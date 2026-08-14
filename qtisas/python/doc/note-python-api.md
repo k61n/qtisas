@@ -30,7 +30,7 @@ print(n.text())
 |------|---------|-------|
 | `note("name")` | `Note` or `None` | look up existing note by object name; returns `None` if no note with that name exists |
 | `newNote()` | `Note` | new empty note |
-| `newNote("name")` | `Note` | new note with given name |
+| `newNote("name")` | `Note` | new note with given name — if a note named `"name"` ALREADY exists, returns it completely unmodified (a genuinely safe reuse, unlike `newTable`'s destructive resize+clear) |
 | `currentNote()` | `Note` or `None` | active note window; returns `None` if no Note is focused |
 
 > **Warning:** `currentNote()` returns `None` whenever the active MDI window is not a Note — including while a script is running (focus is on the console). Always prefer `note("name")` to look up a note by its object name.
@@ -58,7 +58,11 @@ n.setText("# pi, sin, cos, exp etc. are global in QtiSAS\nprint(pi)")
 
 ## Auto-Execute
 
-When `autoexec` is enabled the note's script is executed automatically when the project is loaded.
+When `autoexec` is enabled, the note's script is executed automatically when the project FILE is
+opened, **or when the scripting environment restarts** — not on note-open or any per-tab action.
+For a **multi-tab** note, only the tab that is/was the currently *active* tab gets executed —
+scripts in the note's other tabs do NOT run, even though `autoexec` is a note-level (not per-tab)
+setting.
 
 | Method | Returns | Notes |
 |--------|---------|-------|
@@ -71,6 +75,13 @@ n.setAutoexec(True)
 print(n.autoexec())   # True
 ```
 
+> **`setAutoexec()`/`autoexec()` are `Note`-level methods only — `ScriptEdit` has no
+> autoexec-related methods at all.** Call them on the `Note` object itself (`n.setAutoexec(True)`),
+> never on `n.currentEditor()`/`n.tab(...)`/`n.editorAt(...)`. Confirmed live:
+> `n.currentEditor().setAutoexec(True)` raised `AttributeError: 'ScriptEdit' object has no
+> attribute 'setAutoexec'` — the next retry guessed a second, equally nonexistent method
+> (`setAutoRun`) on the same wrong object instead of just moving `setAutoexec()` to `n`.
+
 ---
 
 ## Tabs
@@ -81,8 +92,8 @@ A note can have multiple editor tabs. Tab indices are **0-based**.
 |--------|---------|-------|
 | `tabs()` | `int` | number of tabs |
 | `addTab()` | — | add a new empty tab |
-| `removeTab(index=-1)` | — | remove tab at `index`; default removes last tab |
-| `renameTab(index, name)` | — | rename tab at `index` |
+| `removeTab(index=-1)` | — | remove tab at `index`; default (`-1`) removes the **currently active** tab (Qt convention), NOT the last tab. No-op if only one tab remains, even if explicitly targeted. |
+| `renameTab(index, name)` | — | rename tab at `index` — **0-based** (confirmed against source: passes `index` straight to Qt's `QTabWidget::setTabText(index, ...)`), unlike `tab(index)` below, which is 1-based. |
 
 ```python
 n = newNote("MultiTab")
@@ -94,6 +105,24 @@ n.renameTab(1, "Analysis")
 n.renameTab(2, "Plot")
 n.removeTab(2)           # remove last tab
 ```
+
+> **`renameTab()` is 0-based; `tab()` is 1-based — do not mix them up.** Confirmed live: a script
+> called `n.renameTab(n.tabs(), "Configuration")` right after `addTab()`, treating the tab COUNT as
+> if it were a valid 1-based "next index" — but `renameTab()` needs the 0-based index instead
+> (`n.tabs() - 1`), so the new tab was never actually renamed. The later `n.tab("Configuration")`
+> lookup then silently returned `None`, with no error pointing back at the real cause.
+
+> **`addTab()` already makes the newly added tab the active/current one — no extra step needed.**
+> Confirmed against source: `addTab()` internally calls Qt's `setCurrentIndex()` on the tab it just
+> created. There is no Python-exposed way to reactivate a DIFFERENT, already-existing tab —
+> `setCurrentIndex()`/`setActiveTab()`/`setCurrentTab()` do **not** exist on `Note` (confirmed
+> against the SIP bindings: `Note` exposes only `tabs()`/`addTab()`/`removeTab()`/`renameTab()`/
+> `indexOf()`/`editorAt()`/`tab()`/`currentEditor()` for tabs — nothing else). Confirmed live: not
+> knowing `addTab()` already does this, a script invented `n.setCurrentIndex(...)`, which raises
+> `AttributeError: 'Note' object has no attribute 'setCurrentIndex'` — and repeated the same
+> invented call across multiple retries, eventually exhausting the retry budget and failing the
+> whole request. If the task is "add a tab and make it the auto-exec one," `addTab()` alone
+> already satisfies "make it active" — do not add any further step to achieve that.
 
 ---
 
@@ -107,7 +136,7 @@ Each tab has a `ScriptEdit` editor object. Use these to work with a specific tab
 | `tab(index)` | `ScriptEdit` | editor for tab at `index` (**1-based**) |
 | `tab(name)` | `ScriptEdit` | editor for tab matching `name` (case-insensitive) |
 | `editorAt(index)` | `ScriptEdit` | editor for tab at `index` (0-based) |
-| `indexOf(editor)` | `int` | tab index of the given `ScriptEdit` object |
+| `indexOf(editor)` | `int` | tab index of the given `ScriptEdit` object (**0-based**, same convention as `editorAt()`) |
 
 ```python
 n = note("Scripts")
@@ -129,7 +158,7 @@ n.tab("Fit").execute()      # execute tab named "Fit"
 | `execute()` | — | execute all code in this editor tab |
 | `print()` | — | print editor content to the results log |
 | `insertFunction(name)` | — | insert a function name at the current cursor position |
-| `save()` | `str` | save to the previously used file; returns file path |
+| `save()` | `str` | save to the previously used file; returns file path — **if this tab has never been saved** (no known file path, e.g. a fresh `newNote()`/`addTab()`), this opens a BLOCKING file-choice dialog instead. Use `saveAs(file)` with an explicit path in automated scripts. |
 | `saveAs(file="")` | `str` | save to `file`; opens dialog if empty; returns file path |
 | `importASCII(file="")` | `str` | load text from `file`; opens dialog if empty; returns file path |
 | `exportPDF(fileName)` | — | export editor content to PDF |

@@ -5,21 +5,30 @@
 # window with that name exists — always check "if x is None:" before use (see class-specific docs).
 
 # Tables:
-table("name")->Table|None  newTable()->Table  newTable("name",rows,cols)->Table  # reuses existing table if name matches
+table("name")->Table|None  newTable()->Table  newTable("name",rows,cols)->Table
+# newTable on an EXISTING name is DESTRUCTIVE, not a safe "reuse" — it resizes to rows/cols AND
+#   unconditionally clears() every cell, even if rows/cols already match the existing size. Never
+#   assume a table survives a second newTable() call with the same name.
 currentTable()->Table
 tables()->list  tableNames()->list[str]
 
 # Matrices:
-matrix("name")->Matrix|None  newMatrix()->Matrix  newMatrix("name",rows,cols)->Matrix  # reuses existing matrix if name matches
+matrix("name")->Matrix|None  newMatrix()->Matrix  newMatrix("name",rows,cols)->Matrix
+# newMatrix on an EXISTING name resizes in place (no blanket clear like newTable) — safe/no-op only
+#   if rows/cols match the current size; SHRINKING permanently truncates rows/cols beyond the new size.
 currentMatrix()->Matrix
 matrices()->list  matrixNames()->list[str]
 
 # 2D Graphs:
 graphWindow("name")->MultiLayer|None  currentGraph()->MultiLayer  graphs()->list
-newGraph("name"="Graph1",layers=1,rows=1,cols=1)->MultiLayer  # reuses existing graph if name matches; blank graph only — do NOT use with plot()
+newGraph("name"="Graph1",layers=1,rows=1,cols=1)->MultiLayer
+# newGraph on an EXISTING name IS safe by default (layers=1 returns it completely untouched) —
+#   unlike newTable/newMatrix above. Only rearranges the layer grid (never curve/plot data) if
+#   called with layers>1 and a different row/col grid than the existing graph already has.
+#   Blank graph only — do NOT use with plot()
 # plot() ALWAYS creates its own new graph window with auto-generated name — do NOT call newGraph() before plot()
 # For a NAMED graph use newGraph("name") + addCurve(), NOT plot():
-#   g = newGraph("SANS_Template"); g.activeLayer().addCurve(t, "I", Graph.CurveType.LineSymbols)
+#   g = newGraph("Template"); g.activeLayer().addCurve(t, "y", Graph.CurveType.LineSymbols)
 plot(table,("x","y"),style=0)->MultiLayer   # style: Line=0 Scatter=1 LineSymbols=2 VerticalBars=3 HorizontalBars=10
 plot(table,"col",style=0)->MultiLayer
 plot(matrix,Graph.CurveType.ColorMap)->MultiLayer   # ColorMap=16 GrayScale=17 Contour=18
@@ -33,14 +42,31 @@ saveGraphAsProject(graph,path,name,compress=False,format="",resolution=-1)
 # format: "PNG" "PDF" "SVG" "TEX" "PS" "EPS" "Archive Graph"; "" uses global setting
 
 # 3D Plots:
+# PREFER newPlot3D(name, ...) over plot3D(...)+setWindowName(g,name) — plot3D(...)'s creating
+#   forms always make a NEW window with no name param, so a separate setWindowName() raises
+#   ValueError: name already exists on any re-run with a taken name, AND plot3D(...) already
+#   created another orphaned window before that error even fired (only the rename fails, not the
+#   creation). newPlot3D(name, ...) checks for the existing window FIRST — updates it in place if
+#   found, creates it fresh (already named) otherwise — never leaks an orphaned window before
+#   failing. If name belongs to a NON-Graph3D window instead (names are unique across ALL window
+#   types), raises ValueError: "newPlot3D: name '<name>' already exists but is not a Graph3D
+#   window" immediately, before creating anything.
 plot3D("name")->Graph3D  newPlot3D("name"="")->Graph3D
+newPlot3D(name,table,"zCol",style=0)->Graph3D   # recommended, same style codes as below
 plot3D(table,"zCol",style=0)->Graph3D   # style: 0=ribbons 1=bars 2=cones
+newPlot3D(name,matrix,style=5)->Graph3D         # recommended, same style codes as below
 plot3D(matrix,style=5)->Graph3D         # style: 5=no-mesh surface
+newPlot3D(name,"z(x,y)",xl,xr,yl,yr,zl,zr,cols=40,rows=40)->Graph3D  # recommended
 plot3D("z(x,y)",xl,xr,yl,yr,zl,zr,cols=40,rows=40)->Graph3D
 plot3D("fx","fy","fz",umin,umax,vmin,vmax,cols=40,rows=40,openU=True,openV=True)->Graph3D
+#   g3 = newPlot3D("Surface3D", "sin(x)*cos(y)", -pi,pi,-pi,pi,-1,1,60,60)
+#   Confirmed live: after a setWindowName() collision, a retry tried graphWindow(name) instead —
+#   that's 2D-GraphWindow-ONLY, always None for a Graph3D name -> AttributeError next line.
 
 # Notes:
-note("name")->Note|None  newNote("name"="")->Note  # reuses existing note if name matches
+note("name")->Note|None  newNote("name"="")->Note
+# newNote on an EXISTING name IS a genuinely safe reuse (like newGraph, unlike newTable/newMatrix
+#   above) — returns the existing Note completely untouched, no resize, no clear.
 currentNote()->Note  notes()->list
 
 # Folders:
@@ -58,6 +84,12 @@ hideWindow(window)  maximizeWindow(window)  # call activateWindow(window) before
 openTemplate("path")->MdiSubWindow  saveAsTemplate(window,"path")
 clone(window)->MdiSubWindow  setWindowName(window,"name")->bool
 # setWindowName raises ValueError (no dialog) if name is empty/invalid/already used by another window
+# Allowed characters: letters, digits, underscore, hyphen — confirmed against source
+#   (ApplicationWindow::setWindowName() strips "-" before checking, and the check itself is \W,
+#   which already excludes "_"). The runtime error text ("only letters and digits are allowed") is
+#   misleading — "_"/"-" are fine, e.g. "SphereMap_3D" is valid, not just "SphereMap3D". Confirmed
+#   live: a script avoided an underscore-suffixed name out of a mistaken belief it'd be rejected
+#   too, and settled for a disconnected generic name ("surface") instead of a traceable one.
 autoArrangeLayers()  setPreferences(graph)  # graph: Graph layer (NOT GraphWindow); auto-applied at creation
 windows()->list  workspace()->QMdiArea
 
@@ -96,6 +128,9 @@ symbolNames()->list[str]  symbolIndex("name")->int
 # Data state:
 autoUpdateTableValues()->bool  setAutoUpdateTableValues(on)
 columnsList()->list[str]  columnsList(Table.PlotDesignation.Y)->list[str]
+# columnsList() with no args defaults to "all columns" internally (C++ Table.All) — but there is
+#   no Table.PlotDesignation.All in Python (omitted from the exposed enum); it's reachable only by
+#   leaving the argument out, never by naming it explicitly.
 
 # Data import:
 importWaveFile()->Table

@@ -5,7 +5,7 @@ Python scripting interface for 2D plots.
 - **`GraphWindow`** — the multi-layer window (SIP name for `MultiLayer`)
 - **`Graph`** — one plot panel inside a `GraphWindow`
 
-All SIP-wrapped methods accept positional arguments. Named optional parameters also accept keyword syntax.
+All SIP-wrapped methods accept positional arguments; named optional parameters also accept keyword syntax.
 
 ---
 
@@ -48,10 +48,32 @@ g2.addCurve(t, "dI", Graph.CurveType.Scatter)
 | `plot(table, cols_tuple, style)` | `GraphWindow` | new window from table columns |
 | `plot(table, "col", style)` | `GraphWindow` | new window from single column |
 | `plot(matrix)` | `GraphWindow` | colour-map spectrogram from matrix |
-| `plot("formula", xMin, xMax)` | `GraphWindow` | function plot |
+| `plot("formula", xMin, xMax)` | `GraphWindow` | function plot — `"formula"` is a MATH EXPRESSION (e.g. `"x^2"`), evaluated over `[xMin, xMax]`; NOT a dataset/table name lookup |
 | `waterfallPlot(table, cols_tuple)` | `GraphWindow` | waterfall plot |
 
-> **Warning:** `graphWindow("name")` returns `None` (confirmed), not an error and not a placeholder object, when no graph with that name exists. Always check `if g is None:` before using the result.
+> **Confirmed live: no `plot()` overload looks up an existing dataset/table by name.**
+> `plot("simulatedCurve-ai/PorodPowerLaw", 0.001, 0.5, Graph.CurveType.Line)` matches the
+> `plot("formula", xMin, xMax)` overload above and silently adds a new function curve literally
+> labeled `F1(x)="simulatedCurve-ai/PorodPowerLaw"` — not the real data, no exception raised.
+> To plot an existing table's columns (e.g. a `fitCurve-<function>`/`simulatedCurve-<function>`
+> table — see fittable-python-api.md), look it up with `table(name)` and add it with
+> `layer.insertCurve(t, "xCol", "yCol", style)` instead:
+> ```python
+> sc = table("simulatedCurve-ai/PorodPowerLaw")
+> gw = newGraph("PorodSim")
+> gw.activeLayer().insertCurve(sc, "x", "y", Graph.CurveType.Line)
+> ```
+
+> **Warning:** `graphWindow("name")` returns `None` (confirmed) — not an error, not a placeholder — when no graph with that name exists. Always check `if g is None:` before using the result.
+
+> **`graphWindow("name")` is 2D-`GraphWindow`-ONLY — returns `None` for a `Graph3D` window even
+> when one exists under that exact name** (confirmed live). To look up an existing 3D surface
+> window, use `plot3D("name")` instead (see graph3d-python-api.md) — the single-argument form is a
+> LOOKUP, not a creation. Confirmed live: after `setWindowName(g3, "Sincos3D")` created a real
+> `Graph3D` window, a later part's `graphWindow("Sincos3D")` returned `None`, misread as "window
+> doesn't exist" rather than "wrong lookup function" — burned 8+ retries chasing dead ends
+> (`currentGraph3D()`, `graphNames()`, `graphs()`, a from-scratch numpy/matrix rebuild) before
+> giving up on reuse entirely.
 
 ---
 
@@ -74,7 +96,7 @@ GraphWindow.AlignPolicy     # AlignLayers=0, AlignCanvases
 | `setActiveLayer(g)` | — | make `g` the active layer |
 | `layer(n)` | `Graph` | **1-based** index — `layer(1)` is the first |
 | `layersList()` | `list[Graph]` | all layers |
-| `addLayer(x, y, w, h, linked)` | `Graph` | add layer at position; all args optional |
+| `addLayer(x, y, w, h, setPreferences=True)` | `Graph` | add layer at position; all args optional — 5th arg applies the app's default fonts/colors/tick style, NOT axis linking; use `linkXLayerAxes()` for that |
 | `removeLayer(g)` | `bool` | remove a specific layer |
 | `removeActiveLayer()` | `bool` | remove the currently active layer |
 | `setNumLayers(n)` | — | change total number of layers |
@@ -101,7 +123,7 @@ GraphWindow.AlignPolicy     # AlignLayers=0, AlignCanvases
 
 Recipe for data+fit / residuals layouts. **All 7 steps are required, in this exact order — do not skip any, do not add `activateWindow` at the end.**
 
-Adding curves and titles changes each layer's Y-axis tick-label width independently (autoscale/margin recalculation), which can shift `l1`/`l2` canvas x/width out of sync with each other — **even after `setCanvasGeometry` already matched them once.** The fix is to add curves/titles first, force the geometry to match a **second time** afterward, and only lock alignment with `keepAligned(True)` once nothing will disturb it again.
+Adding curves and titles changes each layer's Y-axis tick-label width independently (autoscale/margin recalculation), shifting `l1`/`l2` canvas x/width out of sync — **even after `setCanvasGeometry` already matched them once.** Fix: add curves/titles first, re-match geometry a **second time** afterward, and only lock alignment with `keepAligned(True)` once nothing will disturb it again.
 
 | Step | Code | If wrong |
 |------|------|---------|
@@ -158,6 +180,45 @@ l1.replot()
 l2.replot()
 ```
 
+### Adding a residuals panel to an EXISTING single-layer graph
+
+The recipe above assumes a BRAND-NEW graph via `newGraph("Fit", 2, 2, 1)`, which sets row/column
+layout at construction. An equally common case — plotting data+fit first, then adding a residuals
+panel in a LATER, separate step — starts from a graph that already exists with exactly 1 layer,
+needing one extra call the recipe doesn't show:
+
+**`setNumLayers(n)` does NOT update the window's row/column layout — call `setRows()`/`setCols()`
+yourself, before `arrangeLayers()`.** A 1-layer graph has its row/column count fixed at `(1, 1)`;
+`setNumLayers(2)` only adds the second `Graph` object, never touching that count.
+`arrangeLayers(fit=False, ...)` (step 3 above) then lays out using the OLD `(1, 1)` count — the
+second layer's row index clamps onto row 0, landing on top of the first layer, hidden behind it.
+**No error, nothing printed wrong — the script "succeeds," the residuals layer is just invisible.**
+`arrangeLayers(fit=True, ...)` doesn't fix it either: for 2 layers its auto-layout picks 1×2
+(side-by-side), not a vertical stack — `setRows`/`setCols` must be called explicitly regardless of
+`fit`.
+
+```python
+# WRONG — silently invisible second layer, no error
+gw = graphWindow("FitResults")   # already exists with 1 layer from an earlier step
+gw.setNumLayers(2)
+gw.arrangeLayers(False, False)   # still uses the OLD (rows=1, cols=1) — layer 2 collapses onto layer 1
+
+# RIGHT — explicitly set the row/column layout BEFORE arrangeLayers
+gw = graphWindow("FitResults")
+gw.setNumLayers(2)
+gw.setRows(2)
+gw.setCols(1)
+l1 = gw.layer(1)
+l2 = gw.layer(2)
+l1.enableAxis(Graph.Axis.Bottom, False)
+l2.enableAxis(Graph.Axis.Top, False)
+gw.keepAligned(False)
+gw.setAlignPolicy(GraphWindow.AlignPolicy.AlignCanvases)
+gw.setSpacing(0, 0)
+gw.arrangeLayers(False, False)   # now correctly splits into 2 rows
+# ... continue with steps 4-6 of the recipe above (asymmetric heights, curves/titles, re-apply, lock) ...
+```
+
 ### Axis linking
 
 | Method | Notes |
@@ -190,7 +251,14 @@ l2.replot()
 
 ```python
 Graph.Axis.Left=0  Graph.Axis.Right=1  Graph.Axis.Bottom=2  Graph.Axis.Top=3
+Graph.Axis.X=Bottom  Graph.Axis.Y=Left   # convenience aliases for the common case
 ```
+
+`X`/`Y` are aliases for the typical primary axes (`X`→`Bottom`, `Y`→`Left`) — added because scripts
+kept guessing `Graph.Axis.X`/`.Y` by analogy with `Table.PlotDesignation.X`/`.Y` (a *different* enum,
+on `Table`, for a column's data role). If a layer's primary axes are swapped (e.g. horizontal
+error-bar plots using `Left`/`Right` as data axes), use the real `Bottom`/`Left`/`Top`/`Right` names
+explicitly instead of `X`/`Y`.
 
 **Scale** (`Graph.Scale`) — 7th arg of `setScale`
 
@@ -221,8 +289,8 @@ ColorMap=16  GrayScale=17  Contour=18  ImagePlot=20  Function=19
 |--------|---------|-------|
 | `addCurve(t, col, style=0, lineWidth=1, pointSize=3, startRow=0, endRow=-1)` | `bool` | add one Y column; `col` is bare Y column name — **no xcol arg**; X is the column with `PlotDesignation.X` role |
 | `addCurves(t, cols_tuple, style=0, lineWidth=1, pointSize=3, startRow=0, endRow=-1)` | `bool` | add multiple Y columns |
-| `insertCurve(t, col, style, startRow=0, endRow=-1)` | `DataCurve` | |
-| `insertCurve(t, xcol, ycol, style, startRow=0, endRow=-1)` | `DataCurve` | explicit X and Y columns by name |
+| `insertCurve(t, col, style=1, startRow=0, endRow=-1)` | `DataCurve` | note the default `style` differs from `addCurve`'s (`0`) |
+| `insertCurve(t, xcol, ycol, style=1, startRow=0, endRow=-1)` | `DataCurve` | explicit X and Y columns by name |
 | `removeCurve(index)` | — | remove by 0-based index |
 | `removeCurve("title")` | — | remove by curve title |
 | `removeCurve(curve)` | — | remove a `QwtPlotCurve` object |
@@ -242,6 +310,15 @@ ColorMap=16  GrayScale=17  Contour=18  ImagePlot=20  Function=19
 
 ### Curves — reorder / style
 
+**There is no `Graph.setCurveColor()` / `setCurvePenColor()` / `setCurvePen()`.** The real method is
+`setCurveLineColor(index, color)` below. `setCurveColor()` sounds plausible because `Fittable` DOES
+have a same-named method — a different class, different purpose (styles the fit curve *before*
+`fit()`/`plotResults()` creates it; see fittable-python-api.md). On a `Graph` layer, after curves
+already exist, use `setCurveLineColor(index, ...)`. Confirmed live, repeatedly, across separate
+conversations: `setCurveColor`, `setCurvePenColor`, `setCurvePen` all raised `AttributeError` before
+landing on the real name. (`g.curve(index).setPen(QPen(...))` also works — `PlotCurve` inherits
+Qwt's own `setPen()` — but prefer `setCurveLineColor()` over reaching into the raw Qwt object.)
+
 | Method | Notes |
 |--------|-------|
 | `changeCurveIndex(fromIdx, toIdx)` | change draw order |
@@ -256,7 +333,7 @@ ColorMap=16  GrayScale=17  Contour=18  ImagePlot=20  Function=19
 | `setGrayScale()` | apply greyscale palette to all curves |
 | `setIndexedColors()` | apply indexed colour palette |
 
-> **Warning:** `colorIndex("name")` and `QColor("name")` for the **same name are NOT the same colour.** `colorIndex()` looks up QtiSAS's own indexed palette (`"green"` = `Qt::green`, bright RGB(0,255,0)). `QColor("name")` uses Qt's SVG/X11 named-colour table, where `"green"` is RGB(0,128,0) — a dark, muted shade that looks like the palette's own `"olive"` entry, not its `"green"` entry. Confirmed: `setCurveLineColor(0, QColor("green"))` visually renders as olive-looking, not the bright green most people expect.
+> **Warning:** `colorIndex("name")` and `QColor("name")` for the **same name are NOT the same colour.** `colorIndex()` looks up QtiSAS's own indexed palette (`"green"` = `Qt::green`, bright RGB(0,255,0)). `QColor("name")` uses Qt's SVG/X11 named-colour table, where `"green"` is RGB(0,128,0) — a dark, muted shade matching the palette's own `"olive"` entry, not its `"green"`. Confirmed: `setCurveLineColor(0, QColor("green"))` renders olive-looking, not the bright green most expect.
 > ```python
 > # WRONG — expecting bright green; QColor("green") is actually dark/olive-looking
 > l.setCurveLineColor(0, QColor("green"))
@@ -264,7 +341,36 @@ ColorMap=16  GrayScale=17  Contour=18  ImagePlot=20  Function=19
 > # RIGHT — colorIndex uses QtiSAS's palette, matches the expected bright "green"
 > l.setCurveLineColor(0, colorIndex("green"))
 > ```
-> Prefer `colorIndex()` for standard colour names — it's the more predictable choice. Only use `QColor(...)` when you need a specific RGB value or a colour not in the indexed palette.
+> Prefer `colorIndex()` for standard colour names on `setCurveLineColor()`/`setCurveSymbolColor()`/
+> `setCurveSymbolBorderColor()` — the only three methods that accept it: no palette-mismatch
+> surprises like `"green"` above, and **no import needed**, unlike `QColor` (`from PyQt6.QtGui
+> import QColor`). Reach for `QColor(...)` only for a specific RGB value, a colour outside the
+> indexed palette, or anything OTHER than these three methods — every other colour parameter in
+> this API (`addErrorBars`, `setAxisColor`, `setBackgroundColor`, `setFrameColor`, Graph3D's colour
+> setters, ...) takes `QColor` only, with no `colorIndex()` alternative.
+
+> **For a specific RGB value, a bare `0xRRGGBB` int works anywhere a `QColor` parameter is expected — no `PyQt6` import needed.** Confirmed live: `leg.setBackgroundColor(0xFFFFFF)` sets a real white background, same as `QColor(255, 255, 255)`. Simplest fix for a `NameError: name 'QColor' is not defined` — add the int literal, don't fall back to `Qt.white` (also unimported) or abandon the color entirely.
+> ```python
+> leg.setBackgroundColor(0xFFFFFF)      # white — no import needed
+> g.setAxisColor(Graph.Axis.Left, 0x336699)   # a specific blue — no import needed
+> ```
+>
+> **EXCEPTION — does NOT work for `setCurveLineColor()`/`setCurveSymbolColor()`/
+> `setCurveSymbolBorderColor()`.** Each has BOTH an `(index, int)` overload, where the int is a
+> small PALETTE INDEX (0=black, 1=red, ...), and an `(index, QColor)` overload. A bare Python int
+> binds to `(index, int)`, not `QColor` — so `g.setCurveLineColor(0, 0x336699)` is interpreted as
+> colour**index** 3,375,257, wildly out of range. Confirmed in source
+> (`Graph::setCurveLineColor(int,int)`): an out-of-range index silently returns without changing
+> anything — no error, no warning. A small hex value (e.g. `0x000003`) is worse — it silently
+> selects whatever unrelated colour sits at that small palette index instead of failing at all.
+> ```python
+> # WRONG for these 3 methods — silently no-ops (or picks an unrelated colour), never errors
+> g.setCurveLineColor(0, 0x336699)
+>
+> # RIGHT — colorIndex() for a palette name, or QColor for a specific RGB value
+> g.setCurveLineColor(0, colorIndex("blue"))
+> g.setCurveLineColor(0, QColor(0x33, 0x66, 0x99))
+> ```
 
 ### Waterfall
 
@@ -299,7 +405,7 @@ ColorMap=16  GrayScale=17  Contour=18  ImagePlot=20  Function=19
 | `setSkipEmptyBins(on)` | — | manual mode only |
 | `loadData()` | — | recompute after parameter change |
 | `dataSize()` | `int` | number of bins |
-| `x(i)` / `y(i)` | `float` | bin centre / count |
+| `sample(i)` | `QPointF` | per-bin access — **`x(i)`/`y(i)` do NOT exist**; use `hist.sample(i).x()` / `.y()` for bin centre / count |
 | `mean()` / `standardDeviation()` / `minimum()` / `maximum()` | `float` | |
 
 ### Function curves
@@ -320,6 +426,18 @@ ColorMap=16  GrayScale=17  Contour=18  ImagePlot=20  Function=19
 | `setCurveSymbolOpacity(index, int)` | 0=transparent, 255=opaque |
 | `setCurveSymbolStyle(index, int)` | use `symbolIndex("name")` for lookup |
 | `setCurveSymbolSize(index, int)` | pixel width = 2×size+1 |
+
+**Prefer `colorIndex("name")` over `QColor("name")` for both colour methods above** — no import
+needed (unlike `QColor`, which needs `from PyQt6.QtGui import QColor`) and avoids the palette
+mismatch some names have between QtiSAS's colour list and Qt's SVG names (see the `"green"` warning
+under Curve — reorder/style above). Reach for `QColor(...)` only for a specific RGB value or a
+colour outside the indexed palette.
+
+**All of these are called on the LAYER (with a curve `index`), never on a curve object itself** —
+there is no `.setSymbolColor()`/`.setSymbolStyle()` on the `PlotCurve` returned by `g.curve(index)`.
+Confirmed live: `g.curve(0).setSymbolColor(QColor(0, 0, 0))` raised `AttributeError: 'PlotCurve'
+object has no attribute 'setSymbolColor'` — the call belongs on `g` itself:
+`g.setCurveSymbolColor(0, ...)`.
 
 ```python
 g = currentGraph().activeLayer()
@@ -345,14 +463,12 @@ t = table("SANS_Data")
 layer.addErrorBars("SANS_Data_I", t, "dI", 1, 1, 8, QColor("gray"), False, True, True)
 ```
 
-**To change an EXISTING error bar's styling (color, width, cap, through/minus/plus), use
-`updateErrorBars()` — never call `addErrorBars()` again for this.** `addErrorBars()` always
-creates a brand new `ErrorBarsCurve` and has no "already exists, update instead" check — calling
-it a second time for the same curve/column adds a second, overlapping set of error bars rather
-than restyling the first one. `updateErrorBars()` takes the exact same argument shape as
-`addErrorBars()` — including `type` — and finds the existing error bars for you instead of
-creating a new curve; returns `False` if no matching error bars are found instead of creating
-anything.
+**To restyle an EXISTING error bar (color, width, cap, through/minus/plus), use `updateErrorBars()`
+— never `addErrorBars()` again.** `addErrorBars()` always creates a brand new `ErrorBarsCurve` with
+no "already exists" check — a second call for the same curve/column adds a second, overlapping set
+rather than restyling the first. `updateErrorBars()` takes the same argument shape — including
+`type` — and finds the existing error bars instead of creating a new curve; returns `False` if none
+match, instead of creating anything.
 
 ```python
 # WRONG — adds a SECOND, overlapping ErrorBarsCurve; the original gray one is still there too
@@ -374,6 +490,7 @@ Confirmed live.
 | `numArrows()` | `int` | |
 | `addImage("filename")` | `ImageWidget` | load from file |
 | `addImage(QImage)` | `ImageWidget` | |
+| `addImage(existingImageWidget)` | `ImageWidget` | **CLONES** the passed-in widget into a brand-new `ImageWidget` (copies its coordinates) and returns the clone — same trap as `addText()` below: the original is left untouched, so restyle the RETURN VALUE, not the argument |
 | `remove(imageWidget)` | — | |
 
 ### Text and legend
@@ -383,12 +500,55 @@ Confirmed live.
 | `newLegend()` | `LegendWidget` | add default legend |
 | `newLegend("text")` | `LegendWidget` | add legend with custom text |
 | `setLegend("text")` | — | replace legend text |
-| `legend()` | `LegendWidget` | get current legend |
+| `legend()` | `LegendWidget` or `None` | get the EXISTING legend — `None` if none was ever added |
 | `removeLegend()` | — | |
 | `addText(legendWidget)` | `LegendWidget` | add text box |
 | `addTimeStamp()` | `LegendWidget` | add date/time stamp |
 
-**`LegendWidget` methods:**
+**To add a legend to a fresh graph, call `newLegend()` — never `legend()`.** `legend()` is a pure
+getter: on a layer with no legend yet it returns `None`, and `.setText(...)`/`.setFrameStyle(...)`
+on that `None` raises `AttributeError: 'NoneType' object has no attribute 'setText'`. There is no
+`addLegend()` method (a plausible but nonexistent guess). Confirmed live: a script called
+`g.legend()`, hit the `None` `AttributeError`, guessed the nonexistent `g.addLegend()` next, then
+tried `g.legend()` again — three wrong guesses in a row, missing the real answer, `g.newLegend()`.
+```python
+# WRONG — legend() is a getter; returns None if no legend exists yet
+leg = g.legend()
+leg.setText("R = 12.3 nm")   # AttributeError: 'NoneType' object has no attribute 'setText'
+
+# RIGHT — newLegend() creates one
+leg = g.newLegend()
+leg.setText("R = 12.3 nm")
+```
+
+**`newLegend()` has no duplicate check — it unconditionally creates and adds another `LegendWidget`
+every call**, even if the layer already has one. Calling it more than once on the same graph (e.g. a
+retried script, or a re-run on an existing plot) silently stacks up overlapping legends with no
+error. Always check `legend()` first and reuse what's there:
+```python
+leg = g.legend()
+if leg is None:
+    leg = g.newLegend()
+leg.setText("R = 12.3 nm")   # updates the existing legend if there was one, creates it otherwise
+```
+
+**`addText(existingLegendWidget)` does NOT modify or style the widget you pass in — it CLONES it
+into a brand-new `LegendWidget`, leaves the original untouched, and returns the clone.**
+`.setFrameStyle(...)`/`.setText(...)`/etc. on the return value styles only the clone, overlapping
+the original, unstyled widget — two legend-like widgets end up where one was intended, silently. To
+style an *existing* legend, call the setter directly on the widget — never route through `addText()`:
+```python
+# WRONG — leg keeps no frame style at all; fw is a SEPARATE clone that overlaps it
+leg = g.newLegend("R = 12.3 nm")
+fw = g.addText(leg)
+fw.setFrameStyle(Frame.FrameStyle.Shadow.value)   # styles the clone, not leg
+
+# RIGHT — style the legend itself directly
+leg = g.newLegend("R = 12.3 nm")
+leg.setFrameStyle(Frame.FrameStyle.Shadow.value)
+```
+`addText()` adds an independent, additional text box (optionally seeded from an existing widget's
+appearance) — it is not a way to reach back into an already-added legend.
 
 | Method | Notes |
 |--------|-------|
@@ -398,11 +558,13 @@ Confirmed live.
 | `setAngle(degrees)` | rotation |
 | `setAutoUpdate(bool)` | auto-refresh from curve titles |
 
-**`FrameWidget` base methods** (available on `LegendWidget`, `ImageWidget`, `RectangleWidget`):
+**`FrameWidget` base methods** (available on `LegendWidget`, `ImageWidget`, `RectangleWidget`,
+`EllipseWidget`):
 
 | Method | Notes |
 |--------|-------|
 | `setFrameStyle(int)` | `Frame.FrameStyle.Line.value` (1) or `Frame.FrameStyle.Shadow.value` (2) — **NOT** PyQt6's `QFrame` |
+| `setFrameLineStyle(Qt.PenStyle)` | line PATTERN only (dashed/dotted/…) — separate from `setFramePen`, which also sets colour/width |
 | `setFramePen(QPen)` | |
 | `setFrameColor(QColor)` | |
 | `setFrameWidth(float)` | |
@@ -412,22 +574,65 @@ Confirmed live.
 | `setOriginCoord(x, y)` | position in axis data coordinates |
 | `setSize(w, h)` | size in pixels (int, int) |
 
-**`setFrameStyle(int)` takes QtiSAS's own `Frame.FrameStyle` enum value, not Qt's `QFrame`.** The two
-look similar but are unrelated types: `FrameWidget::setFrameStyle()` does an *exact* match against
-`FrameStyle{None_=0, Line=1, Shadow=2}` — it does not decode bit-flags the way real `QFrame` does.
-Passing `QFrame.Shape.Box | QFrame.Shadow.Sunken` (a PyQt6 enum combo, e.g. `4 | 0x30`) silently sets
-an internal value that matches neither `Line` nor `Shadow`, so **no frame is drawn at all** — no
-error, just a legend/image/rectangle widget with an invisible border. Confirmed live.
+`FrameWidget.Unit` enum (`Inch`/`Millimeter`/`Centimeter`/`Point`/`Pixel`/`Scale`) is used as the
+default `unit` argument to `exportImage`/`exportVector`/`exportTex` below.
 
-**Pass `Frame.FrameStyle.Shadow.value` (or a bare int), never the bare enum member `Frame.FrameStyle.Shadow`
-itself.** Because `FrameStyle` has a member named `None_` (a reserved Python keyword otherwise), it is
-bound as a real Python `enum.Enum` — NOT an int subclass — unlike enums with no `None` member
-(`Graph.Axis`, `Graph.Ticks`, `Graph.Scale`, `Graph.CurveType`, ...), which are plain int constants and
-work directly wherever a bare `int` is expected. `setFrameStyle(int)` takes a genuine C++ `int`, and
-sip's argument parser rejects the `FrameStyle` enum object outright — `.value` (or the literal int)
-is required. The same applies to any other enum whose docs show a `.None_` member, e.g.
-`Table.PlotDesignation`, wherever it's passed to a plain-`int`-typed parameter instead of one typed
-as that specific enum.
+### Rectangle and Ellipse annotations
+
+`Rectangle`/`Ellipse` (`RectangleWidget`/`EllipseWidget` in C++) are real, constructible
+`FrameWidget` subclasses — plain shape annotations, not text/legend/image boxes. Constructing one
+**already attaches it to the layer's canvas** — no separate "add" call needed to draw it:
+
+```python
+r = Rectangle(g)                          # already attached and visible on layer g
+r.setFrameStyle(Frame.FrameStyle.Shadow.value)
+r.setSize(200, 60)
+r.setOriginCoord(0.8, 0.8)
+
+e = Ellipse(g)                            # same pattern for an ellipse
+```
+
+**`Graph.add(frameWidget, copy=True) -> FrameWidget` — the default CLONES, same trap as
+`addText()` above.** With `copy=True` (the default), `add()` builds a brand-new widget, copies the
+passed-in widget's appearance into it, and returns that — the original stays untouched, so styling
+the RETURN VALUE (not the original) is what takes effect. Pass `copy=False` to attach/move the SAME
+object you already have (e.g. one just constructed above) without cloning — the one case where you
+want it:
+```python
+r = Rectangle(g)          # already attached — do NOT call g.add(r) again for this
+r.setFrameStyle(...)      # style the object directly
+
+# add(copy=False) is for re-attaching/moving an existing, already-built widget object elsewhere —
+# NOT needed for a freshly-constructed Rectangle/Ellipse, which is already attached on construction
+g.add(r, False)
+```
+**Don't build a separate `Rectangle` just to frame an existing `LegendWidget`/`ImageWidget`** — both
+already inherit every `FrameWidget` method (see above); call `setFrameStyle(...)` on the legend/image
+object itself instead of layering a second shape on top.
+
+**`g.axisScale(axis) -> (start, end)` reads an axis's current visible range back** — use it to
+compute a `setOriginCoord(x, y)` position relative to the live data range (e.g. "95% up the visible
+y-axis": `ymin, ymax = l.axisScale(Graph.Axis.Left); y = ymin + 0.95 * (ymax - ymin)`), instead of
+guessing a nonexistent conversion method or hardcoding a bare fraction as if it were already a data
+coordinate. `setOriginCoord` does no range validation — an out-of-range value places the widget
+off-plot with no error, so always derive it from `axisScale()` or known data bounds, never a bare
+0..1 fraction. (`g.scale(axis, pos)` never existed — use `axisScale(axis)`.)
+
+**`setFrameStyle(int)` takes QtiSAS's own `Frame.FrameStyle` enum value, not Qt's `QFrame`.** The two
+are unrelated types: `FrameWidget::setFrameStyle()` does an *exact* match against
+`FrameStyle{None_=0, Line=1, Shadow=2}`, without decoding bit-flags like real `QFrame`. Passing
+`QFrame.Shape.Box | QFrame.Shadow.Sunken` (a PyQt6 enum combo, e.g. `4 | 0x30`) silently sets a value
+matching neither `Line` nor `Shadow`, so **no frame is drawn at all** — no error, just an invisible
+border. Confirmed live.
+
+**Pass `Frame.FrameStyle.Shadow.value` (or a bare int), never the bare enum member
+`Frame.FrameStyle.Shadow`.** `FrameStyle` has a member named `None_` (`None` is a reserved Python
+keyword), so it's bound as a real `enum.Enum` — NOT an int subclass — unlike enums with no `None`
+member (`Graph.Axis`, `Graph.Ticks`, `Graph.Scale`, `Graph.CurveType`, ...), which are plain int
+constants usable directly as a bare `int`. `setFrameStyle(int)` takes a genuine C++ `int`, and sip's
+parser rejects the enum object outright — `.value` (or a literal int) is required. Same applies to
+any other enum with a `.None_` member, e.g. `Table.PlotDesignation`, passed to a plain-`int`
+parameter.
 
 ```python
 # WRONG — real Qt enum on a QtiSAS FrameWidget; frame silently never renders
@@ -471,10 +676,10 @@ leg.setOrigin(10, 10)
 | `axisTitleDistance(axis)` | `int` — gap in pixels |
 | `setAxisTitleDistance(axis, dist)` | |
 
-**Subscript and superscript** — use `<sub>...</sub>` / `<sup>...</sup>` directly in the title string. Rich text is auto-detected (Qwt renders any string containing markup as rich text, plain strings stay plain) — no `setTitleFormat()` or similar call is needed.
+**Subscript and superscript** — use `<sub>...</sub>` / `<sup>...</sup>` directly in the title string. Rich text is auto-detected (Qwt renders any string with markup as rich text, plain strings stay plain) — no `setTitleFormat()` call needed.
 
 > **RULE — Use `<sup>`/`<sub>` HTML tags, never LaTeX-style `^{...}`/`_{...}` notation, in titles.**
-> `^{-1}` is not markup Qwt recognizes — it renders as the literal characters `^{-1}`, not a superscript. Only `<sup>`/`<sub>` trigger rich-text rendering.
+> `^{-1}` is not markup Qwt recognizes — it renders literally as `^{-1}`, not a superscript. Only `<sup>`/`<sub>` trigger rich-text rendering.
 > ```python
 > # WRONG — renders literally as "I(Q) (cm^{-1})", not "I(Q) (cm⁻¹)"
 > g.setYTitle("I(Q) (cm^{-1})")
@@ -494,7 +699,7 @@ leg.setOrigin(10, 10)
 | `setAxisColor(axis, QColor)` | axis line colour |
 | `setAxisFont(axis, QFont)` | tick label font |
 | `setAxisLabelsColor(axis, QColor)` | tick-label colour — requires explicit `axis` argument |
-| `setAxisNumericFormat(axis, format, precision, suffix)` | `format`: 0=auto, 1=decimal, 2=scientific, 3=engineering |
+| `setAxisNumericFormat(axis, format, precision, formula)` | `format`: 0=Automatic, 1=Decimal, 2=Scientific, 3=Superscripts, 4=Engineering, 5=SuperscriptsGER — **3 is Superscripts, not engineering** (4 is); 4th arg is a label-transform FORMULA string, not a text suffix appended to labels |
 | `setAxisLabelRotation(axis, degrees)` | |
 | `setMajorTicksType(axis, Graph.Ticks.*)` | |
 | `setMinorTicksType(axis, Graph.Ticks.*)` | |
@@ -505,8 +710,8 @@ leg.setOrigin(10, 10)
 | `drawAxesBackbones(yes)` | show / hide axis backbone lines |
 
 **Tick THICKNESS is not a separate property — ticks share the axis line's own width.** Qwt's scale
-draw uses one pen for both the backbone and its tick marks, so there is no "tick width" call distinct
-from `setAxesLinewidth()`/`axesLinewidth()`. Only tick *length* (`setAxisTicksLength`/`setTicksLength`)
+draw uses one pen for both backbone and tick marks, so there is no "tick width" call distinct from
+`setAxesLinewidth()`/`axesLinewidth()`. Only tick *length* (`setAxisTicksLength`/`setTicksLength`)
 is independently controllable.
 
 ```python
@@ -517,12 +722,12 @@ g.setTicksLength(ticklen, ticklen)
 g.setAxesLinewidth(current_width)   # thickness for both backbone AND ticks — same call, no separate one
 ```
 
-**Don't confuse `g.axesLinewidth()` (this graph's actual current value) with `qti.app.graphAxesLineWidth()`
-(the global Preferences default applied to NEW graphs).** The latter reflects the app-wide default, not
-this specific graph — if this graph's width was ever changed after creation, the two will differ.
-Confirmed live: needing "thickness as canvas line width" with no getter available (before `axesLinewidth()`
-was exposed), a script guessed a nonexistent `axesLineWidth()` method, then gave up and hardcoded `1` —
-silently substituting an arbitrary literal for "whatever this graph's actual current width is."
+**Don't confuse `g.axesLinewidth()` (this graph's actual current value) with
+`qti.app.graphAxesLineWidth()` (the global Preferences default for NEW graphs).** The latter is the
+app-wide default, not this specific graph — if this graph's width changed after creation, the two
+differ. Confirmed live: before `axesLinewidth()` was exposed, a script needing "thickness as canvas
+line width" with no getter available guessed the nonexistent `axesLineWidth()`, then gave up and
+hardcoded `1` — silently substituting an arbitrary literal for the graph's real current width.
 
 ### Scale
 
@@ -530,10 +735,29 @@ silently substituting an arbitrary literal for "whatever this graph's actual cur
 |--------|-------|
 | `setScale(axis, start, end)` | set axis range |
 | `setScale(axis, start, end, step, majTicks, minTicks, type, inverted, ...)` | full signature |
+| `axisScale(axis) -> (start, end)` | read the axis's CURRENT visible range back |
 | `setAutoScale()` | auto-fit all axes to data |
 | `setLinOrLogAxis(axis, logYN, changeAxisFormat=True, forceRescale=False)` | switch one axis |
 | `setLogLog()` | all 4 axes → log scale |
 | `setLinLin()` | all 4 axes → linear scale |
+
+**There is no standalone `setMajTicks(axis, n)` / `setMinTicks(axis, n)` / `setMajorTicks(axis, n)` /
+`setMinorTicks(axis, n)` method on `Graph`.** Major/minor tick COUNT is only settable through the
+`majTicks`/`minTicks` parameters of the full `setScale(...)` signature above — there's no way to
+change tick count alone without also restating `start`/`end`/`step`, but you don't need to know
+those in advance: read them first with `axisScale(axis)` and pass them straight back in.
+
+```python
+start, end = l.axisScale(Graph.Axis.Bottom)
+l.setScale(Graph.Axis.Bottom, start, end, 0, 5, 8)   # same range, new tick counts (5 major, 8 minor)
+```
+
+Don't confuse this with the real `setMajorTicksType(axis, Graph.Ticks.*)` / `setMinorTicksType(axis,
+Graph.Ticks.*)` (tick DIRECTION — In/Out/InOut/NoTicks, see the axes table above) — the name is
+real, but dropping "Type" from it is not. Confirmed live TWICE with different guesses before
+`axisScale()` existed: `g.setMajTicks(Graph.Axis.Bottom, 5)`, then `g.setMajorTicks(Graph.Axis.Bottom,
+5)` (mirroring the real `setMajorTicksType` name) — both raised `AttributeError: 'Graph' object has
+no attribute '...'` (same pattern for Min/minor variants).
 
 ### Canvas and frame
 
@@ -570,6 +794,12 @@ silently substituting an arbitrary literal for "whatever this graph's actual cur
 | `setMinPenY(QPen)` / `minPenY()` | minor grid lines on Y axis |
 | `enableXMin(on)` / `xMinEnabled()` | show/hide X minor grid |
 | `enableYMin(on)` / `yMinEnabled()` | show/hide Y minor grid |
+| `enableXMax(on)` / `xMaxEnabled()` | show/hide X **major** grid (the major-line counterpart to `enableXMin` above — easy to miss since only the minor pair is otherwise obvious) |
+| `enableYMax(on)` / `yMaxEnabled()` | show/hide Y **major** grid |
+| `enableZeroLineX()` / `xZeroLineEnabled()` | show/hide a distinct X=0 reference line |
+| `enableZeroLineY()` / `yZeroLineEnabled()` | show/hide a distinct Y=0 reference line |
+| `setXZeroLinePen(QPen)` / `xZeroLinePen()` | style of the X=0 line |
+| `setYZeroLinePen(QPen)` / `yZeroLinePen()` | style of the Y=0 line |
 
 ```python
 from PyQt6.QtGui import QColor, QPen
@@ -626,7 +856,7 @@ g.setAntialiasing(True)
 g.replot()
 ```
 
-Restyling those same error bars later (e.g. a follow-up request to change their color) — look the graph up, don't recreate it, and use `updateErrorBars()`, not another `addErrorBars()`:
+Restyling those same error bars later (e.g. changing their color) — look the graph up, don't recreate it, and use `updateErrorBars()`, not another `addErrorBars()`:
 
 ```python
 from PyQt6.QtGui import QColor
@@ -655,6 +885,8 @@ Many methods belong to `Graph` (a single layer) but are accidentally called on `
 | `replot()` | `layer.replot()` | ~~`gw.replot()`~~ |
 | `canvasGeometry()` | `layer.canvasGeometry()` | ~~`gw.canvasGeometry()`~~ |
 | `showAxis()` | does not exist — use `layer.enableAxis(ax, True)` | — |
+| `setXTitle()` / `setYTitle()` / `setAxisTitle()` | `layer.setXTitle(...)` etc. | ~~`gw.setXTitle(...)`~~ |
+| `setScale()` | `layer.setScale(...)` | ~~`gw.setScale(...)`~~ |
 
 ```python
 # WRONG — all raise AttributeError
@@ -662,6 +894,7 @@ gw.grid().setMajPenX(...)
 gw.showGrid()
 gw.replot()
 gw.canvasGeometry()
+gw.setXTitle("Q")
 
 # RIGHT
 layer = gw.activeLayer()   # or gw.layer(n)
@@ -669,6 +902,7 @@ layer.showGrid()
 layer.grid().setMajPenX(...)
 layer.replot()
 layer.canvasGeometry()
+layer.setXTitle("Q")
 ```
 
 ### `showAxis()` does not exist
@@ -701,7 +935,7 @@ Only use `activateWindow(gw)` **before** `maximizeWindow(gw)` when other windows
 
 ### `maximizeWindow` must come before `arrangeLayers` and `canvasGeometry`
 
-Getting layer references with `gw.layer(n)` is a pure getter — it is safe before or after `maximizeWindow`. What matters is that `maximizeWindow` is called **before `arrangeLayers` and `canvasGeometry()`**.
+Getting layer references with `gw.layer(n)` is a pure getter, safe before or after `maximizeWindow`. What matters: `maximizeWindow` must be called **before `arrangeLayers` and `canvasGeometry()`**.
 
 ```python
 # WRONG — maximizeWindow after arrangeLayers/canvasGeometry; geometry is measured before resize
@@ -737,95 +971,20 @@ from PyQt6.QtCore import Qt
 gw = newGraph(...)
 ```
 
-### Stacked panels — mandatory rules
+### Stacked panels — additional rules not covered by the recipe or call-outs above
 
-**Rule 1: `maximizeWindow` immediately after `newGraph`, before all other setup.**
-`maximizeWindow` is asynchronous. Calling `canvasGeometry()` before the window has resized returns wrong sizes.
-- For a freshly created graph: `maximizeWindow(gw)` right after `newGraph` — no `activateWindow` needed, ever.
-- If other widgets were created between `newGraph` and `maximizeWindow`: call `activateWindow(gw)` first, then `maximizeWindow(gw)`.
-- **Never call `activateWindow(gw)` after `maximizeWindow(gw)` — it undoes the maximize.**
+The 7-step recipe above plus the two `maximizeWindow`/`activateWindow` call-outs already cover
+ordering, `int`-vs-`float` for `setCanvasGeometry`, `removeTitle()`, `linkXLayerAxes(True)`, and why
+`l1.setXTitle(...)` never renders. Two things they don't cover:
 
-**Rule 2: read heights from BOTH layers.**
-After `arrangeLayers`, each layer is only ~50% of the total canvas height.
-`cr1.height() * 0.75` gives 75% of half the window — wrong.
+**Do not call `setTitle()` on a layer after `removeTitle()`** — `removeTitle()` removes the title
+widget, `setTitle("text")` re-adds it; they cancel each other. For the residuals layer (l2): call
+**only** `removeTitle()`, never `setTitle()` afterward.
 
-```python
-# WRONG — cr1.height() is only ~50% of total
-cr = l1.canvasGeometry()
-l1_h = int(cr.height() * 0.75)   # only 37.5% of full height
+**`newGraph` rows/cols for vertical stacking must be `(2, 2, 1)`** — `(2, 1, 1)` (1 row × 1 col)
+cannot accommodate 2 layers vertically.
 
-# RIGHT — sum both
-cr1 = l1.canvasGeometry()
-cr2 = l2.canvasGeometry()
-total_h = cr1.height() + cr2.height()
-l1_h = int(total_h * 0.75)
-l2_h = total_h - l1_h
-```
-
-**Rule 3: `setCanvasGeometry` requires `int`, not `float`.**
-
-```python
-# WRONG — TypeError: argument has unexpected type 'float'
-l1.setCanvasGeometry(cr.x(), cr.y(), cr.width(), cr.height() * 0.75)
-# RIGHT
-l1.setCanvasGeometry(cr.x(), cr.y(), cr.width(), int(cr.height() * 0.75))
-```
-
-**Rule 4: always use `l2.removeTitle()` on the residuals layer.**
-Title visibility depends on QtiSAS Preferences (`qti.app.graphTitleOn()`). If the preference is on, the default title appears even without calling `setTitle()`. Always call `removeTitle()` explicitly.
-`setTitle("")` does NOT remove the title bar — only `removeTitle()` does.
-
-**Rule 5: `linkXLayerAxes(True)` is mandatory for fit+residuals templates.**
-Without it, zooming the fit panel does not update the residuals X-axis.
-
-**Rule 6: no `setXTitle` on l1 — its bottom axis is disabled.**
-`l1.enableAxis(Graph.Axis.Bottom, False)` hides the axis AND its title.
-`l1.setXTitle("anything")` and `l1.setXTitle("")` are both invisible — **do not write either call**.
-
-```python
-# WRONG — l1's bottom axis is hidden; setXTitle on l1 is never rendered
-l1.setXTitle("Q (1/nm)")   # invisible
-l1.setXTitle("")            # also invisible and pointless
-
-# RIGHT — omit setXTitle on l1 completely; only set it on l2
-l2.setXTitle("Q (1/nm)")
-```
-
-**Rule 7: do not call `setTitle()` on a layer after `removeTitle()`.**
-`removeTitle()` removes the title widget. `setTitle("text")` re-adds it — they cancel each other.
-For the residuals layer (l2): call **only** `removeTitle()`. Never follow it with `setTitle()`.
-
-```python
-# WRONG — removeTitle() then setTitle() puts the title back; l2 ends up with "Residuals" visible
-l2.removeTitle()
-l1.setTitle("Fit")
-l2.setTitle("Residuals")   # ← re-adds the title just removed
-
-# RIGHT — removeTitle() only; no setTitle() on l2 at all
-l2.removeTitle()
-l1.setTitle("Fit")         # l1 title is fine; only l2 title is suppressed
-```
-
-**Rule 8: `newGraph` rows/cols for vertical stacking must be `(2, 2, 1)`.**
-
-```python
-# WRONG — 1 row × 1 col cannot accommodate 2 layers vertically
-gw = newGraph("Fit", 2, 1, 1)
-
-# RIGHT — 2 rows, 1 col for a vertically stacked layout
-gw = newGraph("Fit", 2, 2, 1)
-```
-
-**Rule 9: call `replot()` on every layer, not just l1.**
-
-```python
-# WRONG — l2 display not updated
-l1.replot()
-
-# RIGHT — replot both layers
-l1.replot()
-l2.replot()
-```
+**Call `replot()` on every layer, not just `l1`** — `l2`'s display is not otherwise updated.
 
 ### `setAxisLabelsColor` and `setAxisTitleColor` require an explicit axis
 
@@ -913,9 +1072,8 @@ nothing, so apply the same EXPLORE-before-plotting check as above.
 
 ### `addErrorBars` — second argument is a Table object
 
-The first argument is the **curve title** — formed as `"TableName_ColumnName"` when the curve
-was added via `addCurve` or `plot()`. For example, a curve from column `"I"` of table `"Exp"`
-has title `"Exp_I"`.
+The first argument is the **curve title** — `"TableName_ColumnName"` when added via `addCurve` or
+`plot()` (e.g. column `"I"` of table `"Exp"` → title `"Exp_I"`).
 
 `addErrorBars` requires `QColor` — import it **at the top of the script**, not at point of use.
 
@@ -933,7 +1091,7 @@ l.addErrorBars("Exp_I", t, "dI", 1, 1, 8, QColor("gray"), False, True, True)
 
 ### Do not override appearance defaults — let Preferences apply
 
-Every new layer has user Preferences auto-applied at creation (fonts, colors, tick style, backbone, grid). The following calls **override those defaults** and must be omitted from a neutral template:
+Every new layer auto-applies user Preferences at creation (fonts, colors, tick style, backbone, grid). The calls below **override those defaults** and must be omitted from a neutral template:
 
 ```python
 # ALL WRONG — each overrides a user preference

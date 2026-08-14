@@ -44,6 +44,10 @@ Wherever a column argument is accepted it can be:
 
 Row arguments are always 1-based integers.
 
+**Exception: ''colName(col)'' only accepts ''int''** — it's declared with a plain ''int'' parameter
+in the binding, not the string-accepting pattern every other column-arg method uses.
+''t.colName("y")'' raises a ''TypeError'' (int required).
+
 ----
 
 =====Getting a Table=====
@@ -51,7 +55,7 @@ Row arguments are always 1-based integers.
 ^ Call ^ Returns ^ Notes ^
 | ''table("name")'' | ''Table'' or ''None'' | look up existing table by object name; returns ''None'' if no table with that name exists |
 | ''newTable()'' | ''Table'' | blank table (30 rows, 2 cols) |
-| ''newTable("name", rows, cols)'' | ''Table'' | blank table with given size |
+| ''newTable("name", rows, cols)'' | ''Table'' | blank table with given size — if a table named ''"name"'' ALREADY exists, this does NOT create a second table: it resizes AND clears the existing one in place, silently destroying its data (no exception, no dialog) |
 | ''currentTable()'' | ''Table'' | currently active table |
 
 **Warning:** ''table("name")'' returns ''None'' (confirmed), not an error and not a placeholder object, when no table with that name exists. Always check ''if t is None:'' before using the result — ''t.cell(...)'' on ''None'' raises ''AttributeError''.
@@ -76,10 +80,33 @@ Row arguments are always 1-based integers.
 **Warning:** avoid ''_'' in column labels. QtiSAS uses ''_'' as the separator between table name and column name (e.g. ''"MyTable_I"''), so a label like ''"I_true"'' will be misidentified when looked up by name.
 
 ^ Method ^ Returns ^ Notes ^
-| ''colName(col)'' | ''str'' | short label only, e.g. ''"I"'' |
-| ''colNames()'' | ''tuple'' | full names, e.g. ''("MyTable_x", "MyTable_I")'' |
-| ''setColName(col, label)'' | ''bool'' | rename one column — raises ''ValueError'' if ''label'' is empty or already used by another column in this table |
+| ''colName(col)'' | ''str'' | short label only, e.g. ''"y"'' — ''col'' must be an **int** here; unlike most other column-arg methods, a string label is NOT accepted |
+| ''colNames()'' | ''tuple'' | short labels only, e.g. ''("x", "y", "dy")'' — **NEVER table-name-prefixed** |
+| ''setColName(col, label, updateTableDesignations=False)'' | ''bool'' | rename one column — raises ''ValueError'' if ''label'' is empty or already used by another column in this table |
 | ''setColNames(["x","y",...])'' | — | set all column labels at once |
+
+**''colNames()''/''colName(col)'' as exposed to Python both return the BARE label — never the
+''"tablename_colname"'' form used elsewhere by Fittable's dataset-naming convention
+(''configure()'', ''f.datasets()'', ''setWeightingDataset()'', ...).** Confirmed against source: the
+SIP bindings for both call ''Table::colLabel()'', not the differently-named ''Table::colName(int)''
+C++ method that DOES prefix with the table's object name — that prefixed method is never invoked
+from Python at all. Checking for the fully-qualified dataset-name string inside ''colNames()'''s
+result will never match, even when the column genuinely exists exactly as expected.
+
+<code python>
+# WRONG — colNames() never contains the "table_col" form, this check ALWAYS reports "missing"
+if "GaussPeak_y" not in t.colNames():
+    scriptPrint("missing")   # prints even though column "y" genuinely exists
+
+# RIGHT — check the bare label; only build the "table_col" string when calling Fittable
+if "y" not in t.colNames():
+    scriptPrint("missing")
+f.configure(model, [t.objectName() + "_y"])   # the "table_col" form belongs here, not in colNames()
+</code>
+
+Confirmed live: exactly this wrong check (''"GaussPeak_y" not in t.colNames()'') silently blocked
+an entire model-comparison step AND the final plotting step — both printed "missing required y
+or dy columns" and skipped all their real work, while split-mode reported both parts "done."
 
 ----
 
@@ -91,8 +118,8 @@ Row arguments are always 1-based integers.
 | ''text(col, row)'' | ''str'' | raw cell text |
 | ''cell(col, row)'' | ''float'' | numeric value; raises ''ValueError'' if empty |
 | ''cellData(col, row)'' | ''str'' or ''float'' | type-aware: float for numeric cols, str for text |
-| ''rowData(row)'' | ''tuple'' | all cells of a row |
-| ''colData(col)'' | ''list'' | all cells of a column |
+| ''rowData(row)'' | ''tuple'' | all cells of a row — an empty numeric cell becomes ''None'', NOT ''0'' |
+| ''colData(col)'' | ''list'' | all cells of a column — an empty numeric cell becomes ''None'', NOT ''0'' |
 | ''t[n]'' | ''tuple'' | row at **0-based** index ''n''; equivalent to ''rowData(n+1)''; supports negative indices (''t[-1]'' = last row) |
 | ''t[start:stop]'' | ''list'' | standard Python slice (0-based) as list of tuples |
 
@@ -110,6 +137,20 @@ last_q = t.cell(1, t.numRows())
 last_row_tuple = t[-1]          # bracket access DOES support -1
 </code>
 
+**''t.text(col, row)'' used to raise ''TypeError: decoding str is not supported'' for EVERY
+non-empty cell, on any table** — a Python-3-porting bug (an already-decoded ''str'' was passed
+through a second, redundant decode step, which CPython explicitly rejects). Fixed at the source
+(''qtimod.sip'') as of this build; ''text()'' now works as documented above. If you see this exact
+''TypeError'' on a build predating the fix, use ''cellData(col, row)'' instead — it reads the same
+text via a different, already-correct code path and was never affected.
+
+**''t.cell(col, row)'' silently returns ''0.0'' when the cell's text can't be parsed as a number —
+it never raises for this case (only for a genuinely EMPTY cell, see above), and there's no way to
+distinguish "the value really is 0.0" from "parsing failed."** Confirmed live: reading a text
+label cell by mistake produced ''0.0'' with no error, indistinguishable from a real result. Never
+use ''cell()'' on a column you haven't confirmed is numeric — use ''text()''/''cellData()'' and parse
+the string yourself instead, so a parsing failure is visible in what you tried to convert.
+
 ----
 
 =====Writing Cells=====
@@ -120,10 +161,10 @@ last_row_tuple = t[-1]          # bracket access DOES support -1
 | ''setText(col, row, value)'' | write string to cell |
 | ''setCell(col, row, value)'' | write float to cell |
 | ''setCellData(col, row, value)'' | type-aware write (str or float) |
-| ''setRowData(row, tuple)'' | overwrite entire row from a tuple |
-| ''t[row] = tuple'' | same as ''setRowData'' |
+| ''setRowData(row, tuple)'' | overwrite entire row from a tuple — ''row'' is **1-based** |
+| ''t[row] = tuple'' | **0-based, negative-index-capable** (''t[0]'' writes row 1, ''t[-1]'' writes the last row) — internally converts to ''setRowData(row+1, tuple)''; NOT the same convention as ''setRowData'''s own 1-based ''row'' right above it |
 | ''appendRowData(tuple)'' | add a new row at the end; returns new row index |
-| ''setColData(col, iterable, startRow=0)'' | fill column from any iterable; ''startRow'' is 0-based offset |
+| ''setColData(col, data, offset=0)'' | fill column from any iterable; ''offset'' (not ''startRow'') is the real keyword name, 0-based |
 
 ----
 
@@ -178,8 +219,8 @@ Access via ''Table.PlotDesignation.<name>'' — plain integers are **not** accep
 | ''Table.PlotDesignation.Label'' | 6 | label column |
 
 <code python>
-t.setColumnRole("I",  Table.PlotDesignation.Y)
-t.setColumnRole("dI", Table.PlotDesignation.yErr)
+t.setColumnRole("y",  Table.PlotDesignation.Y)
+t.setColumnRole("dy", Table.PlotDesignation.yErr)
 </code>
 
 ----
@@ -197,13 +238,13 @@ t.setColumnRole("dI", Table.PlotDesignation.yErr)
 
 ^ Method ^ Notes ^
 | ''setColTextFormat(col)'' | mark column as text |
-| ''setColNumericFormat(col, fmt, prec)'' | ''fmt'': ''Table.NumericFormat.*''; ''prec'' = significant digits |
-| ''setColDateFormat(col, fmtStr)'' | e.g. ''"yyyy-MM-dd"'' |
-| ''setColTimeFormat(col, fmtStr)'' | e.g. ''"hh:mm:ss"'' |
-| ''setColMonthFormat(col, fmtStr)'' | e.g. ''"MMM"'' (Jan), ''"MMMM"'' (January), ''"MM"'' (01); column must contain integers 1–12 |
-| ''setColDayFormat(col, fmtStr)'' | e.g. ''"ddd"'' (Mon), ''"dddd"'' (Monday); column must contain integers 1–7 (1=Mon) |
+| ''setColNumericFormat(col, format, prec, updateCells=True)'' | ''format'' (not ''fmt''): ''Table.NumericFormat.*''; ''prec'' = significant digits |
+| ''setColDateFormat(col, fmtStr, updateCells=True)'' | e.g. ''"yyyy-MM-dd"'' |
+| ''setColTimeFormat(col, fmtStr, updateCells=True)'' | e.g. ''"hh:mm:ss"'' |
+| ''setColMonthFormat(col, fmtStr, updateCells=True)'' | e.g. ''"MMM"'' (Jan), ''"MMMM"'' (January), ''"MM"'' (01); column must contain integers 1–12 |
+| ''setColDayFormat(col, fmtStr, updateCells=True)'' | e.g. ''"ddd"'' (Mon), ''"dddd"'' (Monday); column must contain integers 1–7 (1=Mon) |
 | ''setColumnWidth(col, px)'' | set column width in pixels |
-| ''hideColumn(col, hide=True)'' | hide or show column |
+| ''hideColumn(col, on=True)'' | hide or show column — the real keyword is ''on'', NOT ''hide''; ''hideColumn(1, hide=True)'' raises ''TypeError'' |
 | ''showAllColumns()'' | un-hide all columns |
 | ''setDecimalSeparators(locale)'' | 0=system, 1=English (dot), 2=German (comma) |
 
@@ -222,7 +263,7 @@ t.setColumnRole("dI", Table.PlotDesignation.yErr)
 
 ^ Method ^ Notes ^
 | ''setCommand(col, expr)'' | assign a formula expression to a column |
-| ''recalculate(col, startRow=1, endRow=-1)'' | evaluate formula; returns ''True'' on success — raises ''ValueError'' if the column is read-only or the formula fails to evaluate |
+| ''recalculate(col, startRow=1, endRow=-1, forceMuParser=False, notifyChanges=True)'' | evaluate formula; returns ''True'' on success — raises ''ValueError'' if the column is read-only or the formula fails to evaluate |
 
 ----
 
@@ -238,8 +279,8 @@ t.setColumnRole("dI", Table.PlotDesignation.yErr)
 
 ^ Method ^ Notes ^
 | ''setReadOnlyColumn(col, readOnly=True)'' | prevent editing of column |
-| ''isRowSelected(row)'' → ''bool'' | — |
-| ''isColSelected(col)'' → ''bool'' | — |
+| ''isRowSelected(row, full=False)'' → ''bool'' | — |
+| ''isColSelected(col, full=False)'' → ''bool'' | — |
 | ''firstSelectedColumn()'' → ''int'' | — |
 | ''numSelectedRows()'' → ''int'' | — |
 | ''setSelectedCol(col)'' | move selection to column |
@@ -264,10 +305,19 @@ t.importASCII(
     False,                # 7  importComments
     "#",                  # 8  commentString
     False,                # 9  readOnly
-    2,                    # 10 mode: 0=NewColumns, 1=NewRows, 2=Overwrite
+    Table.ImportMode.Overwrite,  # 10 mode — see enum below
     # args 11-15 (locale, startRow, endRow, colFilter, colDestinations) use defaults
 )
 </code>
+
+**''mode'' is an actual enum (''Table.ImportMode''), not a plain int** — same strict SIP enum
+parsing as ''Table.PlotDesignation'' above. Passing a raw literal (''t.importASCII(..., 2)'')
+raises ''TypeError'' at runtime; use ''Table.ImportMode.Overwrite'' (etc.) as shown.
+
+^ Constant ^ Value ^ Meaning ^
+| ''Table.ImportMode.NewColumns'' | 0 | append imported data as new columns |
+| ''Table.ImportMode.NewRows'' | 1 | append imported data as new rows |
+| ''Table.ImportMode.Overwrite'' | 2 | replace existing contents |
 
 ----
 
@@ -326,7 +376,8 @@ t.setColData(3, dI)
 
 <code python>
 t  = table("MyData")
-x  = t.colData("x")     # list of floats (empty cells become 0)
+x  = t.colData("x")     # list of floats (empty cells become None, NOT 0 — differs from cell(),
+                         # which raises ValueError on an empty numeric cell instead)
 y  = t.colData("y")
 n  = t.numRows()
 
@@ -420,11 +471,11 @@ t.importASCII(
 )
 
 # set column names, then assign roles
-t.setColNames(["Q", "I", "dI", "sigma"])
-t.setColumnRole("Q",     Table.PlotDesignation.X)
-t.setColumnRole("I",     Table.PlotDesignation.Y)
-t.setColumnRole("dI",    Table.PlotDesignation.yErr)
-t.setColumnRole("sigma", Table.PlotDesignation.xErr)
+t.setColNames(["x", "y", "dy", "dx"])
+t.setColumnRole("x",  Table.PlotDesignation.X)
+t.setColumnRole("y",  Table.PlotDesignation.Y)
+t.setColumnRole("dy", Table.PlotDesignation.yErr)
+t.setColumnRole("dx", Table.PlotDesignation.xErr)
 t.notifyChanges()
 </code>
 

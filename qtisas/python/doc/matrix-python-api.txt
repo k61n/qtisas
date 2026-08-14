@@ -68,6 +68,10 @@ m.setCell(1, 1, 3.14)
 print(m.cell(1, 1))
 </code>
 
+**Out-of-range raises ''ValueError''**: ''text()''/''cell()''/''setText()''/''setCell()'' raise
+''ValueError: There's no row/column N in matrix X!'' for a row or col outside the current
+dimensions — same mechanism as ''Table'''s equivalent methods.
+
 ----
 
 =====Coordinates=====
@@ -124,8 +128,13 @@ m.calculate()
 
 ^ Method ^ Notes ^
 | ''setFormula(expr)'' | store formula string |
-| ''calculate(startRow=0, endRow=-1, startCol=0, endCol=-1, forceMuParser=False)'' | evaluate; range indices 0-based |
+| ''calculate(startRow=0, endRow=-1, startCol=0, endCol=-1, forceMuParser=False)'' → ''bool'' | evaluate; range indices 0-based |
 | ''setNumericPrecision(prec)'' | significant digits for display |
+
+**''calculate()'' has NO error handling** — unlike ''Table.recalculate()'', which raises
+''ValueError'' on a bad formula, ''calculate()'' has no validation at all: an empty or malformed
+formula just makes it silently return ''False'' (or leave data unchanged), with no exception and no
+message. Always check the return value if the formula came from anywhere less than certain.
 
 ----
 
@@ -177,6 +186,8 @@ Access via ''Matrix.HeaderViewType.<name>'':
 | ''colorMap()'' | → ''LinearColorMap'' — current colormap object |
 | ''setColorMap(lc)'' | apply a ''LinearColorMap'' |
 | ''resetView()'' | refresh the display |
+| ''image()'' | → ''QImage'' — current matrix data rendered as an image |
+| ''importImage(fileName)'' | load an image FILE directly as matrix data |
 
 <code python>
 m = matrix("Intensity")

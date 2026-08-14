@@ -69,6 +69,16 @@
 #       y = exp(-x) + random.gauss(0, 0.02)   # exp() is global; random needs import
 #       t.setCell(1, i, x)
 #       t.setCell(2, i, y)
+#
+# NOISE MODEL: sqrt(abs(y)) is a shot-noise (raw photon COUNT) model — do NOT reuse it as a
+#   generic "add noise" recipe for a value already in its own calibrated physical units (intensity
+#   cm^-1, etc.). For small y (e.g. ~0.001), sqrt(abs(y)) is LARGER than y itself -> noise swamps
+#   the signal -> many samples go negative -> clamping to a floor (e.g. 1e-20) with a proportional
+#   (now tiny) error bar creates fake near-infinite-weight outliers that corrupt a weighted fit.
+#   Confirmed live: I~0.001, noise=sqrt(abs(I))*0.10 (std~3x the signal) -> 31% of 150 points
+#   negative/floor-clamped -> meaningless fit (chi2/dof~64, R2=0).
+#   WRONG: noise = sqrt(abs(I)) * 0.10; I_obs = I + random.gauss(0, noise)
+#   RIGHT: I_obs = I + random.gauss(0, 0.10 * I)   # proportional to I's own magnitude
 
 # USER RULES — a small, manually-curated list sent to the AI on every request, for corrections
 # specific to the user's setup that the built-in docs don't cover.
@@ -111,6 +121,11 @@
 # else you generate.
 
 # AGENTIC EXPLORE MODE
+# Everything below (EXPLORE round-trips, the mandatory self-review pass, the automatic error-retry
+#   loop) only fires in AUTO-RUN mode (Ctrl+Shift+Enter / Ctrl+Shift+Click) — in plain "generate
+#   only" mode (bare Enter/Click) a "# EXPLORE" first line is never intercepted, the code is just
+#   shown once as the answer with no execution, no self-review, no error-retry. Don't assume any of
+#   this is active if you don't know which mode produced the current request.
 # If you need to read current state before acting (e.g. read existing code/info/params),
 # return ONLY a read-only script with "# EXPLORE" as the VERY FIRST LINE.
 # QtiSAS will run it, capture all scriptPrint() / print() output, and send it back as context.
@@ -147,12 +162,17 @@
 #   RIGHT: f.setParamValue("radius", 50.0); f.fit(); f.plotResults("FitResult", "")
 #          # let it raise — QtiSAS captures it and asks you for a corrected script
 #
-# EXPLORE IS NOT LIMITED TO ONE ROUND — each round's output is added to the conversation. If
-# output from one EXPLORE raises a new question, return ANOTHER # EXPLORE script rather than
-# guessing you must write the action script now (capped at the same configurable limit, default 4,
-# shared with the error-retry mechanism above). Any script whose job is still "find out X" needs
-# the marker, no matter which round — omitting it (even on a read-only script) makes it the
-# FINAL script and the task ends right there.
+# QtiSAS ONLY RE-INVOKES YOU WHEN THE SCRIPT'S FIRST LINE IS EXACTLY "# EXPLORE" — ANY OTHER
+#   SCRIPT IS TREATED AS FINAL. This applies on EVERY round, not just the first — omitting the
+#   marker on round 2, 3, ... silently ends the task the same way omitting it on round 1 would.
+#   EXPLORE is not limited to one round: if output from one EXPLORE raises a new question, return
+#   ANOTHER # EXPLORE script rather than guessing you must write the action script now (capped at
+#   the same configurable limit, default 4, shared with the error-retry mechanism above). The test
+#   is simply: does this script's job include "find out X"? If yes it needs the marker, no matter
+#   which round — even a purely read-only script is NOT treated as "one more explore step" without
+#   it. It runs once, output goes to the console, and the conversation ends there — if the task
+#   asked for an action (fit, plot, compile, ...) and this script only gathered info, that action
+#   NEVER HAPPENS: no error, no second chance, nothing signals the task is incomplete.
 #   WRONG (round 2): c=Compiler; c.open("Gauss"); scriptPrint(str(c.paramNames()))  ← no marker,
 #          becomes final, no fit ever attempted
 #   RIGHT (round 2): # EXPLORE
@@ -171,15 +191,17 @@
 #   WRONG: hits = f.fitFunctions("*lorentzian*"); f.configure(hits[0], [...])  ← re-searches
 #   RIGHT: f.configure("DoubleLorentzian", [...])  ← the literal name EXPLORE already confirmed
 #
-# OMITTING "# EXPLORE" ON A DISCOVERY-ONLY SCRIPT SILENTLY ENDS THE TASK — no follow-up round
-# happens. QtiSAS only re-invokes you when the script's FIRST LINE is exactly "# EXPLORE". A
-# script without that marker — even a purely read-only one — is treated as FINAL: it runs once,
-# output goes to the console, and the conversation ends there. If the task asked for an action
-# (fit, plot, compile, ...) and the script only gathered info, that action NEVER HAPPENS.
-#   WRONG: t = table("Table1"); scriptPrint(str(t.colNames()))   ← no marker, becomes final;
-#          task was "fit table Table1" but no fit is ever attempted, no error either
-#   RIGHT: # EXPLORE
-#          t = table("Table1"); scriptPrint(str(t.colNames()))   ← triggers follow-up round
+# WHEN REPORTING/COMPARING/DECIDING FROM A VALUE AN EARLIER ROUND/PART ALREADY PRINTED, use that
+# literal printed value — NEVER invent a plausible placeholder, even one labeled "(example)". The
+# real number is sitting right there in this conversation's own visible history; typing a
+# different one is fabrication, not a shortcut — worse than not knowing, since it produces a
+# validated-looking answer with fabricated evidence. Confirmed live: a part comparing two earlier
+# fits' chi2/dof (genuinely printed as 1.0561 and 216.6961) printed brand-new fabricated numbers
+# (1.24, 5.79, commented "# example, from prior fit") and decided from those instead.
+#   WRONG: scriptPrint("chi2/dof = 1.24 (example, from prior fit)")   ← invented, not the real value
+#   RIGHT: scriptPrint("chi2/dof = 1.0561 (from earlier fit)")        ← the value actually printed
+# If the real value genuinely isn't visible anymore, say so and re-derive it — never fill the gap
+# with an invented number.
 #
 # "STOP AND REPORT" MEANS CALL scriptPrint(...) WITH THE MESSAGE — never return plain English
 # text as the response. Every response must be valid, executable Python (the app already
@@ -212,13 +234,33 @@
 #   RIGHT: for name in f.fitFunctions("*gauss*"): c.open(name); scriptPrint(c.paramNames())
 # Reserve f.configure() for when the task actually means to set that function up to fit.
 #
-# ANY compile-and-fit task MUST start with EXPLORE to discover the exact function name
-# and its real parameters — guessing produces ValueError (name doesn't exist) or a fit
-# silently using wrong defaults.
+# ANY task that FITS USING AN EXISTING, ALREADY-COMPILED library function MUST start with
+# EXPLORE to discover the exact function name and its real parameters — guessing produces
+# ValueError (name doesn't exist) or a fit silently using wrong defaults.
 #   WRONG: f.configure("sasviewmodels/gaussian-peak-v2", ["Table1"]); f.fit()  ← guessed
 #          name, no EXPLORE step, → ValueError: not found
 #   RIGHT: # EXPLORE first: c.open(name); scriptPrint(str(c.paramNames()))
 #          # then, using the confirmed real name: f.configure(name, ["Table1"]); f.fit()
+#
+# THIS IS A DIFFERENT TASK FROM "compile/write/create a CUSTOM fit function" — do NOT
+# search fitFunctions()/functionNames() for a coincidentally-matching existing name and
+# reuse it when the task's own words ask you to author NEW code. Confirmed live: asked to
+# "compile a custom fit function" for a sphere form factor, EXPLORE's search for
+# "sphere"+"sans" found a leftover function from an EARLIER session/test run and reused it
+# instead of writing fresh code — then, having skipped the authoring step, the script still
+# tried to force a "compile" on the found-by-name function via c.compile("FoundName"), which
+# raised TypeError (compile() takes only an optional bool, never a name — it always operates
+# on whatever's currently open()/new()'d in the Compiler's live state, not a name you pass
+# in) and repeated identically on retry. If the task says compile/write/create/author a
+# custom function: c.new(); c.setFunctionName("ai/<shortName>"); c.setXName(...);
+# c.setYName(...); c.setParamCount(...); ...; c.setCode(...); ok = c.compile()  — no
+# fitFunctions() search, no c.open() of someone else's function, and NEVER pass a name to
+# compile(). ALWAYS name it "ai/<shortName>" (see compile-python-api RULE 12) — this is what
+# lets a LATER "use an existing model" search exclude your own past one-offs instead of
+# mistaking them for vetted library models, exactly the confusion that caused this bug.
+# If a pre-existing function ALREADY covers what's needed and the task doesn't ask for new
+# code, no compile() call is needed at all — a function found via fitFunctions() is already
+# compiled; just pass its name straight to f.configure().
 #
 # f.setParamValue(name, value) does an EXACT-STRING match against the configured function's
 # real parameter names and RAISES ValueError on a mismatch (same for setParamVaries) — the
@@ -244,17 +286,33 @@
 #          c.setFunctionName("sasviewmodels/ellipsoid-correct")
 #          c.setCode(fixed); c.compile()
 #
-# table("name")/matrix("name")/graph("name") return None (confirmed) when missing —
-# ALWAYS check "if t is None:" before using the result, even for a single-line read.
-# t.cell(...) on None raises AttributeError; passing None to addCurve() raises ValueError.
-# One line handles it gracefully: t=table("X"); scriptPrint("not found" if t is None
-# else str(t.cell(2,3))) — no separate EXPLORE round-trip needed for a single lookup.
+# table("name")/matrix("name")/graphWindow("name") return None (confirmed) when missing —
+# ALWAYS check "if t is None:" before using the result, even for a single-line read —
+# BUT ONLY when the task implies the data ALREADY EXISTS (a named table, "the data", "my
+# results"). t.cell(...) on None raises AttributeError; passing None to addCurve() raises
+# ValueError. One line handles it gracefully: t=table("X"); scriptPrint("not found" if t is
+# None else str(t.cell(2,3))) — no separate EXPLORE round-trip needed for a single lookup.
 # For tasks needing MORE than one value (structure/columns) before a follow-up action
-# script, run EXPLORE first (existTable()/existMatrix()/existGraph()) to gather that.
+# script, run EXPLORE first to gather that: existTable("X") for tables; NO existMatrix()/
+# existGraph() exist (confirmed live NameError) — use matrix("X") is not None /
+# graphWindow("X") is not None instead.
+#
+# THIS EXISTENCE CHECK DOES NOT APPLY WHEN THE TASK ASKS YOU TO CREATE THE DATA YOURSELF
+# (e.g. "create a table with sphere form factor data", "generate synthetic SANS data") —
+# that table doesn't exist yet BY DESIGN; gating newTable() behind an existence check on the
+# very name you're about to create is backwards, not a safety check. Confirmed live,
+# self-review-introduced: a working create+fit+plot script was "corrected" by inserting
+# "if not existTable('Sphere'): scriptPrint(...)" in front of the newTable('Sphere', ...)
+# call that was about to create it (the elif branch even referenced t.colNames() before t
+# was ever assigned) — the script silently printed "does not exist" and never did any of
+# the actual work. If the task's own words are create/generate/make me/synthesize a
+# dataset, go straight to newTable() — do not check whether it exists first.
 #
 # THE WHOLE SCRIPT RUNS AT TOP LEVEL, NOT INSIDE A FUNCTION — bare "return" there is a
-# SyntaxError (compile-time), NOT a catchable runtime error, so the auto-retry can't fix
-# it; the same broken script gets resent and fails identically. Use if/else nesting for
+# SyntaxError (compile-time), NOT a catchable runtime error. The auto-retry only fires on
+# exceptions raised DURING execution; a SyntaxError happens before execution starts, so there is
+# NO automatic retry at all — the script is shown once as "not runnable" and the exchange just
+# stops, unlike a genuine runtime error which DOES get resent. Use if/else nesting for
 # multi-line early exits, not "if cond: scriptPrint(...); return".
 #   WRONG: if not existTable("X"): scriptPrint("missing"); return
 #          t = table("X"); scriptPrint(str(t.colNames()))
@@ -271,10 +329,25 @@
 # GRAPH3D
 # One plot3D() = one surface = one window — NO multi-surface overlay
 # A second plot3D() call opens a new window; setMatrix(g2) fails if g2 is Graph3D, not Matrix
+# NAMING: use newPlot3D(name, ...) not plot3D(...)+setWindowName(g,name) — the two-step form
+#   raises ValueError: name already exists on any re-run with a taken name, AND plot3D(...)
+#   already created ANOTHER orphaned window before that error fired (creation always succeeds,
+#   only the rename fails). Confirmed live: this cascaded into graphWindow(name) (2D-only, always
+#   None for a Graph3D name -> AttributeError) and left 5 orphaned windows behind.
+#     WRONG: g3 = plot3D("sin(x)*cos(y)", -pi,pi,-pi,pi,-1,1,60,60); setWindowName(g3,"Surface3D")
+#     RIGHT: g3 = newPlot3D("Surface3D", "sin(x)*cos(y)", -pi,pi,-pi,pi,-1,1,60,60)
+#   If the name is already used by a NON-Graph3D window (names are unique across ALL window
+#   types), newPlot3D(name,...) raises ValueError: "...already exists but is not a Graph3D
+#   window" immediately, before creating anything.
 # FORMULA SYNTAX (muParser — NOT Python):
 #   Power: x^2  NOT x**2
-#   No ternary ?:  No if() — use sign(threshold-v) for piecewise switching (+1/-1)
-#   Functions: sin cos tan asin acos atan atan2 exp log log2 log10 sqrt abs sign floor ceil round
+#   Ternary ?: DOES work (verified in source) — prefer sign(threshold-v) for piecewise switching
+#   (+1/-1) anyway for chained/composite shapes, since it stays a smooth multiplier. No if() — it's
+#   registered with no actual 3-arg handler (broken, not by design) and silently never becomes callable.
+#   Functions (not exhaustive): sin cos tan asin acos atan sinh cosh tanh asinh acosh atanh exp log
+#   ln log2 log10 sqrt abs sign rint floor ceil pow min max sum avg mod
+#   NOTE: atan2 and round do NOT exist under those names (verified against the registration list) —
+#   use rint for round-to-nearest; there is no 2-argument arctangent registered at all.
 # SHARED SUB-EXPRESSION: build r(v) as Python string, interpolate into BOTH X and Y
 #   WRONG:  plot3D("sqrt(R^2-v^2)*cos(u)", "sqrt(R^2-v^2)*sin(u)", ...)   # duplicated
 #   RIGHT:  r = "sqrt(R^2-v^2)"; plot3D(f"({r})*cos(u)", f"({r})*sin(u)", ...)
@@ -283,6 +356,9 @@
 # setDataColors(c1,c2) vs rescaleColorMap(): mutually exclusive — rescaleColorMap() discards setDataColors()
 
 # PLOTTING
+# When the data's physical quantity/unit is known (SANS Q in 1/A, I(Q) in 1/cm, radius in nm, ...),
+#   set g.setXTitle()/setYTitle() with that unit — default axis labels just echo the bare column name
+#   ("Q","I") with no unit. Never errors, easy to forget every time (confirmed live, repeatedly).
 # plot() ALWAYS creates its own new graph window — do NOT call newGraph() before plot()
 # WRONG: newGraph() then plot() — plot() creates its own window, newGraph() is never needed before it
 # plot() takes bare column names: t=table("data"); g=plot(t,("x","y"),style=0)
@@ -296,6 +372,15 @@
 # addCurve(t,col,style): col is SINGLE Y column str — g.activeLayer().addCurve(t,"y",0)
 # addCurves(t,cols_tuple,style): tuple — g.activeLayer().addCurves(t,("y1","y2"),0)
 
+# FITTING — X-RANGE
+# When generating synthetic data or setting a fit range, the data MUST cover the function's full
+#   dynamic range — a feature (peak/knee/plateau) outside the data range makes all parameters
+#   highly correlated and errors blow up:
+#   Peaked (Gaussian/Lorentzian): x_min < x0-3*sigma AND x_max > x0+3*sigma
+#   Decay A*exp(-b*x)+c: x_max >= 3/b (need >=3 decay lengths to separate amp from background)
+#   Guinier I0*exp(-Rg^2*q^2/3)+bgd: q_min < 1.73/Rg — else signal ~= 0 everywhere, only bgd visible
+#   Power-law/plateau: cover the full transition from steep slope to flat region
+
 # WIDGET NAMES
 # Names are case-sensitive: table("Sample1") != table("sample1")
 # Use exact name from window title bar. Don't default to a capitalized placeholder like
@@ -307,8 +392,10 @@
 #   though newTable()/newGraph() also accept an existing name, that's not what they're for.
 #   newTable(name,rows,cols) on an existing table RESIZES+CLEARS it: fewer cols than it currently
 #   has silently drops the extra ones (and ALL data), even cols added in an earlier, separate turn
-#   (e.g. an error-bar column) — breaking any graph plotting it. newGraph() on an existing graph
-#   is gentler (no curve-clearing, just layer-grid resize if dims differ) but same principle.
+#   (e.g. an error-bar column) — breaking any graph plotting it. newGraph() is NOT the same risk:
+#   with its default layers=1, calling it on an existing name is a complete no-op — the graph comes
+#   back completely untouched, no clearing, no resize. Only a DIFFERENT row/col layer grid than the
+#   graph already has causes any change, and even then it's just the layer arrangement, never curves.
 #   WRONG: t = newTable("Sphere", 200, 2)  # table already has 3 cols (q,I,dI) -> dI silently lost
 #   RIGHT: t = table("Sphere"); t.setCell(2, i, newVal)  # modify in place, nothing else disturbed
 # ADDING a column is the same principle one level further — bumping cols in newTable() still
@@ -321,8 +408,13 @@
 # Table: col FIRST, row second — both 1-based: t.setCell(col,row,value)  t.cell(col,row)
 # Matrix: row FIRST, col second — both 1-based: m.setCell(row,col,value)  m.cell(row,col)
 # plot/addCurve: bare column names ("x","y") — NOT full tableName_col names
-# Fittable datasets: "tablename_colname" (table "data", col "I" → "data_I")
-# colNames() returns full names: t.colNames() → ("MyData_x","MyData_y")
+# Fittable datasets: "tablename_colname" (table "MyData", col "y" → "MyData_y")
+# IMPORTANT: colNames() returns BARE labels, same as plot()/addCurve() above — NEVER the
+#   table-prefixed form: t.colNames() → ("x","y"), NOT ("MyData_x","MyData_y"). Confirmed against
+#   source (SIP calls colLabel(), not the differently-named, table-prefixing C++ colName(int),
+#   never invoked from Python). Build "tablename_colname" yourself for Fittable — colNames() is
+#   never where it comes from. Confirmed live: "MyData_y" not in t.colNames() is ALWAYS true even
+#   when col "y" exists — silently blocked an entire comparison+plot stage, no error, "done" anyway.
 # NEVER put "_" inside the column label itself — split is on the LAST "_", so col "y_noisy" in
 #   table "data" builds "data_y_noisy" -> misparsed as table "data_y" (doesn't exist) + "noisy".
 #   Fit then silently fails with "A problem with Reading Data". Use "y"/"ynoisy", not "y_noisy".
@@ -330,11 +422,24 @@
 # FITTABLE
 # configure()/setFunction() select BY NAME — do NOT pass formula string
 #   WRONG: f.configure("a*x+b")   RIGHT: f.configure("Guinier",["data_I"])
+# EVERY configure()/setFunction() call RESETS all parameter adjustability to the COMPILED
+#   function's baked-in defaults — it never inherits vary flags from a prior fit session on the
+#   same function. Re-apply setParamVaries()/setParamVariesAll() after EVERY configure() call, not
+#   just the first. Confirmed live: switching functions then switching back produced a bad fit
+#   because the varies flags from before the switch were silently gone.
 # datasets= takes Y-column names NOT table names: ["data_I"] not ["data"]
 # setCurveColor(name_or_index): call AFTER configure(), BEFORE fit()/plotResults()
 # do NOT import PyQt5/PyQt6 — use f.setCurveColor("blue")
 # fit()/simulate()/plotResults()/beforeFit()/afterFit() require stage=="fit"
 # simulateCurve() requires stage=="simulate"
+# plotResults() returns a GraphWindow (MultiLayer), NOT a Graph (layer) — legend()/newLegend()/
+#   setLegend()/setXTitle()/setYTitle()/addCurve()/setCurveLineColor()/etc. all raise
+#   AttributeError if called directly on it; always: g = f.plotResults(...).activeLayer(); then
+#   call these on g. Confirmed live, FIVE AttributeErrors in one conversation from this exact
+#   mistake (gw.setXTitle, gw.legend, gw.setLegend x2, gw.newLegend) — see fittable-python-api.
+#   plotResults(graphName,...) DOES reuse a same-named existing window (no pileup from this
+#   alone) — a SEPARATE, redundant bare plot(t,...) call before fitting (which has no reuse)
+#   is what actually orphans one window per retry; skip it if plotResults() already shows the data.
 
 # META COMMANDS (type in AI input — answered instantly, no API call)
 # ai status     — model, URL, docs mode, history turns, max tokens
@@ -342,6 +447,7 @@
 # ai url        — base URL
 # history       — list Q&A turns from this session
 # clear history — reset conversation context (same as Settings → AI → Clear)
+# stop / ai stop / cancel / ai cancel — abort a request currently in flight
 
 # QT BINDINGS
 # macOS/Windows: PyQt6 only. Linux: PyQt5 or PyQt6 depending on Qt version.

@@ -1,9 +1,8 @@
 # QtiSAS Application Python API
 
-Global functions available in every QtiSAS Python script.  
-They are bound to the running `ApplicationWindow` instance and imported automatically.
+Global functions available in every QtiSAS Python script, bound to the running `ApplicationWindow` instance and imported automatically.
 
-> **Note:** SIP-wrapped methods accept positional arguments for all parameters. Optional (defaulted) parameters whose names appear in the binding also accept keyword syntax. Required (non-defaulted) parameters are positional-only.
+> **Note:** SIP-wrapped methods accept positional arguments for all parameters. Optional (defaulted) parameters also accept keyword syntax if their names appear in the binding; required (non-defaulted) parameters are positional-only.
 
 ---
 
@@ -68,7 +67,7 @@ plot3D(matrix("Z"), style=4)   # 1=wireframe, 2=hidden-line, 3=filled, 4=filled+
 | Raise `a` to the power `b` | `a ^ b` | `a ** b` |
 | Raise 2 to the 10th | `2 ^ 10` → `8` (XOR!) | `2 ** 10` → `1024` |
 
-`^` performs a **bitwise XOR** on integers. A standalone `a ^ b` expression also **discards the result** — the variable `a` is left unchanged.
+`^` performs a **bitwise XOR** on integers; a standalone `a ^ b` expression also **discards the result** — `a` is left unchanged.
 
 ```python
 a = 3
@@ -80,7 +79,7 @@ a ^ b          # result is 7 but immediately discarded — a is still 3
 p = a ** b     # p = 81  (3 to the power 4)
 ```
 
-> **muParser note:** in the muParser scripting environment (used in table formulas and the formula bar), `^` is the power operator as usual. The Python-vs-muParser difference only matters inside Python scripts and Notes running in Python mode.
+> **muParser note:** in muParser (table formulas, formula bar), `^` is the power operator as usual. The Python-vs-muParser difference only matters inside Python scripts and Notes running in Python mode.
 
 ---
 
@@ -95,6 +94,13 @@ p = a ** b     # p = 81  (3 to the power 4)
 | `tables()` | `list[Table]` | all tables in the project |
 | `tableNames()` | `list[str]` | object names of all tables (cheaper than `tables()`) |
 
+> **Cross-type name collisions rename silently.** The "reuse if it exists" logic in
+> `newTable`/`newMatrix`/`newGraph`/`newNote` only checks for a window of the SAME type. If `name`
+> belongs to a DIFFERENT-type window (e.g. a `Note` already named "X" when you call `newTable("X")`),
+> that logic never triggers — but the constructor still enforces a project-wide unique-name rule, so
+> it silently renames the new window (e.g. to "X2"): no exception, no dialog, no return-value
+> signal. Check `t.objectName()` afterward if the exact name matters.
+
 ---
 
 ## Matrices
@@ -103,7 +109,7 @@ p = a ** b     # p = 81  (3 to the power 4)
 |------|---------|-------|
 | `matrix("name")` | `Matrix` | look up existing matrix by object name |
 | `newMatrix()` | `Matrix` | blank matrix (32×32) |
-| `newMatrix("name", rows, cols)` | `Matrix` | if a matrix named `"name"` already exists, resize it; otherwise create new |
+| `newMatrix("name", rows, cols)` | `Matrix` | if a matrix named `"name"` already exists, resize it in place; otherwise create new — **shrinking truncates**: existing rows/cols beyond the new size are permanently lost, no warning |
 | `currentMatrix()` | `Matrix` | currently active matrix window |
 | `matrices()` | `list[Matrix]` | all matrices in the project |
 | `matrixNames()` | `list[str]` | object names of all matrices |
@@ -118,7 +124,7 @@ p = a ** b     # p = 81  (3 to the power 4)
 |------|---------|-------|
 | `graphWindow("name")` | `MultiLayer` | look up existing graph by object name |
 | `currentGraph()` | `MultiLayer` | currently active graph window |
-| `newGraph(name="Graph1", layers=1, rows=1, cols=1)` | `MultiLayer` | if a graph named `"name"` already exists, return it; otherwise create blank graph — **do not use with `plot()`**; `plot()` always creates its own window |
+| `newGraph(name="Graph1", layers=1, rows=1, cols=1, applyPreferences=True)` | `MultiLayer` | if a graph named `"name"` exists AND `layers<=1`, returns it untouched; if it exists AND `layers>1` with a differing row/col grid, it DOES rearrange the existing layer grid in place (never touching curve/plot data) — otherwise creates a blank graph. **Do not use with `plot()`** — `plot()` always creates its own window |
 | `graphs()` | `list[MultiLayer]` | all graph windows in the project |
 
 ---
@@ -132,21 +138,18 @@ p = a ** b     # p = 81  (3 to the power 4)
 
 `style` is a `Graph.CurveType` integer value: `0` = Line, `1` = Scatter, `2` = LineSymbols, `3` = VerticalBars, `10` = HorizontalBars.
 
-> **`plot()` always creates a new graph window** with an auto-generated name (`"Graph1"`, `"Graph2"`, …) and returns it.
-> Do **not** call `newGraph()` first — it is redundant and the window it creates will be left empty.
-> `g` is a `GraphWindow` (`MultiLayer`) — it has **no** `replot()` method.
-> Use `g.activeLayer().replot()` to force a redraw, or `g.activeLayer().addCurve(...)` to add more curves.
+> **`plot()` always creates a new graph window** with an auto-generated name (`"Graph1"`, `"Graph2"`, …) and returns it. Do **not** call `newGraph()` first — it's redundant and left empty.
+> `g` is a `GraphWindow` (`MultiLayer`) with **no** `replot()` method — use `g.activeLayer().replot()` to force a redraw, or `g.activeLayer().addCurve(...)` to add curves.
 
-> **When you need a specific graph name** — use `newGraph("name")` + `addCurve()` instead of `plot()`.
-> `plot()` cannot assign a custom name; rename after the fact with `setWindowName(g, "name")` or use `newGraph` from the start.
+> **For a specific graph name** — use `newGraph("name")` + `addCurve()` instead; `plot()` cannot assign a custom name (rename after with `setWindowName(g, "name")`).
 
 ```python
 # quick plot — auto-named "Graph1", "Graph2", ...
-g = plot(t, ("Q", "I"), style=Graph.CurveType.LineSymbols)
+g = plot(t, ("x", "y"), style=Graph.CurveType.LineSymbols)
 
 # named graph — use newGraph + addCurve (preferred for templates and scripts)
-g = newGraph("SANS_Template")
-g.activeLayer().addCurve(t, "I", Graph.CurveType.LineSymbols)
+g = newGraph("Template")
+g.activeLayer().addCurve(t, "y", Graph.CurveType.LineSymbols)
 ```
 
 ---
@@ -217,10 +220,21 @@ saveGraphAsProject(g, "/data/results", "figure1", False, "PNG", 300)  # .qti + .
 
 ## 3D Plots
 
+> **Prefer `newPlot3D(name, ...)` over `plot3D(...)` + `setWindowName(g, name)`** when the window
+> needs a specific name: `plot3D(...)` always makes a brand-new, nameless window, so a following
+> `setWindowName()` raises `ValueError: name already exists` if that name is taken — and by then
+> `plot3D` has already created ANOTHER orphaned window, since creation always succeeds and only the
+> rename fails. `newPlot3D(name, ...)` checks the existing window FIRST — updates it in place if
+> found, else creates it fresh (already named, atomically) — so it never leaks an orphan. If `name`
+> belongs to a NON-`Graph3D` window (names are unique across ALL window types), it raises
+> `ValueError: newPlot3D: name '<name>' already exists but is not a Graph3D window` immediately,
+> before creating anything. Full form: see graph3d-python-api.md's "Getting a Graph3D" section.
+
 ### Getting a 3D window
 
 | Call | Returns | Notes |
 |------|---------|-------|
+| `newPlot3D("name")` | `Graph3D` | create-or-update by name — see the recommendation above |
 | `plot3D("name")` | `Graph3D` | look up existing 3D graph by object name |
 | `newPlot3D(name="")` | `Graph3D` | blank 3D window (empty surface) |
 
@@ -230,6 +244,7 @@ saveGraphAsProject(g, "/data/results", "figure1", False, "PNG", 300)  # .qti + .
 
 | Call | Returns | Notes |
 |------|---------|-------|
+| `newPlot3D(name, table, "colName", style=0)` | `Graph3D` | recommended — see above |
 | `plot3D(table, "colName", style=0)` | `Graph3D` | XYZ scatter/ribbon from a Z column with X/Y from preceding columns; `style`: `0`=ribbons, `1`=bars, `2`=cones |
 
 ---
@@ -238,7 +253,8 @@ saveGraphAsProject(g, "/data/results", "figure1", False, "PNG", 300)  # .qti + .
 
 | Call | Returns | Notes |
 |------|---------|-------|
-| `plot3D(matrix, style=4)` | `Graph3D` | surface from a matrix; `style`: `1`=wireframe, `2`=hidden-line, `3`=filled (no edges), `4`=filled+mesh, `5`=dots, `6`=bars |
+| `newPlot3D(name, matrix, style=5)` | `Graph3D` | recommended — see above |
+| `plot3D(matrix, style=5)` | `Graph3D` | surface from a matrix; `style`: `1`=wireframe, `2`=hidden-line, `3`=filled (no edges), `4`=filled+mesh, `5`=dots, `6`=bars |
 
 ---
 
@@ -246,11 +262,12 @@ saveGraphAsProject(g, "/data/results", "figure1", False, "PNG", 300)  # .qti + .
 
 | Call | Returns | Notes |
 |------|---------|-------|
+| `newPlot3D(name, "z(x,y)", xl, xr, yl, yr, zl, zr, cols=40, rows=40)` | `Graph3D` | recommended — see above |
 | `plot3D("z(x,y)", xl, xr, yl, yr, zl, zr, cols=40, rows=40)` | `Graph3D` | analytic surface Z = f(x, y) |
 | `plot3D("fx", "fy", "fz", umin, umax, vmin, vmax, cols=40, rows=40, openU=True, openV=True)` | `Graph3D` | parametric surface (fx, fy, fz as functions of u, v) |
 
 ```python
-g = plot3D("sin(sqrt(x*x+y*y))", -6, 6, -6, 6, -1, 1)
+g = newPlot3D("SinCos3D", "sin(sqrt(x*x+y*y))", -6, 6, -6, 6, -1, 1)
 ```
 
 ---
@@ -275,15 +292,15 @@ n.currentEditor().execute()
 
 ## Folder Management
 
-Every QtiSAS project has a tree of folders. Windows live inside folders.
+Every QtiSAS project has a tree of folders; windows live inside folders.
 
 | Call | Returns | Notes |
 |------|---------|-------|
 | `activeFolder()` | `Folder` | the currently selected folder |
 | `rootFolder()` | `Folder` | the top-level project folder |
 | `addFolder("name", parent=None)` | `Folder` | create a new sub-folder; `parent=None` adds under `activeFolder()` |
-| `deleteFolder(folder)` | `bool` | remove folder and all its contents |
-| `changeFolder(folder, force=False)` | `bool` | switch active folder; `force=True` skips confirmation |
+| `deleteFolder(folder)` | `bool` | remove folder and all its contents — **shows a blocking confirmation dialog by default** (the "confirm close folder" preference defaults to on); can hang an unattended script with no way to dismiss it |
+| `changeFolder(folder, force=False)` | `bool` | switch active folder; there is no confirmation dialog involved — `force=True` re-runs the folder switch/refresh even if `folder` is already the active one (otherwise a no-op) |
 | `copyFolder(src, dest)` | `bool` | copy all windows from `src` into `dest` |
 | `saveFolder(folder, "path", compress=False)` | — | save one folder as a project file |
 | `appendProject("path", parent=None)` | `Folder` | load an external project file and attach it as a sub-folder |
@@ -303,10 +320,10 @@ saveFolder(results, "/data/results.qti")
 
 | Call | Returns | Notes |
 |------|---------|-------|
-| `newProject()` | — | close current project and start a blank one |
+| `newProject()` | — | close current project and start a blank one (prompts to save if unsaved, same as `closeProject()`) |
 | `closeProject()` | — | close the current project (prompts to save if unsaved) |
 | `saveProject(compress=False)` | `bool` | save to the current file path; returns `True` on success |
-| `saveProjectAs("path", compress=False)` | — | save to an explicit path; `compress=True` writes a `.qtz` archive |
+| `saveProjectAs("path", compress=False)` | — | save to an explicit path (forced to end in `.qti`); `compress=True` additionally gzips it to `<path>.qti.gz` — NOT `.qtz` |
 
 ---
 
@@ -332,7 +349,7 @@ saveFolder(results, "/data/results.qti")
 | `openTemplate("path")` | `MdiSubWindow` | open a saved window template file |
 | `saveAsTemplate(window, "path")` | — | save a single window as a reusable template |
 | `clone(window)` | `MdiSubWindow` | duplicate a window into the active folder |
-| `setWindowName(window, "name")` | `bool` | rename a window — raises `ValueError` if the name is empty, has invalid characters, or is already used by another window (see gotcha below) |
+| `setWindowName(window, "name")` | `bool` | rename a window — raises `ValueError` if the name is empty, invalid, or already used by another window (see gotcha below). **Allowed: letters, digits, underscore, hyphen** — confirmed in source (`ApplicationWindow::setWindowName()` strips `-` before checking; the check itself is `\W`, which excludes `_`). The runtime error text ("only letters and digits are allowed") is misleading: `_`/`-` are fine, e.g. `"SphereMap_3D"` is valid, not just `"SphereMap3D"`. Only spaces/punctuation beyond `_`/`-` are rejected. |
 | `autoArrangeLayers()` | — | tile all visible windows |
 | `setPreferences(graph)` | — | apply current global preferences to a `Graph` layer — takes a `Graph`, **not** a `GraphWindow`; preferences are auto-applied at layer creation so this is only needed to re-apply after manual overrides |
 | `graphTitleOn()` | `bool` | whether layer titles are shown by default (QtiSAS Preferences → 2D Plots) |
@@ -358,11 +375,14 @@ saveFolder(results, "/data/results.qti")
 | `graphTitleFont()` | `QFont` | default plot title font |
 | `graphLegendFont()` | `QFont` | default legend font |
 | `graphNumbersFont()` | `QFont` | default axis numbers font |
-
-> All `qti.app` methods are available as **global functions** — call without `qti.app.` prefix.
-
 | `windows()` | `list[MdiSubWindow]` | all open windows regardless of type |
 | `workspace()` | `QMdiArea` | the central MDI area widget |
+
+> **The `graph*` preference getters above are NOT global** — real `ApplicationWindow` methods,
+> deliberately excluded from the auto-imported global namespace. Bare `graphTitleOn()` raises
+> `NameError`; use `qti.app.graphTitleOn()` (see Common Mistakes below). Most OTHER `qti.app`
+> methods in this table — including `windows()`/`workspace()` above — ARE available as global
+> functions without the prefix.
 
 ```python
 # save, close, reopen
@@ -407,7 +427,7 @@ t = matrixToTable(m, ApplicationWindow.MatrixToTableConversion.XYZ)
 | `scriptPrint("text")` | — | append a line to the scripting console (use inside scripts and Notes) |
 | `scriptPrintReplace("text")` | — | replace the last console line (useful for progress updates in loops) |
 | `displayInfo("text")` | — | append a line to the status bar info log |
-| `resultsLog()` | `QTextEdit` | the Results Log text widget (append text with `.append()`) |
+| `resultsLog()` | `QTextEdit` | the Results Log text widget (append text with `.append()`) — an `ApplicationWindow` method; call as `resultsLog()` (global) or `qti.app.resultsLog()`. Not `c.resultsLog()` on a `Compiler` object — `Compiler` has no `resultsLog()`. |
 | `infoLineEdit()` | `QLineEdit` | the status bar line edit widget |
 
 ```python
@@ -422,14 +442,14 @@ displayInfo("Processing complete.")
 
 ## Colour Palette
 
-The indexed colour list is used by `setCurveLineColor(curveIndex, colorIndex)` and `setCurveSymbolColor(curveIndex, colorIndex|QColor)`. The list is user-configurable in preferences.
+The indexed colour list, user-configurable in preferences, is used by `setCurveLineColor(curveIndex, colorIndex)` and `setCurveSymbolColor(curveIndex, colorIndex|QColor)`.
 
 | Call | Returns | Notes |
 |------|---------|-------|
 | `colorNames()` | `list[str]` | ordered list of colour names (e.g. `["black", "red", ...]`) |
 | `colorIndex("name")` | `int` | index of that name; returns `-1` if not found |
 
-> `colorIndex()` returns a palette **index** (`int`). It is **not** a `QColor` and cannot be passed to `QPen`, `QBrush`, or any Qt class expecting a colour object. Use `QColor("red")` or `QColor(r, g, b)` when a `QColor` is required.
+> `colorIndex()` returns a palette **index** (`int`), **not** a `QColor` — it cannot be passed to `QPen`, `QBrush`, or any Qt class expecting a colour object. Use `QColor("red")` or `QColor(r, g, b)` when a `QColor` is required.
 
 ```python
 print(colorNames())          # ['black', 'red', 'green', 'blue', ...]
@@ -445,7 +465,7 @@ addErrorBars(..., colorIndex("gray"), ...)  # TypeError — color= expects QColo
 
 ## Symbol Palette
 
-The indexed symbol list is used by `setCurveSymbolStyle(curveIndex, style)`. User-configurable in preferences.
+The indexed symbol list, user-configurable in preferences, is used by `setCurveSymbolStyle(curveIndex, style)`.
 
 | Call | Returns | Notes |
 |------|---------|-------|
@@ -502,12 +522,11 @@ all_cols = columnsList()
 
 ## Custom Actions
 
-Custom actions are named Python scripts that appear in a QtiSAS menu and can be triggered from the GUI or a script.  
-Scripts are stored as `.py` files and registered with a `.qca` descriptor in `customActionsPath()`.
+Custom actions are named Python scripts that appear in a QtiSAS menu and can be triggered from the GUI or a script, stored as `.py` files and registered with a `.qca` descriptor in `customActionsPath()`.
 
 ### Workflow
 
-To create a custom action, always follow these three steps in order:
+Create a custom action in three steps, in order:
 
 1. **Write the Python script** — save it into `customActionsPath()/scripts/`:
    ```python
@@ -516,8 +535,7 @@ To create a custom action, always follow these three steps in order:
        f.write("# your QtiSAS Python code here\n")
    ```
 
-2. **Provide an icon** *(optional)* — copy or create an image file into `customActionsPath()/icons/`.  
-   Supported formats: PNG, SVG, etc.
+2. **Provide an icon** *(optional)* — copy or create an image file (PNG, SVG, etc.) into `customActionsPath()/icons/`.
 
 3. **Register the action** — call `addCustomAction` with the bare filenames (not full paths):
    ```python
@@ -528,8 +546,8 @@ To create a custom action, always follow these three steps in order:
                    tooltip="What this action does")
    ```
 
-> **Important:** `scriptName` and `iconName` are bare filenames only, not full paths.  
-> The function automatically prepends `customActionsPath()/scripts/` and `customActionsPath()/icons/`.
+> **Important:** `scriptName`/`iconName` are bare filenames only — the function prepends
+> `customActionsPath()/scripts/` and `customActionsPath()/icons/` automatically.
 
 ---
 
@@ -685,8 +703,7 @@ saveProjectAs("/data/result.qti")
 
 ### `import math` is NEVER correct in QtiSAS scripts
 
-`sin`, `cos`, `exp`, `log`, `sqrt`, `pi`, `e`, `floor`, `ceil`, `abs` are all global.
-Never prefix with `math.` and never write `import math`.
+`sin`, `cos`, `exp`, `log`, `sqrt`, `pi`, `e`, `floor`, `ceil`, `abs` are all global — never prefix with `math.` or write `import math`.
 
 ```python
 # WRONG
@@ -699,7 +716,7 @@ y = exp(-x * x)
 
 ### Graph preference getters — always use `qti.app.` prefix
 
-Graph preference getters require the `qti.app.` prefix. Bare names raise `NameError`.
+Bare names raise `NameError` — always use the `qti.app.` prefix.
 
 ```python
 # WRONG — NameError: name 'graphTitleOn' is not defined
@@ -711,7 +728,7 @@ titleOn = qti.app.graphTitleOn()
 
 ### EXPLORE graph defaults before creating a template
 
-Read current defaults first, then only override what differs:
+Read defaults first; override only what differs:
 
 ```python
 # EXPLORE — check graph defaults before creating a template
@@ -750,6 +767,31 @@ if name in existing:
     name = f"{name}_2"
 setWindowName(g, name)
 ```
+
+> The `_2` suffix is genuinely valid — underscores and hyphens are allowed, despite the runtime
+> error's "only letters and digits" wording (see the character-rule note above). Confirmed live: a
+> script avoided an underscore-suffixed name (`"SphereMap_3D"`), wrongly believing it too would be
+> rejected, and settled for a disconnected generic name (`"surface"`) — losing the traceable link
+> to its source object for no reason.
+
+### Graph3D: use `newPlot3D(name, ...)`, not `plot3D(...)` + `setWindowName()`
+
+```python
+# WRONG — re-running this (e.g. a later turn asking to redo/tweak the same plot) raises
+# ValueError: setWindowName: name 'Surface3D' already exists — AND plot3D(...) already created
+# a second, orphaned, auto-named window before that error was even raised
+g3 = plot3D("sin(x)*cos(y)", -pi, pi, -pi, pi, -1, 1, 60, 60)
+setWindowName(g3, "Surface3D")
+
+# RIGHT — updates the existing "Surface3D" window in place if one exists, creates it fresh
+# (already named) otherwise; never raises, never leaks an orphaned window
+g3 = newPlot3D("Surface3D", "sin(x)*cos(y)", -pi, pi, -pi, pi, -1, 1, 60, 60)
+```
+
+> Confirmed live: after this collision, a retry tried `graphWindow("Surface3D")` — but
+> `graphWindow()` is 2D-`GraphWindow`-ONLY, always returning `None` for a `Graph3D` name and raising
+> `AttributeError` on the next line. The correct lookup is `plot3D("name")`, never
+> `graphWindow("name")` — though `newPlot3D("name", ...)` above makes that lookup unnecessary.
 
 ### `colorIndex()` returns an `int`, not a `QColor`
 

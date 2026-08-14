@@ -76,8 +76,8 @@ c.compileAll()
 
 ### Download and compile the official fit-function library
 
-Clones the official QtiSAS fit-function repository into a temporary folder, then compiles every function into a shared library ready for use in the Fittable widget.
-Each step:
+Clones the official QtiSAS fit-function repository into a temporary folder, then compiles every
+function into a shared library. Each step:
 
 - `setPath(testPath)` — switches the library path to the temporary folder
 - `download()` — clones the repository (new files only, no dialog)
@@ -156,14 +156,22 @@ The `[x]` field names the independent variable(s) of the fit function.
 For 2D functions, multiple names are comma-separated (e.g. `"ix,iy"`).
 `setXName()` updates the first-line comment in the code editor.
 
-> **xName consistency:** whatever name you pass to `setXName()` is the C++ local declared inside
-> `functionSANS`. If you set `"q"`, the variable in `[code]` is `q` — do **not** write `double q = x;`
-> (`x` is not declared and gives `undeclared identifier 'x'`).
+> **xName consistency:** whatever name you pass to `setXName()` is a file-scope `thread_local static`
+> variable that the generated code only ASSIGNS inside `functionSANS` (not declares there — it's
+> declared at file scope, outside the function). If you set `"q"`, the variable in `[code]` is `q` —
+> do **not** write `double q = x;` (`x` is not declared and gives `undeclared identifier 'x'`).
 >
 > | `setXName` | What to write in `[code]` |
 > |---|---|
 > | `"x"` | `double q = x;`  (rename if you prefer `q`) |
 > | `"q"` | use `q` directly — no reassignment line needed |
+>
+> **Do not write `double q = <anything>;` (re-declaring `q` itself) either.** Because `xName`/
+> parameter names are file-scope globals only *assigned* inside `functionSANS`, redeclaring one
+> with `double` in front is legal C++ shadowing — it compiles with **no error at all** and silently
+> discards the real value passed in via `q = x;` (or the real parameter value), producing a
+> wrong-but-successful fit. This is more dangerous than the equivalent mistake with `yName` (see
+> below), which at least fails loudly with a `redefinition` compile error.
 
 ---
 
@@ -202,10 +210,9 @@ This is the only part written by hand; everything else in the generated `.cpp` i
 Inside this snippet the independent variable and all parameter names are available as plain C++ locals.
 The dependent variable **must be assigned** before the snippet ends.
 
-**This snippet is C++, not Python — there is no `**` exponentiation operator.** Confirmed live: `exp(-(x
-- center)**2 / (2 * sigma**2))` fails to compile with a cryptic `indirection requires pointer operand`
-error (`**2` parses as dereferencing a dereference, not "squared"). Use `pow(a, b)` or repeated
-multiplication instead:
+**This snippet is C++, not Python — there is no `**` exponentiation operator.** Confirmed live:
+`exp(-(x - center)**2 / (2 * sigma**2))` fails with a cryptic `indirection requires pointer operand`
+error (`**2` parses as double-dereference, not "squared"). Use `pow(a, b)` or repeated multiplication:
 ```cpp
 // WRONG — Python syntax; C++ has no ** operator
 y = scale * exp(-(x - center)**2 / (2 * sigma**2)) + background;
@@ -217,11 +224,9 @@ y = scale * exp(-(x - center) * (x - center) / (2.0 * sigma * sigma)) + backgrou
 ```
 
 **The reverse mistake also happens: C++'s `cond ? a : b` ternary leaking into surrounding PYTHON
-code.** This comes up specifically when a script both defines a `setCode()` C++ body *and*
-separately needs the same formula in Python (e.g. generating synthetic data with the same math the
-compiled function will fit). Python has no `?:` operator — writing it produces a plain
-`SyntaxError`, not a compile error, since it's caught by Python itself before the script ever runs.
-Confirmed live:
+code.** Happens when a script's `setCode()` C++ body and its Python code (e.g. synthetic-data
+generation) share the same formula. Python has no `?:` operator — writing it is a plain
+`SyntaxError`, caught before the script even runs. Confirmed live:
 ```python
 # WRONG — valid inside c.setCode("""...""") as C++, but this line is bare Python
 F = (qR > 1e-6) ? 3.0 * (sin(qR) - qR * cos(qR)) / (qR**3) : 1.0   # SyntaxError: invalid syntax
@@ -232,21 +237,39 @@ F = 3.0 * (sin(qR) - qR * cos(qR)) / (qR**3) if qR > 1e-6 else 1.0
 The C++ version inside `c.setCode("""...""")` is unaffected by this — `cond ? a : b` is correct
 there; it's only wrong in the Python code around it.
 
-**The dependent variable name is whatever `yName()` returns** — it is NOT always `I`.
-Always call `c.yName()` (or check `setYName()`) to find the correct name.
-If `setYName("y")` was called, write `y = ...;` in the code, not `I = ...;`.
+**The dependent variable name is whatever `yName()` returns** — it is NOT always `I`. Always call
+`c.yName()` (or check `setYName()`) to find the correct name. If `setYName("y")` was called, write
+`y = ...;`, not `I = ...;`. Confirmed live 3+ times: `setYName("I")` was called, but `[code]`
+assigned to `y` instead (a plausible-looking but wrong default) — only caught after a failed
+compile (`clang: error: use of undeclared identifier 'y'`), not before.
 
-**Parameter names are plain C++ locals — never use `P1`, `P2`, `P3`…**
-Every name from `paramNames()` is declared as a local variable automatically.
-Use the names directly:
+**Both `xName`/`yName` locals are ALREADY DECLARED by the boilerplate before `[code]` runs — never
+re-declare them with `double <name> = ...;`.** Confirmed live: `setYName("I")` + code starting
+`double I = 0.0; ... I = ...;` compiles with `error: redefinition of 'I'`, because `I` already
+exists as a local. Assign to it, never declare it:
+
+```cpp
+// WRONG — "I" is already declared; this re-declares it
+double I = 0.0;
+I = scale * pq + background;
+
+// RIGHT — assign directly, no "double" in front
+I = scale * pq + background;
+```
+
+**Parameter names are plain C++ globals available by name — never use `P1`, `P2`, `P3`…**
+Every name from `paramNames()` is declared as a file-scope `thread_local static` and only
+*assigned* inside `functionSANS`, not declared there (same mechanism as `xName`, above).
+Use the names directly — and, same warning as `xName`: never write `double <paramName> = ...;`
+inside `[code]`, since that silently shadows the real value with no compile error at all.
 
 **Never use a C++ reserved keyword as a parameter name** (`switch`, `class`, `new`, `delete`,
 `template`, `if`, `for`, `return`, `int`, `void`, `true`, `const`, …) — `setParamName()`/
 `setParamNamesAll()` reject these with a `ValueError` naming the bad word. Confirmed live before
-that check existed: naming a parameter `"switch"` failed to compile with the *wrong* parameter
-blamed (`undeclared identifier 'bg'`, a different, perfectly valid parameter declared later) —
-the bad declaration corrupts everything after it, so the error you see is not the error you have.
-`setParamNamesAll()` also requires the list length to exactly match `setParamCount()`.
+that check existed: naming a parameter `"switch"` blamed the *wrong* parameter for the failure
+(`undeclared identifier 'bg'`, a different, valid parameter declared later) — a bad declaration
+corrupts everything after it, so the error shown is not the error you have. `setParamNamesAll()`
+also requires the list length to exactly match `setParamCount()`.
 ```cpp
 // correct — parameters declared by name
 double V = M_PI * radius * radius * length;
@@ -337,13 +360,12 @@ in the generated `.cpp`. Use it for helper functions, constants, or lookup table
 multiple calls to the fit function.
 
 **Initial parameter values computed from the loaded data.** Fittable's "Before Fit" button (and
-`f.beforeFit()` from Python — see fittable-python-api.md) calls the compiled function once with
-the `beforeFit` lifecycle flag set, *before* the fit itself starts. Define a `beforeFitting(void
-*ParaM)` helper here that checks that flag and, when set, computes values from the loaded data
-through the `XXX`/`YYY` macros and assigns them straight into the parameter names — they're plain
-thread-local C++ variables, not read-only (see the `functionT` struct and accessor macros further
-below for the full mechanism). Call the helper from `code()`. Confirmed working, adapted from the
-shipped `linear-efit.fif` — a straight line through the fit range's first and last points:
+`f.beforeFit()` — see fittable-python-api.md) calls the compiled function once with `beforeFit` set,
+before the fit starts. Define a `beforeFitting(void *ParaM)` helper that checks the flag and, when
+set, computes values from the loaded data via the `XXX`/`YYY` macros and assigns them into the
+parameter names directly — plain thread-local C++ variables, not read-only (see the `functionT`
+struct/accessor macros below). Call it from `code()`. Confirmed working, adapted from the shipped
+`linear-efit.fif` — a straight line through the fit range's first and last points:
 ```python
 c.setIncludedFunctions("""
 void beforeFitting(void *ParaM)
@@ -359,23 +381,23 @@ y = A*x + B;
 beforeFitting(ParaM);
 """)
 ```
-`currentFirstPoint`/`currentLastPoint` index into `XXX`/`YYY` for whatever data range is currently
-selected for the fit, so this recomputes from the *actual* loaded data — not from
-`setParamInitsAll()`'s fixed numbers — and adapts automatically if the range or dataset changes.
-The same pattern extends to nonlinear guesses: `Allometric1a.fif`'s power law `y = a*x^b` derives
-`a`/`b` log-log from the same two endpoints inside the same `if (!beforeFit) return;` guard.
+`currentFirstPoint`/`currentLastPoint` index into `XXX`/`YYY` for the data range currently selected
+for the fit, so this recomputes from the *actual* loaded data — not from `setParamInitsAll()`'s
+fixed numbers — and adapts automatically if the range or dataset changes. Same pattern for
+nonlinear guesses: `Allometric1a.fif`'s power law `y = a*x^b` derives `a`/`b` log-log from the same
+two endpoints inside the same `if (!beforeFit) return;` guard.
 
 > **Dynamically freezing/activating parameters at runtime (e.g. "only fit as many peaks as the
 > data actually supports, fix the rest") — adapted from the shipped `manyPeaksEfit`/
-> `gaussian-x10-qtisas` functions.** There is no Python-side call for this (`setParamVaries()` is
-> a `Fittable` method — see fittable-python-api.md — it does not exist in compiled code, and
-> calling it from `code()`/`setIncludedFunctions()` fails with `use of undeclared identifier`).
-> The real mechanism has two independent parts:
-> - **Parameter VALUES** are plain named globals, exactly like `A`/`B` above — `readParameters()`
->   (auto-generated) populates them from `Para` BEFORE your `code()` runs, and `saveParameters()`
+> `gaussian-x10-qtisas` functions.** No Python-side call exists for this: `setParamVaries()` is a
+> `Fittable` method (see fittable-python-api.md), not present in compiled code — calling it from
+> `code()`/`setIncludedFunctions()` fails with `use of undeclared identifier`. The real mechanism
+> has two independent parts:
+> - **Parameter VALUES** are plain named globals, like `A`/`B` above — `readParameters()`
+>   (auto-generated) populates them from `Para` BEFORE `code()` runs, and `saveParameters()`
 >   (also auto-generated) writes them back AFTER — do not poke the raw `Para` GSL vector directly
->   from inside `code()`, it gets silently overwritten by `saveParameters()` using the stale
->   pre-assignment values.
+>   from `code()`; it gets silently overwritten by `saveParameters()` using stale pre-assignment
+>   values.
 > - **Which parameters VARY** has no named-variable equivalent — it goes through the raw
 >   `para_fit_yn` field on the `functionT` struct (`gsl_vector_int`, one entry per parameter in
 >   `setParamNamesAll()` order; `1`=free, `0`=fixed), via `gsl_vector_int_set()`.
@@ -496,8 +518,8 @@ The same pattern extends to nonlinear guesses: `Allometric1a.fif`'s power law `y
 > This has NOT been compiled/tested — it's built directly from the shipped reference functions'
 > confirmed-working mechanism (raw `functionT`/`para_fit_yn` access, `readParameters()`/
 > `saveParameters()` ordering), adapted to (a) use plain named globals per the modern `setCode()`
-> convention rather than the older files' fully hand-written `readParameters()`, and (b) generate
-> the per-peak boilerplate from Python so it scales to any `N` without manual unrolling. Verify it
+> convention instead of the older files' fully hand-written `readParameters()`, and (b) generate the
+> per-peak boilerplate from Python so it scales to any `N` without manual unrolling. Verify it
 > compiles before relying on it.
 
 ---
@@ -508,9 +530,9 @@ The same pattern extends to nonlinear guesses: `Allometric1a.fif`'s power law `y
 grp = c.group()    # [group] field of the currently open FIF file
 ```
 
-Returns the group name stored in the `[group]` tag of the currently open FIF file (shown in the **Group name** editor field).
-This is the value that gets saved into the FIF file and determines where the function appears in the explorer.
-Returns an empty string if no function is loaded.
+Returns the group name stored in the `[group]` tag of the currently open FIF file (shown in the
+**Group name** editor field) — the value saved into the FIF file, determining where the function
+appears in the explorer. Empty string if no function is loaded.
 
 ---
 
@@ -533,6 +555,18 @@ Sets the **Group name** editor field. The new value is written to the FIF file o
 > c.setGroup("custom")              # group label
 > c.save("qtiplot/MyGauss")         # saves to pathFIF/qtiplot/MyGauss.fif
 > ```
+
+> **`save()`/`compile()` also raise `ValueError` if `setGroup()` was NEVER called at all for a
+> brand-new function** (`c.new()` leaves the group field empty) — not just when `setGroup("")` is
+> called explicitly. `c.new()` → `setFunctionName(...)` → `setCode(...)` → `compile()`, skipping
+> `setGroup(...)`, now raises `ValueError: compile: group is empty — call setGroup("name") before
+> compile()...` immediately. Before this guard existed, an empty group made the explorer's internal
+> state-restore step (runs after every save of a brand-new function, matching against the group
+> name to relocate it) fail silently, clearing the function name/code — `compile()` then failed deep
+> inside its shelled-out clang invocation with `clang: error: no such file or directory:
+> '<name>.cpp'`, with no hint that a missing `setGroup()` call was the actual cause. Confirmed live.
+> **The minimal create-and-compile flow is always: `c.new()` → `setFunctionName(...)` →
+> `setGroup(...)` → `setCode(...)` → `compile()`** — `setGroup()` is not optional for a new function.
 
 ---
 
@@ -586,6 +620,10 @@ Selects a category in the explorer list and populates `listViewFunctions`.
 Called automatically by `functionNames()`.
 Raises `ValueError` if the category name is not found.
 
+> `categoryChanged(category="")` is the lower-level primitive `selectCategory()` calls internally —
+> unlike `selectCategory()`, it does NOT validate the name and silently does nothing for an unknown
+> category. Prefer `selectCategory()`; there's no reason to call `categoryChanged()` directly.
+
 ---
 
 ### functionNames(groupName)
@@ -599,6 +637,13 @@ Calls `selectCategory(categoryName)` first, then returns the function list from 
 After this call the category is selected in the UI and `open()` + `compile()` work correctly.
 
 Requires an **exact** category name as returned by `categories()` — wildcards and substrings are not accepted.
+
+> **`Compiler` has `functionNames()`; it does NOT have `fitFunctions()`** — that name belongs to
+> `Fittable`, a different singleton. Confirmed live, repeated even after the first AttributeError:
+> `c = Compiler` then `c.fitFunctions(...)` — never call a `Fittable`-only method (`fitFunctions()`,
+> `configure()`, `fit()`, `setWeightingMethod()`, ...) on `c`. To check whether a name already
+> exists among compiled functions, filter `c.functionNames("ALL")` yourself, e.g.
+> `[h for h in c.functionNames("ALL") if h.lower() == name.lower()]` — never `c.fitFunctions(...)`.
 
 To search by **category keyword**, filter `categories()` first:
 ```python
@@ -690,6 +735,44 @@ Saves the current editor content as a `.fif` file.
 >   - WRONG: `c.setFunctionName("Cylinder(2)")` then `c.save()`
 >   - RIGHT: `c.setFunctionName("Cylinder_v2")` — use `_`/`-` instead of parentheses
 
+> **IMPORTANT: a name differing from an EXISTING function only in letter case also raises
+> `ValueError`** (e.g. saving `"SphereFit"` when `"spherefit"` already exists) — checked upfront. On
+> a case-insensitive filesystem (macOS, Windows), a different-case variant resolves the `.fif` write
+> to the SAME file while a later `.dylib` build creates a separately-cased file — `save()`/`compile()`
+> both report success, but the mismatched pair then fails Fittable's case-sensitive matching and
+> disappears from `fitFunctions()`/`configure()` under **either** casing. Confirmed live: compiling
+> `"SphereSANS_Fit"` over an existing `"SphereSANS_fit"` made both names simultaneously unusable — now
+> caught upfront instead. Pick a name that isn't a case-variant of one already in
+> `functionNames("ALL")` — don't retry the same colliding name expecting a different result.
+>
+> **Exception — inside `"ai/"` specifically, when compiling a NEW/custom function (not modifying a
+> specific EXISTING one by name): treat the collision as disposable scratch, not a fallback.**
+> `"ai/"` holds AI-authored one-offs with no guaranteed relationship to the current task.
+> `c.delete(collidingName)` the old entry, then compile fresh under the ORIGINALLY-intended name —
+> never silently adopt the colliding function's code/params as satisfying the current task. Confirmed
+> live: hitting collision `"ai/SphereSANS"` vs. existing `"ai/sphereSANS"`, the recovery opened the
+> pre-existing function and used its old parameter set (`scale, R, sld, background`) instead of the
+> intended 5-parameter model (`scale, R, SLD, SLDsolv, background`) — every later part (fit, plot,
+> legend) then silently built on an unrelated, unverified old function.
+> ```python
+> # WRONG — collision recovery falls back to reusing whatever was already there
+> c.new(); c.setFunctionName("ai/SphereSANS"); c.setCode(new_code); ok = c.compile()
+> # ValueError: 'ai/sphereSANS' already exists, differing only in case
+> hits = [f for f in c.functionNames("ALL") if f.lower() == "ai/spheresans"]
+> c.open(hits[0])              # uses whatever OLD code was left there — never runs new_code at all
+>
+> # RIGHT — clear the disposable old slot, then compile the intended NEW function
+> c.new(); c.setFunctionName("ai/SphereSANS"); c.setCode(new_code); ok = c.compile()
+> # ValueError: 'ai/sphereSANS' already exists, differing only in case
+> hits = [f for f in c.functionNames("ALL") if f.lower() == "ai/spheresans"]
+> c.delete(hits[0])             # old content is disposable — clear the collision
+> c.new(); c.setFunctionName("ai/SphereSANS"); c.setCode(new_code)   # now compiles the NEW function
+> ok = c.compile()
+> ```
+> This exception does NOT apply outside `"ai/"`, nor when the request names a SPECIFIC EXISTING
+> function to use or modify — that case is Rule 1/Rule 3's `open()`-and-modify pattern instead, and
+> a collision there is the actual target, not disposable scratch content.
+
 ---
 
 ### delete(name="", path="")
@@ -715,8 +798,8 @@ c.download(silent=False)                          # show interactive selection d
 ```
 
 Downloads the fit-function library from a Git repository into the current path.
-When `silent=True` (the default) only new files are added automatically, without showing a dialog.
-Pass `silent=False` to open the interactive dialog that lets you review and select which files to apply.
+`silent=True` (default) adds only new files automatically, no dialog. `silent=False` opens an
+interactive dialog to review and select which files to apply.
 
 ---
 
@@ -830,17 +913,17 @@ Recognizing a PySAS model:
 - The FIF has `[python] 1` set internally
 
 **Compiling a PySAS model requires `Python.h`** — the Python development header — at compile time.
-`PySAS.h` wraps the Python C API (`PyObject*`, `PyArg_ParseTuple`, …) which is defined in `Python.h`.
+`PySAS.h` wraps the Python C API (`PyObject*`, `PyArg_ParseTuple`, …), defined in `Python.h`.
 
 > **`c.compile()` will fail with `fatal error: 'Python.h' file not found`** if the Python
 > development headers are not on the include path.
 
-The include path is set from the **Python path** field in the Compiler UI
-(set once and baked into every compile script). On macOS the correct path is the system Python
-framework, e.g. `/opt/homebrew/opt/python@3.x/Frameworks/Python.framework/Versions/3.x/Headers`.
+The include path is set from the **Python path** field in the Compiler UI (set once, baked into
+every compile script). On macOS the correct path is the system Python framework, e.g.
+`/opt/homebrew/opt/python@3.x/Frameworks/Python.framework/Versions/3.x/Headers`.
 
 **Do NOT use `subprocess.run([sys.executable, ...sysconfig...])` to find the path** — QtiSAS's
-embedded Python lacks dev headers; `sysconfig.get_path('include')` will return empty.
+embedded Python lacks dev headers; `sysconfig.get_path('include')` returns empty.
 
 Instead, find the system Python headers manually:
 
@@ -886,6 +969,13 @@ Always call this before filling the parameter table.
 > c.setParamCount(len(names))   # derived from the list — never a hard-coded number
 > c.setParamNamesAll(names)
 > ```
+
+> **`save()`/`compile()` raise `ValueError` if the parameter count is still 0** — i.e. `setParamCount(n)`
+> was never called (or called with `0`) for the current function. The interactive C++ path instead shows
+> a blocking **"Check function!"** dialog, which has no one to click it in a script and would hang.
+> Verified directly: calling `setFunctionName()`/`setGroup()`/`setCode()` and going straight to
+> `compile()`, skipping `setParamCount()`/`setParamNamesAll()` entirely, now raises this `ValueError`
+> immediately instead of risking a hang on the blocking dialog.
 
 ---
 
@@ -933,10 +1023,16 @@ Initial value stored in the FIF `[initial values]` block.
 c.setParamInitsAll([10.0, 1e-6, 0.0])
 ```
 
-**Values must be Python floats or ints — strings cause a `SystemError`:**
+**Values should be Python floats or ints.** Unlike `setParamNamesAll`/`setParamLimitsAll`/
+`setParamDescrsAll` (which explicitly reject non-string input), this setter has no type check at
+all — it calls `PyFloat_AsDouble()` on each item, which silently coerces a NUMERIC string via
+Python's own `float()` parsing:
 ```python
 c.setParamInitsAll([50.0, 6e-6, 0.0])    # correct
-c.setParamInitsAll(["50.0", "6e-6"])      # WRONG — SystemError
+c.setParamInitsAll(["50.0", "6e-6"])      # ALSO WORKS — silently coerced to 50.0 / 6e-06, no error
+c.setParamInitsAll(["fifty", "6e-6"])     # WRONG — SystemError (only a genuinely non-numeric
+                                           #   string triggers the "exception set but function
+                                           #   returns normally" failure)
 ```
 
 ---
@@ -980,12 +1076,12 @@ c.setParamLimitsAll(["..", "0..1e-4", ".."])
 ```
 
 **Values must be Python strings in the `setParamLimit` format above — raw numbers cause a
-`SystemError`.** This is the OPPOSITE requirement from its neighbors `setParamInitsAll`/
+`TypeError`.** This is the OPPOSITE requirement from its neighbors `setParamInitsAll`/
 `setParamVariesAll` (floats/bools, not strings) — easy to mix up since all three are called the
 same way, right next to each other:
 ```python
 c.setParamLimitsAll(["0..", "0.."])       # correct — range strings, even for "no upper bound"
-c.setParamLimitsAll([0.0, 0.0])           # WRONG — SystemError; these are not limit strings
+c.setParamLimitsAll([0.0, 0.0])           # WRONG — TypeError; these are not limit strings
 ```
 
 ---
@@ -1007,6 +1103,22 @@ Corresponds to the adjustability checkbox (`[adjustibility]` in FIF).
 c.setParamVariesAll([True, True, False])
 ```
 
+> **Values are converted with Python truthiness (`PyObject_IsTrue`), not a bool/string check —
+> a non-empty STRING is truthy regardless of its text.** `c.setParamVariesAll(["True", "False"])`
+> silently sets **both** parameters to varying=`True` — `"False"` is a non-empty string and is
+> therefore truthy. No exception, no warning, just the opposite of the obvious intent for the
+> second entry. Always pass actual Python `bool` values (`True`/`False`), never strings.
+
+> **Every parameter defaults to fixed (not varying) when first declared via `setParamCount(n)`** —
+> skipping `setParamVariesAll()`/`setParamVaries()` leaves ALL parameters fixed, baked into the compiled
+> function as its default state. `Fittable.configure()` re-derives its own vary/fixed checkboxes from
+> exactly this baked-in default every time it's called — so a function compiled with no vary flags ever
+> set has NO adjustable parameters after `configure()` either, and `f.fit()` raises `RuntimeError: fit():
+> no adjustable parameters`. Set the parameters you intend to fit here, at compile time, rather than
+> assuming you can enable them later purely via `Fittable.setParamVaries()` — that works too, but only as
+> an override you must repeat after every `configure()` call (see fittable-python-api.md), not as a
+> substitute for a sensible compiled default.
+
 ---
 
 ### paramDescr(i) / setParamDescr(i, text)
@@ -1025,12 +1137,11 @@ c.setParamDescrsAll(["radius nm", "scattering length density", "flat background"
 ```
 
 > **IMPORTANT: never put a literal comma inside a description string.** The `[parameter
-> description]` FIF field is comma-joined with no escaping — a comma inside one description
-> splits into an extra field, so the count no longer matches the parameter count and re-reading
-> the FIF (during `c.compile()`'s save→reload, or `c.open()`) pops a blocking
-> `"Error: [parameter description]"` dialog. Even when the count still happens to match, every
-> description after the stray comma silently shifts by one and ends up attached to the wrong
-> parameter.
+> description]` FIF field is comma-joined with no escaping — a comma inside one description splits
+> into an extra field, desyncing the count from the parameter count, so re-reading the FIF (during
+> `c.compile()`'s save→reload, or `c.open()`) pops a blocking `"Error: [parameter description]"`
+> dialog. Even when the count still happens to match, every description after the stray comma
+> silently shifts by one and ends up attached to the wrong parameter.
 >   - WRONG: `c.setParamDescr(3, "shape (0=Gauss,1=Lorentz)")`
 >   - RIGHT: `c.setParamDescr(3, "shape (0=Gauss; 1=Lorentz)")` — use `;` or drop punctuation instead
 
@@ -1097,7 +1208,11 @@ Weighting method values:
 | 3 | Variance = Y²: w = 1/Y² |
 | 4 | Variance = Yᵃ: w = 1/\|Y\|ᵃ |
 | 5 | Variance = cᵃ+b·Yᵃ: w = 1/(cᵃ+b\|Y\|ᵃ) |
-| 6 | Variance = Yᵃ∘c^\|Xmax−X\|: w = \|Y\|ᵃ/c^\|Xmax−X\| |
+| 6 | Variance = Yᵃ∘c^\|Xmax−X\|: w = 1/(\|Y\|ᵃ·c^\|Xmax−X\|) |
+
+Verified directly against the weight computation in `fittable-data.cpp` — this is the same underlying
+enum as `Fittable.setWeightingMethod()` (see fittable-python-api.md), just exposed through the Compiler's
+own Fit.Control tab. All of methods 3-6 are reciprocals (`1/...`) — larger `|Y|` means *less* weight.
 
 eFit string keywords (space-separated, all optional):
 
@@ -1320,8 +1435,8 @@ for fn in functions:
 
 ### Download and compile the official fit-function library
 
-Clones the official QtiSAS fit-function repository into a temporary folder, then compiles every function into a shared library ready for use in the Fittable widget.
-Each step:
+Clones the official QtiSAS fit-function repository into a temporary folder, then compiles every
+function into a shared library. Each step:
 
 - `setPath(testPath)` — switches the library path to the temporary folder
 - `download()` — clones the repository (new files only, no dialog)
@@ -1353,9 +1468,9 @@ c.compile()
 
 ### Combine two sasview models: P(Q) × S(Q) using namespaces
 
-When two sasview model headers both define `Fq()` or `form_volume()`, including both bare would
-cause redefinition errors. Wrap each header in its own namespace using the single-line syntax
-`namespace X {#include "..."}` in `[h-headers]`. The compiler expands each such line into a proper
+When two sasview model headers both define `Fq()` or `form_volume()`, including both bare causes
+redefinition errors. Wrap each header in its own namespace using the single-line syntax
+`namespace X {#include "..."}` in `[h-headers]`. The compiler expands each line into a proper
 namespace block, so the generated `.cpp` contains:
 
 ```cpp
@@ -1427,8 +1542,8 @@ scriptPrint("SphereHS compiled OK")
 
 **INCLUDE ONLY WHAT YOU CALL — do not add a namespace header for every reference you opened:**
 
-If Guinier P(Q) is written inline and only S(Q) comes from a sasview model, include only that one
-model's header. Including a second unused header wastes compile time and can cause symbol conflicts.
+If Guinier P(Q) is written inline and only S(Q) comes from a sasview model, include only that
+model's header — a second unused header wastes compile time and can cause symbol conflicts.
 
 ```python
 # WRONG — hardsphere.h included but never called; hs:: namespace is dead weight
@@ -1443,9 +1558,9 @@ c.setHHeaders('namespace hs {#include "sasviewmodels/stickyhardsphere.h"}')
 
 **ARG-COUNT RULE — copy the Iq()/Fq() call exactly from the reference `code()` snippet:**
 
-After reading a reference with `c.open("sasviewmodels/stickyhardsphere")` and `c.code()`, the snippet
-shows: `Iq(q, radius_effective, volfraction, perturb, stickiness)` — 5 arguments. Your call must
-also pass all 5 in the same order; only rename, never drop:
+After reading a reference with `c.open("sasviewmodels/stickyhardsphere")` and `c.code()`, the
+snippet shows: `Iq(q, radius_effective, volfraction, perturb, stickiness)` — 5 arguments. Your call
+must pass all 5 in the same order; only rename, never drop:
 
 ```python
 # WRONG — drops perturb; clang: too few arguments, expected 5, have 4
@@ -1473,15 +1588,15 @@ hm::Iq(q, ..., concentration_salt, dielectconst)
 
 **How the parser handles `namespace X {#include "..."}`:**
 
-The `[h-headers]` writer in QtiSAS tests every line for `.contains("#include")`. Lines that also
-`.startsWith("namespace ")` have `{` and `}` expanded to newlines before being written into the
-`.cpp`. Lines without `#include` are silently dropped. This single-line syntax is therefore the
-exact intended way to put namespace-wrapped model headers in `[h-headers]`.
+The `[h-headers]` writer tests every line for `.contains("#include")`. Lines that also
+`.startsWith("namespace ")` have `{`/`}` expanded to newlines before being written into the `.cpp`.
+Lines without `#include` are silently dropped. This single-line syntax is the exact intended way to
+put namespace-wrapped model headers in `[h-headers]`.
 
-**Include-guard note:** Both `sphere.h` and `hardsphere.h` include `models/kernel_header.c`, which
-has an `#ifndef KERNEL_HEADER_H` guard. The guard fires on the second include, so
-`kernel_header.c` content lands in `namespace ff` only. `hardsphere.c` (inside `namespace hs`)
-uses only standard C math — it compiles correctly without the kernel header infrastructure.
+**Include-guard note:** Both `sphere.h` and `hardsphere.h` include `models/kernel_header.c`, guarded
+by `#ifndef KERNEL_HEADER_H`. The guard fires on the second include, so `kernel_header.c` content
+lands in `namespace ff` only. `hardsphere.c` (inside `namespace hs`) uses only standard C math — it
+compiles correctly without the kernel header infrastructure.
 
 ---
 
@@ -1714,11 +1829,11 @@ that both fire once, when a fit finishes — they can be used separately or toge
 **1. C++ → QtiSAS table**, via `tableName` / `tableColNames` / `tableColDestinations` / `mTable`
 
 Guard extra computation with `if (afterFit) { ... }` inside `functionSANS` and fill the aux-table
-struct fields — this creates/overwrites a table in the workspace with no Python involved.
-Unlike `beforeFit`/`afterFit`/`XXX`/`YYY`, these four fields get **no auto-generated macro** — the
+struct fields — this creates/overwrites a table in the workspace with no Python involved. Unlike
+`beforeFit`/`afterFit`/`XXX`/`YYY`, these four fields get **no auto-generated macro** — the
 generated boilerplate's accessor-macro list stops right after `Int1`/`Int2`/`Int3` (the struct
-itself always has the 4 fields; only the macro aliases are missing). **They must be defined
-manually** in `[included functions]` (inserted above `functionSANS`) before use in `[code]`:
+always has the 4 fields; only the macro aliases are missing). **They must be defined manually** in
+`[included functions]` (inserted above `functionSANS`) before use in `[code]`:
 
 ```cpp
 // --- [included functions] ---
@@ -1775,10 +1890,10 @@ t.exportASCII("/path/to/output.dat", "\t", False, False, False)
 **3. `[after.fit: python]` — auto-executed Python script**
 
 Set `[after.fit: python]` to `1` in the FIF; the `[after.fit: python code]` block then runs
-automatically every time a fit converges — no manual `f.plotResults()` call or button click
-needed. Typical use: refresh a persistent graph from a table the C++ side already wrote
-(option 1), or hand off to a completely separate Python process for plotting/analysis that
-needs a library not embedded in QtiSAS's own Python:
+automatically every time a fit converges — no manual `f.plotResults()` call or button click needed.
+Typical use: refresh a persistent graph from a table the C++ side already wrote (option 1), or hand
+off to a separate Python process for plotting/analysis needing a library not embedded in QtiSAS's
+own Python:
 
 ```python
 # read a table written by the compiled function's afterFitTable() (option 1) and
@@ -1821,8 +1936,8 @@ external script exits, so the fit UI stays unresponsive for its duration.
 
 ### Rule 1 — Read references first, then create immediately
 
-**Before generating a new fit function, read 1-2 existing functions as references.**
-After reading them, proceed **immediately** to `c.new()` / `c.setCode()` / `c.compile()` in the **same script**.
+**Before generating a new fit function, read 1-2 existing functions as references,** then proceed
+**immediately** to `c.new()` / `c.setCode()` / `c.compile()` in the **same script**.
 
 **Hard constraints — violations cause the task to fail:**
 - If exact function names are given in the request: call `c.open(name)` directly. Do NOT call `functionNames()` at all.
@@ -1832,8 +1947,8 @@ After reading them, proceed **immediately** to `c.new()` / `c.setCode()` / `c.co
 - Do NOT print "ready to create" or any similar checkpoint and stop — that is the same as stopping.
 - One script = read references + create function + compile. No exceptions.
 - `setParamInitsAll` / `setParamVariesAll` require Python floats/bools — **not strings**.
-  `setParamLimitsAll` is the opposite — it requires range **strings** like `"0.."`/`"0..100"`,
-  **not raw numbers** — confirmed live: `setParamLimitsAll([0.0, 0.0])` raises `SystemError`.
+  `setParamLimitsAll` is the opposite — it requires range **strings** like `"0.."`/`"0..100"`, **not
+  raw numbers** — confirmed live: `setParamLimitsAll([0.0, 0.0])` raises `TypeError`.
 - If the request says "not save" / "do not save": call `setInfo()` / `setCode()` / etc. but do **NOT** call `save()` or `compile()` afterwards.
 - `compile()` **auto-saves** the `.fif` — an explicit `c.save()` before `c.compile()` is **not needed**. The minimal create-and-compile flow is `c.new()` → `c.setFunctionName(…)` → `c.setGroup(…)` → `c.setCode(…)` → `c.compile()`.
 - Call `c.save()` **only** when you want to persist changes (metadata, parameter edits) **without recompiling**.
@@ -1933,8 +2048,8 @@ c.setCode("... inline SQ formula using sin/cos/pow/M_PI ...")
 c.compile()
 ```
 
-**If you do need to call a function from a subfolder header** (e.g. `Iq()` from `sasviewmodels/hardsphere.h`),
-the header path must be prefixed with the subfolder, because the new function compiles from the library root:
+**To call a function from a subfolder header** (e.g. `Iq()` from `sasviewmodels/hardsphere.h`), prefix
+the header path with the subfolder — the new function compiles from the library root:
 
 ```python
 # WRONG — bare path is relative to the subfolder, not the compile root
@@ -1944,16 +2059,55 @@ c.setHHeaders('#include "hardsphere.h"')          # fatal error: hardsphere.h no
 c.setHHeaders('#include "sasviewmodels/hardsphere.h"')
 ```
 
+**Cloning an existing function via `open()` + `setFunctionName()` into a DIFFERENT folder does NOT
+rewrite its inherited `hHeaders` — this silently breaks a same-folder-relative include.** `open()`
+copies the `hHeaders` text verbatim; `compile()` never corrects it for the new location. A quoted
+`#include "foo.h"` resolves relative to the `.cpp` file's OWN folder, which changes the moment
+`setFunctionName()` places the function under a different folder than it was `open()`-ed from.
+Confirmed live: `open("sasviewmodels/sphere")` inherits `hHeaders` = `'#include "sphere.h"'` — valid
+there since that function compiles from `sasviewmodels/sphere.cpp`, colocated with its header — but
+renaming to `"ai/SphereSANS_Fit"` moves compilation to a different folder where the same bare
+include no longer resolves: `fatal error: 'sphere.h' file not found`.
+
+**WRONG — rename into a new folder, inherited header path goes stale:**
+```python
+c.open("sasviewmodels/sphere")            # hHeaders inherited verbatim: '#include "sphere.h"'
+c.setFunctionName("ai/SphereSANS_Fit")    # different folder — the inherited header path is now wrong
+ok = c.compile()                          # fatal error: 'sphere.h' file not found
+```
+
+**RIGHT — re-prefix the inherited header with its ORIGINAL folder before compiling:**
+```python
+c.open("sasviewmodels/sphere")
+c.setFunctionName("ai/SphereSANS_Fit")
+c.setHHeaders('#include "sasviewmodels/sphere.h"')   # prefix with the folder it came FROM
+ok = c.compile()
+```
+
+**Or, safer when adapting the logic anyway — pull the code out and rebuild fresh with `c.new()`:**
+```python
+c.open("sasviewmodels/sphere")            # read-only inspection — EXPLORE-safe
+code = c.code()
+c.new()
+c.setFunctionName("ai/SphereSANS_Fit")
+c.setCode(code)
+c.setHHeaders('#include "sasviewmodels/sphere.h"')
+ok = c.compile()
+```
+
+Only matters when the ORIGINAL function's headers are folder-relative includes of its own subfolder
+— a function with no `hHeaders` (or only root-level/system includes) is unaffected.
+
 ### Rule 3 — `setFunctionName()` before `save()`/`compile()` when saving a modified function under a new name
 
-**`setFunctionName()` MUST be called before `save()` OR `compile()`.** `save()`'s `name` argument only controls
-the **file path/stem** — the FIF's internal `[name]` field always comes from whatever `setFunctionName()` last
-set (or whatever `open()` loaded), never from `save()`'s argument. `compile()` is even easier to get wrong: it
-takes **no name argument at all** (its only parameter is `compileAll`) — it unconditionally uses whatever
-`setFunctionName()`/`open()` last set, so there's no name-parameter illusion of safety to even get half-right.
+**`setFunctionName()` MUST be called before `save()` OR `compile()`.** `save()`'s `name` argument only
+controls the **file path/stem** — the FIF's internal `[name]` field always comes from whatever
+`setFunctionName()` last set (or `open()` loaded), never from `save()`'s argument. `compile()` is
+even easier to get wrong: it takes **no name argument at all** (only parameter is `compileAll`) — it
+unconditionally uses whatever `setFunctionName()`/`open()` last set.
 
-Skipping this produces a file at the right path with the wrong internal identity (`save()` case), or **silently
-overwrites the original function in place** (`compile()` case) — this has actually happened: opening
+Skipping this produces a file at the right path with the wrong internal identity (`save()` case), or
+**silently overwrites the original function in place** (`compile()` case) — confirmed live: opening
 `sasviewmodels/ellipsoid`, fixing its polydispersity normalization, and calling `c.compile()` without
 `setFunctionName()` destroyed the original and never created the requested `ellipsoid-correct`.
 
@@ -1974,32 +2128,44 @@ c.setCode(fixed_code)
 c.save("sasviewmodels/ellipsoid-correct")
 ```
 
-**RIGHT — `setFunctionName()` FIRST; works correctly for either `compile()` or `save()`:**
+**RIGHT — `setFunctionName()` FIRST, then `compile()`:**
 ```python
 c = Compiler
 c.open("sasviewmodels/ellipsoid")
 c.setFunctionName("sasviewmodels/ellipsoid-correct")
 c.setCode(fixed_code)
-c.compile()   # or c.save()
+c.compile()
 ```
 
-The read step (`c.open()`, `c.code()`, `c.paramNames()`, `c.hHeaders()`, `c.includedFunctions()` on the
-*original* function) is read-only and belongs in `# EXPLORE`. `setFunctionName()`, `setCode()`, `save()`, and
-`compile()` are writes — per the FORBIDDEN-in-EXPLORE table (see `ai-python-api.md`), they belong only in the
-action script that follows.
+**Use `compile()`, NOT `save()`, whenever the new name needs to be fittable.** `save()` (SIP:
+`saveFIF()`) only writes the `.fif` **source text** — it never builds a shared library. `compile()`
+(SIP: `buildSharedLibrary()`) is the ONLY call that produces the compiled `.dylib`/`.so`/`.dll` that
+`Fittable.configure()` actually loads. Confirmed live: `c.open("SphereSANS_Custom")`;
+`c.setGroup("custom")`; `c.save("custom_sphere_fit")` — no `setFunctionName()`, no `compile()` — was
+then passed to `f.configure("custom_sphere_fit", ...)` → `ValueError: function not found`.
+`"custom_sphere_fit"` never became loadable under any name: `[name]` was still `"SphereSANS_Custom"`
+(the first mistake above), and even a correctly-renamed `save()`-only copy would have no compiled
+library backing it. `save()` alone is only for persisting metadata/parameter edits on a function
+**already loaded under its existing compiled name** (see Rule 2 below) — it can never make a NEW
+name fittable, with or without `setFunctionName()` first.
+
+The read step (`c.open()`, `c.code()`, `c.paramNames()`, `c.hHeaders()`, `c.includedFunctions()` on
+the *original* function) is read-only and belongs in `# EXPLORE`. `setFunctionName()`, `setCode()`,
+`save()`, and `compile()` are writes — per the FORBIDDEN-in-EXPLORE table (see `ai-python-api.md`),
+they belong only in the action script that follows.
 
 ### Rule 4 — `Int1`/`Int2`/`Int3` + `currentInt`: cache Q-independent quantities, correctly under polydispersity
 
-**`Int1`/`Int2`/`Int3` + `currentInt` cache up to 3 Q-INDEPENDENT quantities ONCE per iteration**, instead of
-recomputing them for every Q point (and every polydispersity node within each Q point). `currentInt` is only
-ever `1`/`2`/`3` during the dedicated `beforeIter` setup call(s) that run once, BEFORE the main per-point loop
-for that iteration starts — during every normal per-point/per-node evaluation, `currentInt == 0`, so an
-`if (currentInt == N) return ...;` branch is simply skipped and execution falls through to the normal formula
-using the cached `IntN`. With polydispersity OFF, that setup call is one direct evaluation of `[code]`. With
-polydispersity ON, the engine instead runs the full `polyIntegral()` quadrature for that setup call (still with
-`currentInt` held fixed), calling `[code]` once per size-distribution node and weight-averaging whatever it
-returns — so `IntN` becomes the TRUE distribution average of whatever expression you return for that branch,
-not just a value at the central parameter.
+**`Int1`/`Int2`/`Int3` + `currentInt` cache up to 3 Q-INDEPENDENT quantities ONCE per iteration**,
+instead of recomputing them for every Q point (and every polydispersity node within it). `currentInt`
+is only ever `1`/`2`/`3` during the dedicated `beforeIter` setup call(s) that run once BEFORE the
+main per-point loop starts — during normal per-point/per-node evaluation, `currentInt == 0`, so an
+`if (currentInt == N) return ...;` branch is skipped and execution falls through to the normal
+formula using the cached `IntN`. With polydispersity OFF, that setup call is one direct evaluation of
+`[code]`. With polydispersity ON, the engine instead runs the full `polyIntegral()` quadrature for
+that setup call (still with `currentInt` held fixed), calling `[code]` once per size-distribution
+node and weight-averaging whatever it returns — so `IntN` becomes the TRUE distribution average of
+whatever expression you return, not just a value at the central parameter.
 
 ```cpp
 // WRONG — form_volume(radius) recomputed inside the main per-node call. Averaging
@@ -2016,8 +2182,8 @@ I = F2;
 I /= meanVolume;
 ```
 
-This generalizes beyond `<V>` — a compound nonlinear expression works too, since what matters is the engine's
-per-node weighted average, not whether the expression is linear:
+This generalizes beyond `<V>` — a compound nonlinear expression works too, since what matters is the
+engine's per-node weighted average, not whether the expression is linear:
 
 ```cpp
 // Int2 = <V^2>, correctly polydispersity-averaged — NOT V_mean^2. Only true during
@@ -2035,9 +2201,9 @@ With polydispersity off there's only one node, so all forms agree — any Q-inde
 candidate for this caching, purely for performance, even without polydispersity.
 
 **Place every `if (currentInt == N) return ...;` check at the very TOP of `[code]`, before any other
-computation.** Since these branches return early, anything computed above them (a form-factor call, an
-integral, any real work) runs and is thrown away on every `beforeIter` call — once per polydispersity node, if
-polydispersity is on — for nothing.
+computation.** Since these branches return early, anything computed above them (a form-factor call,
+an integral, any real work) runs and is thrown away on every `beforeIter` call — once per
+polydispersity node, if polydispersity is on — for nothing.
 
 ```cpp
 // WRONG — Fq() computed first, then discarded every time currentInt == 1 returns early
@@ -2059,3 +2225,186 @@ Fq(q, &F1, &F2, sld, sld_solvent, radius_polar, radius_equatorial);
 I = F2;
 I /= meanVolume;
 ```
+
+### Rule 5 — X-range must cover the function's full dynamic range, but not so wide that an oscillatory function becomes unfittable
+
+The x-range of the DATA used for fitting must be wide enough to constrain every parameter — a
+feature that falls entirely outside the sampled range makes its parameters blow up with huge,
+correlated errors:
+- **Peaked** (Gaussian, Lorentzian): `x_min < centre - 3*width`, `x_max > centre + 3*width`.
+- **Decay** (`exp(-b*x) + c`): `x_max >= 3/b` (need 3+ decay lengths to separate amplitude from background).
+- **Power-law/plateau**: cover the full transition from steep slope to flat region.
+
+(This is a different concept from `Fit.Control`'s own x-range setting for simulation/plotting —
+see the Fit.Control section below.)
+
+**Oscillatory/periodic functions (SANS sphere/cylinder form factors, any `sin(qR)/qR`-style term)
+have the OPPOSITE failure mode: too WIDE a range breaks the fit, not too narrow.** A range spanning
+many oscillation periods (`qR_max / (2π)` more than roughly 5) makes a gradient-based fit
+(Levenberg-Marquardt) fail via "cycle-skipping": if the initial radius guess is off by even
+~10-20%, the fitted curve's oscillations drift out of phase with the data after a few cycles, and
+the optimizer can't tell which cycle it should be matching — it converges to a nearby WRONG local
+minimum instead of the true one, with badly elevated chi²/dof and **no error raised** (the fit
+"succeeds," just at a bad point).
+
+Confirmed live: a synthetic sphere dataset with `R = 50` (Å) and `Q` from `0.01` to `4.48` (same
+units) gives `qR` up to `224` — about 35 oscillation periods. Fitting from a plausible starting
+guess of `R = 40` (only 20% off) converged in 18 iterations to `chi²/dof ≈ 8.5e5` and `R² ≈ 0.06` —
+converged-looking but badly wrong, with nothing in the fit's own output flagging it (see the general
+"good chi²/dof ≠ converged" caveat in `fittable-python-api.md`, about a different symptom — hitting
+the iteration cap — not this cycle-skipping failure).
+
+```python
+# WRONG — Q-range implies ~35 oscillation periods (qR_max = 4.48 * 50 = 224); a 20%-off
+# starting radius guess all but guarantees the fit lands in the wrong oscillation cycle
+for i in range(1, 151):
+    q = 0.01 + 0.03 * (i - 1)   # q up to 4.48
+...
+f.setParamValue("R", 40.0)     # true R is 50 — a plausible guess, but this range punishes it
+
+# RIGHT — keep qR_max to a handful of periods (~20-30) unless the task explicitly asks for
+# a wider range, and/or start closer to the expected radius when the range must be wide
+for i in range(1, 151):
+    q = 0.001 + 0.003 * (i - 1)   # q up to ~0.45 -> qR_max ~= 22, a handful of periods
+```
+
+### Rule 6 — Every function authored via `c.new()` goes under the `"ai/"` folder
+
+**Always `setFunctionName("ai/<shortName>")`, never a bare name and never an existing domain
+folder** (`sasviewmodels/`, `custom/`, `qtiplot/`, ...) that a real library function might already
+use or later collide with. This is the SAME `/`-folder mechanism the library already uses for
+`sasviewmodels/sphere`, `custom/sphere`, etc. — `"ai/"` is simply a reserved namespace for it.
+
+```python
+# WRONG — no dedicated folder; risks colliding with a real library name later, and looks
+# indistinguishable from a vetted model in future EXPLORE searches
+c.new()
+c.setFunctionName("sansTest")
+
+# RIGHT
+c.new()
+c.setFunctionName("ai/sansTest")
+```
+
+**Payoff: when a task says "use an EXISTING library model" (the discovery pattern in
+`fittable-python-api.md`/`ai-python-api.md`), EXCLUDE names starting with `"ai/"` from the
+candidates** — anything there is a prior AI-authored one-off, never a vetted library model.
+Confirmed live (twice): a leftover custom function from an earlier session/turn was found by
+`fitFunctions()`/`functionNames()` search and mistaken for "the existing model to reuse," instead of
+the AI authoring fresh code as the task actually asked. Reserving `"ai/"` and filtering it out of
+"existing model" searches removes this confusion at the source.
+
+```python
+# WRONG — can match an old "ai/sphere-test" left over from a previous turn, not a real library model
+hits = [h for h in c.functionNames("ALL") if "sphere" in h.lower()]
+
+# RIGHT — exclude the AI-authored namespace when looking for a vetted, pre-existing model
+hits = [h for h in c.functionNames("ALL") if "sphere" in h.lower() and not h.startswith("ai/")]
+```
+
+### Rule 7 — `setGroup()`: reuse an existing group if one fits, only invent a new one otherwise
+
+**Before calling `setGroup()`, check for an existing group that already matches the function's
+domain and reuse it EXACTLY (byte-for-byte)** — only invent a new one if nothing matches. Reusing
+near-variants inconsistently (`"SANS"` vs `"sans"` vs `"Sans"`) fragments the Explorer category
+tree into duplicates instead of one real group.
+
+```python
+c.scanGroups()
+existing = c.groups()
+match = next((g for g in existing if "sans" in g.lower()), None)
+c.setGroup(match if match else "custom:sans")   # reuse if found, else propose one
+```
+
+New group names follow the library's existing `":"`-hierarchy convention (e.g. `"shape:sphere"` in
+the Quick Start above) — `setGroup()` still rejects `"/"` (`ValueError`, see Rule 3's group note).
+`":"` is for group hierarchy and `"/"` is for the function-name folder — two separate mechanisms,
+don't mix them.
+
+### Rule 8 — A SAS/SANS/SAXS-style model always needs a free `scale` AND `background` parameter
+
+Any form-factor/structure-factor custom function should always get TWO free "nuisance" parameters
+acting on the WHOLE model, independent of the physically-meaningful shape parameters (radius, SLD,
+...): a multiplicative `scale` and an additive `background`, both with broad, effectively-unbounded
+limits (`"0.."`).
+
+Without a free `scale`, the model's absolute normalization is entirely fixed by whatever the shape
+parameters happen to produce — nothing in the fit can correct a mismatch with the data's actual
+absolute scale, no matter how correct the shape parameters are. Confirmed live: a compiled function
+used a `(sld - 1.0e-6)²` contrast-squared term with `sld` initialized near `6.0e-6`, making the
+model's predicted intensity ~10⁻¹¹ in magnitude — but the actual data (generated by a slightly
+different formula with no equivalent contrast term) was of order 1. No adjustment to `R`/`sld`
+within reasonable limits can bridge a ten-order-of-magnitude scale mismatch: the fit ran without
+error but converged to a meaningless result (chi²/dof ≈ 3217, R² ≈ 3.5×10⁻¹⁰) — a free `scale`
+parameter would have absorbed the mismatch and let the fit converge on the correct shape parameters
+regardless.
+
+**WRONG — no free `scale`; the contrast/SLD term alone fixes the absolute normalization:**
+```python
+c.setParamCount(3)
+c.setParamNamesAll(["R", "sld", "background"])
+c.setParamInitsAll([50.0, 6.0e-6, 0.001])
+c.setParamLimitsAll(["0.1..500", "0..1e-4", "0..0.1"])
+c.setCode("""
+  double qR = q * R;
+  double F = (qR > 1e-6) ? 3.0 * (sin(qR) - qR * cos(qR)) / (qR * qR * qR) : 1.0;
+  double V = 4.0/3.0 * M_PI * R * R * R;
+  I = (3.0 * V / (4.0 * M_PI * R * R * R)) * (sld - 1.0e-6) * (sld - 1.0e-6) * F * F + background;
+""")
+```
+
+**RIGHT — add a free `scale` multiplying the whole model, broad limits on both `scale` and `background`:**
+```python
+c.setParamCount(4)
+c.setParamNamesAll(["scale", "R", "sld", "background"])
+c.setParamInitsAll([1.0, 50.0, 6.0e-6, 0.001])
+c.setParamLimitsAll(["0..", "0.1..500", "0..1e-4", "0.."])
+c.setCode("""
+  double qR = q * R;
+  double F = (qR > 1e-6) ? 3.0 * (sin(qR) - qR * cos(qR)) / (qR * qR * qR) : 1.0;
+  double V = 4.0/3.0 * M_PI * R * R * R;
+  I = scale * (3.0 * V / (4.0 * M_PI * R * R * R)) * (sld - 1.0e-6) * (sld - 1.0e-6) * F * F + background;
+""")
+```
+
+This is standard SAS/SAXS/SANS practice, not a special-case workaround — real instruments' absolute
+intensity calibration, sample concentration, and path length all introduce an unknown multiplicative
+factor that `scale` exists to absorb. `background` deserves the same broad `"0.."` treatment: an
+unnecessarily tight background limit can just as easily block convergence if the true background
+sits outside a too-narrow guessed range.
+
+### Rule 9 — Before `compile()`, verify every declared parameter is actually used in `[code]`
+
+A parameter listed in `setParamNamesAll()` but never referenced in the `setCode()` body is a dead
+free direction in parameter space: it has zero effect on the model output, so nothing constrains its
+"fitted" value or error, and its presence can measurably destabilize the fit (a flatter,
+harder-to-navigate parameter space) — with no error raised anywhere, since declaring an unused
+parameter is perfectly valid C++/API usage. Confirmed live: a 4-parameter sphere model (`scale`,
+`R`, `SLD`, `background`) never referenced `SLD` in its `[code]`; the resulting fit hit the iteration
+cap without converging (gradient still ~9 orders of magnitude above tolerance) — `SLD`'s flat,
+unconstrained direction is a plausible contributor.
+
+**Before calling `compile()`, self-check every declared name appears as a whole identifier in the
+code body** — this is a plain string check the AI can run itself, no new API needed:
+
+```python
+import re
+code_body = """
+  double qR = q * R;
+  double F = (qR > 1e-6) ? 3.0 * (sin(qR) - qR * cos(qR)) / (qR * qR * qR) : 1.0;
+  I = scale * F * F + background;
+"""
+param_names = ["scale", "R", "SLD", "background"]
+
+unused = [p for p in param_names if not re.search(r"\b" + re.escape(p) + r"\b", code_body)]
+if unused:
+    scriptPrint("WARNING: parameter(s) declared but never used in [code]: " + str(unused) +
+                " — remove them or add the missing physics before compiling.")
+```
+
+If a parameter is genuinely only used indirectly — e.g. cached into `Int1`/`Int2`/`Int3` inside a
+`beforeIter`-style hook rather than referenced directly in `[code]` (see Rule 4) — this check will
+still flag it as a false positive; that's fine, it's advisory, not a hard gate. Confirm by checking
+the hook code too before deciding a flagged name is truly dead. The common case, though, is simply a
+parameter declared and then forgotten in the formula — remove it or wire it in before compiling, not
+after a puzzling non-convergent fit.

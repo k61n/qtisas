@@ -1,7 +1,6 @@
 # QtiSAS Table Python API
 
-Python scripting interface for the `Table` class.  
-Obtain a table via `table("name")`, `newTable()`, or `currentTable()`.
+Python scripting interface for `Table`. Obtain one via `table("name")`, `newTable()`, or `currentTable()`.
 
 ---
 
@@ -35,14 +34,17 @@ t.importASCII("/path/to/data.dat", " ", 2, True, True, True)
 
 ## Column Addressing
 
-> **Warning:** Column index comes **before** row index in all cell access methods — `t.cell(col, row)`, `t.setCell(col, row, value)`. This is the **opposite** of Matrix which uses `(row, col)`.
+> **Warning:** Column index comes **before** row in all cell access methods — `t.cell(col, row)`, `t.setCell(col, row, value)` — the **opposite** of Matrix's `(row, col)`.
 
-Wherever a column argument is accepted it can be:
+A column argument can be:
 
 - **`int`** — 1-based column index (column 1 is the first column)
 - **`str`** — short label (e.g. `"y"`) or full name (e.g. `"MyData_y"`)
 
-Row arguments are always 1-based integers.
+Row arguments are always 1-based.
+
+> **Exception: `colName(col)` only accepts `int`** — not the string-accepting pattern other
+> column-arg methods use. `t.colName("y")` raises `TypeError` (int required).
 
 ---
 
@@ -50,12 +52,12 @@ Row arguments are always 1-based integers.
 
 | Call | Returns | Notes |
 |------|---------|-------|
-| `table("name")` | `Table` or `None` | look up existing table by object name; returns `None` if no table with that name exists |
+| `table("name")` | `Table` or `None` | look up table by object name; `None` if not found — see warning below |
 | `newTable()` | `Table` | blank table (30 rows, 2 cols) |
-| `newTable("name", rows, cols)` | `Table` | blank table with given size |
+| `newTable("name", rows, cols)` | `Table` | blank table with given size — if `"name"` already exists, resizes AND clears it in place instead of creating a second table, silently destroying its data (no exception, no dialog) |
 | `currentTable()` | `Table` | currently active table |
 
-> **Warning:** `table("name")` returns `None` (confirmed), not an error and not a placeholder object, when no table with that name exists. Always check `if t is None:` before using the result — `t.cell(...)` on `None` raises `AttributeError`.
+> **Warning:** `table("name")` returns `None` (not an error/placeholder) when not found — check `if t is None:` before use; `t.cell(...)` on `None` raises `AttributeError`.
 
 ---
 
@@ -75,35 +77,63 @@ Row arguments are always 1-based integers.
 
 ## Column Names
 
-> **Warning:** avoid `_` in column labels. QtiSAS uses `_` as the separator between table name and column name (e.g. `"MyTable_I"`), so a label like `"I_true"` will be misidentified when looked up by name.
+> **Warning:** avoid `_` in column labels — QtiSAS uses `_` as the table-name/column-name separator (e.g. `"MyTable_I"`), so `"I_true"` gets misidentified when looked up by name.
 
 | Method | Returns | Notes |
 |--------|---------|-------|
-| `colName(col)` | `str` | short label only, e.g. `"I"` |
-| `colNames()` | `tuple` | full names, e.g. `("MyTable_x", "MyTable_I")` |
-| `setColName(col, label)` | `bool` | rename one column — raises `ValueError` if `label` is empty or already used by another column in this table |
+| `colName(col)` | `str` | short label only, e.g. `"y"` — `col` must be `int` here (see exception above) |
+| `colNames()` | `tuple` | short labels only, e.g. `("x", "y", "dy")` — **NEVER table-name-prefixed** |
+| `setColName(col, label, updateTableDesignations=False)` | `bool` | rename one column — raises `ValueError` if `label` is empty or already taken in this table |
 | `setColNames(["x","y",...])` | — | set all column labels at once |
+
+> **`colNames()`/`colName(col)` return the BARE label, never `"tablename_colname"`** (Fittable's
+> dataset-naming convention: `configure()`, `f.datasets()`, `setWeightingDataset()`, ...) — both
+> call `Table::colLabel()`, not the prefixing `Table::colName(int)` C++ method Python never invokes.
+> So a fully-qualified name check inside `colNames()` never matches, even if the column exists.
+> ```python
+> # WRONG — colNames() never contains the "table_col" form, this check ALWAYS reports "missing"
+> if "GaussPeak_y" not in t.colNames():
+>     scriptPrint("missing")   # prints even though column "y" genuinely exists
+>
+> # RIGHT — check the bare label; only build the "table_col" string when calling Fittable
+> if "y" not in t.colNames():
+>     scriptPrint("missing")
+> f.configure(model, [t.objectName() + "_y"])   # the "table_col" form belongs here, not in colNames()
+> ```
+> Confirmed live: this check (`"GaussPeak_y" not in t.colNames()`) blocked a model-comparison step
+> and the final plotting step — both printed "missing required y or dy columns" and skipped real
+> work, while split-mode reported both parts "done."
 
 ---
 
 ## Reading Cells
 
-> **Note:** Argument order is **(col, row)** — column first, row second, both 1-based. For example, `t.cell(2, 3)` reads column 2, row 3. This is unusual compared to most table APIs.
+> **Note:** Argument order is **(col, row)**, both 1-based — e.g. `t.cell(2, 3)` reads column 2, row 3 (unusual vs. most table APIs).
 
 | Method | Returns | Notes |
 |--------|---------|-------|
 | `text(col, row)` | `str` | raw cell text |
 | `cell(col, row)` | `float` | numeric value; raises `ValueError` if empty |
 | `cellData(col, row)` | `str` or `float` | type-aware: float for numeric cols, str for text |
-| `rowData(row)` | `tuple` | all cells of a row |
-| `colData(col)` | `list` | all cells of a column |
+| `rowData(row)` | `tuple` | all cells of a row — an empty numeric cell becomes `None`, NOT `0` |
+| `colData(col)` | `list` | all cells of a column — an empty numeric cell becomes `None`, NOT `0` |
 | `t[n]` | `tuple` | row at **0-based** index `n`; equivalent to `rowData(n+1)`; supports negative indices (`t[-1]` = last row) |
 | `t[start:stop]` | `list` | standard Python slice (0-based) as list of tuples |
 
-> **Warning:** Negative indices work for `t[n]`/`t[start:stop]` (bracket access) but **NOT** for
+> **Warning:** Negative indices work for `t[n]`/`t[start:stop]` but **NOT** for
 > `cell()`/`text()`/`cellData()`/`setCell()` — those are 1-based only and raise `ValueError: There's
-> no row -1 in table <name>!` for a negative row/col. To read the last row's value, get the row count
-> first: `t.cell(col, t.numRows())`, not `t.cell(col, -1)`. Confirmed live.
+> no row -1 in table <name>!` on negative row/col (see example below). Confirmed live.
+
+> **`t.text(col, row)` used to raise `TypeError: decoding str is not supported` for every
+> non-empty cell, on any table** (Python-3-porting bug: an already-decoded `str` hit a redundant
+> second decode step, which CPython rejects). Fixed at the source (`qtimod.sip`) as of this build.
+> On older builds, use `cellData(col, row)` instead (unaffected, same text).
+
+> **`t.cell(col, row)` silently returns `0.0` when the text can't be parsed as a number** — it only
+> raises on a genuinely EMPTY cell; no way to tell "really 0.0" from "parsing failed." Confirmed
+> live: reading a text-label cell by mistake gave `0.0` with no error. Never use `cell()` on an
+> unconfirmed-numeric column — use `text()`/`cellData()` and parse it yourself so failures stay
+> visible.
 
 ```python
 # WRONG — cell() doesn't support Python-style negative indexing, unlike t[n]
@@ -118,17 +148,17 @@ last_row_tuple = t[-1]          # bracket access DOES support -1
 
 ## Writing Cells
 
-> **Note:** Argument order is **(col, row)** — column first, row second, both 1-based. For example, `t.setCell(2, 3, 1.0)` writes to column 2, row 3.
+> **Note:** Argument order is **(col, row)**, both 1-based — e.g. `t.setCell(2, 3, 1.0)` writes column 2, row 3.
 
 | Method | Notes |
 |--------|-------|
 | `setText(col, row, value)` | write string to cell |
 | `setCell(col, row, value)` | write float to cell |
 | `setCellData(col, row, value)` | type-aware write (str or float) |
-| `setRowData(row, tuple)` | overwrite entire row from a tuple |
-| `t[row] = tuple` | same as `setRowData` |
+| `setRowData(row, tuple)` | overwrite entire row from a tuple — `row` is **1-based** |
+| `t[row] = tuple` | **0-based, negative-index-capable** (`t[0]` writes row 1, `t[-1]` writes the last row) — converts to `setRowData(row+1, tuple)`; unlike `setRowData`'s own 1-based `row` above |
 | `appendRowData(tuple)` | add a new row at the end; returns new row index |
-| `setColData(col, iterable, startRow=0)` | fill column from any iterable; `startRow` is 0-based offset |
+| `setColData(col, data, offset=0)` | fill column from any iterable; keyword is `offset` (not `startRow`), 0-based |
 
 ---
 
@@ -136,7 +166,7 @@ last_row_tuple = t[-1]          # bracket access DOES support -1
 
 | Call | Notes |
 |------|-------|
-| `deleteRows(start, end)` | delete rows `start`…`end` (1-based, inclusive) — raises `ValueError` if the table contains any read-only column (whole operation aborted) |
+| `deleteRows(start, end)` | delete rows `start`…`end` (1-based, inclusive) — raises `ValueError` if any column is read-only (whole op aborted) |
 | `del t[row]` | delete single row (0-based Python index) — same read-only restriction, raises `ValueError` |
 | `del t[start:stop]` | delete row slice (0-based Python indices) — same read-only restriction, raises `ValueError` |
 | `removeCol(col)` | delete column — silently skips read-only columns (no dialog, no exception) |
@@ -188,8 +218,8 @@ Access via `Table.PlotDesignation.<name>` — plain integers are **not** accepte
 | `Table.PlotDesignation.Label` | 6 | label column |
 
 ```python
-t.setColumnRole("I",  Table.PlotDesignation.Y)
-t.setColumnRole("dI", Table.PlotDesignation.yErr)
+t.setColumnRole("y",  Table.PlotDesignation.Y)
+t.setColumnRole("dy", Table.PlotDesignation.yErr)
 ```
 
 ---
@@ -209,13 +239,13 @@ t.setColumnRole("dI", Table.PlotDesignation.yErr)
 | Method | Notes |
 |--------|-------|
 | `setColTextFormat(col)` | mark column as text |
-| `setColNumericFormat(col, fmt, prec)` | `fmt`: `Table.NumericFormat.*`; `prec` = significant digits |
-| `setColDateFormat(col, fmtStr)` | e.g. `"yyyy-MM-dd"` |
-| `setColTimeFormat(col, fmtStr)` | e.g. `"hh:mm:ss"` |
-| `setColMonthFormat(col, fmtStr)` | e.g. `"MMM"` (Jan), `"MMMM"` (January), `"MM"` (01); column must contain integers 1–12 |
-| `setColDayFormat(col, fmtStr)` | e.g. `"ddd"` (Mon), `"dddd"` (Monday); column must contain integers 1–7 (1=Mon) |
+| `setColNumericFormat(col, format, prec, updateCells=True)` | `format` (not `fmt`): `Table.NumericFormat.*`; `prec` = significant digits |
+| `setColDateFormat(col, fmtStr, updateCells=True)` | e.g. `"yyyy-MM-dd"` |
+| `setColTimeFormat(col, fmtStr, updateCells=True)` | e.g. `"hh:mm:ss"` |
+| `setColMonthFormat(col, fmtStr, updateCells=True)` | e.g. `"MMM"` (Jan), `"MMMM"` (January), `"MM"` (01); column must contain integers 1–12 |
+| `setColDayFormat(col, fmtStr, updateCells=True)` | e.g. `"ddd"` (Mon), `"dddd"` (Monday); column must contain integers 1–7 (1=Mon) |
 | `setColumnWidth(col, px)` | set column width in pixels |
-| `hideColumn(col, hide=True)` | hide or show column |
+| `hideColumn(col, on=True)` | hide or show column — keyword is `on`, not `hide`; `hideColumn(1, hide=True)` raises `TypeError` |
 | `showAllColumns()` | un-hide all columns |
 | `setDecimalSeparators(locale)` | 0=system, 1=English (dot), 2=German (comma) |
 
@@ -236,7 +266,7 @@ t.setColumnRole("dI", Table.PlotDesignation.yErr)
 | Method | Notes |
 |--------|-------|
 | `setCommand(col, expr)` | assign a formula expression to a column |
-| `recalculate(col, startRow=1, endRow=-1)` | evaluate formula; returns `True` on success — raises `ValueError` if the column is read-only or the formula fails to evaluate |
+| `recalculate(col, startRow=1, endRow=-1, forceMuParser=False, notifyChanges=True)` | evaluate formula; returns `True` on success — raises `ValueError` if the column is read-only or the formula fails to evaluate |
 
 ---
 
@@ -254,8 +284,8 @@ t.setColumnRole("dI", Table.PlotDesignation.yErr)
 | Method | Notes |
 |--------|-------|
 | `setReadOnlyColumn(col, readOnly=True)` | prevent editing of column |
-| `isRowSelected(row)` → `bool` | — |
-| `isColSelected(col)` → `bool` | — |
+| `isRowSelected(row, full=False)` → `bool` | — |
+| `isColSelected(col, full=False)` → `bool` | — |
 | `firstSelectedColumn()` → `int` | — |
 | `numSelectedRows()` → `int` | — |
 | `setSelectedCol(col)` | move selection to column |
@@ -267,7 +297,7 @@ t.setColumnRole("dI", Table.PlotDesignation.yErr)
 
 ### importASCII
 
-All arguments are **positional only** (parameters are unnamed in the SIP binding):
+All arguments are **positional only** (unnamed in the SIP binding):
 
 ```python
 t.importASCII(
@@ -280,10 +310,20 @@ t.importASCII(
     False,                # 7  importComments
     "#",                  # 8  commentString
     False,                # 9  readOnly
-    2,                    # 10 mode: 0=NewColumns, 1=NewRows, 2=Overwrite
+    Table.ImportMode.Overwrite,  # 10 mode — see enum below
     # args 11-15 (locale, startRow, endRow, colFilter, colDestinations) use defaults
 )
 ```
+
+> **`mode` is an actual enum (`Table.ImportMode`), not a plain int** — same strict SIP enum parsing
+> as `Table.PlotDesignation` above. A raw literal (`t.importASCII(..., 2)`) raises `TypeError`; use
+> `Table.ImportMode.Overwrite` etc. as shown.
+
+| Constant | Value | Meaning |
+|----------|-------|---------|
+| `Table.ImportMode.NewColumns` | 0 | append imported data as new columns |
+| `Table.ImportMode.NewRows` | 1 | append imported data as new rows |
+| `Table.ImportMode.Overwrite` | 2 | replace existing contents |
 
 ---
 
@@ -301,7 +341,7 @@ ok = t.exportASCII(
 )
 ```
 
-Raises `ValueError` if the file cannot be opened for writing (bad path/permissions) — no dialog, script stops.
+Raises `ValueError` if the file can't be opened for writing (bad path/permissions) — no dialog, script stops.
 
 ---
 
@@ -343,7 +383,8 @@ t.setColData(3, dI)
 
 ```python
 t  = table("MyData")
-x  = t.colData("x")     # list of floats (empty cells become 0)
+x  = t.colData("x")     # list of floats (empty cells become None, NOT 0 — differs from cell(),
+                         # which raises ValueError on an empty numeric cell instead)
 y  = t.colData("y")
 n  = t.numRows()
 
@@ -437,11 +478,11 @@ t.importASCII(
 )
 
 # set column names, then assign roles
-t.setColNames(["Q", "I", "dI", "sigma"])
-t.setColumnRole("Q",     Table.PlotDesignation.X)
-t.setColumnRole("I",     Table.PlotDesignation.Y)
-t.setColumnRole("dI",    Table.PlotDesignation.yErr)
-t.setColumnRole("sigma", Table.PlotDesignation.xErr)
+t.setColNames(["x", "y", "dy", "dx"])
+t.setColumnRole("x",  Table.PlotDesignation.X)
+t.setColumnRole("y",  Table.PlotDesignation.Y)
+t.setColumnRole("dy", Table.PlotDesignation.yErr)
+t.setColumnRole("dx", Table.PlotDesignation.xErr)
 t.notifyChanges()
 ```
 
@@ -564,8 +605,8 @@ for row in range(t.numRows(), 0, -1):
 t.notifyChanges()
 ```
 
-Same pattern removes **empty rows** — an empty/non-numeric cell raises `ValueError` from `cell()`,
-so treat that as "this row is empty" instead of skipping it:
+Same pattern removes **empty rows**: an empty/non-numeric cell raises `ValueError` from `cell()`,
+so treat that as "empty" instead of skipping it:
 ```python
 t = table("MyData")
 for row in range(t.numRows(), 0, -1):
@@ -575,8 +616,8 @@ for row in range(t.numRows(), 0, -1):
         t.deleteRows(row, row)  # unreadable/empty -> remove
 t.notifyChanges()
 ```
-There is no `removeEmptyRows()`/`setColumn()`-style one-call helper — `Table` cannot be
-constructed directly either (`Table("name")` raises `TypeError`; use the `table("name")` function).
+There is no `removeEmptyRows()`/`setColumn()`-style one-call helper. `Table` also cannot be
+constructed directly (`Table("name")` raises `TypeError`; use the `table("name")` function).
 
 ---
 
@@ -616,8 +657,8 @@ scriptPrint("cols: " + str(t.colNames()))
 
 ### Rule 1 — Cell order is (col, row) — opposite of Matrix
 
-Table uses **(col, row)** order. Matrix uses **(row, col)**. Mixing them silently reads/writes the
-wrong cell. Both indices are **1-based**.
+Table uses **(col, row)**; Matrix uses **(row, col)**. Mixing them silently reads/writes the wrong
+cell. Both indices are **1-based**.
 
 **WRONG (Matrix habit applied to Table):**
 ```python
@@ -633,11 +674,11 @@ t.text(col, row)
 
 ### Rule 2 — Math functions are global; all other standard library modules must be imported
 
-Math functions (`exp`, `sin`, `cos`, `sqrt`, `pi`, `log`, …) are global in QtiSAS — `import math`
-raises `ImportError`. Use the bare names directly.
+Math functions (`exp`, `sin`, `cos`, `sqrt`, `pi`, `log`, …) are global — `import math` raises
+`ImportError`; use bare names.
 
-All other standard library modules (`random`, `os`, `sys`, `re`, `json`, `numpy`, …) are **not**
-global and must be imported explicitly before use.
+All other stdlib modules (`random`, `os`, `sys`, `re`, `json`, `numpy`, …) are **not** global —
+import explicitly before use.
 
 **WRONG:**
 ```python
@@ -655,8 +696,8 @@ t.setCell(2, i, random.random() * 10) # random — must import
 
 ### Rule 3 — `plot()` creates its own graph window; don't call `newGraph()` first
 
-`t.plot("x", "y", Graph.CurveType.Line)` creates and returns a `GraphWindow`. Calling `newGraph()`
-before it creates an extra, empty, unused window.
+`t.plot(...)` creates and returns a `GraphWindow`; calling `newGraph()` first just adds an extra,
+empty, unused window.
 
 **WRONG:**
 ```python
@@ -671,8 +712,8 @@ gw = t.plot("x", "y", Graph.CurveType.Line)
 
 ### Rule 4 — `notifyChanges()` required after bulk cell writes
 
-After filling cells in a loop, call `t.notifyChanges()` to refresh the view and downstream plots.
-Skipping it leaves the table display stale.
+After filling cells in a loop, call `t.notifyChanges()` to refresh the view and downstream plots —
+skipping it leaves the display stale.
 
 **RIGHT:**
 ```python
@@ -684,12 +725,11 @@ t.notifyChanges()
 
 ### Rule 5 — `cell()` raises on empty cells; EXPLORE before reading
 
-`cell(col, row)` raises `ValueError` (surfaced as `SystemError`) if the cell is empty.
-A freshly created table has **all cells empty**.
+`cell(col, row)` raises `ValueError` (surfaced as `SystemError`) on an empty cell — a freshly
+created table has **all cells empty**.
 
-**Before reading from any table whose content is uncertain, use EXPLORE** to check whether
-the table exists and its cells are populated. Only after EXPLORE confirms data should you
-call `cell()`.
+**Before reading any table with uncertain content, use EXPLORE** to confirm it exists and has
+populated cells — only then call `cell()`.
 
 **WRONG — create or look up a table then immediately read without knowing cell state:**
 ```python

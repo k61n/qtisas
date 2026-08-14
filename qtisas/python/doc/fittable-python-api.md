@@ -4,13 +4,13 @@ Python scripting interface for the **Fittable** fitting widget.
 Access via: `f = Fittable`
 
 > **You cannot define or create fitting functions via Python.**
-> `configure()` and `setFunction()` select a function **by name** from the pre-compiled Fittable library.
+> `configure()`/`setFunction()` select a function **by name** from the pre-compiled Fittable library.
 > Passing a formula string such as `"a*x+b"` will raise `ValueError`.
 > Use `f.fitFunctions()` to list all available function names.
-> Function authoring via Python will be supported in a future release through the **Compiler** interface.
+> Function authoring via Python will be supported in a future release via the **Compiler** interface.
 
 > **Boolean aliases:** QtiSAS defines `true` and `false` as aliases for `True` and `False`.
-> Both forms are accepted in scripts: `f.setInstrumentalFit(true)` and `f.setInstrumentalFit(True)` are equivalent.
+> Both forms are accepted: `f.setInstrumentalFit(true)` == `f.setInstrumentalFit(True)`.
 
 ---
 
@@ -56,7 +56,7 @@ The API has two phases separated by function selection:
 2. **Function selection** — `configure()` or `setFunction()`
 3. **Post-function** — datasets, range, weighting, resolution, polydispersity, parameters
 
-`setInstrumentalFit()` and `setInstrument()` may be called at any stage (before or after function selection). When called at stage `"fit"` or later, the UI widgets and parameter tables are updated immediately.
+`setInstrumentalFit()` and `setInstrument()` may be called at any stage; at `"fit"` or later, the UI widgets and parameter tables update immediately.
 
 ---
 
@@ -112,10 +112,10 @@ Returns a dict:
 
 | Key | Type | Description |
 |-----|------|-------------|
-| `stage` | str | current stage (see Stage Navigation) |
+| `stage` | str | `"init"` / `"ready"` / `"fitted"` — **NOT** `stage()`/`selectStage()`'s vocabulary. Tracks only whether a function is loaded and a fit has run, not the active tab: after `f.selectStage("simulate")`, `f.stage()` returns `"simulate"` but `f.state()["stage"]` still shows `"ready"`/`"fitted"`. |
 | `function` | str | current function name (empty if not set) |
 | `datasets` | int | number of configured datasets |
-| `selectedDatasets` | list[str] | names of selected dataset columns |
+| `selected` | list[str] | names of selected dataset columns — **NOT** `selectedDatasets`; that key does not exist and raises `KeyError` |
 | `fitMethod` | int | 0=Simplex, 1=LM, 2=GenMin |
 | `params` | int | number of parameters |
 | `instrumental` | bool | SANS resolution/polydispersity active |
@@ -137,12 +137,25 @@ f.fitFunctions("*SANS*")     # substring match
 
 Returns sorted list of function names. Wildcards: `*` matches any substring including `/`.
 
+> **`Fittable` has `fitFunctions()`; it does NOT have `functionNames()`** — that belongs to
+> `Compiler`, a different singleton (see compile-python-api.md). Don't borrow one's method name onto
+> the other — `Compiler` needs `c.functionNames("ALL")` to list compiled functions, never
+> `c.fitFunctions(...)`.
+
 ---
 
 ### currentFunction()
 
 ```python
 name = f.currentFunction()
+```
+
+---
+
+### Path — compiled function library directory
+
+```python
+lib_dir = f.Path   # e.g. "~/.config/qtisas/FitFunctions/" — readable/writable attribute, not a method
 ```
 
 ---
@@ -169,14 +182,14 @@ f.configure("Guinier", ["table_I1", "table_I2"])    # multi-dataset global fit
 
 > **IMPORTANT: each item in `datasets` is one COMPLETE `"tablename_colname"` string — a 2-item
 > list means a 2-DATASET GLOBAL FIT, not "table name + column name" split apart.** Splitting a
-> single table+column pair into two list items asks for two entirely separate datasets, each of
-> which must independently exist:
->   - WRONG: `f.configure("Guinier", ["data", "I"])` — this requests dataset `"data"` AND dataset
->     `"I"` as two separate fits (neither of which exists — `"I"` alone is never a valid dataset
->     name) — raises `ValueError` on the first missing one, not a hint that the split was wrong.
+> table+column pair into two list items asks for two separate datasets that must independently
+> exist:
+>   - WRONG: `f.configure("Guinier", ["data", "I"])` — requests datasets `"data"` AND `"I"` as two
+>     separate fits (neither exists — `"I"` alone is never valid) — raises `ValueError` on the first
+>     missing one, not a hint the split was wrong.
 >   - RIGHT: `f.configure("Guinier", ["data_I"])` — one combined string, column `I` of table `data`.
 >   - RIGHT (genuinely two datasets): `f.configure("Guinier", ["data1_I", "data2_I"])` — a global
->     fit across two different tables' `I` columns, each a complete `tablename_colname` string.
+>     fit across two tables' `I` columns, each a complete `tablename_colname` string.
 
 ---
 
@@ -208,12 +221,11 @@ f.selectDataset(3, "table_I3")
 | `setDatasetCount(n)` | set number (call before `setFunction`) |
 | `selectDataset(m, name)` | assign dataset to slot m (call after `setFunction`) |
 
-> **`datasets()` is read-only — it lists what's already configured, it cannot register new ones.**
-> Calling it with an argument (`f.datasets(["name"])`, intending to "add" a dataset) raises
-> `TypeError: datasets(self): too many arguments`; calling it bare afterward (`f.datasets()`)
-> then compiles fine but does nothing useful — the return value is discarded, and the fit still
-> has zero datasets configured. To actually set datasets, call `configure(function, [...])` again
-> with the full list, or use `setDatasetCount(n)` + `selectDataset(m, name)` above.
+> **`datasets()` is read-only — it can't register new datasets, only list configured ones.**
+> Calling it with an argument raises `TypeError: datasets(self): too many arguments`; calling it
+> bare afterward runs but does nothing — return value discarded, fit still has zero datasets. To set
+> datasets, call `configure(function, [...])` again with the full list, or `setDatasetCount(n)` +
+> `selectDataset(m, name)`.
 > ```python
 > # WRONG — configure() called with an empty list "to fill in later", then datasets() misused as a setter
 > f.configure("SphereSANS", [])
@@ -246,11 +258,10 @@ f.selectDataset(3, "table_I3")
 ## Fit Algorithm
 
 > **Use LM for all smooth analytical functions — Simplex is WRONG for them.**
-> Levenberg-Marquardt (`"LM"`) is the default and converges in fewer than 20 iterations for
-> Gaussian, sphere, Guinier, cylinder, and any continuously differentiable model.
-> `setFitMethod("Simplex")` or `setFitMethod(0)` uses derivative-free search; for smooth models
-> it runs 500–1000 iterations without convergence — do NOT use it for analytical functions.
-> Only use Simplex for tabulated or step-function models where derivatives are unreliable.
+> Levenberg-Marquardt (`"LM"`, default) converges in under 20 iterations for Gaussian, sphere,
+> Guinier, cylinder, any continuously differentiable model. `setFitMethod("Simplex")`/`(0)` is
+> derivative-free search; for smooth models it runs 500–1000 iterations without converging — only
+> use it for tabulated/step-function models where derivatives are unreliable.
 >
 > ```python
 > # RIGHT — LM converges in <20 iterations for smooth models; or omit (LM is the default)
@@ -333,8 +344,15 @@ f.selectDataset(3, "table_I3")
 
 | Function | Description |
 |----------|-------------|
-| `resoEnabled(m)` / `setResoEnabled(m, bool)` | enable resolution for dataset m |
+| `resoEnabled(m)` / `setResoEnabled(m, bool)` | enable resolution for dataset m — **no bounds check**: an out-of-range `m` (e.g. `0`, beyond `datasetCount()`) silently no-ops / returns `False`, no exception — unlike `setResoDataset` below |
 | `resoDataset(m)` / `setResoDataset(m, name)` | resolution σ(Q) source for dataset m — column name or built-in option (see below) |
+
+> **`setResoDataset(m, name)` raises `ValueError` if `name` doesn't match any available resolution
+> option for that index** — same silent-no-op bug `setWeightingDataset` had (confirmed live): an
+> unmatched name used to silently keep the previous selection, so smearing never applied. The combo
+> only populates once `setInstrumentalFit(True)` is set — call that first if a column name isn't
+> recognized. `setPolyDataset(m, name)` below has the identical fix, needing `setPolyEnabled(m,
+> True)` first instead.
 
 Built-in `name` values (matched by substring, case-sensitive):
 
@@ -372,7 +390,7 @@ Or pass any σ(Q) column name from your data table.
 
 | Function | Description |
 |----------|-------------|
-| `polyEnabled(m)` / `setPolyEnabled(m, bool)` | enable polydispersity for dataset m |
+| `polyEnabled(m)` / `setPolyEnabled(m, bool)` | enable polydispersity for dataset m — **no bounds check**, same silent no-op as `setResoEnabled` above for an out-of-range `m` |
 | `polyDataset(m)` / `setPolyDataset(m, name)` | polydispersity sigma column for dataset m |
 
 ---
@@ -387,7 +405,7 @@ Or pass any σ(Q) column name from your data table.
 | 3 | `1/Y^2` |
 | 4 | `1/Y^a` |
 | 5 | `1/(c^a + b·Y^a)` |
-| 6 | `1/(Y^a · c^(Xmax−X))` |
+| 6 | `1/(Y^a · c^|Xmax−X|)` |
 
 ---
 
@@ -403,10 +421,18 @@ f.setWeightingEnabled(1, True)         # enable weighting for dataset 1
 f.setWeightingDataset(1, "table_dI")   # σ column for dataset 1
 ```
 
-> **RULE — Assigning a column `Table.PlotDesignation.yErr` does NOT enable weighted fitting by itself. You must also call `setWeightingEnabled(m, True)`.**
-> Without it, weighting silently defaults to OFF (unweighted, every point weight = 1) — no error, no warning. `chi2`/`f.results()` still return numbers, so nothing *looks* wrong. But chi²/dof then reflects raw, unnormalized residuals rather than residuals-over-σ, so its magnitude is dominated by the absolute scale of the data rather than actual fit quality. Confirmed: a fit with data ~10⁹ in magnitude reported chi²/dof ≈ 1.5×10¹⁴ unweighted vs. ≈ 1.8 with weighting correctly enabled on the exact same fit — thirteen orders of magnitude apart, silently.
+Matching read accessors exist for every setter above (not shown in the code block):
+`weightingMethod()`, `weightingA()`/`weightingB()`/`weightingC()`/`weightingXmax()`,
+`weightingEnabled(m)`, `weightingDataset(m)`.
+
+> **RULE — Assigning role `Table.PlotDesignation.yErr` does NOT enable weighted fitting; also call
+> `setWeightingEnabled(m, True)`.** Without it, weighting silently stays OFF (weight = 1) — no error;
+> `chi2`/`f.results()` still return numbers, but chi²/dof reflects raw unnormalized residuals,
+> dominated by the data's scale, not fit quality. Confirmed: data ~10⁹ in magnitude reported
+> chi²/dof ≈ 1.5×10¹⁴ unweighted vs. ≈ 1.8 weighted, same fit — thirteen orders of magnitude apart.
 >
-> **`m` here is a 1-based dataset INDEX (int) — not the `"tablename_colname"` dataset NAME string used almost everywhere else in this API.** That's the one exception, and it's easy to miss given the rest of this API's convention. Confirmed live, both wrong forms, across separate conversations:
+> **`m` here is a 1-based dataset INDEX (int), not a `"tablename_colname"` NAME string like
+> elsewhere in this API.** Confirmed live, both wrong forms:
 > ```python
 > f.setWeightingEnabled("Data_I", True)  # WRONG — TypeError: setWeightingEnabled(self, m: int,
 >                                         #   enabled: bool): argument 1 has unexpected type 'str'
@@ -429,56 +455,44 @@ f.setWeightingDataset(1, "table_dI")   # σ column for dataset 1
 > f.setWeightingDataset(1, "Data_dI")  # the actual yErr column name
 > chi2 = f.fit()
 > ```
-> If comparing chi²/dof across multiple models or datasets, always confirm weighting is enabled first — otherwise the comparison is meaningless regardless of how good the fits look.
+> When comparing chi²/dof across models/datasets, confirm weighting is enabled first — otherwise the comparison is meaningless.
 
-> **IMPORTANT — a good chi²/dof does NOT by itself mean the fit actually finished converging.** `fit()` can stop for several different reasons (converged within tolerance, hit the iteration cap, step size too small, ...) — of these, only "hit the iteration cap" (visible in the console as `iter <N> [<maxIterations>]` with `<N>` equal or very close to `maxIterations()`) genuinely means the optimizer may have been cut off before reaching a true minimum, not that it found one. The reliable, general check: call `fit()` a second time immediately after (same configuration, no changes) — this restarts the optimizer from the just-converged parameters. If chi²/dof barely changes, the fit had already genuinely settled and the result is trustworthy; if the second call's chi²/dof drops meaningfully further, the first run was NOT actually finished. This applies regardless of which specific model or parameter shape is involved — unlike checking a parameter's value against the data's range, which depends on domain judgment and can be flat wrong (a fitted peak center legitimately CAN sit outside the sampled range when the visible tail/wing still constrains it with a tight error bar — that is not a sign of a bad fit).
-> ```python
-> chi1 = f.fit()
-> chi2 = f.fit()  # re-run from the just-converged parameters — cheap, and confirms convergence
-> if abs(chi2 - chi1) > 1e-6 * max(abs(chi1), 1e-300):
->     scriptPrint(f"Fit may not have fully converged: chi2/dof went from {chi1} to {chi2} on a "
->                 f"repeat fit — consider raising maxIterations (currently {f.maxIterations()}).")
-> else:
->     scriptPrint(f"Fit converged: chi2/dof = {chi2}, R2 = {f.r2()}")
-> ```
-
-> **IMPORTANT — `f.lastChi2` and `f.results()` reflect the CURRENT fit state, not a history — reading them again after a second `fit()` call does NOT give you the "before" values.** There is only ever one live result; a second `fit()` overwrites it in place. To compare before-vs-after (e.g. "raise maxIterations and compare with the last result"), you must capture the "before" snapshot into local variables **before** calling `fit()` again — reading `f.lastChi2`/`f.results()` afterward, expecting them to still hold the old values, silently gives you the SAME (new) values twice under different labels, with no error and no warning that the comparison never actually happened.
-> ```python
-> # WRONG — both "old" reads happen AFTER fit() already overwrote the state, so
-> # chi2_old ends up identical to chi2_new — this is not a real before/after comparison
-> f.setMaxIterations(1000)
-> chi2_new = f.fit()
-> r_new = f.results()
-> chi2_old = f.lastChi2   # already overwritten — this is the NEW value, not the old one
-> r_old = f.results()      # same mistake
+> **`setWeightingDataset(m, name)` raises `ValueError` if `name` isn't the exact, fully-qualified
+> `"tablename_colname"` name — not a bare column like `"dI"`.** Confirmed live:
+> `f.setWeightingDataset(1, "dI")` used to silently no-op instead of failing, same shape as
+> forgetting `setWeightingEnabled()` above. Always use the full `"table_dI"` form.
 >
-> # RIGHT — capture "before" state first, using the values already in hand
-> chi2_before = f.lastChi2   # or the chi2 returned by the PREVIOUS fit() call, if still in scope
-> r_before = f.results()
-> f.setMaxIterations(1000)
-> chi2_after = f.fit()        # fit()'s own return value is always the freshest "after" reading
-> r_after = f.results()
-> ```
-> This is the same underlying gotcha as the convergence check above — `fit()`'s own return value is always safe to use as a distinct snapshot (it's a fresh value each call), while `lastChi2`/`results()` are only safe to read once, at the moment you actually need "the current state," never as a stand-in for "the state from before the call I just made."
+> **A correctly-formatted `"table_col"` name still isn't enough — the column must be yErr-role.**
+> `setWeightingDataset`'s valid-name pool is a strict subset of `configure()`'s `datasets` argument
+> (X/Y too) — see Rule 6 below.
 
 ---
 
 ## Parameters
 
 > **IMPORTANT — exact parameter names required.**
-> `setParamValue`, `setParamVaries`, `paramValue`, and related methods require names **exactly** as returned by `paramNames()` — case-sensitive, no abbreviations.
-> An unknown name raises `ValueError: setParamValue: no such parameter '<name>'. Available: <comma-separated real names>.` (or the equivalent for `setParamVaries`/`paramValue`) — it does not silently fail, and the error itself already names every valid parameter, so a correction never has to guess.
-> `paramValue` — the READ accessor — used to silently return `nan` for an unknown name instead of raising, unlike the setters; this was fixed so a wrong guess (e.g. `paramValue("center")` for a function whose real parameter is `"x0"`) is caught immediately instead of reporting a misleading `nan` as if it were a real result.
-> Always discover names in an EXPLORE step: `scriptPrint(str(f.paramNames()))` — then use those exact strings.
-> Example: for `sasviewmodels/sphere` the names are `['scale', 'background', 'sld', 'sld_solvent', 'radius']` —
-> `setParamValue("R", ...)` or `setParamValue("SLD", ...)` raise `ValueError`, they don't silently do nothing.
+> `setParamValue`, `setParamVaries`, `paramValue`, etc. need names **exactly** as `paramNames()`
+> returns — case-sensitive, no abbreviations. An unknown name raises `ValueError: setParamValue: no
+> such parameter '<name>'. Available: <comma-separated real names>.`, so a fix never has to guess.
+> `paramValue` (READ) used to silently return `nan` for an unknown name instead of raising; now
+> fixed, so e.g. `paramValue("center")` on a model whose real name is `"x0"` is caught immediately.
+> Discover names first: `scriptPrint(str(f.paramNames()))`. Example, `sasviewmodels/sphere`:
+> `['scale', 'background', 'sld', 'sld_solvent', 'radius']`.
 
 > **IMPORTANT — not all parameters are adjustable (fittable).**
-> Each model defines which parameters can be fitted. After `configure()`, `paramVaries(name)` reflects
-> the model's built-in adjustability — it returns `False` for parameters the model marks as non-adjustable
-> (e.g. in some SANS-fit functions only `scale` is adjustable while `SLD1`/`SLD2` are fixed by the model).
-> **Always call `paramVaries(name)` after `configure()` to discover which parameters are actually fittable.**
-> Calling `setParamVaries("sld1", True)` on a non-adjustable parameter has no effect.
+> Each model decides what's fittable. After `configure()`, `paramVaries(name)` reflects that —
+> `False` for parameters the model marks fixed (e.g. some SANS-fit functions vary only `scale`,
+> fixing `SLD1`/`SLD2`). **Call `paramVaries(name)` after `configure()`** to check;
+> `setParamVaries("sld1", True)` on a non-adjustable parameter has no effect.
+>
+> **For a CUSTOM compiled function, adjustability is just whatever `c.setParamVariesAll()` set at
+> compile time** — not a deliberate restriction. `setParamCount(n)` defaults new parameters to
+> fixed; skip `setParamVariesAll()` and ALL stay permanently non-adjustable.
+>
+> **`configure()` re-derives vary/fixed state from that compiled default EVERY call — it drops any
+> prior `setParamVaries()` overrides.** A second `configure()` resets to the compiled baseline. If
+> nothing ever sets varying params, `fit()` raises `RuntimeError: fit(): no adjustable parameters —
+> every parameter is fixed.` Confirmed live.
 
 All `dataset` arguments are **1-indexed** (1 = first dataset).
 For `setParamValue` and `setParamVaries`, `dataset=-1` (default) applies to **all datasets**.
@@ -550,7 +564,7 @@ empty string.
 
 | Function | Stage required | Returns | Description |
 |----------|---------------|---------|-------------|
-| `fit()` | `"fit"` | float | run fit; returns Chi²/DoF; prints `chi²/dof`, `R²`, `Q` to console; raises `RuntimeError` if the selected dataset(s) can't be read (e.g. an empty table) |
+| `fit()` | `"fit"` | float | run fit; returns Chi²/DoF; prints `chi²/dof`, `R²`, `Q`; raises `RuntimeError` if the dataset(s) can't be read (e.g. empty table) |
 | `r2()` | `"fit"` | float | R² = 1 − χ²/TSS after last fit or simulate |
 | `qFactor()` | `"fit"` | float | goodness-of-fit probability Q(dof/2, χ²/2); meaningful only with instrumental (error-bar) weighting |
 | `simulate()` | `"fit"` | float | plot fit curves for all datasets |
@@ -560,13 +574,12 @@ empty string.
 | `afterFit()` | `"fit"` | — | called internally by `fit()` — do NOT call manually |
 | `curveColor()` | any | int | current output-curve color index (used by fit, simulate, simulateCurve, plotResults) |
 | `setCurveColor(index)` | after `configure()` | bool | set output-curve color by integer index; returns `False` if out of range or called in `"init"` stage |
-| `setCurveColor("name")` | after `configure()` | bool | set output-curve color by partial name (case-insensitive); prints available names on failure; call after `configure()` and before `fit()` / `plotResults()` |
+| `setCurveColor("name")` | after `configure()` | bool | set output-curve color by partial name (case-insensitive); prints available names on failure; call after `configure()`, before `fit()`/`plotResults()` |
 | `setScaleErrors(bool)` | — | — | scale parameter errors by √(Chi²/DoF) |
 | `setStatisticsNotes(bool)` | — | — | save covariance matrix to a Note after fit |
 | `setSaveSession(bool)` | — | — | save session to a Note after fit |
 
-`fit()`, `simulate()`, `plotResults()`, `beforeFit()` and `afterFit()` raise `RuntimeError` if stage is not `"fit"`.
-`simulateCurve()` raises `RuntimeError` if stage is not `"simulate"`.
+`fit()`, `simulate()`, `plotResults()`, `beforeFit()`, `afterFit()` raise `RuntimeError` if stage isn't `"fit"`; `simulateCurve()` raises it if stage isn't `"simulate"`.
 
 After `fit()` and after `simulate()`, fit curve tables are created in the workspace:
 - Single dataset: `fitCurve-<function>`
@@ -580,8 +593,12 @@ After `fit()` and after `simulate()`, fit curve tables are created in the worksp
 | 2 | `y` | Y | fitted curve I(Q) |
 | 3 | `weight` | yErr | fit weight per point |
 | 4 | `sigma` | xErr | resolution σ(Q) |
-| 5 | `residues` | Y | normalised residuals (data − fit) / σ |
-| 6+ | `Characteristics`, `Conditions`, `Parameters`, `Values`, `Errors` | None | fit metadata |
+| 5 | `residues` | Y | raw, UNNORMALIZED residual `data − fit` — not divided by σ or weight, despite the name |
+| 6 | `Characteristics` | None | label column — one text label per row (e.g. `"chi^2/DoF"`, `"R^2=1-chi^2/TSS"`, a parameter name lives in col 8 instead, see below) |
+| 7 | `Conditions` | None | value column, same row as its label in col 6 — text, prefixed `"->   "` |
+| 8 | `Parameters` | None | one fit parameter NAME per row |
+| 9 | `Values` | None | that parameter's fitted value, same row |
+| 10 | `Errors` | None | that parameter's fit error, same row (empty for a pure `simulate()`, only populated after a real `fit()`) |
 
 To access the fit curve from Python after `fit()`:
 
@@ -599,6 +616,146 @@ i_fit = fc.cell(2, idx)    # col 2 = "y"
 resid = fc.cell(5, idx)    # col 5 = "residues"
 ```
 
+**This table is the ONLY reliable source for chi²/dof, R², and every fitted parameter's value+error
+in a LATER script/part — never re-derive from memory, printed console text, or a fresh `f.fit()`
+call.** The row each label/parameter lands on shifts depending on whether SANS
+resolution/polydispersity are enabled (confirmed against source), so **search by label text, never
+hardcode a row number**:
+
+```python
+def read_characteristic(fc, label):
+    for row in range(1, fc.numRows() + 1):
+        if fc.text(6, row).strip() == label:
+            return fc.text(7, row).replace("->", "").strip()
+    return None
+
+def read_param(fc, name):
+    for row in range(1, fc.numRows() + 1):
+        if fc.text(8, row).strip() == name:
+            value = float(fc.text(9, row).strip())
+            err_str = fc.text(10, row).strip()
+            error = None if err_str == "---" else float(err_str.replace("±", "").strip())
+            return value, error
+    return None, None
+
+fc = table("fitCurve-ai/GaussPeakModel")
+chi2_dof = float(read_characteristic(fc, "chi^2/DoF"))
+r2       = float(read_characteristic(fc, "R^2=1-chi^2/TSS"))
+scale_val, scale_err = read_param(fc, "scale")
+```
+**Col 7 (`Conditions`) is `"->"` + variable spacing + the value** (e.g. `"->   7.88510912046E+03"`)
+— `read_characteristic()` above handles this via `.replace("->", "").strip()`. Don't slice a
+fixed-width prefix — spacing isn't constant across rows.
+
+**Col 10 (`Errors`) is `"±<number>"` for a varied parameter, or `"---"` for a fixed one** — check
+for `"---"` first and strip the `"±"` before `float()` otherwise. Confirmed live: `float()` on
+`"±0.00974278485"` directly raises `ValueError: could not convert string to float`.
+
+Run an `# EXPLORE` first to confirm exact label/parameter text for the model in question
+(`fc.colNames()`, print a few rows of cols 6-9) before hardcoding a label string.
+
+> **`t.text(col, row)` used to raise `TypeError: decoding str is not supported` for EVERY
+> non-empty cell, on any table** — a Python-3-porting bug (an already-decoded `str` passed through a
+> second, redundant decode step, which CPython rejects). Fixed at the source (`qtimod.sip`) as of
+> this build. On a build predating the fix, use `cellData(col, row)` instead — same text, unaffected
+> code path.
+
+> **`t.cell(col, row)` silently returns `0.0` when the cell's text can't be parsed — it never
+> raises, and can't distinguish "value really is 0.0" from "parsing failed."** Confirmed-live-
+> dangerous on these label/value columns: reading `cell(7, row)` at the WRONG row (e.g. one holding
+> `"Number of Parameters"` text like `"->   4"` instead of `chi^2/DoF`) silently returns `0.0`,
+> indistinguishable from a perfect fit. Confirmed live: exactly this produced `chi2/dof = 0.0000` for
+> BOTH of two different models compared — an implausibly identical "perfect" value that flagged
+> nothing. Never use `cell()` on columns 6-10 of a `fitCurve` table — they're text columns; use
+> `text()`/`cellData()` and parse the result yourself.
+
+**Comparing two already-fit models (e.g. "fit both Gauss and Lorentzian, pick the better one") is
+solved once BOTH models have been fit at least once — no re-fit, guess, or recall needed.** Both
+`fitCurve-<model>` tables persist as real, lookupable objects — read both directly. Worked example:
+compare, pick the winner, read a parameter, then plot data + winner's ACTUAL fit curve + residuals
+in two stacked panels (`canvasGeometry()`/`setCanvasGeometry()` below is the confirmed-working
+pattern — prefer it over guessing `setLayerGeometry()`/`setLayerRect()`/`setLayout()`, none of which
+exist):
+
+```python
+# Both models are assumed already compiled and fit earlier — each fit() call already created its
+# own persistent fitCurve-<model> table (see the table structure above).
+
+def read_characteristic(fc, label):
+    for row in range(1, fc.numRows() + 1):
+        if fc.text(6, row).strip() == label:
+            return fc.text(7, row).replace("->", "").strip()
+    return None
+
+def read_param(fc, name):
+    for row in range(1, fc.numRows() + 1):
+        if fc.text(8, row).strip() == name:
+            value = float(fc.text(9, row).strip())
+            err_str = fc.text(10, row).strip()
+            error = None if err_str == "---" else float(err_str.replace("±", "").strip())
+            return value, error
+    return None, None
+
+# --- Step 1: look up both fit-result tables by name — no re-fit needed ---
+fc1 = table("fitCurve-ai/fittable-model1")
+fc2 = table("fitCurve-ai/fittable-model2")
+if fc1 is None or fc2 is None:
+    scriptPrint("One of the fit-curve tables is missing — did both fits actually run?")
+else:
+    # --- Step 2: read the REAL chi2/dof from each — never recall printed text or fabricate ---
+    chi2_1 = float(read_characteristic(fc1, "chi^2/DoF"))
+    chi2_2 = float(read_characteristic(fc2, "chi^2/DoF"))
+    scriptPrint(f"Model 1 chi2/dof = {chi2_1:.4f}")
+    scriptPrint(f"Model 2 chi2/dof = {chi2_2:.4f}")
+
+    # --- Step 3: select the winner ---
+    best_fc, best_name = (fc1, "ai/fittable-model1") if chi2_1 <= chi2_2 else (fc2, "ai/fittable-model2")
+    scriptPrint(f"Best model: {best_name}")
+
+    # --- Step 4: pull the winner's parameters, e.g. "scale" ---
+    scale_val, scale_err = read_param(best_fc, "scale")
+    scriptPrint(f"Best-fit scale = {scale_val}" + (f" ± {scale_err}" if scale_err is not None else " (fixed)"))
+
+    # --- Step 5: plot ORIGINAL data + winner's ACTUAL fit curve + ACTUAL residuals, 2 stacked panels ---
+    # "y" on best_fc is the MODEL's calculated curve, not the original data (see fitCurve table
+    # structure above) — the original data must be added separately, from its own table, or the
+    # plot silently shows only the fit line with no data points to compare it against.
+    t = table("YourDataTable")   # the table you originally called f.configure(model, ["YourDataTable_y"]) with
+    gw = newGraph("FitResults", 2, 2, 1)
+    maximizeWindow(gw)
+    l1, l2 = gw.layer(1), gw.layer(2)
+    l1.enableAxis(Graph.Axis.Bottom, False)
+    l2.enableAxis(Graph.Axis.Top, False)
+    gw.keepAligned(False)
+    gw.setAlignPolicy(GraphWindow.AlignPolicy.AlignCanvases)
+    gw.setSpacing(0, 0)
+    gw.arrangeLayers(False, False)
+
+    cr1, cr2 = l1.canvasGeometry(), l2.canvasGeometry()
+    x, y, w = cr1.x(), min(cr1.y(), cr2.y()), cr1.width()
+    total_h = cr1.height() + cr2.height()
+    h1 = int(total_h * 0.75)
+    l1.setCanvasGeometry(x, y, w, h1)
+    l2.setCanvasGeometry(x, y + h1, w, total_h - h1)
+    l2.removeTitle()
+
+    l1.addCurve(t, "y", Graph.CurveType.Scatter)                       # ORIGINAL measured data — curve index 0
+    l1.insertCurve(best_fc, "x", "y", Graph.CurveType.Line)            # winner's ACTUAL fit curve — index 1
+    l2.insertCurve(best_fc, "x", "residues", Graph.CurveType.Scatter)  # winner's ACTUAL residuals
+
+    l1.setCanvasGeometry(x, y, w, h1)          # re-apply — inserting curves can drift the geometry
+    l2.setCanvasGeometry(x, y + h1, w, total_h - h1)
+    gw.keepAligned(True)
+    gw.linkXLayerAxes(True)
+    l1.replot()
+    l2.replot()
+```
+This avoids four confirmed-live failures at once: inventing placeholder comparison numbers instead
+of real ones; plotting a raw data column (e.g. `dI`) mislabeled "residuals" instead of the model's
+actual `residues`; skipping the best-fit overlay because "which model won" seemed to need a re-fit;
+and — most likely to go unnoticed, since nothing errors — plotting `best_fc`'s "y" alone, mistaken
+for the original data instead of adding the real data table's own curve.
+
 ---
 
 ### plotResults(graphName="", graphTemplate="")
@@ -607,14 +764,11 @@ Always plots into **layer 1** (data scatter + fit line).
 If the MultiLayer has a second layer and `radioButtonSameQrange` is checked, residuals (scatter) are added to **layer 2** and the X axes are linked.  
 Existing curves are never duplicated — repeated calls are safe.
 
-**Curve order/index in layer 1, per dataset: the DATA scatter is inserted first, the FIT line second.**
-For a single dataset that's curve index **0 = data scatter**, index **1 = fit line** — NOT the other way
-round, and NOT "the only curve = the line". Styling curve `0` via `Graph.setCurveLineColor()` after
-`plotResults()` recolors the raw data points, not the fit. To style the fit line's color, prefer
-`f.setCurveColor(...)` (see above) called *before* `fit()`/`plotResults()` — it's the purpose-built API
-and already applies correctly when the curve is created. Only reach for `g.setCurveLineColor(1, ...)`
-(index **1**, not `0`) if you need something `setCurveColor()` can't express, e.g. an exact `QColor`
-outside its named palette.
+**Curve order/index in layer 1, per dataset: DATA scatter is inserted first, FIT line second.** For
+a single dataset that's index **0 = data**, index **1 = fit** — NOT reversed, NOT "the only curve =
+the line." Styling curve `0` recolors data points, not the fit. Prefer `f.setCurveColor(...)`,
+called *before* `fit()`/`plotResults()`. Only reach for `g.setCurveLineColor(1, ...)` for something
+`setCurveColor()` can't express, e.g. an exact `QColor` outside its named palette.
 
 ```python
 # WRONG — index 0 is the DATA scatter; this recolors the raw points, not "the line"
@@ -629,10 +783,32 @@ f.fit()
 f.plotResults("FitResult")
 ```
 
-Confirmed live: a request to "set line color to orange" was fulfilled correctly via `f.setCurveColor
-("orange")`, called in the right place — but the script ALSO added a redundant `g.setCurveLineColor
-(0, colorIndex("orange"))` afterward, which doesn't touch the fit line at all and instead recolors the
-data scatter to match it, unintentionally making data and fit visually blend together.
+> **The fit curve's `Graph.curveTitle(i)` is NOT the bare model/function name — it's
+> `"fitCurve-" + function + "_y"`.** Checking `g.curveTitle(i) == model` to verify the fit curve
+> exists will NEVER match — a false "not found" with no error. Confirmed live: exactly this check
+> (`g.curveTitle(i) == "ai/SphereFormFactor"`) silently skipped a legend/styling part — just printed
+> "Fit curve missing from graph," even though `plotResults()` had succeeded. **Prefer the INDEX
+> convention above (0 = data, 1 = fit) or `g.numCurves() >= 2`** instead of guessing a title format.
+> ```python
+> # WRONG — invented title guess, never matches the real "fitCurve-<function>_y" format
+> if any(g.curveTitle(i) == model for i in range(g.numCurves())):
+>     ...  # never true — silently skips everything inside, no error
+>
+> # RIGHT — trust the already-documented index convention instead
+> if g.numCurves() >= 2:
+>     ...
+> ```
+
+Confirmed live: "set line color to orange" was fulfilled correctly via `f.setCurveColor("orange")`
+— but the script ALSO added a redundant `g.setCurveLineColor(0, colorIndex("orange"))` afterward,
+which recolors the data scatter instead, unintentionally blending data and fit visually.
+
+**`setCurveColor()`/`curveColor()` are the ONLY curve-styling methods `Fittable` has** — no
+`setCurveLineWidth()` or any symbol-styling setter exists on it. For line width, symbol
+shape/size/color, get the layer via `f.plotResults(...).activeLayer()` and call the `Graph` method on
+curve index **1** (the fit line), e.g. `g.setCurveLineWidth(1, 2)`. Confirmed live:
+`f.setCurveLineWidth(2)` raised `AttributeError: 'fittable18' object has no attribute
+'setCurveLineWidth'` — the method doesn't exist on `Fittable`.
 
 | Parameter | Description |
 |-----------|-------------|
@@ -657,6 +833,32 @@ g.setXTitle("q, 1/nm")
 g.setYTitle("I(q), 1/cm")
 g.setLinOrLogAxis(Graph.Axis.Left, True)   # log Y
 ```
+
+**`plotResults()` returns a `MultiLayer` (`GraphWindow`) — NOT a `Graph` (layer). EVERY layer-level
+method (`legend()`, `newLegend()`, `setLegend()`, `setXTitle()`, `setYTitle()`, `addCurve()`,
+`setCurveLineColor()`, `setCurveSymbolColor()`, etc.) raises `AttributeError` if called directly on
+it — always go through `.activeLayer()` first.**
+
+```python
+gw = f.plotResults("FitResults")
+g = gw.activeLayer()
+g.setXTitle("q, 1/nm")               # NOT gw.setXTitle(...)
+leg = g.legend()                     # NOT gw.legend()
+if leg is None:
+    leg = g.newLegend()              # NOT gw.newLegend()
+```
+
+Confirmed live, FIVE separate `AttributeError`s in one conversation, each burning a retry round:
+`gw.setXTitle(...)`, `gw.legend()`, `gw.setLegend(...)` (twice), `gw.newLegend()` — all
+`AttributeError: 'GraphWindow' object has no attribute '<name>'`.
+
+**`plotResults(graphName, ...)` itself DOES reuse an existing window by that exact name** — it was
+NOT the source of window pileup here. The actual driver was an earlier, redundant bare `plot(t,
+(...))` call made BEFORE fitting just to preview raw data — `plot()` has no name-based reuse (see
+`ai-python-api.md`'s "retries re-run the whole script" rule) and created a new window per retry.
+Since `plotResults()` already plots one scatter curve per dataset before the fit line, that preview
+call is usually unnecessary — the single most common `plotResults()` mistake, an instance of
+`graph-python-api.md`'s "GraphWindow vs Graph" note.
 
 ---
 
@@ -722,6 +924,29 @@ print(f"simulation Chi²/DoF = {chi2:.4f}")
 
 ---
 
+### `simulateCurve()`'s output table
+
+`simulateCurve()` creates a workspace table named **`"simulatedCurve-" + function`** (`function` is
+the string passed to `configure()`) — same naming scheme as `fitCurve-<function>`, different prefix.
+**Same exact 10-column layout as `fitCurve-<function>`** (see "Fit curve table columns" above): `x`,
+`y`, `weight`, `sigma`, `residues`, `Characteristics`, `Conditions`, `Parameters`, `Values`, `Errors`.
+Read/plot it the same way:
+
+```python
+sc = table("simulatedCurve-" + model)          # model is the string passed to configure()
+g.insertCurve(sc, "x", "y", Graph.CurveType.Line)
+```
+
+> **Confirmed live: do NOT pass `"simulatedCurve-<function>_y"` to `table()`** — the `_y` suffix is
+> the COLUMN-qualified dataset name (same `"tablename_colname"` convention as `f.datasets()`), not
+> the table name. Confirmed live, separately: do NOT reach for `plot("simulatedCurve-<function>",
+> xMin, xMax, style)` either — `graph-python-api.md`'s `plot("formula", xMin, xMax)` overload
+> evaluates its string as a MATH FORMULA (e.g. `"x^2"`), not a dataset lookup; a table name there
+> silently plots a nonsense function labeled with that string, no exception. Use `table()` +
+> `insertCurve()` instead.
+
+---
+
 ## Results
 
 ### Scalar results
@@ -730,6 +955,48 @@ print(f"simulation Chi²/DoF = {chi2:.4f}")
 chi2 = f.lastChi2    # Chi²/DoF from last fit
 dof  = f.lastDoF     # degrees of freedom
 ```
+
+> **IMPORTANT — a good chi²/dof does NOT by itself mean the fit finished converging.** `fit()` can
+> stop for several reasons — only "hit the iteration cap" (console `iter <N> [<maxIterations>]`,
+> `<N>` at/near `maxIterations()`) means it may have been cut off early. Reliable check: call
+> `fit()` again immediately (same config); barely-changed chi²/dof means it had settled, a further
+> drop means the first run wasn't finished. Works regardless of model — unlike checking a parameter
+> against the data's range, which is domain judgment (a peak center CAN legitimately sit outside the
+> sampled range with a tight error bar).
+> ```python
+> chi1 = f.fit()
+> chi2 = f.fit()  # re-run from the just-converged parameters — cheap, and confirms convergence
+> if abs(chi2 - chi1) > 1e-6 * max(abs(chi1), 1e-300):
+>     scriptPrint(f"Fit may not have fully converged: chi2/dof went from {chi1} to {chi2} on a "
+>                 f"repeat fit — consider raising maxIterations (currently {f.maxIterations()}).")
+> else:
+>     scriptPrint(f"Fit converged: chi2/dof = {chi2}, R2 = {f.r2()}")
+> ```
+
+> **IMPORTANT — `f.lastChi2` and `f.results()` reflect the CURRENT fit state, not a history —
+> reading them again after a second `fit()` does NOT give the "before" values.** Only one live
+> result exists; a second `fit()` overwrites it. To compare before-vs-after, capture the "before"
+> snapshot **before** calling `fit()` again — reading them afterward instead silently gives the SAME
+> (new) values twice under different labels, no error or warning.
+> ```python
+> # WRONG — both "old" reads happen AFTER fit() already overwrote the state, so
+> # chi2_old ends up identical to chi2_new — this is not a real before/after comparison
+> f.setMaxIterations(1000)
+> chi2_new = f.fit()
+> r_new = f.results()
+> chi2_old = f.lastChi2   # already overwritten — this is the NEW value, not the old one
+> r_old = f.results()      # same mistake
+>
+> # RIGHT — capture "before" state first, using the values already in hand
+> chi2_before = f.lastChi2   # or the chi2 returned by the PREVIOUS fit() call, if still in scope
+> r_before = f.results()
+> f.setMaxIterations(1000)
+> chi2_after = f.fit()        # fit()'s own return value is always the freshest "after" reading
+> r_after = f.results()
+> ```
+> Same gotcha as the convergence check above — `fit()`'s return value is always a fresh snapshot
+> each call; `lastChi2`/`results()` are safe only for "the current state," never as a stand-in for
+> "before the call I just made."
 
 ---
 
@@ -753,6 +1020,20 @@ for m, (v, e) in enumerate(r["Rg"], start=1):
     print(f"DS{m}: Rg = {v:.3f} ± {e:.3f}")
 ```
 
+**`r["name"]` is the `(value, error)` tuple itself — never index it with `[0]`, and never pass it
+directly into a format spec expecting a number.** Confirmed live, twice in the same conversation:
+```python
+# WRONG — one index too many; r["R"][0] is already the float, not another indexable tuple
+r_val = f.results()["R"][0][0]           # TypeError: 'float' object is not subscriptable
+
+# WRONG — the tuple itself, unindexed, passed straight into a numeric format spec
+leg.setText(f"R = {f.results()['R']:.2f} nm")   # TypeError: unsupported format string passed to tuple.__format__
+
+# RIGHT — unpack once
+r_val, r_err = f.results()["R"]
+leg.setText(f"R = {r_val:.2f} nm")
+```
+
 ---
 
 ### fitReport() — formatted text
@@ -771,11 +1052,16 @@ Returns the full fit statistics and covariance matrix as a formatted string.
 | Exception | Raised by | Condition |
 |-----------|-----------|-----------|
 | `RuntimeError` | `fit()`, `simulate()`, `plotResults()`, `beforeFit()`, `afterFit()` | stage is not `"fit"` |
-| `RuntimeError` | `fit()` | selected dataset(s) could not be read (e.g. an empty table) — previously returned a stale chi²/dof from a prior fit with no indication anything was wrong |
+| `RuntimeError` | `fit()` | selected dataset(s) could not be read (e.g. empty table) — previously silently returned a stale chi²/dof with no indication of failure |
 | `RuntimeError` | `simulateCurve()` | stage is not `"simulate"` |
 | `RuntimeError` | `selectStage(s)` | in `init` stage and `s` ≠ `"init"` |
+| `RuntimeError` | `fit()` | no adjustable parameters — every parameter is fixed |
+| `RuntimeError` | `setInstrument()`, `setInstrumentalFit()` | invalid usage (see SANS Instrument section) |
 | `ValueError` | `setFunction`, `selectDataset`, `configure` | name not found |
 | `ValueError` | `selectStage(s)` | unknown stage name |
+| `ValueError` | `setParamValue`, `setParamVaries`, `paramValue` and related | unknown parameter name |
+| `ValueError` | `setWeightingDataset`, `setResoDataset`, `setPolyDataset` | bad/unqualified dataset name, or index out of range |
+| `ValueError` | `setWeightingEnabled`, `weightingDataset` | dataset index out of range |
 
 When a name is not found, available names are printed to the script console before raising.
 
@@ -1005,12 +1291,11 @@ f.afterFit()
 print(f.fitReport())
 ```
 
-`f.beforeFit()` (same as pressing **Before Fit** in the Fittable interface) does more than sync the
-UI table — it also calls the compiled fit function once with its `beforeFit` lifecycle flag set,
-*before* the fit itself runs. If the function defines a `beforeFitting(void *ParaM)` helper in its
-`[included functions]` section (see compile-python-api.md's `includedFunctions()`), that's the hook
-where it can compute its own initial parameter values from the loaded data instead of relying on
-fixed numbers from `setParamInitsAll()`.
+`f.beforeFit()` (same as pressing **Before Fit** in the UI) does more than sync the UI table — it
+also calls the compiled fit function once with its `beforeFit` lifecycle flag set, *before* fitting.
+If the function defines a `beforeFitting(void *ParaM)` helper in `[included functions]` (see
+compile-python-api.md's `includedFunctions()`), that hook can compute initial parameter values from
+loaded data instead of fixed numbers from `setParamInitsAll()`.
 
 ---
 
@@ -1024,16 +1309,15 @@ Two independent mechanisms can make a parameter "fixed" or "linked" — don't co
 | **Shared** | above the function, by Fittable | `setParamShared(name, True)` — forced equal to dataset 1's value, for every other dataset | No |
 | **In-code constrained** | inside the compiled function | any transform written in `[code]` (e.g. `Rg = fabs(Rg);`) | Yes |
 
-The first two are checkbox flags Fittable resolves itself, before the compiled function ever runs
-— there is nothing to write in `[code]` for either. The third is arbitrary — the compiled function
-can do anything to its own parameters. It runs on **every** call (every point, every iteration) so
-the returned value is always physically consistent, but the *persisted* result (what ends up back
-in the optimizer's vector and in the UI table) only updates during the two `beforeFit()`/`afterFit()`
-calls above — not on the many ordinary per-point calls in between.
+The first two are checkbox flags Fittable resolves itself before the compiled function runs —
+nothing to write in `[code]` for either. The third is arbitrary: the compiled function can do
+anything to its own parameters, running on **every** call (every point/iteration) so the returned
+value stays physically consistent, but the *persisted* result (optimizer vector + UI table) only
+updates during the `beforeFit()`/`afterFit()` calls above — not the many per-point calls in between.
 
-**Ordering constraint on two peaks (`x1 < x2`) — swap the whole parameter group, not just the compared variable.**
-If an iteration proposes `x1 > x2`, swapping only the positions leaves `amplitude1`/`width1`
-attached to the wrong peak:
+**Ordering constraint on two peaks (`x1 < x2`) — swap the whole parameter group, not just the
+compared variable.** If an iteration proposes `x1 > x2`, swapping only positions leaves
+`amplitude1`/`width1` attached to the wrong peak:
 ```cpp
 // WRONG — only the positions swap; amplitude1/width1 now describe the wrong peak
 if (x2 < x1) { double t = x1; x1 = x2; x2 = t; }
@@ -1087,42 +1371,65 @@ for i, (rg, chi2) in enumerate(zip(rg_values, chi2_list), start=1):
 
 ### Rule 1 — Never hardcode a function name from the library
 
-Function names depend on what is compiled into the running Fittable library and may differ between
+Function names depend on what's compiled into the running library and may differ between
 installations. **Exception:** if the script itself compiled the function via `Compiler`, the name is
-already known — no discovery needed. For all other cases, discover first.
+already known. Otherwise, discover first.
 
 **WRONG:**
 ```python
 f.configure("sasviewmodels/sphere_SANS", ["table_I"])   # hardcoded — may not exist
 ```
 
-**RIGHT — discovery pattern (required when using a pre-existing model):**
+**RIGHT — discovery pattern (required for a pre-existing model). Exclude `"ai/*"` from candidates —
+that namespace holds only prior AI-authored one-offs (see `compile-python-api.md` Rule 6), never a
+vetted library model; a match there means a NEW custom function was wanted, not reuse:**
 ```python
 f = Fittable
-hits = f.fitFunctions("*sphere*SANS*")   # most specific pattern first
-if not hits:
-    hits = f.fitFunctions("*sphere*")    # broaden on miss
-if not hits:
-    print("No sphere model found. SANS-related models:")
-    print(f.fitFunctions("*SANS*"))
-    raise RuntimeError("No suitable model found in Fittable library")
-model = hits[0]
-print(f"Model: {model}")
-if len(hits) > 1:
-    print(f"Also available: {hits[1:]}")
+requested = "Sphere"   # the exact name the request itself quoted, if any — else ""
+
+# If the request quoted a SPECIFIC name, check it exactly FIRST — a quoted name is the user
+# asserting it's the real one, the same as a quoted table/column name; treat a miss as a
+# reportable mismatch, not silent license to broaden the search.
+if requested and requested in f.fitFunctions():
+    model = requested
+else:
+    hits = [h for h in f.fitFunctions("*sphere*SANS*") if not h.startswith("ai/")]   # most specific first
+    if not hits:
+        hits = [h for h in f.fitFunctions("*sphere*") if not h.startswith("ai/")]    # broaden on miss
+    if not hits:
+        print(f"Model '{requested}' not found, and no similar model was found either. "
+              f"SANS-related models: {f.fitFunctions('*SANS*')}")
+        raise RuntimeError(f"No suitable model found in Fittable library for '{requested}'")
+    model = hits[0]
+    if requested:
+        print(f"Model '{requested}' does not exist exactly — using closest match: {model}")
+    else:
+        print(f"Model: {model}")
+    if len(hits) > 1:
+        print(f"Also available: {hits[1:]}")
 # use `model` as the function name — never a hardcoded string
 f.configure(model, ["table_I"])
 ```
 
-If the expected model is not found: print the search results and raise an error — do not silently
-fall back to a wrong model.
+> **`configure()` alone does not give the model sensible starting values.** Set physically
+> reasonable initial guesses via `setParamValue()`/`setParamLimits()` before calling `fit()` —
+> unless the function has its own `beforeFitting()` hook deriving them from loaded data (see
+> `beforeFit()`). Skipping this raises no error: the fit silently runs from arbitrary library
+> defaults, which can converge to garbage (huge `chi²/dof`, `R²` near 0) with nothing to flag it.
+
+If no model is found: print the search results and raise an error — don't fall back silently. If a
+quoted SPECIFIC name doesn't exist but a broader search finds something plausible, use it but print
+that the exact name wasn't found and name the substitute. Confirmed live: a request quoting
+`"Sphere"` (no exact match) had its search broadened with no announcement, landed on an unrelated
+model matching `hits[0]` alphabetically, and produced a catastrophically bad fit (`R² = -190`) with
+nothing printed to flag the mismatch.
 
 ### Rule 2 — Never guess whether an explicitly named table/dataset exists
 
 When a request names a specific table (e.g. "table SAXS_data column I"), the derived
-`"tablename_colname"` string is a *guess*, not a guarantee the table exists at all — the naming
-convention only tells you the *shape*, not whether the underlying data is actually there. Verify
-before calling `configure()`, not after it fails:
+`"tablename_colname"` string is a *guess*, not a guarantee it exists — the naming convention only
+gives the *shape*, not whether the data is there. Verify before calling `configure()`, not after it
+fails:
 
 **WRONG — go straight to `configure()` and react to the failure:**
 ```python
@@ -1142,28 +1449,23 @@ else:
         f.setParamValue("Rg", 50.0)
         f.fit()
 ```
-**Checking `existTable()` alone is NOT enough** — it only rules out "the table doesn't exist at
-all." A table can exist while the specific named column doesn't, and `existTable()` says nothing
-about that: `configure()` still fails with the exact same runtime `ValueError` it would have
-raised with no check at all, just one level down (confirmed live: an `existTable()`-only guard
-passed straight through into `configure()`, which then failed on the missing `"...I"` column).
-The second check (`"I" not in t.colNames()`) is what actually prevents that.
+**Checking `existTable()` alone is NOT enough** — it only rules out "table doesn't exist at all." A
+table can exist while the named column doesn't; `configure()` still fails with the same runtime
+`ValueError` one level down (confirmed live: an `existTable()`-only guard passed straight through
+into `configure()`, which failed on the missing `"...I"` column). The second check
+(`"I" not in t.colNames()`) is what actually prevents that.
 
-Use `existTable("name")` (an `app`-level function — see `app-python-api.md`), not `f.datasets()`,
-for the table-level check: `f.datasets()` only lists Y-columns *already recognized as fit-ready*
-(with a Y role assigned), so it can't distinguish "table doesn't exist" from "table exists but
-that column isn't set up for fitting" — a real difference the report should state precisely.
+Use `existTable("name")` (an `app`-level function), not `f.datasets()`, for the table-level check —
+`f.datasets()` only lists Y-columns already recognized as fit-ready, so it can't distinguish "table
+doesn't exist" from "table exists but isn't set up for fitting."
 
-> **The table name itself can contain underscores — the column name never does.** `"SAXS_data_I"`
-> means table `"SAXS_data"`, column `"I"` — split at the LAST underscore, not the first, since
-> `"SAXS"` + `"data_I"` would be the wrong split. When going the other direction (constructing the
-> dataset string from a table+column you already know), this is unambiguous either way — it only
-> matters when parsing an EXISTING dataset name string back into its table/column parts.
+> **The table name can contain underscores — the column name never does.** `"SAXS_data_I"` means
+> table `"SAXS_data"`, column `"I"` — split at the LAST underscore, not the first (`"SAXS"` +
+> `"data_I"` would be wrong). Only matters when parsing an EXISTING dataset name string back apart.
 >
-> **This includes passing a dataset name straight to `table()` without splitting it first.**
-> `table()` takes a TABLE name, not a `"table_col"` dataset identifier — passing the whole string
-> through looks like it should work (it's a valid-looking name) but silently returns `None`
-> because no table is actually named that.
+> **This includes passing a dataset name straight to `table()` without splitting it.** `table()`
+> takes a TABLE name, not a `"table_col"` identifier — the whole string looks valid but silently
+> returns `None` since no table is actually named that.
 > ```python
 > # WRONG — "SAXS_data_2" is a dataset identifier (table "SAXS_data", column "2"), not a table
 > # name; table() returns None, and the next line crashes with AttributeError on NoneType
@@ -1215,3 +1517,140 @@ f.configure("Guinier", ["table_I"])
 f.configure("Guinier", ["table_I"])
 f.setParamValue("Rg", 50.0)   # after function selection
 ```
+
+### Rule 6 — `setWeightingDataset()`'s valid names are a stricter subset than `configure()`'s — yErr-role columns only
+
+`configure(fn, datasets)` accepts a dataset string from any plotted-role column (X or Y) — why
+`"table_I"` is valid there. `setWeightingDataset(m, name)` draws from a smaller pool: only **yErr**
+columns qualify. A correctly-formatted `"table_col"` string for a Y column raises the same generic
+`ValueError` as a nonexistent name — nothing distinguishes "wrong role" from "doesn't exist."
+
+**WRONG — `"Sphere_I"` looks valid (`I` is really a column of table `Sphere`), but it's the
+Y-role column, not yErr — confirmed live:**
+```python
+t.setColNames(["Q", "I", "dI"])
+t.setColumnRole(1, Table.PlotDesignation.X)
+t.setColumnRole(2, Table.PlotDesignation.Y)
+t.setColumnRole(3, Table.PlotDesignation.yErr)
+f.configure("SphereSANS", ["Sphere_I"])   # OK — Y column is the right pool for configure()
+f.setWeightingDataset(1, "Sphere_I")      # ValueError — wrong pool: only yErr columns qualify here
+```
+
+**RIGHT — point at the yErr-role column instead:**
+```python
+f.setWeightingDataset(1, "Sphere_dI")     # dI is the yErr-role column
+```
+
+If unsure which column is yErr-role, check which had `Table.PlotDesignation.yErr` assigned — don't
+assume it's the same column named in the main `configure()` string.
+
+**A `newTable()`'d table's columns default to `Y` except column 1 (`X`) — there is NO default
+`yErr`.** Without an explicit `t.setColumnRole(col, Table.PlotDesignation.yErr)` call, the error
+column silently stays `Y`-role: a properly-formatted `"table_dI"` string can still be rejected even
+though the column exists and survives `configure()` — it's absent from the yErr pool, and the error
+only says "not one of the available weighting datasets," never "wrong role." Confirmed live:
+`newTable("GaussPeak", 150, 3); t.setColNames(["Q", "I", "dI"])` with no `setColumnRole()` left `dI`
+as `Y` — `f.setWeightingDataset(1, "GaussPeak_dI")` failed twice, retries only re-checking the name
+string, never the column's role, until the identical-error-repeat guard gave up.
+
+**This is fixable on the spot, even from a LATER part/script — the table doesn't need to be
+recreated:**
+```python
+t = table("GaussPeak")
+t.setColumnRole(3, Table.PlotDesignation.yErr)   # fix the role on the EXISTING table
+f.setWeightingDataset(1, "GaussPeak_dI")          # now succeeds
+```
+If `setWeightingDataset()` rejects an otherwise-correct-looking name, check the column's actual
+role before assuming the name is wrong — especially if the table was created in an earlier, separate
+part/script that might have skipped `setColumnRole()`.
+
+### Rule 7 — A "fitted"/"resulting" value shown in a legend or print must come from `f.results()`, never a hardcoded literal
+
+When a request asks to display "the fitted X," the value must be read back from the fit's own
+output — not reused from an initial parameter guess, a synthetic-data comment, or anything else
+already visible in context. A literal that happens to match the true/seed value in a test case will
+keep showing that stale number if the fit ever converges elsewhere — nothing raises or warns.
+
+**WRONG — `"R = 50.00"` is copied from the parameter's initial guess and never touched again;
+confirmed live, the fit's actual result was never queried:**
+```python
+f.setParamValue("R", 50.0)
+chi2 = f.fit()
+leg.setText("R = 50.00 Å")   # unconditionally the initial guess, regardless of what fit() found
+```
+
+**RIGHT — read the fitted value back from `results()` after `fit()` returns:**
+```python
+f.setParamValue("R", 50.0)
+chi2 = f.fit()
+r_val, r_err = f.results()["R"]
+leg.setText(f"R = {r_val:.2f} Å")
+```
+
+This applies to every "show the fitted/resulting/computed ___" phrasing — the number must trace
+back to a `fit()` call's actual output (`f.results()`, `f.lastChi2`, `f.fitReport()`), never to
+something decided before `fit()` ran.
+
+### Rule 8 — Don't add resolution/polydispersity/instrumental config the request never asked for
+
+Instrumental resolution smearing (`setInstrumentalFit()`, `setResoFunction()`, `setResoDataset()`,
+...) and polydispersity (`setPolyFunction()`, `setPolyEnabled()`, `setPolyDataset()`, ...) are real,
+optional refinements — not a default "more thorough" mode for any SANS/SAXS request. Add them only
+when explicitly asked for — never as an unprompted embellishment, same as unrequested axis/tick
+styling.
+
+**WRONG — request only asked for "fit with weighted errors":**
+```python
+f.configure(model, ["data_I"])
+f.setInstrumentalFit(True)
+f.setResoFunction("Gauss-SANS")
+f.setResoEnabled(1, True)
+f.setResoDataset(1, "10%")
+f.setPolyFunction("Gauss")
+f.setPolyEnabled(1, True)
+f.setPolyDataset(1, "")          # empty/meaningless — no real sigma column was ever created
+f.setWeightingMethod(0)
+f.setWeightingEnabled(1, True)
+f.setWeightingDataset(1, "data_dI")
+chi2 = f.fit()
+```
+
+**RIGHT — only what was actually asked for:**
+```python
+f.configure(model, ["data_I"])
+f.setWeightingMethod(0)
+f.setWeightingEnabled(1, True)
+f.setWeightingDataset(1, "data_dI")
+chi2 = f.fit()
+```
+
+Confirmed live: a plain "fit with weighted errors" request grew an unrequested resolution-smearing
+setup plus `setPolyDataset(1, "")` — an empty, meaningless argument — on top of the actual fit. Every
+added call is unreviewed surface area with failure modes unrelated to what was asked.
+
+### Rule 9 — `f.fit()`'s return value is ALREADY chi²/dof — never divide it by `dof` again
+
+**`chi2 = f.fit()` is the REDUCED chi-squared (chi²/dof), not the raw sum-of-squared-residuals**
+(the variable name `chi2` here is just short physics shorthand). Computing `chi2 / dof` again
+silently produces a value too small by a factor of `dof`, with no error — it still looks plausible.
+
+**WRONG — divides an already-reduced chi² by `dof` a second time:**
+```python
+chi2 = f.fit()
+dof = f.lastDoF
+scriptPrint(f"chi2/dof = {chi2/dof:.4f}")   # WRONG — chi2 IS ALREADY chi2/dof
+```
+
+**RIGHT — `f.fit()`'s return value is the final chi²/dof, use it directly:**
+```python
+chi2_dof = f.fit()
+scriptPrint(f"chi2/dof = {chi2_dof:.4f}")
+```
+
+Confirmed live, both fits in one conversation: console printed `chi²/dof: 1.14126291068E+00`, but
+`scriptPrint(f"... chi2/dof = {chi2/dof:.4f}")` reported `0.0078` — exactly `1.1413 / 146` (its own
+`dof`). A second fit showed the same pattern: `chi²/dof: 1.43413853647E+08` printed as
+`975604.4466` — divided by its own `dof` (147) again. Both looked plausible enough that neither
+raised suspicion — model-selection logic later read the correct value from the `fitCurve` table
+instead, so the final "best model" choice was unaffected, but any report relying on these printed
+numbers would be wrong by a large, silent factor.
