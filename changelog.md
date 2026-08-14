@@ -1,3 +1,188 @@
+# v0.17.0
+
+ * dan: add ILL-SAM-init SANS instrument
+ * dan: add KWSX-init SANS instrument
+ * docs: sync *-python-api reference docs with AI-confirmed gotchas
+ * ai: color script output from AI-triggered scriptPrint()/scriptPrintReplace()
+ * ai: introduce AiScriptHost/AiContentProvider host interfaces
+ * plot2D: persist Add/Remove Curves' "New curves style" selection
+ * dan: fix crash when adding files for a table column with no valid rows
+ * plot2D: persist Add/Remove Curves dialog's wildcard filter across openings
+ * dan: fix per-call gsl_matrix leak in Fast Info Extractor's "Read & Plot Matrix"
+ * dan: use normalized Monitor-3 reading for DB-M3 absolute calibration
+ * dan: add EDF file accumulation (image sum + ASCII header merge)
+ * plot2D: show column/widget comments as tooltips in Add/Remove Curves dialog
+ * plot2D: add Graph.Axis.X/.Y convenience aliases
+ * table: fix text() raising TypeError on every non-empty cell
+ * fittable: reject unmatched weighting/reso/poly dataset names; explicit no-adjustable-parameters error
+ * compile: reject case-colliding names and require group/paramCount before save()/compile()
+ * plot2D: fix bare column-name titles from insertCurve()'s two-column overload
+ * plot2D: add Graph::axisScale() accessor and Python binding
+ * table: block signals while clearing to avoid per-cell curve-update reentrancy
+ * plot3D: name-first newPlot3D() upsert family; fix stale surface/function pointers
+ * fix: guard null curve symbol in Graph symbol setters and color-scheme methods
+ * core: add AI Assistant orchestration (self-review, EXPLORE/retry, doc-selection) as a standalone src/ai/
+ * docs: misc Python API reference corrections
+ * fittable: safer errors for weighting/parameter APIs; NaN on fit failure; non-blocking plotResults() rename
+ * plot2D: fix addErrorBars() bare column names; add updateErrorBars(); expose axesLinewidth()
+ * compile: guard against '(' / ')' in function/parameter names; validate bulk param setters
+ * core: fix crash from window activation during app shutdown
+ * scripting: include the failing source line in Python tracebacks
+ * python: fix scipy.special.round() shadowing builtin round()
+ * docs: document silent-failure gotchas found via live AI testing
+ * core: add mandatory pre-execution self-review pass for AI action scripts
+ * core: add User Rules and a configurable AI auto-continue limit
+ * build: fix SIP regeneration silently skipped when qtimod.sip is edited
+ * python: raise ValueError instead of blocking dialogs in scripted calls
+ * docs: sync AI-assistant Python API documentation
+ * core: AI assistant automatically retries action scripts that raise errors
+ * fittable: raise ValueError from setParamValue/setParamVaries on unknown parameter names
+ * table: fix cell() raising malformed exception state on empty cells
+ * compile: add Python scripting API for Compiler
+ * fittable: skip after-fit Python hook when fit was triggered from Python
+ * fittable: skip openTemplate error dialog when graph template is missing
+ * core: add two-phase EXPLORE mode for AI-generated scripts
+ * plot2D: fix inverted empty-check guard in MultiLayer::updateLayerAxes
+ * plot2D: mark Graph::logDataExtents/guessLogBreak as const
+ * ci: fix release bundles linkage against hdf5
+ * common: add silent mode to updateGitInteractive for auto-sync without UI
+ * core: Python API help windows float above main window
+ * plot3D: copy 3D plot to clipboard with transparent background
+ * plot3D: snap floor projection to axis box via Graph3DCurve subclass
+ * plot2D: fix axis-dialog sync — propagate range to primary, preserve break
+ * plot2D: fix log-log/lin-lin axis rescaling and break decoration inheritance
+ * plot2D: set 8 minor ticks per break half on symlog axes
+ * plot2D: fix color map image clipped at left/top edges during export
+ * plot2D: fix inward tick position on right/bottom axes during export
+ * plot2D: fix export preview content at non-100% display scaling
+ * plot2D: fix axis tick length scaling in print/export output
+ * plot2D: fix HiDPI pen rendering and SVG export double-scaling
+ * plot2D: skip error-bar cap draw when cap width is zero
+ * plot2D: drop redundant ±1 coefficient in superscript scale labels
+ * plot2D: fix null QwtSymbol crash in LegendWidget::drawSymbol
+ * plot3D: fix ColorMapEditor showing wrong boundary values when loading color map
+ * core: fix null-table crash in curve context menu
+ * compile: replace compile-info.cpp with EditableLinkBrowser lambdas
+ * sync: migrate all git-get callers to updateGitInteractive
+ * compile: extract EditableLinkBrowser from QTextBrowser
+ * sync: interactive git-get dialog with diff preview
+ * fittable: clean up stale temp shared-library copies on load
+ * plot2D: fix scatter symbol cycling in insertCurveScatter
+ * compile: canonical HTML format for .fif description field
+ * compile: replace QTextEdit description with EditableLinkBrowser
+ * docs: Graph3D formula syntax, surface-of-revolution example, AI rules
+ * python: API doc clarifications — function discovery, fit curve columns, addCurve/addErrorBars
+ * python: Graph3D SIP bindings and API documentation
+ * plot3D: dialog log10 scale handling and plot3DMatrix cleanup
+ * plot3D: log10 scale support for surface plots
+ * lib: ColorMapEditor — fix boundary row colors and avoid spinbox reads in colorMapToTable
+ * lib: DoubleSpinBox — sync d_value with displayed text to prevent infinite recursion
+ * plot2D: histogram — geometric binning, ratio/skipEmptyBins, UI and Python API
+ * core: fix QShortcut and QComboBox signal connections in CustomActionDialog
+ * plot2D: fix auto-rescaling for XYAM vector plots
+ * scripting: ScriptWindow stays in front of main window — pass window flags at construction
+ * scripting: Ctrl+Enter AI shortcut and Ctrl cancels completion in all editors
+ * plot2D: add canvasGeometry() getter to Graph and Python bindings
+ * core: script window — Qt::Tool above app, Qt::Window in console mode
+ * plot2D: set step 1 for columns/rows gap spinboxes in LayerDialog
+ * python: expand graph/app API docs — stacked panels, error bars, legend, grid
+ * python: sip — add forceRescale to setLinOrLogAxis; add circle alias in symbolIndex
+ * core: update terminal '?' help text: AI commands and formatting
+ * plot2D: fix Best Fit for linked-X layers; add forceRescale to setLinOrLogAxis
+ * fittable: fix uninit-pointer crash and residuals handling in uniform-Q mode
+ * plot2D: fix per-axis backbone state corruption in AxesDialog and Graph
+ * python: add AI assistant docs and expand graph/app/fittable API docs
+ * python: add curve symbol and layout bindings; extract Graph-python.cpp
+ * fittable: shorten fit progress message in script mode
+ * core: connect error and print signals for AI-executed scripts
+ * core: expand inline getters to multi-line and add const in ApplicationWindow
+ * plot2D: allow negative column/row gap in layer arrange dialog
+ * plot2D: restore canvas geometry and keepAligned state on project open
+ * plot2D: add "Fix layout" checkbox to lock canvas geometry across layers
+ * plot2D: defer profile layer replot until after data fill
+ * config: fix 3D color map sync; add presetColorMap(); default to jet-white (#5)
+ * fittable: allow setInstrument at any fit stage; fix two crashes
+ * python: add true/false boolean aliases to QtiSAS scripting environment
+ * core: resolve python config source dir relative to binary on linux
+ * core: enable anthropic prompt caching for system prompt
+ * python: SIP bindings — Graph axis log/lin, new* id-or-create
+ * python: fix crash on script teardown — strip Python ownership for all SIP wrappers, safe excepthook
+ * core: remove AiAssistant::Mode, fix AI output routing from terminal vs script window
+ * core: git-get AI presets — selective sync with New/Update/Remove dialog
+ * matrix: fix SIGSEGV — null d_table_view after delete in setViewType
+ * table: fix col_label out-of-bounds crash in columnsList and updateValues
+ * core: replace hardcoded AI provider presets with file-based .ai presets
+ * Add syncFilesOverwrite() and updateGitOverwrite() to RepositorySynchronization
+ * common: add EditableLinkBrowser reusable widget
+ * graph: apply preferences on multilayerPlot, rename addLayer replot→setPreferences
+ * fittable: fix GSL vector leaks on doFit early-return paths
+ * scripting: muParser line-by-line run with output and constant-assignment error hint
+ * scripting: fix error line highlighting always pointing to line 1 in Script Window
+ * scripting: add Python syntax highlighting and grey code blocks to API doc browser
+ * python: add API usage warnings to prevent common AI code generation mistakes
+ * scripting: show correct language name in script error header
+ * python: add named parameters to SIP bindings and update API docs
+ * fittable: add curveColor/setCurveColor Python API for fit/simulate output curve color
+ * core: fix SIGSEGV in ~ApplicationWindow by disconnecting subWindowActivated before destruction
+ * core: fix crash in ConfigDialog when switching scripting language
+ * scripting: fix Python error line highlighting and improve error message format
+ * core: add Python API documentation submenu to Help menu
+ * scripting: attach PythonSyntaxHighlighter to scripting console output panels
+ * scripting: add QTextDocument constructor to highlighter and highlight AI response lines
+ * core: use AI highlight color for terminal_line background
+ * dan: continue processing without buffer subtraction when buffer file is missing
+ * dan: fix radUni crash on zero angleStep and uninitialized pointers
+ * dan: add error propagation to matrixConvolusion and fix 25-pixel ring loops
+ * table: guard pasteSelection and deleteSelectedRows against empty selection
+ * app: skip paste when a modal dialog is active
+ * app: add Python API for custom actions (add/update/remove/run)
+ * python: add .pyi stubs for all API modules
+ * python: update API docs for new bindings and keyword argument support
+ * python: bind new API functions and add Python API docs
+ * core: add AI assistant integration with Ask AI button and settings page
+ * core: add saveGraphAsProject(plot, path, name) helper for scripted export
+ * fittable: prefix fit progress message with ▸▸▸ marker
+ * scripting: append errors to console with header and cursor positioning
+ * scripting: add ScriptEdit::ensureOneTrailingBlank console formatting helper
+ * python: enable keyword arguments for optional SIP-bound parameters
+ * core: add/modify Copy/Clear context menu and shortcuts to scripting consoles
+ * core: process events after changeFolder on project open to fix maximized window restore
+ * dan: initialise Table pointers to nullptr to prevent undefined behaviour
+ * dan: refresh InfoTable, InfoMatrix and InfoExtractor combos on tab selection
+ * dan: increase numeric precision of sums to 13 significant digits in info table
+ * dan: remove trailing space in Buffer Subtraction mode label
+ * dan: add absolute calibration from Monitor-3 header flux (Direct Beam from Monitor3)
+ * dan: fix missing files in merging table — sync mergedTemplate on early row skip, dynamic condition column
+ * fittable: normalise truncated polydispersity integrals for Gauss, Schultz-Zimm, Gamma and Log-Normal
+ * scripting: add Note.tab() and ScriptEdit.execute() to Python API
+ * ui: redirect Ubuntu/Sans-serif font aliases to system default to suppress Qt warnings
+ * scripting: Esc hides completion popup if visible, else clears terminal line
+ * scripting: raise console only when already tabified; fix crash from uninitialized d_fitFromScriptWindow
+ * python: on version change, refresh managed config files and preserve user subdirectories
+ * fittable: fix merged column width in tablePara for multi-dataset mode
+ * fittable: trigger plotSwitcher when checkBoxScaleErrors is checked
+ * fittable: block signals for fit-control checkboxes during session table reading
+ * fittable: fix shared library reload by loading a unique temp copy on all platforms
+ * fittable: fix parameter sync after simulation — correction to v.15.2
+ * python: add Graph, Matrix, Note, and Table scripting API documentation
+ * python: add fittable scripting API documentation
+ * python: add Graph enum namespaces and Table NumericFormat to SIP API
+ * PythonScript: add missing override specifiers
+ * fittable: Python scripting API
+ * ApplicationWindow: shared Python script env for terminal_line
+ * ApplicationWindow: show only first line of script result in status bar
+ * Matrix: update view and connected plots on setCell
+ * python: add ln() alias and pow/ln to wordlist
+ * ParserIMAGE: add EDF reader with ESRF mask sentinel handling
+ * ApplicationWindow: improve import of ascii files
+ * Table::importASCII: add colDestinations parameter
+ * ascii1d: improve import/export interface
+ * fittable: improve fitting output results
+ * fittable: add second fitting curve color box to visible area
+ * fittable: show corresponding widget on save-session and statistical-notes checkbox toggle
+ * fittable: rename iFit-contained items to eFit
+ * ConfigDialog: suppress crash on symbol color map update
+
 # v0.16.1
 
  * plot2d: restore default right-axis stand-off for color-bar plots
