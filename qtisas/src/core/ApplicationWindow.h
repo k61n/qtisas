@@ -1436,6 +1436,8 @@ public:
 	QSize d_add_curves_dialog_size;
     //! Last-used "Available data" wildcard filter in the Add/Remove curves dialog
     QString d_add_curves_dialog_filter;
+    //! Last-used "New curves style" in the Add/Remove curves dialog (Graph::CurveType)
+    int d_add_curves_dialog_style;
 
 	//! Scale the errors output in fit operations with reduced chi^2
 	bool fit_scale_errors;

@@ -333,7 +333,7 @@ void CurvesDialog::init()
         boxShowCurrentFolder->setChecked(currentFolderOnly);
 		showCurrentFolder(currentFolderOnly);
 
-        int style = app->defaultCurveStyle;
+        int style = app->d_add_curves_dialog_style;
         if (style == Graph::Line)
             boxStyle->setCurrentIndex(0);
         else if (style == Graph::Scatter)
@@ -860,6 +860,7 @@ void CurvesDialog::closeEvent(QCloseEvent *e)
     {
         app->d_add_curves_dialog_size = this->size();
         app->d_add_curves_dialog_filter = dataFilter->text();
+        app->d_add_curves_dialog_style = curveStyle();
     }
 
     e->accept();
