@@ -34,6 +34,7 @@ const QStringList &KWS3_VHRD();
 const QStringList &KWS3_VHRD_2020();
 const QStringList &KWS3_VHRD_2018();
 const QStringList &KWSX_init();
+const QStringList &ILL_SAM_init();
 
 const QStringList &MARIA();
 const QStringList &SANS1();
@@ -42,7 +43,7 @@ static const QSet<QString> defaultInstruments = {"KWS1",           "KWS1-2020", 
                                                  "KWS2-He3-10%",   "KWS2-He3-20%",    "KWS2-HRD",  "KWS3",
                                                  "kws3-2016",      "kws3-2017-nicos", "KWS3-VHRD", "KWS3-VHRD-2018",
                                                  "KWS3-VHRD-2020", "KWS3-2018",       "KWS3-2020", "MARIA",
-                                                 "SANS1",          "KWSX-init"};
+                                                 "SANS1",          "KWSX-init",       "ILL-SAM-init"};
 enum class Parameter
 {
     Instrument,

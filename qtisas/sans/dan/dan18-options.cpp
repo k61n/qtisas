@@ -83,7 +83,7 @@ void dan18::saveCalibrantAs()
     bool ok = false;
     QString fileName = comboBoxCalibrant->currentText();
 
-    if (comboBoxCalibrant->currentIndex() < 5)
+    if (comboBoxCalibrant->currentIndex() < 6)
         fileName = "Create Your Calibrant: Input Calibrant Name";
 
     while (ok == false)
@@ -95,11 +95,10 @@ void dan18::saveCalibrantAs()
         {
             return;
         }
-        
-        if (fileName=="Plexi-1.5mm-[Current]" || fileName=="Plexi-1.5mm[KWS-1&2]" || fileName=="DirectBeam-No-Attenuator" || fileName=="DirectBeam[KWS-3]" || fileName=="H2O[SANS-1]")
-        {
-            ok=false;
-        }
+
+        ok = !QStringList{"Plexi-1.5mm-[Current]", "Plexi-1.5mm[KWS-1&2]", "DirectBeam-No-Attenuator",
+                          "DirectBeam[KWS-3]",     "H2O[SANS-1]",          "H2O[SAM]"}
+                  .contains(fileName);
     }
     
     QString s="";
@@ -142,7 +141,7 @@ void dan18::saveCalibrantAs()
 
 void dan18::deleteCurrentCalibrant()
 {
-    if (comboBoxCalibrant->currentIndex() < 5)
+    if (comboBoxCalibrant->currentIndex() < 6)
         return;
 
     QString fileName = comboBoxCalibrant->currentText();
@@ -176,7 +175,8 @@ void dan18::calibrantselected()
 {
     QString calibrant=comboBoxCalibrant->currentText();
     
-    if (comboBoxCalibrant->currentIndex()<5) pushButtonDeleteCurrentCalibrator->setEnabled(false);
+    if (comboBoxCalibrant->currentIndex() < 6)
+        pushButtonDeleteCurrentCalibrator->setEnabled(false);
     else pushButtonDeleteCurrentCalibrator->setEnabled(true);
     
     //+++
@@ -227,6 +227,15 @@ void dan18::calibrantselected()
     {
         lineEditMuY0->setText("0.0064601014");
         lineEditMuA->setText("-0.00471886555");
+        lineEditMut->setText("-7.87955599");
+        lineEditTo->setText("0.64601014");
+        lineEditTA->setText("0.471886555");
+        lineEditLate->setText("7.87955599");
+    }
+    else if (calibrant == "H2O[SAM]")
+    {
+        lineEditMuY0->setText("0.06422772");
+        lineEditMuA->setText("-0.04691597");
         lineEditMut->setText("-7.87955599");
         lineEditTo->setText("0.64601014");
         lineEditTA->setText("0.471886555");
@@ -345,10 +354,10 @@ void dan18::findCalibrators()
     lst.replaceInStrings(".ACS", "");
     lst.prepend("DirectBeam-No-Attenuator");
     lst.prepend("Plexi-1.5mm-[Current]");
+    lst.prepend("H2O[SAM]");
     lst.prepend("H2O[SANS-1]");
     lst.prepend("DirectBeam[KWS-3]");
     lst.prepend("Plexi-1.5mm[KWS-1&2]");
-    
     QString ct=comboBoxCalibrant->currentText();
     
     comboBoxCalibrant->clear();
