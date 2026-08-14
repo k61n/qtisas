@@ -24,6 +24,7 @@ Description: QtiSAS's main window
 #include <QApplication>
 #include <QClipboard>
 #include <QDateTime>
+#include <QDebug>
 #include <QDockWidget>
 #include <QFileDialog>
 #include <QFontComboBox>
@@ -6468,6 +6469,102 @@ void ApplicationWindow::scriptPrintReplace(const QString &text)
         cursor.movePosition(QTextCursor::StartOfBlock, QTextCursor::KeepAnchor);
         cursor.removeSelectedText();
         cursor.insertText(text);
+        console->setTextCursor(cursor);
+    }
+#else
+    qDebug() << text;
+#endif
+}
+
+// Distinct color for a script's OWN reported results (via the scriptPrint()/scriptPrintReplace()
+// Python API calls), so they stand out from surrounding AI status/header lines and error dumps,
+// which are printed via the plain, uncolored scriptPrint()/scriptPrintReplace() above. Applied via
+// QTextCharFormat + QTextCursor::insertText(), not raw HTML markup — scriptPrintReplace()'s
+// cursor.insertText() never interprets HTML, so a format-based approach is the only one that works
+// identically for both scriptPrint() and scriptPrintReplace().
+static const QColor kScriptOutputColor(0x0f, 0x9d, 0x58);
+
+void ApplicationWindow::scriptPrintHighlighted(const QString &text)
+{
+    if (m_aiCapturing && !text.trimmed().isEmpty())
+        m_aiCaptureBuffer += text + "\n";
+
+#ifdef SCRIPTING_CONSOLE
+    // Mirrors scriptPrint() above line-for-line (including its own comment on why this routing
+    // check is duplicated here) — only the final append is replaced with a colored insert.
+    QTextCharFormat fmt;
+    fmt.setForeground(kScriptOutputColor);
+    if (d_fitFromScriptWindow || (m_aiCapturing && !m_aiForceConsole && scriptWindow && scriptWindow->isVisible()))
+    {
+        scriptWindow->showOutputPanel();
+        QTextEdit *out = scriptWindow->outputConsole();
+        if (!text.trimmed().isEmpty())
+        {
+            QTextCursor cursor(out->document());
+            cursor.movePosition(QTextCursor::End);
+            if (!out->document()->isEmpty())
+                cursor.insertBlock();
+            cursor.insertText(text, fmt);
+            // Without this, insertText() leaves its format as the cursor's "current" format —
+            // append() (used by the plain, uncolored scriptPrint()/print() for every later line)
+            // continues from whatever format the document last ended with, so every subsequent
+            // line would silently render green too, confirmed live.
+            cursor.setCharFormat(QTextCharFormat());
+            out->setTextCursor(cursor);
+            out->ensureCursorVisible();
+        }
+    }
+    else
+    {
+        consoleWindow->show();
+        if (explorerWindow && tabifiedDockWidgets(explorerWindow).contains(consoleWindow))
+            tabifyDockWidget(explorerWindow, consoleWindow);
+        else if (logWindow && tabifiedDockWidgets(logWindow).contains(consoleWindow))
+            tabifyDockWidget(logWindow, consoleWindow);
+        if (!text.trimmed().isEmpty())
+        {
+            QTextCursor cursor(console->document());
+            cursor.movePosition(QTextCursor::End);
+            if (!console->document()->isEmpty())
+                cursor.insertBlock();
+            cursor.insertText(text, fmt);
+            // See the matching comment in the scriptWindow branch above — resets the "current"
+            // format so later, plain-colored lines don't inherit green.
+            cursor.setCharFormat(QTextCharFormat());
+            console->setTextCursor(cursor);
+            console->ensureCursorVisible();
+        }
+    }
+#else
+    qDebug() << text;
+#endif
+}
+
+void ApplicationWindow::scriptPrintReplaceHighlighted(const QString &text)
+{
+#ifdef SCRIPTING_CONSOLE
+    QTextCharFormat fmt;
+    fmt.setForeground(kScriptOutputColor);
+    if (d_fitFromScriptWindow || (m_aiCapturing && !m_aiForceConsole && scriptWindow && scriptWindow->isVisible()))
+    {
+        QTextEdit *out = scriptWindow->outputConsole();
+        QTextCursor cursor = out->textCursor();
+        cursor.movePosition(QTextCursor::End);
+        cursor.movePosition(QTextCursor::StartOfBlock, QTextCursor::KeepAnchor);
+        cursor.removeSelectedText();
+        cursor.insertText(text, fmt);
+        cursor.setCharFormat(QTextCharFormat());
+        out->setTextCursor(cursor);
+    }
+    else
+    {
+        consoleWindow->show();
+        QTextCursor cursor = console->textCursor();
+        cursor.movePosition(QTextCursor::End);
+        cursor.movePosition(QTextCursor::StartOfBlock, QTextCursor::KeepAnchor);
+        cursor.removeSelectedText();
+        cursor.insertText(text, fmt);
+        cursor.setCharFormat(QTextCharFormat());
         console->setTextCursor(cursor);
     }
 #else

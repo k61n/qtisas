@@ -1160,6 +1160,10 @@ public slots:
 	void restartScriptingEnv();
 	//! print to scripting console (if available) or to stdout
 	void scriptPrint(const QString &text);
+    //! same as scriptPrint(), but rendered in a distinct color — used ONLY for the Python-exposed
+    //! scriptPrint() API call (see qtimod.sip), so a script's own reported results are visually set
+    //! apart from surrounding AI status/header lines, which keep calling plain scriptPrint().
+    void scriptPrintHighlighted(const QString &text);
     void askAi(const QString &text, bool autoRun = false, bool forceConsole = false);
     AiAssistant *aiAssistant() const
     {
@@ -1175,6 +1179,8 @@ public slots:
 
     //! replace the last line in the scripting console (in-place iteration update)
     void scriptPrintReplace(const QString &text);
+    //! same as scriptPrintReplace(), but rendered in a distinct color — see scriptPrintHighlighted()
+    void scriptPrintReplaceHighlighted(const QString &text);
     //! returns true if Python has received a SIGINT (Ctrl+C) since last check
     static bool scriptInterrupted();
     void setScriptFitRunning(bool on);

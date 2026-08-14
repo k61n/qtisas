@@ -3851,9 +3851,17 @@ public:
   QStringList customActionNames() const;
   QString customActionsPath() const;
 
-  // console output
+  // console output — rendered in a distinct color (see ApplicationWindow::scriptPrintHighlighted()
+  // in the C++ source) so a script's own reported results stand out from AI status lines, which
+  // print via the plain, uncolored ApplicationWindow::scriptPrint()/scriptPrintReplace() directly.
   void scriptPrint(const QString &);
+%MethodCode
+    sipCpp->scriptPrintHighlighted(*a0);
+%End
   void scriptPrintReplace(const QString &);
+%MethodCode
+    sipCpp->scriptPrintReplaceHighlighted(*a0);
+%End
 
   // AI system-prompt rules — manually curated, capped, shown in Help > Python API > Ai
   bool addRule(const QString &text) /PyName=addRule/;
