@@ -1,3 +1,7 @@
+# v0.17.1
+
+ * aiconfig: fix Git URL
+
 # v0.17.0
 
  * dan: add ILL-SAM-init SANS instrument
