@@ -15,6 +15,8 @@ Description: The "Ask AI" tab of ConfigDialog — AI preset management (API
 
 #include <QWidget>
 
+inline const QString repoUrl = "https://iffgit.fz-juelich.de/qtisas/ai.git";
+
 class ApplicationWindow;
 class QComboBox;
 class QLineEdit;
@@ -45,6 +47,7 @@ class AiConfig : public QWidget
     QCheckBox *m_splitByDefault;
     QSpinBox *m_maxSplitParts;
     QCheckBox *m_splitRequestMerge;
+
 };
 
 #endif

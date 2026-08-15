@@ -246,7 +246,6 @@ AiConfig::AiConfig(ApplicationWindow *app, QWidget *parent) : QWidget(parent), m
 
     connect(gitGetBtn, &QToolButton::clicked, this, [=]() mutable {
         const QString previousPreset = m_mode->currentData(Qt::UserRole + 1).toString();
-        static const QString repoUrl = "https://iffgit.fz-juelich.de/qtisas/ai";
 
         RepositorySynchronization::updateGitInteractive(this, aiDir, repoUrl, {"ai"});
 
