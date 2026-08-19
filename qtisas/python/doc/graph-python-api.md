@@ -1070,6 +1070,28 @@ l1.insertCurve(fc, "x", "y", Graph.CurveType.Line)
 invalid/missing table raises `ValueError: Invalid table in insertCurve()` rather than plotting
 nothing, so apply the same EXPLORE-before-plotting check as above.
 
+**`insertCurve()` also validates that the named column(s) actually exist in the table** — passing
+a column name the table doesn't have raises `ValueError: insertCurve(): column '<name>' not found
+in table '<table>'` (or `X column`/`Y column` for the two-name form) instead of silently plotting
+nothing. This matters most when mixing tables with different naming: a `fitCurve-<name>` analysis
+table's own columns are ALWAYS the fixed `x`/`y`/`weight`/`sigma`/`residues`/... set (see
+fittable-python-api.md), never the SOURCE data table's own column names — passing the source
+table's custom names (e.g. `"xx"`/`"yy"`) to `insertCurve()` on a `fitCurve-<name>` table now
+raises immediately instead of silently producing an empty curve. Confirmed live: a script mixed
+the source table's own custom column names into an `insertCurve()` call against the `fitCurve-`
+table, which returned `None` with no visible error — the winning model's fit curve and residuals
+were silently never plotted, and the run reported success anyway.
+
+```python
+# WRONG — "xx"/"yy" are the SOURCE table's columns, not fitCurve-<name>'s (always x/y/residues)
+fc = table("fitCurve-ai/LorentzianPeak")
+l1.insertCurve(fc, "xx", "yy", Graph.CurveType.Line)   # ValueError: X column 'xx' not found
+
+# RIGHT — fitCurve-<name> tables always use the fixed x/y/residues names, regardless of what the
+# source data table's own columns were called
+l1.insertCurve(fc, "x", "y", Graph.CurveType.Line)
+```
+
 ### `addErrorBars` — second argument is a Table object
 
 The first argument is the **curve title** — `"TableName_ColumnName"` when added via `addCurve` or

@@ -1896,18 +1896,39 @@ public:
 
   DataCurve* insertCurve(Table*, const QString&, int style = 1, int startRow = 0, int endRow = -1);
 %MethodCode
+  // Confirmed live: a script called insertCurve() against a fitCurve-<name> table (whose real
+  // columns are the fixed x/y/weight/sigma/residues/... set, never the SOURCE data table's own
+  // column names) using a column name that only existed on the source table. Graph::insertCurve()
+  // itself just returns nullptr when Table::colIndex() can't find the name (Graph.cpp) — no
+  // exception, no curve, no visible sign anything went wrong; the script completed as if it had
+  // succeeded, with the fit curve/residuals silently never plotted. Raising here, at the SIP
+  // boundary, turns that silent no-op into an immediate, catchable Python error instead.
   if (a0 == 0) {
     sipIsErr = 1;
     PyErr_Format(PyExc_ValueError, "Invalid table in insertCurve().");
+  } else if (a0->colIndex(*a1) < 0) {
+    sipIsErr = 1;
+    PyErr_Format(PyExc_ValueError, "insertCurve(): column '%s' not found in table '%s'.",
+                 a1->toUtf8().constData(), a0->objectName().toUtf8().constData());
   } else {
     sipRes = sipCpp->insertCurve(a0, *a1, a2, a3, a4);
   }
 %End
   DataCurve* insertCurve(Table*, const QString&, const QString&, int style = 1, int startRow = 0, int endRow = -1);
 %MethodCode
+  // See the single-column overload above for the confirmed-live rationale — same fix, checking
+  // BOTH the X and Y column names here.
   if (a0 == 0) {
     sipIsErr = 1;
     PyErr_Format(PyExc_ValueError, "Invalid table in insertCurve().");
+  } else if (a0->colIndex(*a1) < 0) {
+    sipIsErr = 1;
+    PyErr_Format(PyExc_ValueError, "insertCurve(): X column '%s' not found in table '%s'.",
+                 a1->toUtf8().constData(), a0->objectName().toUtf8().constData());
+  } else if (a0->colIndex(*a2) < 0) {
+    sipIsErr = 1;
+    PyErr_Format(PyExc_ValueError, "insertCurve(): Y column '%s' not found in table '%s'.",
+                 a2->toUtf8().constData(), a0->objectName().toUtf8().constData());
   } else {
     sipRes = sipCpp->insertCurve(a0, *a1, *a2, a3, a4, a5);
   }

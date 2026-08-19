@@ -118,6 +118,11 @@
 # insertCurve(t,col,style,startRow=0,endRow=-1)->DataCurve
 # insertCurve(t,xcol,ycol,style,startRow=0,endRow=-1)->DataCurve
 #   validates t like addCurve does -> ValueError: Invalid table in insertCurve() if invalid/None
+#   ALSO validates col/xcol/ycol actually exist in t -> ValueError: column '<name>' not found (or
+#   X column/Y column for the 2-name form) — no more silent no-curve-added. Confirmed live: mixing
+#   a SOURCE table's custom column names into an insertCurve() call on a fitCurve-<name> table
+#   (whose own columns are ALWAYS the fixed x/y/weight/sigma/residues/... set, never the source
+#   table's names) used to return None silently; now raises immediately instead.
 # removeCurve(index|title|curve)  deleteFitCurves()
 # numCurves()->int  curve(index|title)  curveTitle(index)->str
 # dataCurve(index)->DataCurve  boxCurve(index)->BoxCurve  functionCurve(index)->FunctionCurve
