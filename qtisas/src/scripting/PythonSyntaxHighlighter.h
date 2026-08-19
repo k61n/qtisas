@@ -11,6 +11,7 @@ Description: Python syntax highlighting based on the Qt syntax highlighter examp
 #ifndef PYTHONHIGHLIGHTER_H
 #define PYTHONHIGHLIGHTER_H
 
+#include <QColor>
 #include <QHash>
 #include <QRegularExpression>
 #include <QSyntaxHighlighter>
@@ -18,6 +19,16 @@ Description: Python syntax highlighting based on the Qt syntax highlighter examp
 #include <QTextDocument>
 
 #include "ScriptEdit.h"
+
+// Distinct color for a script's OWN reported results (via the scriptPrint()/scriptPrintReplace()
+// Python API calls), so they stand out from surrounding AI status/header lines and error dumps,
+// which are printed via the plain, uncolored scriptPrint()/scriptPrintReplace() above. Applied via
+// QTextCharFormat + QTextCursor::insertText(), not raw HTML markup — scriptPrintReplace()'s
+// cursor.insertText() never interprets HTML, so a format-based approach is the only one that works
+// identically for both scriptPrint() and scriptPrintReplace(). Shared with PythonSyntaxHighlighter
+// (see highlightBlock()'s script-output detection), which is why this lives here rather than in
+// ApplicationWindow.cpp alongside its callers.
+inline const QColor scriptOutputColor(0x0f, 0x9d, 0x58);
 
 class SyntaxHighlighter : public QSyntaxHighlighter
 {

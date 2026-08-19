@@ -6261,8 +6261,25 @@ void ApplicationWindow::echoAiRequest(const QString &effectiveText)
     if (!m_aiForceConsole && scriptWindow && scriptWindow->isVisible())
     {
         scriptWindow->showOutputPanel();
-        ScriptEdit::ensureOneTrailingBlank(scriptWindow->outputConsole());
-        scriptWindow->outputConsole()->append("▸▸▸ AI request: " + effectiveText.split("\n").first());
+        QTextEdit *out = scriptWindow->outputConsole();
+        ScriptEdit::ensureOneTrailingBlank(out);
+        // append() inherits whatever format the document's LAST character happens to have — if
+        // the previous line was scriptPrintHighlighted()'s own green script-output color, append()
+        // can silently continue in that same color instead of the normal default, confirmed live
+        // (this exact header line rendered green right after a script's colored output). Force an
+        // explicit, definite foreground via qApp's own palette (not a hardcoded color, so this
+        // still respects whatever light/dark theme is active) instead of trusting append()'s
+        // inherited-format behavior.
+        QTextCursor cursor(out->document());
+        cursor.movePosition(QTextCursor::End);
+        if (!out->document()->isEmpty())
+            cursor.insertBlock();
+        QTextCharFormat fmt;
+        fmt.setForeground(qApp->palette().color(QPalette::Text));
+        cursor.insertText("▸▸▸ AI request: " + effectiveText.split("\n").first(), fmt);
+        out->setTextCursor(cursor);
+        out->setCurrentCharFormat(fmt);
+        out->ensureCursorVisible();
     }
     else
     {
@@ -6410,17 +6427,27 @@ void ApplicationWindow::scriptPrint(const QString &text)
         m_aiCaptureBuffer += text + "\n";
 
 #ifdef SCRIPTING_CONSOLE
-    // AI-generated scripts call scriptPrint() directly (a Python-exposed function, not a stdout
-    // write) — that bypasses askAi()'s print() routing entirely, so this needs its own copy of
-    // print()'s "is the Script Output Panel the right place" check; d_fitFromScriptWindow alone
-    // is never true during an AI run (only ScriptWindow::executeAll() sets it), which is why AI
-    // output kept landing in the main Scripting Console regardless of which window issued it.
+    // Duplicates print()'s Script Output Panel check since AI scripts call scriptPrint() directly,
+    // bypassing askAi()'s routing; d_fitFromScriptWindow alone misses AI runs.
+    // Explicit foreground (via qApp's palette) since append() would otherwise inherit a leftover
+    // green from prior script output.
+    QTextCharFormat fmt;
+    fmt.setForeground(qApp->palette().color(QPalette::Text));
     if (d_fitFromScriptWindow || (m_aiCapturing && !m_aiForceConsole && scriptWindow && scriptWindow->isVisible()))
     {
         scriptWindow->showOutputPanel();
         QTextEdit *out = scriptWindow->outputConsole();
         if (!text.trimmed().isEmpty())
-            out->append(text);
+        {
+            QTextCursor cursor(out->document());
+            cursor.movePosition(QTextCursor::End);
+            if (!out->document()->isEmpty())
+                cursor.insertBlock();
+            cursor.insertText(text, fmt);
+            out->setTextCursor(cursor);
+            out->setCurrentCharFormat(fmt);
+            out->ensureCursorVisible();
+        }
     }
     else
     {
@@ -6430,7 +6457,16 @@ void ApplicationWindow::scriptPrint(const QString &text)
         else if (logWindow && tabifiedDockWidgets(logWindow).contains(consoleWindow))
             tabifyDockWidget(logWindow, consoleWindow);
         if (!text.trimmed().isEmpty())
-            console->append(text);
+        {
+            QTextCursor cursor(console->document());
+            cursor.movePosition(QTextCursor::End);
+            if (!console->document()->isEmpty())
+                cursor.insertBlock();
+            cursor.insertText(text, fmt);
+            console->setTextCursor(cursor);
+            console->setCurrentCharFormat(fmt);
+            console->ensureCursorVisible();
+        }
     }
 #else
     qDebug() << text;
@@ -6466,13 +6502,8 @@ void ApplicationWindow::scriptPrintReplace(const QString &text)
 #endif
 }
 
-// Distinct color for a script's OWN reported results (via the scriptPrint()/scriptPrintReplace()
-// Python API calls), so they stand out from surrounding AI status/header lines and error dumps,
-// which are printed via the plain, uncolored scriptPrint()/scriptPrintReplace() above. Applied via
-// QTextCharFormat + QTextCursor::insertText(), not raw HTML markup — scriptPrintReplace()'s
-// cursor.insertText() never interprets HTML, so a format-based approach is the only one that works
-// identically for both scriptPrint() and scriptPrintReplace().
-static const QColor kScriptOutputColor(0x0f, 0x9d, 0x58);
+// scriptOutputColor is shared with PythonSyntaxHighlighter — see its doc comment in
+// PythonSyntaxHighlighter.h (already #included above) for why it lives there instead of here.
 
 void ApplicationWindow::scriptPrintHighlighted(const QString &text)
 {
@@ -6483,13 +6514,18 @@ void ApplicationWindow::scriptPrintHighlighted(const QString &text)
     // Mirrors scriptPrint() above line-for-line (including its own comment on why this routing
     // check is duplicated here) — only the final append is replaced with a colored insert.
     QTextCharFormat fmt;
-    fmt.setForeground(kScriptOutputColor);
+    fmt.setForeground(scriptOutputColor);
     if (d_fitFromScriptWindow || (m_aiCapturing && !m_aiForceConsole && scriptWindow && scriptWindow->isVisible()))
     {
         scriptWindow->showOutputPanel();
         QTextEdit *out = scriptWindow->outputConsole();
         if (!text.trimmed().isEmpty())
         {
+            // Captured BEFORE touching the cursor at all — currentCharFormat() is "whatever
+            // format text typed here right now would use", i.e. the real previous appearance,
+            // not an assumed/blank default. Restored below so later plain-colored lines pick up
+            // exactly where this one's surroundings left off, instead of stayng green.
+            const QTextCharFormat previousFormat = out->currentCharFormat();
             QTextCursor cursor(out->document());
             cursor.movePosition(QTextCursor::End);
             if (!out->document()->isEmpty())
@@ -6499,8 +6535,9 @@ void ApplicationWindow::scriptPrintHighlighted(const QString &text)
             // append() (used by the plain, uncolored scriptPrint()/print() for every later line)
             // continues from whatever format the document last ended with, so every subsequent
             // line would silently render green too, confirmed live.
-            cursor.setCharFormat(QTextCharFormat());
+            cursor.setCharFormat(previousFormat);
             out->setTextCursor(cursor);
+            out->setCurrentCharFormat(previousFormat);
             out->ensureCursorVisible();
         }
     }
@@ -6513,14 +6550,15 @@ void ApplicationWindow::scriptPrintHighlighted(const QString &text)
             tabifyDockWidget(logWindow, consoleWindow);
         if (!text.trimmed().isEmpty())
         {
+            const QTextCharFormat previousFormat = console->currentCharFormat();
             QTextCursor cursor(console->document());
             cursor.movePosition(QTextCursor::End);
             if (!console->document()->isEmpty())
                 cursor.insertBlock();
             cursor.insertText(text, fmt);
-            // See the matching comment in the scriptWindow branch above — resets the "current"
-            // format so later, plain-colored lines don't inherit green.
-            cursor.setCharFormat(QTextCharFormat());
+            // See the matching comment in the scriptWindow branch above — restores the format
+            // that was actually in effect before this call, not an assumed default.
+            cursor.setCharFormat(previousFormat);
             console->setTextCursor(cursor);
             console->ensureCursorVisible();
         }
@@ -6534,28 +6572,35 @@ void ApplicationWindow::scriptPrintReplaceHighlighted(const QString &text)
 {
 #ifdef SCRIPTING_CONSOLE
     QTextCharFormat fmt;
-    fmt.setForeground(kScriptOutputColor);
+    fmt.setForeground(scriptOutputColor);
     if (d_fitFromScriptWindow || (m_aiCapturing && !m_aiForceConsole && scriptWindow && scriptWindow->isVisible()))
     {
         QTextEdit *out = scriptWindow->outputConsole();
+        // See scriptPrintHighlighted()'s comment — captured before the selection below exists,
+        // so a PRIOR call's own green line (about to be replaced) is never mistaken for "the
+        // previous format".
+        const QTextCharFormat previousFormat = out->currentCharFormat();
         QTextCursor cursor = out->textCursor();
         cursor.movePosition(QTextCursor::End);
         cursor.movePosition(QTextCursor::StartOfBlock, QTextCursor::KeepAnchor);
         cursor.removeSelectedText();
         cursor.insertText(text, fmt);
-        cursor.setCharFormat(QTextCharFormat());
+        cursor.setCharFormat(previousFormat);
         out->setTextCursor(cursor);
+        out->setCurrentCharFormat(previousFormat);
     }
     else
     {
         consoleWindow->show();
+        const QTextCharFormat previousFormat = console->currentCharFormat();
         QTextCursor cursor = console->textCursor();
         cursor.movePosition(QTextCursor::End);
         cursor.movePosition(QTextCursor::StartOfBlock, QTextCursor::KeepAnchor);
         cursor.removeSelectedText();
         cursor.insertText(text, fmt);
-        cursor.setCharFormat(QTextCharFormat());
+        cursor.setCharFormat(previousFormat);
         console->setTextCursor(cursor);
+        console->setCurrentCharFormat(previousFormat);
     }
 #else
     qDebug() << text;

@@ -109,6 +109,9 @@ void PythonSyntaxHighlighter::highlightBlock(const QString &text)
     }
 
     static const QColor aiColor(220, 235, 255);
+    // Marks blocks under a "▸▸▸ AI answer:" header as prose, not code, so they skip Python
+    // highlighting until the next "▸▸▸ " header (other headers stay code/status as usual).
+    static const int aiAnswerBlockState = 2;
 
     if (text.startsWith("▸▸▸ "))
     {
@@ -121,9 +124,28 @@ void PythonSyntaxHighlighter::highlightBlock(const QString &text)
         }
         QTextCharFormat charFmt;
         charFmt.setBackground(aiColor);
+        // setFormat() merges onto the existing char format, so an unset foreground here would
+        // leave a bled-in color (e.g. green from prior script output) instead of resetting it.
+        // Uses qApp's palette, not a hardcoded color, to respect the active light/dark theme.
+        charFmt.setForeground(qApp->palette().color(QPalette::Text));
         setFormat(0, static_cast<int>(text.length()), charFmt);
+        setCurrentBlockState(text.startsWith("▸▸▸ AI answer:") ? aiAnswerBlockState : 0);
         return;
     }
+
+    // Script output is colored at insertion time (ApplicationWindow), not by this highlighter, so
+    // we detect it by that color instead of a block state — read via a probe cursor since format(0)
+    // only reflects what this highlighter itself set, not the document's real character format.
+    bool isScriptOutput = false;
+    if (!text.isEmpty())
+    {
+        QTextCursor probe(document());
+        probe.setPosition(currentBlock().position());
+        probe.setPosition(currentBlock().position() + 1, QTextCursor::KeepAnchor);
+        isScriptOutput = probe.charFormat().foreground().color() == scriptOutputColor;
+    }
+
+    const bool suppressPythonHighlighting = (previousBlockState() == aiAnswerBlockState) || isScriptOutput;
 
     // Strip AI background inherited by subsequent blocks
     if (currentBlock().blockFormat().background().color() == aiColor)
@@ -138,14 +160,52 @@ void PythonSyntaxHighlighter::highlightBlock(const QString &text)
     static const QRegularExpression comment = QRegularExpression("\"{3}");
     s.replace(comment, "   ");
 
-    foreach (HighlightingRule rule, pythonHighlightingRules) {
-        QRegularExpression re(rule.pattern);
-        QRegularExpressionMatchIterator i = re.globalMatch(s);
-        while (i.hasNext())
+    if (!suppressPythonHighlighting)
+    {
+        foreach (HighlightingRule rule, pythonHighlightingRules)
         {
-            QRegularExpressionMatch match = i.next();
-            setFormat(static_cast<int>(match.capturedStart()), static_cast<int>(match.capturedLength()), rule.format);
+            QRegularExpression re(rule.pattern);
+            QRegularExpressionMatchIterator i = re.globalMatch(s);
+            while (i.hasNext())
+            {
+                QRegularExpressionMatch match = i.next();
+                setFormat(static_cast<int>(match.capturedStart()), static_cast<int>(match.capturedLength()),
+                          rule.format);
+            }
         }
+    }
+
+    // Markdown emphasis in AI answers (**bold**, `code`) — markers stay visible since a
+    // QSyntaxHighlighter can't remove characters, but this still beats no styling at all.
+    // Applied after the rules above so it wins over an incidental keyword-color match.
+    static const QRegularExpression boldRe(R"(\*\*[^*]+\*\*)");
+    QRegularExpressionMatchIterator boldIt = boldRe.globalMatch(s);
+    while (boldIt.hasNext())
+    {
+        const QRegularExpressionMatch m = boldIt.next();
+        QTextCharFormat boldFmt = format(static_cast<int>(m.capturedStart()));
+        boldFmt.setFontWeight(QFont::Bold);
+        setFormat(static_cast<int>(m.capturedStart()), static_cast<int>(m.capturedLength()), boldFmt);
+    }
+
+    static const QRegularExpression inlineCodeRe(R"(`[^`]+`)");
+    QRegularExpressionMatchIterator codeIt = inlineCodeRe.globalMatch(s);
+    while (codeIt.hasNext())
+    {
+        const QRegularExpressionMatch m = codeIt.next();
+        QTextCharFormat codeFmt = format(static_cast<int>(m.capturedStart()));
+        codeFmt.setFontFamily("monospace");
+        setFormat(static_cast<int>(m.capturedStart()), static_cast<int>(m.capturedLength()), codeFmt);
+    }
+
+    if (suppressPythonHighlighting)
+    {
+        // Carry the suppressed state forward to the next block — skip the base class's
+        // comment/string/number/function coloring (also code-oriented; a quoted word in prose
+        // would otherwise be colored as if it were a Python string) and the trailing """
+        // multi-line-comment state machine below, which would otherwise overwrite this state.
+        setCurrentBlockState(aiAnswerBlockState);
+        return;
     }
 
 	SyntaxHighlighter::highlightBlock(text);//process common rules and parentheses matching
