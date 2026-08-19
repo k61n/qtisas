@@ -6318,8 +6318,8 @@ bool ApplicationWindow::handleAiTextCommand(const QString &trimmed)
         print("▸▸▸ AI: request cancelled.");
         return true;
     }
-    if (trimmed == "history" || trimmed == "show history" || trimmed == "show request history" ||
-        trimmed == "request history")
+    if (trimmed == "history" || trimmed == "history list" || trimmed == "list history" || trimmed == "show history" ||
+        trimmed == "show request history" || trimmed == "request history")
     {
         print("▸▸▸ AI answer:\n\n" + m_ai->historyText());
         return true;
