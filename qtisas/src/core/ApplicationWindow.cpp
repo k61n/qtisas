@@ -1693,6 +1693,10 @@ void ApplicationWindow::initToolBars()
     d_status_info->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     d_status_info->setContextMenuPolicy(Qt::CustomContextMenu);
     d_status_info->setStyleSheet("color: grey");
+    // Cap to exactly one text line — frame margins added on top of the font's own line height so
+    // the sunken border doesn't clip the glyphs.
+    d_status_info->setMaximumHeight(d_status_info->fontMetrics().height() + 6);
+    d_status_info->setMinimumWidth(250);
     connect(d_status_info, SIGNAL(customContextMenuRequested(const QPoint &)), this,
             SLOT(showStatusBarContextMenu(const QPoint &)));
 
@@ -1702,6 +1706,7 @@ void ApplicationWindow::initToolBars()
     terminal_line->setPalette(palette1);
     terminal_line->setPlaceholderText("type command here [ '?' = help | Ctrl+Enter = AI | Ctrl+Shift+Enter = AI+run ]");
     terminal_line->setReadOnly(0);
+    terminal_line->setMinimumWidth(250);
 
     connect(terminal_line, &QLineEdit::returnPressed, this, [this]() {
         terminal(terminal_line->text());
