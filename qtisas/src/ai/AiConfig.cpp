@@ -168,6 +168,19 @@ AiConfig::AiConfig(ApplicationWindow *app, QWidget *parent) : QWidget(parent), m
     lay->addWidget(m_splitRequestMerge, 12, 0, 1, 2);
     connect(m_splitRequestMerge, &QCheckBox::toggled, app, [app](bool on) { app->aiSettings.splitRequestMerge = on; });
 
+    // When off, every candidate action script skips the mandatory pre-execution review pass
+    // (checklist + the 9 mechanical regression backstops) and goes straight to execution — trading
+    // that safety net for one fewer HTTP round-trip per script. detectKnownMistakes() and the other
+    // pre-execution mechanical checks still run either way.
+    m_selfReviewEnabled = new QCheckBox(tr("Mandatory pre-execution self-review"));
+    m_selfReviewEnabled->setToolTip(
+        tr("On (default): every candidate script is sent back once for a checklist/regression "
+           "review before it runs.\n"
+           "Off: skip that review round-trip entirely — a compilable candidate runs immediately."));
+    m_selfReviewEnabled->setChecked(app->aiSettings.selfReviewEnabled);
+    lay->addWidget(m_selfReviewEnabled, 13, 0, 1, 2);
+    connect(m_selfReviewEnabled, &QCheckBox::toggled, app, [app](bool on) { app->aiSettings.selfReviewEnabled = on; });
+
     // Fill fields when preset changes — loads from .ai file
     auto fillPreset = [=, this](int idx) mutable {
         if (idx < 0 || idx >= m_mode->count())

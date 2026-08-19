@@ -335,6 +335,20 @@ class AiAssistant : public QObject
     {
         return m_splitMergeEnabled;
     }
+    // When true (default), maybeDispatchSelfReview() sends every compilable candidate script back
+    // to the AI once for a mandatory pre-execution review pass (checklist + the 9 mechanical
+    // regression backstops) before it ever runs. When false, that whole round-trip is skipped —
+    // a compilable candidate goes straight to runActionScript(). detectKnownMistakes() and the
+    // other pre-execution mechanical checks in runActionScript() itself still run either way; only
+    // the SEPARATE review-and-correct pass is what this toggles.
+    void setSelfReviewEnabled(bool on)
+    {
+        m_selfReviewEnabled = on;
+    }
+    bool selfReviewEnabled() const
+    {
+        return m_selfReviewEnabled;
+    }
 
     // Conversation-level orchestration state (doc-selection -> EXPLORE -> self-review ->
     // error-retry state machine). Each branch's handling has moved into the methods above, but
@@ -598,6 +612,7 @@ class AiAssistant : public QObject
     int m_maxAutoContinue = 4;
     int m_maxSplitParts = 8;
     bool m_splitMergeEnabled = true;
+    bool m_selfReviewEnabled = true;
     QList<QPair<QString, QString>> m_history; // (user, assistant) pairs
     QString m_pendingUserText;
     bool m_pendingAddToHistory = true;

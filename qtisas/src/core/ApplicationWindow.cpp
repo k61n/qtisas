@@ -6394,6 +6394,7 @@ void ApplicationWindow::askAi(const QString &text, bool autoRun, bool forceConso
     m_ai->setMaxAutoContinue(aiSettings.maxAutoContinue);
     m_ai->setMaxSplitParts(aiSettings.maxSplitParts);
     m_ai->setSplitMergeEnabled(aiSettings.splitRequestMerge);
+    m_ai->setSelfReviewEnabled(aiSettings.selfReviewEnabled);
 
     m_aiForceConsole = forceConsole;
 

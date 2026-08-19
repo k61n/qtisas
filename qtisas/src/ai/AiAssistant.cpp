@@ -1591,7 +1591,13 @@ bool AiAssistant::maybeDispatchSelfReview(QString &code, bool &compilable, QStri
         }
     }
 
-    if (!compilable || isSelfReviewResult)
+    // m_selfReviewEnabled off (a user setting — see AiSettings::selfReviewEnabled's doc comment):
+    // skip the mandatory review pass entirely, straight to runActionScript(). Checked here rather
+    // than at the top of the function since every backstop block above only ever fires on
+    // isSelfReviewResult == true — reachable only once a review round was actually dispatched — so
+    // this is the one place a bypass is needed; nothing above becomes reachable-but-wrong when
+    // self-review is disabled, it simply never gets a chance to run.
+    if (!compilable || isSelfReviewResult || !m_selfReviewEnabled)
         return false;
 
     // Mandatory pre-execution self-review: send the candidate script back to the

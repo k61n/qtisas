@@ -47,6 +47,7 @@ class AiConfig : public QWidget
     QCheckBox *m_splitByDefault;
     QSpinBox *m_maxSplitParts;
     QCheckBox *m_splitRequestMerge;
+    QCheckBox *m_selfReviewEnabled;
 
 };
 

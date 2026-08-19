@@ -35,6 +35,16 @@ struct AiSettings
     // When false, split mode skips that step entirely — each part already ran independently, so
     // this only affects whether a standalone reference script gets printed at the end.
     bool splitRequestMerge = true;
+
+    // When true (default), every candidate action script is sent back to the AI once for a
+    // mandatory pre-execution self-review pass (checklist + the 9 mechanical regression backstops)
+    // before it ever runs — see AiAssistant::maybeDispatchSelfReview()'s doc comment. When false,
+    // that whole round-trip is skipped and a compilable candidate goes straight to
+    // runActionScript() — trading the checklist/backstop safety net for one fewer HTTP round-trip
+    // per script. detectKnownMistakes() and the other pre-execution mechanical checks in
+    // runActionScript() itself are unaffected either way; only the SEPARATE review-and-correct pass
+    // is what this toggles.
+    bool selfReviewEnabled = true;
 };
 
 // Keeps the "/AI" group name and its key strings colocated with the struct they belong to,
@@ -49,6 +59,7 @@ inline void AiReadSettings(QSettings *settings, AiSettings &s)
     s.splitByDefault = settings->value("/SplitByDefault", s.splitByDefault).toBool();
     s.maxSplitParts = settings->value("/MaxSplitParts", s.maxSplitParts).toInt();
     s.splitRequestMerge = settings->value("/SplitRequestMerge", s.splitRequestMerge).toBool();
+    s.selfReviewEnabled = settings->value("/SelfReviewEnabled", s.selfReviewEnabled).toBool();
     settings->endGroup();
 }
 
@@ -60,6 +71,7 @@ inline void AiWriteSettings(QSettings *settings, const AiSettings &s)
     settings->setValue("/SplitByDefault", s.splitByDefault);
     settings->setValue("/MaxSplitParts", s.maxSplitParts);
     settings->setValue("/SplitRequestMerge", s.splitRequestMerge);
+    settings->setValue("/SelfReviewEnabled", s.selfReviewEnabled);
     settings->endGroup();
 }
 
