@@ -3469,11 +3469,32 @@ public:
         existing = sipCpp->projectFolder()->graph(*a0, true);
     if (existing)
     {
-        if (a1 > 1 && (existing->getRows() != a2 || existing->getCols() != a3))
+        if (a1 > 1)
         {
-            existing->setRows(a2);
-            existing->setCols(a3);
-            existing->arrangeLayers(false, true);
+            // Confirmed live (Python-side): a script calling newGraph(name, layers>1, rows, cols)
+            // a second time (a retry, or simply re-running the same script) against a window that
+            // ALREADY has the requested grid used to be returned COMPLETELY untouched, curves and
+            // all — and even when the grid genuinely differed, only the layer geometry was
+            // rearranged, never the curve data. Either way, curves already on the layers stayed in
+            // place while the caller's own insertCurve()/addCurve() calls piled MORE on top, with
+            // no error at all — a two-panel fit-plus-residuals graph ended up with 4 curves in the
+            // top layer instead of 2, each one duplicated exactly once. newGraph() is documented as
+            // the "build from scratch" entry point (graphWindow(name) is the lookup-to-extend one),
+            // so clearing every existing layer's curves here — regardless of whether the grid also
+            // needs rearranging — matches that contract instead of leaving it to luck.
+            if (existing->getRows() != a2 || existing->getCols() != a3)
+            {
+                existing->setRows(a2);
+                existing->setCols(a3);
+                existing->arrangeLayers(false, true);
+            }
+            for (int li = 1; li <= existing->numLayers(); ++li)
+            {
+                Graph *g = existing->layer(li);
+                if (g)
+                    for (int ci = g->curveCount() - 1; ci >= 0; --ci)
+                        g->removeCurve(ci);
+            }
         }
         sipRes = existing;
     }

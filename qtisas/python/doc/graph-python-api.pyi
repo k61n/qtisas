@@ -2,6 +2,9 @@
 # gw=newGraph("name")|newGraph("name",layers,rows,cols)|graphWindow("name")|currentGraph()
 # graphWindow("name") returns None (confirmed) if no graph with that name exists — ALWAYS
 # check "if gw is None:" before use.
+# newGraph("name",layers,...) reused against an EXISTING window of that name now clears every
+#   layer's curves first (build-from-scratch contract) — was a silent curve-doubling trap on
+#   script re-run. Use graphWindow("name") instead if you want to add to it, not rebuild it.
 #    plot(table,("x","y"),Graph.CurveType.Line)|plot(matrix,Graph.CurveType.ColorMap)|plot("f(x)",xMin,xMax)
 # GraphWindow=multi-layer window(MultiLayer); Graph=one panel.
 # plot("f(x)",xMin,xMax) — the string is a MATH FORMULA (e.g. "x^2"), NOT a dataset/table name

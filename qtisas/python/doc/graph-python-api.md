@@ -51,6 +51,14 @@ g2.addCurve(t, "dI", Graph.CurveType.Scatter)
 | `plot("formula", xMin, xMax)` | `GraphWindow` | function plot — `"formula"` is a MATH EXPRESSION (e.g. `"x^2"`), evaluated over `[xMin, xMax]`; NOT a dataset/table name lookup |
 | `waterfallPlot(table, cols_tuple)` | `GraphWindow` | waterfall plot |
 
+> **`newGraph("name", layers, ...)` called again against an existing window of that name now
+> clears every layer's curves first**, regardless of whether the row/col grid also needs
+> rearranging. `newGraph()` is the build-from-scratch entry point (`graphWindow("name")` is the
+> lookup-to-extend one) — re-running a script that calls `newGraph("Fit", 2, 2, 1)` a second time
+> used to leave existing curves in place while new `insertCurve()`/`addCurve()` calls piled more on
+> top, silently doubling every curve with no error. If you actually want to add to an existing
+> graph rather than rebuild it, use `graphWindow("name")` instead.
+
 > **Confirmed live: no `plot()` overload looks up an existing dataset/table by name.**
 > `plot("simulatedCurve-ai/PorodPowerLaw", 0.001, 0.5, Graph.CurveType.Line)` matches the
 > `plot("formula", xMin, xMax)` overload above and silently adds a new function curve literally
