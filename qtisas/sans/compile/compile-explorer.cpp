@@ -1608,6 +1608,8 @@ void compile18::newFIF()
 // +++  build Shared Library
 bool compile18::buildSharedLibrary(bool compileAllYN)
 {
+    lastCompileErrors.clear();
+
     const QString savedName = lineEditFunctionName->text().trimmed();
 
     bool activateFunction = !pushButtonSave->isEnabled() || compileAllYN;
@@ -1703,6 +1705,8 @@ bool compile18::buildSharedLibrary(bool compileAllYN)
 
         toResLog(errMsg);
         app()->d_status_info->setText("<< compile status >>  ERROR: check function code / compiler options");
+        if (lastCompileErrors.trimmed().isEmpty())
+            lastCompileErrors = errMsg.trimmed();
     }
 
     QString objName = funcName + ".o" + ext;
@@ -1803,6 +1807,9 @@ void compile18::readFromStdout()
         if (line.contains("error:"))
             errors += line + "\n";
     errors.replace("‘", "`").replace("’", "'");
+
+    if (!errors.trimmed().isEmpty())
+        lastCompileErrors += errors;
 
     toResLog(errors);
 }

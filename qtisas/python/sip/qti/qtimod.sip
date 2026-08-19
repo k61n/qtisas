@@ -2577,6 +2577,16 @@ public:
     else
     {
         sipRes = sipCpp->buildSharedLibrary(a0);
+        if (!sipRes)
+        {
+            sipIsErr = 1;
+            const QString errText = sipCpp->lastCompileErrors.trimmed().isEmpty()
+                                         ? QString("no compiler output captured — see qti.app.resultsLog().")
+                                         : sipCpp->lastCompileErrors.trimmed();
+            PyErr_SetString(PyExc_RuntimeError,
+                QString("compile: compilation of '%1' failed:\n%2")
+                    .arg(sipCpp->functionName(), errText).toLocal8Bit().constData());
+        }
     }
 %End
     void compileAll() /PyName=compileAll/;

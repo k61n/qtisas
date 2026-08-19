@@ -62,6 +62,7 @@ public:
     bool boolYN{};
     QString pathFIF;
     QString batFileMSVC;
+    QString lastCompileErrors;
 
     EditableLinkBrowser *textEditDescription{};
 
