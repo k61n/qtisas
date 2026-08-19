@@ -741,8 +741,8 @@ hardcoded `1` — silently substituting an arbitrary literal for the graph's rea
 
 | Method | Notes |
 |--------|-------|
-| `setScale(axis, start, end)` | set axis range |
-| `setScale(axis, start, end, step, majTicks, minTicks, type, inverted, ...)` | full signature |
+| `setScale(axis, start, end)` | set axis range (all trailing params default) |
+| `setScale(axis, start, end, step=0.0, majTicks=5, minTicks=5, type=Graph.Scale.Linear, inverted=False, left_break=-DBL_MAX, right_break=DBL_MAX, pos=50, stepBeforeBreak=0.0, stepAfterBreak=0.0, minTicksBeforeBreak=4, minTicksAfterBreak=4, typeAfterBreak=Graph.Scale.Linear, breakWidth=4, breakDecoration=True)` | full signature — `left_break`/`right_break` define an axis-break gap (see below); `type`/`typeAfterBreak` are `Graph.Scale.{Linear,Log10,Ln,Log2,Reciprocal,Probability,Logit}` |
 | `axisScale(axis) -> (start, end)` | read the axis's CURRENT visible range back |
 | `setAutoScale()` | auto-fit all axes to data |
 | `setLinOrLogAxis(axis, logYN, changeAxisFormat=True, forceRescale=False)` | switch one axis |
@@ -766,6 +766,29 @@ real, but dropping "Type" from it is not. Confirmed live TWICE with different gu
 `axisScale()` existed: `g.setMajTicks(Graph.Axis.Bottom, 5)`, then `g.setMajorTicks(Graph.Axis.Bottom,
 5)` (mirroring the real `setMajorTicksType` name) — both raised `AttributeError: 'Graph' object has
 no attribute '...'` (same pattern for Min/minor variants).
+
+**Axis breaks** — `setScale(...)`'s trailing params (past `inverted`) split an axis into two
+segments with a visual gap between them, useful when a middle range carries no interesting data
+(e.g. `0..10` and `90..100` on the same axis, with the boring `10..90` region compressed away):
+
+| Param | Default | Meaning |
+|-------|---------|---------|
+| `left_break`, `right_break` | `-DBL_MAX`, `DBL_MAX` (no break) | the data-value interval to compress into the gap |
+| `pos` | `50` | break's position along the axis, as a percentage (0-100) of the available length |
+| `stepBeforeBreak`, `stepAfterBreak` | `0.0`, `0.0` | tick step for each segment (`0.0` = auto) |
+| `minTicksBeforeBreak`, `minTicksAfterBreak` | `4`, `4` | minimum tick count for each segment |
+| `typeAfterBreak` | `Graph.Scale.Linear` | scale type for the segment AFTER the break — independent of `type` (the segment before), so e.g. linear-before/log-after is valid |
+| `breakWidth` | `4` | visual width of the gap, in pixels |
+| `breakDecoration` | `True` | draw the small diagonal "break" marks at the gap |
+
+```python
+# axis breaks at 10..90 — compresses that range into a narrow visual gap
+l.setScale(Graph.Axis.Left, 0, 100, 0, 5, 5, Graph.Scale.Linear, False,
+           10, 90, 50, 0, 0, 4, 4, Graph.Scale.Linear, 4, True)
+```
+
+> `typeAfterBreak` was WRONGLY exposed as a `bool` in older bindings (only `Linear`/`Log10` were
+> reachable from Python) — fixed to accept the full `Graph.Scale.*` enum, matching `type` above.
 
 ### Canvas and frame
 

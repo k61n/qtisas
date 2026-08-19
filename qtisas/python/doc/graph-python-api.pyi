@@ -204,7 +204,12 @@
 
 # Graph — scale/axes:
 # e.g.: g.setScale(Graph.Axis.Bottom, 0.01, 1.0, 0, 5, 5, Graph.Scale.Log10)
-# setScale(axis,start,end,step=0,majorTicks=5,minorTicks=5,type=0,inverted=False)
+# setScale(axis,start,end,step=0.0,majorTicks=5,minorTicks=5,type=Linear,inverted=False,
+#          left_break=-DBL_MAX,right_break=DBL_MAX,pos=50,stepBeforeBreak=0.0,stepAfterBreak=0.0,
+#          minTicksBeforeBreak=4,minTicksAfterBreak=4,typeAfterBreak=Linear,breakWidth=4,breakDecoration=True)
+#   left_break/right_break/pos/...breakDecoration = axis-break gap (e.g. skip 10..90 on a 0..100
+#   axis). type/typeAfterBreak: Graph.Scale.{Linear,Log10,Ln,Log2,Reciprocal,Probability,Logit} —
+#   typeAfterBreak was WRONGLY bound as bool in older bindings (only Linear/Log10 reachable); fixed.
 # axisScale(axis)->(start,end)  # read current visible range back; feed into setScale(...) to change
 #   tick count while keeping the same range: start,end = l.axisScale(ax); l.setScale(ax,start,end,0,5,8)
 # setLinOrLogAxis(axis,logYN,changeAxisFormat=True,forceRescale=False)  # single-axis log/lin toggle; forceRescale=True snaps to data extent even when current scale already contains data

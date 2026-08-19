@@ -2099,11 +2099,16 @@ public:
   void enableAxisLabels(int axis, bool on);
   void setAxisLabelsColor(int axis, const QColor& color);
   void setLabelsNumericFormat(int axis, int format, int = 6, const QString& = QString()) /PyName=setAxisNumericFormat/;
+  // 15th param was WRONGLY declared as "bool log10AfterBreak" here — Graph.h/Graph.cpp both
+  // consistently declare/use it as "int typeAfterBreak" (a Graph.Scale enum selector for the
+  // scale type used after an axis break: Linear/Log10/Ln/Log2/Reciprocal/Probability/Logit, not
+  // a log10-vs-not toggle). The mismatched bool made every value except Linear/Log10 unreachable
+  // from Python. Fixed to match the real C++ signature exactly.
   void setScale(int axis, double start, double end, double step = 0.0,
                 int majorTicks = 5, int minorTicks = 5, int type = 0, bool inverted = false,
 				double left_break = -DBL_MAX, double right_break = DBL_MAX, int pos = 50,
 				double stepBeforeBreak = 0.0, double stepAfterBreak = 0.0, int minTicksBeforeBreak = 4,
-				int minTicksAfterBreak = 4, bool log10AfterBreak = false, int breakWidth = 4, bool breakDecoration = true);
+				int minTicksAfterBreak = 4, int typeAfterBreak = 0, int breakWidth = 4, bool breakDecoration = true);
   SIP_PYTUPLE axisScale(int axis);
 %MethodCode
 double start = 0.0, end = 0.0;
