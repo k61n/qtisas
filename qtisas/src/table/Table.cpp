@@ -821,6 +821,7 @@ bool Table::calculate(int col, int startRow, int endRow, int step, bool forceMuP
     colscript->setInt(startRow + 1, "sr");
     colscript->setInt(endRow + 1, "er");
 
+    bool ok = true;
 	int colType = colTypes[col];
 	if (colType == Date || colType == Time){
 		QString fmt = col_format[col];
@@ -837,7 +838,10 @@ bool Table::calculate(int col, int startRow, int endRow, int step, bool forceMuP
             else if (ret.canConvert<QString>())
                 d_table->setText(i, col, ret.toString());
             else
+            {
                 d_table->setText(i, col, "");
+                ok = false;
+            }
 		}
     }
     else if (colType == Numeric)
@@ -861,7 +865,10 @@ bool Table::calculate(int col, int startRow, int endRow, int step, bool forceMuP
             else if (ret.canConvert<QString>())
                 d_table->setText(i, col, ret.toString());
             else
+            {
                 d_table->setText(i, col, "");
+                ok = false;
+            }
         }
     }
     setAutoUpdateValues(updateValues);
@@ -870,7 +877,7 @@ bool Table::calculate(int col, int startRow, int endRow, int step, bool forceMuP
 	emit modifiedWindow(this);
 
 	QApplication::restoreOverrideCursor();
-	return true;
+    return ok;
 }
 
 Table* Table::extractData(const QString& name, const QString& condition, int startRow, int endRow)
