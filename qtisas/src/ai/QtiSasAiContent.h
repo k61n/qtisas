@@ -39,7 +39,8 @@ class QtiSasAiContent : public AiContentProvider
     bool isGiveUpFallbackScript(const QString &script) const override;
     QString retryHintForError(const QString &errContext) const override;
     bool isUnverifiedMissingClaim(const QString &script) const override;
-    AiKnownMistakeMatch detectKnownMistakes(const QString &code, const QString &originalRequestText) const override;
+    QList<AiKnownMistakeMatch> detectKnownMistakes(const QString &code,
+                                                   const QString &originalRequestText) const override;
     QString selfReviewFunctionNameSubstitution(const QString &preReviewDraft,
                                                const QString &postReviewCode) const override;
     QString selfReviewFalseIncompletenessClaim(const QString &preReviewDraft,

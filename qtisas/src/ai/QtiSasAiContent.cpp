@@ -2021,62 +2021,65 @@ QString QtiSasAiContent::guessedNameCandidateListMistake(const QString &code)
     return {};
 }
 
-AiKnownMistakeMatch QtiSasAiContent::detectKnownMistakes(const QString &code, const QString &originalRequestText) const
+QList<AiKnownMistakeMatch> QtiSasAiContent::detectKnownMistakes(const QString &code,
+                                                                const QString &originalRequestText) const
 {
-    // Dispatches each pattern in the SAME priority order these were previously checked in as
-    // separate AiAssistant.cpp local variables/if-else branches — preserves "first match wins" and
-    // each pattern's own print header exactly. See AiContentProvider::detectKnownMistakes()'s doc
-    // comment for why this is one method instead of 16, and each private helper below for its own
+    // Dispatches EVERY pattern below unconditionally and collects ALL matches, in the SAME order
+    // these were previously checked in as separate AiAssistant.cpp local variables/if-else branches
+    // — one dispatch point replacing what used to be 16 separate single-purpose pure virtual
+    // methods here. See AiContentProvider::detectKnownMistakes()'s doc comment for the full
+    // "collect all, don't stop at first" rationale, and each private helper below for its own
     // "confirmed live" incident writeup.
+    QList<AiKnownMistakeMatch> matches;
     QString explanation = compiledCodeSelfShadowBug(code);
     if (!explanation.isEmpty())
-        return {"compiled-function defect detected", explanation};
+        matches << AiKnownMistakeMatch{"compiled-function defect detected", explanation};
     explanation = fitCurveNameReconstructionMismatch(code);
     if (!explanation.isEmpty())
-        return {"fitCurve name mismatch detected", explanation};
+        matches << AiKnownMistakeMatch{"fitCurve name mismatch detected", explanation};
     explanation = unrequestedAutoexecImmediateRun(code, originalRequestText);
     if (!explanation.isEmpty())
-        return {"unrequested immediate autoexec run detected", explanation};
+        matches << AiKnownMistakeMatch{"unrequested immediate autoexec run detected", explanation};
     explanation = zeroBasedTableIndexMistake(code);
     if (!explanation.isEmpty())
-        return {"0-based table/matrix index detected", explanation};
+        matches << AiKnownMistakeMatch{"0-based table/matrix index detected", explanation};
     explanation = staleFitStatisticMistake(code);
     if (!explanation.isEmpty())
-        return {"hardcoded chi2/dof detected", explanation};
+        matches << AiKnownMistakeMatch{"hardcoded chi2/dof detected", explanation};
     explanation = missingLegendCreationMistake(code);
     if (!explanation.isEmpty())
-        return {"legend created only conditionally", explanation};
+        matches << AiKnownMistakeMatch{"legend created only conditionally", explanation};
     explanation = unannouncedModelNameSubstitution(code, originalRequestText);
     if (!explanation.isEmpty())
-        return {"unannounced model name substitution detected", explanation};
+        matches << AiKnownMistakeMatch{"unannounced model name substitution detected", explanation};
     explanation = hallucinatedLegendMethodMistake(code);
     if (!explanation.isEmpty())
-        return {"nonexistent Legend method detected", explanation};
+        matches << AiKnownMistakeMatch{"nonexistent Legend method detected", explanation};
     explanation = graphWindowLayerMethodMistake(code);
     if (!explanation.isEmpty())
-        return {"GraphWindow/Graph layer method confusion detected", explanation};
+        matches << AiKnownMistakeMatch{"GraphWindow/Graph layer method confusion detected", explanation};
     explanation = conditionalMaximizeWindowMistake(code);
     if (!explanation.isEmpty())
-        return {"maximizeWindow() conditionally gated behind graph-reuse check", explanation};
+        matches << AiKnownMistakeMatch{"maximizeWindow() conditionally gated behind graph-reuse check", explanation};
     explanation = windowNameMethodCallMistake(code);
     if (!explanation.isEmpty())
-        return {"setWindowName() called as a method", explanation};
+        matches << AiKnownMistakeMatch{"setWindowName() called as a method", explanation};
     explanation = nonexistentExistMatrixMistake(code);
     if (!explanation.isEmpty())
-        return {"nonexistent existMatrix() detected", explanation};
+        matches << AiKnownMistakeMatch{"nonexistent existMatrix() detected", explanation};
     explanation = qti3DImportMistake(code);
     if (!explanation.isEmpty())
-        return {"nonexistent Qti3D import detected", explanation};
+        matches << AiKnownMistakeMatch{"nonexistent Qti3D import detected", explanation};
     explanation = setAutoexecOnScriptEditMistake(code);
     if (!explanation.isEmpty())
-        return {"setAutoexec() called on the wrong object", explanation};
+        matches << AiKnownMistakeMatch{"setAutoexec() called on the wrong object", explanation};
     explanation = plotStyleStringArgumentMistake(code);
     if (!explanation.isEmpty())
-        return {"string passed to a plot-style setter", explanation};
+        matches << AiKnownMistakeMatch{"string passed to a plot-style setter", explanation};
     explanation = guessedNameCandidateListMistake(code);
     if (!explanation.isEmpty())
-        return {"guessed a list of candidate names instead of using the known one", explanation};
-    return {};
+        matches << AiKnownMistakeMatch{"guessed a list of candidate names instead of using the known one", explanation};
+    return matches;
 }
 
 QString QtiSasAiContent::retryHintForError(const QString &errContext) const

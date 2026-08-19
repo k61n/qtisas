@@ -1645,9 +1645,11 @@ void AiAssistant::runActionScript(const QString &code, bool compilable, const QS
     // a genuine defect regardless of split mode (e.g. a Compiler setCode() self-shadow bug compiles
     // with no error, so nothing else in the pipeline would ever catch it before it silently
     // corrupts a fit) — see AiContentProvider::detectKnownMistakes()'s doc comment for the full
-    // family and why this is one call instead of 16.
-    const AiKnownMistakeMatch knownMistake =
-        (compilable && m_content) ? m_content->detectKnownMistakes(code, originalRequestText) : AiKnownMistakeMatch();
+    // family and why this is one call instead of 16. Collects ALL matching patterns, not just the
+    // first — see that doc comment's "collect all, don't stop at first" rationale.
+    const QList<AiKnownMistakeMatch> knownMistakes = (compilable && m_content)
+                                                         ? m_content->detectKnownMistakes(code, originalRequestText)
+                                                         : QList<AiKnownMistakeMatch>();
     // Unconditional and host-independent — see isEmptyActionScript()'s doc comment. Confirmed
     // live: self-review's "ONLY executable code" instruction broke down entirely, returning a
     // checklist-reasoning dump formatted as comments instead of any actual script.
@@ -1693,13 +1695,38 @@ void AiAssistant::runActionScript(const QString &code, bool compilable, const QS
         m_host->print("▸▸▸ AI code (blocked — out of scope for this part):\n\n" + code);
         errContext = scopeViolation;
     }
-    else if (!knownMistake.explanation.isEmpty())
+    else if (!knownMistakes.isEmpty())
     {
         // Blocked BEFORE running, same reasoning as the scope-violation branch above — see
         // AiContentProvider::detectKnownMistakes()'s doc comment for the full family of patterns
         // checked here, each with its own "confirmed live" incident writeup in QtiSasAiContent.cpp.
-        m_host->print("▸▸▸ AI code (blocked — " + knownMistake.header + "):\n\n" + code);
-        errContext = knownMistake.explanation;
+        // detectKnownMistakes() now collects EVERY matching pattern instead of stopping at the
+        // first — a single script can genuinely trip more than one independent pattern at once, and
+        // reporting only one meant the model burned a whole retry round per defect instead of fixing
+        // them all from a single grounded prompt. Single-match wording is unchanged from before this
+        // change; only 2+ matches get the numbered "N known issues" framing.
+        QStringList headers;
+        QStringList explanations;
+        for (const AiKnownMistakeMatch &m : knownMistakes)
+        {
+            headers << m.header;
+            explanations << m.explanation;
+        }
+        m_host->print("▸▸▸ AI code (blocked — " + headers.join("; ") + "):\n\n" + code);
+        if (knownMistakes.size() == 1)
+        {
+            errContext = explanations.first();
+        }
+        else
+        {
+            QStringList numbered;
+            for (int i = 0; i < explanations.size(); ++i)
+                numbered << QString("%1. %2").arg(i + 1).arg(explanations.at(i));
+            errContext = "This script has " + QString::number(explanations.size()) +
+                         " separate known issues — fix ALL of them together in one corrected "
+                         "script:\n\n" +
+                         numbered.join("\n\n");
+        }
     }
     else if (emptyScript)
     {

@@ -16,6 +16,7 @@ Description: Abstract interface supplying the AI orchestration logic (AiAssistan
 #ifndef AICONTENTPROVIDER_H
 #define AICONTENTPROVIDER_H
 
+#include <QList>
 #include <QString>
 #include <QStringList>
 
@@ -198,10 +199,10 @@ class AiContentProvider
     // prompt wording alone does not reliably prevent it, so this exists as a mechanical backstop.
     virtual bool isUnverifiedMissingClaim(const QString &script) const = 0;
 
-    // Runs every known, host-specific, STATELESS pre-execution mistake pattern against `code` (and,
-    // for the two patterns that need it, `originalRequestText`) in a fixed priority order, stopping
-    // at the first match — one dispatch point replacing what used to be 16 separate single-purpose
-    // pure virtual methods here (compiled-function self-shadow bugs, fitCurve name-reconstruction
+    // Runs EVERY known, host-specific, STATELESS pre-execution mistake pattern against `code` (and,
+    // for the two patterns that need it, `originalRequestText`) and collects ALL matches — one
+    // dispatch point replacing what used to be 16 separate single-purpose pure virtual methods here
+    // (compiled-function self-shadow bugs, fitCurve name-reconstruction
     // mismatches, 0-based Table/Matrix indexing, hallucinated Legend/GraphWindow methods,
     // nonexistent existMatrix()/Qti3D-import forms, guessed candidate-name lists, ...). Each
     // individual pattern is still implemented as its own private helper in QtiSasAiContent.cpp, with
@@ -210,9 +211,21 @@ class AiContentProvider
     // BEFORE/AFTER regression checks below (selfReviewFunctionNameSubstitution and siblings) — those
     // compare a preReviewDraft against postReviewCode, a fundamentally different shape neither
     // reducible to nor combinable with a single-code-snapshot check. Host-specific because every
-    // individual pattern depends on this host's own scripting API. Returns an AiKnownMistakeMatch
-    // with an empty header/explanation if nothing matched.
-    virtual AiKnownMistakeMatch detectKnownMistakes(const QString &code, const QString &originalRequestText) const = 0;
+    // individual pattern depends on this host's own scripting API. Returns an empty list if nothing
+    // matched.
+    //
+    // Deliberately collects every match instead of stopping at the first, as earlier versions of
+    // this method did. Confirmed live: a single blocked script legitimately tripped MULTIPLE
+    // independent patterns at once. Stopping at the first meant only one issue was ever surfaced per
+    // retry round — the model fixed that one, the corrected script tripped the second pattern on the
+    // very next round, and so on, burning a retry per independent defect instead of fixing all of
+    // them together from one grounded prompt. Every pattern here is a pure function of its inputs
+    // with no dependency on any other pattern's result, so running all of them against the same code
+    // snapshot and combining the matches is safe. Order is preserved (same fixed priority order as
+    // before) since it becomes the presentation order in the combined retry prompt — see
+    // AiAssistant::runActionScript()'s call site, which joins the list into one errContext.
+    virtual QList<AiKnownMistakeMatch> detectKnownMistakes(const QString &code,
+                                                           const QString &originalRequestText) const = 0;
 
     // Checks whether self-review's own output changed the model-name argument to configure()/
     // setFunction() compared to `preReviewDraft` (the script it was actually asked to review).
