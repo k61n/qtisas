@@ -66,6 +66,11 @@ SmartCompleter::SmartCompleter(QLineEdit *edit, const QStringList &keywords, QOb
     });
 }
 
+void SmartCompleter::setKeywordCompletionEnabled(bool enabled)
+{
+    m_keywordEnabled = enabled;
+}
+
 void SmartCompleter::addKeywords(const QStringList &list)
 {
     QStringList current = m_keywordModel->stringList();
@@ -153,7 +158,7 @@ bool SmartCompleter::eventFilter(QObject *obj, QEvent *event)
 
 void SmartCompleter::updateCompletionPrefix()
 {
-    if (!m_lineEdit)
+    if (!m_lineEdit || !m_keywordEnabled)
         return;
 
     int cursorPos = m_lineEdit->cursorPosition();

@@ -25,6 +25,7 @@ class SmartCompleter : public QObject
   public:
     explicit SmartCompleter(QLineEdit *edit, const QStringList &keywords = {}, QObject *parent = nullptr);
     void addKeywords(const QStringList &list);
+    void setKeywordCompletionEnabled(bool enabled);
 
   protected:
     bool eventFilter(QObject *obj, QEvent *event) override;
@@ -41,6 +42,7 @@ class SmartCompleter : public QObject
     QCompleter *m_historyCompleter = nullptr;
 
     bool m_blockReturn = false;
+    bool m_keywordEnabled = true;
 };
 
 #endif

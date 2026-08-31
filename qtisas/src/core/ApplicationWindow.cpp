@@ -6735,8 +6735,10 @@ bool ApplicationWindow::setScriptingLanguage(const QString &lang, bool force)
 	actionUncommentSelection->setEnabled(python);
 #endif
 
-    auto *smart = new SmartCompleter(terminal_line, {}, this);
-    smart->addKeywords(qobject_cast<QStringListModel *>(d_completer->model())->stringList());
+    delete m_terminalCompleter; // replaced below; avoids stacking stale event filters on terminal_line
+    m_terminalCompleter = new SmartCompleter(terminal_line, {}, this);
+    m_terminalCompleter->addKeywords(qobject_cast<QStringListModel *>(d_completer->model())->stringList());
+    m_terminalCompleter->setKeywordCompletionEnabled(d_completion);
 
 	return true;
 }
@@ -21368,6 +21370,9 @@ void ApplicationWindow::enableCompletion(bool on)
         return;
 
     d_completion = on;
+
+    if (m_terminalCompleter)
+        m_terminalCompleter->setKeywordCompletionEnabled(on);
 
     if (scriptWindow){
 		if (d_completion)

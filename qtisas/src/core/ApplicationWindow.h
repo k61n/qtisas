@@ -82,6 +82,7 @@ class dan18;
 class compile18;
 class fittable18;
 #endif
+class SmartCompleter;
 
 #ifdef SCRIPTING_PYTHON
 class ApplicationWindow : public QMainWindow, public scripted, public AiScriptHost
@@ -284,6 +285,7 @@ public:
 
     QLabel *d_status_info;
     QLineEdit *terminal_line;
+    SmartCompleter *m_terminalCompleter = nullptr;
     QAction *actionCopyStatusBarText;
 
     QVariant scriptCaller(const QString &scriptCode);
