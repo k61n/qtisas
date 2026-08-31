@@ -6215,6 +6215,49 @@ void ApplicationWindow::ensureAiAssistant()
     }
 }
 
+// True if every code line is just scriptPrint()/print() — a MESSAGE wrapped as valid Python, not real work.
+// canCompile() can't tell these apart: a real action script and a bare scriptPrint() greeting are equally valid Python.
+// Textual heuristic, not a parse — multi-line scriptPrint() falls through as real code, only costs an eager highlight.
+static bool isInformationalOnlyScript(const QString &code)
+{
+    static const QRegularExpression printCallRe(R"(^\s*(scriptPrint|print)\s*\(.*\)\s*$)");
+    const auto lines = code.split('\n');
+    bool sawStatement = false;
+    for (const QString &line : lines)
+    {
+        const QString trimmed = line.trimmed();
+        if (trimmed.isEmpty() || trimmed.startsWith('#') || trimmed.startsWith("import "))
+            continue;
+        if (!printCallRe.match(trimmed).hasMatch())
+            return false;
+        sawStatement = true;
+    }
+    return sawStatement;
+}
+
+// Extracts an informational script's plain text (see isInformationalOnlyScript()) to show as a normal chat reply.
+// Conservative: only a bare string literal, no f/r/b prefix, no concatenation — an f-string embeds a variable.
+// Anything unmatched returns empty: "show raw code instead." Multiple scriptPrint()/print() lines join with newlines.
+static QString tryExtractInformationalMessage(const QString &code)
+{
+    static const QRegularExpression literalCallRe(
+        R"(^\s*(?:scriptPrint|print)\s*\(\s*(['"])((?:[^\\]|\\.)*?)\1\s*\)\s*$)");
+    QStringList messages;
+    for (const QString &line : code.split('\n'))
+    {
+        const QString trimmed = line.trimmed();
+        if (trimmed.isEmpty() || trimmed.startsWith('#') || trimmed.startsWith("import "))
+            continue;
+        const QRegularExpressionMatch m = literalCallRe.match(trimmed);
+        if (!m.hasMatch())
+            return {};
+        QString text = m.captured(2);
+        text.replace("\\n", "\n").replace("\\t", "\t").replace("\\\"", "\"").replace("\\'", "'").replace("\\\\", "\\");
+        messages << text;
+    }
+    return messages.join('\n');
+}
+
 // Wires m_ai's responseReady/errorOccurred/infoMessage signals — guarded by m_aiConnected so a
 // re-entrant askAi() (or one following askAiConfigure()'s own pre-creation of m_ai) never
 // double-connects.
@@ -6261,29 +6304,21 @@ void ApplicationWindow::connectAiSignalsOnce()
             return;
         }
 
+        // EXPLORE-round handling checked outside autoRun (read-only, always safe) — confirmed live, previously inside
+        // autoRun only, a non-auto-run script dead-ended as "AI answer:" with no error. Marker matches as a FIRST-LINE
+        // PREFIX, not exact — a strict check missed a same-line description and stalled as "not runnable".
+        static const QRegularExpression exploreMarkerRe(R"(^#\s*EXPLORE\b)");
+        const int firstLineEnd = static_cast<int>(code.indexOf('\n'));
+        const QString firstLine = (firstLineEnd < 0 ? code : code.left(firstLineEnd));
+        if (exploreMarkerRe.match(firstLine).hasMatch())
+        {
+            m_ai->handleExploreResponse(code);
+            return;
+        }
         if (m_ai->autoRun)
         {
-            // EXPLORE-round handling — see AiAssistant::handleExploreResponse()'s doc comment.
-            // Matches the marker on the FIRST LINE only as a prefix, not an exact whole-line
-            // match — a strict "# EXPLORE\n" check missed a real EXPLORE script that appended
-            // a description on the same line ("# EXPLORE — check existing table..."),
-            // confirmed live: it fell through to the action-script path below instead and was
-            // judged "not runnable" there for unrelated reasons, contributing to a stalled
-            // conversation with no further AI response.
-            static const QRegularExpression exploreMarkerRe(R"(^#\s*EXPLORE\b)");
-            const int firstLineEnd = static_cast<int>(code.indexOf('\n'));
-            const QString firstLine = (firstLineEnd < 0 ? code : code.left(firstLineEnd));
-            if (exploreMarkerRe.match(firstLine).hasMatch())
-            {
-                m_ai->handleExploreResponse(code);
-                return;
-            }
-
-            // Compilable-check + self-review dispatch — see
-            // AiAssistant::maybeDispatchSelfReview()'s doc comment. Mutable copy: the call may
-            // rewrite it in place (stripping a leading commentary paragraph the model
-            // shouldn't have included but did) — printing/execution below must use that
-            // corrected version, not the original `code` from the signal.
+            // Compilable-check + self-review dispatch — see maybeDispatchSelfReview(). Mutable copy: the call may strip
+            // a leading commentary paragraph — execution below must use the corrected version, not the original `code`.
             QString correctedCode = code;
             bool compilable = false;
             QString syntaxError;
@@ -6296,7 +6331,24 @@ void ApplicationWindow::connectAiSignalsOnce()
         }
         else
         {
-            print("▸▸▸ AI answer:\n\n" + code);
+            // "AI answer:" tells the highlighter to skip Python until the next header — but this branch also shows
+            // not-yet-run scripts (confirmed live, unhighlighted). Route through a distinct header like "AI code
+            // (running)" — canCompile() can't tell scriptPrint() prose from real code, see isInformationalOnlyScript()
+            const bool isRealActionScript = canCompile(code) && !isInformationalOnlyScript(code);
+            if (isRealActionScript)
+            {
+                // Lets a follow-up "run it"/"execute that" run this exact script directly instead
+                // of going back through the model — see askAi()'s own "run it" interception.
+                m_ai->markLastScriptUnrun();
+                print("▸▸▸ AI code (not run):\n\n" + code);
+            }
+            else
+            {
+                // Show it like a normal chat reply when safely extractable (see tryExtractInformationalMessage()) —
+                // scriptPrint(...) is plumbing for "must be valid Python", not something the user asked to see.
+                const QString extracted = tryExtractInformationalMessage(code);
+                print("▸▸▸ AI answer:\n\n" + (extracted.isEmpty() ? code : extracted));
+            }
         }
     });
     connect(m_ai, &AiAssistant::errorOccurred, this,
