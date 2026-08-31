@@ -88,7 +88,8 @@ void Table::init(int rows, int cols)
     
 	connect(head, SIGNAL(sectionResized(int, int, int)), this, SLOT(colWidthModified(int, int, int)));
 
-	col_plot_type[0] = X;
+    if (cols > 0)
+        col_plot_type[0] = X;
 	setHeaderColType();
 
     int w =  3*(d_table->horizontalHeader())->sectionSize(0);
