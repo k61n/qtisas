@@ -2521,11 +2521,12 @@ void AiAssistant::onReplyFinished(QNetworkReply *reply)
                 if (ok && raSecs > 0)
                     delayMs = raSecs * 1000;
             }
-            emit infoMessage(QString("AI: HTTP %1 — retrying in %2s (attempt %3/%4)...")
-                                 .arg(code)
-                                 .arg(delayMs / 1000.0, 0, 'f', 1)
-                                 .arg(m_httpRetryCount)
-                                 .arg(kMaxHttpRetries));
+            emit httpRetryStatus(QString("AI: HTTP %1 — retrying in %2s (attempt %3/%4)...")
+                                     .arg(code)
+                                     .arg(delayMs / 1000.0, 0, 'f', 1)
+                                     .arg(m_httpRetryCount)
+                                     .arg(kMaxHttpRetries),
+                                 m_httpRetryCount == 1);
             m_busy = true;
             m_retryTimer->start(delayMs);
             return;

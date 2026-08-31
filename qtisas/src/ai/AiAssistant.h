@@ -600,6 +600,12 @@ class AiAssistant : public QObject
     void responseReady(const QString &text);
     void errorOccurred(const QString &error);
     void infoMessage(const QString &text);
+    // Separate from infoMessage() specifically so its consecutive attempts can overwrite one
+    // another in the UI (see ApplicationWindow::printHttpRetryStatus()) instead of each becoming
+    // its own new line — infoMessage() also carries the per-call "sending..." diagnostic, which
+    // must never be collapsed like this. isFirstAttempt distinguishes "append a new line" (this
+    // retry sequence's first message) from "replace the previous line" (every attempt after).
+    void httpRetryStatus(const QString &text, bool isFirstAttempt);
 
   private slots:
     void onReplyFinished(QNetworkReply *reply);

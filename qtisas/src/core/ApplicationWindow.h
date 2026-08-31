@@ -1616,6 +1616,7 @@ private:
     void ensureAiAssistant();
     void connectAiSignalsOnce();
     void echoAiRequest(const QString &effectiveText);
+    void printHttpRetryStatus(const QString &message, bool isFirstAttempt);
     bool handleAiTextCommand(const QString &trimmed);
     bool m_aiConnected = false;
 #endif
@@ -1625,6 +1626,11 @@ private:
     bool m_aiCapturing = false;
     QString m_aiCaptureBuffer;
     QString m_aiErrorBuffer;
+    // See printHttpRetryStatus() — tracks where the CURRENT retry status line starts, so the next attempt replaces it
+    // in place instead of appending. -1/nullptr means "nothing to overwrite" — print() invalidates this on every OTHER
+    // call, so anything printed in between forces the next retry status back to a fresh line.
+    int m_retryStatusPos = -1;
+    QTextEdit *m_retryStatusWidget = nullptr;
 
 	QTranslator *appTranslator, *qtTranslator;
 	QDockWidget *explorerWindow, *undoStackWindow;

@@ -6002,6 +6002,10 @@ QStringList ApplicationWindow::showRules()
 // auto-display themselves (see runScript()'s doc comment).
 void ApplicationWindow::print(const QString &message)
 {
+    // Invalidated on every print() call — see printHttpRetryStatus()'s doc comment.
+    // Anything printed between retries means the last line isn't ours, so the next one starts fresh, never overwrites.
+    m_retryStatusPos = -1;
+    m_retryStatusWidget = nullptr;
     const bool isHeader = message.startsWith("▸▸▸ ");
     if (!m_aiForceConsole && scriptWindow && scriptWindow->isVisible())
     {
@@ -6044,6 +6048,49 @@ void ApplicationWindow::print(const QString &message)
 #else
     scriptPrint(message);
 #endif
+}
+
+// Same "which panel" selection as print(), for retry-backoff: first attempt appends, later ones replace in place.
+// So N backoff attempts show as one updating line, not N. Falls back to print() with no QTextEdit target to overwrite.
+void ApplicationWindow::printHttpRetryStatus(const QString &message, bool isFirstAttempt)
+{
+    const QString full = message.startsWith("▸▸▸ ") ? message : "▸▸▸ " + message;
+    QTextEdit *target = nullptr;
+#ifdef SCRIPTING_PYTHON
+    if (!m_aiForceConsole && scriptWindow && scriptWindow->isVisible())
+    {
+        scriptWindow->showOutputPanel();
+        target = scriptWindow->outputConsole();
+    }
+#endif
+#ifdef SCRIPTING_CONSOLE
+    if (!target)
+        target = scriptingConsole();
+#endif
+    if (!target)
+    {
+        print(full);
+        return;
+    }
+    if (!isFirstAttempt && target == m_retryStatusWidget && m_retryStatusPos >= 0)
+    {
+        QTextCursor c(target->document());
+        c.setPosition(m_retryStatusPos);
+        c.movePosition(QTextCursor::End, QTextCursor::KeepAnchor);
+        c.insertText(full);
+        target->setTextCursor(c);
+        target->ensureCursorVisible();
+        return;
+    }
+    // Position recorded AFTER append() — its own break means an earlier position sits at the previous line's end.
+    // Confirmed live: capturing early let the next overwrite delete that break too, merging onto the previous line.
+    ScriptEdit::ensureOneTrailingBlank(target);
+    target->append(full);
+    QTextCursor c = target->textCursor();
+    c.movePosition(QTextCursor::StartOfBlock);
+    m_retryStatusPos = c.position();
+    m_retryStatusWidget = target;
+    target->ensureCursorVisible();
 }
 
 // Runs `code` under `scriptName`, capturing everything printed and any raised exception —
@@ -6256,6 +6303,8 @@ void ApplicationWindow::connectAiSignalsOnce()
             [this](const QString &err) { print(err.startsWith("▸▸▸") ? err : "▸▸▸ " + err); });
     connect(m_ai, &AiAssistant::infoMessage, this,
             [this](const QString &msg) { print(msg.startsWith("▸▸▸") ? msg : "▸▸▸ " + msg); });
+    connect(m_ai, &AiAssistant::httpRetryStatus, this,
+            [this](const QString &msg, bool isFirstAttempt) { printHttpRetryStatus(msg, isFirstAttempt); });
 }
 
 // Echoes the request's first line to wherever the user is watching (Script Window output panel or
