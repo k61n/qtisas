@@ -45,6 +45,10 @@ struct AiSettings
     // runActionScript() itself are unaffected either way; only the SEPARATE review-and-correct pass
     // is what this toggles.
     bool selfReviewEnabled = true;
+
+    // Loopback backends are latency-bound by local generation, not payload size (see ask()'s timeout note).
+    // Raised 600s from 300s after a real "Operation canceled" at larger num_ctx — tunable since usage tracks it.
+    int localTimeoutSec = 600;
 };
 
 // Keeps the "/AI" group name and its key strings colocated with the struct they belong to,
@@ -60,6 +64,7 @@ inline void AiReadSettings(QSettings *settings, AiSettings &s)
     s.maxSplitParts = settings->value("/MaxSplitParts", s.maxSplitParts).toInt();
     s.splitRequestMerge = settings->value("/SplitRequestMerge", s.splitRequestMerge).toBool();
     s.selfReviewEnabled = settings->value("/SelfReviewEnabled", s.selfReviewEnabled).toBool();
+    s.localTimeoutSec = settings->value("/LocalTimeoutSec", s.localTimeoutSec).toInt();
     settings->endGroup();
 }
 
@@ -72,6 +77,7 @@ inline void AiWriteSettings(QSettings *settings, const AiSettings &s)
     settings->setValue("/MaxSplitParts", s.maxSplitParts);
     settings->setValue("/SplitRequestMerge", s.splitRequestMerge);
     settings->setValue("/SelfReviewEnabled", s.selfReviewEnabled);
+    settings->setValue("/LocalTimeoutSec", s.localTimeoutSec);
     settings->endGroup();
 }
 

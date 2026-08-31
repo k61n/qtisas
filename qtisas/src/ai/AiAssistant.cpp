@@ -2268,8 +2268,14 @@ void AiAssistant::ask(const QString &userText, bool includeDocs, const QString &
     const QString endpoint = resolveEndpoint(m_baseUrl, isAnthropic);
 
     QNetworkRequest req{QUrl(endpoint)};
+    // Loopback backends are latency-bound by local generation, not payload size — confirmed live: 60-150+s on a
+    // non-trivial request (no cached docs, 60000 branch), past a cloud-sized budget. Give loopback one generous fixed
+    // timeout, unrelated to the cached-docs heuristic. User-configurable rather than fixed: confirmed live, a compile
+    // call under larger num_ctx hit "Operation canceled" (Qt's transfer-timeout error) at 300s, then again at 600s —
+    // generation need trades directly against num_ctx/prompt size, so this can't be one fixed constant.
+    const bool isLocalBackend = m_baseUrl.contains("127.0.0.1") || m_baseUrl.contains("localhost");
     // First request carries the full API docs in the system prompt — allow extra time
-    req.setTransferTimeout(m_cachedDocs.isEmpty() ? 60000 : 120000);
+    req.setTransferTimeout(isLocalBackend ? m_localTimeoutSec * 1000 : (m_cachedDocs.isEmpty() ? 60000 : 120000));
     req.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     // Force HTTP/1.1 — seen live: Qt's HTTP/2 client mid-stream reset with a bare "HTTP/2
     // protocol error" on these long, single-request-at-a-time AI calls, aborting the whole

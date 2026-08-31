@@ -312,6 +312,16 @@ class AiAssistant : public QObject
     {
         return m_maxAutoContinue;
     }
+    // HTTP transfer timeout for loopback backends only — see ask()'s setTransferTimeout() call
+    // for why this is separate from the cloud-API timeout branches.
+    void setLocalTimeoutSec(int n)
+    {
+        m_localTimeoutSec = n;
+    }
+    int localTimeoutSec() const
+    {
+        return m_localTimeoutSec;
+    }
     // Caps how many parts a single split-mode decomposition is allowed to produce — see
     // handleSplitPlanResponse()'s use of this for the rationale (bounds sequential HTTP
     // round-trips a pathologically over-fragmented plan would cause).
@@ -613,6 +623,7 @@ class AiAssistant : public QObject
     int m_maxSplitParts = 8;
     bool m_splitMergeEnabled = true;
     bool m_selfReviewEnabled = true;
+    int m_localTimeoutSec = 600;
     QList<QPair<QString, QString>> m_history; // (user, assistant) pairs
     QString m_pendingUserText;
     bool m_pendingAddToHistory = true;
