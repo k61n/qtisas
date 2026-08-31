@@ -145,7 +145,8 @@ void PythonSyntaxHighlighter::highlightBlock(const QString &text)
         isScriptOutput = probe.charFormat().foreground().color() == scriptOutputColor;
     }
 
-    const bool suppressPythonHighlighting = (previousBlockState() == aiAnswerBlockState) || isScriptOutput;
+    const bool isAiAnswerBody = previousBlockState() == aiAnswerBlockState;
+    const bool suppressPythonHighlighting = isAiAnswerBody || isScriptOutput;
 
     // Strip AI background inherited by subsequent blocks
     if (currentBlock().blockFormat().background().color() == aiColor)
@@ -154,6 +155,16 @@ void PythonSyntaxHighlighter::highlightBlock(const QString &text)
         blockFmt.setBackground(QBrush());
         QTextCursor c(currentBlock());
         c.setBlockFormat(blockFmt);
+    }
+
+    // Tint a cleaned "AI answer:" body dark blue, echoing header aiColor (see tryExtractInformationalMessage()).
+    // Not applied to isScriptOutput lines — those already have their own scriptOutputColor.
+    if (isAiAnswerBody && !text.isEmpty())
+    {
+        static const QColor aiAnswerTextColor(30, 60, 100);
+        QTextCharFormat fmt;
+        fmt.setForeground(aiAnswerTextColor);
+        setFormat(0, static_cast<int>(text.length()), fmt);
     }
 
     QString s = text;
