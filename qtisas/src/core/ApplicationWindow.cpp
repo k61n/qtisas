@@ -6390,6 +6390,62 @@ void ApplicationWindow::askAi(const QString &text, bool autoRun, bool forceConso
         return;
     }
 
+    // Guards all three "run it"/"run it again"/"run Q4" fast paths against firing while another request is in flight —
+    // none otherwise check this (unlike normal dispatch, which beginRequest() now rejects up front). Confirmed live:
+    // without this, a fast path during an in-flight error-retry ran concurrently with it, producing garbled,
+    // interleaved output. Same rejection message as beginRequest()'s busy check, just reached earlier — non-matching
+    // text skips this and still reaches beginRequest()'s check further down, unchanged.
+    if (m_ai->isBusy() && (AiAssistant::looksLikeRunItRequest(text) || AiAssistant::looksLikeRunItAgainRequest(text) ||
+                           AiAssistant::looksLikeRunHistoryIndexRequest(text, nullptr)))
+    {
+        echoAiRequest(text);
+        print("▸▸▸ AI: previous request still in progress.");
+        return;
+    }
+
+    // "run it"/"execute that" referring to the just-shown, not-yet-run script — literal, unambiguous, so handled
+    // directly instead of going back through the model to reinterpret it. Confirmed live: re-asking the model for this
+    // exact case produced a hallucinated, unrelated answer instead of recognizing its own just-shown script. Must run
+    // BEFORE anything else touches m_history this turn — runLastScript() reads m_history.last(), only still the
+    // previous turn's entry as long as nothing from THIS turn has been appended yet.
+    if (m_ai->hasUnrunLastScript() && AiAssistant::looksLikeRunItRequest(text))
+    {
+        // echoAiRequest() would otherwise only run later, in normal-dispatch tail — every fast path needs its own call,
+        // or the request never appears in the log, looking unprompted. Confirmed live: exactly that, right before this
+        // fix. The "running ... directly" confirmation is printed by runLastScript(), not here — only known true/false
+        // once the mechanical detectKnownMistakes() check inside it has run; printing it here unconditionally was
+        // confirmed wrong when a correction cycle fired right after "no re-generation needed" was already shown.
+        echoAiRequest(text);
+        m_ai->runLastScript("▸▸▸ AI: running the previously shown script directly (no re-generation needed).");
+        return;
+    }
+    // "run it again" — distinct from the check above: "again" is an explicit signal the user
+    // wants a repeat regardless of whether the last script already ran (autoRun on, or just
+    // consumed by the fast path above on an earlier turn), so this only needs a last script to
+    // exist at all, not hasUnrunLastScript() specifically.
+    if (m_ai->historySize() > 0 && AiAssistant::looksLikeRunItAgainRequest(text))
+    {
+        echoAiRequest(text);
+        m_ai->runLastScript("▸▸▸ AI: running the previous script again directly (no re-generation needed).");
+        return;
+    }
+    // "run Q4"/"run A4" — an explicit index into "history"'s own Q/A numbering, not just "the
+    // last turn". Valid even for a turn before the current context boundary — history/execution
+    // by reference is unaffected by what's excluded from the MODEL's context (see
+    // m_contextHistoryStart's doc comment).
+    int historyIndex = 0;
+    if (AiAssistant::looksLikeRunHistoryIndexRequest(text, &historyIndex))
+    {
+        echoAiRequest(text);
+        // Success message (if any) is printed by runHistoryScript() itself, same timing reasoning
+        // as runLastScript() above — only the "invalid index" case is decidable here up front.
+        if (!m_ai->runHistoryScript(historyIndex))
+            print(QString("▸▸▸ AI: no turn #%1 in history (%2 turn(s) recorded).")
+                      .arg(historyIndex)
+                      .arg(m_ai->historySize()));
+        return;
+    }
+
     m_ai->setMaxUserRules(aiSettings.maxUserRules);
     m_ai->setMaxAutoContinue(aiSettings.maxAutoContinue);
     m_ai->setMaxSplitParts(aiSettings.maxSplitParts);

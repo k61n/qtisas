@@ -113,6 +113,47 @@ class AiAssistant : public QObject
     // here (public static, like parseSplitMarker() above) rather than behind AiContentProvider.
     static bool looksLikeNewTaskReply(const QString &reply);
 
+    // Classifies a short follow-up like "run it"/"execute that"/"run this" as a literal request to execute the
+    // just-shown, not-yet-run candidate script — as opposed to a fresh request that merely happens to start with "run".
+    // Deliberately narrow (whole-message match, not substring) so it only fires for the unambiguous case; a longer
+    // message ("run it and then plot the results") falls through to normal dispatch instead. Same reasoning as
+    // looksLikeNewTaskReply() above for living here.
+    static bool looksLikeRunItRequest(const QString &text);
+
+    // "run it again"/"do that again" — distinct from looksLikeRunItRequest() above: "again" is an
+    // explicit signal the user knows (or doesn't care) whether the last script already ran, and
+    // deliberately wants a repeat, side effects included. Callers gate this on the last script
+    // simply EXISTING (historySize() > 0), not on hasUnrunLastScript() — an already-run script is
+    // exactly the normal case "again" is for.
+    static bool looksLikeRunItAgainRequest(const QString &text);
+
+    // "run Q4"/"run A4"/"execute Q4" — re-runs a SPECIFIC numbered turn from historyText()'s own Q/A numbering
+    // (1-based), not just the last one. Unlike the two checks above, the index is explicit in the text itself, so
+    // there's no "which script did they mean" ambiguity to gate on — any existing index is fair game, including one
+    // before m_contextHistoryStart (see its own doc comment). indexOut receives the parsed index only when true.
+    static bool looksLikeRunHistoryIndexRequest(const QString &text, int *indexOut);
+
+    // Runs m_history[oneBasedIndex - 1].second directly via runActionScript() — same reasoning as
+    // runLastScript(), just addressed by explicit index instead of "the last turn". Returns false
+    // (and runs nothing) when oneBasedIndex is out of [1, historySize()] range, so the caller can
+    // report that instead of silently doing nothing.
+    bool runHistoryScript(int oneBasedIndex);
+
+    // True only in the narrow window between a real action script shown as "AI code (not run)" and either
+    // runLastScript() consuming it or a new request superseding it (beginRequest() clears this unconditionally, since a
+    // leftover script is no longer safely "the thing 'run it' refers to"). markLastScriptUnrun() sets it;
+    // ApplicationWindow calls it right where it prints "AI code (not run)". Gates looksLikeRunItRequest()'s fast path
+    // specifically; looksLikeRunItAgainRequest() deliberately does NOT check this.
+    bool hasUnrunLastScript() const;
+    void markLastScriptUnrun();
+
+    // Runs the last turn's script via runActionScript(), skipping continuation-check/decomposition/generation — "run
+    // it"/"run it again" mean one thing, and re-asking the model hallucinated instead (confirmed live). Call BEFORE
+    // anything touches m_history this turn — reads m_history.last(), only correct while nothing from THIS turn is
+    // appended. Clears m_lastScriptUnrun unconditionally; confirmationMessage prints only once detectKnownMistakes()
+    // confirms it won't block — never beforehand, confirmed wrong right after "no re-generation needed" was shown.
+    void runLastScript(const QString &confirmationMessage);
+
     void stop();
     void clearHistory();
     QString historyText() const;
@@ -296,6 +337,13 @@ class AiAssistant : public QObject
     {
         return static_cast<int>(m_history.size());
     }
+    // Lets ApplicationWindow's "run it"/"run it again"/"run Q4" fast paths reject a concurrent
+    // submission the same way beginRequest() does, instead of running while another request is
+    // still in flight — see those call sites for why that matters.
+    bool isBusy() const
+    {
+        return m_busy;
+    }
     void setMaxUserRules(int n)
     {
         m_maxUserRules = n;
@@ -369,6 +417,9 @@ class AiAssistant : public QObject
     // from outside.
     bool autoRun = false;
     int autoContinueCount = 0;
+    // Consumed by resetErrorRetryState() — declared here so that reset has a real counter to
+    // clear; not yet incremented/read anywhere else in this commit.
+    int consecutiveDocRetryCount = 0;
     bool awaitingSelfReview = false;
     bool awaitingDocSelection = false;
     QString pendingRequestText;
@@ -586,6 +637,18 @@ class AiAssistant : public QObject
     // Returns an empty string (no side effect) when not in split mode.
     QString splitModeGiveUpNote();
 
+    // Clears the retry-loop tracking state runActionScript()'s error path reads/writes
+    // (lastRetryError, lastAvailableBlock, isErrorRetryCorrection, consecutiveDocRetryCount) —
+    // the subset of beginRequest()'s per-request reset that matters for a FRESH execution, as
+    // opposed to conversation-level state (pendingRequestText, splitModeActive, ...) that doesn't
+    // apply when no new model request is being made. beginRequest() calls this as part of its own
+    // reset; runLastScript()/runHistoryScript() call it too, for the same reason — confirmed live:
+    // without it, "run A2" re-running an old, already-abandoned script inherited lastRetryError
+    // from that OLD, unrelated retry cycle, so hitting the identical error again falsely tripped
+    // "same corrective explanation given twice in a row" — a check meant to detect a live retry
+    // loop going nowhere, not a deliberate, standalone re-run of something already known to fail.
+    void resetErrorRetryState();
+
     // Appends one line per HTTP response to a persistent, cross-session log — timestamp, latency,
     // request size, HTTP status, and any provider-reported rate-limit headers found (name contains
     // "ratelimit", case-insensitive; varies by provider, so collected generically rather than by a
@@ -625,6 +688,11 @@ class AiAssistant : public QObject
     bool m_selfReviewEnabled = true;
     int m_localTimeoutSec = 600;
     QList<QPair<QString, QString>> m_history; // (user, assistant) pairs
+    // See hasUnrunLastScript()/markLastScriptUnrun()/runLastScript()'s doc comments — true
+    // only while m_history.last() is a shown-but-not-executed candidate script "run it" can still
+    // unambiguously refer to. beginRequest() clears it unconditionally for any request that isn't
+    // itself consumed as that fast path.
+    bool m_lastScriptUnrun = false;
     QString m_pendingUserText;
     bool m_pendingAddToHistory = true;
     QString m_cachedDocs; // loaded once; cleared by clearHistory() or configure()

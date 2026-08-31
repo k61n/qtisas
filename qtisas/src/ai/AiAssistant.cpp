@@ -2008,8 +2008,49 @@ AiAssistant::AiAssistant(QObject *parent)
 void AiAssistant::clearHistory()
 {
     m_history.clear();
+    m_lastScriptUnrun = false;
     m_pendingUserText.clear();
     m_cachedDocs.clear();
+}
+
+void AiAssistant::resetErrorRetryState()
+{
+    lastAvailableBlock.clear();
+    lastRetryError.clear();
+    isErrorRetryCorrection = false;
+    consecutiveDocRetryCount = 0;
+}
+
+bool AiAssistant::hasUnrunLastScript() const
+{
+    return m_lastScriptUnrun && !m_history.isEmpty();
+}
+
+void AiAssistant::markLastScriptUnrun()
+{
+    m_lastScriptUnrun = true;
+}
+
+void AiAssistant::runLastScript(const QString &confirmationMessage)
+{
+    m_lastScriptUnrun = false;
+    resetErrorRetryState();
+    if (m_history.isEmpty())
+        return;
+    // stripCodeFences(): defense-in-depth, not the fix itself (see onReplyFinished()'s own
+    // comment for that) — cheap and idempotent, and guards against any OTHER path that might
+    // someday append unstripped text into m_history, given runActionScript() below is called
+    // with compilable=true, skipping the canCompile() gate that would otherwise catch a stray
+    // fence before it reaches the interpreter.
+    const QString code = stripCodeFences(m_history.last().second);
+    // Printed here — only once it's known whether the mechanical detectKnownMistakes() check
+    // below (the SAME one runActionScript() itself runs) will block this script — rather than by
+    // the caller before this even starts. Confirmed live: printing "no re-generation needed"
+    // unconditionally beforehand was wrong exactly when a correction cycle fired right after it.
+    const bool blocked = m_content && !m_content->detectKnownMistakes(code, originalRequestText).isEmpty();
+    if (m_host && !blocked)
+        m_host->print(confirmationMessage);
+    runActionScript(code, true, QString());
 }
 
 QString AiAssistant::historyText() const
@@ -2078,6 +2119,55 @@ bool AiAssistant::looksLikeNewTaskReply(const QString &reply)
     static const QRegularExpression newRe(R"(\b(new|different|unrelated|separate)\b)",
                                           QRegularExpression::CaseInsensitiveOption);
     return newRe.match(reply).hasMatch();
+}
+
+bool AiAssistant::looksLikeRunItRequest(const QString &text)
+{
+    // Whole-message match (^...$, not just \b...\b) — deliberately narrower than
+    // looksLikeNewTaskReply() above: a longer message that happens to contain "run it" as part of
+    // something bigger ("run it and then plot the results") is a real new request, not a bare
+    // re-execution ask, and must fall through to normal dispatch instead of short-circuiting here.
+    static const QRegularExpression runItRe(R"(^\s*(?:please\s+)?(?:run|execute)\s+(?:it|that|this)\s*[.!]?\s*$)",
+                                            QRegularExpression::CaseInsensitiveOption);
+    return runItRe.match(text).hasMatch();
+}
+
+bool AiAssistant::looksLikeRunItAgainRequest(const QString &text)
+{
+    static const QRegularExpression runAgainRe(
+        R"(^\s*(?:please\s+)?(?:run|execute|do)\s+(?:it|that|this)\s+again\s*[.!]?\s*$)",
+        QRegularExpression::CaseInsensitiveOption);
+    return runAgainRe.match(text).hasMatch();
+}
+
+bool AiAssistant::looksLikeRunHistoryIndexRequest(const QString &text, int *indexOut)
+{
+    static const QRegularExpression re(R"(^\s*(?:please\s+)?(?:run|execute)\s+[QA](\d+)\s*[.!]?\s*$)",
+                                       QRegularExpression::CaseInsensitiveOption);
+    const QRegularExpressionMatch m = re.match(text);
+    if (!m.hasMatch())
+        return false;
+    if (indexOut)
+        *indexOut = m.captured(1).toInt();
+    return true;
+}
+
+bool AiAssistant::runHistoryScript(int oneBasedIndex)
+{
+    m_lastScriptUnrun = false;
+    if (oneBasedIndex < 1 || oneBasedIndex > m_history.size())
+        return false;
+    resetErrorRetryState();
+    // stripCodeFences(): see runLastScript()'s own comment for why this is defense-in-depth.
+    const QString code = stripCodeFences(m_history[oneBasedIndex - 1].second);
+    // Same reasoning as runLastScript(): printed only once it's known this won't be blocked by
+    // the mechanical detectKnownMistakes() check runActionScript() itself is about to run.
+    const bool blocked = m_content && !m_content->detectKnownMistakes(code, originalRequestText).isEmpty();
+    if (m_host && !blocked)
+        m_host->print(
+            QString("▸▸▸ AI: running turn #%1's script directly (no re-generation needed).").arg(oneBasedIndex));
+    runActionScript(code, true, QString());
+    return true;
 }
 
 QString AiAssistant::buildSystemPrompt(const QString &systemPrompt, bool includeDocs, const QStringList &docTopics)
