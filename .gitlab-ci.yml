@@ -30,7 +30,6 @@ SAST:
       -Dyaml-cpp_ROOT=/opt/homebrew/opt/yaml-cpp
       -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/qt
       -DPython3_ROOT_DIR=/opt/homebrew/opt/python@3
-      -DWITH_PYTHON=ON
       -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
     - mkdir -p qtisas_autogen/include
     - /opt/homebrew/opt/qt/share/qt/libexec/uic ../qtisas/sans/ascii1d/ascii1d.ui -o qtisas_autogen/include/ui_ascii1d.h
@@ -115,7 +114,6 @@ windows:
       -DZLIB_ROOT="C:/qtisas_libs/$TOOL/zlib"
       -DCMAKE_PREFIX_PATH="C:/Qt/6.11.1/$TOOL"
       -DPython3_ROOT_DIR="C:/Users/$USER/AppData/Local/Programs/Python/Python314"
-      -DWITH_PYTHON=ON
     - cmake.exe --build . --config Release
 
 linux:
@@ -129,7 +127,7 @@ linux:
   script:
     - git submodule update --init --recursive
     - mkdir build && cd build
-    - cmake .. -G"Ninja" -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON
+    - cmake .. -G"Ninja" -DCMAKE_BUILD_TYPE=Release
     - cmake --build . --parallel 4
 
 tag:
@@ -190,7 +188,6 @@ macos-release:
         -DTIFF_ROOT=$CI_PROJECT_DIR/deps/tiff
         -Dyaml-cpp_ROOT=$CI_PROJECT_DIR/deps/yaml_cpp
         -DCMAKE_PREFIX_PATH=~/Qt/6.11.1/macos
-        -DWITH_PYTHON=ON
         -DPython3_ROOT_DIR=$CI_PROJECT_DIR/deps/$PYTHONDIR
         -DCMAKE_OSX_SYSROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX13.3.sdk
         -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
@@ -272,7 +269,6 @@ windows-release:
       -Dyaml-cpp_ROOT="C:/qtisas_libs/$TOOL/yaml_cpp"
       -DZLIB_ROOT="C:/qtisas_libs/$TOOL/zlib"
       -DCMAKE_PREFIX_PATH="C:/Qt/6.11.1/$TOOL"
-      -DWITH_PYTHON=ON
       -DPython3_ROOT_DIR="C:\Users\$USER\AppData\Local\Programs\Python\Python314"
     - cmake --build . --config Release
     - cd ..

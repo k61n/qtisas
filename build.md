@@ -9,7 +9,7 @@ and above, Qwt of version 6.3 and above. Minimal python version is 3.9.2.
     cd qtisas
     mkdir build
     cd build
-    cmake .. -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON
+    cmake .. -DCMAKE_BUILD_TYPE=Release
     cmake --build . --parallel $(nproc)
     ../bin/qtisas
 
@@ -95,7 +95,6 @@ Use PowerShell (as an example, you might have different paths):
         -Dyaml-cpp_ROOT="C:/qtisas_libs/msvc2022_64/yaml_cpp"
         -DZLIB_ROOT="C:/qtisas_libs/msvc2022_64/zlib"
         -DCMAKE_PREFIX_PATH="C:/Qt/6.11.1/msvc2022_64"
-        -DWITH_PYTHON=ON
         -DPython3_ROOT_DIR="C:/Users/admin/AppData/Local/Programs/Python/Python314"
     cmake --build . --config Release
 
@@ -127,7 +126,6 @@ Build the software:
         -DTIFF_ROOT=/opt/homebrew/opt/libtiff
         -Dyaml-cpp_ROOT=/opt/homebrew/opt/yaml-cpp
         -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/qt
-        -DWITH_PYTHON=ON
         -DPython3_ROOT_DIR=/opt/homebrew/opt/python@3
     cmake --build . --parallel $(sysctl -n hw.ncpu)
     open bin/qtisas.app

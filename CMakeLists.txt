@@ -59,6 +59,7 @@ find_package(ZLIB REQUIRED)     # used by dan module and minigzip
 
 find_package(BuiltinLibs REQUIRED)
 
+option(WITH_PYTHON "Build with Python scripting feature" ON)
 if (WITH_PYTHON)
     find_package(Qmake REQUIRED)
     find_package(Python REQUIRED)
