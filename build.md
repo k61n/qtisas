@@ -15,8 +15,14 @@ and above, Qwt of version 6.3 and above. Minimal python version is 3.9.2.
 
 ### Dependencies
 
-Most Linux distros don't provide the upstream qwt. It needs to be built by the
-user independently. Qwt can be also installed from our repositories.
+#### Arch
+
+    pacman -Syu cmake gcc ninja \
+        glu gl2ps gsl hdf5 muparser libtiff qwt yaml-cpp \
+        qt6-base qt6-svg pyqt-builder python-pyqt6 python-pyqt6-sip sip
+
+Most Linux distros don't provide the upstream qwt. It needs to be built, or it
+can be also installed from our repositories.
 
 #### Debian 13
 
@@ -35,7 +41,7 @@ user independently. Qwt can be also installed from our repositories.
 
 #### Rocky Linux 10
 
-Rocky Linux systems lack muParser library.
+Rocky Linux systems lack muParser library too.
 
     dnf install -y dnf-plugins-core
     dnf config-manager --set-enabled devel
@@ -51,6 +57,16 @@ Rocky Linux systems lack muParser library.
         qt6-qtbase-devel qt6-qtsvg-devel \
         python3-devel python3-pyqt6-devel sip6 PyQt-builder
 
+#### Systems with Python3 < 3.11
+
+Require tomli module.
+
+    apt install python3-tomli
+
+or
+
+    dnf install python3-tomli
+
 ## Windows
 
 Install following apps:
@@ -64,7 +80,7 @@ Install following apps:
 And libs:
 
     gl2ps - https://gitlab.onelab.info/gl2ps/gl2ps.git
-    gsl - https://github.com/k61n/gsl
+    gsl - https://git.savannah.gnu.org/git/gsl.git
     hdf5 - https://github.com/HDFGroup/hdf5
     libjpeg-turbo - https://github.com/libjpeg-turbo/libjpeg-turbo
     libtiff - https://gitlab.com/libtiff/libtiff
@@ -118,14 +134,6 @@ Build the software:
     cd build
     cmake ..
         -DCMAKE_BUILD_TYPE=Release
-        -Dgl2ps_ROOT=/opt/homebrew/opt/gl2ps
-        -DGSL_ROOT=/opt/homebrew/opt/gsl
-        -DHDF5_ROOT=/opt/homebrew/opt/hdf5
-        -Dmuparser_ROOT=/opt/homebrew/opt/muparser
-        -Dqwt_ROOT=/opt/homebrew/opt/qwt
-        -DTIFF_ROOT=/opt/homebrew/opt/libtiff
-        -Dyaml-cpp_ROOT=/opt/homebrew/opt/yaml-cpp
-        -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/qt
-        -DPython3_ROOT_DIR=/opt/homebrew/opt/python@3
+        -DCMAKE_PREFIX_PATH="/opt/homebrew/opt/qt;/opt/homebrew/opt/"
     cmake --build . --parallel $(sysctl -n hw.ncpu)
     open bin/qtisas.app
