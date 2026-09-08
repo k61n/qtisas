@@ -624,7 +624,7 @@ void ApplicationWindow::init(bool factorySettings)
     new PythonSyntaxHighlighter(console->document());
     {
         // Ctrl+X clear: QShortcut with WidgetShortcut fires before the window-level actionCutSelection
-        auto *clrSC = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_X), console);
+        auto *clrSC = new QShortcut(QKeySequence(Qt::ControlModifier | Qt::Key_X), console);
         clrSC->setContext(Qt::WidgetShortcut);
         connect(clrSC, &QShortcut::activated, console, &QTextEdit::clear);
 
@@ -640,7 +640,7 @@ void ApplicationWindow::init(bool factorySettings)
         connect(actSelAll, &QAction::triggered, console, &QTextEdit::selectAll);
 
         auto *actClear = new QAction(tr("Clear"), console);
-        actClear->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_X));
+        actClear->setShortcut(QKeySequence(Qt::ControlModifier | Qt::Key_X));
         actClear->setShortcutVisibleInContextMenu(true);
         connect(actClear, &QAction::triggered, console, &QTextEdit::clear);
 
@@ -16010,7 +16010,7 @@ void ApplicationWindow::createActions()
 	connect(actionUndo, SIGNAL(triggered()), this, SLOT(undo()));
 
 	actionRedo = new QAction(QIcon(":/redo.png"), tr("&Redo"), this);
-    actionRedo->setShortcut(QKeySequence(Qt::CTRL, Qt::SHIFT, Qt::Key_Z));
+    actionRedo->setShortcut(QKeySequence(Qt::ControlModifier, Qt::SHIFT, Qt::Key_Z));
     setupActionIcon(actionRedo);
 	connect(actionRedo, SIGNAL(triggered()), this, SLOT(redo()));
 

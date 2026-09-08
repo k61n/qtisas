@@ -111,7 +111,7 @@ ScriptWindow::ScriptWindow(ScriptingEnv *env, ApplicationWindow *app, Qt::Window
         connect(actSelAll, &QAction::triggered, console, &QTextEdit::selectAll);
 
         auto *actClear = new QAction(tr("Clear"), console);
-        actClear->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_X));
+        actClear->setShortcut(QKeySequence(Qt::ControlModifier | Qt::Key_X));
         actClear->setShortcutVisibleInContextMenu(true);
         connect(actClear, &QAction::triggered, console, &QTextEdit::clear);
 
