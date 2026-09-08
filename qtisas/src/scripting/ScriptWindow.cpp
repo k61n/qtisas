@@ -58,6 +58,7 @@ ScriptWindow::ScriptWindow(ScriptingEnv *env, ApplicationWindow *app, Qt::Window
     runbtn->setMinimumWidth(32);
     runbtn->setMaximumWidth(80);
 
+#ifdef SCRIPTING_PYTHON
     auto *aibtn = new QPushButton(QIcon(":/ai.png"), "Ask AI");
     aibtn->setFlat(true);
     aibtn->setToolTip("Ask AI  [Ctrl+Enter: ask; Ctrl+Shift+Enter: ask + run]");
@@ -75,12 +76,15 @@ ScriptWindow::ScriptWindow(ScriptingEnv *env, ApplicationWindow *app, Qt::Window
         const bool autoRun = (mods & Qt::ControlModifier) && (mods & Qt::ShiftModifier);
         d_app->askAi(question, autoRun);
     });
+#endif
 
     auto *buttonLayout = new QHBoxLayout();
     buttonLayout->setContentsMargins(0, 0, 0, 0);
     buttonLayout->addItem(new QSpacerItem(20, 20, QSizePolicy::Expanding, QSizePolicy::Fixed));
     buttonLayout->addWidget(runbtn);
+#ifdef SCRIPTING_PYTHON
     buttonLayout->addWidget(aibtn);
+#endif
 
     grid->addLayout(buttonLayout, 0, 1);
 

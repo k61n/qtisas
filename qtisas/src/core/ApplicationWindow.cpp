@@ -2097,6 +2097,7 @@ void ApplicationWindow::initMainMenu()
     sasHelpMenu->addAction(openWebPageAction("ASCII.SANS.1D: Online Info", qs + "/ascii1d", nl));
     help->addMenu(sasHelpMenu);
 
+#ifdef SCRIPTING_PYTHON
     auto *pythonApiMenu = new QMenu(tr("Python API"), this);
     {
         QStringList docDirs = {
@@ -2196,6 +2197,7 @@ void ApplicationWindow::initMainMenu()
         }
     }
     help->addMenu(pythonApiMenu);
+#endif
 
     help->addSeparator();
     auto *checkForUpdateAction = new QAction("Check for a new version ...", this);
@@ -2520,7 +2522,11 @@ void ApplicationWindow::disableActions()
 	actionPrintAllPlots->setEnabled(false);
 	actionPrint->setEnabled(false);
 
+#ifdef SCRIPTING_CONSOLE
     actionCutSelection->setEnabled(this->console && this->console->hasFocus());
+#else
+    actionCutSelection->setEnabled(false);
+#endif
 	actionCopySelection->setEnabled(false);
 	actionPasteSelection->setEnabled(false);
 	actionClearSelection->setEnabled(false);
@@ -5946,6 +5952,7 @@ void ApplicationWindow::scriptError(const QString &message, const QString &scrip
 #endif
 }
 
+#ifdef SCRIPTING_PYTHON
 void ApplicationWindow::askAiConfigure(const QString &apiKey, const QString &baseUrl, const QString &model,
                                        int maxTokens, AiAssistant::DocsMode docsMode)
 {
@@ -5991,7 +5998,6 @@ QStringList ApplicationWindow::showRules()
 void ApplicationWindow::print(const QString &message)
 {
     const bool isHeader = message.startsWith("▸▸▸ ");
-#ifdef SCRIPTING_PYTHON
     if (!m_aiForceConsole && scriptWindow && scriptWindow->isVisible())
     {
         scriptWindow->showOutputPanel();
@@ -6010,7 +6016,6 @@ void ApplicationWindow::print(const QString &message)
         }
         return;
     }
-#endif
 #ifdef SCRIPTING_CONSOLE
     {
         QTextEdit *sc = scriptingConsole();
@@ -6067,7 +6072,6 @@ void ApplicationWindow::print(const QString &message)
 AiScriptResult ApplicationWindow::runScript(const QString &code, const QString &scriptName)
 {
     AiScriptResult result;
-#ifdef SCRIPTING_PYTHON
     m_aiErrorBuffer.clear();
     m_aiCaptureBuffer.clear();
     m_aiCapturing = true;
@@ -6089,10 +6093,6 @@ AiScriptResult ApplicationWindow::runScript(const QString &code, const QString &
     m_aiCapturing = false;
     result.output = m_aiCaptureBuffer.trimmed();
     result.error = m_aiErrorBuffer.trimmed();
-#else
-    Q_UNUSED(code);
-    Q_UNUSED(scriptName);
-#endif
     return result;
 }
 
@@ -6103,7 +6103,6 @@ AiScriptResult ApplicationWindow::runScript(const QString &code, const QString &
 // comment on canCompile().
 bool ApplicationWindow::canCompile(const QString &code, QString *errorOut) const
 {
-#ifdef SCRIPTING_PYTHON
     bool compilable = false;
     PyGILState_STATE gstate = PyGILState_Ensure();
     PyObject *obj = Py_CompileString(code.toUtf8().constData(), "<ai>", Py_file_input);
@@ -6140,11 +6139,6 @@ bool ApplicationWindow::canCompile(const QString &code, QString *errorOut) const
     }
     PyGILState_Release(gstate);
     return compilable;
-#else
-    Q_UNUSED(code);
-    Q_UNUSED(errorOut);
-    return false;
-#endif
 }
 
 // Lazy-constructs m_ai (with the last-selected preset's API key/base URL/model/max tokens/docs
@@ -6217,7 +6211,6 @@ void ApplicationWindow::connectAiSignalsOnce()
 
         if (m_ai->autoRun)
         {
-#ifdef SCRIPTING_PYTHON
             // EXPLORE-round handling — see AiAssistant::handleExploreResponse()'s doc comment.
             // Matches the marker on the FIRST LINE only as a prefix, not an exact whole-line
             // match — a strict "# EXPLORE\n" check missed a real EXPLORE script that appended
@@ -6248,9 +6241,6 @@ void ApplicationWindow::connectAiSignalsOnce()
             // Action-script running + error-retry dispatch — see
             // AiAssistant::runActionScript()'s doc comment.
             m_ai->runActionScript(correctedCode, compilable, syntaxError);
-#else
-            print("▸▸▸ AI answer:\n\n" + code);
-#endif
         }
         else
         {
@@ -6268,7 +6258,6 @@ void ApplicationWindow::connectAiSignalsOnce()
 // any AI call — and thus before print() itself would ever be invoked for this request.
 void ApplicationWindow::echoAiRequest(const QString &effectiveText)
 {
-#ifdef SCRIPTING_PYTHON
     if (!m_aiForceConsole && scriptWindow && scriptWindow->isVisible())
     {
         scriptWindow->showOutputPanel();
@@ -6276,7 +6265,6 @@ void ApplicationWindow::echoAiRequest(const QString &effectiveText)
         scriptWindow->outputConsole()->append("▸▸▸ AI request: " + effectiveText.split("\n").first());
     }
     else
-#endif
     {
 #ifdef SCRIPTING_CONSOLE
         if (QTextEdit *sc = scriptingConsole())
@@ -6414,6 +6402,7 @@ void ApplicationWindow::askAi(const QString &text, bool autoRun, bool forceConso
     // see beginRequest()'s doc comment.
     m_ai->beginRequest(aiText, autoRun, wantsSplit);
 }
+#endif // SCRIPTING_PYTHON
 
 void ApplicationWindow::scriptPrint(const QString &text)
 {
@@ -6600,6 +6589,7 @@ bool ApplicationWindow::eventFilter(QObject *obj, QEvent *event)
             actionTableRecalculate->setShortcut(QKeySequence());
         else if (event->type() == QEvent::FocusOut)
             actionTableRecalculate->setShortcut(QKeySequence(tr("Ctrl+Return")));
+#ifdef SCRIPTING_PYTHON
         else if (event->type() == QEvent::KeyPress)
         {
             auto *ke = dynamic_cast<QKeyEvent *>(event);
@@ -6618,7 +6608,9 @@ bool ApplicationWindow::eventFilter(QObject *obj, QEvent *event)
                 return true;
             }
         }
+#endif
     }
+#ifdef SCRIPTING_PYTHON
     auto *se = qobject_cast<ScriptEdit *>(obj);
     if (se && event->type() == QEvent::KeyPress)
     {
@@ -6635,6 +6627,7 @@ bool ApplicationWindow::eventFilter(QObject *obj, QEvent *event)
             return true;
         }
     }
+#endif
     if (scriptFitRunning && event->type() == QEvent::KeyPress)
     {
         auto *ke = dynamic_cast<QKeyEvent *>(event);
@@ -7334,7 +7327,9 @@ void ApplicationWindow::readSettings()
     d_multi_peak_messages = settings->value("/MultiPeakToolMsg", d_multi_peak_messages).toBool();
     settings->endGroup(); // Fitting
 
+#ifdef SCRIPTING_PYTHON
     AiReadSettings(settings, aiSettings);
+#endif
 
     settings->beginGroup("/ImportASCII");
     columnSeparator = settings->value("/ColumnSeparator", "\\t").toString();
@@ -7801,7 +7796,9 @@ void ApplicationWindow::saveSettings()
     settings->setValue("/MultiPeakToolMsg", d_multi_peak_messages);
     settings->endGroup(); // Fitting
 
+#ifdef SCRIPTING_PYTHON
     AiWriteSettings(settings, aiSettings);
+#endif
 
     settings->beginGroup("/ImportASCII");
     QString sep = columnSeparator;
@@ -16023,20 +16020,28 @@ void ApplicationWindow::createActions()
 	actionCutSelection->setShortcut( tr("Ctrl+X") );
     setupActionIcon(actionCutSelection);
     connect(actionCutSelection, &QAction::triggered, this, [this]() {
+#ifdef SCRIPTING_CONSOLE
         if (console && console->hasFocus())
+        {
             console->clear();
-        else
-            cutSelection();
+            return;
+        }
+#endif
+        cutSelection();
     });
 
 	actionCopySelection = new QAction(QIcon(":/copy.png"), tr("&Copy Selection"), this);
 	actionCopySelection->setShortcut( tr("Ctrl+C") );
     setupActionIcon(actionCopySelection);
     connect(actionCopySelection, &QAction::triggered, this, [this]() {
+#ifdef SCRIPTING_CONSOLE
         if (console && console->hasFocus())
+        {
             console->copy();
-        else
-            copySelection();
+            return;
+        }
+#endif
+        copySelection();
     });
 
 	actionPasteSelection = new QAction(QIcon(":/paste.png"), tr("&Paste Selection"), this);

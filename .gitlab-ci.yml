@@ -55,9 +55,10 @@ macos:
     - if: '$CI_COMMIT_BRANCH && $CI_PROJECT_ID != "1655"'
   parallel:
     matrix:
-      - { ARCH: "arm64", SDK: MacOSX.sdk }
-      - { ARCH: "arm64", SDK: MacOSX13.3.sdk }
-      - { ARCH: "intel", SDK: MacOSX.sdk }
+      - { ARCH: "arm64", SDK: MacOSX.sdk,     PYTHON: -DWITH_PYTHON=ON }
+      - { ARCH: "arm64", SDK: MacOSX13.3.sdk, PYTHON: -DWITH_PYTHON=ON }
+      - { ARCH: "intel", SDK: MacOSX.sdk,     PYTHON: -DWITH_PYTHON=ON }
+      - { ARCH: "arm64", SDK: MacOSX.sdk,     PYTHON: -DWITH_PYTHON=OFF }
   tags:
     - darwin, $ARCH, ventura
   script:
@@ -76,7 +77,7 @@ macos:
       -DTIFF_ROOT=/opt/homebrew/opt/libtiff
       -Dyaml-cpp_ROOT=/opt/homebrew/opt/yaml-cpp
       -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/qt
-      -DWITH_PYTHON=ON
+      $PYTHON
       -DPython3_ROOT_DIR=/opt/homebrew/opt/python@3
       -DCMAKE_OSX_SYSROOT=/Library/Developer/CommandLineTools/SDKs/$SDK
       -DCMAKE_IGNORE_PATH=/usr/local

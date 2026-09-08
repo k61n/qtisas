@@ -31,7 +31,9 @@ Description: Preferences dialog
 #include <QTabWidget>
 #include <QWidget>
 
+#ifdef SCRIPTING_PYTHON
 #include "AiConfig.h"
+#endif
 #include "ApplicationWindow.h"
 #include "ColorButton.h"
 #include "ColorMapEditor.h"
@@ -135,7 +137,9 @@ private:
 	void setColorsList(const QList<QColor>& colList, const QStringList& colNames);
 	void initPlotsPage();
 	void initAppPage();
+#ifdef SCRIPTING_PYTHON
     void initAiPage();
+#endif
 	void initCurvesPage();
 	void initAxesPage();
 	void initGridPage();
@@ -173,8 +177,10 @@ private:
 	QStackedWidget * generalDialog;
 	QWidget *appColors, *tables, *plotOptions, *plotTicks, *plotFonts, *confirm, *plotPrint;
 	QWidget *application, *curves, *axesPage, *plots3D, *fitPage, *numericFormatPage, *notesPage, *plotGeometryPage, *plotSpeedPage;
+#ifdef SCRIPTING_PYTHON
     // AI settings — see AiConfig.h
     AiConfig *aiPage;
+#endif
 	QPushButton* buttonAxesFont, *buttonNumbersFont, *buttonLegendFont, *buttonTitleFont, *fontsBtn;
 	QCheckBox *boxOrthogonal, *logBox, *plotLabelBox, *scaleErrorsBox;
 	QCheckBox *boxTitle, *boxFrame, *boxPlots3D, *boxPlots2D, *boxTables, *boxNotes, *boxFolders;

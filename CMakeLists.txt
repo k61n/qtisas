@@ -69,8 +69,12 @@ endif ()
 #
 
 set(SUBDIRS
-    "src/ai" "src/analysis" "src/core" "src/lib" "src/matrix" "src/parsers" "src/plot2D" "src/plot3D" "src/scripting"
+    "src/analysis" "src/core" "src/lib" "src/matrix" "src/parsers" "src/plot2D" "src/plot3D" "src/scripting"
     "src/table" "sans/ascii1d" "sans/common" "sans/compile" "sans/dan" "sans/genmin" "sans/fittable" "sans/jnse" "sans/svd")
+if (WITH_PYTHON)
+    # the AI assistant generates and runs Python scripts, so it is only built with Python support
+    list(APPEND SUBDIRS "src/ai")
+endif ()
 foreach (subdir ${SUBDIRS})
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/qtisas/${subdir}/)
     # reduces subdir from relative path to submodule name

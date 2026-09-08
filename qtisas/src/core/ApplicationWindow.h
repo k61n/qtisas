@@ -44,10 +44,12 @@ Description: QtiSAS's main window
 
 #include <gsl/gsl_matrix.h>
 
+#ifdef SCRIPTING_PYTHON
 #include "AiAssistant.h"
 #include "AiScriptHost.h"
 #include "AiSettings.h"
 #include "QtiSasAiContent.h"
+#endif
 #include "ArrowMarker.h"
 #include "AssociationsDialog.h"
 #include "CurveRangeDialog.h"
@@ -81,7 +83,11 @@ class compile18;
 class fittable18;
 #endif
 
+#ifdef SCRIPTING_PYTHON
 class ApplicationWindow : public QMainWindow, public scripted, public AiScriptHost
+#else
+class ApplicationWindow : public QMainWindow, public scripted
+#endif
 {
     Q_OBJECT
 
@@ -90,6 +96,7 @@ public:
     explicit ApplicationWindow(const QStringList &l);
     ~ApplicationWindow() override;
 
+#ifdef SCRIPTING_PYTHON
     // AI configuration knobs — see AiSettings.h. Public: read/written directly by AiConfig/askAi().
     // Not a slot (a plain member can't sit inside "public slots:") — that section reopens right below.
     AiSettings aiSettings;
@@ -100,6 +107,7 @@ public:
 
     void print(const QString &message) override;
     bool canCompile(const QString &code, QString *errorOut = nullptr) const override;
+#endif
 
     enum ShowWindowsPolicy
     {
@@ -1164,6 +1172,7 @@ public slots:
     //! scriptPrint() API call (see qtimod.sip), so a script's own reported results are visually set
     //! apart from surrounding AI status/header lines, which keep calling plain scriptPrint().
     void scriptPrintHighlighted(const QString &text);
+#ifdef SCRIPTING_PYTHON
     void askAi(const QString &text, bool autoRun = false, bool forceConsole = false);
     AiAssistant *aiAssistant() const
     {
@@ -1176,6 +1185,7 @@ public slots:
     static bool removeRule(int index, QString *errorOut = nullptr);
     static bool removeAllRules();
     QStringList showRules();
+#endif
 
     //! replace the last line in the scripting console (in-place iteration update)
     void scriptPrintReplace(const QString &text);
@@ -1597,6 +1607,7 @@ private:
 	QSplitter *explorerSplitter;
 
 	ScriptWindow *scriptWindow;
+#ifdef SCRIPTING_PYTHON
     AiAssistant *m_ai = nullptr;
     QtiSasAiContent m_aiContent; // stateless — supplies AiAssistant's QtiSAS-specific knowledge
     // askAi() helpers — see ApplicationWindow.cpp for each one's doc comment.
@@ -1605,6 +1616,9 @@ private:
     void echoAiRequest(const QString &effectiveText);
     bool handleAiTextCommand(const QString &trimmed);
     bool m_aiConnected = false;
+#endif
+    // AI output-capture state. Deliberately not under SCRIPTING_PYTHON: scriptPrint*()/scriptError()
+    // consult it unconditionally, and without Python it simply keeps its defaults.
     bool m_aiForceConsole = false;
     bool m_aiCapturing = false;
     QString m_aiCaptureBuffer;

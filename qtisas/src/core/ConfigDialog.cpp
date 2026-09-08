@@ -45,7 +45,9 @@ Description: Preferences dialog
 #include <QWidget>
 #include <QInputDialog>
 
+#ifdef SCRIPTING_PYTHON
 #include "AiConfig.h"
+#endif
 #include "ApplicationWindow.h"
 #include "ColorBox.h"
 #include "ColorButton.h"
@@ -996,7 +998,9 @@ void ConfigDialog::initAppPage()
 	numericFormatLayout->setRowStretch(4, 1);
 	appTabWidget->addTab( numericFormatPage, QString() );
 
+#ifdef SCRIPTING_PYTHON
     initAiPage();
+#endif
 
 	initFileLocationsPage();
 
@@ -2265,7 +2269,9 @@ void ConfigDialog::languageChange()
 	appTabWidget->setTabText(appTabWidget->indexOf(appColors), tr("Colors"));
 	appTabWidget->setTabText(appTabWidget->indexOf(numericFormatPage), tr("Numeric Format"));
 	appTabWidget->setTabText(appTabWidget->indexOf(fileLocationsPage), tr("File Locations"));
+#ifdef SCRIPTING_PYTHON
     appTabWidget->setTabText(appTabWidget->indexOf(aiPage), tr("Ask AI"));
+#endif
 
 	lblLanguage->setText(tr("Language"));
 	lblStyle->setText(tr("Style"));
@@ -2697,8 +2703,10 @@ void ConfigDialog::apply()
     app->enableCompletion(completionBox->isChecked());
 	app->d_open_last_project = openLastProjectBox->isChecked();
 
+#ifdef SCRIPTING_PYTHON
     // AI settings tab — see AiConfig::apply()
     aiPage->apply();
+#endif
 
 	// general page: numeric format tab
 	app->d_decimal_digits = boxAppPrecision->value();
@@ -3105,12 +3113,14 @@ void ConfigDialog::rehighlight()
     }
 }
 
+#ifdef SCRIPTING_PYTHON
 void ConfigDialog::initAiPage()
 {
     auto *app = (ApplicationWindow *)parentWidget();
     aiPage = new AiConfig(app);
     appTabWidget->addTab(aiPage, QString());
 }
+#endif
 
 void ConfigDialog::customizeNotes()
 {
