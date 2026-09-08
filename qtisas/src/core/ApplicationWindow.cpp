@@ -1688,7 +1688,8 @@ void ApplicationWindow::initToolBars()
 #endif
 
     d_status_info = new QLabel(this);
-    d_status_info->setFrameStyle(QFrame::Sunken | QFrame::StyledPanel);
+    d_status_info->setFrameShape(QFrame::StyledPanel);
+    d_status_info->setFrameShadow(QFrame::Sunken);
     d_status_info->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     d_status_info->setContextMenuPolicy(Qt::CustomContextMenu);
     d_status_info->setStyleSheet("color: grey");

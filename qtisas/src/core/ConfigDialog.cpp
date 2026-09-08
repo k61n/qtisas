@@ -108,7 +108,8 @@ ConfigDialog::ConfigDialog( QWidget* parent, Qt::WindowFlags fl )
 	fnt.setPointSize(fnt.pointSize() + 3);
 	fnt.setBold(true);
 	lblPageHeader->setFont(fnt);
-	lblPageHeader->setFrameStyle(QFrame::StyledPanel | QFrame::Sunken);
+    lblPageHeader->setFrameShape(QFrame::StyledPanel);
+    lblPageHeader->setFrameShadow(QFrame::Sunken);
 
 	QPalette pal = lblPageHeader->palette();
 	pal.setColor( QPalette::Window, app->panelsColor );

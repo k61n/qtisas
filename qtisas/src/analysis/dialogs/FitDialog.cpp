@@ -122,7 +122,8 @@ void FitDialog::initFitPage()
 
     lblFunction = new QLabel();
     lblFunction->setFont(font);
-    lblFunction->setFrameStyle(QFrame::Box | QFrame::Plain);
+    lblFunction->setFrameShape(QFrame::Box);
+    lblFunction->setFrameShadow(QFrame::Plain);
 	lblFunction->setLineWidth(2);
 	lblFunction->setMargin(10);
 	lblFunction->setPalette(palette);
@@ -282,7 +283,8 @@ void FitDialog::initFitPage()
     hbox3->addWidget(buttonOk);
 
 	QFrame *frame1 = new QFrame();
-	frame1->setFrameStyle(QFrame::Box | QFrame::Plain);
+    frame1->setFrameShape(QFrame::Box);
+    frame1->setFrameShadow(QFrame::Plain);
 	frame1->setLineWidth(2);
 
 	palette = frame1->palette();
@@ -452,7 +454,8 @@ void FitDialog::initEditPage()
     gl2->addWidget(btnAddFunc, 0, 2);
     gl2->addWidget(new QLabel(tr("Parameters")), 1, 0);
 	boxParam = new QLabel();
-	boxParam->setFrameStyle(QFrame::Box | QFrame::Sunken);
+    boxParam->setFrameShape(QFrame::Box);
+    boxParam->setFrameShadow(QFrame::Sunken);
     gl2->addWidget(boxParam, 1, 1);
 	btnDelFunc = new QPushButton( tr( "&Remove" ));
 	btnDelFunc->setIcon(QIcon(":/close.png"));
@@ -467,7 +470,8 @@ void FitDialog::initEditPage()
 	editBox->setFocus();
 
 	boxErrorMsg = new QLabel();
-	boxErrorMsg->setFrameStyle(QFrame::Box | QFrame::Sunken);
+    boxErrorMsg->setFrameShape(QFrame::Box);
+    boxErrorMsg->setFrameShadow(QFrame::Sunken);
 	boxErrorMsg->hide();
 
     QVBoxLayout *vbox1 = new QVBoxLayout();
@@ -494,7 +498,8 @@ void FitDialog::initEditPage()
     palette.setColor(QPalette::Window, blue);
 
 	QFrame *frame1 = new QFrame();
-	frame1->setFrameStyle(QFrame::Box | QFrame::Plain);
+    frame1->setFrameShape(QFrame::Box);
+    frame1->setFrameShadow(QFrame::Plain);
 	frame1->setLineWidth(2);
 	frame1->setAutoFillBackground(true);
 	frame1->setPalette(palette);
@@ -680,7 +685,8 @@ void FitDialog::initAdvancedPage()
 	font.setPointSize(font.pointSize() + 1);
 
 	QFrame *frame1 = new QFrame();
-	frame1->setFrameStyle(QFrame::Box | QFrame::Plain);
+    frame1->setFrameShape(QFrame::Box);
+    frame1->setFrameShadow(QFrame::Plain);
 	frame1->setLineWidth(2);
 	frame1->setPalette(palette);
 

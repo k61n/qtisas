@@ -22,7 +22,8 @@ LineNumberDisplay::LineNumberDisplay(QTextEdit *te, QWidget *parent) : QTextEdit
     setAttribute(Qt::WA_TransparentForMouseEvents, true);
     setContentsMargins(0, 0, 0, 0);
     setFocusPolicy(Qt::NoFocus);
-    setFrameStyle(QFrame::NoFrame | QFrame::Plain);
+    setFrameShape(QFrame::NoFrame);
+    setFrameShadow(QFrame::Plain);
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setLineWrapMode(QTextEdit::NoWrap);
     setReadOnly(true);

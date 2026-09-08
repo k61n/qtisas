@@ -41,7 +41,8 @@ GriddingDialog::GriddingDialog(Table* t, const QString& colName, int nodes, QWid
 	gl1->addWidget(new QLabel(tr("Selected Z Dataset")), 0, 0);
 
 	boxName = new QLabel(colName);
-	boxName->setFrameStyle(QFrame::Panel | QFrame::Sunken);
+    boxName->setFrameShape(QFrame::Panel);
+    boxName->setFrameShadow(QFrame::Sunken);
 	gl1->addWidget(boxName, 0, 1);
 
 	QLabel *methodLabel = new QLabel("<a href=\"http://www.alglib.net/interpolation/inversedistanceweighting.php\">" + tr("Gridding Method") + "</a>");

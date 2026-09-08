@@ -32,7 +32,8 @@ FindDialog::FindDialog( QWidget* parent, Qt::WindowFlags fl )
 
 	topLayout->addWidget( new QLabel(tr( "Start From" )), 0, 0 );
 	labelStart = new QLabel();
-	labelStart->setFrameStyle(QFrame::Panel | QFrame::Sunken);
+    labelStart->setFrameShape(QFrame::Panel);
+    labelStart->setFrameShadow(QFrame::Sunken);
 	labelStart->setSizePolicy(QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed));
 	topLayout->addWidget( labelStart, 0, 1, 1, 4 );
 

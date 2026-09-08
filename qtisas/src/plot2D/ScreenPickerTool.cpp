@@ -296,7 +296,8 @@ ImageProfilesTool::ImageProfilesTool(ApplicationWindow *app, Graph *graph, Matri
 
 			zLabel = new QLabel();
 			zLabel->setMinimumWidth(80);
-			zLabel->setFrameStyle(QFrame::Panel | QFrame::Sunken);
+            zLabel->setFrameShape(QFrame::Panel);
+            zLabel->setFrameShadow(QFrame::Sunken);
 
             append(QPointF(xVal, yVal));
 
