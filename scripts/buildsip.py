@@ -11,6 +11,10 @@ import os
 import platform
 import subprocess
 import sys
+try:
+    import tomllib
+except ModuleNotFoundError:
+    import tomli as tomllib
 import venv
 
 
@@ -65,7 +69,13 @@ def get_pyqt_versions(pipexe, qtv):
     return pyqtv, pyqtqtv
 
 
-def sip():
+def get_sip_version(filename):
+    with open(filename, 'rb') as f:
+        cfg = tomllib.load(f)
+    return cfg['sip-version']
+
+
+def sip_build():
     """Assuming python already has sip>=5 package"""
 
     build_path = sys.argv[1]
@@ -91,9 +101,11 @@ def sip():
         pipexe = find_resource('pip3' + ext, [venv_root])
         pyqt, pyqtqt = get_pyqt_versions(pipexe, qtv)
         subprocess.run(
-            f'{pipexe} install pyqt{version(qtv)[0]}=={pyqt} PyQt{version(qtv)[0]}-Qt{version(qtv)[0]}=={pyqtqt} pyqt-builder setuptools sip',
+            f'{pipexe} install pyqt{version(qtv)[0]}=={pyqt} PyQt{version(qtv)[0]}-Qt{version(qtv)[0]}=={pyqtqt} pyqt-builder setuptools',
             shell=True
         )
+        sip = get_sip_version(find_resource('QtCore.toml', [venv_root]))
+        subprocess.run(f'{pipexe} install sip=={sip}', shell=True)
         sipexe = find_resource('sip-build' + ext, [venv_root])
         sip_includes = find_resource('QtCoremod.sip', [venv_root])
         sip_includes = os.path.dirname(os.path.dirname(sip_includes))
@@ -136,4 +148,4 @@ sip-include-dirs = ["{sip_includes}"]
 
 
 if __name__ == '__main__':
-    sip()
+    sip_build()
