@@ -123,7 +123,7 @@ linux:
     - if: '$CI_COMMIT_BRANCH && $CI_PROJECT_ID != "1655"'
   parallel:
     matrix:
-      - IMAGE: ["debian11:7", "ubuntu24.04:8", "rocky9:15"]
+      - IMAGE: ["ubuntu22.04:17", "rocky9:16", "ubuntu26.04:1"]
   image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/$IMAGE
   script:
     - git submodule update --init --recursive
