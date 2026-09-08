@@ -2,6 +2,7 @@
 Project: QtiSAS
 License: GNU GPL Version 3 (see LICENSE)
 Copyright (C) by the authors:
+    2026 Konstantin Kholostov <k.kholostov@fz-juelich.de>
     2026 Vitaliy Pipich <v.pipich@gmail.com>
 Description: See AiConfig.h.
  ******************************************************************************/
@@ -168,7 +169,7 @@ AiConfig::AiConfig(ApplicationWindow *app, QWidget *parent) : QWidget(parent), m
     connect(m_splitRequestMerge, &QCheckBox::toggled, app, [app](bool on) { app->aiSettings.splitRequestMerge = on; });
 
     // Fill fields when preset changes — loads from .ai file
-    auto fillPreset = [=](int idx) mutable {
+    auto fillPreset = [=, this](int idx) mutable {
         if (idx < 0 || idx >= m_mode->count())
             return;
         const QString cname = m_mode->itemData(idx, Qt::UserRole + 1).toString();
@@ -193,7 +194,7 @@ AiConfig::AiConfig(ApplicationWindow *app, QWidget *parent) : QWidget(parent), m
     };
     connect(m_mode, QOverload<int>::of(&QComboBox::currentIndexChanged), this, fillPreset);
 
-    connect(savePresetBtn, &QPushButton::clicked, this, [=]() mutable {
+    connect(savePresetBtn, &QPushButton::clicked, this, [=, this]() mutable {
         bool ok;
         const QString name = QInputDialog::getText(this, tr("Save AI Configuration"), tr("Preset name:"),
                                                    QLineEdit::Normal, m_mode->currentText(), &ok)
@@ -234,7 +235,7 @@ AiConfig::AiConfig(ApplicationWindow *app, QWidget *parent) : QWidget(parent), m
         }
     });
 
-    connect(deletePresetBtn, &QPushButton::clicked, this, [=]() mutable {
+    connect(deletePresetBtn, &QPushButton::clicked, this, [=, this]() mutable {
         const int idx = m_mode->currentIndex();
         const QString cname = m_mode->itemData(idx, Qt::UserRole + 1).toString();
         if (cname.isEmpty())
@@ -244,7 +245,7 @@ AiConfig::AiConfig(ApplicationWindow *app, QWidget *parent) : QWidget(parent), m
         m_mode->setCurrentIndex(0);
     });
 
-    connect(gitGetBtn, &QToolButton::clicked, this, [=]() mutable {
+    connect(gitGetBtn, &QToolButton::clicked, this, [=, this]() mutable {
         const QString previousPreset = m_mode->currentData(Qt::UserRole + 1).toString();
 
         RepositorySynchronization::updateGitInteractive(this, aiDir, repoUrl, {"ai"});

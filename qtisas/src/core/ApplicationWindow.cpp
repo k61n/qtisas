@@ -221,7 +221,7 @@ void ApplicationWindow::newVersionCheck()
 
     auto *manager = new QNetworkAccessManager(this);
 
-    connect(manager, &QNetworkAccessManager::finished, this, [=](QNetworkReply *reply) {
+    connect(manager, &QNetworkAccessManager::finished, this, [=, this](QNetworkReply *reply) {
         reply->deleteLater();
         manager->deleteLater();
 
@@ -285,7 +285,7 @@ void ApplicationWindow::newVersionCheck()
             auto *downloadBtn = new QPushButton("Download", &dialog);
             layout->insertWidget(2, downloadBtn);
 
-            connect(downloadBtn, &QPushButton::clicked, this, [=, &dialog]() {
+            connect(downloadBtn, &QPushButton::clicked, this, [=, this, &dialog]() {
                 downloadBtn->setEnabled(false);
 
                 const QString url =
