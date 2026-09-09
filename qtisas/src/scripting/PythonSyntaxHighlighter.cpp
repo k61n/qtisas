@@ -205,7 +205,7 @@ void PythonSyntaxHighlighter::highlightBlock(const QString &text)
     {
         const QRegularExpressionMatch m = codeIt.next();
         QTextCharFormat codeFmt = format(static_cast<int>(m.capturedStart()));
-        codeFmt.setFontFamily("monospace");
+        codeFmt.setFontFamilies({"monospace"});
         setFormat(static_cast<int>(m.capturedStart()), static_cast<int>(m.capturedLength()), codeFmt);
     }
 
