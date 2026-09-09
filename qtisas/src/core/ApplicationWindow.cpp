@@ -45,6 +45,7 @@ Description: QtiSAS's main window
 #include <QPrintPreviewDialog>
 #include <QProgressDialog>
 #include <QRegularExpression>
+#include <QScreen>
 #include <QSpinBox>
 #include <QSplitter>
 #include <QStatusBar>
@@ -660,6 +661,14 @@ void ApplicationWindow::init(bool factorySettings)
     }
     consoleWindow->setWidget(console);
     consoleWindow->hide();
+    // As in showScriptWindow(): restoreState() may put a FLOATING console on a screen that's gone.
+    connect(consoleWindow, &QDockWidget::visibilityChanged, this, [this](bool visible) {
+        if (!visible || !consoleWindow->isFloating())
+            return;
+        QScreen *mainScreen = this->screen();
+        if (mainScreen && !mainScreen->availableGeometry().contains(consoleWindow->pos()))
+            consoleWindow->move(mainScreen->availableGeometry().topLeft() + QPoint(50, 50));
+    });
     tabifyDockWidget(explorerWindow, consoleWindow);
 #endif
 
@@ -20206,6 +20215,10 @@ void ApplicationWindow::showScriptWindow(bool parent)
 		scriptWindow->setAttribute(Qt::WA_DeleteOnClose);
 
 	if (!scriptWindow->isVisible()){
+        // Every show, not just creation: the restored d_script_win_rect may point at a screen that's gone.
+        QScreen *mainScreen = this->screen();
+        if (mainScreen && !mainScreen->availableGeometry().contains(scriptWindow->pos()))
+            scriptWindow->move(mainScreen->availableGeometry().topLeft() + QPoint(50, 50));
 		scriptWindow->show();
         if (parent && scriptWindow->windowHandle() && windowHandle())
             scriptWindow->windowHandle()->setTransientParent(windowHandle());
