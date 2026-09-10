@@ -6578,15 +6578,16 @@ void ApplicationWindow::askAi(const QString &text, bool autoRun, bool forceConso
     m_aiForceConsole = forceConsole;
 
     // Split-mode trigger — see AiAssistant.h's splitModeActive doc comment and
-    // AiAssistant::parseSplitMarker()'s doc comment for the "SPLIT:"/"NOSPLIT:" marker rules.
+    // AiAssistant::parseSplitMarker()'s doc comment for the "SPLIT"/"NOSPLIT" marker rules.
     QString effectiveText;
-    const bool wantsSplit = AiAssistant::parseSplitMarker(text, aiSettings.splitByDefault, &effectiveText);
+    bool wantsSplit = AiAssistant::parseSplitMarker(text, aiSettings.splitByDefault, &effectiveText);
     if (wantsSplit && !autoRun)
     {
-        // Split mode's per-part loop needs actual execution to advance — the marker implies
-        // auto-run regardless of the shift-key state `autoRun` came from.
-        autoRun = true;
-        print("▸▸▸ AI: split-mode requires auto-run — enabling it for this request.");
+        // Split mode needs execution to advance, so it cannot honor "generate only". This used to
+        // force autoRun on, overriding the no-run choice the user actually made. Falling back to a
+        // plain, non-split request honors autoRun=false instead, losing only the decomposition —
+        // and no longer worth announcing, since it is now normal behavior rather than an override.
+        wantsSplit = false;
     }
 
     // Chained onto effectiveText (already stripped of SPLIT/NOSPLIT), so REVIEW/NOREVIEW work
