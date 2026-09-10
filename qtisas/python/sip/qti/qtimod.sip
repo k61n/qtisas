@@ -2516,7 +2516,14 @@ public:
     // silently overwrite a different function's files on a later save/compile.
     const QString stem = a0->isEmpty() ? sipCpp->functionName() : *a0;
     const QString collision = sipqti_caseInsensitiveCollision(sipCpp, stem);
-    if (stem.contains('(') || stem.contains(')'))
+    if (stem.trimmed().isEmpty())
+    {
+        sipIsErr = 1;
+        PyErr_SetString(PyExc_ValueError,
+            "save: function name is empty — call setFunctionName(\"name\") before save() for a new "
+            "function (or pass a name to save() directly).");
+    }
+    else if (stem.contains('(') || stem.contains(')'))
     {
         sipIsErr = 1;
         PyErr_SetString(PyExc_ValueError,
@@ -2566,7 +2573,18 @@ public:
 %MethodCode
     // interactive=false: same guards as save() — compile() saves the FIF internally too.
     const QString collision = sipqti_caseInsensitiveCollision(sipCpp, sipCpp->functionName());
-    if (sipCpp->functionName().contains('(') || sipCpp->functionName().contains(')'))
+    if (sipCpp->functionName().trimmed().isEmpty())
+    {
+        sipIsErr = 1;
+        PyErr_SetString(PyExc_ValueError,
+            "compile: function name is empty — call setFunctionName(\"name\") before compile() for a "
+            "new function. Without it, compile() attempts to build an empty-named file, failing deep "
+            "inside the shelled-out clang invocation with an unhelpful \"no such file or directory: "
+            "'.cpp'\" error instead of this clear message. Confirmed live: setGroup() was called but "
+            "setFunctionName() never was, and the fix attempted was renaming the group instead of "
+            "adding the missing setFunctionName() call — the same error then repeated unchanged.");
+    }
+    else if (sipCpp->functionName().contains('(') || sipCpp->functionName().contains(')'))
     {
         sipIsErr = 1;
         PyErr_SetString(PyExc_ValueError,
