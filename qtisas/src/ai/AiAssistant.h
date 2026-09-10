@@ -102,6 +102,10 @@ class AiAssistant : public QObject
     // with the marker (if any) stripped — the form every later use of the request text should use.
     static bool parseSplitMarker(const QString &text, bool splitByDefault, QString *effectiveTextOut = nullptr);
 
+    // Same convention as parseSplitMarker() above, for "REVIEW"/"NOREVIEW" controlling self-review
+    // instead of split-mode. `reviewByDefault` is the host's persisted default.
+    static bool parseReviewMarker(const QString &text, bool reviewByDefault, QString *effectiveTextOut = nullptr);
+
     // Classifies the REAL user's own free-form reply to the "is this a new task or a
     // continuation?" clarifying question (see awaitingContinuationClarification's doc comment) as
     // "new task" (true) or "continue" (false, the default) — a broader keyword set than

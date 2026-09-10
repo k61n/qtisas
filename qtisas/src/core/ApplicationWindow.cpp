@@ -6589,6 +6589,11 @@ void ApplicationWindow::askAi(const QString &text, bool autoRun, bool forceConso
         print("▸▸▸ AI: split-mode requires auto-run — enabling it for this request.");
     }
 
+    // Chained onto effectiveText (already stripped of SPLIT/NOSPLIT), so REVIEW/NOREVIEW work
+    // together with the split marker in any order/position.
+    m_ai->setSelfReviewEnabled(
+        AiAssistant::parseReviewMarker(effectiveText, aiSettings.selfReviewEnabled, &effectiveText));
+
     connectAiSignalsOnce();
     echoAiRequest(effectiveText);
 

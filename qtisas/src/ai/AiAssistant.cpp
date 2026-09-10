@@ -2210,25 +2210,54 @@ AiAssistant::DocsMode AiAssistant::docsModeFromSettings(const QSettings &setting
     return settings.value("AI/Unlimited", false).toBool() ? DocsMode::Full : DocsMode::Compact;
 }
 
+// Finds `wordPattern` (a raw regex fragment, e.g. "SPLIT" or "NO\\s*SPLIT") anywhere in `text` as
+// a standalone ALL-CAPS word — \b on both sides rejects "SPLITa"/"aSPLIT" while still matching
+// "SPLIT a"/"a SPLIT". An optional trailing colon is consumed too. On a match, *textOut (if given)
+// gets `text` with the marker removed and surrounding whitespace collapsed via QString::simplified().
+static bool findAndStripCapitalMarker(const QString &text, const QString &wordPattern, QString *textOut)
+{
+    const QRegularExpression re(R"(\b)" + wordPattern + R"(\b:?)");
+    const QRegularExpressionMatch m = re.match(text);
+    if (!m.hasMatch())
+        return false;
+    if (textOut)
+        *textOut = (text.left(m.capturedStart()) + " " + text.mid(m.capturedEnd())).simplified();
+    return true;
+}
+
 bool AiAssistant::parseSplitMarker(const QString &text, bool splitByDefault, QString *effectiveTextOut)
 {
-    // "NOSPLIT:" is the mirror-image escape hatch for when splitByDefault is ON: forces this ONE
-    // request to skip split mode (e.g. a plain question that shouldn't pay for the split-plan
-    // pre-flight or have autoRun forced on) regardless of the default. Checked first since its
-    // match would otherwise also need excluding from splitMarkerRe (its own leading "split:"
-    // substring isn't at position 0, so no actual regex clash, but checking NOSPLIT first keeps
-    // the precedence obvious).
-    static const QRegularExpression noSplitMarkerRe(R"(^\s*no\s*split\s*:\s*)",
-                                                    QRegularExpression::CaseInsensitiveOption);
-    static const QRegularExpression splitMarkerRe(R"(^\s*split\s*:\s*)", QRegularExpression::CaseInsensitiveOption);
-    const QRegularExpressionMatch noSplitMatch = noSplitMarkerRe.match(text);
-    const QRegularExpressionMatch splitMatch =
-        noSplitMatch.hasMatch() ? QRegularExpressionMatch() : splitMarkerRe.match(text);
+    // "NOSPLIT" is the mirror-image escape hatch for when splitByDefault is ON: forces this ONE
+    // request to skip split mode regardless of the default. Checked first since a match makes
+    // SPLIT irrelevant either way. Case-sensitive, capital-only, like parseListRequest()'s marker.
+    QString afterNoSplit;
+    if (findAndStripCapitalMarker(text, "NO\\s*SPLIT", &afterNoSplit))
+    {
+        if (effectiveTextOut)
+            *effectiveTextOut = afterNoSplit;
+        return false;
+    }
+    QString afterSplit;
+    const bool splitMatch = findAndStripCapitalMarker(text, "SPLIT", &afterSplit);
     if (effectiveTextOut)
-        *effectiveTextOut = noSplitMatch.hasMatch() ? text.mid(noSplitMatch.capturedLength())
-                            : splitMatch.hasMatch() ? text.mid(splitMatch.capturedLength())
-                                                    : text;
-    return noSplitMatch.hasMatch() ? false : (splitByDefault || splitMatch.hasMatch());
+        *effectiveTextOut = splitMatch ? afterSplit : text;
+    return splitByDefault || splitMatch;
+}
+
+bool AiAssistant::parseReviewMarker(const QString &text, bool reviewByDefault, QString *effectiveTextOut)
+{
+    QString afterNoReview;
+    if (findAndStripCapitalMarker(text, "NO\\s*REVIEW", &afterNoReview))
+    {
+        if (effectiveTextOut)
+            *effectiveTextOut = afterNoReview;
+        return false;
+    }
+    QString afterReview;
+    const bool reviewMatch = findAndStripCapitalMarker(text, "REVIEW", &afterReview);
+    if (effectiveTextOut)
+        *effectiveTextOut = reviewMatch ? afterReview : text;
+    return reviewByDefault || reviewMatch;
 }
 
 bool AiAssistant::looksLikeNewTaskReply(const QString &reply)
