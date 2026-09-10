@@ -334,7 +334,7 @@ void ScriptEdit::contextMenuEvent(QContextMenuEvent *e)
 	delete menu;
 }
 
-void ScriptEdit::ensureOneTrailingBlank(QTextEdit *w, const QString &headerPrefix)
+void ScriptEdit::stripTrailingBlanks(QTextEdit *w)
 {
     QTextDocument *doc = w->document();
     if (doc->isEmpty())
@@ -346,8 +346,16 @@ void ScriptEdit::ensureOneTrailingBlank(QTextEdit *w, const QString &headerPrefi
         c.movePosition(QTextCursor::End, QTextCursor::KeepAnchor);
         c.removeSelectedText();
     }
-    const QString last = doc->lastBlock().text();
-    if (!last.isEmpty() && !last.startsWith(headerPrefix))
+}
+
+void ScriptEdit::ensureOneTrailingBlank(QTextEdit *w, const QString &headerPrefix)
+{
+    if (w->document()->isEmpty())
+        return;
+    stripTrailingBlanks(w);
+    const QString last = w->document()->lastBlock().text();
+    const bool lastIsListLine = last.startsWith("▸    AI request: LIST") || last.startsWith("▸▸  AI LIST:");
+    if (!last.isEmpty() && !last.startsWith(headerPrefix) && !lastIsListLine)
         w->append("");
 }
 

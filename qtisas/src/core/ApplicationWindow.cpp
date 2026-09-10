@@ -6005,6 +6005,13 @@ QStringList ApplicationWindow::showRules()
     return rules;
 }
 
+// LIST-mode status line? Used only for spacing decisions below — the actual coloring is owned
+// entirely by PythonSyntaxHighlighter's own matching check, same as it owns "▸▸▸ " lines.
+static bool isAiListMessage(const QString &message)
+{
+    return message.startsWith("▸    AI request: LIST") || message.contains("▸▸  AI LIST:");
+}
+
 // AiScriptHost implementation — part of the eventual split of AI orchestration logic into a
 // standalone library. print() is called directly by askAi()'s responseReady lambda for plain-text
 // answers, and internally by runScript() below for the two output channels that don't already
@@ -6015,13 +6022,17 @@ void ApplicationWindow::print(const QString &message)
     // Anything printed between retries means the last line isn't ours, so the next one starts fresh, never overwrites.
     m_retryStatusPos = -1;
     m_retryStatusWidget = nullptr;
-    const bool isHeader = message.startsWith("▸▸▸ ");
+    const bool isHeader = message.startsWith("▸▸▸ ") || message.startsWith("▸▸ ") || message.startsWith("▸ ");
+    // A LIST item line wants a blank before it EXCEPT right after "▸ AI request: LIST" itself
+    // (item 1) — passing that as headerPrefix here reuses ensureOneTrailingBlank()'s own
+    // "skip if last line already starts with this" check for exactly that one case.
+    const QString blankSkipPrefix = isAiListMessage(message) ? "▸    AI request: LIST" : "▸▸▸ ";
     if (!m_aiForceConsole && scriptWindow && scriptWindow->isVisible())
     {
         scriptWindow->showOutputPanel();
         QTextEdit *out = scriptWindow->outputConsole();
         if (isHeader)
-            ScriptEdit::ensureOneTrailingBlank(out);
+            ScriptEdit::ensureOneTrailingBlank(out, blankSkipPrefix);
         QTextCursor c = out->textCursor();
         c.movePosition(QTextCursor::End);
         const int anchor = c.position();
@@ -6038,13 +6049,14 @@ void ApplicationWindow::print(const QString &message)
     {
         QTextEdit *sc = scriptingConsole();
         int anchor = 0;
-        if (isHeader && sc)
+        if (sc)
         {
-            ScriptEdit::ensureOneTrailingBlank(sc);
             QTextCursor c = sc->textCursor();
             c.movePosition(QTextCursor::End);
             anchor = c.position();
         }
+        if (isHeader && sc)
+            ScriptEdit::ensureOneTrailingBlank(sc, blankSkipPrefix);
         scriptPrint(message);
         if (isHeader && sc)
         {
