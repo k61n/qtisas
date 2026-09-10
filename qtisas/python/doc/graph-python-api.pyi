@@ -64,7 +64,7 @@
 # setNumLayers(n)  setActiveLayer(g)  swapLayers(src,dest)  setEqualSizedLayers()
 # setCols(n)  setRows(n)  setMargins(l,r,t,b)
 # setLayerCanvasSize(w,h)  # ALL layers uniformly — GraphWindow method
-# arrangeLayers(fit,userSize)  setScaleLayersOnResize(on)
+# arrangeLayers(fit=True,userSize=False)  setScaleLayersOnResize(on=True)
 # setAlignement(hAlign,vAlign)
 # setAlignPolicy(policy)  — GraphWindow.AlignPolicy.AlignLayers(default) | GraphWindow.AlignPolicy.AlignCanvases
 #   AlignCanvases: arrangeLayers pins canvases directly → same X, same width for all layers in a column
@@ -105,9 +105,11 @@
 #
 # keepAligned(on=True)  isKeepAligned()->bool  # pin canvas rect (pos+size); re-applied on every layer update
 #   keepAligned(False) before re-arrangement, keepAligned(True) after the 2nd setCanvasGeometry pass
-# setCommonLayerAxes(vertical,horizontal)  linkXLayerAxes(link)  reverseWaterfallOrder()
-# export("file.png")  exportImage(file,quality,transparent,dpi)
-# exportVector(file,fontEmbed,dpi,color)  exportTex(file,color,escapeStrings,fontSizes)
+# setCommonLayerAxes(vertical=True,horizontal=True)  linkXLayerAxes(link=True)  reverseWaterfallOrder()
+# export("file.png")
+# exportImage(file,quality=100,transparent=False,dpi=72,customSize=QSizeF(),unit=Pixel,fontsFactor=1.0,compression=0)
+# exportVector(file,fontEmbedding,dpi=72,color=True,customSize=QSizeF(),unit=Pixel,fontsFactor=1.0)  # fontEmbedding required, no default
+# exportTex(file,color=True,escapeStrings=True,fontSizes=True,customSize=QSizeF(),unit=Pixel,fontsFactor=1.0)
 
 # Graph — add curves:
 # ALWAYS pass a Table object — addCurve("tableName_col", type) raises TypeError at runtime (no string overload)
@@ -142,8 +144,8 @@
 #   fit()/plotResults() even creates it) — don't confuse the two classes' methods.
 # setCurveLineColor(index,colorIndex|QColor)  setCurveLineStyle(index,Qt.PenStyle.DashLine)  # PyQt6: Qt.PenStyle.X
 # setCurveLineWidth(index,width)  setCurveAxes(index,xAxis,yAxis)
-# showMissingDataGap(on,update)  isMissingDataGapEnabled()->bool  setGrayScale()  setIndexedColors()
-# setWaterfallOffset(x,y,update)  setWaterfallSideLines(on)  setWaterfallFillColor(QColor)
+# showMissingDataGap(on=True,update=True)  isMissingDataGapEnabled()->bool  setGrayScale()  setIndexedColors()
+# setWaterfallOffset(x,y,update=True)  setWaterfallSideLines(on=True)  setWaterfallFillColor(QColor)
 
 # Graph — curve symbols (same RULE as above applies — layer methods, not curve(index) methods;
 #   also NEVER construct a raw QwtSymbol and call dataCurve(...).setSymbol() with it — same rule):
@@ -224,8 +226,8 @@
 # setXTitle/setAxisTitle on a DISABLED axis has no visible effect — set titles only on enabled axes
 # e.g. in stacked panels: set X title on BOTTOM layer only (Bottom axis enabled), not on top layer
 # setAxisTitleFont(axis,QFont)  setAxisTitleColor(axis,QColor)  setAxisTitleAlignment(axis,align)
-# QFont bold — PyQt6: QFont("name",12,QFont.Weight.Bold)   PyQt5: QFont("name",12,QFont.Bold)
-# QFont.Bold raises AttributeError in PyQt6 — always use QFont.Weight.Bold
+# QFont bold — QFont("name",12,QFont.Weight.Bold)
+# QFont.Bold (the old PyQt5 form) raises AttributeError in PyQt6 — always use QFont.Weight.Bold
 # setAxisTitleColor/setAxisLabelsColor — axis arg REQUIRED; setAxisTitleColor(QColor) fails
 # axisTitleDistance(axis)->int  setAxisTitleDistance(axis,dist)
 # SUBSCRIPT/SUPERSCRIPT: use <sub>...</sub> / <sup>...</sup> directly in the title string — rich
@@ -233,12 +235,12 @@
 #   WRONG: g.setYTitle("I(Q) (cm^{-1})")  ← LaTeX-style ^{} is NOT recognized, renders literally
 #   RIGHT: g.setYTitle("I(Q) (cm<sup>-1</sup>)")   g.setXTitle("Q (&Aring;<sup>-1</sup>)")
 #          g.setYTitle("R<sub>g</sub> (nm)")                                      # &Aring;=Å
-# enableAxis(axis,on)  enableAxisLabels(axis,on)  setAxisColor(axis,QColor)
+# enableAxis(axis,on=True)  enableAxisLabels(axis,on)  setAxisColor(axis,QColor)
 # showAxis() does NOT exist (TypeError: no such method) — use enableAxis(axis,True)/False to
 #   show/hide instead: layer.enableAxis(Graph.Axis.Right, True)
 # setAxisFont(axis,QFont)  setAxisLabelsColor(axis,QColor)  # tick label number colour; axis required
 # to apply to all axes: for ax in [Graph.Axis.Bottom,Graph.Axis.Left,Graph.Axis.Top,Graph.Axis.Right]: layer.setAxisLabelsColor(ax,c); layer.setAxisTitleColor(ax,c)
-# setAxisNumericFormat(axis,fmt,prec,formula)   # fmt:0=auto 1=decimal 2=scientific 3=superscripts
+# setAxisNumericFormat(axis,fmt,prec=6,formula="")   # fmt:0=auto 1=decimal 2=scientific 3=superscripts
 #   4=engineering 5=superscriptsGER — 3 is superscripts, NOT engineering (4 is); 4th arg is a
 #   label-transform FORMULA string, not a text suffix appended to labels
 # setAxisLabelRotation(axis,degrees)
@@ -251,12 +253,12 @@
 #   Preferences default for NEW graphs — they diverge once a graph's width is changed post-creation.
 
 # Graph — canvas/frame/grid:
-# setCanvasColor(QColor)  setCanvasFrame(width,QColor)  setCanvasBackgroundImage(file,autocrop)
+# setCanvasColor(QColor)  setCanvasFrame(width=1,QColor=black)  setCanvasBackgroundImage(file="",autocrop=True)
 # setCanvasGeometry(x,y,w,h)
 # canvasGeometry()->QRect  # canvas position+size in MultiLayer coords; use for zero-gap asymmetric sizing
 # setCanvasSize(w,h)  # per-layer — Graph method; for all layers use graphWindow.setLayerCanvasSize(w,h)
-# setBackgroundColor(QColor)  setFrame(width,QColor)
-# grid()->Grid  showGrid()  showGrid(axis)  setGridOnTop(on,update)  hasGridOnTop()->bool
+# setBackgroundColor(QColor)  setFrame(width=1,QColor=black)
+# grid()->Grid  showGrid()  showGrid(axis)  setGridOnTop(on=True,update=True)  hasGridOnTop()->bool
 # Grid pen methods — use QPen (no setMajorGridColor/setMinorGridColor methods):
 #   grid().setMajPenX(QPen)  grid().majPenX()->QPen   # major X grid
 #   grid().setMajPenY(QPen)  grid().majPenY()->QPen   # major Y grid
@@ -300,6 +302,11 @@
 #   compute e.g. "95% up the y-axis"; no range validation, so a wrong value places the widget off-plot
 #   with no error.
 #   setSize(w:int,h:int)
+#   Frame/Image/Legend/Rectangle/Ellipse (and Table/Matrix/Graph/Compiler/Fittable/Qti3D/...) need NO
+#   import, ever — global in every script already. `from qti import X` works (qti is the real
+#   extension module) but is unneeded; `from qti.api import X`/`import qti.X` raise
+#   ImportError/ModuleNotFoundError — no such submodule exists. Confirmed live twice, same guessed
+#   "qti.api" submodule for two different classes (Qti3D, then Frame) before falling back to bare.
 #   frame style: Frame.FrameStyle.Line(1)/.Shadow(2) — NOT PyQt6 QFrame; exact-match int, no bit-flags,
 #   so QFrame.Shape.Box|QFrame.Shadow.Sunken silently draws NO frame at all (confirmed live)
 #   MUST use .value: setFrameStyle(Frame.FrameStyle.Shadow.value) — the bare enum member raises
@@ -314,6 +321,21 @@
 # RIGHT: gw.layer(1).replot(); gw.layer(2).replot()   — or — gw.activeLayer().replot()
 # Same GraphWindow-vs-Graph trap applies to setXTitle()/setYTitle()/setAxisTitle()/setScale() —
 #   all are Graph (layer) methods, all raise AttributeError on GraphWindow. Confirmed live.
-# replot()  setAntialiasing(on,update)  setAutoscaleFonts(on)  enableAutoscaling(on)
-# export("file.png")  exportImage(file,quality,transparent,dpi)
-# exportVector(file,fontEmbed,dpi,color)  exportTex(file,color,escapeStrings,fontSizes)
+# replot()  setAntialiasing(on=True,update=True)  setAutoscaleFonts(on=True)  enableAutoscaling(on=True)
+# export("file.png")
+# exportImage(file,quality=100,transparent=False,dpi=72,customSize=QSizeF(),unit=Pixel,fontsFactor=1.0,compression=0)
+# exportVector(file,fontEmbedding,dpi=72,color=True,customSize=QSizeF(),unit=Pixel,fontsFactor=1.0)  # fontEmbedding required, no default
+# exportTex(file,color=True,escapeStrings=True,fontSizes=True,customSize=QSizeF(),unit=Pixel,fontsFactor=1.0)
+
+# RULE — do NOT override Preferences-controlled appearance defaults unless the request specifically
+#   asks for that styling. A new layer/curve already inherits correct defaults from Preferences ->
+#   2D Plots (Options/Axes/Grid/Curves tabs) — calling these unprompted overrides the user's own
+#   settings, not a neutral no-op:
+#   Layer-level: setAxisTitleFont, setAxisFont, setAxisLabelsColor, setAxisTitleColor, setAxisColor,
+#     setAxesLinewidth, drawAxesBackbones, showGrid, setCanvasColor, setBackgroundColor, enableAxis,
+#     enableAxisLabels, setAntialiasing, enableAutoscaling, setAutoscaleFonts, setFrame,
+#     setCanvasFrame, grid().setMajPenX/Y, setMinPenX/Y, enableXMin/YMin, enableXMax/YMax.
+#   Curve-level (Preferences -> 2D Plots -> Curves tab): setCurveLineWidth, setCurveLineStyle,
+#     setCurveLineColor, setCurveSymbolStyle, setCurveSymbolSize, setCurveSymbolBorderWidth,
+#     setCurveSymbolColor, setCurveSymbolBorderColor — unless the request names a specific colour/
+#     width/symbol, in which case calling these IS the requested content, not an override.

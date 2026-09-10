@@ -122,7 +122,7 @@ GraphWindow.AlignPolicy     # AlignLayers=0, AlignCanvases
 | `arrangeLayers(fit=True, userSize=False)` | reflow layers |
 | `swapLayers(src, dest)` | swap two layers by 1-based index |
 | `setEqualSizedLayers()` | make all layers the same size |
-| `setScaleLayersOnResize(on)` | scale layer geometry on window resize |
+| `setScaleLayersOnResize(on=True)` | scale layer geometry on window resize |
 | `setAlignPolicy(policy)` | `AlignLayers` (default) or `AlignCanvases` |
 | `keepAligned(on=True)` | snapshot canvas rects and re-apply on every update |
 | `isKeepAligned()` | `bool` |
@@ -245,9 +245,9 @@ gw.arrangeLayers(False, False)   # now correctly splits into 2 rows
 | Method | Notes |
 |--------|-------|
 | `export("file.png")` | export in format deduced from extension |
-| `exportImage(file, quality, transparent, dpi, ...)` | raster export |
-| `exportVector(file, fontEmbed, dpi, color, ...)` | vector (PDF/SVG/EPS) export |
-| `exportTex(file, color, escapeStrings, fontSizes, ...)` | LaTeX/TikZ export |
+| `exportImage(file, quality=100, transparent=False, dpi=72, customSize=QSizeF(), unit=FrameWidget.Unit.Pixel, fontsFactor=1.0, compression=0)` | raster export |
+| `exportVector(file, fontEmbedding, dpi=72, color=True, customSize=QSizeF(), unit=FrameWidget.Unit.Pixel, fontsFactor=1.0)` | vector (PDF/SVG/EPS) export — `fontEmbedding` is required (no default) |
+| `exportTex(file, color=True, escapeStrings=True, fontSizes=True, customSize=QSizeF(), unit=FrameWidget.Unit.Pixel, fontsFactor=1.0)` | LaTeX/TikZ export |
 
 ---
 
@@ -336,10 +336,12 @@ Qwt's own `setPen()` — but prefer `setCurveLineColor()` over reaching into the
 | `setCurveLineStyle(index, Qt.PenStyle)` | e.g. `Qt.PenStyle.DashLine` |
 | `setCurveLineWidth(index, width)` | line width in points |
 | `setCurveAxes(index, xAxis, yAxis)` | attach to axis pair; 0=Bottom/Left, 1=Top/Right |
-| `showMissingDataGap(on, update)` | show gaps for `NaN` rows |
+| `showMissingDataGap(on=True, update=True)` | show gaps for `NaN` rows |
 | `isMissingDataGapEnabled()` | `bool` |
 | `setGrayScale()` | apply greyscale palette to all curves |
 | `setIndexedColors()` | apply indexed colour palette |
+
+### colorIndex() vs QColor() — same name, different colour
 
 > **Warning:** `colorIndex("name")` and `QColor("name")` for the **same name are NOT the same colour.** `colorIndex()` looks up QtiSAS's own indexed palette (`"green"` = `Qt::green`, bright RGB(0,255,0)). `QColor("name")` uses Qt's SVG/X11 named-colour table, where `"green"` is RGB(0,128,0) — a dark, muted shade matching the palette's own `"olive"` entry, not its `"green"`. Confirmed: `setCurveLineColor(0, QColor("green"))` renders olive-looking, not the bright green most expect.
 > ```python
@@ -357,12 +359,16 @@ Qwt's own `setPen()` — but prefer `setCurveLineColor()` over reaching into the
 > this API (`addErrorBars`, `setAxisColor`, `setBackgroundColor`, `setFrameColor`, Graph3D's colour
 > setters, ...) takes `QColor` only, with no `colorIndex()` alternative.
 
+### Bare hex int as a QColor substitute
+
 > **For a specific RGB value, a bare `0xRRGGBB` int works anywhere a `QColor` parameter is expected — no `PyQt6` import needed.** Confirmed live: `leg.setBackgroundColor(0xFFFFFF)` sets a real white background, same as `QColor(255, 255, 255)`. Simplest fix for a `NameError: name 'QColor' is not defined` — add the int literal, don't fall back to `Qt.white` (also unimported) or abandon the color entirely.
 > ```python
 > leg.setBackgroundColor(0xFFFFFF)      # white — no import needed
 > g.setAxisColor(Graph.Axis.Left, 0x336699)   # a specific blue — no import needed
 > ```
 >
+### Exception — bare int breaks setCurveLineColor/SymbolColor/SymbolBorderColor
+
 > **EXCEPTION — does NOT work for `setCurveLineColor()`/`setCurveSymbolColor()`/
 > `setCurveSymbolBorderColor()`.** Each has BOTH an `(index, int)` overload, where the int is a
 > small PALETTE INDEX (0=black, 1=red, ...), and an `(index, QColor)` overload. A bare Python int
@@ -384,8 +390,8 @@ Qwt's own `setPen()` — but prefer `setCurveLineColor()` over reaching into the
 
 | Method | Notes |
 |--------|-------|
-| `setWaterfallOffset(x, y, update)` | offset between successive curves |
-| `setWaterfallSideLines(on)` | draw closing side lines |
+| `setWaterfallOffset(x, y, update=True)` | offset between successive curves |
+| `setWaterfallSideLines(on=True)` | draw closing side lines |
 | `setWaterfallFillColor(QColor)` | fill colour below curves |
 
 ### Special plot types
@@ -529,6 +535,8 @@ leg = g.newLegend()
 leg.setText("R = 12.3 nm")
 ```
 
+### newLegend() has no duplicate check — always reuse an existing legend
+
 **`newLegend()` has no duplicate check — it unconditionally creates and adds another `LegendWidget`
 every call**, even if the layer already has one. Calling it more than once on the same graph (e.g. a
 retried script, or a re-run on an existing plot) silently stacks up overlapping legends with no
@@ -539,6 +547,8 @@ if leg is None:
     leg = g.newLegend()
 leg.setText("R = 12.3 nm")   # updates the existing legend if there was one, creates it otherwise
 ```
+
+### addText() clones instead of modifying
 
 **`addText(existingLegendWidget)` does NOT modify or style the widget you pass in — it CLONES it
 into a brand-new `LegendWidget`, leaves the original untouched, and returns the clone.**
@@ -565,6 +575,8 @@ appearance) — it is not a way to reach back into an already-added legend.
 | `setFont(QFont)` | |
 | `setAngle(degrees)` | rotation |
 | `setAutoUpdate(bool)` | auto-refresh from curve titles |
+
+### FrameWidget base methods (Legend, Image, Rectangle, Ellipse)
 
 **`FrameWidget` base methods** (available on `LegendWidget`, `ImageWidget`, `RectangleWidget`,
 `EllipseWidget`):
@@ -618,6 +630,8 @@ g.add(r, False)
 already inherit every `FrameWidget` method (see above); call `setFrameStyle(...)` on the legend/image
 object itself instead of layering a second shape on top.
 
+### Positioning annotations relative to the data range (axisScale())
+
 **`g.axisScale(axis) -> (start, end)` reads an axis's current visible range back** — use it to
 compute a `setOriginCoord(x, y)` position relative to the live data range (e.g. "95% up the visible
 y-axis": `ymin, ymax = l.axisScale(Graph.Axis.Left); y = ymin + 0.95 * (ymax - ymin)`), instead of
@@ -625,6 +639,22 @@ guessing a nonexistent conversion method or hardcoding a bare fraction as if it 
 coordinate. `setOriginCoord` does no range validation — an out-of-range value places the widget
 off-plot with no error, so always derive it from `axisScale()` or known data bounds, never a bare
 0..1 fraction. (`g.scale(axis, pos)` never existed — use `axisScale(axis)`.)
+
+### QtiSAS classes need no import, ever
+
+**`Frame`/`Image`/`Legend`/`Rectangle`/`Ellipse` (and every other QtiSAS-native class — `Table`,
+`Matrix`, `Graph`, `Compiler`, `Fittable`, `Qti3D`, ...) need NO import at all, ever, from anywhere.**
+They're globals in every script's namespace already — no `import qti`, no `from qti import Frame`,
+no `from qti.api import Frame`, no `import qti.Frame`. `qti` is genuinely QtiSAS's own extension
+module and `from qti import X` happens to work for names that live there, but it's unnecessary; any
+other guessed form — a `.api`/`.core`/similar submodule, or `import qti.X` treating X as a
+submodule — raises `ImportError`/`ModuleNotFoundError`, since the module has no internal package
+structure to guess a path into. Confirmed live, twice, same guessed submodule both times for two
+different classes: `from qti.api import Qti3D` and, separately, `from qti.api import Frame` —
+`ModuleNotFoundError: No module named 'qti.api'; 'qti' is not a package` — before falling back to
+using the class bare with no import, which is all that was ever needed.
+
+### setFrameStyle() takes an int, not a bare enum member
 
 **`setFrameStyle(int)` takes QtiSAS's own `Frame.FrameStyle` enum value, not Qt's `QFrame`.** The two
 are unrelated types: `FrameWidget::setFrameStyle()` does an *exact* match against
@@ -707,7 +737,7 @@ leg.setOrigin(10, 10)
 | `setAxisColor(axis, QColor)` | axis line colour |
 | `setAxisFont(axis, QFont)` | tick label font |
 | `setAxisLabelsColor(axis, QColor)` | tick-label colour — requires explicit `axis` argument |
-| `setAxisNumericFormat(axis, format, precision, formula)` | `format`: 0=Automatic, 1=Decimal, 2=Scientific, 3=Superscripts, 4=Engineering, 5=SuperscriptsGER — **3 is Superscripts, not engineering** (4 is); 4th arg is a label-transform FORMULA string, not a text suffix appended to labels |
+| `setAxisNumericFormat(axis, format, precision=6, formula="")` | `format`: 0=Automatic, 1=Decimal, 2=Scientific, 3=Superscripts, 4=Engineering, 5=SuperscriptsGER — **3 is Superscripts, not engineering** (4 is); 4th arg is a label-transform FORMULA string, not a text suffix appended to labels |
 | `setAxisLabelRotation(axis, degrees)` | |
 | `setMajorTicksType(axis, Graph.Ticks.*)` | |
 | `setMinorTicksType(axis, Graph.Ticks.*)` | |
@@ -767,6 +797,8 @@ real, but dropping "Type" from it is not. Confirmed live TWICE with different gu
 5)` (mirroring the real `setMajorTicksType` name) — both raised `AttributeError: 'Graph' object has
 no attribute '...'` (same pattern for Min/minor variants).
 
+### Scale — axis breaks
+
 **Axis breaks** — `setScale(...)`'s trailing params (past `inverted`) split an axis into two
 segments with a visual gap between them, useful when a middle range carries no interesting data
 (e.g. `0..10` and `90..100` on the same axis, with the boring `10..90` region compressed away):
@@ -795,15 +827,15 @@ l.setScale(Graph.Axis.Left, 0, 100, 0, 5, 5, Graph.Scale.Linear, False,
 | Method | Notes |
 |--------|-------|
 | `setCanvasColor(QColor)` | canvas background fill |
-| `setCanvasFrame(width, QColor)` | border around canvas |
-| `setCanvasBackgroundImage(filename, autocrop)` | image behind data |
+| `setCanvasFrame(width=1, QColor=black)` | border around canvas |
+| `setCanvasBackgroundImage(filename="", autocrop=True)` | image behind data |
 | `canvasBackgroundFileName()` | `str` |
 | `setCanvasGeometry(x, y, w, h)` | position and size of canvas — all arguments must be `int` |
 | `setCanvasGeometry(QRect)` | |
 | `canvasGeometry()` | `QRect` — canvas position and size in MultiLayer coordinates |
 | `setCanvasSize(w, h)` | per-layer canvas size |
 | `setBackgroundColor(QColor)` | outer background (outside canvas) |
-| `setFrame(width, QColor)` | outer frame of the graph widget |
+| `setFrame(width=1, QColor=black)` | outer frame of the graph widget |
 
 ### Grid
 
@@ -812,7 +844,7 @@ l.setScale(Graph.Axis.Left, 0, 100, 0, 5, 5, Graph.Scale.Linear, False,
 | `grid()` | `Grid` object for fine-grained control |
 | `showGrid()` | show grid on all axes |
 | `showGrid(axis)` | show grid for one axis only |
-| `setGridOnTop(on, update)` | draw grid above curves |
+| `setGridOnTop(on=True, update=True)` | draw grid above curves |
 | `hasGridOnTop()` | `bool` |
 
 **`Grid` pen methods:**
@@ -845,13 +877,13 @@ layer.grid().setMajPenY(QPen(QColor(200, 200, 200), 1, Qt.PenStyle.SolidLine))
 | Method | Notes |
 |--------|-------|
 | `replot()` | redraw canvas |
-| `setAntialiasing(on, update)` | enable antialiasing |
-| `setAutoscaleFonts(on)` | scale fonts when canvas is resized |
-| `enableAutoscaling(on)` | auto-scale axes when data changes |
+| `setAntialiasing(on=True, update=True)` | enable antialiasing |
+| `setAutoscaleFonts(on=True)` | scale fonts when canvas is resized |
+| `enableAutoscaling(on=True)` | auto-scale axes when data changes |
 | `export("file.png")` | export by file extension |
-| `exportImage(file, quality, transparent, dpi, ...)` | raster |
-| `exportVector(file, fontEmbed, dpi, color, ...)` | vector (PDF/SVG/EPS) |
-| `exportTex(file, color, escapeStrings, fontSizes, ...)` | LaTeX/TikZ |
+| `exportImage(file, quality=100, transparent=False, dpi=72, customSize=QSizeF(), unit=FrameWidget.Unit.Pixel, fontsFactor=1.0, compression=0)` | raster |
+| `exportVector(file, fontEmbedding, dpi=72, color=True, customSize=QSizeF(), unit=FrameWidget.Unit.Pixel, fontsFactor=1.0)` | vector (PDF/SVG/EPS) — `fontEmbedding` is required (no default), confirmed against the C++ implementation (unnamed in the SIP header itself) |
+| `exportTex(file, color=True, escapeStrings=True, fontSizes=True, customSize=QSizeF(), unit=FrameWidget.Unit.Pixel, fontsFactor=1.0)` | LaTeX/TikZ |
 
 ---
 
@@ -1038,6 +1070,25 @@ t = table("SANS_Data")
 g.addCurve(t, "I", Graph.CurveType.Scatter)
 ```
 
+### addCurve/insertCurve need the fitCurve TABLE, not the Fittable object itself
+
+Confirmed live: after `f.fit()`, a script called `l1.addCurve(f, "y", Graph.CurveType.Line)` —
+passing the `Fittable` object itself — raising `TypeError: argument 1 has unexpected type
+'fittable18'`. `f`/`Fittable` is never a valid curve source; `fit()` creates a real, lookupable
+`fitCurve-<model>` TABLE (see fittable-python-api.md's "Fit curve table" section) — curve from
+that instead.
+
+```python
+# WRONG — Fittable object is not a Table
+f.fit()
+l1.addCurve(f, "y", Graph.CurveType.Line)
+
+# RIGHT — look up the table fit() actually created
+f.fit()
+fc = table("fitCurve-" + model_name)
+l1.addCurve(fc, "y", Graph.CurveType.Line)
+```
+
 ### EXPLORE the data table before adding curves
 
 When a task says "plot data from table X", **EXPLORE the table first**.
@@ -1159,9 +1210,16 @@ l1.showGrid()
 # RIGHT — omit all of the above; the layer already has correct defaults from Preferences
 ```
 
-Complete list of banned hardcodes (omit unless the template deliberately differs from user prefs):
+Complete list of banned hardcodes (omit unless the template deliberately differs from user prefs;
+audited against every control in Preferences → 2D Plots → Options/Axes/Grid):
 `setAxisTitleFont`, `setAxisFont`, `setAxisLabelsColor`, `setAxisTitleColor`, `setAxisColor`,
-`setAxesLinewidth`, `drawAxesBackbones`, `showGrid`, `setCanvasColor`, `setBackgroundColor`.
+`setAxesLinewidth`, `drawAxesBackbones`, `showGrid`, `setCanvasColor`, `setBackgroundColor`,
+`enableAxis` (per-axis visibility), `enableAxisLabels` (per-axis label visibility),
+`setAntialiasing`, `enableAutoscaling`, `setAutoscaleFonts`, `setFrame` (outer border),
+`setCanvasFrame`, and the `Grid` pen methods (`setMajPenX`/`setMajPenY`/`setMinPenX`/`setMinPenY`/
+`enableXMin`/`enableYMin`/`enableXMax`/`enableYMax`) — Preferences → 2D Plots → Grid controls
+color/style/width/antialiasing for major AND minor grid lines per axis, not just whether the grid
+shows at all.
 
 ```python
 # WRONG — showGrid() overrides the user's grid preference
@@ -1171,6 +1229,30 @@ l2.showGrid()
 # RIGHT — omit showGrid(); grid state is inherited from Preferences
 # Only call showGrid() if the template explicitly requires a grid regardless of preferences
 ```
+
+### Do not override curve/symbol appearance defaults either
+
+A newly-added curve (`addCurve()`/`plot()`) already inherits its line width/style, symbol style/
+size/border, and colours from Preferences → 2D Plots → **Curves** — the same "only touch it if the
+request asks for specific styling" rule as the layer-level list above applies to curve methods too:
+
+`setCurveLineWidth`, `setCurveLineStyle`, `setCurveLineColor` (unless a specific colour was
+requested), `setCurveSymbolStyle`, `setCurveSymbolSize`, `setCurveSymbolBorderWidth`,
+`setCurveSymbolColor`/`setCurveSymbolBorderColor` (unless a specific colour was requested).
+
+```python
+# WRONG — no styling was requested; this overrides the user's Preferences → Curves defaults
+l.addCurve(t, "y", Graph.CurveType.Line)
+l.setCurveLineWidth(0, 2)
+l.setCurveSymbolStyle(0, symbolIndex("Circle"))
+l.setCurveSymbolSize(0, 6)
+
+# RIGHT — omit all of the above; the new curve already has correct defaults from Preferences
+l.addCurve(t, "y", Graph.CurveType.Line)
+```
+
+**Do** call these when the request explicitly names a colour, line width, or symbol — that's real,
+requested content, not an unprompted override of the user's own defaults.
 
 ### Graph defaults — read before overriding
 To read the current defaults before creating a template:

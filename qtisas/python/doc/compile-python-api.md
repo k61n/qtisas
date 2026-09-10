@@ -223,6 +223,8 @@ y = scale * exp(-pow((x - center) / sigma, 2.0) / 2.0) + background;
 y = scale * exp(-(x - center) * (x - center) / (2.0 * sigma * sigma)) + background;
 ```
 
+### setCode() — C++ ternary vs Python ternary
+
 **The reverse mistake also happens: C++'s `cond ? a : b` ternary leaking into surrounding PYTHON
 code.** Happens when a script's `setCode()` C++ body and its Python code (e.g. synthetic-data
 generation) share the same formula. Python has no `?:` operator — writing it is a plain
@@ -236,6 +238,8 @@ F = 3.0 * (sin(qR) - qR * cos(qR)) / (qR**3) if qR > 1e-6 else 1.0
 ```
 The C++ version inside `c.setCode("""...""")` is unaffected by this — `cond ? a : b` is correct
 there; it's only wrong in the Python code around it.
+
+### setCode() — dependent variable (yName) naming and redeclaration rules
 
 **The dependent variable name is whatever `yName()` returns** — it is NOT always `I`. Always call
 `c.yName()` (or check `setYName()`) to find the correct name. If `setYName("y")` was called, write
@@ -256,6 +260,34 @@ I = scale * pq + background;
 // RIGHT — assign directly, no "double" in front
 I = scale * pq + background;
 ```
+
+### setCode() — unset xName/yName defaults and silent failure
+
+**If `setXName()`/`setYName()` are never called, the unset defaults are `"x"` and `"f"`** — NOT
+`"I"`, despite `"I"` being the typical SANS/SAXS convention and the most common value used in
+practice. Never assume either default; call `c.xName()`/`c.yName()` (or set them explicitly)
+before writing `[code]`.
+
+**A wrong assumed name is only guaranteed to be caught by a compile error if it collides with
+something already declared — an uncalled `setYName()` leaves nothing to collide with, so the
+mistake compiles clean and fails silently instead.** Confirmed live: with `setYName()` never
+called (leaving the real unset default `"f"`), `[code]` wrote `double I = scale * pq + background;`
+— this compiles without error, because `I` is simply a new, unrelated local, not a redeclaration
+of anything. But the boilerplate's `return f;` at the end returns `f`, which was never assigned —
+an uninitialized value returned on every evaluation, with no error anywhere to catch it. The fix
+is not a syntax rule but a required step: always call `setXName("...")`/`setYName("...")`
+explicitly for a new function, never rely on either default being correct.
+
+```cpp
+// WRONG — setYName() never called; "f" (the real unset default) is never assigned;
+// "I" is a plausible-looking guess that compiles fine but is a separate, unrelated local
+double I = scale * pq + background;
+
+// RIGHT — call c.setYName("I") in Python first, matching the C++ variable used here
+I = scale * pq + background;
+```
+
+### setCode() — parameter names are C++ globals, never redeclare
 
 **Parameter names are plain C++ globals available by name — never use `P1`, `P2`, `P3`…**
 Every name from `paramNames()` is declared as a file-scope `thread_local static` and only
@@ -279,6 +311,8 @@ I = scale * contrast * contrast * V * V * PQ + background;
 I = P1 * P2 * P3;
 ```
 
+### setCode() — using hHeaders functions directly
+
 **Functions from `hHeaders` are available directly in `[code]` and `[included functions]`.**
 When combining two reference functions, use their library functions — do not reimplement:
 ```cpp
@@ -299,6 +333,8 @@ c.setYName("y")
 c.setCode("y = a * cos(b * x) + c * sin(f / x);")   # correct — matches yName()
 c.setCode("I = a * cos(b * x) + c * sin(f / x);")   # WRONG — I is undeclared; compile error
 ```
+
+### setCode() — return statement rules
 
 The snippet is inserted inside `functionSANS`, which has return type `double`.
 
@@ -359,6 +395,8 @@ Gets or sets the `[included functions]` section — verbatim C++ code inserted a
 in the generated `.cpp`. Use it for helper functions, constants, or lookup tables shared across
 multiple calls to the fit function.
 
+### setIncludedFunctions() — beforeFitting pattern (initial values from loaded data)
+
 **Initial parameter values computed from the loaded data.** Fittable's "Before Fit" button (and
 `f.beforeFit()` — see fittable-python-api.md) calls the compiled function once with `beforeFit` set,
 before the fit starts. Define a `beforeFitting(void *ParaM)` helper that checks the flag and, when
@@ -387,6 +425,8 @@ fixed numbers — and adapts automatically if the range or dataset changes. Same
 nonlinear guesses: `Allometric1a.fif`'s power law `y = a*x^b` derives `a`/`b` log-log from the same
 two endpoints inside the same `if (!beforeFit) return;` guard.
 
+### setIncludedFunctions() — dynamic parameter freezing/activation at runtime
+
 > **Dynamically freezing/activating parameters at runtime (e.g. "only fit as many peaks as the
 > data actually supports, fix the rest") — adapted from the shipped `manyPeaksEfit`/
 > `gaussian-x10-qtisas` functions.** No Python-side call exists for this: `setParamVaries()` is a
@@ -402,6 +442,8 @@ two endpoints inside the same `if (!beforeFit) return;` guard.
 >   `para_fit_yn` field on the `functionT` struct (`gsl_vector_int`, one entry per parameter in
 >   `setParamNamesAll()` order; `1`=free, `0`=fixed), via `gsl_vector_int_set()`.
 >
+### setIncludedFunctions() — full worked example: LorentzianX5 (multi-peak)
+
 > **Don't hand-write this per peak — it doesn't scale past a handful.** Generate the repetitive
 > parts (parameter names, pointer arrays) from a single Python `N`, so the C++ loop logic is
 > identical whether `N` is 5 or 50. Full worked example — a 5-Lorentzian-peak function,
@@ -841,38 +883,33 @@ c.compile(True)       # compile all functions (same as compileAll())
 ```
 
 Builds the shared library (`.so` / `.dylib` / `.dll`) for the current function.
-Returns `True` on success, `False` on failure. Use `qti.app.resultsLog().toPlainText()` to read the full compiler output — **`resultsLog()` is an `ApplicationWindow` method, NOT a Compiler method**.
-`compile()` saves the FIF internally first, so it raises the same `ValueError` as `save()` (see
-above) if the function name contains `(` or `)`.
+Returns `True` on success. **On failure it raises `RuntimeError`, with the compiler's own
+`error:` output included directly in the exception message** — no need to separately read
+`qti.app.resultsLog()` to find out what went wrong (though the full log — including non-error
+output — is still there if needed; `resultsLog()` is an `ApplicationWindow` method, NOT a
+Compiler method). `compile()` saves the FIF internally first, so it raises the same `ValueError`
+as `save()` (see above) if the function name contains `(` or `)`.
 
-> **CRITICAL — `compile()` returns a bool; always check it.**
-> Printing a success message unconditionally is wrong — it runs even when compilation failed:
-> ```python
-> # WRONG — prints "compiled!" even if compile() returned False
-> c.compile()
-> print("compiled!")
->
-> # RIGHT — check the return value
-> ok = c.compile()
-> if not ok:
->     scriptPrint(qti.app.resultsLog().toPlainText()[-500:])
->     raise RuntimeError("Compilation failed")
-> scriptPrint("Compiled OK")
-> ```
+```python
+c.compile()
+scriptPrint("Compiled OK")   # only reached if compile() didn't raise
+```
 
-Self-debugging loop:
+Self-debugging loop, reading the exception text instead of scraping the results log:
 
 ```python
 for attempt in range(3):
-    if c.compile():
+    try:
+        c.compile()
         break
-    log = qti.app.resultsLog().toPlainText()
-    if "gsl_sf_bessel" in log:
-        c.setHHeaders(c.hHeaders() + "\n#include <gsl/gsl_sf_bessel.h>")
-    elif "gsl_sf_gamma" in log:
-        c.setHHeaders(c.hHeaders() + "\n#include <gsl/gsl_sf_gamma.h>")
-    else:
-        raise RuntimeError(log)
+    except RuntimeError as e:
+        msg = str(e)
+        if "gsl_sf_bessel" in msg:
+            c.setHHeaders(c.hHeaders() + "\n#include <gsl/gsl_sf_bessel.h>")
+        elif "gsl_sf_gamma" in msg:
+            c.setHHeaders(c.hHeaders() + "\n#include <gsl/gsl_sf_gamma.h>")
+        else:
+            raise
 else:
     raise RuntimeError("compilation failed after 3 attempts")
 ```

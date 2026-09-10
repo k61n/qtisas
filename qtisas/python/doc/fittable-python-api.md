@@ -253,6 +253,28 @@ f.selectDataset(3, "table_I3")
 | `setRange(m, min, max, byIndex=True)` | range by point index instead of X value |
 | `setRangeAll(min, max)` | set same range for all datasets |
 
+> **Choosing a range: the data must cover the function's full dynamic range, or every parameter
+> becomes highly correlated and errors blow up.** Applies whether the data is real or synthetic —
+> not specific to authoring a new compiled function (see `compile-python-api.md`'s Rule 5 for the
+> same rule, plus its oscillatory-function caveat, when the task also involves `c.new()`).
+>
+> | Function type | Required x-range |
+> |---|---|
+> | Peaked (Gaussian, Lorentzian) | `x_min < x0 − 3·sigma` AND `x_max > x0 + 3·sigma` |
+> | Decay in x (`A·exp(−b·x) + c`) | `x_max ≥ 3/b` (need ≥ 3 decay lengths to separate amp from background) |
+> | Decay in x² — Guinier (`I0·exp(−Rg²·q²/3) + bgd`) | `q_min < 1.73/Rg` — if `q_min·Rg >> 1`, the signal is exp(−large) ≈ 0 everywhere and only background is visible |
+> | Power-law / plateau | cover the full transition from steep slope to flat region |
+>
+> ```python
+> # WRONG — Guinier with Rg=25 but q starts at 0.5 → q_min*Rg = 12.5 >> 1 → signal ≈ 0 everywhere
+> for i in range(1, 201):
+>     q = 0.5 + 0.05 * i                          # q ∈ [0.5, 10.5] — all exp(-Rg²q²/3) ≈ 0
+>
+> # RIGHT — Guinier needs q_min < 1.73/Rg = 1.73/25 ≈ 0.07
+> for i in range(1, 201):
+>     q = 0.001 + 0.0005 * i                      # q ∈ [0.001, 0.1] → q*Rg < 2.5 → signal visible
+> ```
+
 ---
 
 ## Fit Algorithm
@@ -425,6 +447,8 @@ Matching read accessors exist for every setter above (not shown in the code bloc
 `weightingMethod()`, `weightingA()`/`weightingB()`/`weightingC()`/`weightingXmax()`,
 `weightingEnabled(m)`, `weightingDataset(m)`.
 
+### Weighting must be explicitly enabled — yErr role alone is not enough
+
 > **RULE — Assigning role `Table.PlotDesignation.yErr` does NOT enable weighted fitting; also call
 > `setWeightingEnabled(m, True)`.** Without it, weighting silently stays OFF (weight = 1) — no error;
 > `chi2`/`f.results()` still return numbers, but chi²/dof reflects raw unnormalized residuals,
@@ -456,6 +480,8 @@ Matching read accessors exist for every setter above (not shown in the code bloc
 > chi2 = f.fit()
 > ```
 > When comparing chi²/dof across models/datasets, confirm weighting is enabled first — otherwise the comparison is meaningless.
+
+### setWeightingDataset() requires the fully-qualified table_col name
 
 > **`setWeightingDataset(m, name)` raises `ValueError` if `name` isn't the exact, fully-qualified
 > `"tablename_colname"` name — not a bare column like `"dI"`.** Confirmed live:
@@ -581,6 +607,8 @@ empty string.
 
 `fit()`, `simulate()`, `plotResults()`, `beforeFit()`, `afterFit()` raise `RuntimeError` if stage isn't `"fit"`; `simulateCurve()` raises it if stage isn't `"simulate"`.
 
+### Fit curve table — creation and column structure
+
 After `fit()` and after `simulate()`, fit curve tables are created in the workspace:
 - Single dataset: `fitCurve-<function>`
 - Global fit dataset N: `fitCurve-<function>-global-N`
@@ -600,6 +628,8 @@ After `fit()` and after `simulate()`, fit curve tables are created in the worksp
 | 9 | `Values` | None | that parameter's fitted value, same row |
 | 10 | `Errors` | None | that parameter's fit error, same row (empty for a pure `simulate()`, only populated after a real `fit()`) |
 
+### Reading the fit curve from Python
+
 To access the fit curve from Python after `fit()`:
 
 ```python
@@ -615,6 +645,8 @@ gr.insertCurve(fc, "x", "residues", Graph.CurveType.Scatter)
 i_fit = fc.cell(2, idx)    # col 2 = "y"
 resid = fc.cell(5, idx)    # col 5 = "residues"
 ```
+
+### Fit curve table is the only reliable source for results
 
 **This table is the ONLY reliable source for chi²/dof, R², and every fitted parameter's value+error
 in a LATER script/part — never re-derive from memory, printed console text, or a fresh `f.fit()`
@@ -651,8 +683,12 @@ fixed-width prefix — spacing isn't constant across rows.
 for `"---"` first and strip the `"±"` before `float()` otherwise. Confirmed live: `float()` on
 `"±0.00974278485"` directly raises `ValueError: could not convert string to float`.
 
-Run an `# EXPLORE` first to confirm exact label/parameter text for the model in question
-(`fc.colNames()`, print a few rows of cols 6-9) before hardcoding a label string.
+Confirm the exact label/parameter text for the model in question before hardcoding a label
+string — from output already present in this conversation if there is any, otherwise by reading
+it at run time in the script itself (`fc.colNames()`, print a few rows of cols 6-9); an
+`# EXPLORE` round only if neither is possible.
+
+### Known bugs when reading fit curve tables (text() and cell())
 
 > **`t.text(col, row)` used to raise `TypeError: decoding str is not supported` for EVERY
 > non-empty cell, on any table** — a Python-3-porting bug (an already-decoded `str` passed through a
@@ -668,6 +704,8 @@ Run an `# EXPLORE` first to confirm exact label/parameter text for the model in 
 > BOTH of two different models compared — an implausibly identical "perfect" value that flagged
 > nothing. Never use `cell()` on columns 6-10 of a `fitCurve` table — they're text columns; use
 > `text()`/`cellData()` and parse the result yourself.
+
+### Comparing two already-fit models — worked example
 
 **Comparing two already-fit models (e.g. "fit both Gauss and Lorentzian, pick the better one") is
 solved once BOTH models have been fit at least once — no re-fit, guess, or recall needed.** Both
@@ -808,12 +846,14 @@ which recolors the data scatter instead, unintentionally blending data and fit v
 shape/size/color, get the layer via `f.plotResults(...).activeLayer()` and call the `Graph` method on
 curve index **1** (the fit line), e.g. `g.setCurveLineWidth(1, 2)`. Confirmed live:
 `f.setCurveLineWidth(2)` raised `AttributeError: 'fittable18' object has no attribute
-'setCurveLineWidth'` — the method doesn't exist on `Fittable`.
+'setCurveLineWidth'` — the method doesn't exist on `Fittable`. Do NOT import PyQt6 as a workaround
+for curve styling either — `f.setCurveColor(...)` (before `fit()`/`plotResults()`) already covers
+color; there is no supported reason to reach for `QColor`/`QtGui` here.
 
 | Parameter | Description |
 |-----------|-------------|
 | `graphName` | window name; reuses existing graph or creates new one if not found / empty |
-| `graphTemplate` | template file stem (without `.qpt`); applied when creating a new graph |
+| `graphTemplate` | template file stem (without `.qpt`); applied when creating a new graph. **Must be `""` or an exact name from `qti.app.graphTemplates()`** — an arbitrary word like `"graph"` is not validated: if the file doesn't exist, the plot silently falls back to a default layout with no error. Use `scriptPrint(str(qti.app.graphTemplates()))` (EXPLORE) to find valid names first. |
 
 ```python
 # plain new graph
@@ -864,7 +904,7 @@ call is usually unnecessary — the single most common `plotResults()` mistake, 
 
 ## Simulate Curve tab
 
-`simulateCurve()` corresponds to the **Simulate Curve** tab; call `selectStage("simulate")` first.
+`simulateCurve()` corresponds to the **Simulate Curve** tab. Order matters: `configure()` (or `setFunction()`) selects the function FIRST, and only then `selectStage("simulate")` — `selectStage()` before a function is selected raises. "First" here means first among the SIMULATE calls, not first in the script.
 
 Two modes: **uniform X** (generates a new X grid) and **dataset** (uses X values of an existing dataset and returns Chi²/DoF).
 
@@ -905,22 +945,34 @@ Two modes: **uniform X** (generates a new X grid) and **dataset** (uses X values
 ### Example
 
 ```python
-f.selectStage("simulate")
-
-# uniform X: generate model curve over a custom range
+# uniform X: generate a model curve over a custom range, with NO data to fit against
+f = Fittable
+f.configure("Guinier", [])          # function FIRST — empty dataset list is fine here
+f.selectStage("simulate")           # ...then the stage
 f.setSimUniformX(True)
 f.setSimFromX(0.005)
 f.setSimToX(0.5)
 f.setSimNumPoints(200)
 f.setSimLogStep(True)
-f.simulateCurve()
+f.simulateCurve()                   # returns NaN in this mode — see below, do not report it
+scriptPrint("simulated curve written to table simulatedCurve-Guinier")
 
 # dataset mode: simulate and compare to existing data
+f = Fittable
+f.configure("Guinier", ["table_I"])
+f.selectStage("simulate")
 f.setSimUniformX(False)
 f.setSimDataset("table_I")
-chi2 = f.simulateCurve()
-print(f"simulation Chi²/DoF = {chi2:.4f}")
+chi2 = f.simulateCurve()            # a real Chi2/DoF here, because there IS data
+scriptPrint("simulation Chi2/DoF = " + str(chi2))
 ```
+
+> **Do NOT report `simulateCurve()`'s return value in uniform X mode — it is `NaN` by definition**
+> (there is no data to compare against, which is the whole point of that mode). Confirmed live:
+> "compile a Porod power-law function, then simulate a curve from it without fitting any real
+> data" ended with `scriptPrint(f"Simulation completed with chi²/dof = {chi2:.4f}")` printing
+> `chi²/dof = nan` as though the task had produced a bad result, when it had in fact succeeded.
+> Report the output table (`simulatedCurve-<function>`) instead.
 
 ---
 

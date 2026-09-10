@@ -352,6 +352,13 @@ saveFolder(results, "/data/results.qti")
 | `setWindowName(window, "name")` | `bool` | rename a window — raises `ValueError` if the name is empty, invalid, or already used by another window (see gotcha below). **Allowed: letters, digits, underscore, hyphen** — confirmed in source (`ApplicationWindow::setWindowName()` strips `-` before checking; the check itself is `\W`, which excludes `_`). The runtime error text ("only letters and digits are allowed") is misleading: `_`/`-` are fine, e.g. `"SphereMap_3D"` is valid, not just `"SphereMap3D"`. Only spaces/punctuation beyond `_`/`-` are rejected. |
 | `autoArrangeLayers()` | — | tile all visible windows |
 | `setPreferences(graph)` | — | apply current global preferences to a `Graph` layer — takes a `Graph`, **not** a `GraphWindow`; preferences are auto-applied at layer creation so this is only needed to re-apply after manual overrides |
+| `windows()` | `list[MdiSubWindow]` | all open windows regardless of type |
+| `workspace()` | `QMdiArea` | the central MDI area widget |
+
+### Graph preference getters (qti.app.graph*)
+
+| Call | Returns | Notes |
+|------|---------|-------|
 | `graphTitleOn()` | `bool` | whether layer titles are shown by default (QtiSAS Preferences → 2D Plots) |
 | `graphDrawBackbones()` | `bool` | whether axis backbones are drawn by default |
 | `graphAntialiasing()` | `bool` | whether antialiasing is on by default |
@@ -375,14 +382,12 @@ saveFolder(results, "/data/results.qti")
 | `graphTitleFont()` | `QFont` | default plot title font |
 | `graphLegendFont()` | `QFont` | default legend font |
 | `graphNumbersFont()` | `QFont` | default axis numbers font |
-| `windows()` | `list[MdiSubWindow]` | all open windows regardless of type |
-| `workspace()` | `QMdiArea` | the central MDI area widget |
 
 > **The `graph*` preference getters above are NOT global** — real `ApplicationWindow` methods,
 > deliberately excluded from the auto-imported global namespace. Bare `graphTitleOn()` raises
 > `NameError`; use `qti.app.graphTitleOn()` (see Common Mistakes below). Most OTHER `qti.app`
-> methods in this table — including `windows()`/`workspace()` above — ARE available as global
-> functions without the prefix.
+> methods — including `windows()`/`workspace()` in the Window arrangement table above — ARE
+> available as global functions without the prefix.
 
 ```python
 # save, close, reopen
@@ -600,6 +605,8 @@ python-actions/
 
 ---
 
+### Custom Actions — worked examples
+
 ```python
 import os
 
@@ -804,4 +811,29 @@ addErrorBars(..., colorIndex("gray"), ...)
 from PyQt6.QtGui import QColor, QPen
 QPen(QColor("black"), 1)
 addErrorBars(..., QColor("gray"), ...)
+```
+
+### `changeFolder(activeFolder())` is a guaranteed no-op — never a way to "activate" anything
+
+`changeFolder(folder, force=False)` bails out immediately when `folder` is already the active
+one (see the Folder Management table above); `activeFolder()` always returns exactly that folder,
+so `changeFolder(activeFolder())` does nothing at all, by construction, every time. Folders and a
+window's own state (e.g. a Note's active tab) are unrelated — this call cannot "activate",
+refresh, or confirm anything about a table/graph/note just created.
+
+Confirmed live: generated as an attempt to make a just-created Note's script tab "active" before
+relying on autoexec, paired with a `scriptPrint()` falsely reporting success — the note only had
+one tab (no `addTab()` call was ever made), so there was nothing to activate in the first place,
+and this line was invented busywork rather than a real action.
+
+```python
+# WRONG — does nothing; folders have nothing to do with a Note's tabs
+n = newNote("Setup")
+n.setAutoexec(True)
+changeFolder(activeFolder())
+scriptPrint("Note is now active and will auto-execute on project open.")  # false — nothing happened
+
+# RIGHT — nothing needed: a note with only one tab has no other tab to "activate"
+n = newNote("Setup")
+n.setAutoexec(True)
 ```

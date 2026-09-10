@@ -144,6 +144,13 @@
 #     double R = radius;                 // OK: params/new helper names get "double"
 #     I = (q < 1e-6) ? 1.0 : pow(3.0*(sin(q*R)-q*R*cos(q*R))/pow(q*R,3), 2);  // "q" used directly,
 #                                         // "I" assigned directly — neither is declared with "double"
+#   IF setXName()/setYName() ARE NEVER CALLED AT ALL, the unset defaults are "x" and "f" — NOT
+#   "I", despite "I" being the typical convention. A THIRD failure mode, worse than both above:
+#   guessing "I" when setYName() was never called (real default "f") does NOT collide with
+#   anything, so "double I = scale*pq+background;" compiles clean as a new unrelated local — the
+#   boilerplate's "return f;" then returns f, never assigned, uninitialized, on every evaluation.
+#   No error anywhere. Always call setXName()/setYName() explicitly for a new function; never rely
+#   on either default.
 #
 # RULE 8 — PARAMCOUNT: setParamNamesAll(names) requires len(names) == setParamCount(n) EXACTLY —
 #   raises ValueError otherwise (used to silently drop/misalign entries; now fails loudly).
@@ -334,14 +341,9 @@ makeCPP()->str      # saves .cpp and returns generated source
 makeScript()->str   # saves compile script and returns script text
 
 # Build:
-compile(compileAll=False)->bool  compileAll()  # True=ok, False=error; errors in resultsLog() — that is qti.app.resultsLog(), NOT c.resultsLog()
-# CRITICAL — compile() returns bool; ALWAYS check it. Print does NOT mean success.
-#   WRONG: c.compile(); print("compiled!")         # prints even if compile failed
-#   RIGHT: ok = c.compile()
-#          if not ok:
-#              scriptPrint(qti.app.resultsLog().toPlainText()[-500:])
-#              raise RuntimeError("Compilation failed")
-#          scriptPrint("Compiled OK")
+compile(compileAll=False)->bool  compileAll()
+# Raises RuntimeError on failure, with the compiler's error: output included in the message —
+# no separate resultsLog() read needed. Returns True on success (never False).
 
 # SasView import:
 openSasView()   # requires: pip install sasmodels

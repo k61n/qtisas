@@ -63,8 +63,8 @@ Use for well-defined, trusted requests.
 - Explain any QtiSAS Python function or workflow.
 - Create datasets, run fits, and plot results in a single script.
 - Batch-process multiple datasets.
-- Author, compile, and save new custom fitting functions via the `Compiler` class
-  (`c = Compiler`) — see `compile-python-api.md`.
+- Author, edit, compile, and save custom fitting functions — new or existing — via the `Compiler`
+  class (`c = Compiler`) — see `compile-python-api.md`.
 
 ### What the AI cannot do
 
@@ -77,6 +77,10 @@ Use for well-defined, trusted requests.
 - Name your tables and columns clearly — the AI uses them to build column references.
 - Mention the fitting function name explicitly (e.g. `"Guinier"`, `"sphere_SANS"`).
 - Use `f.fitFunctions()` to list available function names, `f.datasets()` to list Y-columns.
+- When a script's only job is printing several lines of static, non-computed text (a summary,
+  a status report), build ONE multi-line string and call `scriptPrint()` once — not one call
+  per line. This doesn't apply when lines are printed one at a time as they're computed (e.g.
+  progress inside a loop, or values only known after a call earlier in the same line).
 
 ---
 
@@ -130,36 +134,109 @@ currently active list is also shown in its own **Help → Python API → User Ru
 
 ## For AI: Agentic Explore Mode
 
-> **Everything in this section (EXPLORE round-trips, the mandatory self-review pass, and the
-> automatic error-retry loop) only fires in AUTO-RUN mode** — `Ctrl+Shift+Enter` at the status bar,
-> or `Ctrl+Shift`+Click in the Script Window / Note "Ask AI" button. In plain "generate only" mode
-> (bare `Enter`/Click), a `# EXPLORE` first line is never intercepted — the code is simply shown as
-> the answer, once, with no execution, output capture, self-review, or error-retry. If you don't
-> know which mode produced the current request, don't assume any of these mechanisms are active.
+### Scope — EXPLORE, self-review and error-retry are AUTO-RUN only
+
+> **EXPLORE round-trips, the mandatory self-review pass and the automatic error-retry loop all fire
+> only in AUTO-RUN mode** — `Ctrl+Shift+Enter` at the status bar, or `Ctrl+Shift`+Click in the
+> Script Window / Note "Ask AI" button.
+>
+> In plain "generate only" mode (bare `Enter`/Click) a probe round is **refused**: the request will
+> say so outright, and a `# EXPLORE` script returned anyway is never executed, so no output comes
+> back and the round-trip is wasted. A probe is model-authored code, and the read-only guarantee is
+> a blocklist of recognized write calls rather than a sandbox — it has leaked twice, once running an
+> entire `Compiler` authoring sequence for real. Executing that when the user declined execution is
+> not a risk worth taking, so the probe is refused instead. When told probing is unavailable, read
+> the live value AT RUN TIME inside the action script and branch on what you find.
+>
+> What generate-only mode does NOT do is run the ACTION script: it is shown once, as the answer,
+> with no execution, no output capture, no self-review pass and no error-retry. So a mistake in the
+> action script is not corrected for you there — it is simply displayed. Write it as if it were
+> going to run unchecked, because it will not get a second round.
+
+### PRE-FLIGHT checklist
 
 > **PRE-FLIGHT — answer these before writing ANY script:**
-> 1. **Does the task ask you to READ/analyze/fit/plot data the user implies already exists** (a named table, "the data", "my results", a column referenced as if already there)? → `table("name")` / `matrix("name")` / `graphWindow("name")` return **`None`** (confirmed) when missing — **always check `if t is None:` before using the result**, even for a single-line read: `t = table("X"); scriptPrint("not found" if t is None else str(t.cell(2, 3)))`. Beyond a single read — needing column names/structure first — **run EXPLORE** (`existTable("X")`, or `matrix("X") is not None` / `graphWindow("X") is not None` — **there is no `existMatrix`/`existGraph`; only `existTable` and `existNote` exist as separate functions, confirmed live via `NameError: name 'existGraph' is not defined`** — everything else uses the lookup-returns-None pattern). If missing: stop and report — do NOT generate synthetic data as a substitute. **After EXPLORE: only use tables/column names that actually appeared in the output — never invent names by pattern-matching from similar ones observed.** If required data isn't confirmed by EXPLORE, stop and ask the user.
->    **THIS DOES NOT APPLY when the task asks you to CREATE/generate/synthesize the data yourself** (e.g. "create a table with sphere form factor data") — the table doesn't exist yet BY DESIGN; checking for it first is backwards, not a safety check. Confirmed live: a working "create a table + fit + plot" script was "corrected" by inserting `if not existTable("Sphere"): scriptPrint("Table 'Sphere' does not exist")` before the `newTable("Sphere", ...)` call about to create it, so the script short-circuited and never ran any actual work (no table, no fit, no plot) — a CREATE task treated as a READ task. If the task says "create"/"generate"/"make me"/"synthesize", go straight to `newTable()` — don't gate it behind an existence check on the name you're about to create.
+> 1. **Does the task ask you to READ/analyze/fit/plot data the user implies already exists** (a named table, "the data", "my results", a column referenced as if already there)? → `table("name")` / `matrix("name")` / `graphWindow("name")` / `note("name")` return **`None`** (confirmed) when missing — **always check `if t is None:` before using the result**, even for a single-line read: `t = table("X"); scriptPrint("not found" if t is None else str(t.cell(2, 3)))`. Beyond a single read — needing column names/structure first — **run EXPLORE** (`existTable("X")`, or `matrix("X") is not None` / `graphWindow("X") is not None` / `existNote("X")` — **there is no `existMatrix`/`existGraph`; only `existTable` and `existNote` exist as separate functions, confirmed live via `NameError: name 'existGraph' is not defined`** — everything else uses the lookup-returns-None pattern). If missing: stop and report — do NOT generate synthetic data as a substitute. **After EXPLORE: only use tables/column names that actually appeared in the output — never invent names by pattern-matching from similar ones observed.** If required data isn't confirmed by EXPLORE, stop and ask the user.
+>    **THIS DOES NOT APPLY when the task asks you to CREATE/generate/synthesize/set up the object yourself** (e.g. "create a table with sphere form factor data", "create a note with an auto-executing script") — the object doesn't exist yet BY DESIGN; checking for it first is backwards, not a safety check. Confirmed live, two different object types: (1) a working "create a table + fit + plot" script was "corrected" by inserting `if not existTable("Sphere"): scriptPrint("Table 'Sphere' does not exist")` before the `newTable("Sphere", ...)` call about to create it, so the script short-circuited and never ran any actual work (no table, no fit, no plot) — a CREATE task treated as a READ task; (2) asked to CREATE a note "Setup" from scratch, every attempt across 4 retries called the LOOKUP `note("Setup")` instead of the CREATE `newNote("Setup")` — since the note genuinely didn't exist yet, `note("Setup")` correctly returned `None` every time, and the task ended with a clean-looking `if n is None: scriptPrint("Failed to create note 'Setup'")` guard that never once called `newNote()` — a plausible, error-free report of failure for an object that was simply never asked to be created via the right function. If the task says "create"/"generate"/"make me"/"synthesize"/"set up", go straight to the CREATE function (`newTable()`, `newMatrix()`, `newNote()`, `newGraph()`, ...) for that object type — don't gate it behind an existence check on the name you're about to create, and don't substitute that object type's LOOKUP function for its CREATE function just because both happen to take the same name argument.
 > 2. Does the action script use `random.*`? → `import random` must be its first line.
 > 3. Does the action script use `QColor` / `QFont` / `QPen`? → `from PyQt6.QtGui import …` must be at the **top of the script, before any other code** — not mid-script.
 > 4. Does the script add curves to a graph? → `addCurve(t, ycol, style)` takes **one column name** (Y only); `insertCurve(t, xcol, ycol, style)` takes two. `addCurve(t, "x", "y", style)` → `TypeError: argument 3 has unexpected type 'str'`.
 > 5. Stacked panels: X title goes on **l2 only** (l1's bottom axis is disabled). `l1.setXTitle(...)` is silent but invisible.
 > 6. **EXPLORE must be read-only.** If it contains `newGraph()`, `newTable()`, `addCurve()`, `maximizeWindow()`, `plot()`, or any write/create call, **split those lines into the action script** — an EXPLORE that creates windows or modifies state runs twice, leaving duplicate windows or corrupted state. `plot()` is easiest to miss — it doesn't read like a "write" call the way `newTable()`/`newGraph()` do, but unconditionally creates a new graph window every call.
-> 7. **`scriptPrint()` requires a `str` (or `None`) argument — it does NOT accept `float`/`int`/`list`/`tuple` directly.** `cell()`, `paramNames()`, `fitFunctions()`, and most read methods return non-string types. Always wrap: `scriptPrint(str(t.cell(2, 3)))`, never `scriptPrint(t.cell(2, 3))` → `TypeError: argument 1 has unexpected type 'float'`.
+> 7. **`scriptPrint()` requires a `str` (or `None`) argument — it does NOT accept `float`/`int`/`list`/`tuple` directly.** `cell()`, `paramNames()`, `fitFunctions()`, and most read methods return non-string types. Always wrap: `scriptPrint(str(t.cell(2, 3)))`, never `scriptPrint(t.cell(2, 3))` → `TypeError: argument 1 has unexpected type 'float'`. It also takes **exactly ONE argument**, unlike Python's built-in `print()` — `scriptPrint("label:", value)` raises `TypeError: scriptPrint(self, a0: str|None): too many arguments`. Concatenate into one string instead: `scriptPrint("label: " + str(value))`. Confirmed live: this exact mistake survived TWO consecutive error-retries in a row — the first retry dropped one multi-argument call but left another one untouched, and only the second retry, hitting the identical error again, finally concatenated instead of splitting into separate arguments.
 > 8. **Does the task modify an existing compiled function and save under a NEW name** (e.g. "fix X's normalization, save as X-correct")? → call `c.setFunctionName("new-name")` **before** `c.compile()` / `c.save()` — they use whatever name is currently loaded, so compiling without renaming first **silently overwrites the original function**. Confirmed live: opening `sasviewmodels/ellipsoid`, fixing its polydispersity normalization, and calling `c.compile()` without `setFunctionName()` destroyed the original `ellipsoid` and never created the requested `ellipsoid-correct`.
-> 9. **Does the action script call `f.setParamValue(name, value)`?** → `name` must be one of the EXACT strings from `c.paramNames()` for the function just configured — an exact-match lookup that **raises `ValueError: setParamValue: no such parameter '<name>'.` if unmatched** (same for `setParamVaries()`). Never guess generic names (`xc`, `A`, `sigma`, `y0`) — confirm via EXPLORE first; catching the error after the fact still means the fit never ran.
+> 9. **Does the action script call `f.setParamValue(name, value)`?** → `name` must be one of the EXACT strings from `c.paramNames()` for the function just configured — an exact-match lookup that **raises `ValueError: setParamValue: no such parameter '<name>'.` if unmatched** (same for `setParamVaries()`). Never guess generic names (`xc`, `A`, `sigma`, `y0`) — read `c.paramNames()` at RUN TIME in this same script (or use names already printed for this function) and match against them; catching the error after the fact still means the fit never ran. A probe can't supply this: `paramVaries()` only means anything after `configure()`, which EXPLORE forbids.
 > 10. **Is "stop and report" the right outcome** (required data doesn't exist, nothing to fit)? → The report must still be a **valid, executable Python script** — wrap the message in `scriptPrint(...)`. Plain English text instead of code fails to compile, shown as "AI code (not runnable)", never reaching the user as a clean message.
 >
 > Skipping step 1 causes `ValueError: Invalid table in addCurve()` or `SystemError` from empty cells.
+
+### Default to the minimal/empty form when the request specifies no content
+
+> **RULE — A bare "create a new X" with no data, formula, or content specified means the MINIMAL/EMPTY form of that create function — never invent placeholder data, a formula, or a script to fill it with.** Every create function has a minimal, empty form for exactly this: `newTable(name, 0, 0)`, `newMatrix(name, 0, 0)`, `newPlot3D(name)` (no formula), `newNote(name)` (no script), `newGraph(name, 1, 1, 1)`. If the request doesn't say what should be IN the object, don't guess — create it empty and stop.
+> Confirmed live, twice, same session: asked for a bare "new table" (name only), a response invented a 10-row x/y dataset and plotted it — neither requested. Asked for a bare "new plot3D", a response invented the formula `"sin(x)*cos(y)"` with specific ranges/grid density — again nothing in the request specified any of that; `newPlot3D(name)` (documented as a genuinely empty 3D window) was the correct, minimal answer.
+> ```python
+> # WRONG — request was just "new table 'new Table'"; nothing asked for data or a plot
+> t = newTable("new Table", 10, 2)
+> t.setColNames(["x", "y"])
+> for i in range(1, 11):
+>     t.setCell(1, i, i * 0.1)
+>     t.setCell(2, i, i * i * 0.01)
+> plot(t, ("x", "y"), style=Graph.CurveType.Line)
+>
+> # RIGHT — the request specified only a name; nothing else
+> t = newTable("new Table", 0, 0)
+> ```
+
+### Reading state before acting
 
 If you need to read current state before acting (existing code, info, parameters), return
 **only** a read-only script with `# EXPLORE` as the **very first line**. QtiSAS runs it, captures
 all `scriptPrint()` / `print()` output, and sends it back as context. Once you have what you
 need, return the action script (without `# EXPLORE`).
 
+> **RULE — EXPLORE and the action script are always TWO SEPARATE responses, never one.** Return
+> the `# EXPLORE` script, stop there, and wait for its real output to come back before writing
+> anything else — do not write the action script underneath it in the same reply, even labeled
+> with a comment like `# action script:`. (The worked examples below that show a "guessed value
+> fails" vs. "confirmed value works" contrast keep the confirmed value as a plain result
+> annotation, never as a second script pasted under the first, for exactly this reason.)
+
+### Project state you are given — do not re-check it
+
+Before a request that names existing objects, QtiSAS looks those names up in its own live
+registries and puts the answer in the request:
+
+    PROJECT STATE (read directly from QtiSAS, not guessed):
+    - "sasviewmodels/sphere": exists NOW, as: compiled function and fit function.
+    - "SAXS_data": UNKNOWN — cannot be resolved ahead of time.
+
+These are facts, not hints. Act on them directly:
+
+- **exists NOW** — use that object. Do not write a script to look it up again, and do not
+  search for it with a wildcard when the exact name is already given. If the kind is not the
+  kind you need (a fit function where the request wants a graph of that name), that is a name
+  collision: say so plainly instead of overwriting it.
+- **UNKNOWN** — genuinely unresolvable in advance, because nothing generated in the session has
+  been executed yet and an earlier step may create it. Do not assume either way and do not state
+  either as a fact in your script. Decide at run time: `t = table(name)` then
+  `if t is None: t = newTable(name, ...)`. If the request only MODIFIES a named object (restyle,
+  add a curve, rename, configure), create just that object when absent and then do the requested
+  work — never invent substitute data or extra objects to have something to act on.
+
+Two related messages arrive the same way. `PROBE ROUNDS ARE NOT AVAILABLE FOR THIS REQUEST`
+means a `# EXPLORE` reply will not be executed and no output will come back — answer directly and
+read live values at run time. `This script omits N things the request explicitly asked for` lists
+deliverables named in the request whose calls appear nowhere in your script (residuals, a fit
+curve, a legend, axis titles, a script tab); add them. A guard clause is fine, but the branch that
+does the work still has to contain those calls.
+
+### Automatic error-retry
+
 > **RULE — If your action script raises a runtime error, QtiSAS automatically sends you the error and asks for a corrected script — respond with ONLY the corrected script, no explanation.**
 > This works like the EXPLORE round-trip: no need to ask the user to paste the error back, it happens automatically. The message starts with `The action script raised an error:` followed by the traceback — read it, fix the actual cause (e.g. a missing `import random`, a wrong parameter name), and return the fixed script.
 > **This automatic retry is capped at a limited number of total automatic continuations per user request** (default 4, configurable in **Preferences → AI**; EXPLORE rounds and error-retries share the same counter). If still failing after several attempts, stop guessing variations and reconsider whether the task's premise is wrong (e.g. a function/column genuinely doesn't exist) rather than retrying the same mistake.
+
+### Let retryable exceptions propagate
 
 > **RULE — Do NOT wrap `setParamValue()` / `setParamVaries()` / `fit()` in a broad `try/except Exception` that just prints the error and continues. Let the error propagate uncaught so the automatic retry above can fix it.**
 > Catching the exception yourself defeats the auto-retry: QtiSAS only captures and re-sends errors that reach the script's top level (uncaught). Swallowing it locally lets execution continue past the failed call, and whatever the graph already contained (from an earlier attempt, or nothing) gets reported as success — a misleading "done" message is worse than a visible failure.
@@ -182,6 +259,8 @@ need, return the action script (without `# EXPLORE`).
 > ```
 > Only catch exceptions you can actually recover from **within the same script** (e.g. a fallback value); never catch-and-continue just to avoid the task ending in an error.
 
+### The marker is required every round
+
 > **RULE — QtiSAS only sends output back to you when a script's FIRST LINE is exactly `# EXPLORE`; any other script is treated as FINAL. This applies on every round, not just the first — omitting the marker on round 2, 3, ... silently ends the task exactly the same way omitting it on round 1 would.**
 > EXPLORE is not limited to one round: if the output raises a new question, return ANOTHER `# EXPLORE` script rather than assuming you must write the action script now (capped at the same limit as error-retry, default 4). The only test: does this script's job include "find out X"? If yes, it needs the marker, no matter the round — even a read-only script (`table()`, `colNames()`, `scriptPrint()`, no writes) that omits the marker is NOT "one more explore step." It runs once, output goes to console, and the conversation ends — if the task asked for an action (fit, plot, compile, …) and this script only gathered information, that action **never happens**: no error, no second chance, nothing signals the task is incomplete.
 > ```python
@@ -199,6 +278,8 @@ need, return the action script (without `# EXPLORE`).
 > scriptPrint("Gauss params: " + str(c.paramNames()))
 > ```
 
+### Fresh execution per round — no persisted variables
+
 > **RULE — Each script run (every EXPLORE round, action-script attempt, error-retry correction) gets a fresh execution — variables from an EARLIER round are NOT still bound.** `f = Fittable`, `c = Compiler`, `t = table(...)`, and similar setup lines must be rewritten at the top of every script that needs them, even the very next round. Only the printed *output* of earlier rounds carries forward as conversation context — not the Python objects/names themselves.
 > ```python
 > # WRONG — round 1 defines f, round 2 (a later EXPLORE) assumes it's still there:
@@ -213,7 +294,9 @@ need, return the action script (without `# EXPLORE`).
 > scriptPrint("datasets: " + str(f.datasets()))
 > ```
 
-> **RULE — Once EXPLORE confirms a SPECIFIC name (function, table, or column matched by a search/pattern), use that literal name directly in the action script — do NOT re-run the same search at execution time and take whatever it returns.** Different from the "fresh namespace" rule above: redefining `f = Fittable` is required and harmless, but re-searching (`f.fitFunctions("*pattern*")`, `[x for x in hits if ...]`) and re-indexing is unsafe — the search can silently resolve to a DIFFERENT match than EXPLORE checked if the library changed between rounds (a new function compiled matching the pattern, sorting earlier), and the action script would then call `setParamValue()` etc. against an unverified function's parameters believing they're the ones confirmed.
+### Use the EXPLORE-confirmed name literally
+
+> **RULE — Once EXPLORE confirms a SPECIFIC name (function, table, column, or group matched by a search/pattern), use that literal name directly in the action script — do NOT re-run the same search at execution time and take whatever it returns.** Different from the "fresh namespace" rule above: redefining `f = Fittable` is required and harmless, but re-searching (`f.fitFunctions("*pattern*")`, `[x for x in hits if ...]`) and re-indexing is unsafe — the search can silently resolve to a DIFFERENT match than EXPLORE checked if the library changed between rounds (a new function compiled matching the pattern, sorting earlier), and the action script would then call `setParamValue()` etc. against an unverified function's parameters believing they're the ones confirmed.
 > ```python
 > # WRONG — re-searches at execution time instead of using the confirmed name; if the "*lorentz*"
 > # match set has changed since EXPLORE ran, hits[0] may now be a DIFFERENT, unverified function
@@ -229,21 +312,57 @@ need, return the action script (without `# EXPLORE`).
 > f.setParamValue("xc1", 0.5)
 > ```
 
-> **RULE — When reporting, comparing, or deciding based on a value an EARLIER round/part already printed, use that literal printed value — never invent a plausible-looking placeholder, even one labeled "(example)".** The number is already in this conversation's visible history; typing a different one is fabrication, not a shortcut, however plausible. This is worse than not knowing: it produces a validated-looking answer with fabricated evidence — if the invented numbers happen to match the real conclusion that's luck, not correctness; if not, the decision is confidently wrong. Confirmed live: a later part had to compare two earlier fits' `chi2/dof` (printed a few turns earlier as `1.0561` and `216.6961`) but instead printed fabricated numbers (`1.24` and `5.79`), commented `# example, from prior fit`, and drew its conclusion from those invented values.
+### Exception — recompute derived conclusions live
+
+> **EXCEPTION to the rule above — it covers a stable IDENTITY fact (a name/column that already existed and was merely looked up), NOT a COMPUTED CONCLUSION EXPLORE derived (e.g. "which model wins by chi²/DoF," any comparison result).** A function's name doesn't change between rounds unless the library itself does; which model has the LOWER chi²/DoF depends on live data and the specific fit just run — hardcoding that conclusion as a literal in the next script is the exact same "recalled from memory instead of a live check" mistake the next rule below warns against for NUMBERS, just for a NAME instead. Confirmed live: EXPLORE printed `chi2_g=0.926, chi2_l=78.15, winner=ai/GaussianPeak`; the next action script hardcoded `table("fitCurve-ai/GaussianPeak")` and `"Winner: ai/GaussianPeak"` with no comparison logic anywhere in it — correct only because Gaussian genuinely won THIS run. The same script, run against different data where Lorentzian won instead, would silently plot and label the WRONG model, no error at all.
+> ```python
+> # WRONG — hardcodes the winner EXPLORE printed instead of re-deriving it live in THIS script
+> # EXPLORE printed: chi2_g=0.926, chi2_l=78.15, winner=ai/GaussianPeak
+> fc = table("fitCurve-ai/GaussianPeak")            # baked-in assumption, not computed here
+> leg.setText("Winner: ai/GaussianPeak")            # same assumption, repeated
+>
+> # RIGHT — re-derive the comparison live, in this exact script. `read_characteristic()` is NOT a
+> # QtiSAS function: it is a helper YOU must define in the same script (copy the definition from
+> # "Comparing two already-fit models" in fittable-python-api.md — it is ~6 lines). Confirmed live:
+> # this snippet was copied verbatim without it and died on
+> # `NameError: name 'read_characteristic' is not defined` after both fits had already run.
+> def read_characteristic(fc, label):   # <-- REQUIRED; see fittable-python-api.md for the body
+>     ...
+> fc_a = table("fitCurve-<modelA>")     # <-- your OWN two model names, not these placeholders
+> fc_b = table("fitCurve-<modelB>")
+> chi2_a = float(read_characteristic(fc_a, "chi^2/DoF"))
+> chi2_b = float(read_characteristic(fc_b, "chi^2/DoF"))
+> best_fc, best_name = (fc_a, "<modelA>") if chi2_a <= chi2_b else (fc_b, "<modelB>")
+> ```
+
+### Use literal printed values, never fabricate
+
+> **RULE — When reporting, comparing, or deciding based on a value an EARLIER round/part already printed, use that literal printed value — never invent a plausible-looking placeholder, even one labeled "(example)".** The number is already in this conversation's visible history; typing a different one is fabrication, not a shortcut, however plausible. This is worse than not knowing: it produces a validated-looking answer with fabricated evidence — if the invented numbers happen to match the real conclusion that's luck, not correctness; if not, the decision is confidently wrong. Confirmed live: a later part had to compare two earlier fits' `chi2/dof` but instead printed fabricated numbers (`1.24` and `5.79`), commented `# example, from prior fit`, and drew its conclusion from those invented values. **Confirmed live a second time, and worse: a later run copied THIS RULE'S OWN example digits (`1.0561` / `216.6961`, from the incident above) verbatim into a real script's `scriptPrint()` calls, as if they were this run's real fit results — even though this run's own actual fit had printed completely different numbers a few lines earlier.** The two numbers below are illustration only, for a different run's data, on a different day — never copy these two specific digits into a real script; read whatever number YOUR OWN earlier part actually printed instead.
 > ```python
 > # WRONG — invents numbers instead of using the ones already printed in this same conversation
 > scriptPrint("GaussPeakModel chi2/dof = 1.24 (example, from prior fit)")
 > scriptPrint("LorentzianPeakModel chi2/dof = 5.79 (example, from prior fit)")
 > scriptPrint("Best model: GaussPeakModel (lower chi2/dof)")
 >
-> # RIGHT — use the literal values an earlier part/round actually printed
+> # ALSO WRONG — copying this doc's own illustration digits instead of substituting today's
+> # real printed values (this is not hypothetical: it has happened)
 > scriptPrint("GaussPeakModel chi2/dof = 1.0561 (from earlier fit)")
 > scriptPrint("LorentzianPeakModel chi2/dof = 216.6961 (from earlier fit)")
-> scriptPrint("Best model: GaussPeakModel (lower chi2/dof)")
+>
+> # RIGHT — parse the exact value your own earlier part's output actually contains, in code,
+> # rather than typing any digit by hand
+> import re
+> chi2_g = float(re.search(r"chi2/dof = ([\d.]+)", gauss_fit_output_text).group(1))
+> chi2_l = float(re.search(r"chi2/dof = ([\d.]+)", lorentz_fit_output_text).group(1))
+> scriptPrint(f"GaussPeakModel chi2/dof = {chi2_g} (from earlier fit)")
+> scriptPrint(f"LorentzianPeakModel chi2/dof = {chi2_l} (from earlier fit)")
+> scriptPrint("Best model: GaussPeakModel (lower chi2/dof)" if chi2_g <= chi2_l else "Best model: LorentzianPeakModel (lower chi2/dof)")
 > ```
-> If the real value genuinely isn't visible anymore (history cleared or truncated), say so and either re-derive it (re-run the fit) or report the comparison can't be made — never substitute an invented number.
+> If the real value genuinely isn't visible anymore (history cleared or truncated), say so and either re-derive it (re-run the fit) or report the comparison can't be made — never substitute an invented number, and never substitute a number from this doc's own examples either.
 
 > Any time your script's only job is to gather information before a real action, check that `# EXPLORE` is literally the first line before returning it.
+
+### Stop-and-report must be valid, executable code
 
 > **RULE — "Stop and report" means return a script that CALLS `scriptPrint(...)` with the message — never return plain English text as the response.**
 > Every action-script response must be valid, executable Python (the app already states this: "Return ONLY executable Python code — no explanations, no markdown fences, no text"). This doesn't relax when the right answer is to give up — e.g. EXPLORE found zero tables and there's nothing to fit. Returning prose instead of code fails to compile: shown to the user as "AI code (not runnable)", never displayed as an actual result.
@@ -255,6 +374,8 @@ need, return the action script (without `# EXPLORE`).
 > scriptPrint("No data tables are present in the workspace. Please import or create SANS data before fitting.")
 > ```
 
+### General reminders
+
 **Rules:**
 - Use `scriptPrint()` to output data — it is captured and returned to you.
 - EXPLORE scripts must be **strictly read-only**: only call read methods + `scriptPrint()`.
@@ -262,6 +383,8 @@ need, return the action script (without `# EXPLORE`).
 - **`table("name")` / `matrix("name")` / `graphWindow("name")` return `None` when missing — always null-check before use, even for a single read.** `t.cell(...)` on `None` raises `AttributeError`; passing `None` to `addCurve()` raises `ValueError`. Guard with `if`/`else` nesting (see RULE below) to turn that crash into a graceful report in the same script — no separate EXPLORE round-trip needed for a single lookup.
 - **For a task naming a specific table, graph, matrix, or note AND needing more than one value from it before a follow-up action script: start with EXPLORE** — verify it exists and check its structure first. If missing: stop and report — **do NOT generate synthetic data** unless the task explicitly asks for it.
 - **`import random` must be the first line of any action script using `random.*`** — it's not in the global namespace. `import math` is NEVER correct — math functions (`exp`, `sin`, `cos`, `sqrt`, `pi`, …) are global.
+
+### No bare return/exit/sys.exit at top level
 
 > **RULE — The whole script (EXPLORE or action) runs at top level, not inside a function. A bare `return` there is a `SyntaxError`, not a catchable runtime error** — error-retry only fires on exceptions raised DURING execution, and a `SyntaxError` happens before execution starts, so there is NO automatic retry for this. A script that fails to compile is shown once as "not runnable" and the exchange stops there — it is NOT resent automatically like a genuine runtime error, so getting this right matters more than for an ordinary bug. Use `if`/`else` nesting to guard the rest of a script instead of an early `return`.
 > ```python
@@ -285,6 +408,8 @@ need, return the action script (without `# EXPLORE`).
 >
 > **The same "don't trigger a retry just to stop" problem applies to `exit()` / `quit()` / `sys.exit()`.** They raise `SystemExit` under the hood, and the script runner treats *any* uncaught exception — `SystemExit` included — as a script error, feeding it back for an automatic retry exactly like a real crash. Use the same `if`/`else` nesting as above instead, never `exit()`/`quit()`/`sys.exit()`.
 
+### Verify before stating a fact
+
 > **RULE — Verify before you state a fact. If you haven't run code to check it in THIS conversation, you don't know it.**
 > Parameter names, column names, existing function/template names, dataset contents, settings — anything checkable by running a script must be checked; the answer must quote real output, not training-data recall. **Partial hedging is still an unverified answer for the whole claim** — stating some values as fact while hedging on the rest is the same mistake as guessing all of it.
 > ```python
@@ -301,6 +426,8 @@ need, return the action script (without `# EXPLORE`).
 > # only after seeing real output (or a real error) do you answer the question
 > ```
 > If you already retrieved this exact information earlier in this conversation, cite that prior output instead of re-answering from memory — do not re-guess.
+
+### Read-only lookups: Compiler.open(), not Fittable.configure()
 
 > **RULE — For read-only parameter/info lookups use `Compiler.open(name)` + `c.paramNames()`, never `Fittable.configure()`.**
 > `f.configure(name, [])` reconfigures the LIVE Fittable widget, discarding whatever fit was already set up, just to answer a question. `c.open(name)` only reads the function's source and never touches the Fittable widget.
@@ -320,20 +447,29 @@ need, return the action script (without `# EXPLORE`).
 > ```
 > Reserve `f.configure()` for when the task actually means to set that function up for fitting.
 
-> **RULE — Any task that fits USING AN EXISTING, ALREADY-COMPILED library function must start with EXPLORE** to discover the exact function name and its real parameters before writing the action script.
+### Fitting an existing library function needs its confirmed name — and nothing else by default
+
+> **RULE — To fit an existing library function you need ONE fact: its exact name.** `configure()` re-derives every parameter's vary/fixed state from the compiled default on each call (see `fittable-python-api.md`), so a default-configuration fit needs no parameter names at all. If the name is stated in the request and confirmed by a QtiSAS existence check, or printed earlier in this conversation, you already have everything — write the action script, do NOT probe first.
+> **Parameter names are needed only if the task sets, varies, or reports SPECIFIC parameters.** Even then, do not probe for them: `paramVaries(name)` is only meaningful AFTER `configure()`, and `configure()` is FORBIDDEN in EXPLORE. Read `paramNames()`/`paramVaries()` at RUN TIME inside the action script, match them against what the request asked for, and report anything that doesn't match instead of guessing — a request can name a parameter the model doesn't have (confirmed live: "scale, backgroubd, Rg are fitable" for a sphere model whose real parameters are `scale`, `background`, `sld`, `sld_solvent`, `radius` — one typo, one parameter that doesn't exist).
+> Confirmed live: with the name given in the request, `(compile) EXISTS`/`(fittable) EXISTS` already printed, and `(rows) SAXS_data: 100 rows, columns ('Q', 'I', 'dI')` already printed, a probe still re-ran `f.fitFunctions("*sphere*")` and re-checked the same table's columns — a full round-trip spent re-confirming facts sitting six lines above it in the same prompt, for a fit that then used no parameter names at all.
 > Guessing a function name or parameter count instead of checking `f.fitFunctions()` / `c.paramNames()` produces either a `ValueError` (name doesn't exist) or a fit that silently uses wrong defaults.
 > ```python
 > # WRONG — jumps straight to configure()/fit() with a guessed name, no EXPLORE step
 > f = Fittable
 > f.configure("sasviewmodels/gaussian-peak-v2", ["Table1"])   # ValueError: not found
 > f.fit()
->
+> ```
+> ```python
 > # RIGHT — EXPLORE first to confirm the function exists and see its real parameters
 > # EXPLORE
 > c = Compiler
 > c.open("sasviewmodels/gaussian-peak")
 > scriptPrint(str(c.paramNames()))
-> # -- after seeing real output, write the action script:
+> ```
+> → QtiSAS runs this and sends back: `['scale', 'center', 'width', 'background']`
+>
+> **Only THEN, in a separate later response (no `# EXPLORE` marker), the action script:**
+> ```python
 > f = Fittable
 > f.configure("sasviewmodels/gaussian-peak", ["Table1"])
 > f.fit()
@@ -346,13 +482,16 @@ need, return the action script (without `# EXPLORE`).
 > c = Compiler
 > hits = [n for n in c.functionNames("ALL") if "sphere" in n.lower()]
 > scriptPrint(hits[0] if hits else "none")
-> # -> "SphereSANS_Custom" (a leftover from an earlier, unrelated test run)
-> #
-> # action script:
+> ```
+> → QtiSAS runs this and sends back: `"SphereSANS_Custom"` (a leftover from an earlier, unrelated
+> test run) — and, in a separate later response, still WRONG:
+> ```python
 > c = Compiler
 > ok = c.compile("SphereSANS_Custom")   # TypeError: compile() takes no name argument
+> ```
 >
-> # RIGHT — the task asked to author a NEW function; write it, don't search for one to reuse
+> **RIGHT — the task asked to author a NEW function; write it, don't search for one to reuse:**
+> ```python
 > c = Compiler
 > c.new()
 > c.setFunctionName("ai/SphereFormFactor")   # "ai/" folder — see compile-python-api Rule 6
@@ -369,6 +508,8 @@ need, return the action script (without `# EXPLORE`).
 > ```
 > If a pre-existing (non-`"ai/"`) function already covers what's needed and the task doesn't ask for new code, no `compile()` call is needed at all — a function found via `fitFunctions()` is already compiled; just pass its name straight to `f.configure()`.
 
+### Confirm setParamValue() names before using them
+
 > **RULE — `f.setParamValue(name, value)` raises `ValueError` on an unmatched `name` — confirm names with `c.paramNames()` BEFORE writing these calls, don't rely on catching the error.**
 > It does an exact-string lookup against the configured function's real parameter names; no match raises `ValueError: setParamValue: no such parameter '<name>'.` (same for `setParamVaries()`), and the script stops there — `f.fit()` never runs. Generic textbook names (`xc`, `A`, `sigma`, `y0`) are guesses, not facts — real names vary per function (e.g. `GaussianPeak` uses `scale`, `center`, `width`, `background`). Confirm with `c.paramNames()` in EXPLORE first.
 > ```python
@@ -380,19 +521,26 @@ need, return the action script (without `# EXPLORE`).
 > f.setParamValue("xc", 0.5)   # ValueError: setParamValue: no such parameter 'xc'.
 > f.setParamValue("A", 1.0)
 > f.fit()
->
+> ```
+> ```python
 > # RIGHT — EXPLORE confirms the real names first
 > # EXPLORE
 > c = Compiler
 > c.open("GaussianPeak")
-> scriptPrint(str(c.paramNames()))   # -> ['scale', 'center', 'width', 'background']
-> # -- after seeing real output, write the action script with those exact names:
+> scriptPrint(str(c.paramNames()))
+> ```
+> → QtiSAS runs this and sends back: `['scale', 'center', 'width', 'background']`
+>
+> **Only THEN, in a separate later response, the action script with those exact names:**
+> ```python
 > f = Fittable
 > f.configure("GaussianPeak", ["Table1_2"])
 > f.setParamValue("center", 0.5)
 > f.setParamValue("scale", 1.0)
 > f.fit()
 > ```
+
+### Forbidden calls in EXPLORE
 
 **FORBIDDEN in EXPLORE — calling any of these corrupts widget state and breaks the action script:**
 
@@ -406,6 +554,8 @@ need, return the action script (without `# EXPLORE`).
 Calling `f.configure()` or `f.fit()` in EXPLORE leaves the Fittable widget in an undefined
 state — even a **failed** `f.configure()` corrupts it, so the action script's `f.fit()` then
 raises `TypeError` or returns garbage.
+
+### Allowed EXPLORE calls
 
 **EXPLORE allowed calls (read-only):**
 
@@ -428,15 +578,19 @@ scriptPrint("datasets: " + str(f.datasets()))
 
 After receiving the output, generate the action script without the `# EXPLORE` line.
 
+### When EXPLORE is mandatory
+
 **When to use EXPLORE — mandatory for any task that involves:**
 
 | Situation | What to query |
 |---|---|
 | Using `plotResults` with a template | `qti.app.graphTemplates()` → pick a valid name or `""` |
 | Compiling a new function | `c.functionNames("ALL")` → check the name is not already taken |
-| Fitting an existing library function | `f.fitFunctions("*keyword*")` → discover the exact name |
-| **Accessing a named table, graph, matrix, or note** | **MANDATORY** — `existTable("name")` for tables; for graphs/matrices/notes there is no `existGraph`/`existMatrix` function — use `graphWindow("name") is not None` / `matrix("name") is not None` / `existNote("name")` → if missing, **stop and report to the user**; do NOT generate synthetic data as a substitute unless the task explicitly asks for it; never pass an unverified object to `addCurve()`, `cell()`, or any write method |
+| Fitting a library function whose exact name you were NOT given | `f.fitFunctions("*keyword*")` → discover the exact name. Skip entirely when the request names it and an existence check already confirmed it |
+| **Accessing a named table, graph, matrix, or note** | **Do NOT probe for this** — QtiSAS checks these names itself and states the answer in the request under `PROJECT STATE` (see "Project state you are given" below). Never write a script to look up a name it already reported. Where that block says UNKNOWN, resolve it at run time instead: `t = table(name)` then `if t is None: t = newTable(name, ...)`. Never pass an unverified object to `addCurve()`, `cell()`, or any write method, and do not generate synthetic data as a substitute for a named input unless the task explicitly asks for it |
 | **Creating a graph template (stacked or multi-panel)** | **`graphTitleOn()`, `graphMajTicksStyle()`, `graphCanvasColor()`, etc. → read current defaults before overriding** |
+
+### EXPLORE for graph templates
 
 **EXPLORE for graph templates — check defaults first, then only override what differs:**
 ```python
@@ -756,11 +910,13 @@ columns added in an earlier, separate turn. Confirmed live: a table created with
 extended to 3 (an error-bar column added separately) and plotted with error bars, was "corrected"
 via `newTable(name, n_points, 2)` again — silently wiping the error-bar column and all data,
 breaking the graph's error-bar curve.
-`newGraph(name, ...)` is NOT the same risk: with default `layers=1`, calling it on an existing
-name is a complete no-op — untouched, no clearing, no resize. Only a DIFFERENT layer grid (via
-`layers>1`) changes anything, and even then just the layer arrangement, never curves. Still, use
-`graphWindow(name)` to work with the existing one, and reserve `newGraph()` for building from
-scratch.
+`newGraph(name, ...)` is a DIFFERENT risk with `layers=1`: calling it on an existing name is a
+complete no-op — untouched, no clearing, no resize — so it silently does nothing useful if the
+intent was actually to add fresh content. With `layers>1`, `newGraph(name, layers, rows, cols)`
+DOES clear every existing layer's curves (and rearranges the grid if it differs) before handing
+the window back — it's the "build from scratch" entry point, not an incremental-add one. Still,
+use `graphWindow(name)` to work with an existing window incrementally (adding more curves without
+clearing what's there), and reserve `newGraph()` for genuinely starting over.
 
 ```python
 # WRONG — "correcting" an existing table via newTable(): cols=2 matches the ORIGINAL creation
@@ -850,155 +1006,14 @@ comparison-and-plot stage with no error, while split-mode reported the affected 
 
 ---
 
-### Fittable
+### Compiler / Fittable
 
-**`configure()` takes a function NAME, not a formula string.**
-
-```python
-# CORRECT
-f = Fittable
-f.configure("Guinier", ["data_I"])
-
-# WRONG — raises ValueError
-f.configure("a*exp(-x*x*Rg*Rg/3)+bgd", ["data_I"])
-```
-
-Use `f.fitFunctions()` to list all available function names.
-
----
-
-**EVERY `configure()`/`setFunction()` call RESETS all parameter adjustability to the COMPILED
-function's baked-in defaults — it never inherits vary flags from a prior fit session on the same
-function.** Re-apply `setParamVaries()`/`setParamVariesAll()` after EVERY `configure()` call, not
-just the first. Confirmed live: switching functions and then switching back produced a bad fit
-because the vary flags set before the switch were silently gone.
-
-```python
-# WRONG — vary flags set once, then lost after switching functions and back
-f.configure("Guinier", ["data_I"])
-f.setParamVariesAll([True, True])
-f.configure("OtherModel", ["data_I"])   # ... some other work ...
-f.configure("Guinier", ["data_I"])      # vary flags are back to compiled defaults, NOT [True, True]
-chi2 = f.fit()                          # may raise "no adjustable parameters" or fit fewer params than intended
-
-# RIGHT — re-apply vary flags after every single configure() call
-f.configure("Guinier", ["data_I"])
-f.setParamVariesAll([True, True])
-```
-
----
-
-**`datasets` are Y-column names, not table names.**
-
-```python
-f.configure("Guinier", ["data_I"])   # correct: column "I" in table "data"
-f.configure("Guinier", ["data"])     # WRONG: raises ValueError
-```
-
----
-
-**`plotResults(graphName, graphTemplate)` — the second argument must be `""` or a name from `qti.app.graphTemplates()` without the `.qpt` extension. Never pass an arbitrary word like `"graph"` — if the template file doesn't exist, the plot silently falls back to a default layout.**
-
-```python
-# WRONG — "graph" is not a valid template name; falls back silently
-f.plotResults("MyFit", "graph")
-
-# RIGHT — use empty string (no template) or check what's available
-f.plotResults("MyFit", "")
-
-# RIGHT — use EXPLORE first to find valid template names
-# EXPLORE: scriptPrint(str(qti.app.graphTemplates()))
-# Then in action script:
-tpl = "fit-plus-residues" if "fit-plus-residues" in qti.app.graphTemplates() else ""
-f.plotResults("MyFit", tpl)
-```
-
----
-
-**`setCurveColor()` must be called after `configure()` and before `fit()` / `plotResults()`.**
-Do NOT import PyQt5 or PyQt6 to set curve colors — use the API method.
-
-```python
-f.configure("Guinier", ["data_I"])
-f.setCurveColor("blue")             # after configure(), before fit()
-f.fit()
-f.plotResults("FitResult")
-
-# WRONG — PyQt5 is not available; PyQt6 would work but is not needed
-from PyQt5.QtGui import QColor
-g.activeLayer().setCurveLineColor(1, QColor(0, 0, 255))
-```
-
----
-
-**X-range rule: when generating synthetic data or setting a fit range, the data must cover the function's full dynamic range. If a feature (peak, knee, plateau) is outside the data range, all parameters become highly correlated and errors blow up.**
-
-| Function type | Required x-range |
-|---|---|
-| Peaked (Gaussian, Lorentzian) | `x_min < x0 − 3·sigma` AND `x_max > x0 + 3·sigma` |
-| Decay in x (`A·exp(−b·x) + c`) | `x_max ≥ 3/b` (need ≥ 3 decay lengths to separate amp from background) |
-| Decay in x² — Guinier (`I0·exp(−Rg²·q²/3) + bgd`) | `q_min < 1.73/Rg` — if `q_min·Rg >> 1`, the signal is exp(−large) ≈ 0 everywhere and only background is visible |
-| Power-law / plateau | cover the full transition from steep slope to flat region |
-
-```python
-# WRONG — Guinier with Rg=25 but q starts at 0.5 → q_min*Rg = 12.5 >> 1 → signal ≈ 0 everywhere
-for i in range(1, 201):
-    q = 0.5 + 0.05 * i                          # q ∈ [0.5, 10.5] — all exp(-Rg²q²/3) ≈ 0
-    y = 100.0 * exp(-25.0**2 * q**2 / 3.0)      # ≈ 0 for all q; only background visible
-
-# RIGHT — Guinier needs q_min < 1.73/Rg = 1.73/25 ≈ 0.07
-for i in range(1, 201):
-    q = 0.001 + 0.0005 * i                      # q ∈ [0.001, 0.1] → q*Rg < 2.5 → signal visible
-    y = 100.0 * exp(-25.0**2 * q**2 / 3.0) + 0.5
-
-# WRONG — Gaussian peak at x0=5, sigma=2 but x only goes to 2.0 → peak outside data
-for i in range(1, 201):
-    x = 0.01 * i            # x ∈ [0.01, 2.0] — only left tail visible
-
-# RIGHT — cover x0 ± 3*sigma = 5 ± 6 → use [0, 11] or wider
-for i in range(1, 201):
-    x = 0.055 * i           # x ∈ [0.055, 11.0] → covers full peak
-```
-
----
-
-**Fit method: use LM for all smooth analytical functions — Simplex is WRONG for them.**
-
-`setFitMethod("LM")` is the default and converges in fewer than 20 iterations for Gaussian, sphere, Guinier, cylinder, and any continuously differentiable model. `setFitMethod("Simplex")` or `setFitMethod(0)` runs 500–1000 iterations for smooth models without converging — do NOT use it for analytical functions.
-
-```python
-# RIGHT — LM converges in <20 iterations; or omit entirely (LM is already the default)
-f.setFitMethod("LM")
-```
-
-Only use Simplex for tabulated or step-function models where derivatives are unreliable.
-
----
-
-**Stage requirements** — these methods raise `RuntimeError` if called in the wrong stage:
-
-| Method | Required stage |
-|--------|----------------|
-| `fit()`, `simulate()`, `plotResults()` | `"fit"` |
-| `beforeFit()`, `afterFit()` | `"fit"` — called internally by `fit()`; do NOT call manually |
-| `simulateCurve()` | `"simulate"` |
-| `setCurveColor()` | after `configure()` (not `"init"`) |
-
----
-
-**`plotResults()` returns a `GraphWindow` (`MultiLayer`), NOT a `Graph` (layer)** — `legend()`,
-`newLegend()`, `setLegend()`, `setXTitle()`, `setYTitle()`, `addCurve()`, `setCurveLineColor()`,
-etc. all raise `AttributeError` if called directly on it. Always:
-```python
-g = f.plotResults("FitResults").activeLayer()
-g.setXTitle("q, 1/nm")   # NOT gw.setXTitle(...)
-```
-Confirmed live: FIVE separate `AttributeError`s in one conversation from this mistake
-(`gw.setXTitle`, `gw.legend`, `gw.setLegend` ×2, `gw.newLegend`) — see `fittable-python-api.md`
-for the full incident. `plotResults(graphName, ...)` itself DOES reuse a same-named existing
-window (no pileup alone) — a separate, redundant bare `plot(t, ...)` call before fitting (no
-name-based reuse) was what actually orphaned one window per retry; skip it if `plotResults()`
-already shows the data.
+Compiler and Fittable rules (the `"ai/"` namespace requirement, vary-flag reset on `configure()`,
+dataset naming, plotResults()/curve-color/stage rules, X-range selection, LM vs Simplex, ...) live
+in `compile-python-api.md`'s own "For AI: Workflow Rules" section and `fittable-python-api.md`'s
+own "For AI: Common Mistakes" section, not duplicated here — those files are the ones actually
+scoped in whenever `compile`/`fittable` topics are requested, so a copy here would only ever be
+redundant or, worse, drift out of sync with the real one.
 
 ---
 
@@ -1019,9 +1034,7 @@ Type these directly into the AI input — they are answered instantly without an
 
 ### Qt bindings
 
-QtiSAS embeds **PyQt6** on macOS and Windows. On Linux, the build may use **PyQt5** or **PyQt6**
-depending on the Qt version installed — do not assume either.
-Prefer the QtiSAS API over direct Qt calls whenever possible.
+QtiSAS embeds **PyQt6**. Always import from `PyQt6`, never `PyQt5`.
 
 Qt symbols (`QColor`, `QFont`, `QPen`, `Qt`, `QFrame`) are **not** in the default script namespace — import them explicitly when needed:
 
@@ -1030,5 +1043,16 @@ from PyQt6.QtGui import QColor, QFont, QPen, QBrush
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QFrame
 ```
+
+> **Never switch an already-correct `PyQt6` import to `PyQt5` (or vice versa) — confirmed live:** a
+> script correctly started with `from PyQt6.QtGui import QColor, QFont`. A LATER self-review pass,
+> while fixing an unrelated issue elsewhere in the same script, silently rewrote that line to
+> `from PyQt5.QtGui import QColor, QFont` for no reason connected to the actual fix — the script
+> crashed with `ModuleNotFoundError: No module named 'PyQt5'` a full round-trip later. If a script
+> already imports from `PyQt6`, never change that to `PyQt5` while fixing something unrelated.
+>
+> (A small number of older Linux builds may still embed PyQt5 instead — if `ModuleNotFoundError: No
+> module named 'PyQt6'` is the actual error seen at runtime, that specific build is the exception;
+> switch that script's imports to `PyQt5` and prefer PyQt6 for everything else.)
 
 Never import `QApplication` — it transfers ownership to Python GC and crashes the app.

@@ -124,6 +124,8 @@ Row arguments are always 1-based.
 > `cell()`/`text()`/`cellData()`/`setCell()` — those are 1-based only and raise `ValueError: There's
 > no row -1 in table <name>!` on negative row/col (see example below). Confirmed live.
 
+### Reading Cells — known bugs (text() and cell())
+
 > **`t.text(col, row)` used to raise `TypeError: decoding str is not supported` for every
 > non-empty cell, on any table** (Python-3-porting bug: an already-decoded `str` hit a redundant
 > second decode step, which CPython rejects). Fixed at the source (`qtimod.sip`) as of this build.
@@ -134,6 +136,8 @@ Row arguments are always 1-based.
 > live: reading a text-label cell by mistake gave `0.0` with no error. Never use `cell()` on an
 > unconfirmed-numeric column — use `text()`/`cellData()` and parse it yourself so failures stay
 > visible.
+
+### Reading Cells — negative index example
 
 ```python
 # WRONG — cell() doesn't support Python-style negative indexing, unlike t[n]
@@ -267,6 +271,17 @@ t.setColumnRole("dy", Table.PlotDesignation.yErr)
 |--------|-------|
 | `setCommand(col, expr)` | assign a formula expression to a column |
 | `recalculate(col, startRow=1, endRow=-1, forceMuParser=False, notifyChanges=True)` | evaluate formula; returns `True` on success — raises `ValueError` if the column is read-only or the formula fails to evaluate |
+
+> **The formula string is MuParser, not Python — reference another column via `col("name")` or `col(index)`, never by bare name.** A bare identifier like `x` is not a registered MuParser variable. `setCommand()` accepts the string unvalidated; the failure only surfaces on `recalculate()`. Confirmed live: `t.setCommand("y", "exp(-pow(x-100, 2)/100)")` raised `Unexpected token "x" found at position 9`, immediately followed by `ValueError: recalculate: column 2 is read-only or its formula failed to evaluate` — and the mistake repeated across several retries (including swapping `pow(...)` for `**`) with the bare `x` never fixed.
+>
+> **WRONG:**
+> ```python
+> t.setCommand("y", "exp(-pow(x-100, 2)/100)")
+> ```
+> **RIGHT:**
+> ```python
+> t.setCommand("y", "exp(-pow(col(\"x\")-100, 2)/100)")
+> ```
 
 ---
 

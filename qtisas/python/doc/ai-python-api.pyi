@@ -121,11 +121,31 @@
 # else you generate.
 
 # AGENTIC EXPLORE MODE
-# Everything below (EXPLORE round-trips, the mandatory self-review pass, the automatic error-retry
-#   loop) only fires in AUTO-RUN mode (Ctrl+Shift+Enter / Ctrl+Shift+Click) — in plain "generate
-#   only" mode (bare Enter/Click) a "# EXPLORE" first line is never intercepted, the code is just
-#   shown once as the answer with no execution, no self-review, no error-retry. Don't assume any of
-#   this is active if you don't know which mode produced the current request.
+# EXPLORE round-trips fire only in AUTO-RUN mode. In plain "generate only" mode (bare Enter/Click)
+#   a probe is REFUSED: the request says so, and a "# EXPLORE" script returned anyway is never run,
+#   so no output comes back. The read-only guarantee is a blocklist of write calls, not a sandbox,
+#   and it has leaked — so nothing is executed when the user declined execution. When told probing
+#   is unavailable, read the value AT RUN TIME in the action script and branch on what you find.
+# The mandatory self-review pass and the automatic error-retry loop fire only in AUTO-RUN mode
+#   (Ctrl+Shift+Enter / Ctrl+Shift+Click). In generate-only mode the ACTION script is shown once,
+#   as the answer, and never run — no self-review, no error-retry, so a mistake in it is not
+#   corrected for you. Write it as if it will run unchecked, because it gets no second round.
+# PROJECT STATE YOU ARE GIVEN — do not re-check it. A request naming existing objects carries a
+#   "PROJECT STATE (read directly from QtiSAS, not guessed):" block, one line per name.
+#   "exists NOW, as: <kind>" = use that object; never script a lookup for it, never wildcard-search
+#   a name you were given exactly. Wrong kind (a fit function where a graph of that name is wanted)
+#   = a name collision: say so, do not overwrite it.
+#   "UNKNOWN — cannot be resolved ahead of time" = nothing generated this session has run yet and an
+#   earlier step may create it. Assume neither way, state neither as fact in your script, and decide
+#   at run time: t = table(name) then "if t is None: t = newTable(name, ...)". For a request that only
+#   MODIFIES a named object (restyle, add a curve, rename, configure), create just that object when
+#   absent and then do the work — never invent substitute data or extra objects to act on.
+# Two more messages arrive the same way. "PROBE ROUNDS ARE NOT AVAILABLE FOR THIS REQUEST" = a
+#   "# EXPLORE" reply is never executed and no output returns; answer directly, read values at run
+#   time. "This script omits N things the request explicitly asked for" lists deliverables named in
+#   the request whose calls appear nowhere in your script (residuals, fit curve, legend, axis titles,
+#   script tab); add them. A guard clause is fine, but the branch that does the work must contain
+#   those calls.
 # If you need to read current state before acting (e.g. read existing code/info/params),
 # return ONLY a read-only script with "# EXPLORE" as the VERY FIRST LINE.
 # QtiSAS will run it, capture all scriptPrint() / print() output, and send it back as context.
@@ -141,6 +161,9 @@
 #   No newTable()/newGraph()/addCurve()/maximizeWindow()/plot()/etc. — plot() is the easy one to
 #   miss, it doesn't read like a "write" call but unconditionally creates a new graph window every
 #   single call. Anything write/create belongs in the action script only, or it runs twice.
+#   EXPLORE and the action script are TWO SEPARATE RESPONSES, not two halves of one reply: return
+#   the EXPLORE script, STOP, and wait for its real output before writing anything else. Do not
+#   pre-write the action script below it, even labelled with a "# ACTION SCRIPT:" comment.
 #
 # IF YOUR ACTION SCRIPT RAISES A RUNTIME ERROR, QtiSAS automatically sends it back to you
 # ("The action script raised an error:" + traceback) and asks for a corrected script — respond
@@ -184,24 +207,38 @@
 #   WRONG (round 2): scriptPrint(str(f.datasets()))  ← NameError, f was only set in round 1
 #   RIGHT (round 2): f = Fittable; scriptPrint(str(f.datasets()))
 #
-# ONCE EXPLORE CONFIRMS A SPECIFIC NAME (function/table/column matched by a search), use that
+# ONCE EXPLORE CONFIRMS A SPECIFIC NAME (function/table/column/group matched by a search), use that
 # literal name in the action script — do NOT re-run the same search again and index into it.
 # Unsafe, not just wasteful: the search can resolve to a DIFFERENT match if the library changed
 # between rounds, silently using unverified parameters believed to be the confirmed ones.
 #   WRONG: hits = f.fitFunctions("*lorentzian*"); f.configure(hits[0], [...])  ← re-searches
 #   RIGHT: f.configure("DoubleLorentzian", [...])  ← the literal name EXPLORE already confirmed
 #
+# EXCEPTION: the rule above covers a stable IDENTITY (a name that already existed), NOT a COMPUTED
+# CONCLUSION (e.g. "which model wins by chi2/DoF"). A function's name doesn't change; which model
+# wins depends on live data. Re-derive a comparison result live in the action script — never
+# hardcode the winner's name/table just because an earlier EXPLORE round printed it.
+#   WRONG: fc = table("fitCurve-ai/GaussianPeak")  ← EXPLORE printed this as the winner; no
+#          comparison logic in THIS script — correct only by coincidence with THIS run's data
+#   RIGHT: read both fitCurve-<name> tables' chi2/DoF and pick dynamically in this exact script
+#
 # WHEN REPORTING/COMPARING/DECIDING FROM A VALUE AN EARLIER ROUND/PART ALREADY PRINTED, use that
 # literal printed value — NEVER invent a plausible placeholder, even one labeled "(example)". The
 # real number is sitting right there in this conversation's own visible history; typing a
 # different one is fabrication, not a shortcut — worse than not knowing, since it produces a
-# validated-looking answer with fabricated evidence. Confirmed live: a part comparing two earlier
-# fits' chi2/dof (genuinely printed as 1.0561 and 216.6961) printed brand-new fabricated numbers
-# (1.24, 5.79, commented "# example, from prior fit") and decided from those instead.
-#   WRONG: scriptPrint("chi2/dof = 1.24 (example, from prior fit)")   ← invented, not the real value
-#   RIGHT: scriptPrint("chi2/dof = 1.0561 (from earlier fit)")        ← the value actually printed
+# validated-looking answer with fabricated evidence. Confirmed live TWICE: (1) a part compared two
+# earlier fits' chi2/dof but printed brand-new fabricated numbers (1.24, 5.79, commented "# example,
+# from prior fit") instead; (2) a LATER run then copied THIS RULE'S OWN illustration digits
+# (1.0561, 216.6961 — from incident #1) verbatim into a real script, even though that run's own
+# actual fit had printed different numbers. Never hand-type any digit here — parse it out of the
+# earlier output text in code instead:
+#   WRONG: scriptPrint("chi2/dof = 1.24 (example, from prior fit)")     ← invented
+#   ALSO WRONG: scriptPrint("chi2/dof = 1.0561 (from earlier fit)")     ← this doc's own illustration
+#               digits, copied instead of substituted — not this run's real value
+#   RIGHT: chi2 = float(re.search(r"chi2/dof = ([\d.]+)", earlier_output_text).group(1));
+#          scriptPrint(f"chi2/dof = {chi2} (from earlier fit)")
 # If the real value genuinely isn't visible anymore, say so and re-derive it — never fill the gap
-# with an invented number.
+# with an invented number, and never with a number from this doc's own examples either.
 #
 # "STOP AND REPORT" MEANS CALL scriptPrint(...) WITH THE MESSAGE — never return plain English
 # text as the response. Every response must be valid, executable Python (the app already
@@ -234,9 +271,14 @@
 #   RIGHT: for name in f.fitFunctions("*gauss*"): c.open(name); scriptPrint(c.paramNames())
 # Reserve f.configure() for when the task actually means to set that function up to fit.
 #
-# ANY task that FITS USING AN EXISTING, ALREADY-COMPILED library function MUST start with
-# EXPLORE to discover the exact function name and its real parameters — guessing produces
-# ValueError (name doesn't exist) or a fit silently using wrong defaults.
+# To fit an existing, already-compiled library function you need ONE fact: its exact name.
+# configure() re-derives every parameter's vary/fixed state from the compiled default each call,
+# so a default-configuration fit needs NO parameter names. Name given in the request and confirmed
+# by an existence check, or printed earlier in this conversation? You have everything — write the
+# action script, do NOT probe. Parameter names matter only when the task sets/varies/reports
+# SPECIFIC parameters, and even then read paramNames()/paramVaries() at RUN TIME in the action
+# script (paramVaries() means nothing before configure(), which EXPLORE forbids) — guessing
+# produces ValueError (no such parameter) or a fit silently using wrong defaults.
 #   WRONG: f.configure("sasviewmodels/gaussian-peak-v2", ["Table1"]); f.fit()  ← guessed
 #          name, no EXPLORE step, → ValueError: not found
 #   RIGHT: # EXPLORE first: c.open(name); scriptPrint(str(c.paramNames()))
@@ -286,27 +328,42 @@
 #          c.setFunctionName("sasviewmodels/ellipsoid-correct")
 #          c.setCode(fixed); c.compile()
 #
-# table("name")/matrix("name")/graphWindow("name") return None (confirmed) when missing —
-# ALWAYS check "if t is None:" before using the result, even for a single-line read —
-# BUT ONLY when the task implies the data ALREADY EXISTS (a named table, "the data", "my
+# table("name")/matrix("name")/graphWindow("name")/note("name") return None (confirmed) when
+# missing — ALWAYS check "if t is None:" before using the result, even for a single-line read —
+# BUT ONLY when the task implies the object ALREADY EXISTS (a named table, "the data", "my
 # results"). t.cell(...) on None raises AttributeError; passing None to addCurve() raises
 # ValueError. One line handles it gracefully: t=table("X"); scriptPrint("not found" if t is
 # None else str(t.cell(2,3))) — no separate EXPLORE round-trip needed for a single lookup.
 # For tasks needing MORE than one value (structure/columns) before a follow-up action
 # script, run EXPLORE first to gather that: existTable("X") for tables; NO existMatrix()/
 # existGraph() exist (confirmed live NameError) — use matrix("X") is not None /
-# graphWindow("X") is not None instead.
+# graphWindow("X") is not None instead; existNote("X") does exist for notes.
 #
-# THIS EXISTENCE CHECK DOES NOT APPLY WHEN THE TASK ASKS YOU TO CREATE THE DATA YOURSELF
-# (e.g. "create a table with sphere form factor data", "generate synthetic SANS data") —
-# that table doesn't exist yet BY DESIGN; gating newTable() behind an existence check on the
-# very name you're about to create is backwards, not a safety check. Confirmed live,
-# self-review-introduced: a working create+fit+plot script was "corrected" by inserting
-# "if not existTable('Sphere'): scriptPrint(...)" in front of the newTable('Sphere', ...)
-# call that was about to create it (the elif branch even referenced t.colNames() before t
-# was ever assigned) — the script silently printed "does not exist" and never did any of
-# the actual work. If the task's own words are create/generate/make me/synthesize a
-# dataset, go straight to newTable() — do not check whether it exists first.
+# THIS EXISTENCE CHECK DOES NOT APPLY WHEN THE TASK ASKS YOU TO CREATE/SET UP THE OBJECT
+# YOURSELF (e.g. "create a table with sphere form factor data", "create a note with an
+# auto-executing script") — that object doesn't exist yet BY DESIGN; gating its CREATE call
+# behind an existence check on the very name you're about to create is backwards, not a
+# safety check. Confirmed live, two object types: (1) self-review-introduced — a working
+# create+fit+plot script was "corrected" by inserting "if not existTable('Sphere'):
+# scriptPrint(...)" in front of the newTable('Sphere', ...) call that was about to create it —
+# the script silently printed "does not exist" and never did any of the actual work; (2) asked
+# to CREATE a note "Setup" from scratch, every one of 4 retries called the LOOKUP note("Setup")
+# instead of the CREATE newNote("Setup") — note("Setup") correctly returned None every time
+# (nothing had ever created it), and the task ended with a clean if-n-is-None guard that
+# reported "Failed to create note 'Setup'" without ever once calling newNote(). If the task's
+# own words are create/generate/make me/synthesize/set up an object, go straight to that
+# object's CREATE function (newTable()/newMatrix()/newNote()/newGraph()/...) — never its LOOKUP
+# function, even though both take the same name argument — and do not check whether it exists
+# first.
+#
+# A BARE "create a new X" WITH NO DATA/FORMULA/CONTENT SPECIFIED MEANS THE MINIMAL, EMPTY FORM —
+# never invent placeholder data, a formula or a script to fill it with. Every create function has
+# one: newTable(name, 0, 0), newMatrix(name, 0, 0), newPlot3D(name) (no formula), newNote(name)
+# (no script), newGraph(name, 1, 1, 1). Confirmed live twice: a bare "new table" got a 10-row x/y
+# dataset AND a plot, neither requested; a bare "new plot3D" got an invented "sin(x)*cos(y)" with
+# specific ranges/grid density. If the request doesn't say what goes IN it, create it empty, stop.
+#   WRONG: t = newTable("new Table", 10, 2); ...fill 10 rows...; plot(t, ("x","y"), style=...)
+#   RIGHT: t = newTable("new Table", 0, 0)
 #
 # THE WHOLE SCRIPT RUNS AT TOP LEVEL, NOT INSIDE A FUNCTION — bare "return" there is a
 # SyntaxError (compile-time), NOT a catchable runtime error. The auto-retry only fires on
@@ -429,7 +486,7 @@
 #   because the varies flags from before the switch were silently gone.
 # datasets= takes Y-column names NOT table names: ["data_I"] not ["data"]
 # setCurveColor(name_or_index): call AFTER configure(), BEFORE fit()/plotResults()
-# do NOT import PyQt5/PyQt6 — use f.setCurveColor("blue")
+# do NOT import PyQt6 — use f.setCurveColor("blue")
 # fit()/simulate()/plotResults()/beforeFit()/afterFit() require stage=="fit"
 # simulateCurve() requires stage=="simulate"
 # plotResults() returns a GraphWindow (MultiLayer), NOT a Graph (layer) — legend()/newLegend()/
@@ -450,6 +507,10 @@
 # stop / ai stop / cancel / ai cancel — abort a request currently in flight
 
 # QT BINDINGS
-# macOS/Windows: PyQt6 only. Linux: PyQt5 or PyQt6 depending on Qt version.
+# PyQt6 always. Never switch an already-correct PyQt6 import to PyQt5 (or vice versa) while fixing
+# something unrelated — confirmed live: self-review silently rewrote a correct PyQt6 import to
+# PyQt5 mid-fix; PyQt5 isn't present, ModuleNotFoundError a full round-trip later.
+# (A few older Linux builds may still embed PyQt5 instead — only if the actual runtime error is
+# ModuleNotFoundError: No module named 'PyQt6' should that one script use PyQt5.)
 # (import rule for QColor/QFont/QPen/Qt/QFrame/QBrush and the QApplication ban: see top of file)
 # Prefer QtiSAS API over direct Qt calls where one exists.

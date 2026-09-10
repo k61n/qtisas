@@ -9,7 +9,7 @@ Python scripting interface for 3D surface/scatter plots.
   live); `import qti.Qti3D` also fails (not a submodule). `from qti import Qti3D` works but is
   unneeded.
 
-> **`QColor`, `QFont`** must be imported explicitly: `from PyQt6.QtGui import QColor, QFont` (macOS/Windows; `PyQt5` on Linux with Qt5). Use the `QColor("name")` string form for Qt5/Qt6 compatibility.
+> **`QColor`, `QFont`** must be imported explicitly: `from PyQt6.QtGui import QColor, QFont`. Use the `QColor("name")` string form where possible — it's independent of the exact PyQt binding.
 
 > **Axis indices:** X = 0, Y = 1, Z = 2. Used by `setAxisNumericFormat`, `axisNumericFormat`, `axisNumericPrecision`, `setScales(…, axis)`.
 
@@ -633,3 +633,64 @@ g.setTitle(f"Sphere R={r}")
 Applies to any parametric/function surface, not just spheres: whatever varies the shape's actual
 size must be a factor inside the `X`/`Y`/`Z` (or `f(x,y)`) formula strings — `setScales()` only
 follows along to fit the view, it never drives the geometry.
+
+### Rule 7 — Pick the ONE creation overload matching your data source; don't create then switch
+
+A surface's data source is exactly one of four kinds: an **explicit function** (`plot3D("f(x,y)",
+xl, xr, yl, yr, zl, zr, ...)`), a **parametric equation** (`plot3D(xF, yF, zF, ul, ur, vl, vr,
+...)`, three formulas in `u`/`v`), a **Matrix** (`plot3D(matrix, style)`), or a **Table column**
+(`plot3D(table, "zCol", type=0)` — any column works, no `PlotDesignation.Z` needed, just its
+name). Pick the overload matching the data you actually have — don't call a function- or
+parametric-equation-creating overload and then immediately switch source with `setData()`/
+`setMatrix()`/`setFunction()`/`setParametricSurface()`: the second call REPLACES what the first
+just created (`setData()` silently discards the formula surface entirely), so the first call's
+work is wasted and the result no longer matches what created it.
+
+Confirmed failure: a table was built specifically to hold x/y/z surface data, but the Graph3D was
+created via the explicit-function overload and then `.setData(table, "z")` was called right after
+— the equation surface was thrown away and replaced by the table data, making the equation call
+pure dead weight.
+
+**WRONG:**
+```python
+t = table("SurfaceData")
+g = newPlot3D("Surface", "sin(x)*cos(y)", -pi, pi, -pi, pi, -1.5, 1.5, 40, 40)
+g.setData(t, "z")   # discards the equation surface created one line above
+```
+
+**RIGHT** — the table already has the data, so create from it directly:
+```python
+t = table("SurfaceData")
+g = newPlot3D("Surface", t, "z")
+```
+
+**RIGHT** — no table needed at all, the formula is self-sufficient:
+```python
+g = newPlot3D("Surface", "sin(x)*cos(y)", -pi, pi, -pi, pi, -1.5, 1.5, 40, 40)
+```
+
+### Rule 8 — A closed-form equation needs NO intermediate table or matrix
+
+If the surface is expressible directly as `z = f(x, y)` (or a parametric equation), plot it with
+the equation overload directly — do NOT create a table or matrix first to hold computed x/y/z
+values the formula could produce on its own. An intermediate table/matrix is only justified when
+the data ISN'T a closed-form formula (real measured/experimental values, or a result already
+sitting in an existing table/matrix the request explicitly refers to).
+
+Confirmed failure: asked to plot a 3D surface of `sin(x)*cos(y)` — a pure function of x and y — a
+table was created with x/y/z columns and `PlotDesignation` roles set, but never populated with any
+data (created with 0 rows), while the actual plot was built via the equation overload anyway,
+completely ignoring the table. The table was pure dead weight: created, named, roled, and never
+used for anything.
+
+**WRONG** — an unused table alongside an equation-based plot:
+```python
+t = newTable("SurfaceData", 100, 3)
+t.setColNames(["x", "y", "z"])
+g = newPlot3D("Surface", "sin(x)*cos(y)", -pi, pi, -pi, pi, -1.5, 1.5, 40, 40)
+```
+
+**RIGHT** — the formula is self-sufficient, no table at all:
+```python
+g = newPlot3D("Surface", "sin(x)*cos(y)", -pi, pi, -pi, pi, -1.5, 1.5, 40, 40)
+```

@@ -367,7 +367,12 @@ setParamLimits(name,lo,hi,bayesianYN=False,dataset=-1)
 # == float('-inf'), not None or "".
 setParamValueAll(values,dataset=-1)  setParamVariesAll(varies,dataset=-1)
 
-# Simulate Curve tab (selectStage("simulate") first):
+# Simulate Curve tab. ORDER: configure()/setFunction() FIRST, then selectStage("simulate"), then
+#   these setters, then simulateCurve(). selectStage() before a function is selected raises.
+#   RIGHT: f=Fittable; f.configure("Guinier",[]); f.selectStage("simulate"); f.setSimUniformX(True)
+#   WRONG: f.selectStage("simulate"); f.setFunction("Guinier")   <- raises, blocked before running
+# In uniform X mode simulateCurve() returns NaN BY DEFINITION (no data to compare) — do NOT report
+#   it as a result; report the output table "simulatedCurve-<model>" instead.
 setSimUniformX(bool)  setSimFromX(v)  setSimToX(v)  setSimNumPoints(n)  setSimLogStep(bool)
 setSimDataset(name)  simDataset()->str
 simUniformX()->bool  simFromX()->float  simToX()->float  simNumPoints()->int  simLogStep()->bool

@@ -106,11 +106,15 @@ n.renameTab(2, "Plot")
 n.removeTab(2)           # remove last tab
 ```
 
+### Tabs — renameTab() is 0-based, tab() is 1-based
+
 > **`renameTab()` is 0-based; `tab()` is 1-based — do not mix them up.** Confirmed live: a script
 > called `n.renameTab(n.tabs(), "Configuration")` right after `addTab()`, treating the tab COUNT as
 > if it were a valid 1-based "next index" — but `renameTab()` needs the 0-based index instead
 > (`n.tabs() - 1`), so the new tab was never actually renamed. The later `n.tab("Configuration")`
 > lookup then silently returned `None`, with no error pointing back at the real cause.
+
+### Tabs — addTab() already activates the new tab
 
 > **`addTab()` already makes the newly added tab the active/current one — no extra step needed.**
 > Confirmed against source: `addTab()` internally calls Qt's `setCurrentIndex()` on the tab it just

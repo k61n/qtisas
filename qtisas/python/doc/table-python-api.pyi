@@ -82,6 +82,8 @@ comment(col)->str  setComment(col,text)  showComments(on=True)
 setCommand(col,expr)      # t.setCommand("y2","pow(col(\"y\"),2)")
 recalculate(col,startRow=1,endRow=-1)->bool
 # raises ValueError if the column is read-only or the formula fails to evaluate
+# expr is MuParser, not Python -- bare names like "x" fail silently until recalculate();
+# always col("x") or col(idx), never bare
 
 # Sort:
 sort(type=0,order=0,leadCol="")   # type:0=single 1=grouped; order:0=asc 1=desc
