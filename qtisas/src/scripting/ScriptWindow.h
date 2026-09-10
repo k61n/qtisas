@@ -75,6 +75,9 @@ private:
 
 		void initMenu();
 		void initActions();
+#ifdef SCRIPTING_PYTHON
+    void askAiFromEditor(bool autoRun);
+#endif
 		ScriptEdit *te;
 		ApplicationWindow *d_app;
 		LineNumberDisplay *d_line_number;
@@ -84,7 +87,7 @@ private:
 
     QMenu *file{}, *edit{}, *run{}, *windowMenu{};
     QAction *actionNew{}, *actionUndo{}, *actionRedo{}, *actionCut{}, *actionCopy{}, *actionPaste{};
-    QAction *actionRun{}, *actionPrint{}, *actionOpen{};
+    QAction *actionRun{}, *actionAskAi{}, *actionPrint{}, *actionOpen{};
     QAction *actionSave{}, *actionSaveAs{};
     QAction *actionAlwaysOnTop{}, *actionHide{}, *actionShowLineNumbers{};
     QAction *actionShowConsole{}, *actionPrintPreview{};

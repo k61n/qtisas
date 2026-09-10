@@ -67,14 +67,8 @@ ScriptWindow::ScriptWindow(ScriptingEnv *env, ApplicationWindow *app, Qt::Window
     aibtn->setMinimumWidth(32);
     aibtn->setMaximumWidth(72);
     connect(aibtn, &QPushButton::clicked, this, [this]() {
-        QString question = te->textCursor().selectedText().trimmed();
-        if (question.isEmpty())
-            question = te->toPlainText().trimmed();
-        if (question.isEmpty())
-            return;
         const auto mods = QApplication::keyboardModifiers();
-        const bool autoRun = (mods & Qt::ControlModifier) && (mods & Qt::ShiftModifier);
-        d_app->askAi(question, autoRun);
+        askAiFromEditor((mods & Qt::ControlModifier) && (mods & Qt::ShiftModifier));
     });
 #endif
 
@@ -285,6 +279,13 @@ void ScriptWindow::initActions()
     connect(actionRun, SIGNAL(triggered()), this, SLOT(executeAll()));
     run->addAction(actionRun);
 
+#ifdef SCRIPTING_PYTHON
+    actionAskAi = new QAction(QIcon(":/ai.png"), tr("Ask AI"), this);
+    actionAskAi->setToolTip(tr("Ask AI about the selected text, or the whole script if nothing is selected"));
+    connect(actionAskAi, &QAction::triggered, this, [this]() { askAiFromEditor(false); });
+    run->addAction(actionAskAi);
+#endif
+
 	run->addSeparator();
 
 	actionShowConsole = consoleWindow->toggleViewAction();
@@ -316,6 +317,18 @@ void ScriptWindow::initActions()
 	connect(te, SIGNAL(undoAvailable(bool)), actionUndo, SLOT(setEnabled(bool)));
 	connect(te, SIGNAL(redoAvailable(bool)), actionRedo, SLOT(setEnabled(bool)));
 }
+
+#ifdef SCRIPTING_PYTHON
+void ScriptWindow::askAiFromEditor(bool autoRun)
+{
+    QString question = te->textCursor().selectedText().trimmed();
+    if (question.isEmpty())
+        question = te->toPlainText().trimmed();
+    if (question.isEmpty())
+        return;
+    d_app->askAi(question, autoRun);
+}
+#endif
 
 void ScriptWindow::executeAll()
 {
