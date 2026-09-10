@@ -109,8 +109,7 @@ void PythonSyntaxHighlighter::highlightBlock(const QString &text)
     }
 
     static const QColor aiColor(220, 235, 255);
-    // Marks blocks under a "▸▸▸ AI answer:" header as prose, not code, so they skip Python
-    // highlighting until the next "▸▸▸ " header (other headers stay code/status as usual).
+    static const QColor listColor(0xC8, 0xE6, 0xC9);
     static const int aiAnswerBlockState = 2;
 
     if (text.startsWith("▸▸▸ "))
@@ -124,12 +123,27 @@ void PythonSyntaxHighlighter::highlightBlock(const QString &text)
         }
         QTextCharFormat charFmt;
         charFmt.setBackground(aiColor);
-        // setFormat() merges onto the existing char format, so an unset foreground here would
-        // leave a bled-in color (e.g. green from prior script output) instead of resetting it.
-        // Uses qApp's palette, not a hardcoded color, to respect the active light/dark theme.
         charFmt.setForeground(qApp->palette().color(QPalette::Text));
         setFormat(0, static_cast<int>(text.length()), charFmt);
-        setCurrentBlockState(text.startsWith("▸▸▸ AI answer:") ? aiAnswerBlockState : 0);
+        const bool isProseHeader = text.startsWith("▸▸▸ AI answer:") || text.startsWith("▸▸▸ AI split-plan (");
+        setCurrentBlockState(isProseHeader ? aiAnswerBlockState : 0);
+        return;
+    }
+
+    if (text.startsWith("▸    AI request: LIST") || text.startsWith("▸▸  AI LIST:"))
+    {
+        QTextBlockFormat blockFmt = currentBlock().blockFormat();
+        if (blockFmt.background().color() != listColor)
+        {
+            blockFmt.setBackground(listColor);
+            QTextCursor c(currentBlock());
+            c.setBlockFormat(blockFmt);
+        }
+        QTextCharFormat charFmt;
+        charFmt.setBackground(listColor);
+        charFmt.setForeground(Qt::black);
+        setFormat(0, static_cast<int>(text.length()), charFmt);
+        setCurrentBlockState(0);
         return;
     }
 
@@ -148,8 +162,8 @@ void PythonSyntaxHighlighter::highlightBlock(const QString &text)
     const bool isAiAnswerBody = previousBlockState() == aiAnswerBlockState;
     const bool suppressPythonHighlighting = isAiAnswerBody || isScriptOutput;
 
-    // Strip AI background inherited by subsequent blocks
-    if (currentBlock().blockFormat().background().color() == aiColor)
+    const QColor inheritedBg = currentBlock().blockFormat().background().color();
+    if (inheritedBg == aiColor || inheritedBg == listColor)
     {
         QTextBlockFormat blockFmt = currentBlock().blockFormat();
         blockFmt.setBackground(QBrush());
