@@ -1986,9 +1986,126 @@ static QString stripCodeFences(const QString &s)
     return out.join('\n').trimmed();
 }
 
+// Detects and truncates decoding-level repetition-loop garbage. Confirmed live: an EXPLORE
+// response hit max_tokens cycling near-identical "check if we need to set X" blocks, and the whole
+// multi-KB reply landed in m_history, inflating the NEXT call's prefill by 90+ seconds. Only lines
+// at least kMinLineLen long count — "else:"/"return" recur in legitimately varied code.
+//
+// Repeat counts reset at each stage-boundary marker. Counting across the WHOLE response broke the
+// DRAFT/---CHECK---/---FINAL--- fixup protocol, which legitimately restates an unchanged PART line
+// once per stage: the 4th, wanted occurrence inside ---FINAL--- was truncated away as garbage,
+// deleting the real answer and surfacing as "unparseable — abandoning split mode".
+//
+// Two tiers, because cutting AT the threshold occurrence left kRepeatThreshold-1 = three copies —
+// and all three then executed. cleanResponse() is the single network-response chokepoint and hands
+// its result on as an ordinary valid response, so nothing downstream can tell truncation happened
+// (the marker appended below is a bare `#` comment no caller reads). Harmless for a read-only
+// EXPLORE; the same path carries ACTION scripts, where three passes of newNote()/addTab()/setCell()
+// would run for real. So tier 1 (kRepeatThreshold, the field-proven gate) only decides THAT a
+// response is degenerate, and tier 2 cuts back to the pattern's second occurrence so exactly one
+// pass survives. Tier 2 cannot misfire on healthy output: it is only reached for a response tier 1
+// already condemned, and it stays OFF for the staged protocol above.
+static const QRegularExpression kRepetitionStageBoundaryRe(R"(-{2,}\s*(?:CHECK|FINAL)\s*-{2,})",
+                                                           QRegularExpression::CaseInsensitiveOption);
+
+// Walks a truncation point back to the start of the top-level statement enclosing it. The kept
+// prefix is EXECUTED, and an EXPLORE script is routed on its first-line marker alone without ever
+// passing through canCompile() (see the exploreMarkerRe branch in ApplicationWindow's responseReady
+// handler), so a cut landing inside an indented block can leave "if x:"/"for ...:" with an empty
+// body and turn a recoverable repetition loop into a SyntaxError. Same hazard and same remedy as
+// QtiSasAiContent::explorePrefixBeforeFirstWriteCall(), which snaps its own cut for this reason.
+// Returns -1 when no safe boundary exists above the cut (everything sits inside one top-level
+// statement); the caller then leaves the response untouched rather than emit an empty script.
+static int snapRepetitionCutToTopLevel(const QStringList &lines, int cutBefore)
+{
+    if (cutBefore <= 0 || cutBefore >= lines.size())
+        return cutBefore;
+    // A cut before a blank or an unindented line already ends on a complete statement.
+    const QString &cutLine = lines.at(cutBefore);
+    if (cutLine.trimmed().isEmpty() || !cutLine.at(0).isSpace())
+        return cutBefore;
+    for (int i = cutBefore - 1; i >= 0; --i)
+    {
+        const QString &line = lines.at(i);
+        if (line.trimmed().isEmpty() || line.at(0).isSpace())
+            continue;
+        return i > 0 ? i : -1;
+    }
+    return -1;
+}
+
+QString truncateRepetitiveGarbage(const QString &s)
+{
+    constexpr int kMinLineLen = 20;
+    constexpr int kRepeatThreshold = 4; // same line this many times in one response = degenerate
+    const QStringList lines = s.split('\n');
+    // Tier 2 off for the staged protocol — see this function's doc comment.
+    const bool stagedProtocol = kRepetitionStageBoundaryRe.match(s).hasMatch();
+    QHash<QString, int> seenCount;
+    for (int i = 0; i < lines.size(); ++i)
+    {
+        const QString trimmed = lines[i].trimmed();
+        if (kRepetitionStageBoundaryRe.match(trimmed).hasMatch())
+        {
+            seenCount.clear();
+            continue;
+        }
+        if (trimmed.length() < kMinLineLen)
+            continue;
+        if (++seenCount[trimmed] < kRepeatThreshold)
+            continue;
+        int cutBefore = i;
+        if (!stagedProtocol)
+        {
+            // Tier 2: cut back to this line's SECOND occurrence, then keep walking back over the
+            // lines immediately before it that are themselves repeats of earlier ones — the
+            // cycle's own opening lines (its comment header, a short setup call), which the
+            // kMinLineLen filter never counted. Without that walk the cut lands mid-cycle and
+            // keeps a stray fragment of a second pass. Only exact duplicates of something further
+            // up are walked over, so nothing unique to the surviving pass is ever lost: every line
+            // of the FIRST pass is its own first occurrence, which is where the walk stops.
+            QHash<QString, int> firstIndex;
+            for (int j = 0; j < lines.size(); ++j)
+            {
+                const QString probe = lines[j].trimmed();
+                if (!probe.isEmpty() && !firstIndex.contains(probe))
+                    firstIndex.insert(probe, j);
+            }
+            int seen = 0;
+            for (int j = 0; j < i; ++j)
+            {
+                if (lines[j].trimmed() != trimmed || ++seen < 2)
+                    continue;
+                cutBefore = j;
+                break;
+            }
+            while (cutBefore > 0)
+            {
+                const QString prev = lines[cutBefore - 1].trimmed();
+                if (!prev.isEmpty() && firstIndex.value(prev, cutBefore - 1) >= cutBefore - 1)
+                    break;
+                --cutBefore;
+            }
+            cutBefore = snapRepetitionCutToTopLevel(lines, cutBefore);
+            if (cutBefore < 0)
+                return s;
+        }
+        QStringList kept = lines.mid(0, cutBefore);
+        while (!kept.isEmpty() && kept.last().trimmed().isEmpty())
+            kept.removeLast();
+        // Nothing salvageable — leave the response alone rather than replace it with a
+        // comment-only script, the same "don't delete the real answer" reflex as the staged-
+        // protocol regression above.
+        if (kept.isEmpty())
+            return s;
+        return kept.join('\n') + "\n\n# [truncated — repetition-loop garbage detected and removed]";
+    }
+    return s;
+}
+
 static QString cleanResponse(const QString &s)
 {
-    return stripCodeFences(stripThinkBlocks(s)).trimmed();
+    return truncateRepetitiveGarbage(stripCodeFences(stripThinkBlocks(s)).trimmed());
 }
 
 AiAssistant::AiAssistant(QObject *parent)

@@ -56,4 +56,10 @@ QStringList extractExistingEntityNames(const QString &requestText);
 // line. See AiAssistant.cpp for the full rationale.
 QStringList missingEntityNames(const QString &scriptOutput, const QStringList &checkedNames);
 
+// Truncates decoding-level repetition-loop garbage, keeping exactly one pass of the cycling
+// pattern (the staged DRAFT/---CHECK---/---FINAL--- protocol keeps the older, looser cut instead).
+// Returns `s` unchanged when nothing repeats often enough, or when no salvageable prefix exists.
+// See AiAssistant.cpp for the full rationale.
+QString truncateRepetitiveGarbage(const QString &s);
+
 #endif
