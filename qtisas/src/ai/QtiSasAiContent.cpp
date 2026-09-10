@@ -148,131 +148,26 @@ static QString graphChecklistRules()
 // Compiler — setGroup() requirement, the redefinition/output-variable-assignment rule.
 static QString compileChecklistRules()
 {
-    return "- A brand-new Compiler function (c.new() followed by setFunctionName()/setCode()/"
-           "QtiSAS Preferences (e.g. graphTitleOn(), graphMajTicksStyle()). Omit them unless the "
-           "task explicitly requires overriding the user's configured defaults.\n"
-           "- replot()/grid()/showGrid()/canvasGeometry()/setXTitle()/setYTitle()/setAxisTitle()/"
-           "setScale() are Graph (layer) methods, never GraphWindow — call them on "
-           "gw.layer(n)/gw.activeLayer() (also mechanically blocked pre-run if missed).\n"
-           "- showAxis() does NOT exist on Graph (layer) or GraphWindow — calling it raises "
-           "TypeError: no such method. Use enableAxis(axis, True/False) to show/hide an axis "
-           "instead, e.g. layer.enableAxis(Graph.Axis.Right, True).\n"
-           "- If the script calls gw.setNumLayers(n) to grow an EXISTING graph from 1 layer to "
-           "more (e.g. adding a residuals panel to a graph created by an earlier "
-           "plotResults()/plot() call), it MUST also call gw.setRows(...)/gw.setCols(...) BEFORE "
-           "arrangeLayers() — setNumLayers() only adds the Graph object, it never updates the "
-           "window's row/column count, which stays at the original graph's (1, 1). "
-           "arrangeLayers(fit=False, ...) then lays out using that stale (1, 1): the new layer's "
-           "row index gets clamped back onto row 0, landing it in the SAME position as the first "
-           "layer, hidden behind it — arrangeLayers(fit=True, ...) does not fix this either, since "
-           "for exactly 2 layers its auto-layout picks 1 row x 2 columns (side-by-side), not a "
-           "vertical stack. This raises NO error and prints nothing wrong — the script completes "
-           "normally and the added panel is simply invisible, so it will not be caught by any "
-           "output the script itself prints. This does NOT apply to a graph created fresh via "
-           "newGraph(name, 2, 2, 1) — that sets rows/cols at construction time and needs no fix. "
-           "Confirmed live: a residuals-panel script called gw.setNumLayers(2) on a pre-existing "
-           "single-layer 'FitResults' graph, then arrangeLayers(False, False) with no setRows()/"
-           "setCols() call anywhere — the script ran with no error and printed a success message, "
-           "but the residuals layer was not visible in the resulting graph.\n"
-           "- If the script creates a NEW graph for data with a known physical quantity and unit, "
-           "and doesn't already call setXTitle()/setYTitle() with that unit, ADD them — this is "
-           "completing what the plot is supposed to show, not an unrequested embellishment (unlike "
-           "tick/axis STYLING, which stays out unless asked for). The quantity/unit MUST be "
-           "established by THIS request's own content — its explicit wording, its actual column "
-           "names/descriptions, a domain it genuinely named (e.g. SANS, scattering) — never copied "
-           "from an illustrative example elsewhere (including the SANS Q/Å⁻¹, I/cm⁻¹ example a few "
-           "lines below, which is only an ILLUSTRATION of the general rule, not a default to fall "
-           "back on for unrelated data). If THIS request's own data has no clearly established "
-           "physical quantity or unit, leave the axis titles at their default (bare column name) — "
-           "inventing a specific unit for data that was never described that way is fabrication, "
-           "the same violation as inventing a numeric value, just in a title string instead of a "
-           "number. Confirmed live: a plain, explicitly generic \"Gaussian peak model\" request — "
-           "table columns named just \"x\"/\"y\", nothing about SANS, scattering, or Q anywhere in "
-           "the request — still got labeled `setXTitle(\"Q (&Aring;<sup>-1</sup>)\")` / "
-           "`setYTitle(\"I(Q) (cm<sup>-1</sup>)\")`, borrowing this exact checklist's own SANS "
-           "example wholesale for data that was never Q/I at all.\n"
-           "- When the quantity/unit genuinely IS established (e.g. SANS Q in Å⁻¹, I(Q) in cm⁻¹, a "
-           "fitted radius in nm, from THIS request's own wording or column context — see the rule "
-           "above), default axis labels just echo the bare column name (\"Q\", \"I\") with no unit "
-           "and no indication of what the quantity physically is, so setting the real title is "
-           "still required, not optional. Use HTML tags for units/exponents, not LaTeX: "
-           "`g.setXTitle(\"Q (&Aring;<sup>-1</sup>)\")`, `g.setYTitle(\"I(Q) (cm<sup>-1</sup>)\")`. "
-           "Confirmed live, repeatedly: many SANS-fit scripts in a row created a table with "
-           "explicit Q/I(Q) columns and plotted them, and NONE ever set a real axis title — this "
-           "never raises an error or looks obviously wrong in scriptPrint() output, so it keeps "
-           "getting missed unless explicitly checked for here.\n"
-           "- There is NO tick-COUNT setter on Graph under ANY name or arg count — not "
-           "setMajTicks/setMinTicks, not setMajorTicks/setMinorTicks, not a combined "
-           "setMajTicks(axis, majN, minN). All of these are hallucinated; none exist. Tick "
-           "count is only settable via the majTicks/minTicks params of the FULL setScale(axis, "
-           "start, end, step, majTicks, minTicks, ...) signature. If you don't already know the "
-           "axis's current start/end, read them first with axisScale(axis) -> (start, end) and "
-           "pass them straight back into setScale(...) alongside the new tick counts — don't just "
-           "strip the tick-count request as unfulfillable, this IS achievable, just not via a "
-           "standalone setter. This is NOT a one-off: confirmed live across THREE separate "
-           "name/arg-count guesses in the same codebase, and one of them "
-           "(`l.setMajTicks(Graph.Axis.Bottom, 5, 8)`) exhausted all 10 automatic error-retries "
-           "and made the AI give up entirely — losing the legend and both scriptPrint() outputs "
-           "the user had explicitly asked for, even though the table, compile, and fit had "
-           "already completed successfully earlier in the same script.\n"
-           "- In axis/plot titles, use <sup>/<sub> HTML tags for superscript/subscript (e.g. "
-           "\"cm<sup>-1</sup>\", \"R<sub>g</sub>\") — never LaTeX-style ^{...}/_{...} notation, "
-           "which renders as literal characters, not a real superscript/subscript.\n"
-           "- A bare 0xRRGGBB int is safe as a QColor substitute for most colour parameters (e.g. "
-           "setBackgroundColor, setFrameColor, setAxisColor), but NOT for setCurveLineColor()/"
-           "setCurveSymbolColor()/setCurveSymbolBorderColor() specifically — these three each have "
-           "BOTH an (index, int) overload, where the int is a small PALETTE INDEX, and an (index, "
-           "QColor) overload. A bare Python int argument binds to the (index, int) overload, not "
-           "the QColor one — so 0xFF0000 (16711680) is interpreted as colorIndex 16711680, wildly "
-           "out of range for the palette (confirmed in source: Graph::setCurveLineColor(int,int) "
-           "silently returns without changing anything when the index is out of range — no error, "
-           "no warning, the curve keeps whatever colour it already had). A SMALL hex value (e.g. "
-           "0x000003) is worse — it silently selects whatever unrelated colour sits at that small "
-           "palette index instead of failing at all. For these three methods specifically, always "
-           "use colorIndex(\"name\") or QColor(\"name\")/QColor(r,g,b) — never a bare int literal, "
-           "regardless of how it looks like a valid RGB hex value.\n"
-           "- \"colored symbols\"/\"colored markers\"/\"colored points\" (Scatter or LineSymbols "
-           "curve style) means setCurveSymbolColor()/setCurveSymbolBorderColor() — NOT "
-           "setCurveLineColor(), which only recolors the connecting LINE between points, never the "
-           "symbol itself. Confirmed in source: a curve's initial symbol color is copied from its "
-           "line color only ONCE, at curve creation (Graph::initCurveLayout()'s `cl.symCol = "
-           "cl.lCol`); a later setCurveLineColor() call updates only the QwtPlotCurve's own pen, "
-           "never touching the QwtSymbol already attached to it. A request for \"red star symbols\" "
-           "satisfied only via setCurveLineColor(0, colorIndex(\"red\")) turns the connecting line "
-           "red while the stars themselves keep whatever color they were auto-assigned at creation "
-           "— call setCurveSymbolColor() (fill) and, for a filled look, setCurveSymbolBorderColor() "
-           "(outline) too.\n"
-           "- If the script calls setFrameStyle(...) on a LegendWidget/ImageWidget/RectangleWidget/"
-           "EllipseWidget (e.g. from newLegend()), and the argument is built from PyQt6's "
-           "QFrame.Shape/QFrame.Shadow (e.g. `QFrame.Shape.Box | QFrame.Shadow.Sunken`), that is "
-           "wrong regardless of whether the QFrame import is present — QtiSAS's own FrameWidget "
-           "base class takes a DIFFERENT, unrelated enum (Frame.FrameStyle.Line=1, .Shadow=2) and "
-           "does an exact-value match, not Qt's bit-flag decoding. A PyQt6 QFrame combo produces "
-           "some int that matches neither Line nor Shadow, so no NameError and no crash — the "
-           "frame border simply never renders. Fix by replacing the argument with "
-           "Frame.FrameStyle.Line.value or Frame.FrameStyle.Shadow.value — NOT the bare enum member "
-           "(Frame.FrameStyle.Shadow alone raises TypeError: argument has unexpected type "
-           "'FrameStyle'; confirmed live). FrameStyle has a member named None_, so unlike "
-           "Graph.Axis/Graph.Ticks/Graph.Scale/Graph.CurveType (no None member, bound as plain "
-           "ints, usable directly anywhere) it's a genuine Python enum.Enum, not an int — .value "
-           "is required wherever a plain int is expected. Also drop the now-unneeded "
-           "PyQt6.QtWidgets QFrame import if nothing else in the script needs it — do NOT "
-           "'fix' this by adding the QFrame import per the rule above; that only removes a "
-           "NameError this pattern doesn't even raise, while leaving the actual bug (wrong enum, "
-           "invisible frame) untouched. Confirmed live: a script styled a fit-result legend with "
-           "exactly this QFrame combo; it ran with no error and no visual sign anything was wrong, "
-           "the requested boxed/sunken legend frame just silently never appeared.\n"
-           "- Same principle, third confirmed case: `addCurve()` has NO name-based dedup at all — "
-           "it succeeds silently every time, even when a curve with the same title already exists "
-           "on the layer. Confirmed live, worse than the plot()/compile() cases above: repeated "
-           "retries styling one fit-results graph (each fixing an unrelated error a few lines "
-           "later — a wrong color-argument type, a hallucinated legend method) kept re-running an "
-           "unconditional `g.addCurve(t, \"I\", ...)` with no existence check, ending with the SAME "
-           "data curve added FIVE separate times onto one layer alongside the real fit/residual "
-           "curves — invisible in the script's own printed output, only found by inspecting the "
-           "live graph afterward. Before calling addCurve() in a corrected/retried script, check "
-           "for an existing curve with that title first: `if not any(g.curveTitle(i) == title for "
-           "i in range(g.numCurves())): g.addCurve(...)`.\n";
+    return "- setGroup() is not optional for a brand-new Compiler function — c.new() leaves the "
+           "group field empty, and save()/compile() both raise ValueError: compile: group is "
+           "empty — call setGroup(\"name\") before save()/compile() if it was never called. "
+           "The minimal create-and-compile flow is c.new() -> setFunctionName(...) -> "
+           "setGroup(...) -> setCode(...) -> compile() — setGroup() also raises ValueError on its "
+           "own if given an empty name or one containing '/'.\n"
+           "- xName/yName locals (whatever setXName()/setYName() actually set them to — not "
+           "always \"x\"/\"I\") are ALREADY DECLARED by the boilerplate before [code] runs — never "
+           "re-declare either with `double <name> = ...;` inside setCode(), only assign to it. "
+           "Re-declaring yName fails loudly (`error: redefinition of '<name>'`), but re-declaring "
+           "xName is worse: it's legal C++ shadowing, compiles with no error at all, and silently "
+           "discards the real parameter value, producing a wrong-but-successful fit.\n"
+           "- When the function being compiled is a NAMED physical/mathematical model (a sphere "
+           "form factor, Guinier law, a named peak shape, ...), the setCode() expression must be "
+           "that model's real, well-known formula, carefully recalled — not a plausible-looking "
+           "approximation — and must include every term the request explicitly calls out (\"with "
+           "background\", \"plus a linear term\", ...), never silently dropped. This is the same "
+           "lapse generalChecklistRules() documents for table/matrix formulas, just written in C++ "
+           "here instead of Python — same failure mode, same fix: double-check the formula "
+           "actually being written against what's actually known, before compiling it.\n";
 }
 
 // Fittable — weighting/yErr setup, results() unpacking, fitCurve table reading, Rule 1 (known name vs fitFunctions()
@@ -409,7 +304,20 @@ static QString fittableChecklistRules()
            "real failure surface for no benefit: confirmed live, a plain \"fit with weighted "
            "errors\" request grew an unrequested `setPolyDataset(1, \"\")` (an empty, meaningless "
            "sigma-column argument) and a full resolution-smearing setup, neither asked for, on top "
-           "of the actual fit.\n";
+           "of the actual fit.\n"
+           "- \"(X, Y, Z - fittable parameters)\" names the model's ONLY varying parameters — every "
+           "OTHER parameter must get an explicit setParamVaries(name, False) too, not be left at "
+           "whatever Fittable's own default is. The inverse phrasing, \"(X, Y, Z - unfittable "
+           "parameters)\", is the same rule flipped: X/Y/Z get False, every other parameter gets "
+           "True. This is IMPOSSIBLE to satisfy without first knowing the model's FULL parameter "
+           "list — if it isn't already confirmed earlier in this conversation, an EXPLORE round "
+           "calling f.paramNames() is a REQUIRED prerequisite (fittable-python-api.md documents "
+           "exactly this discovery step), never skip straight to setParamVaries() calls for only "
+           "the named parameters and leave the rest untouched. Confirmed live: \"(scale, "
+           "background, radius - fittable parameters)\" only set those three to "
+           "setParamVaries(..., True), no EXPLORE round ever ran to discover what the model's "
+           "other parameters even were, and they were left unspecified rather than explicitly "
+           "fixed.\n";
 }
 
 // General script hygiene — missing imports, existTable()/colNames() guards, compile()'s return value, "don't silently
@@ -465,6 +373,17 @@ static QString generalChecklistRules()
            "graph-python-api.md's own worked example for setCurveSymbolStyle() uses "
            "\"diamond\" as its illustrative value, and that literal carried into the script "
            "unchanged instead of being replaced with the actually-requested \"star\".\n"
+           "- Same rule applies when the request gives NO value for a parameter at all, not just "
+           "when it names a different one: use the genuinely minimal/empty creation form the docs "
+           "already provide (e.g. newPlot3D(\"name\") with no formula) — never fall back to a "
+           "doc's own illustrative example as if it were a sensible default. Confirmed live: even "
+           "\"empty\" in the request wasn't enough on its own — \"new empty 3D plot 'PP'\" still "
+           "produced newPlot3D(\"PP\", \"x\", -1, 1, -1, 1, -1, 1, 10, 10), a fabricated (if "
+           "simpler) formula, after a bare \"new 3D plot\" request had already produced the doc's "
+           "own sin(x)*cos(y) worked example verbatim; only explicitly saying \"without data\" "
+           "produced the correct, empty newPlot3D(\"PP\"). Same habit for tables/matrices: an "
+           "unqualified creation request should create the object and stop — no invented column "
+           "names, fill values, or display/color-map styling beyond what was actually asked.\n"
            "- When correcting a script after a runtime error, don't silently drop the "
            "functionality that caused it — fix the call to do what was actually asked. If that's "
            "genuinely not possible, say so in the printed output rather than quietly reverting to "
@@ -608,7 +527,21 @@ static QString generalChecklistRules()
            "redoing it.\n"
            "- Table.setCell/cell/cellData/setColumnRole and Matrix.setCell/cell are ALL 1-based — "
            "column/row index 0 never exists. Do NOT 'correct' an already-correct 1-based script "
-           "to 0-based indexing (also mechanically blocked pre-run if missed).\n";
+           "to 0-based indexing (also mechanically blocked pre-run if missed).\n"
+           "- When a request names a specific physical/mathematical model (a sphere form factor, "
+           "Guinier law, a named peak shape, ...), actually recall its real, well-known formula "
+           "carefully rather than approximating it with a plausible-looking but different "
+           "expression — and represent EVERY term the request explicitly calls out (\"with "
+           "background\", \"plus a linear term\", ...) concretely in the code, never silently "
+           "dropped. Confirmed live: asked for \"a sphere form factor (with background) plus 4% "
+           "Gaussian noise\", the generated intensity was a bare Gaussian decay in q "
+           "(`exp(-q**2 * const)`) — not the real sphere form factor `3*(sin(qR) - "
+           "qR*cos(qR))/(qR)**3` — with no background term added anywhere, even though the exact "
+           "same model, asked the SAME formula directly and in isolation, immediately produced "
+           "the correct expression — this is a real lapse under the full request/script-writing "
+           "context, not a genuine knowledge gap, so slow down and double-check the formula "
+           "actually being written against what's actually known, rather than pattern-matching to "
+           "something merely similar-looking.\n";
 }
 
 // Split-mode specific — EXPLORE side effects from an earlier round, task abdication ("happens in a later part").
@@ -641,22 +574,54 @@ static QString splitModeChecklistRules()
            "work.\n";
 }
 
-QString QtiSasAiContent::selfReviewChecklist() const
+// Scoped to docTopics/splitModeActive the same way attached doc content already is
+// (filterDocsByTopic()) — generalChecklistRules() always applies (import/singleton/indexing rules
+// aren't topic-specific), the other three only when their own topic is actually in play for this
+// call, cutting a plain table/note task's payload from all five sections down to one.
+QString QtiSasAiContent::selfReviewChecklist(const QStringList &docTopics, bool splitModeActive) const
 {
-    return graphChecklistRules() + compileChecklistRules() + fittableChecklistRules() + generalChecklistRules() +
-           splitModeChecklistRules();
+    QString checklist = generalChecklistRules();
+    if (docTopics.contains("graph", Qt::CaseInsensitive))
+        checklist += graphChecklistRules();
+    if (docTopics.contains("compile", Qt::CaseInsensitive))
+        checklist += compileChecklistRules();
+    if (docTopics.contains("fittable", Qt::CaseInsensitive))
+        checklist += fittableChecklistRules();
+    if (splitModeActive)
+        checklist += splitModeChecklistRules();
+    return checklist;
 }
 
 
 QString QtiSasAiContent::docTopicIndex() const
 {
-    return "compile — create, edit, and compile NEW fit functions (Compiler class: c = Compiler). FIF "
+    return "compile — create, edit, or modify fit functions, new OR existing (Compiler class: c = Compiler). FIF "
            "files, C++ code generation, parameters/limits, after-fit hooks.\n"
-           "fittable — configure and RUN fits using EXISTING compiled functions (Fittable class: "
-           "f = Fittable). Parameters, weighting, resolution, polydispersity, global/batch fits.\n"
+           "fittable — for EXISTING compiled functions ONLY, never compiles new ones: CONFIGURE first, then "
+           "RUN the fit (Fittable class: f = Fittable). Parameters, weighting, resolution, polydispersity, "
+           "global/batch fits.\n"
            "graph — 2D plots (GraphWindow/Graph/MultiLayer): curves, axes, layers, styling.\n"
-           "graph3d — 3D surface/scatter plots (Graph3D/Qti3D).\n"
-           "matrix — the Matrix class: 2D numeric grids/image-like data.\n"
+           "graph3d — 3D surface/scatter plots (Graph3D/Qti3D). Fully self-contained: legend "
+           "(showLegend()), title (setTitle()), and axis labels (setXAxisLabel()/setYAxisLabel()/"
+           "setZAxisLabel()) are all native Graph3D methods, never the 2D graph topic's — a part "
+           "that only creates/styles a Graph3D does not need the graph topic too. Worse than just "
+           "unnecessary here: graph3d's own docs warn that graphWindow(\"name\") (the 2D lookup) "
+           "returns None for a real Graph3D window (use plot3D(\"name\") instead) — a confirmed-"
+           "live footgun that pulling in the graph topic risks reinforcing rather than avoiding.\n"
+           "matrix — the Matrix class: 2D numeric grids/image-like data. Its (row, col) cell order "
+           "is the OPPOSITE of Table's (col, row), but that distinction is documented within "
+           "matrix's own docs — a part that only creates/fills/reads a Matrix does not need the "
+           "table topic too just because of that cross-reference. Ambiguous \"color fill\"/"
+           "\"colormap\"/\"grayscale\" language for matrix data has THREE genuinely different real "
+           "meanings, not one: (1) the matrix's OWN in-place 2D view — "
+           "m.setViewType(Matrix.ViewType.ImageView) + setRainbowColorMap()/setGrayScale(), same "
+           "window, topic matrix only; (2) a separate 2D graph spectrogram — plot(matrix, style) "
+           "/ plotSpectrogram(matrix, style) with Graph.CurveType.ColorMap/GrayScale/Contour/"
+           "ImagePlot, a NEW GraphWindow, topic graph; (3) an actual 3D surface — "
+           "plot3D(matrix, style) with a Qti3D.<CONSTANT>, a NEW Graph3D window, topic graph3d. "
+           "Pick based on what the request actually asks for (in-place display vs. a new "
+           "plot/window vs. an explicit 3D surface) — don't default to one without checking "
+           "which is meant.\n"
            "note — the Note class: text/script notes and tabs.\n"
            "table — the Table class: spreadsheet-like data tables, columns, import/export.\n";
 }
@@ -673,63 +638,177 @@ QStringList QtiSasAiContent::baselineDocTopics() const
     return {"ai", "app"};
 }
 
-QString QtiSasAiContent::splitPlanPreflightPrompt(const QString &requestText) const
+QString QtiSasAiContent::splitPlanPreflightPrompt(const QString &requestText, bool docsIntegrated) const
 {
+    // Rewritten as a numbered, priority-ordered rule list (was prose paragraphs) plus a
+    // draft/check/final two-stage answer format — confirmed live via direct, isolated testing
+    // against the raw model (bypassing this whole app), not just reasoned about:
+    //
+    // - The ORIGINAL prose-paragraph prompt reproducibly degenerated into repetition-loop
+    //   garbage on this exact request — either identical lines repeated verbatim dozens of
+    //   times, or a small set of ~9 phrasings cycled through repeatedly — confirmed to be a
+    //   general model/decoding weakness (reproduced on a completely unrelated, non-QtiSAS prompt
+    //   too: "list party-planning tasks" degenerated identically), NOT something specific to this
+    //   prompt's own wording.
+    // - Two DIFFERENT targeted reactive instructions ("merge neighboring same-DOCS lines",
+    //   "stop immediately if about to repeat the previous line verbatim") were each tried alone
+    //   and had ZERO effect on the loop — confirming this is a decoding-level termination
+    //   failure, not an instruction-comprehension gap that a single added sentence could fix.
+    // - This restructured version (numbered rules + a required self-check pass before the model
+    //   commits to an answer) did NOT reproduce the loop across repeated tests, including on the
+    //   GaussPeak compound multi-topic request (this project's own standing regression case) —
+    //   where the check step visibly caught and fixed a real over-fragmentation (the draft
+    //   separated "fit both models" from "compare chi2/dof" as two parts; the check step
+    //   correctly merged them under rule 3 before finalizing).
+    //
+    // Rules are numbered programmatically below, not hardcoded, because rule 2 (the
+    // Integrated-mode doc-footprint note) only exists in one of the two modes this function
+    // serves — hardcoding "3.", "4.", ... after it would silently mislabel every rule whenever
+    // docsIntegrated is false.
+    QStringList rules;
+    rules << "Split into multiple parts ONLY where doing so gives a genuine benefit: an earlier "
+             "part performs a distinct, already-durable action (creating a table, compiling a "
+             "function, running a fit, producing a graph, applying styling) that a LATER, "
+             "unrelated part doesn't need to redo or risk re-running if it fails.";
+    if (docsIntegrated)
+        // Every OTHER reason above/below to split (durability, retry isolation) still applies
+        // unchanged in Integrated mode — this rule only removes doc-footprint as an ADDITIONAL,
+        // unstated pressure toward more parts. Confirmed by inspection (not a live incident
+        // writeup): DocsMode::Integrated means no part's DOCS field ever attaches anything
+        // regardless of what topics are listed (see AiAssistant::buildSystemPrompt()'s own
+        // Integrated short-circuit), so a model defaulting to its usual "keep each part's doc
+        // surface narrow" caution here is splitting defensively against a cost that was never
+        // actually going to be paid.
+        rules << "No per-topic documentation will be attached to ANY part regardless of its DOCS "
+                 "field — this deployment already has full API knowledge built in. Doc footprint "
+                 "is therefore NOT a reason to split here; decide purely on rule 1, and default "
+                 "to the FEWEST parts that still respect it.";
+    rules << "Do NOT fragment a request that is really one coherent step just to produce more "
+             "parts — e.g. \"create a table and immediately fill it with computed values\" is "
+             "ONE part, not two: filling has no independent value without the creation, and both "
+             "would need to re-run together on any failure regardless. If the whole request is "
+             "already a single coherent step, return exactly one part covering all of it.";
+    rules << "Quick test: if the request already gives an explicit analytical formula (e.g. "
+             "sin(x)*cos(y), x^2+y^2 — anything you could type directly as a plot3D(\"<here>\", "
+             "...) formula string), that formula IS the complete data source — use exactly one "
+             "part that plots straight from it, and do NOT create a table or matrix at all. Never "
+             "precede it with a \"create a table/matrix with x,y,z values\" part: that table would "
+             "be pure dead weight. Only propose a table/matrix-creation part when the request "
+             "instead describes real/measured values, or explicitly names an existing table/"
+             "matrix. Confirmed live, repeatedly, on the identical request: an unrequested table "
+             "got built and manually populated via a loop instead of using the formula directly — "
+             "wasted work every time, even though a version of this exact rule already warned "
+             "against it.";
+    rules << "A graph's (2D or 3D) creation and EVERY piece of its styling/configuration — "
+             "mesh/line style, colors, rotation, scale, axis labels, axis numeric format, legend, "
+             "title, layout — belong in the SAME single part as the creation, no matter how many "
+             "distinct styling actions the request lists. Confirmed live: exactly this happened — "
+             "a request to plot a surface with a specific mesh style, axis labels, and a legend "
+             "was decomposed into 4 parts (create, set mesh style, add axis labels, add legend), "
+             "and the eventual merge just concatenated 3 redundant graph-lookup-then-one-line-"
+             "change scripts instead of the single coherent script this always should have been.";
+    rules << "If two or more parts would need the exact same DOCS topic(s), merge them into ONE "
+             "part instead of listing them separately — never leave two parts with an identical "
+             "DOCS field when nothing else forces them apart under the rules above.";
+    rules << "A single part's description may span MULTIPLE sentences or clauses — a longer, "
+             "multi-sentence description for one part is always preferred over splitting into "
+             "additional parts just to keep each description short.";
+    rules << "Every qualifying detail in the ORIGINAL request — a parenthetical like \"(with "
+             "background)\", a noise/error percentage, an explicit value, a named constraint — "
+             "must survive into whichever part's description covers that action, worded however "
+             "is natural but never dropped for brevity. A part's script is generated from ITS OWN "
+             "description alone, not the original request text, so anything paraphrased away here "
+             "is gone for good by the time code gets written. Confirmed live: \"...a sphere form "
+             "factor (with background) plus 4% Gaussian noise\" produced a part description "
+             "reading \"...for sphere form factor plus 4% Gaussian noise\" — \"(with background)\" "
+             "silently disappeared already at THIS decomposition step, before any code was ever "
+             "generated, and the resulting script predictably never added one.";
+    rules << "A LATER part's script can assume every EARLIER part already ran successfully in "
+             "this same conversation — whatever it created (a table, a compiled function, a "
+             "graph, ...) already exists live — but must look it up BY NAME (table(name), "
+             "graphWindow(name), re-opening a compiled function by name, etc.), never by assuming "
+             "a variable from an earlier part's script is still bound; only printed output "
+             "carries forward between separate script runs, never the Python objects themselves "
+             "(the same rule that already governs EXPLORE rounds).";
+    rules << "Decide and FIX every object name (table, graph, compiled function, ...) HERE, at "
+             "this decomposition step — never leave one to be invented ad hoc when a part's "
+             "script is actually generated later. Name it explicitly in the description of the "
+             "part that CREATES it (e.g. \"create table named '<PlaceholderTable>' with...\", "
+             "\"plot results into a graph named '<PlaceholderGraph>'\"), and repeat that EXACT "
+             "same name in every LATER part's description that reads or references it (e.g. "
+             "\"...add a legend to the '<PlaceholderGraph>' graph\", \"...read the last value "
+             "from table '<PlaceholderTable>'\"). This applies to every kind of named object a "
+             "later part must look up, not just a compiled function name — a name decided "
+             "independently and separately by each part's own script is exactly how mismatches "
+             "happen (one part creating a graph called \"FitResults\", a later part guessing a "
+             "different name for it). The names in THIS rule and the example line below are "
+             "placeholders illustrating the FORMAT only — every actual name you write must come "
+             "from the REQUEST below (or be one you invent because the request left it unnamed), "
+             "never copied from this instruction text or from any example in a loaded doc file. "
+             "Confirmed live: asked for a table explicitly named 'GaussPeak', a decomposition "
+             "instead invented an unrelated table named 'SphereSANS' — the exact placeholder-"
+             "style name this instruction text used to use in this very spot before it was made "
+             "an obvious placeholder — while also completely ignoring the required PART/DOCS "
+             "format below in favor of freeform \"Part 1: ...\" prose.";
+    rules << "A part's DOCS list must include every topic its own script actually calls into — "
+             "not just the topic matching its primary/described action. A part whose job is "
+             "graph styling but which must ALSO read back a value produced by a different "
+             "topic's object (e.g. \"add a legend showing the fitted radius\" needs Fittable's "
+             "f.results(), not just Graph's styling calls) still makes a real API call into that "
+             "other topic, and needs that topic's docs too, or that call is pure guesswork. When "
+             "in doubt, include the topic that PRODUCED a value a later part must read, not only "
+             "the topic that CONSUMES or displays it.";
+    rules << "\"Compile a custom fit function\" needs ONLY compile, never fittable — c.compile() "
+             "calls into Compiler alone; fittable is for a part whose script calls Fittable itself "
+             "(f.configure(), f.fit(), ...). Confirmed live: \"compile two custom fit functions\" "
+             "still got DOCS: compile, fittable for a part whose script never touched Fittable, "
+             "purely from \"fit\" appearing in the wording — that word describes the function's "
+             "eventual USE, not this part's own API calls, and inflated that part's request enough "
+             "to risk a timeout. Naming a function \"fit\"-something is not a Fittable call.";
+    rules << "A part whose script only selects an ALREADY-compiled function BY NAME through "
+             "Fittable (f.configure()/f.setFunction(), then f.fit() or f.simulateCurve()) needs "
+             "ONLY fittable — never compile (selecting by name is not a Compiler call, even though "
+             "an earlier part compiled that function) and never table (a result table fit()/"
+             "simulateCurve() creates automatically is Fittable's own side effect, not this "
+             "script's own Table-API call). Add graph only if the part's own description actually "
+             "asks for a plot — producing or simulating a curve is not, by itself, a request to "
+             "graph it.";
+    rules << "A part whose script only creates/fills/reads a Matrix (setFormula(), calculate(), "
+             "setViewType(), setRainbowColorMap()/setGrayScale(), ...) needs ONLY matrix — never "
+             "table too, even though both are 2D numeric grids. Confirmed live: exactly this "
+             "extra table topic accompanied a part whose script had zero Table-API calls, and the "
+             "generated code called newTable() instead of newMatrix() for a request that explicitly "
+             "asked for a matrix — caught only by a downstream mechanical check, not by this "
+             "decomposition step. Add table only if the part's own description also names a real, "
+             "separate Table action (creating/reading/plotting an actual table), never just because "
+             "a matrix is table-shaped.";
+    rules << QString("Default to the FEWEST parts that still satisfy rules 1-%1.").arg(rules.size());
+
+    QStringList numberedRules;
+    for (int i = 0; i < rules.size(); ++i)
+        numberedRules << QString("%1. %2").arg(i + 1).arg(rules[i]);
+
     return "Split-mode pre-flight: decide whether the request below should be broken into an "
            "ORDERED list of smaller, independently-runnable parts, each generated, reviewed, and "
            "executed as its OWN separate script in sequence — NOT combined into one script — or "
            "whether it is already a single coherent step that shouldn't be fragmented.\n\n"
-           "Split into multiple parts ONLY where doing so gives a genuine benefit: an earlier part "
-           "performs a distinct, already-durable action (creating a table, compiling a function, "
-           "running a fit, producing a graph, applying styling) that a LATER, unrelated part "
-           "doesn't need to redo or risk re-running if it fails. Do NOT fragment a request that is "
-           "really one coherent step just to produce more parts — e.g. \"create a table and "
-           "immediately fill it with computed values\" is ONE part, not two: filling has no "
-           "independent value without the creation, and both would need to re-run together on any "
-           "failure regardless. If the whole request is already a single coherent step, say so by "
-           "returning exactly one part covering all of it.\n\n"
-           "A LATER part's script can assume every EARLIER part already ran successfully in this "
-           "same conversation — whatever it created (a table, a compiled function, a graph, ...) "
-           "already exists live — but must look it up BY NAME (table(name), graphWindow(name), "
-           "re-opening a compiled function by name, etc.), never by assuming a variable from an "
-           "earlier part's script is still bound; only printed output carries forward between "
-           "separate script runs, never the Python objects themselves (the same rule that already "
-           "governs EXPLORE rounds).\n\n"
-           "Decide and FIX every object name (table, graph, compiled function, ...) HERE, at this "
-           "decomposition step — never leave one to be invented ad hoc when a part's script is "
-           "actually generated later. Name it explicitly in the description of the part that "
-           "CREATES it (e.g. \"create table named '<PlaceholderTable>' with...\", \"plot results "
-           "into a graph named '<PlaceholderGraph>'\"), and repeat that EXACT same name in every "
-           "LATER part's description that reads or references it (e.g. \"...add a legend to the "
-           "'<PlaceholderGraph>' graph\", \"...read the last value from table "
-           "'<PlaceholderTable>'\"). This applies to every kind of named object a later part must "
-           "look up, not just a compiled function name — a name decided independently and "
-           "separately by each part's own script is exactly how mismatches happen (one part "
-           "creating a graph called \"FitResults\", a later part guessing a different name for "
-           "it). The names in THIS paragraph and the example line below are placeholders "
-           "illustrating the FORMAT only — every actual name you write must come from the "
-           "REQUEST below (or be one you invent because the request left it unnamed), never "
-           "copied from this instruction text or from any example in a loaded doc file. Confirmed "
-           "live: asked for a table explicitly named 'GaussPeak', a decomposition instead invented "
-           "an unrelated table named 'SphereSANS' — the exact placeholder-style name this "
-           "instruction text used to use in this very spot before it was made an obvious "
-           "placeholder — while also completely ignoring the required PART/DOCS format below in "
-           "favor of freeform \"Part 1: ...\" prose.\n\n"
-           "A part's DOCS list must include every topic its own script actually calls into — not "
-           "just the topic matching its primary/described action. A part whose job is graph "
-           "styling but which must ALSO read back a value produced by a different topic's object "
-           "(e.g. \"add a legend showing the fitted radius\" needs Fittable's f.results(), not just "
-           "Graph's styling calls) still makes a real API call into that other topic, and needs "
-           "that topic's docs too, or that call is pure guesswork. When in doubt, include the "
-           "topic that PRODUCED a value a later part must read, not only the topic that CONSUMES "
-           "or displays it.\n\n"
-           "Answer in EXACTLY this format, one PART per line, nothing else — no numbering prose, "
-           "no markdown, no explanation outside this format:\n"
+           "Follow these rules IN ORDER OF PRIORITY — an earlier rule always wins over a later "
+           "one if they conflict:\n\n" +
+           numberedRules.join("\n\n") +
+           "\n\nAnswer in TWO stages.\n\n"
+           "Stage 1 — DRAFT: write your draft PART/DOCS list, one PART per line, nothing else:\n"
            "PART: <short, self-contained, imperative description of exactly what this part must "
            "accomplish> | DOCS: <comma-separated topic names from the index below this part's "
            "script will need, or \"none\">\n\n"
-           "Example line demonstrating the format ONLY — invent your own description/topics from "
-           "the ACTUAL request below, never reuse this scenario or name:\n"
+           "Stage 2 — CHECK, then FINAL: on a new line write exactly \"---CHECK---\", then "
+           "briefly verify your draft against the numbered rules above (does any line repeat an "
+           "earlier line's action, violate the graph-styling or same-DOCS-merge rules, or "
+           "fragment unnecessarily?). Then write exactly \"---FINAL---\" followed by the "
+           "corrected list if anything needed fixing, or the same list unchanged if it was "
+           "already correct. The FINAL list is the only part that will actually be used — "
+           "everything before it is your own working draft, not the answer.\n\n"
+           "Example demonstrating the format ONLY — invent your own description/topics from the "
+           "ACTUAL request below, never reuse this scenario or name:\n"
            "PART: create table named '<PlaceholderTable>' with 50 rows of x,y data | DOCS: table\n\n"
            "Available topics:\n" +
            docTopicIndex() + "\nRequest:\n" + requestText;
@@ -738,25 +817,34 @@ QString QtiSasAiContent::splitPlanPreflightPrompt(const QString &requestText) co
 QString QtiSasAiContent::docSelectionPreflightPrompt(const QString &requestText) const
 {
     return "Which documentation topics do you need to fulfill the request below? Answer with "
-           "ONLY a comma-separated list of topic names from the index below (say \"all\" if "
-           "genuinely unsure which apply, or \"none\" if this is a question/discussion about "
-           "something already done rather than a new coding/analysis task — none of the API "
-           "reference topics apply to a plain question) — no code, no explanation, nothing "
-           "else.\n\n"
+           "ONLY a comma-separated list of topic names from the index below — base this ONLY on "
+           "the request's own CONCRETE actions (what it actually names creating/reading/"
+           "plotting/fitting/compiling), never on what a vaguely-described PURPOSE might "
+           "eventually need. If part of the request is left unspecified (e.g. \"configures "
+           "analysis defaults\" without saying what those defaults are), that is NOT grounds to "
+           "select more topics defensively — the script for that unspecified part should be a "
+           "minimal placeholder, not real API calls guessing at every topic it might touch, so "
+           "it needs no extra topic's docs either. Confirmed live: a request to create a note "
+           "with a script that \"configures analysis defaults\" (mechanics fully specified: "
+           "auto-exec, active tab; purpose left abstract) selected all seven topics — table, "
+           "matrix, graph, graph3d, note, compile, fittable — when only \"note\" was actually "
+           "needed. Say \"none\" if this is a question/discussion about something already done "
+           "rather than a new coding/analysis task — no code, no explanation, nothing else.\n\n"
            "Available topics:\n" +
            docTopicIndex() + "\nRequest:\n" + requestText;
 }
 
-QString QtiSasAiContent::continuationCheckPreflightPrompt(const QString &newRequestText,
-                                                          const QString &priorRequestText) const
+QString QtiSasAiContent::continuationCheckPreflightPrompt(const QString &newRequestText) const
 {
-    return "The assistant has been working on this task in the current conversation:\n\n" + priorRequestText +
-           "\n\nA new message just arrived:\n\n" + newRequestText +
-           "\n\nDoes the new message CONTINUE the task above (references or builds on the same "
-           "data/objects/goal, e.g. \"now add a legend to that\", \"also plot the residuals\"), or "
-           "is it a NEW, independent task unrelated to it (a different subject, different data, "
-           "no reference back to the task above)? If you cannot tell confidently either way, say "
-           "so honestly rather than guessing.\n\n"
+    return "The conversation above is what has actually happened so far. A new message just "
+           "arrived:\n\n" +
+           newRequestText +
+           "\n\nDoes the new message CONTINUE the ongoing conversation above (references or builds "
+           "on the same data/objects/goal, e.g. \"now add a legend to that\", \"also plot the "
+           "residuals\", or refers to something the conversation above actually created), or is it "
+           "a NEW, independent task unrelated to it (a different subject, different data, no "
+           "reference back to anything above)? If you cannot tell confidently either way, say so "
+           "honestly rather than guessing.\n\n"
            "Answer with EXACTLY one word: CONTINUE, NEW, or UNCLEAR. No explanation, no "
            "punctuation, nothing else.";
 }
@@ -776,8 +864,21 @@ QString QtiSasAiContent::requestSuffix(bool autoRun) const
                "discussion rather than a request to write/run a script, answer it via "
                "one or more scriptPrint(\"...\") calls instead of returning nothing "
                "meaningful.)";
+    // Generate-only mode: the script will be SHOWN, never executed, and neither will anything this
+    // session generated before it. So a resource the request names as existing may genuinely not
+    // exist yet — typically because an earlier, equally unexecuted step was the thing that would
+    // have created it. Saying so here replaces the existence-check round-trip that beginRequest()
+    // now skips in this mode (see its own doc comment for why): the verdict's only useful effect was
+    // to make the script defensive, and stating the situation gets that for free, without executing
+    // anything or spending a call. Confirmed live: a generate-only item wrote
+    // "if n is None: n = newNote(\"Batch\")" unprompted, which is exactly the wanted shape.
     return "\n\n(Answer in plain text if this is a question. "
-           "Return raw Python code only if code was explicitly requested.)";
+           "Return raw Python code only if code was explicitly requested. Nothing in this session "
+           "has been executed — not even scripts shown earlier in this same conversation — so any "
+           "table/matrix/note/graph or compiled function this request names may not exist yet. "
+           "Write code that CREATES it when absent and reuses it when present (e.g. "
+           "\"t = table(name)\" then \"if t is None: t = newTable(name, ...)\"), and never stop or "
+           "report failure merely because a name is missing.)";
 }
 
 QString QtiSasAiContent::apiCallingConventionHint() const
@@ -803,6 +904,206 @@ QString QtiSasAiContent::existenceVerificationFunctionExamples() const
 QString QtiSasAiContent::noOpPrintFunctionName() const
 {
     return "scriptPrint()";
+}
+
+QString QtiSasAiContent::exploreUnavailableNote() const
+{
+    // Deliberately contradicts the corpus head-on and by name: ai-python-api.md's "When EXPLORE is
+    // mandatory" table and its "## For AI: Agentic Explore Mode" section are what the model is
+    // following when it probes, so a vague "you may not need to explore" loses to them. Also gives
+    // it the supported alternative in the same breath — reading live values at run time inside the
+    // action script — because a prohibition with no replacement is what produced scripts that
+    // simply guessed.
+    return "\n\nPROBE ROUNDS ARE NOT AVAILABLE FOR THIS REQUEST. Do NOT return a \"# EXPLORE\" "
+           "script: it will not be executed, no output will come back, and asking for one only "
+           "wastes a round-trip. This overrides the API documentation's own \"Agentic Explore Mode\" "
+           "section and its \"When EXPLORE is mandatory\" table for this request — those describe "
+           "what happens when probing IS available, which it is not here.\n"
+           "Answer directly instead. Where a probe would have told you a live value (whether a "
+           "table/graph/note exists, a function's real parameter names, an existing group or "
+           "template name), write the action script so it reads that value AT RUN TIME and branches "
+           "on what it finds — that is the supported way to handle unknown project state, and it "
+           "needs no separate round-trip. Do not invent a value you would have checked, and do not "
+           "drop part of the task because you could not check it first.";
+}
+
+namespace
+{
+// One requested deliverable: what the REQUEST has to say for this to be expected, what the SCRIPT
+// has to contain for it to count as delivered, and how to name it back to the model.
+//
+// Entries are chosen for a fingerprint that is unambiguous in BOTH directions. Two deliberate
+// omissions, each a real false positive found while calibrating this against a 12-item run:
+//   - a generic "fit" entry: "simulate a curve from it WITHOUT fitting any real data" mentions
+//     fitting in order to exclude it, and would have demanded a fit() call that must not be there;
+//   - "the data" as a plotting deliverable: too generic to distinguish "plot the data" from any
+//     other sentence containing the word.
+// Nothing here fires on 9 of that run's 12 items; the 3 it flags are all genuine.
+struct RequestedDeliverable
+{
+    const char *requestPattern;
+    const char *codePattern;
+    const char *label;
+};
+
+const RequestedDeliverable kRequestedDeliverables[] = {
+    {R"(\bresidual)", R"(residu)", "residuals (no residuals column is read or plotted anywhere)"},
+    {R"(\bfit curve\b)", R"(\baddCurve\b|\binsertCurve\b|\bplot\()",
+     "the fit curve (no addCurve()/insertCurve()/plot() call anywhere)"},
+    {R"(\blegend\b)", R"(\bnewLegend\b|\bshowLegend\b|\blegend\()", "the legend (nothing creates or shows one)"},
+    {R"(\baxis (?:titles?|labels?)\b)", R"(\bset[XYZ]Title\b|\bsetAxisTitle\b|\bset[XYZ]AxisLabel\b)",
+     "the axis titles/labels (none are set)"},
+    {R"(\bminor tick)", R"(MinorTicks)", "the minor tick marks (no minor-tick call)"},
+    // Split from "active tab" below: adding a tab and activating one are different calls, and a
+    // script that only activates the window it already has has not added a tab.
+    {R"(\bscript tab\b)", R"(\baddTab\b|\beditorAt\b)",
+     "the script TAB itself (no addTab()/editorAt() — setText() alone writes into whatever tab already exists)"},
+    {R"(\bactive tab\b)", R"(\baddTab\b|\beditorAt\b|\bactivateWindow\b|\bsetActive)",
+     "keeping it as the ACTIVE tab (nothing activates a tab or window)"},
+    {R"(\bautoexec\b|\beach time the project loads\b|\bwhen the project (?:file )?is opened\b)", R"(\bsetAutoexec\b)",
+     "auto-execution on project load (no setAutoexec() call)"},
+    {R"(\bsimulate\b)", R"(\bsimulateCurve\b)", "the simulated curve (no simulateCurve() call)"},
+    {R"(\bcompile\b)", R"(\.compile\()", "the compile step (no compile() call)"},
+    {R"(\bchi2\b|chi²)", R"(chi2|chi²)", "the chi2/dof report (chi2 is never printed)"},
+    {R"(\bstacked panels?\b|\btwo panels?\b)", R"(\blayer\(2\)|\bnewGraph\([^)]*,\s*2)",
+     "the second stacked panel (only one layer is ever created or used)"},
+    {R"(\brow count\b)", R"(\bnumRows\b)", "the row count (numRows() is never read)"},
+};
+} // namespace
+
+QString QtiSasAiContent::missingRequestedDeliverables(const QString &code, const QString &requestText) const
+{
+    if (code.isEmpty() || requestText.isEmpty())
+        return {};
+    QStringList missing;
+    for (const RequestedDeliverable &d : kRequestedDeliverables)
+    {
+        const QRegularExpression requestRe(QString::fromUtf8(d.requestPattern),
+                                           QRegularExpression::CaseInsensitiveOption);
+        if (!requestRe.match(requestText).hasMatch())
+            continue;
+        const QRegularExpression codeRe(QString::fromUtf8(d.codePattern), QRegularExpression::CaseInsensitiveOption);
+        if (codeRe.match(code).hasMatch())
+            continue;
+        missing << QString::fromUtf8(d.label);
+    }
+    if (missing.isEmpty())
+        return {};
+    // Phrased as an omission to be added, not as a defect to be explained: the failure this catches
+    // is a script that quietly substituted a smaller task, and asking "why" invites a justification
+    // round instead of the missing code.
+    QStringList numbered;
+    for (int i = 0; i < missing.size(); ++i)
+        numbered << QString("%1. %2").arg(i + 1).arg(missing.at(i));
+    return "This script omits " + QString::number(missing.size()) +
+           (missing.size() == 1 ? " thing the request explicitly asked for:\n"
+                                : " things the request explicitly asked "
+                                  "for:\n") +
+           numbered.join("\n") +
+           "\n\nAdd it. If the script guards against a missing object (\"if x is None: report and stop\"), that guard "
+           "is fine — but the branch that DOES the work still has to contain the calls listed above. Do not drop a "
+           "requested deliverable, do not substitute a different action for it, and do not defer it to a later step: "
+           "this script is the only one that will do this task.";
+}
+
+QString QtiSasAiContent::liveEntityFactsNote(const QList<QPair<QString, QStringList>> &facts) const
+{
+    if (facts.isEmpty())
+        return {};
+    QStringList lines;
+    bool anyUnknown = false;
+    bool anyExisting = false;
+    for (const QPair<QString, QStringList> &entry : facts)
+    {
+        if (entry.second.isEmpty())
+        {
+            // Deliberately NOT reported as "does not exist", even though that is what the registries
+            // say right now. This note only reaches a request whose script will be SHOWN and not
+            // run, so "absent" is a claim about a moment that is not the one the script executes in:
+            // the user may run an earlier item's script first, or none of them, or all of them
+            // tomorrow. Stating the absence anyway produced three separate confirmed-live failures
+            // in one run, all of them the model BELIEVING it:
+            //   1. the fact copied into the script as a statement — an unconditional
+            //      scriptPrint("Table 'SAXS_data' does not exist.") at the top of a script that
+            //      would run after an earlier item had created it;
+            //   2. the object recreated from scratch with worse data than the earlier item that
+            //      really owns it produced (a Gaussian standing in for a sphere form factor);
+            //   3. worst, asked only to RESTYLE a missing graph, the script invented an entire
+            //      substitute dataset (a new "SampleData" table of exp(-x) noise) and renamed a
+            //      graph of it, purely to have something to style.
+            // Fighting a belief with prohibitions costs a paragraph and still leaves the belief;
+            // not creating it costs nothing. The one thing the model genuinely needs here — resolve
+            // this at run time, do not spend a round-trip asking — survives intact, and now agrees
+            // with exploreUnavailableNote() instead of pulling against it.
+            anyUnknown = true;
+            lines << "- \"" + entry.first + "\": UNKNOWN — cannot be resolved ahead of time.";
+        }
+        else
+        {
+            // The existing half stays a hard fact, because existence is very nearly monotone: a
+            // session's scripts create and overwrite, they do not delete or rename, so "exists now"
+            // still holds when the script runs while "absent now" does not. This half is also where
+            // the value is — confirmed live, it killed a probe AND the fitFunctions("*sphere*") +
+            // hits[0] guessing for a name the request had already given exactly.
+            //
+            // Kinds are translated out of the internal check vocabulary ("compile"/"fittable") into
+            // what a QtiSAS user would call them, since this text is read, not parsed.
+            anyExisting = true;
+            QStringList readable;
+            for (const QString &kind : entry.second)
+                readable << (kind == "compile"    ? QStringLiteral("compiled function")
+                             : kind == "fittable" ? QStringLiteral("fit function")
+                                                  : kind);
+            lines << "- \"" + entry.first + "\": exists NOW, as: " + readable.join(" and ") + ".";
+        }
+    }
+    QString note = "\n\nPROJECT STATE (read directly from QtiSAS, not guessed):\n" + lines.join("\n");
+    // Each instruction is gated on ITS OWN case actually occurring: telling a model what to do about
+    // an unknown name when nothing is unknown is an invitation to write pointless defensive
+    // branching around an object already known to be there, and the mirror mistake spends context
+    // on a case that cannot arise.
+    if (anyUnknown)
+        note += "\n\nUNKNOWN is the real answer, not a missing lookup: nothing generated in this session "
+                "has been executed yet, so whether such a name exists depends on which earlier scripts "
+                "get run and when. Do not assume it exists, do not assume it is absent, and do not state "
+                "either as a fact in your script. Do not spend a separate round-trip asking — decide it "
+                "AT RUN TIME, inside the script you are writing now: \"t = table(name)\" then \"if t is "
+                "None: t = newTable(name, ...)\", so it works either way. If this request only MODIFIES a "
+                "named object (restyle, add a curve, rename, configure), create just that object when it "
+                "turns out to be absent and then do the requested work — never invent substitute data, a "
+                "stand-in table, or extra objects the request never asked for.";
+    if (anyExisting)
+        note += "\n\nFor any name that exists above: use that object rather than creating another, and do "
+                "not write a script to look it up again. If its kind is not the kind this request needs — "
+                "an existing fit function where the request wants a graph of that name, say — that is a "
+                "name collision, not the object you want: say so plainly, and do not overwrite it.";
+    return note;
+}
+
+QString QtiSasAiContent::exploreModeReminder() const
+{
+    // The purpose line asks for an INTENDED USE, not just a description of what's being checked —
+    // confirmed live (repeatedly, this session): the previous wording's one worked example
+    // ("checking existing groups and previewing a reference model") recurred verbatim across
+    // unrelated requests, and the exploration it labeled routinely had zero effect on the write
+    // action that followed (e.g. EXPLORE prints the real c.groups() list, then setGroup() invents
+    // an unrelated name anyway — twice, even when the printed list was complete). A bare label has
+    // nothing for the next line of code to be held to; stating the use at least makes the model
+    // commit to something concrete before it sees the answer.
+    return "If you need to check real state (an existing table/graph/3D-plot/compiled function's "
+           "actual name, its current parameters, or simply whether something already exists) "
+           "before writing the real script, return a READ-ONLY script whose EXACT first line is "
+           "\"# EXPLORE: <what you need to know, and what you'll do with the answer>\" (e.g. "
+           "\"# EXPLORE: need an existing group name to reuse in setGroup(), instead of inventing "
+           "one\") — state the actual use, not just a label for what's being checked. QtiSAS runs "
+           "it, captures every scriptPrint()/print() call's output, and sends it back to you as "
+           "context — then return the real action script (no EXPLORE marker) using what you just "
+           "confirmed, rather than guessing or repeating a value you assumed before seeing this. An "
+           "EXPLORE script must never create or modify anything (no newTable()/newGraph()/"
+           "newPlot3D()/plot()/addCurve()/compile()/setWindowName(), etc.) — split those calls into "
+           "the action script instead. Not limited to one round: if the output raises a new "
+           "question, return ANOTHER EXPLORE script rather than assuming the action script must "
+           "come next.\n\n";
 }
 
 QString QtiSasAiContent::creationCallExamples() const
@@ -859,6 +1160,12 @@ static bool plot3DCallHasMultipleArgs(const QString &code)
 QString QtiSasAiContent::splitPartScopeViolation(const QString &code, const QString &partDescription,
                                                  const QString &earlierPartsCode) const
 {
+    // Every direction reports, instead of the first one returning immediately: they are
+    // independent scope rules and a script can trip several at once, which previously cost
+    // one retry round per direction. Same "collect all" reasoning detectKnownMistakes() and
+    // runActionScript()'s block already apply; this was the last exclusive layer left.
+    QStringList violations;
+
     // Direction 1 — OVERREACH: a part whose own description names a different job entirely (e.g.
     // "compare fit quality and select the best model") instead builds the ENTIRE plot — a later,
     // separate part's explicit responsibility. Self-review is already told about this exact
@@ -885,7 +1192,7 @@ QString QtiSasAiContent::splitPartScopeViolation(const QString &code, const QStr
         static const QRegularExpression plotKeywordRe(R"(\b(plot|graph|chart|visuali[sz]e|surface|3d|mesh)\w*\b)",
                                                       QRegularExpression::CaseInsensitiveOption);
         if (!plotKeywordRe.match(partDescription).hasMatch())
-            return "This part's own job (\"" + partDescription +
+            violations << "This part's own job (\"" + partDescription +
                    "\") does not mention plotting/graphing, but the script calls "
                    "newGraph()/plot()/plotResults() — that is a DIFFERENT, separate part's "
                    "explicit responsibility (see the full plan restated below). Do not build or "
@@ -916,7 +1223,7 @@ QString QtiSasAiContent::splitPartScopeViolation(const QString &code, const QStr
     {
         static const QRegularExpression fitCallRe(R"(\.\s*(configure|fit)\s*\()");
         if (!fitCallRe.match(code).hasMatch())
-            return "This part's own job (\"" + partDescription +
+            violations << "This part's own job (\"" + partDescription +
                    "\") explicitly requires PERFORMING a fit, but the script never calls "
                    "configure()/fit() anywhere — it only reads pre-existing fitCurve-<model> "
                    "results, as if an earlier part had already fit them. No part in this plan "
@@ -946,15 +1253,38 @@ QString QtiSasAiContent::splitPartScopeViolation(const QString &code, const QStr
     // bare name, self-review sometimes "correcting" it back to a stale "ai/"-prefixed leftover
     // from an earlier session) directly caused a real runtime ValueError several parts later, and
     // burned 6+ EXPLORE rounds tracing it back to this false positive.
+    //
+    // The literal-name check below is only meaningful when a name was actually fixed somewhere in
+    // text to check against. When the user's original request never names the function at all
+    // (e.g. "compile a custom Porod power-law fit function with an adjustable exponent parameter")
+    // the model MUST invent one, and by construction no invented name can appear in a description
+    // that never specified one — the check would then block every possible name, unconditionally.
+    // Confirmed live, severe: exactly this shape blocked a part twice (two different invented
+    // names, "ai/PorodPowerLaw" then "PorodPowerLaw"), exhausted the "same explanation twice in a
+    // row" retry guard, and killed the whole split-mode run.
+    //
+    // So the literal-name requirement is skipped for the FIRST setFunctionName() call only when
+    // the part's own description never names any function at all (no quoted identifier anywhere)
+    // — nothing exists to check an invented name against. Whenever the description DOES name a
+    // specific function (quoted, e.g. "named 'GaussPeakModel'"), the first call is still checked
+    // against it like any other — that's what catches the documented true-positive shape (a
+    // SECOND, extra setFunctionName() call for an unrelated, separately-named function smuggled
+    // into an otherwise correctly single-scoped part); a mismatch on the very first call against
+    // an explicitly named target is just as real a violation.
+    static const QRegularExpression explicitNameInDescriptionRe(R"(['"]([A-Za-z_][A-Za-z0-9_/]*)['"])");
+    const bool descriptionNamesAFunction = explicitNameInDescriptionRe.match(partDescription).hasMatch();
     static const QRegularExpression setFunctionNameRe(R"(setFunctionName\(\s*["']([^"']+)["']\s*\))");
     QRegularExpressionMatchIterator it = setFunctionNameRe.globalMatch(code);
+    int setFunctionNameIndex = 0;
     while (it.hasNext())
     {
         const QString name = it.next().captured(1);
         const QString bareName = name.startsWith("ai/", Qt::CaseInsensitive) ? name.mid(3) : name;
-        if (!partDescription.contains(name, Qt::CaseInsensitive) &&
+        const bool isFirstCompileCall = (setFunctionNameIndex++ == 0);
+        if ((!isFirstCompileCall || descriptionNamesAFunction) &&
+            !partDescription.contains(name, Qt::CaseInsensitive) &&
             !partDescription.contains(bareName, Qt::CaseInsensitive))
-            return "This part's own job (\"" + partDescription +
+            violations << "This part's own job (\"" + partDescription +
                    "\") never mentions the "
                    "function name \"" +
                    name + "\", but the script calls setFunctionName(\"" + name +
@@ -987,7 +1317,7 @@ QString QtiSasAiContent::splitPartScopeViolation(const QString &code, const QStr
     {
         static const QRegularExpression compileCallRe(R"(\.\s*compile\s*\()");
         if (!compileCallRe.match(code).hasMatch())
-            return "This part's own job (\"" + partDescription +
+            violations << "This part's own job (\"" + partDescription +
                    "\") explicitly requires "
                    "COMPILING a function, but the script never calls compile() anywhere. If "
                    "repeated attempts at the Compiler singleton syntax keep failing, the fix is "
@@ -1065,7 +1395,7 @@ QString QtiSasAiContent::splitPartScopeViolation(const QString &code, const QStr
         }
         if (allTokensPresent)
             continue; // every piece of the name traces back to the description, just reordered
-        return "This part's own job (\"" + partDescription +
+        violations << "This part's own job (\"" + partDescription +
                "\") never mentions the window "
                "name \"" +
                name +
@@ -1107,7 +1437,7 @@ QString QtiSasAiContent::splitPartScopeViolation(const QString &code, const QStr
         {
             const QString compiledName = compiledIt.next().captured(1); // e.g. "ai/GaussPeakModel"
             if (configuredName.compare(compiledName.mid(3), Qt::CaseInsensitive) == 0)
-                return "This part configures against \"" + configuredName +
+                violations << "This part configures against \"" + configuredName +
                        "\", but an earlier "
                        "part in THIS conversation already compiled \"" +
                        compiledName +
@@ -1160,7 +1490,7 @@ QString QtiSasAiContent::splitPartScopeViolation(const QString &code, const QStr
                     break;
                 }
             if (!matchesAny)
-                return "This part references \"fitCurve-" + referencedRaw +
+                violations << "This part references \"fitCurve-" + referencedRaw +
                        "\", but no earlier "
                        "part in THIS conversation compiled a function by that name (checked "
                        "against: " +
@@ -1187,7 +1517,7 @@ QString QtiSasAiContent::splitPartScopeViolation(const QString &code, const QStr
     {
         static const QRegularExpression setWindowNameRe(R"(\bsetWindowName\s*\()");
         if (!setWindowNameRe.match(code).hasMatch())
-            return "This part creates a 3D surface via plot3D(...) but never calls "
+            violations << "This part creates a 3D surface via plot3D(...) but never calls "
                    "setWindowName(g3, \"name\") afterward — plot3D()'s creating overloads take no "
                    "name argument, so without setWindowName() this window is permanently unfindable "
                    "by name (plot3D(\"name\") lookup) for any later part that needs to reference it, "
@@ -1230,7 +1560,7 @@ QString QtiSasAiContent::splitPartScopeViolation(const QString &code, const QStr
         {
             const QString name = mlIt.next().captured(1);
             if (nameType.value(name) == "table")
-                return "This part calls matrix(\"" + name + "\"), but \"" + name +
+                violations << "This part calls matrix(\"" + name + "\"), but \"" + name +
                        "\" was created via newTable(...) — a Table, not a Matrix. matrix(\"" + name +
                        "\") always returns None for a non-Matrix name, silently producing broken "
                        "downstream behavior (e.g. plot3D(None, ...) creates an unusable window). "
@@ -1243,7 +1573,7 @@ QString QtiSasAiContent::splitPartScopeViolation(const QString &code, const QStr
         {
             const QString name = tlIt.next().captured(1);
             if (nameType.value(name) == "matrix")
-                return "This part calls existTable(\"" + name + "\")/table(\"" + name + "\"), but \"" + name +
+                violations << "This part calls existTable(\"" + name + "\")/table(\"" + name + "\"), but \"" + name +
                        "\" was created via newMatrix(...) — a Matrix, not a Table. "
                        "existTable() is strictly type-specific and always returns False for a Matrix "
                        "name (there is no existMatrix()) — any logic gated behind this check silently "
@@ -1284,7 +1614,7 @@ QString QtiSasAiContent::splitPartScopeViolation(const QString &code, const QStr
         {
             const QString newName = setIt.next().captured(1);
             if (existingNames.contains(newName))
-                return "This part looks up an EXISTING object via matrix()/table()/note()/"
+                violations << "This part looks up an EXISTING object via matrix()/table()/note()/"
                        "graphWindow() named \"" +
                        newName + "\", then calls setWindowName(..., \"" + newName +
                        "\") — reusing that SAME name for the NEW window it creates. Window names "
@@ -1348,7 +1678,7 @@ QString QtiSasAiContent::splitPartScopeViolation(const QString &code, const QStr
             {
                 const QString name = gwIt.next().captured(1);
                 if (graph3DNames.contains(name))
-                    return "This part calls graphWindow(\"" + name + "\"), but \"" + name +
+                    violations << "This part calls graphWindow(\"" + name + "\"), but \"" + name +
                            "\" is a Graph3D window (named via setWindowName() after plot3D(...), "
                            "or newPlot3D(...)) — graphWindow() is 2D-GraphWindow-ONLY and always "
                            "returns None for a Graph3D name (there is no graphWindow()-equivalent "
@@ -1360,7 +1690,161 @@ QString QtiSasAiContent::splitPartScopeViolation(const QString &code, const QStr
         }
     }
 
-    return {};
+    // Direction 12 — UNDERREACH via plot (mirror image of Direction 1, same failure class as
+    // Directions 2/4): a part whose own description explicitly requires PLOTTING data/a curve/
+    // residuals into a graph instead only re-derives or re-verifies a fact from an earlier part
+    // (e.g. re-reading fitCurve-<model> chi2/dof to confirm which model won) and stops there,
+    // never calling any graph-creating/curve-adding function. Confirmed live: a part described as
+    // "plot winning model's data, fit curve, and residuals into graph 'GaussPeakFit' with two
+    // stacked panels, styled legend, and axis titles" ran a script that only re-read chi2/dof from
+    // both fitCurve tables and printed the winner (again — part 3 already had) — zero graph API
+    // calls despite "graph" being in this part's own DOCS. runActionScript()'s only success gate
+    // is "no exception raised," so this counted as "part done," split-mode moved straight to
+    // requesting the merged script, and the merge step then fabricated an entirely fictional
+    // graph-plotting API (setStackedPanels(), .panel(), setDataCurve(), setLegendOn(), ...) out of
+    // nothing to paper over a part that never actually plotted anything. Deliberately requires
+    // BOTH a plot-verb AND a data/curve/residual noun in the description (not just Direction 1's
+    // broader plot/graph/chart/surface keyword alone) — a legitimate styling-only part like "add a
+    // styled legend and axis titles to graph 'X'" mentions "graph" but not "data"/"curve"/
+    // "residual", and correctly has no reason to call any of these functions itself.
+    static const QRegularExpression plotDataVerbRe(R"(\bplot\w*\b.*\b(data|curve|residual)\w*\b)",
+                                                   QRegularExpression::CaseInsensitiveOption);
+    if (plotDataVerbRe.match(partDescription).hasMatch())
+    {
+        static const QRegularExpression graphActionRe(
+            R"(\b(newGraph|plotResults|newPlot3D|plot3D|insertCurve|addCurve)\s*\(|\bplot\s*\()");
+        if (!graphActionRe.match(code).hasMatch())
+            violations << "This part's own job (\"" + partDescription +
+                              "\") explicitly requires PLOTTING data/a curve/residuals into a graph, but the "
+                              "script never calls newGraph()/plot()/plotResults()/insertCurve()/addCurve() "
+                              "anywhere — it only re-derives or re-prints a fact (e.g. re-reading chi2/dof to "
+                              "confirm the winner) as if plotting were a different part's job or already done. "
+                              "No part in this plan does that on this part's behalf. Actually build the graph "
+                              "here: look up or create it by name, add the required curve(s), and apply the "
+                              "requested styling — do not stop after just re-confirming which model won.";
+    }
+
+    // Direction 13 — UNDERREACH via 3D surface plot (mirror image of Direction 1, same failure
+    // class as Direction 12 above — but Direction 12's own "data/curve/residual" noun requirement
+    // deliberately excludes a pure formula-based 3D surface like "plot 3D surface of
+    // sin(x)*cos(y)...", which has none of those nouns; that narrowness is correct for Direction
+    // 12's own false-positive concern (a styling-only part mentions "graph" but not those nouns)
+    // but leaves this shape uncovered). Confirmed live: a part described "plot 3D surface of
+    // sin(x)*cos(y) ... using filled mesh style" was correctly blocked once for prematurely
+    // adding legend/axis styling (Direction 1's own overreach check), and the retry that followed
+    // didn't produce a corrected surface-plotting script — it abandoned plotting entirely and
+    // called newNote("MyScript") instead, something with zero relation to graphing at all. That
+    // ran without error and was accepted as "part done" — with nothing else in the pipeline
+    // positioned to catch it, since none of Directions 1-12 match a script that does something
+    // unrelated rather than a recognizable plotting mistake. The actual absence of any 3D surface
+    // only surfaced later, when the NEXT part's plot3D(name) lookup returned None.
+    static const QRegularExpression plotSurfaceVerbRe(R"(\bplot\w*\b.*\b(surface|mesh)\w*\b)",
+                                                      QRegularExpression::CaseInsensitiveOption);
+    if (plotSurfaceVerbRe.match(partDescription).hasMatch())
+    {
+        static const QRegularExpression surfaceCreateRe(R"(\b(newPlot3D|plot3D)\s*\()");
+        if (!surfaceCreateRe.match(code).hasMatch())
+            violations << "This part's own job (\"" + partDescription +
+                              "\") explicitly requires PLOTTING a 3D surface, but the script never calls "
+                              "newPlot3D()/plot3D() anywhere — it does something unrelated instead. If an "
+                              "earlier attempt at this part was blocked for a different reason, fix THAT "
+                              "specific issue in the surface-plotting script itself; do not abandon plotting "
+                              "and do something else.";
+    }
+
+    // Direction 14 — UNDERREACH via simulate (mirror image of Direction 2, same failure class):
+    // a part whose own description explicitly requires PERFORMING a Fittable simulation (e.g.
+    // "simulate a curve from the compiled ... function") instead does something ENTIRELY
+    // unrelated — confirmed live, severe: a part described only as "simulate a curve from the
+    // compiled Porod power-law function named 'ai/PorodFit'" (no plotting, no styling mentioned
+    // anywhere in it) instead opened an EXISTING graph window by name and set its title/axis
+    // labels/log-log scale — 100% graph-styling code, zero Fittable calls, not even a botched
+    // attempt at simulating anything. That graph didn't even exist yet at this point in the plan
+    // (a LATER part's own job was to create it), so the only reason this ran without immediately
+    // erroring is that the script's own "if gw is None: scriptPrint(...)" branch caught the
+    // lookup failure and printed a message instead of raising — still accepted as "part done"
+    // with the actual simulation never having happened at all.
+    //
+    // "simulate" (present-tense imperative, this part's OWN job) must be distinguished from
+    // "simulated" (past-tense adjective describing an object an EARLIER part already produced,
+    // e.g. "plot the simulated Porod curve") — the fitVerbRe precedent above already established
+    // this exact verb-vs-adjective distinction is necessary for "fit"/"fitted"; matches only
+    // "simulate(s)" directly followed by its typical object, not the "-d" participle form.
+    static const QRegularExpression simulateVerbRe(R"(\bsimulate[s]?\s+(?:a\s+|the\s+)?curves?\b)",
+                                                   QRegularExpression::CaseInsensitiveOption);
+    if (simulateVerbRe.match(partDescription).hasMatch())
+    {
+        static const QRegularExpression simulateCallRe(
+            R"(\bsimulateCurve\s*\(|selectStage\s*\(\s*["']simulate["']|\.\s*simulate\s*\()");
+        if (!simulateCallRe.match(code).hasMatch())
+            violations << "This part's own job (\"" + partDescription +
+                              "\") explicitly requires PERFORMING a simulation (Fittable.simulateCurve()), "
+                              "but the script never calls selectStage(\"simulate\")/simulateCurve() "
+                              "anywhere — it does something unrelated instead. If an earlier attempt at "
+                              "this part was blocked for a different reason, fix THAT specific issue in the "
+                              "simulate script itself; do not abandon simulating and do something else "
+                              "(e.g. styling a graph another part is responsible for creating).";
+    }
+
+    // Direction 15 — cross-part variable leakage: a part references a name that was only ever
+    // ASSIGNED in an EARLIER part's own script, never in this part's own — split-mode scripts run
+    // as fully separate executions (ai-python-api.md's own "Fresh execution per round" rule), so
+    // nothing a prior part bound to a local variable survives into this one. Confirmed live: part
+    // 3 computed `best_fc`/`best_name` (which of two fits won); part 4 referenced both directly
+    // with no local assignment of either, hitting `NameError: name 'best_fc' is not defined`
+    // identically across multiple retries (the model reordered surrounding code each time without
+    // ever actually defining the name) before the harness gave up. Deliberately scoped to
+    // DISTINCTIVE names (5+ characters, past the common short aliases below) — `t`/`f`/`c`/`g`/
+    // `l1`/`l2`/`m`/`i` are routinely and CORRECTLY reassigned fresh in nearly every part; flagging
+    // those would be pure noise, not a real instance of this mistake.
+    {
+        static const QRegularExpression assignRe(R"((?:\A|\n)\s*(\w{5,})\s*=(?!=))");
+        static const QSet<QString> commonAliasExclusions = {"table", "graph", "layer", "score", "count",
+                                                            "value", "index", "names", "title"};
+        QSet<QString> earlierNames;
+        QRegularExpressionMatchIterator eIt = assignRe.globalMatch(earlierPartsCode);
+        while (eIt.hasNext())
+        {
+            const QString name = eIt.next().captured(1);
+            if (!commonAliasExclusions.contains(name))
+                earlierNames << name;
+        }
+        // Matched against the code with string literals blanked out: a name inside a quoted string
+        // is not a Python variable reference. Confirmed live: "sigma", a fit-parameter name in
+        // setParamNamesAll([...]) and a boilerplate-declared C++ identifier inside setCode(), was
+        // flagged as leaked from an earlier part's Python `sigma = 1.0` — unsatisfiable, since the
+        // parameter is legitimately named sigma, so it blocked twice and ended the whole run.
+        const QString pythonCode = codeWithoutStringLiterals(code);
+        for (const QString &name : std::as_const(earlierNames))
+        {
+            const QRegularExpression usedRe(R"(\b)" + QRegularExpression::escape(name) + R"(\b)");
+            if (!usedRe.match(pythonCode).hasMatch())
+                continue;
+            const QRegularExpression assignedHereRe(R"((?:\A|\n)\s*)" + QRegularExpression::escape(name) +
+                                                    R"(\s*=(?!=))");
+            if (assignedHereRe.match(pythonCode).hasMatch())
+                continue;
+            violations << "This part references \"" + name +
+                              "\", but that name is only ever ASSIGNED in an EARLIER part's script, never in "
+                              "this part's own. Split-mode parts run as fully separate executions — nothing "
+                              "an earlier part bound to a local variable is still bound here, even though its "
+                              "PRINTED output does carry forward. Re-derive \"" +
+                              name +
+                              "\" in this part's own code (e.g. look up the object it refers to by name, or "
+                              "re-read a value this part's own script already printed) instead of assuming "
+                              "it is still bound.";
+        }
+    }
+
+    if (violations.isEmpty())
+        return {};
+    if (violations.size() == 1)
+        return violations.first();
+    QStringList numbered;
+    for (int i = 0; i < violations.size(); ++i)
+        numbered << QString("%1. %2").arg(i + 1).arg(violations.at(i));
+    return "This part's script breaks " + QString::number(violations.size()) +
+           " separate scope rules — fix ALL of them together in one corrected script:\n\n" + numbered.join("\n\n");
 }
 
 bool QtiSasAiContent::isGiveUpFallbackScript(const QString &script) const
@@ -1423,6 +1907,47 @@ QString QtiSasAiContent::selfReviewFalseIncompletenessClaim(const QString &preRe
            "described action, never against a later or different part's responsibility.";
 }
 
+QString QtiSasAiContent::fabricatedConversationCheck(const QString &code) const
+{
+    return fabricatedConversationMistake(code);
+}
+
+QString QtiSasAiContent::fabricatedConversationMistake(const QString &code)
+{
+    // A generated script that role-plays the rest of the exchange: "USER:"/"ASSISTANT:" turns of
+    // its own invention, complete with prompt boilerplate and made-up tool output. Confirmed live
+    // three times, worst case one part's script followed by fabricated parts 3-5 — and then
+    // fabricated parts 3-5 including error messages it lifted from an unrelated earlier fit
+    // (sasviewmodels/sphere's parameter list, reused as a fake error for ai/Gaussian). Only ever
+    // caught incidentally, as a syntax error, which told the model nothing about the real problem.
+    static const QRegularExpression roleMarkerRe(R"(^[ \t]*(USER|ASSISTANT)[ \t]*:)",
+                                                 QRegularExpression::MultilineOption);
+    const QRegularExpressionMatch m = roleMarkerRe.match(codeWithoutStringLiterals(code));
+    if (!m.hasMatch())
+        return {};
+    return "This script contains a \"" + m.captured(1) +
+           ":\" line — you continued the conversation yourself instead of answering this one turn. "
+           "Everything after that marker is invented: prompts you were never sent, scripts that "
+           "never ran, and output/errors that were never produced (they are typically borrowed from "
+           "an unrelated earlier step, so they look real but describe a different object). Return "
+           "ONLY the Python script for the CURRENT request, ending at its last line — no "
+           "\"USER:\"/\"ASSISTANT:\" turns, no simulated results. If you need real output before "
+           "continuing, return a \"# EXPLORE\" script and stop; QtiSAS will run it and send back "
+           "the actual output.";
+}
+
+QString QtiSasAiContent::codeWithoutStringLiterals(const QString &code)
+{
+    // Triple-quoted first, so a setCode("""...""") body is removed whole rather than leaving its
+    // interior exposed by the single-quote pass.
+    static const QRegularExpression tripleRe(R"RX("""[\s\S]*?"""|'''[\s\S]*?''')RX");
+    static const QRegularExpression singleRe(R"RX("(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*')RX");
+    QString out = code;
+    out.replace(tripleRe, " ");
+    out.replace(singleRe, " ");
+    return out;
+}
+
 QString QtiSasAiContent::compiledCodeSelfShadowBug(const QString &code)
 {
     // A Compiler setCode() C++ body redeclares a name by initializing it FROM ITSELF —
@@ -1441,10 +1966,20 @@ QString QtiSasAiContent::compiledCodeSelfShadowBug(const QString &code)
     // hypothesis instead of ever suspecting the compiled function itself, since the compile step
     // itself had reported success.
     static const QRegularExpression selfShadowRe(R"(\bdouble\s+(\w+)\s*=\s*\1\s*;)");
-    const QRegularExpressionMatch m = selfShadowRe.match(code);
-    if (!m.hasMatch())
+    // Every self-shadowed name, not just the first — the aliasing pattern this comes from
+    // (center->x0, width->sigma, scale->A) is applied per parameter, so a body that gets one wrong
+    // can get several wrong the same way.
+    QStringList names;
+    QRegularExpressionMatchIterator shadowIt = selfShadowRe.globalMatch(code);
+    while (shadowIt.hasNext())
+    {
+        const QString n = shadowIt.next().captured(1);
+        if (!names.contains(n))
+            names << n;
+    }
+    if (names.isEmpty())
         return {};
-    const QString name = m.captured(1);
+    const QString name = names.join("\", \"");
     return "The compiled function's C++ code declares `double " + name + " = " + name +
            ";` — a self-referential declaration that reads its own not-yet-initialized value, not "
            "whatever \"" +
@@ -1458,6 +1993,287 @@ QString QtiSasAiContent::compiledCodeSelfShadowBug(const QString &code)
            name +
            "\" as-is everywhere below — it is already a pre-declared "
            "double in scope.";
+}
+
+QString QtiSasAiContent::compilerYNameAssignmentRepair(const QString &code) const
+{
+    // EVERY setCode() in the script, not just the first: confirmed live, a part compiling two
+    // functions had its first body repaired and the second left with "double I = ..." intact.
+    static const QRegularExpression setCodeRe(
+        R"RX(setCode\s*\(\s*(?:"""([\s\S]*?)"""|'''([\s\S]*?)'''|"((?:[^"\\]|\\.)*)"|'((?:[^'\\]|\\.)*)'))RX");
+    QList<QRegularExpressionMatch> codeCalls;
+    QRegularExpressionMatchIterator codeIt = setCodeRe.globalMatch(code);
+    while (codeIt.hasNext())
+        codeCalls << codeIt.next();
+    if (codeCalls.isEmpty())
+        return {};
+
+    // Only when this script states the yName itself — after c.load()/open() it is unknown here.
+    static const QRegularExpression yNameRe(R"(setYName\s*\(\s*["']([^"']+)["'])");
+    const QRegularExpressionMatch yMatch = yNameRe.match(code);
+    if (!yMatch.hasMatch())
+        return {};
+    const QString yName = yMatch.captured(1);
+
+    // Rebuilt back-to-front so each splice cannot shift the offsets of the ones not yet applied.
+    QString repaired = code;
+    bool anyRepair = false;
+    for (int i = static_cast<int>(codeCalls.size() - 1); i >= 0; --i)
+    {
+        const QRegularExpressionMatch &codeCall = codeCalls[i];
+        int bodyGroup = 0;
+        for (int g = 1; g <= 4 && bodyGroup == 0; ++g)
+            if (!codeCall.captured(g).isEmpty())
+                bodyGroup = g;
+        if (bodyGroup == 0)
+            continue;
+        const QString body = codeCall.captured(bodyGroup);
+        const QString fixedBody = repairedSetCodeBody(body, yName);
+        if (fixedBody.isEmpty())
+            continue;
+        repaired.replace(codeCall.capturedStart(bodyGroup), codeCall.capturedLength(bodyGroup), fixedBody);
+        anyRepair = true;
+    }
+    return anyRepair ? repaired : QString();
+}
+
+// Returns `body` with its lone declaration turned into an assignment to yName, or empty when there
+// is nothing to repair here — the per-body half of compilerYNameAssignmentRepair() above.
+QString QtiSasAiContent::repairedSetCodeBody(const QString &body, const QString &yName)
+{
+    // Exactly one declaration, or the intended result variable is a guess. Its declared name may
+    // be the yName itself ("double I = ..." — clang's redefinition) or anything else ("double y =
+    // ..." — silently never assigns yName); both repair to the same assignment.
+    static const QRegularExpression declRe(
+        R"(\b(?:double|float|int|long|short|unsigned|signed|char|bool|auto)\s+([A-Za-z_]\w*)\s*=\s*([^;]+);)");
+    QRegularExpressionMatchIterator it = declRe.globalMatch(body);
+    if (!it.hasNext())
+        return {};
+    const QRegularExpressionMatch decl = it.next();
+    if (it.hasNext())
+        return {};
+    const QString declaredName = decl.captured(1);
+
+    // A declaration whose name is NOT the yName is only the result variable if the body never
+    // assigns yName some other way, and if nothing else reads that local.
+    const QRegularExpression assignRe(R"(\b)" + QRegularExpression::escape(yName) + R"(\s*(?:[+\-*/]?)=(?!=))");
+    if (declaredName != yName && assignRe.match(body).hasMatch())
+        return {};
+    const QRegularExpression usesDeclaredRe(R"(\b)" + QRegularExpression::escape(declaredName) + R"(\b)");
+    int uses = 0;
+    QRegularExpressionMatchIterator useIt = usesDeclaredRe.globalMatch(body);
+    while (useIt.hasNext())
+    {
+        useIt.next();
+        ++uses;
+    }
+    if (uses != 1)
+        return {};
+
+    QString repairedBody = body;
+    repairedBody.replace(decl.capturedStart(), decl.capturedLength(), yName + " = " + decl.captured(2).trimmed() + ";");
+    return repairedBody;
+}
+
+QString QtiSasAiContent::compilerParamCountRepair(const QString &code) const
+{
+    static const QRegularExpression countRe(R"(setParamCount\s*\(\s*(\d+)\s*\))");
+    const QRegularExpressionMatch countMatch = countRe.match(code);
+    if (!countMatch.hasMatch())
+        return {};
+    const int declaredCount = countMatch.captured(1).toInt();
+
+    // Every setParam*All() list present must agree on a length before rewriting the count — if two
+    // lists differ, which one reflects the intent is a guess, so leave it to the runtime error.
+    static const QRegularExpression listRe(R"(setParam(?:Names|Inits|Limits|Varies|Descrs)All\s*\(\s*\[([^\]]*)\])");
+    static const QRegularExpression itemRe(
+        R"(["'][^"']*["']|\btrue\b|\bfalse\b|\bTrue\b|\bFalse\b|-?[\d.]+(?:[eE][-+]?\d+)?)");
+    int agreedLength = -1;
+    QRegularExpressionMatchIterator it = listRe.globalMatch(code);
+    while (it.hasNext())
+    {
+        const QString inner = it.next().captured(1);
+        int items = 0;
+        QRegularExpressionMatchIterator itemIt = itemRe.globalMatch(inner);
+        while (itemIt.hasNext())
+        {
+            itemIt.next();
+            ++items;
+        }
+        if (items == 0)
+            return {};
+        if (agreedLength < 0)
+            agreedLength = items;
+        else if (agreedLength != items)
+            return {};
+    }
+    if (agreedLength < 0 || agreedLength == declaredCount)
+        return {};
+
+    QString repaired = code;
+    repaired.replace(countMatch.capturedStart(), countMatch.capturedLength(),
+                     "setParamCount(" + QString::number(agreedLength) + ")");
+    return repaired;
+}
+
+QString QtiSasAiContent::compilerYNameNeverAssignedMistake(const QString &code)
+{
+    // The boilerplate returns the yName local, so a body that never assigns it returns an
+    // uninitialized value — and this compiles CLEANLY, so nothing downstream catches it.
+    // Confirmed live: after clang rejected "double I = ..." with "redefinition of 'I'", the fix
+    // attempt renamed the variable to "double y = ..." — no redefinition, no error, "compiled
+    // successfully" printed, and I never assigned. Renaming escapes the redeclaration check, so
+    // this one (assignment to yName present or not) is what actually pins the requirement.
+    static const QRegularExpression setCodeRe(
+        R"RX(setCode\s*\(\s*(?:"""([\s\S]*?)"""|'''([\s\S]*?)'''|"((?:[^"\\]|\\.)*)"|'((?:[^'\\]|\\.)*)'))RX");
+    // Every setCode() body, not just the first (see compilerYNameAssignmentRepair()'s own note).
+    QStringList bodies;
+    QRegularExpressionMatchIterator codeIt = setCodeRe.globalMatch(code);
+    while (codeIt.hasNext())
+    {
+        const QRegularExpressionMatch m = codeIt.next();
+        for (int g = 1; g <= 4; ++g)
+            if (!m.captured(g).trimmed().isEmpty())
+            {
+                bodies << m.captured(g);
+                break;
+            }
+    }
+    if (bodies.isEmpty())
+        return {};
+
+    // Only when this script states the yName itself — after c.load()/open() of an existing
+    // function the real yName is unknown here, so staying silent beats a false block.
+    static const QRegularExpression yNameRe(R"(setYName\s*\(\s*["']([^"']+)["'])");
+    const QRegularExpressionMatch yMatch = yNameRe.match(code);
+    if (!yMatch.hasMatch())
+        return {};
+    const QString yName = yMatch.captured(1);
+
+    // Each body separately: one function assigning yName must not excuse another that doesn't.
+    // Confirmed live, a part compiling two functions had only its first body checked.
+    const QRegularExpression assignRe(R"(\b)" + QRegularExpression::escape(yName) + R"(\s*(?:[+\-*/]?)=(?!=))");
+    bool allAssign = true;
+    for (const QString &b : bodies)
+        if (!assignRe.match(b).hasMatch())
+            allAssign = false;
+    if (allAssign)
+        return {};
+
+    return "The setCode() body never assigns to \"" + yName +
+           "\", the dependent variable set by "
+           "setYName(\"" +
+           yName + "\"). The generated function ends with \"return " + yName +
+           ";\", so as written it returns an UNINITIALIZED value on every evaluation — and this "
+           "compiles cleanly, with no error to warn you. Assign the result to \"" +
+           yName + "\" itself: write \"" + yName + " = ...;\". Do NOT declare it (no \"double " + yName +
+           "\" — the boilerplate already declares it), and do NOT rename it to something else: a "
+           "different name is just an unused local, which is exactly this bug.";
+}
+
+QString QtiSasAiContent::compilerRedeclaredReservedNameMistake(const QString &code)
+{
+    // A setCode() body that DECLARES a name the generated boilerplate already provides. Grounded
+    // in the real generator (compile-explorer.cpp makeCPP()): yName is a local `double <yName>;`
+    // inside functionSANS, so redeclaring it is a hard "error: redefinition" — confirmed live with
+    // setYName("I") + `double I = scale * pow(x, -exponent) + background;`. xName, the parameter
+    // names and initNow are file-scope `thread_local static`s and key/ParaM are function
+    // parameters, so declaring those inside the body SILENTLY shadows the real value with no
+    // compiler error at all — the worse variant, and the reason this can't be left to the compiler.
+    static const QRegularExpression setCodeRe(
+        R"RX(setCode\s*\(\s*(?:"""([\s\S]*?)"""|'''([\s\S]*?)'''|"((?:[^"\\]|\\.)*)"|'((?:[^'\\]|\\.)*)'))RX");
+    // Every setCode() body, not just the first (see compilerYNameAssignmentRepair()'s own note).
+    QStringList bodies;
+    QRegularExpressionMatchIterator codeIt = setCodeRe.globalMatch(code);
+    while (codeIt.hasNext())
+    {
+        const QRegularExpressionMatch m = codeIt.next();
+        for (int g = 1; g <= 4; ++g)
+            if (!m.captured(g).trimmed().isEmpty())
+            {
+                bodies << m.captured(g);
+                break;
+            }
+    }
+    if (bodies.isEmpty())
+        return {};
+    const QString body = bodies.join("\n");
+
+    // Reserved names are read from THIS script's own setters, never hardcoded — yName is routinely
+    // "I", "y", "Intensity", ... and the parameter names are arbitrary. An absent setter falls back
+    // to the documented unset default; a name this script never states stays unknown, which only
+    // costs a missed detection (fail-open) instead of risking a false block on a valid script.
+    static const QRegularExpression yNameRe(R"(setYName\s*\(\s*["']([^"']+)["'])");
+    static const QRegularExpression xNameRe(R"(setXName\s*\(\s*["']([^"']+)["'])");
+    const QRegularExpressionMatch yMatch = yNameRe.match(code);
+    const QRegularExpressionMatch xMatch = xNameRe.match(code);
+    const QString yName = yMatch.hasMatch() ? yMatch.captured(1) : QString("f");
+    const QString xName = xMatch.hasMatch() ? xMatch.captured(1) : QString("x");
+
+    QStringList paramNames;
+    static const QRegularExpression paramsAllRe(R"(setParamNamesAll\s*\(\s*\[([^\]]*)\])");
+    static const QRegularExpression quotedItemRe(R"(["']([^"']+)["'])");
+    const QRegularExpressionMatch paramsAll = paramsAllRe.match(code);
+    if (paramsAll.hasMatch())
+    {
+        QRegularExpressionMatchIterator it = quotedItemRe.globalMatch(paramsAll.captured(1));
+        while (it.hasNext())
+            paramNames << it.next().captured(1);
+    }
+    static const QRegularExpression paramOneRe(R"(setParamName\s*\(\s*\d+\s*,\s*["']([^"']+)["'])");
+    QRegularExpressionMatchIterator paramOne = paramOneRe.globalMatch(code);
+    while (paramOne.hasNext())
+        paramNames << paramOne.next().captured(1);
+
+    // Declarations in the body: capture the declarator list between the type keyword and the first
+    // "=" or ";" so both `double I = ...;` and `double a, b;` are covered.
+    static const QRegularExpression declRe(
+        R"(\b(?:double|float|int|long|short|unsigned|signed|char|bool|auto)\s+([^;{}()=]+?)\s*(?:=|;))");
+    QStringList hardCollisions;
+    QStringList silentCollisions;
+    QRegularExpressionMatchIterator decl = declRe.globalMatch(body);
+    while (decl.hasNext())
+    {
+        const QStringList declared = decl.next().captured(1).split(',');
+        for (const QString &raw : declared)
+        {
+            const QString name = raw.trimmed().remove('*').remove('&').trimmed();
+            if (name.isEmpty() || name.contains(' '))
+                continue;
+            if (name == yName)
+            {
+                if (!hardCollisions.contains(name))
+                    hardCollisions << name;
+            }
+            else if (name == xName || name == "initNow" || name == "key" || name == "ParaM" ||
+                     paramNames.contains(name))
+            {
+                if (!silentCollisions.contains(name))
+                    silentCollisions << name;
+            }
+        }
+    }
+    // Silent collisions only — a yName clash is a loud clang "error: redefinition" that self-corrects.
+    if (silentCollisions.isEmpty())
+        return {};
+
+    QString explanation = "The setCode() C++ body declares name(s) the generated function already "
+                          "provides — assign to them, never declare them.\n";
+    if (!hardCollisions.isEmpty())
+        explanation += "- \"" + hardCollisions.join("\", \"") +
+                       "\": this is the dependent variable (yName), "
+                       "already declared as a local by the boilerplate. Declaring it again fails the compile "
+                       "with \"error: redefinition\". Drop the type keyword: write \"" +
+                       hardCollisions.first() + " = ...;\", not \"double " + hardCollisions.first() + " = ...;\".\n";
+    if (!silentCollisions.isEmpty())
+        explanation += "- \"" + silentCollisions.join("\", \"") +
+                       "\": already in scope (the independent "
+                       "variable, a fit parameter, or boilerplate state). Declaring these compiles CLEANLY but "
+                       "silently shadows the real value, so the function computes with an uninitialized local "
+                       "instead of the actual parameter. Use the name(s) directly, with no declaration.\n";
+    explanation += "Intermediate locals of your OWN naming are fine — only these reserved names must not be "
+                   "redeclared.";
+    return explanation;
 }
 
 QString QtiSasAiContent::fitCurveNameReconstructionMismatch(const QString &code)
@@ -1534,6 +2350,74 @@ QString QtiSasAiContent::selfReviewFunctionNameSubstitution(const QString &preRe
            "check, any change here is more likely a hallucinated substitution than a real fix.";
 }
 
+QString QtiSasAiContent::selfReviewCreationNameSubstitution(const QString &preReviewDraft,
+                                                            const QString &postReviewCode) const
+{
+    // Same rationale and shape as selfReviewFunctionNameSubstitution() above, for a different call
+    // family: self-review has no access to the original request text, so the pre-review draft's
+    // name — generated straight from that request — is the only legitimate source of truth. Checks
+    // each creation kind independently (not "the first creation call found overall") since a script
+    // may create more than one kind of object and comparing across kinds would false-match.
+    struct CreationKind
+    {
+        QString noun;
+        QString creationCall;
+    };
+    static const QList<CreationKind> kinds = {
+        {"table", "newTable"}, {"matrix", "newMatrix"}, {"graph", "newGraph"}, {"note", "newNote"}};
+    for (const CreationKind &kind : kinds)
+    {
+        const QRegularExpression creationNameRe(R"(\b)" + kind.creationCall + R"(\s*\(\s*["']([^"']+)["'])");
+        const QRegularExpressionMatch preMatch = creationNameRe.match(preReviewDraft);
+        const QRegularExpressionMatch postMatch = creationNameRe.match(postReviewCode);
+        if (!preMatch.hasMatch() || !postMatch.hasMatch())
+            continue;
+        const QString preName = preMatch.captured(1);
+        const QString postName = postMatch.captured(1);
+        if (preName == postName)
+            continue;
+        return "Self-review changed the " + kind.noun + " name passed to " + kind.creationCall + "() from \"" +
+               preName + "\" to \"" + postName +
+               "\". Self-review runs with no access to the original request text, so it has no "
+               "legitimate basis to alter a creation name the draft already got right — unlike "
+               "checklist items it IS grounded to check, any change here is more likely a "
+               "typo/hallucinated substitution than a real fix.";
+    }
+    return {};
+}
+
+QString QtiSasAiContent::exploreGroupsIgnoredMistake(const QString &code, const QString &exploreOutput) const
+{
+    static const QRegularExpression setGroupRe(R"(\.setGroup\s*\(\s*["']([^"']+)["'])");
+    const QRegularExpressionMatch groupCall = setGroupRe.match(code);
+    if (!groupCall.hasMatch())
+        return {};
+
+    // Only a line that actually looks like a groups() listing counts — "group"/"groups" plus a
+    // bracketed, quoted list on the same line — so an EXPLORE round that checked something
+    // unrelated (params, column names, ...) never gets treated as if it had covered groups.
+    static const QRegularExpression groupsListLineRe(R"((?im)^.*\bgroups?\b.*(\[[^\[\]]*\]).*$)");
+    const QRegularExpressionMatch listLine = groupsListLineRe.match(exploreOutput);
+    if (!listLine.hasMatch())
+        return {};
+
+    static const QRegularExpression quotedItemRe(R"(['"]([^'"]+)['"])");
+    QStringList exploredGroups;
+    QRegularExpressionMatchIterator it = quotedItemRe.globalMatch(listLine.captured(1));
+    while (it.hasNext())
+        exploredGroups << it.next().captured(1);
+
+    const QString chosenGroup = groupCall.captured(1);
+    if (exploredGroups.contains(chosenGroup))
+        return {};
+
+    return "The preceding EXPLORE step printed the real existing groups (" + exploredGroups.join(", ") +
+           ") and this script calls setGroup(\"" + chosenGroup +
+           "\"), which matches none of them. If you meant to reuse an existing group, use one of "
+           "the ones listed above instead. If a new group is genuinely intentional, that's allowed "
+           "— just confirm it, don't repeat a value you invented before you'd seen the real list.";
+}
+
 QString QtiSasAiContent::zeroBasedTableIndexMistake(const QString &code)
 {
     // First-argument (column) position: Table.setCell/cell/cellData/setColumnRole(col, ...) and
@@ -1559,6 +2443,388 @@ QString QtiSasAiContent::zeroBasedTableIndexMistake(const QString &code)
     return {};
 }
 
+QString QtiSasAiContent::scriptPrintMultipleArgumentsMistake(const QString &code)
+{
+    // scriptPrint() takes exactly ONE argument (a str, or None) — unlike Python's built-in
+    // print(), it does not accept multiple comma-separated positional arguments. Confirmed live:
+    // a "label:", value style call survived TWO consecutive error-retries in a row — one retry
+    // dropped the specific occurrence named in the error but left a second, identically-shaped
+    // call untouched elsewhere in the same script, which then failed the same way on the very
+    // next run. A leading quoted string literal immediately followed by a comma, inside
+    // scriptPrint(...)'s parentheses, is the confirmed-live shape of this mistake — a real
+    // single-string argument never has a comma right after its own closing quote.
+    static const QRegularExpression multiArgRe(R"(\bscriptPrint\s*\(\s*(?:"[^"]*"|'[^']*')\s*,)");
+    // EVERY offending call, not just the first: this check's own incident above is precisely a
+    // partial fix — "the first retry dropped one multi-argument call but left another one
+    // untouched, and only the second retry, hitting the identical error again, finally
+    // concatenated". Naming them all lets one round fix all of them.
+    QStringList offenders;
+    QRegularExpressionMatchIterator it = multiArgRe.globalMatch(code);
+    while (it.hasNext())
+    {
+        const QString call = it.next().captured(0);
+        if (!offenders.contains(call))
+            offenders << call;
+    }
+    if (offenders.isEmpty())
+        return {};
+    const QString which = offenders.size() == 1
+                              ? "with more than one argument (" + offenders.first() + "...)"
+                              : QString("with more than one argument in %1 places (%2...) — fix ALL of them")
+                                    .arg(offenders.size())
+                                    .arg(offenders.join("..., "));
+    return "This script calls scriptPrint(...) " + which +
+           " — scriptPrint() takes exactly ONE str (or None) argument, unlike Python's "
+           "built-in print(). This raises TypeError: \"scriptPrint(self, a0: str|None): too "
+           "many arguments\". Concatenate into a single string instead, e.g. "
+           "scriptPrint(\"label: \" + str(value)) — never scriptPrint(\"label:\", value).";
+}
+
+QString QtiSasAiContent::changeFolderNoOpMistake(const QString &code)
+{
+    // changeFolder(folder, force=False) bails out immediately when folder is already the active
+    // one (ApplicationWindow::changeFolder()'s own first check) — activeFolder() always returns
+    // exactly that, so changeFolder(activeFolder()) with no force=True is a guaranteed no-op by
+    // construction, never a real action. The regex requires activeFolder()'s closing paren to be
+    // immediately followed by changeFolder's own closing paren, so an explicit force=True second
+    // argument (a genuinely meaningful call) does not match. Confirmed live: generated as an
+    // attempt to "activate" a just-created Note's tab before relying on autoexec — folders and a
+    // Note's tabs are unrelated, and the call was paired with a scriptPrint() falsely confirming
+    // success for an action that did nothing at all.
+    static const QRegularExpression noOpRe(R"(\bchangeFolder\s*\(\s*activeFolder\s*\(\s*\)\s*\))");
+    QRegularExpressionMatch m = noOpRe.match(code);
+    if (m.hasMatch())
+        return "This script calls changeFolder(activeFolder()) — changeFolder() bails out "
+               "immediately whenever the folder given is already the active one, and "
+               "activeFolder() always returns exactly that folder, so this call is a guaranteed "
+               "no-op that does nothing at all, every time. It is never a real way to \"activate\" "
+               "anything — folders and a window's own state (e.g. a Note's active tab) are "
+               "unrelated. Remove this line entirely; if a tab genuinely needs to be the active "
+               "one, only addTab() makes a new tab active on creation — there is no way to "
+               "reactivate an existing tab afterward.";
+    return {};
+}
+
+QString QtiSasAiContent::tableCellRowColSwapMistake(const QString &code)
+{
+    // Table's setCell/setCellData/cell/text all take (col, row) — the opposite of Matrix's
+    // (row, col) (see zeroBasedTableIndexMistake()'s doc comment on that same asymmetry) and of
+    // the "loop over rows" intuition that carries the Matrix habit over. Confirmed live: a
+    // table-fill script wrote t.setCell(i+1, 1, q[i]) / t.setCell(i+1, 2, ...) / t.setCell(i+1, 3,
+    // ...) inside a "for i in range(100):" loop — i+1 (the ROW) landed in the COLUMN position and
+    // a literal column index (1/2/3) landed in the ROW position. table-python-api.md's own
+    // (col, row) rule was already present THREE separate times in this exact call's retrieved
+    // context (a warning banner, an inline note, and a dedicated "Rule 1" mistake entry) and still
+    // didn't prevent it — a documentation-only fix isn't reliable enough here.
+    //
+    // Heuristic, not a proof, so deliberately narrowed twice to keep false positives rare:
+    // (1) the receiver must be a variable this same script assigned from table()/newTable()/
+    // currentTable() — cell()/text() are also Matrix methods with the OPPOSITE (row, col) order,
+    // so without this a genuinely correct Matrix call (row-loop variable first, on purpose) would
+    // get mechanically "corrected" into a real bug instead of catching one.
+    // (2) even restricted to Table, this still can't know which axis a loop variable represents —
+    // "for col in range(1, ncols+1): t.setCell(col, 5, value)" (looping over columns with a fixed
+    // row) matches the identical shape and is correct. Accepted anyway: QtiSAS tables are
+    // row-heavy/column-sparse by construction (see table-python-api.md's own fill examples), so
+    // looping over columns instead of rows is a rare pattern in practice, and the explanation
+    // below tells the model to leave the call alone if that's genuinely what it's doing.
+    static const QRegularExpression tableVarRe(R"(\b(\w+)\s*=\s*(?:table|newTable|currentTable)\s*\()");
+    QSet<QString> tableVars;
+    QRegularExpressionMatchIterator tableVarIt = tableVarRe.globalMatch(code);
+    while (tableVarIt.hasNext())
+        tableVars.insert(tableVarIt.next().captured(1));
+    if (tableVars.isEmpty())
+        return {};
+
+    static const QRegularExpression loopVarRe(R"(\bfor\s+(\w+)\s+in\s+range\()");
+    QSet<QString> loopVars;
+    QRegularExpressionMatchIterator loopVarIt = loopVarRe.globalMatch(code);
+    while (loopVarIt.hasNext())
+        loopVars.insert(loopVarIt.next().captured(1));
+    if (loopVars.isEmpty())
+        return {};
+
+    static const QRegularExpression callRe(
+        R"(\b(\w+)\.(setCell|setCellData|cell|text)\s*\(\s*(\w+)(?:\s*[+\-]\s*\d+)?\s*,\s*(\d+)\s*[,)])");
+    QRegularExpressionMatchIterator callIt = callRe.globalMatch(code);
+    while (callIt.hasNext())
+    {
+        const QRegularExpressionMatch m = callIt.next();
+        if (!tableVars.contains(m.captured(1)) || !loopVars.contains(m.captured(3)))
+            continue;
+        const QString method = m.captured(2);
+        const QString loopVar = m.captured(3);
+        const QString colLiteral = m.captured(4);
+        return "This script calls " + m.captured(1) + "." + method + "(" + loopVar + ", " + colLiteral +
+               ", ...) — a for-loop variable (\"" + loopVar +
+               "\") as the FIRST argument and a bare "
+               "integer literal as the SECOND. Table's cell methods take (col, row), so a row-loop "
+               "variable belongs in the SECOND position, not the first. If this loop iterates rows "
+               "(the common case), swap the arguments — the column should be the small literal, the "
+               "loop variable the row: " +
+               m.captured(1) + "." + method + "(" + colLiteral + ", " + loopVar + ", ...) — not " + m.captured(1) +
+               "." + method + "(" + loopVar + ", " + colLiteral +
+               ", ...). (If this loop genuinely iterates columns instead, this call is "
+               "already correct and can be left as-is.)";
+    }
+    return {};
+}
+
+QString QtiSasAiContent::compilerSetCodeNestedFunctionMistake(const QString &code)
+{
+    // setCode(text) sets ONLY the body snippet inserted into an already-open function
+    // (compile-explorer.cpp's saveAsCPP(): emits "extern \"C\" ... double functionSANS(...) { "
+    // + setCode()'s text + " ... return <yName>; }" verbatim — confirmed directly against that
+    // generator, not just the doc's own claim). A [code] snippet that itself contains a full
+    // "TYPE NAME(args) { ... }" function definition is therefore always a C++ "function
+    // definition is not allowed here" error — C++ has no nested named function definitions.
+    // Confirmed live: setCode("double Iq(double q, ...) { return ...; }") instead of assigning
+    // directly to the pre-declared dependent variable (e.g. "f = ...;"), apparently pattern-
+    // matching a SasView-style standalone Iq(q, params...) function instead of this API's
+    // "assign, don't declare" contract. Legitimate ONLY inside setIncludedFunctions() (a separate
+    // insertion point outside functionSANS entirely) — never inside setCode().
+    static const QRegularExpression nestedFunctionRe(
+        R"(\b(?:double|float|int|void|bool)\s+\w+\s*\([^;{}]*\)\s*\n?\s*\{)");
+
+    static const QRegularExpression inlineRe(R"re(\.setCode\s*\(\s*(?:"""(.*?)"""|'''(.*?)''')\))re",
+                                             QRegularExpression::DotMatchesEverythingOption);
+    QRegularExpressionMatchIterator inlineIt = inlineRe.globalMatch(code);
+    while (inlineIt.hasNext())
+    {
+        const QRegularExpressionMatch m = inlineIt.next();
+        const QString text = m.captured(1).isEmpty() ? m.captured(2) : m.captured(1);
+        if (nestedFunctionRe.match(text).hasMatch())
+            return "This script's setCode(...) argument contains a full C++ function definition "
+                   "(\"TYPE NAME(args) { ... }\") — setCode() only sets the BODY inserted inside "
+                   "the already-open functionSANS(), so a nested function definition there raises "
+                   "\"function definition is not allowed here\". Assign directly to the dependent "
+                   "variable instead (whatever setYName() was given, or the unset default \"f\") — "
+                   "no signature, no braces, no return statement, e.g. "
+                   "\"f = scale * exp(-0.5 * pow((x - center) / sigma, 2.0)) + background;\", not a "
+                   "standalone \"double Iq(...) { return ...; }\" definition.";
+    }
+
+    QHash<QString, QString> stringVars;
+    static const QRegularExpression varAssignRe(R"re(\b(\w+)\s*=\s*(?:"""(.*?)"""|'''(.*?)'''))re",
+                                                QRegularExpression::DotMatchesEverythingOption);
+    QRegularExpressionMatchIterator varIt = varAssignRe.globalMatch(code);
+    while (varIt.hasNext())
+    {
+        const QRegularExpressionMatch m = varIt.next();
+        stringVars.insert(m.captured(1), m.captured(2).isEmpty() ? m.captured(3) : m.captured(2));
+    }
+    static const QRegularExpression setCodeVarRe(R"(\.setCode\s*\(\s*(\w+)\s*\))");
+    QRegularExpressionMatchIterator refIt = setCodeVarRe.globalMatch(code);
+    while (refIt.hasNext())
+    {
+        const QString varName = refIt.next().captured(1);
+        if (stringVars.contains(varName) && nestedFunctionRe.match(stringVars.value(varName)).hasMatch())
+            return "The string assigned to \"" + varName + "\" and passed to setCode(" + varName +
+                   ") contains a full C++ function definition (\"TYPE NAME(args) { ... }\") — "
+                   "setCode() only sets the BODY inserted inside the already-open functionSANS(), "
+                   "so a nested function definition there raises \"function definition is not "
+                   "allowed here\". Assign directly to the dependent variable instead (whatever "
+                   "setYName() was given, or the unset default \"f\") — no signature, no braces, "
+                   "no return statement.";
+    }
+    return {};
+}
+
+QString QtiSasAiContent::compilerFittableOnlyMethodMistake(const QString &code)
+{
+    // setParamLimits(name, min, max) and setParamShared(name, shared)/paramShared(name) are real,
+    // correctly-shaped methods — but only on Fittable (fittable18 in qtimod.sip), never on
+    // Compiler (compile18) — confirmed against the SIP class boundary directly, not just the
+    // docs. Compiler's own limits API is entirely different in both name AND shape:
+    // setParamLimit(i, "min..max") (per-index, STRING range) or setParamLimitsAll([...]) (bulk,
+    // STRING ranges) — Compiler has no "shared" concept at all. Confirmed live: a script
+    // correctly using Fittable's float-argument setParamLimits()/setParamShared() syntax called
+    // it on a Compiler object instead, and across 3 retries the model just deleted each call
+    // rather than switching to Compiler's real, differently-shaped equivalent.
+    static const QRegularExpression compilerVarRe(R"(\b(\w+)\s*=\s*Compiler\b)");
+    QSet<QString> compilerVars;
+    QRegularExpressionMatchIterator varIt = compilerVarRe.globalMatch(code);
+    while (varIt.hasNext())
+        compilerVars.insert(varIt.next().captured(1));
+    if (compilerVars.isEmpty())
+        return {};
+
+    static const QRegularExpression callRe(R"(\b(\w+)\.(setParamShared|paramShared|setParamLimits)\s*\()");
+    QRegularExpressionMatchIterator callIt = callRe.globalMatch(code);
+    while (callIt.hasNext())
+    {
+        const QRegularExpressionMatch m = callIt.next();
+        if (!compilerVars.contains(m.captured(1)))
+            continue;
+        const QString receiver = m.captured(1);
+        const QString method = m.captured(2);
+        if (method == "setParamLimits")
+            return "This script calls " + receiver +
+                   ".setParamLimits(...) — setParamLimits(name, "
+                   "min, max) is real, but only on Fittable, never on Compiler. Compiler's own "
+                   "limits API is a different shape entirely: setParamLimit(i, \"min..max\") "
+                   "(per-index, a STRING range like \"0..100\" or \"0..\") or "
+                   "setParamLimitsAll([...]) (bulk, a list of those same range strings) — raw "
+                   "float arguments raise TypeError on Compiler's setParamLimitsAll, and "
+                   "setParamLimits itself doesn't exist there at all.";
+        return "This script calls " + receiver + "." + method + "(...) — " + method +
+               "(name, "
+               "...) is real, but only on Fittable, never on Compiler; Compiler has no \"shared "
+               "parameter\" concept at all. If parameter sharing is genuinely needed, it belongs "
+               "on the Fittable object used later for fitting, not on Compiler.";
+    }
+    return {};
+}
+
+QString QtiSasAiContent::setParamNamesMissingAllMistake(const QString &code)
+{
+    // setParamNames(...) (plural, no "All") doesn't exist on Compiler OR Fittable — the only real
+    // bulk name-setter is setParamNamesAll(names) (Compiler; Fittable has no bulk name-setter
+    // concept at all, since it reuses already-named library parameters). Confirmed live: dropped
+    // entirely across a retry instead of renamed.
+    static const QRegularExpression re(R"(\.setParamNames\s*\()");
+    if (re.match(code).hasMatch())
+        return "This script calls .setParamNames(...) — that method doesn't exist. The real bulk "
+               "name-setter is setParamNamesAll(names) (same list-of-strings argument, matching "
+               "setParamCount()) — never setParamNames() (no \"All\").";
+    return {};
+}
+
+QString QtiSasAiContent::compilerNonexistentMethodMistake(const QString &code)
+{
+    // setFunctionCode() doesn't exist — the real body-setter is setCode(text) (see
+    // compilerSetCodeNestedFunctionMistake()'s doc comment on what it actually does). compile()
+    // takes no name argument at all — its only parameter is compileAll (a bool, defaulting to
+    // False); the function name must already be set via setFunctionName() before calling it.
+    // Confirmed live: both hallucinated together in the same script, with no setFunctionName()
+    // call anywhere and no c.new()/setGroup() either.
+    static const QRegularExpression setFunctionCodeRe(R"(\.setFunctionCode\s*\()");
+    if (setFunctionCodeRe.match(code).hasMatch())
+        return "This script calls .setFunctionCode(...) — that method doesn't exist. The real "
+               "body-setter is setCode(text), and text must be a single assignment to the "
+               "dependent variable (see setCode()'s own doc rules) — never a full function "
+               "definition.";
+
+    static const QRegularExpression compileWithNameRe(R"(\.compile\s*\(\s*["'])");
+    if (compileWithNameRe.match(code).hasMatch())
+        return "This script calls .compile(\"...\") with a function-name argument — compile() "
+               "takes no such argument (its only parameter is compileAll, a bool). Set the "
+               "function name beforehand with setFunctionName(\"...\"), then call compile() with "
+               "no arguments.";
+
+    return {};
+}
+
+QString QtiSasAiContent::compilerSetCodeCppSyntaxMistake(const QString &code)
+{
+    // Two confirmed-live C++-vs-Python mixups inside setCode()'s/setIncludedFunctions()'s text.
+    // (1) "**" is not a C++ operator — "x ** 2" parses as "x * (*2)", dereferencing the integer
+    // literal 2, which raises "indirection requires pointer operand" (compile-python-api.md's own
+    // "no ** operator" rule). (2) ParaM is the raw void* the boilerplate passes to
+    // readParameters()/saveParameters() around the snippet — it is NOT indexable; every declared
+    // parameter is already available by NAME as a plain local, never via ParaM[i]. Confirmed
+    // live: both together raised 5 separate clang errors in the same script (4x "subscript of
+    // pointer to incomplete type 'void'", 1x "indirection requires pointer operand"), surviving 2
+    // rounds unfixed until the retry budget ran out.
+    QStringList candidateTexts;
+
+    static const QRegularExpression inlineRe(
+        R"re(\.set(?:Code|IncludedFunctions)\s*\(\s*(?:"""(.*?)"""|'''(.*?)''')\))re",
+        QRegularExpression::DotMatchesEverythingOption);
+    QRegularExpressionMatchIterator inlineIt = inlineRe.globalMatch(code);
+    while (inlineIt.hasNext())
+    {
+        const QRegularExpressionMatch m = inlineIt.next();
+        candidateTexts << (m.captured(1).isEmpty() ? m.captured(2) : m.captured(1));
+    }
+
+    QHash<QString, QString> stringVars;
+    static const QRegularExpression varAssignRe(R"re(\b(\w+)\s*=\s*(?:"""(.*?)"""|'''(.*?)'''))re",
+                                                QRegularExpression::DotMatchesEverythingOption);
+    QRegularExpressionMatchIterator varIt = varAssignRe.globalMatch(code);
+    while (varIt.hasNext())
+    {
+        const QRegularExpressionMatch m = varIt.next();
+        stringVars.insert(m.captured(1), m.captured(2).isEmpty() ? m.captured(3) : m.captured(2));
+    }
+    static const QRegularExpression setCodeVarRe(R"(\.set(?:Code|IncludedFunctions)\s*\(\s*(\w+)\s*\))");
+    QRegularExpressionMatchIterator refIt = setCodeVarRe.globalMatch(code);
+    while (refIt.hasNext())
+    {
+        const QString varName = refIt.next().captured(1);
+        if (stringVars.contains(varName))
+            candidateTexts << stringVars.value(varName);
+    }
+
+    static const QRegularExpression starStarRe(R"(\*\*)");
+    static const QRegularExpression paraMIndexRe(R"(\bParaM\s*\[)");
+    for (const QString &text : candidateTexts)
+    {
+        if (starStarRe.match(text).hasMatch())
+            return "This script's setCode(...)/setIncludedFunctions(...) text contains \"**\" — "
+                   "C++ has no exponentiation operator; \"x ** 2\" parses as \"x * (*2)\", "
+                   "dereferencing the integer literal 2, which raises \"indirection requires "
+                   "pointer operand\". Use pow(x, 2) or x * x instead.";
+        if (paraMIndexRe.match(text).hasMatch())
+            return "This script's setCode(...) text indexes ParaM directly (e.g. ParaM[0]) — "
+                   "ParaM is the raw void* the boilerplate passes to readParameters()/"
+                   "saveParameters() around the snippet; it is not indexable and raises "
+                   "\"subscript of pointer to incomplete type 'void'\". Every declared parameter "
+                   "is already available by its own NAME as a plain local — use the name "
+                   "directly, never ParaM[i].";
+    }
+    return {};
+}
+
+QString QtiSasAiContent::compilerMissingAiNamespaceMistake(const QString &code)
+{
+    // Every function authored via .new() must be named "ai/<shortName>" (compile-python-api.md's
+    // Rule 6) — never a bare name, and never an existing domain folder that a real library
+    // function might already use or later collide with. Gated on .compile() rather than .new()
+    // itself: confirmed live, every observed script that actually authors a new function calls
+    // setFunctionName()/setCode()/compile() but skips .new() entirely — requiring .new() as the
+    // gate would make this never fire in practice. .compile() together with a bare
+    // setFunctionName() is still a reliable signal of authoring something new, since reusing an
+    // existing library function for fitting never calls setFunctionName() with a fresh name at all.
+    static const QRegularExpression compileCallRe(R"(\.compile\s*\()");
+    if (!compileCallRe.match(code).hasMatch())
+        return {};
+    static const QRegularExpression setFunctionNameRe(R"(\.setFunctionName\s*\(\s*["']([^"']+)["'])");
+    const QRegularExpressionMatch m = setFunctionNameRe.match(code);
+    if (m.hasMatch() && !m.captured(1).startsWith("ai/"))
+        return "This script calls .setFunctionName(\"" + m.captured(1) +
+               "\") then .compile() — "
+               "every function authored this way must be named under the reserved \"ai/\" folder "
+               "(e.g. \"ai/" +
+               m.captured(1) +
+               "\"), never a bare name or an existing domain "
+               "folder (sasviewmodels/, custom/, qtiplot/, ...) that a real library function "
+               "might already use or later collide with.";
+    return {};
+}
+
+QString QtiSasAiContent::hallucinatedPlotDesignationCaseMistake(const QString &code)
+{
+    // Confirmed live: Table.PlotDesignation.x (lowercase, matching the mixed-case xErr/yErr but
+    // guessed for the plain X/Y/Z members too) raised AttributeError — the real members
+    // (table-python-api.md) are an inconsistent-looking mix the model evidently didn't recall
+    // exactly and guessed a "consistent" lowercase variant for instead.
+    static const QStringList validMembers = {"None_", "X", "Y", "Z", "xErr", "yErr", "Label"};
+    static const QRegularExpression usageRe(R"(\bTable\.PlotDesignation\.(\w+))");
+    QRegularExpressionMatchIterator it = usageRe.globalMatch(code);
+    while (it.hasNext())
+    {
+        const QString member = it.next().captured(1);
+        if (!validMembers.contains(member))
+            return "This script references Table.PlotDesignation." + member +
+                   ", which does not exist and raises AttributeError — the real members are "
+                   "exactly Table.PlotDesignation.None_/X/Y/Z/xErr/yErr/Label (X/Y/Z uppercase, "
+                   "xErr/yErr lowercase-prefixed, Label capitalized) — don't guess a case variant "
+                   "of a real member.";
+    }
+    return {};
+}
+
 QString QtiSasAiContent::staleFitStatisticMistake(const QString &code)
 {
     // Confirmed live: a "compare chi2/dof from both fits" part had no memory of an earlier part's
@@ -1567,19 +2833,33 @@ QString QtiSasAiContent::staleFitStatisticMistake(const QString &code)
     // read_characteristic(fc, "chi^2/DoF") search against the real fitCurve-<name> tables — the
     // documented, correct pattern — but the actual action script threw that away and pasted the
     // printed numbers back in as bare literals instead. Got the right answer this time only because
-    // nothing about the underlying data changed between the read and the hardcoding.
-    static const QRegularExpression hardcodedChi2Re(R"(\bchi2\w*\s*=\s*-?\d+\.\d+\b)");
-    if (!hardcodedChi2Re.match(code).hasMatch())
-        return {};
-    if (code.contains(QStringLiteral(".fit(")) || code.contains(QStringLiteral("fitCurve")))
-        return {};
-    return "This script assigns a chi2/dof-named variable a bare hardcoded literal number, with no "
-           ".fit() call or fitCurve-<name> table read anywhere in this script to back it up. "
-           "fittable-python-api.md is explicit that the fitCurve-<name> table is the ONLY reliable "
-           "source for chi2/dof once you're past the part that originally ran the fit — never "
-           "re-derive it from memory or an earlier turn's printed console text. Read it via "
-           "table(\"fitCurve-<name>\") and search for the \"chi^2/DoF\" label by text (or call "
-           "f.fit() again in this exact script) instead of hardcoding the recalled number.";
+    // nothing about the underlying data changed between the read and the hardcoding. ALSO confirmed
+    // live in a script that legitimately calls f.fit()/reads fitCurve-<name> for OTHER variables: a
+    // "winner" variable was assigned a bare hardcoded literal recalled from an earlier turn's
+    // printed output, with no live re-derivation of THAT SPECIFIC variable anywhere in the script —
+    // a real fit() call elsewhere in the same script is not proof this one value is live, so the
+    // check below is scoped per-variable rather than bailing out on any fit()/fitCurve in the file.
+    static const QRegularExpression hardcodedChi2Re(R"(\b(chi2\w*)\s*=\s*-?\d+\.\d+\b)");
+    QRegularExpressionMatchIterator it = hardcodedChi2Re.globalMatch(code);
+    while (it.hasNext())
+    {
+        const QString varName = it.next().captured(1);
+        const QRegularExpression liveAssignRe(
+            "\\b" + QRegularExpression::escape(varName) +
+            R"(\s*(?:,[^=\n]*)?=\s*[^=\n]*(?:\.fit\(|fitCurve|read_val\(|\.results\(\)))");
+        if (liveAssignRe.match(code).hasMatch())
+            continue; // this exact variable IS derived from a live fit round-trip somewhere
+        return "This script assigns \"" + varName +
+               "\" a bare hardcoded literal number, with no "
+               "live .fit()/fitCurve-<name>/.results() assignment to THAT SAME variable anywhere in "
+               "the script — a real fit() call elsewhere in the script for a DIFFERENT variable "
+               "doesn't make this one live. fittable-python-api.md is explicit that the "
+               "fitCurve-<name> table (or a fresh f.fit() call) is the ONLY reliable source for "
+               "chi2/dof once you're past the part that originally ran the fit — never re-derive it "
+               "from memory or an earlier turn's printed console text. Assign \"" +
+               varName + "\" from a live read instead of hardcoding the recalled number.";
+    }
+    return {};
 }
 
 QString QtiSasAiContent::missingLegendCreationMistake(const QString &code)
@@ -1605,6 +2885,51 @@ QString QtiSasAiContent::missingLegendCreationMistake(const QString &code)
            "already have a legend, this silently produces NO legend at all, with no error, even "
            "when one was explicitly requested. Add the newLegend() fallback before styling " +
            varName + ".";
+}
+
+QString QtiSasAiContent::discoveredNameInsteadOfRequestedMistake(const QString &code,
+                                                                 const QString &originalRequestText)
+{
+    // unannouncedModelNameSubstitution() below only matches a LITERAL configure("name") argument,
+    // so a name DERIVED from a wildcard search and passed as a variable escapes it. Confirmed
+    // live: the request named "sasviewmodels/sphere" (already verified EXISTS by the existence
+    // check), and the script ran fitFunctions("*sphere*"), took hits[0], and fitted
+    // "Core-Shell-Sphere-ShellPD-GH-5pt" instead — caught only three rounds later, once the wrong
+    // name had been hardcoded. This blocks the derivation itself, before the wrong model is fitted.
+    static const QRegularExpression quotedThenModelRe(
+        R"re("([A-Za-z][\w/-]*)"\s+(?:[a-zA-Z-]+\s+){0,3}(?:model|function)\b)re");
+    static const QRegularExpression modelThenQuotedRe(
+        R"re(\b(?:model|function)\s+(?:named\s+|called\s+)?"([A-Za-z][\w/-]*)")re");
+    QRegularExpressionMatch m = quotedThenModelRe.match(originalRequestText);
+    if (!m.hasMatch())
+        m = modelThenQuotedRe.match(originalRequestText);
+    if (!m.hasMatch())
+        return {};
+    const QString requestedName = m.captured(1);
+
+    // Naming it anywhere at all is enough to stay silent — fail open rather than risk blocking a
+    // script that legitimately mentions the requested name.
+    if (code.contains("\"" + requestedName + "\"") || code.contains("'" + requestedName + "'"))
+        return {};
+
+    static const QRegularExpression wildcardSearchRe(
+        R"(\.(?:fitFunctions|functionNames)\s*\(\s*["'][^"']*\*[^"']*["'])");
+    if (!wildcardSearchRe.match(code).hasMatch())
+        return {};
+
+    static const QRegularExpression configureVarRe(R"(\.(?:configure|setFunction)\s*\(\s*(?!["'])[A-Za-z_])");
+    if (!configureVarRe.match(code).hasMatch())
+        return {};
+
+    return "The request names \"" + requestedName +
+           "\" explicitly, but this script never uses that name — it runs a wildcard "
+           "fitFunctions()/functionNames() search and configures whatever the search happened to "
+           "return. A pattern search returns UNRELATED models whose names merely share a word "
+           "(e.g. \"*sphere*\" matches core-shell and polydisperse variants), so this silently "
+           "fits a different model than the one asked for. Use \"" +
+           requestedName +
+           "\" verbatim in configure(). If you genuinely believe it does not exist, say so "
+           "explicitly instead of substituting a search result for it.";
 }
 
 QString QtiSasAiContent::unannouncedModelNameSubstitution(const QString &code, const QString &originalRequestText)
@@ -1657,11 +2982,224 @@ QString QtiSasAiContent::unannouncedModelNameSubstitution(const QString &code, c
            requestedName + "\" verbatim if it does exist.";
 }
 
+QString QtiSasAiContent::reuseInsteadOfCompileMistake(const QString &code, const QString &originalRequestText,
+                                                      const QString &earlierPartsCode)
+{
+    // Confirmed live TWICE, independently, for two different physics targets (a sphere form
+    // factor, and separately a Gaussian/Lorentzian peak pair): asked to "compile a custom fit
+    // function," EXPLORE finds a coincidentally-matching name already sitting in the workspace
+    // from an earlier session/attempt — Compiler.functionNames() AND Fittable.fitFunctions() BOTH
+    // listing it is genuine evidence a working compiled function currently exists under that name —
+    // and the action script configures/fits it directly, with no c.compile() call anywhere.
+    // Existence in both interfaces proves a PRECONDITION ("a compiled function exists"), but
+    // "compile X" is an imperative action that was actually requested, not a precondition to
+    // verify — it should always produce a live compile() call in the executed script: c.open(name)
+    // then compile() if the name already exists (re-affirms it's genuinely compiled right now,
+    // rather than trusting a leftover that could be stale or, per the first incident, not actually
+    // working despite the FIF existing), or the full c.new()/.../compile() sequence if it doesn't.
+    // Request-text-gated: only fires when "compile" was actually asked for — a request that only
+    // asks to FIT an existing/library function is correctly exempt.
+    //
+    // Confirmed live a THIRD time, downstream of this exact check: this explanation used to name
+    // only setFunctionName()/setGroup()/setCode()/compile() for the "doesn't exist yet" branch,
+    // omitting the parameter-setup calls entirely. Blocks like this one route through the SAME
+    // no-fresh-docs retry path as a runtime error (AiAssistant::runActionScript() calls
+    // ask(..., false) for every entry in errContext, including this one) — so this string is the
+    // ONLY grounding the corrective round gets, not a substitute for docs it can fall back on. The
+    // gap got filled with a plausible-but-nonexistent `c.addParameter(name, init, varies, min,
+    // max)` — a single consolidated call other fitting libraries do have, QtiSAS does not. Spelling
+    // out every required call closes exactly that gap; see compile-python-api.md's own minimal
+    // create-and-compile flow for the authoritative version this mirrors.
+    static const QRegularExpression requestedCompileRe(R"(\bcompile\b)", QRegularExpression::CaseInsensitiveOption);
+    if (!requestedCompileRe.match(originalRequestText).hasMatch())
+        return {};
+    static const QRegularExpression compileCallRe(R"(\.compile\s*\()");
+    if (compileCallRe.match(code).hasMatch())
+        return {};
+    // Split-mode: an EARLIER part in the SAME plan may have already compiled the function THIS
+    // part now just fits/plots — that's the intended division of labor (e.g. "part 2: compile the
+    // models", "part 3: fit them and compare"), not a violation. `originalRequestText` is the
+    // WHOLE multi-part request and still says "compile" regardless of which part actually does it,
+    // so without this guard this check would wrongly block every later part that correctly reuses
+    // what an earlier part already built — forcing a redundant recompile, or worse, scolding a
+    // legitimately correct later part into "fixing" something that was never broken. Deliberately
+    // coarse (ANY compile() call in ANY earlier part exempts THIS part entirely, not just a
+    // same-named one) — false negatives here are low-risk (a genuinely wrong later part with truly
+    // no compile anywhere in the plan still gets caught), while false positives actively harm a
+    // correct split-mode plan. Empty (and therefore never matching) outside split mode.
+    if (compileCallRe.match(earlierPartsCode).hasMatch())
+        return {};
+    static const QRegularExpression configuresOrFitsRe(R"(\.(?:configure|setFunction)\s*\(\s*["'])");
+    if (!configuresOrFitsRe.match(code).hasMatch())
+        return {};
+    return "The request explicitly asked to COMPILE a custom fit function, but this script never "
+           "calls Compiler.compile() anywhere — it goes straight to Fittable.configure()/"
+           "setFunction() against a name that happens to already exist in the workspace (likely a "
+           "leftover from an earlier session/attempt). Finding the name in both "
+           "Compiler.functionNames() and Fittable.fitFunctions() proves a working compiled function "
+           "currently exists, but 'compile X' is an action that was requested, not a precondition "
+           "to verify — call c.compile() in this script regardless. If the name already exists: "
+           "c.open(name); c.compile(). If it doesn't (or you're authoring genuinely new code): "
+           "c.new(); c.setFunctionName(name); c.setGroup(group); c.setYName(yname); "
+           "c.setXName(xname); c.setParamCount(n); c.setParamNamesAll([...]); "
+           "c.setParamInitsAll([...]); c.setParamLimitsAll([...]); c.setParamVariesAll([...]); "
+           "c.setCode(...); ok = c.compile() — EVERY one of these calls is required, not just "
+           "setCode()+compile(); there is no single consolidated 'add a parameter' call (no "
+           "addParameter()/addParam() method exists) — parameter count, names, inits, limits, and "
+           "vary-flags are five SEPARATE bulk-setter calls, each taking a same-length list.";
+}
+
+QString QtiSasAiContent::requestedCreationNeverHappenedMistake(const QString &code, const QString &originalRequestText,
+                                                               const QString &earlierPartsCode)
+{
+    // Confirmed live: a request "Create a table \"SAXS_data\" with 3 columns Q, I, dI and fill it
+    // with synthetic small-angle-scattering intensities for a sphere form factor plus 3% Gaussian
+    // noise" ran as a SINGLE part (correctly — this genuinely is one coherent step). EXPLORE
+    // correctly found the built-in "SimpleSphere" model, but the ACTION script that followed was
+    // just "import random; c.open(\"SimpleSphere\"); scriptPrint(str(c.paramNames()))" — it ran
+    // without error and was accepted as "part done," yet table "SAXS_data" was never created, no
+    // intensities were ever computed, and the imported `random` module was never actually called.
+    // None of the request's three actual requirements happened at all. Unlike
+    // isGiveUpFallbackScript() (a single bare scriptPrint() line), this script has several real,
+    // successfully-running API calls — it just does nothing relevant to what was asked, a distinct
+    // "elaborate no-op" shape that check's narrow one-line heuristic can't catch.
+    //
+    // Mirrors reuseInsteadOfCompileMistake()'s split-mode safety immediately above: originalRequestText
+    // is always the WHOLE (possibly multi-part) request, so a LATER part correctly reusing an
+    // object an EARLIER part already created must stay exempt — checked via earlierPartsCode the
+    // same way. Deliberately requires "create" and the object noun and its quoted name to appear
+    // within a short span of each other (not just anywhere in the same request) — a request that
+    // creates one object and separately just READS an existing, differently-purposed one quoted
+    // elsewhere must not false-trigger on that unrelated quote.
+    struct CreationKind
+    {
+        QString noun;
+        QString creationCall;
+    };
+    static const QList<CreationKind> kinds = {
+        {"table", "newTable"},
+        {"matrix", "newMatrix"},
+        {"graph", "newGraph"},
+        {"note", "newNote"},
+    };
+    for (const CreationKind &kind : kinds)
+    {
+        const QRegularExpression requestedCreateRe(
+            QString(R"(\bcreate\w*\b.{0,30}?\b%1s?\b.{0,20}?["']([^"']+)["'])").arg(kind.noun),
+            QRegularExpression::CaseInsensitiveOption);
+        const QRegularExpressionMatch m = requestedCreateRe.match(originalRequestText);
+        if (!m.hasMatch())
+            continue;
+        const QRegularExpression creationCallRe(R"(\b)" + kind.creationCall + R"(\s*\()");
+        if (creationCallRe.match(code).hasMatch() || creationCallRe.match(earlierPartsCode).hasMatch())
+            continue;
+        return "The request explicitly asks to CREATE a " + kind.noun + " named \"" + m.captured(1) +
+               "\", but this script never calls " + kind.creationCall +
+               "(...) anywhere (and no earlier part in this plan created it either) — it only "
+               "inspects/opens existing objects instead, with nothing that actually creates \"" +
+               m.captured(1) + "\". Add the actual " + kind.creationCall + "(\"" + m.captured(1) +
+               "\", ...) call, then perform the rest of the request against it.";
+    }
+    return {};
+}
+
+QString QtiSasAiContent::hardcodedWinnerWithoutLiveComparisonMistake(const QString &code,
+                                                                     const QString &originalRequestText,
+                                                                     const QString &earlierPartsCode)
+{
+    // Confirmed live in split mode: EXPLORE (round 3) fit both a Gaussian and a Lorentzian peak
+    // model and printed chi2_g=0.926, chi2_l=78.15, winner=ai/GaussianPeak — a COMPUTED CONCLUSION,
+    // not a stable identity. Part 4's action script then hardcoded table("fitCurve-ai/GaussianPeak")
+    // and the legend text "Winner: ai/GaussianPeak" with NO comparison logic anywhere in the script
+    // — it never read chi2/DoF from either fitCurve table and never compared them. This happened to
+    // be correct only because it matched what EXPLORE already found for THIS run's data; against
+    // different noise/seed data where the Lorentzian actually won, the exact same script would
+    // silently plot and label the WRONG model with no error at all. Root cause: each script
+    // execution gets a FRESH Python namespace (EXPLORE's local variables never carry over), so a
+    // computed conclusion is only available to a later part as printed TEXT in history — reusing it
+    // as a literal instead of re-deriving it live is the mistake. Contrast with
+    // reuseInsteadOfCompileMistake: compiling is a durable/idempotent action (once done, permanently
+    // true, so a later part MAY safely skip redoing it), but "which model currently wins" is a
+    // potentially non-durable, data-dependent fact that must be re-checked every time it's acted on
+    // — so this check does the OPPOSITE of that one: it requires live re-derivation rather than
+    // exempting reuse.
+    //
+    // Gate 1 — only fires when the request genuinely asked for a comparison/winner; a split plan
+    // that fits two UNRELATED models across parts for reasons other than picking a winner (e.g.
+    // "part 2: fit a background model, part 3: fit a peak model, part 4: plot the peak model") is
+    // correctly exempt.
+    static const QRegularExpression comparisonRequestedRe(
+        R"(\b(?:compare|comparison|which\s+\w*\s*model|better\s+fit|winner|fits?\s+better)\b)",
+        QRegularExpression::CaseInsensitiveOption);
+    if (!comparisonRequestedRe.match(originalRequestText).hasMatch())
+        return {};
+    // Gate 2 — earlierPartsCode must show evidence 2+ DIFFERENT candidates were genuinely
+    // configured/fit somewhere in this plan. Always empty in non-split mode, so this check can
+    // NEVER fire outside split mode, by construction — no separate mode gate is needed.
+    static const QRegularExpression configuredNameRe(R"(\.(?:configure|setFunction)\s*\(\s*["']([^"']+)["'])");
+    QStringList fittedNames;
+    QRegularExpressionMatchIterator cfgIt = configuredNameRe.globalMatch(earlierPartsCode);
+    while (cfgIt.hasNext())
+    {
+        const QString name = cfgIt.next().captured(1);
+        if (!fittedNames.contains(name))
+            fittedNames << name;
+    }
+    if (fittedNames.size() < 2)
+        return {};
+    // Gate 3 — THIS script references exactly ONE of those candidates via a fitCurve-<name> lookup.
+    // None (not this pattern at all) or 2+ (likely already comparing live itself) both fall through.
+    static const QRegularExpression fitCurveNameRe(R"(fitCurve-([A-Za-z0-9_/\-]+))");
+    QStringList namedInThisScript;
+    QRegularExpressionMatchIterator fcIt = fitCurveNameRe.globalMatch(code);
+    while (fcIt.hasNext())
+    {
+        const QString name = fcIt.next().captured(1);
+        if (!namedInThisScript.contains(name))
+            namedInThisScript << name;
+    }
+    if (namedInThisScript.size() != 1)
+        return {};
+    const QString hardcodedName = namedInThisScript.first();
+    if (!fittedNames.contains(hardcodedName))
+        return {}; // not one of the genuinely-fit candidates from earlier parts — different check's territory
+    // Gate 4 — THIS script itself must not already be doing its own live comparison (the documented
+    // and correct pattern: read both fitCurve-<name> tables' chi^2/DoF and pick dynamically).
+    int configureCallsInThisScript = 0;
+    QRegularExpressionMatchIterator selfCfgIt = configuredNameRe.globalMatch(code);
+    while (selfCfgIt.hasNext())
+    {
+        selfCfgIt.next();
+        ++configureCallsInThisScript;
+    }
+    if (configureCallsInThisScript >= 2)
+        return {};
+    return "This script references \"" + hardcodedName +
+           "\" as the presumed winning model (via "
+           "fitCurve-" +
+           hardcodedName +
+           ") with no live comparison anywhere in THIS script, but an "
+           "earlier part fit multiple candidates (" +
+           fittedNames.join(", ") +
+           ") — evidence a real comparison exists somewhere in this plan. Hardcoding the name "
+           "recalled from an earlier round's printed conclusion is fragile: correct only because it "
+           "happens to match this run's actual result; re-run against different data where a "
+           "different model wins, and this exact script would silently plot and label the WRONG "
+           "model with no error. Re-derive the comparison live in this script instead: read BOTH "
+           "candidates' fitCurve-<name> tables' chi^2/DoF and select dynamically (see "
+           "fittable-python-api.md's worked example for comparing two already-fit models), then use "
+           "the DYNAMICALLY selected table/name, not a hardcoded literal.";
+}
+
 QString QtiSasAiContent::hallucinatedLegendMethodMistake(const QString &code)
 {
     // Confirmed live: a legend-styling script tried .setPen(), then .setShape(), then .setAlign()
     // on the SAME legend variable, one at a time, each caught only by a live AttributeError — none
-    // of the three exist on Legend (SIP PyName for LegendWidget).
+    // of the three exist on Legend (SIP PyName for LegendWidget). Confirmed live again, a second,
+    // unrelated incident: .setPosition() (a generic "typical plotting library" guess for
+    // positioning), plus .setItemCount()/.setItemText() — inventing a per-item, multi-entry
+    // legend-list API that doesn't exist at all; Legend's text is ONE combined string via
+    // setText(str), never per-item.
     static const QRegularExpression legendVarRe(R"(\b(\w+)\s*=\s*\w+\.(?:newLegend|legend)\s*\()");
     QRegularExpressionMatchIterator varIt = legendVarRe.globalMatch(code);
     QStringList legendVars;
@@ -1673,8 +3211,9 @@ QString QtiSasAiContent::hallucinatedLegendMethodMistake(const QString &code)
     }
     for (const QString &varName : legendVars)
     {
-        const QRegularExpression badMethodRe(QRegularExpression::escape(varName) +
-                                             R"(\.(setPen|setShape|setAlign)\s*\()");
+        const QRegularExpression badMethodRe(
+            QRegularExpression::escape(varName) +
+            R"(\.(setPen|setShape|setAlign|setPosition|setItemCount|setItemText)\s*\()");
         const QRegularExpressionMatch m = badMethodRe.match(code);
         if (m.hasMatch())
         {
@@ -1684,8 +3223,17 @@ QString QtiSasAiContent::hallucinatedLegendMethodMistake(const QString &code)
                 realEquivalent = "setFramePen(QPen)/setFrameColor(QColor)/setFrameWidth(float)";
             else if (method == "setShape")
                 realEquivalent = "setFrameStyle(Frame.FrameStyle.Line.value or .Shadow.value)";
-            else
+            else if (method == "setAlign")
                 realEquivalent = "setOriginCoord(x, y) — there is no \"align\" concept at all";
+            else if (method == "setPosition")
+                realEquivalent = "setOrigin(x, y) (pixel coordinates) or setOriginCoord(x, y) "
+                                 "(axis data coordinates) — there is no named-position enum like "
+                                 "Graph.Legend.Position.RightTop";
+            else
+                realEquivalent = "setText(str) with the FULL combined text as one string — there "
+                                 "is no per-item list API (no item count, no indexed item text); "
+                                 "build the whole legend's text yourself, e.g. "
+                                 "setText(\"Data\\nFit\")";
             return "This script calls ." + method +
                    "() on a Legend (LegendWidget) object — this "
                    "method does not exist. graph-python-api.md documents Legend's real API "
@@ -1775,23 +3323,186 @@ QString QtiSasAiContent::conditionalMaximizeWindowMistake(const QString &code)
            varName + ") unconditionally, right after the if/else that gets or creates it.";
 }
 
-QString QtiSasAiContent::existingEntityVerificationPrompt(const QStringList &names) const
+QString QtiSasAiContent::curveExistenceGuardTitleMismatch(const QString &code)
 {
-    QStringList quoted;
-    for (const QString &n : names)
-        quoted << "\"" + n + "\"";
-    return "Before doing anything else, verify whether each of the following name(s) — explicitly "
+    // Confirmed live: a guard like `if not any(l1.curveTitle(i) == "Data" for i in
+    // range(l1.numCurves())): l1.insertCurve(...)` compares against a bare literal/plain
+    // identifier — but curveTitle() has no setter anywhere in this API (no setCurveTitle()
+    // exists), so a curve's title is ALWAYS auto-generated as "<table>_<column>" (confirmed live:
+    // "GaussPeak_y", "fitCurve-ai/GaussPeak_y"). A bare label like "Data" or a bare model-name
+    // variable (e.g. winner == "ai/GaussPeak") can never equal that auto-generated string, so
+    // `not any(...)` is permanently True and insertCurve() runs UNCONDITIONALLY every time this
+    // script executes — silently accumulating duplicate curves on every re-run with no error at
+    // all. Confirmed live: the very next split-mode part's own EXPLORE round printed 4 curves in a
+    // layer that should have held 2, each name duplicated exactly once, directly downstream of
+    // exactly this guard shape.
+    //
+    // A bare identifier RHS is chased back to its LAST assignment before the guard (if any) rather
+    // than judged as-is — a script that legitimately reconstructs the real title and factors it
+    // into a variable first (`expected = t.objectName() + "_y"; ... curveTitle(i) == expected`)
+    // must not be punished just for being one level of indirection removed from the confirmed-live
+    // shape. Still flags the confirmed-live case itself (`winner = "ai/GaussPeakFit"` is, one level
+    // removed, still just a hardcoded literal) and any bare name with no assignment found at all.
+    static const QRegularExpression guardRe(
+        R"((\w+)\.curveTitle\([^()]*\)\s*==\s*([^\n]+?)\s+for\s+\w+\s+in\s+range\(\1\.numCurves\(\)\)\)\s*:)");
+    static const QRegularExpression bareLiteralRe(R"(^["'][^"']*["']$)");
+    static const QRegularExpression bareIdentifierRe(R"(^\w+$)");
+    QRegularExpressionMatchIterator it = guardRe.globalMatch(code);
+    while (it.hasNext())
+    {
+        const QRegularExpressionMatch m = it.next();
+        const QString layerVar = m.captured(1);
+        const QString rhs = m.captured(2).trimmed();
+        // Allow anything that looks like a genuine dynamic reconstruction (concatenation, f-string,
+        // a method call combining a table/model identifier with a column name) — only flag a bare
+        // literal or a bare identifier reference, neither of which can ever match the real
+        // "<table>_<column>" format.
+        const bool isBareLiteral = bareLiteralRe.match(rhs).hasMatch();
+        const bool isBareIdentifier = !isBareLiteral && bareIdentifierRe.match(rhs).hasMatch();
+        if (!isBareLiteral && !isBareIdentifier)
+            continue;
+        if (isBareIdentifier)
+        {
+            // A bare identifier might legitimately hold a properly-reconstructed
+            // "<table>_<column>" value assigned earlier in the script (e.g. `expected =
+            // t.objectName() + "_y"; ... curveTitle(i) == expected`) — chase its LAST assignment
+            // before this guard and judge THAT expression instead of the bare name itself, so a
+            // genuine reconstruction factored into a variable isn't punished just for being one
+            // level removed. Still flags the confirmed-live shape (`winner = "ai/GaussPeakFit"`,
+            // itself just a hardcoded literal one level removed) and any name with no assignment
+            // found at all (nothing grounds it as a real reconstruction either).
+            const QString beforeGuard = code.left(m.capturedStart());
+            const QRegularExpression assignRe(R"(\b)" + QRegularExpression::escape(rhs) + R"(\s*=\s*([^\n]+))");
+            QString lastAssignedExpr;
+            QRegularExpressionMatchIterator aIt = assignRe.globalMatch(beforeGuard);
+            while (aIt.hasNext())
+                lastAssignedExpr = aIt.next().captured(1).trimmed();
+            if (!lastAssignedExpr.isEmpty() && !bareLiteralRe.match(lastAssignedExpr).hasMatch())
+                continue; // assigned via something other than a bare literal — genuine reconstruction
+        }
+        const int guardEnd = static_cast<int>(m.capturedEnd());
+        const QString trailing = code.mid(guardEnd, 200);
+        const QRegularExpression insertRe(R"re(\b)re" + QRegularExpression::escape(layerVar) +
+                                          R"re(\.(?:insertCurve|addCurve)\s*\()re");
+        if (!insertRe.match(trailing).hasMatch())
+            continue;
+        return "This script guards `" + layerVar + ".insertCurve(...)` with `not any(" + layerVar +
+               ".curveTitle(i) == " + rhs + " for i in range(" + layerVar +
+               ".numCurves()))`, but curveTitle() has no setter anywhere in this API — every "
+               "curve's title is ALWAYS auto-generated as \"<table>_<column>\" (confirmed live: "
+               "\"GaussPeak_y\", \"fitCurve-ai/GaussPeak_y\"). A bare literal/identifier like " +
+               rhs +
+               " can never equal that auto-generated string, so this guard is permanently a "
+               "no-op — insertCurve() runs unconditionally every time this script executes, "
+               "silently accumulating duplicate curves on every re-run with no error at all. "
+               "Either compare against the real auto-generated title (the table/curve identifier "
+               "concatenated with the column name), or simply clear all curves unconditionally "
+               "before rebuilding (for i in range(" +
+               layerVar + ".numCurves()): " + layerVar +
+               ".removeCurve(0)) instead of trying to detect which ones already exist.";
+    }
+    return {};
+}
+
+QString QtiSasAiContent::existingEntityVerificationPrompt(const QList<QPair<QString, QStringList>> &names,
+                                                          bool includeDataProbe) const
+{
+    // Group by which check(s) actually apply — empty labels means genuinely unknown (all three).
+    QStringList windowOnly, functionOnly, unknownKind, allQuoted;
+    for (const QPair<QString, QStringList> &entry : names)
+    {
+        allQuoted << "\"" + entry.first + "\"";
+        if (entry.second.isEmpty())
+            unknownKind << entry.first;
+        else if (entry.second.contains("window"))
+            windowOnly << entry.first;
+        else
+            functionOnly << entry.first;
+    }
+    QStringList applicability;
+    for (const QString &n : windowOnly)
+        applicability << "\"" + n + "\": window check ONLY.";
+    for (const QString &n : functionOnly)
+        applicability << "\"" + n + "\": compile+fittable checks ONLY.";
+    for (const QString &n : unknownKind)
+        applicability << "\"" + n + "\": kind unknown — ALL THREE checks.";
+
+    // Only describe a registry's check mechanics when some name actually needs it — otherwise an
+    // unused-but-fully-explained check invites "it's right here, may as well run it too."
+    const bool needsWindow = !windowOnly.isEmpty() || !unknownKind.isEmpty();
+    const bool needsFunction = !functionOnly.isEmpty() || !unknownKind.isEmpty();
+    // Both use an explicit if/else conditional expression, same shape as the VERDICT line below
+    // (which has never shown this bug) — NOT the "A or B for name in LIST" phrasing this replaced,
+    // which reads like a loop/generator, not a membership test, and is a plausible root cause of a
+    // confirmed-live, 100%-reproducible bug: scripts printing BOTH the EXISTS and MISSING line for
+    // the same name instead of exactly one.
+    const QString windowText =
+        "WINDOW — compute window_exists = name in [w.objectName() for w in windows()], then "
+        "scriptPrint(\"(window) EXISTS: \" + name) if window_exists else scriptPrint(\"(window) "
+        "MISSING: \" + name) — exactly ONE of the two, never both. Covers table/matrix/note/graph "
+        "at once (one shared name registry; setWindowName() refuses a name any of them already "
+        "uses). Never call existTable()/matrix()/note()/graphWindow() separately — same check, "
+        "asked four times.";
+    const QString functionText =
+        "COMPILED-FUNCTION — compute compile_exists = name in Compiler.functionNames(\"ALL\") and "
+        "fittable_exists = name in Fittable.fitFunctions(\"*\"), then scriptPrint(\"(compile) "
+        "EXISTS: \" + name) if compile_exists else scriptPrint(\"(compile) MISSING: \" + name), "
+        "and likewise for fittable_exists — exactly ONE EXISTS/MISSING line per label, never both "
+        "for the same label";
+    QString registryText;
+    if (needsWindow && needsFunction)
+        registryText = "Two independent registries: " + windowText + " And " + functionText +
+                       " — a separate registry, never merged with the window check.";
+    else if (needsWindow)
+        registryText = windowText;
+    else
+        registryText = functionText + " — a separate, compiled-function-only registry.";
+
+    // For a request that goes on to FIT or PLOT a named table, exists/missing is the wrong
+    // question: a table can exist and still hold nothing. Confirmed live: "SAXS_data" was created
+    // with 0 rows (named, roled, never filled), reported EXISTS here, and the fit then failed with
+    // "fit(): failed to read data for the selected dataset(s)" ~90s later — a fact this script was
+    // already standing in the right place to have reported for free. Only for window-kind names:
+    // a compiled function has no rows, and only when the caller says this request will use the
+    // data (a pure name-collision check has nothing to inspect).
+    const QString dataProbeText =
+        (includeDataProbe && needsWindow)
+            ? QString("\n\nFor any name above that turns out to be an EXISTING TABLE, also print its "
+                      "shape on its own extra line — scriptPrint(\"(rows) \" + name + \": \" + "
+                      "str(t.numRows()) + \" rows, columns \" + str(t.colNames())) using t = "
+                      "table(name) — because this request will fit or plot that table, and a table "
+                      "that exists but holds 0 rows fails later inside fit()/addCurve() with an error "
+                      "that never names the real cause. Still read-only, and it does not replace the "
+                      "VERDICT line: print both.")
+            : QString();
+
+    // Anti-hallucination constraint first — the failure mode it guards against (a fabricated
+    // VERDICT with no real check behind it) is the costliest one, so it comes before anything else.
+    return "A bare scriptPrint(\"VERDICT: MISSING <name>\")/scriptPrint(\"VERDICT: EXISTS <name>\") "
+           "with no real check call behind it is NOT valid — it's an unverified guess wearing the "
+           "shape of a check, whether that's one check or several. Confirmed live: asked to verify "
+           "\"Disk\" (a genuinely unknown-kind name, needing all three checks), the entire script "
+           "was scriptPrint(\"MISSING: Disk\") — no windows()/functionNames()/fitFunctions() call "
+           "anywhere, and wrong (\"Disk\" really was in Fittable.fitFunctions()). Every VERDICT "
+           "below must come only after this script actually ran whichever check(s) apply to that "
+           "name — not necessarily all three; see the per-name list below.\n\n"
+           "Before doing anything else, verify whether each of the following name(s) — explicitly "
            "described in the request below as already EXISTING — actually exist: " +
-           quoted.join(", ") +
-           ".\n\nWrite ONE short, read-only Python script (no markdown fences, no explanation) "
-           "that checks each name against every plausible kind it could be — existTable(name) is "
-           "not None, existMatrix(name) is not None, note(name) is not None, graphWindow(name) is "
-           "not None, name in Compiler.functionNames(\"ALL\"), name in Fittable.fitFunctions(\"*\") "
-           "— and for each name prints EXACTLY one line: scriptPrint(\"EXISTS: \" + name) if it "
-           "matches ANY of those, or scriptPrint(\"MISSING: \" + name) if it matches NONE. Do not "
-           "create, modify, delete, fit, or plot anything — this is a pure existence check, "
-           "nothing else. Do not attempt any discovery/fuzzy search/broadened matching (e.g. "
-           "fitFunctions(\"*partial*\") guessing) — check the EXACT name given, nothing else.\n\n";
+           allQuoted.join(", ") +
+           ".\n\nWrite ONE short, read-only Python script (no markdown fences, no explanation). " + registryText +
+           "\n\nOnly run the check(s) that apply to EACH name below — never a check that doesn't "
+           "apply, and never skip one that DOES apply just because another kind seems likelier "
+           "from the name's own spelling/prefix:\n" +
+           applicability.join("\n") +
+           "\n\nStore each check you run in its own boolean, then compute that name's verdict as "
+           "the OR of whichever booleans actually apply to it, and print exactly ONE final line "
+           "per name: scriptPrint(\"VERDICT: EXISTS \" + name) if verdict_exists else "
+           "scriptPrint(\"VERDICT: MISSING \" + name) — never a separate, freely-written "
+           "conclusion; it must be computed from those same booleans, never contradicting them. Do "
+           "not create, modify, delete, fit, or plot anything — a pure existence check. Do not "
+           "attempt discovery/fuzzy/broadened matching (e.g. fitFunctions(\"*partial*\") guessing) "
+           "— the EXACT name given, nothing else." +
+           dataProbeText;
 }
 
 QString QtiSasAiContent::windowNameMethodCallMistake(const QString &code)
@@ -1822,6 +3533,41 @@ QString QtiSasAiContent::nonexistentExistMatrixMistake(const QString &code)
     return "This script calls existMatrix(...) — this function does NOT exist. Matrix has no "
            "exist*() helper at all, unlike Table's existTable(). Use matrix(name) is not None to "
            "check a Matrix's existence instead.";
+}
+
+QString QtiSasAiContent::creationChainedMethodCallMistake(const QString &code)
+{
+    // Confirmed live: newMatrix("SphereMap", 50, 50).setFormula("sin(x)*cos(y)").calculate() —
+    // AttributeError: 'NoneType' object has no attribute 'calculate'. newMatrix() itself returns
+    // a real Matrix object, so the FIRST chained call (.setFormula(...)) works fine — the break
+    // is one link later: setFormula() (like every setter in this API) returns None, not self, so
+    // a THIRD link chained onto its result always fails. Every documented example for every
+    // object type (Matrix, Table, Graph, ...) uses separate statements
+    // (m = newX(...); m.setFormula(...); m.calculate()) for exactly this reason — this is a
+    // general API-wide convention, not something specific to Matrix, so this checks any
+    // new<Something>(...) constructor, not just newMatrix(). Repeated identically twice in the
+    // same incident (retrying didn't change the model's assumption that chaining works), burning
+    // the retry budget before this check existed.
+    // Argument content is [^()"']* interleaved with whole "..."/'...' string literals, not a
+    // blanket [^()]* — confirmed while writing this: the real incident's own argument,
+    // "sin(x)*cos(y)", contains literal parens INSIDE the quoted string, which a naive [^()]*
+    // excludes and would have made this check silently never match its own motivating example.
+    static const QString arg = R"re((?:[^()"']|"[^"]*"|'[^']*')*)re";
+    static const QRegularExpression chainRe(R"re(\bnew\w+\s*\()re" + arg + R"re(\)((?:\s*\.\s*\w+\s*\()re" + arg +
+                                            R"re(\)){2,}))re");
+    const QRegularExpressionMatch m = chainRe.match(code);
+    if (!m.hasMatch())
+        return {};
+    return "This script chains multiple method calls directly onto a new<Something>(...) "
+           "constructor call, e.g. \"" +
+           m.captured(0) +
+           "\". The constructor itself returns a real object, but every setter method in this "
+           "API (setFormula(), setCoordinates(), setColNames(), ...) returns None, not self — "
+           "chaining a THIRD call onto a setter's return value always raises \"AttributeError: "
+           "'NoneType' object has no attribute '...'\". Assign the constructor's result to a "
+           "variable and call each method as its own separate statement instead (e.g. "
+           "m = newMatrix(...); m.setFormula(...); m.calculate()), matching every documented "
+           "example for every object type in this API.";
 }
 
 QString QtiSasAiContent::selfReviewLookupToCreationRegression(const QString &preReviewDraft,
@@ -1924,6 +3670,113 @@ QString QtiSasAiContent::plotStyleStringArgumentMistake(const QString &code)
            "USER=6) — do not guess a bare int, use the named Qti3D.<CONSTANT> form.";
 }
 
+QString QtiSasAiContent::matrixViewTypeIntMistake(const QString &code)
+{
+    // Confirmed live: m.setViewType(1) and m.setViewType(0) both raised TypeError: setViewType(
+    // self, a0: Matrix.ViewType, renderImage: bool = True): argument 1 has unexpected type 'int'
+    // — the OPPOSITE mistake shape from plotStyleStringArgumentMistake() above: unlike Qti3D's
+    // plot-style constants (plain ints), Matrix.ViewType IS a genuine Python enum.Enum, and every
+    // documented example uses the named member (matrix-python-api.md:
+    // m.setViewType(Matrix.ViewType.ImageView)), never a bare int. Retried twice with different
+    // bare ints before exhausting the retry budget and failing the whole request — the model had
+    // used the correct enum form earlier in the SAME conversation, so this is inconsistent recall,
+    // not a doc gap.
+    static const QRegularExpression intViewTypeRe(R"(\bsetViewType\s*\(\s*\d+\s*[,)])");
+    if (!intViewTypeRe.match(code).hasMatch())
+        return {};
+    return "This script passes a bare integer to setViewType() — it takes a Matrix.ViewType enum "
+           "member only, never a plain int; this raises TypeError: argument 1 has unexpected type "
+           "'int'. Use the named form instead, e.g. m.setViewType(Matrix.ViewType.ImageView) or "
+           "m.setViewType(Matrix.ViewType.TableView) — never a bare 0/1.";
+}
+
+// Blanks triple-quoted string literals' interiors (kept same length/line count) so a usage scan
+// below can't mistake text embedded in a note/script-content string for a live call in `code`.
+static QString withTripleQuotedStringsBlanked(const QString &code)
+{
+    static const QRegularExpression tripleQuotedRe(R"("""[\s\S]*?"""|'''[\s\S]*?''')");
+    QString result = code;
+    QList<QRegularExpressionMatch> matches;
+    QRegularExpressionMatchIterator it = tripleQuotedRe.globalMatch(code);
+    while (it.hasNext())
+        matches << it.next();
+    for (auto matchIt = matches.crbegin(); matchIt != matches.crend(); ++matchIt)
+    {
+        QString blanked;
+        blanked.reserve(matchIt->capturedLength());
+        for (const QChar &ch : matchIt->captured())
+            blanked += (ch == '\n') ? ch : QChar(' ');
+        result.replace(matchIt->capturedStart(), matchIt->capturedLength(), blanked);
+    }
+    return result;
+}
+
+QString QtiSasAiContent::missingPyQtImportMistake(const QString &code)
+{
+    // Confirmed live, repeatedly — see selfReviewChecklist()'s own "Confirmed live" writeup a few
+    // hundred lines up: the checklist already explicitly instructs self-review to check for exactly
+    // this, but that's still prose an LLM pass can (and does) skip. A script calling QColor(...)/
+    // QFont(...)/QPen(...)/QBrush(...)/QFrame(...), or referencing the Qt.* namespace, with no
+    // matching PyQt import reaches execution unchanged and raises NameError, burning a retry round
+    // guessing at an unrelated fix before anyone adds the missing import. Mirrors
+    // fragmentedStaticScriptPrintMistake in spirit: a mechanical backstop for a checklist item prose
+    // alone doesn't reliably enforce. Usage patterns require the class NOT be immediately preceded
+    // by a dot or word character, so a qualified `QtGui.QColor(...)` (needing no separate `from ...
+    // import` line) is never misflagged.
+    const QString liveCode = withTripleQuotedStringsBlanked(code);
+    QStringList missing;
+    static const QStringList classCallNames = {"QColor", "QFont", "QPen", "QBrush", "QFrame"};
+    for (const QString &className : classCallNames)
+    {
+        const QRegularExpression usageRe(R"((?<![.\w]))" + QRegularExpression::escape(className) + R"(\s*\()");
+        if (!usageRe.match(liveCode).hasMatch())
+            continue;
+        const QRegularExpression importRe(R"(\bimport\b[^\n]*\b)" + QRegularExpression::escape(className) + R"(\b)");
+        if (!importRe.match(liveCode).hasMatch())
+            missing << className;
+    }
+    static const QRegularExpression qtNamespaceRe(R"((?<![.\w])Qt\.[A-Za-z_]\w*)");
+    if (qtNamespaceRe.match(liveCode).hasMatch())
+    {
+        static const QRegularExpression qtImportRe(R"(\bimport\b[^\n]*\bQt\b)");
+        if (!qtImportRe.match(liveCode).hasMatch())
+            missing << "Qt";
+    }
+    if (missing.isEmpty())
+        return {};
+    return "This script uses " + missing.join(", ") +
+           " with no matching PyQt import line — none of these are in the default namespace, so "
+           "using them unimported raises NameError at runtime. Add `from PyQt6.QtGui import " +
+           missing.join(", ") +
+           "` (QFrame actually comes from PyQt6.QtWidgets, Qt from "
+           "PyQt6.QtCore — split across the right import lines, don't put them all in one) instead "
+           "of leaving this for a runtime retry to catch. EXCEPTION: a bare 0xRRGGBB int needs no "
+           "import and is a valid substitute specifically for QColor(...), never for the others.";
+}
+
+QString QtiSasAiContent::missingRandomImportMistake(const QString &code)
+{
+    // Confirmed live, repeatedly — a script generating synthetic data with added noise calls
+    // random.gauss(...)/random.uniform(...)/etc. with no `import random` line, reaching execution
+    // unchanged and raising NameError, burning a full retry round before anyone adds the missing
+    // import. Same shape as missingPyQtImportMistake: a mechanical backstop for a mistake the model
+    // makes reliably enough that a checklist reminder alone doesn't prevent it. The usage lookbehind
+    // requires `random` not be immediately preceded by a dot or word character, so a qualified
+    // reference (e.g. a variable named `my_random`, or `np.random.gauss(...)`) is never misflagged;
+    // np.random specifically needs `import numpy as np`, a separate, unrelated import this check
+    // doesn't attempt to verify.
+    static const QRegularExpression usageRe(R"((?<![.\w])random\.\w+\s*\()");
+    if (!usageRe.match(code).hasMatch())
+        return {};
+    static const QRegularExpression importRe(R"(\bimport\b[^\n]*\brandom\b)");
+    if (importRe.match(code).hasMatch())
+        return {};
+    return "This script calls random.<method>(...) (e.g. random.gauss(), random.uniform()) with no "
+           "`import random` line — `random` is not in the default namespace, so this raises "
+           "NameError at runtime. Add `import random` near the top of the script instead of "
+           "leaving this for a runtime retry to catch.";
+}
+
 QString QtiSasAiContent::selfReviewEnumConstantRegression(const QString &preReviewDraft,
                                                           const QString &postReviewCode) const
 {
@@ -1965,6 +3818,152 @@ QString QtiSasAiContent::selfReviewEnumConstantRegression(const QString &preRevi
     return {};
 }
 
+QString QtiSasAiContent::selfReviewCompileSequenceRegression(const QString &preReviewDraft,
+                                                             const QString &postReviewCode) const
+{
+    // Confirmed live: a correct, complete compile setup — c.new()/setFunctionName()/setGroup()/
+    // setParamCount()/setParamNamesAll()/setParamInitsAll()/setParamLimitsAll()/
+    // setParamVariesAll()/setCode()/compile() — was replaced wholesale with old-style raw-array
+    // C-function code (`double Fn(double* x, double* par) { double scale = par[0]; ... }`) with no
+    // setGroup(), no parameter declarations at all, still ending in a compile() call — raising
+    // ValueError: "compile: group is empty" on the very next run. Only applies when BOTH scripts
+    // still attempt to compile something; a legitimate decision to stop compiling entirely is a
+    // different, unrelated edit this check has no opinion on.
+    static const QRegularExpression compileCallRe(R"(\.compile\s*\()");
+    if (!compileCallRe.match(preReviewDraft).hasMatch() || !compileCallRe.match(postReviewCode).hasMatch())
+        return {};
+    static const QStringList requiredSetupCalls = {"setFunctionName",  "setGroup",         "setParamCount",
+                                                   "setParamNamesAll", "setParamInitsAll", "setParamLimitsAll",
+                                                   "setParamVariesAll"};
+    QStringList dropped;
+    for (const QString &callName : requiredSetupCalls)
+    {
+        const QRegularExpression callRe(R"(\.)" + callName + R"(\s*\()");
+        if (callRe.match(preReviewDraft).hasMatch() && !callRe.match(postReviewCode).hasMatch())
+            dropped << callName + "()";
+    }
+    if (dropped.isEmpty())
+        return {};
+    return "The script you were reviewing still had a complete Compiler setup, but your own edit "
+           "still calls compile() while dropping " +
+           dropped.join(", ") +
+           " — present in the reviewed draft, missing now. compile-python-api.md's minimal "
+           "create-and-compile flow requires ALL of setFunctionName()/setGroup()/setParamCount()/"
+           "setParamNamesAll()/setParamInitsAll()/setParamLimitsAll()/setParamVariesAll() before "
+           "compile() for a function using them — dropping any of these either raises a specific "
+           "ValueError (e.g. \"group is empty\") or silently leaves parameters undeclared/unfixed. "
+           "Restore the dropped call(s) exactly as they were in the reviewed draft.";
+}
+
+QHash<QString, bool> QtiSasAiContent::openSessionsHaveSetCode(const QString &code)
+{
+    // For each `c.open("<name>")` call, the "session" for that name runs from right after the
+    // open() call up to the NEXT compile() call in the script (or the end of the script if none
+    // follows) — mirrors how a Compiler script actually reads: open, optionally reconfigure, then
+    // compile. Returns whether a setCode() call appears anywhere in that session, per name.
+    QHash<QString, bool> result;
+    static const QRegularExpression openRe(R"(\.open\s*\(\s*["']([^"']+)["']\s*\))");
+    static const QRegularExpression compileRe(R"(\.compile\s*\()");
+    static const QRegularExpression setCodeRe(R"(\.setCode\s*\()");
+    QRegularExpressionMatchIterator it = openRe.globalMatch(code);
+    while (it.hasNext())
+    {
+        const QRegularExpressionMatch m = it.next();
+        const QString name = m.captured(1);
+        const int sessionStart = static_cast<int>(m.capturedEnd());
+        const QRegularExpressionMatch compileMatch = compileRe.match(code, sessionStart);
+        const int sessionEnd =
+            compileMatch.hasMatch() ? static_cast<int>(compileMatch.capturedStart()) : static_cast<int>(code.length());
+        const QString session = code.mid(sessionStart, sessionEnd - sessionStart);
+        result[name] = setCodeRe.match(session).hasMatch();
+    }
+    return result;
+}
+
+QString QtiSasAiContent::selfReviewFabricatedSetCodeMistake(const QString &preReviewDraft,
+                                                            const QString &postReviewCode) const
+{
+    // Confirmed live, severe: EXPLORE had already printed the EXISTING, correct code for two
+    // functions ("y = scale * exp(-pow((x - center) / width, 2.0) / 2.0) + background;"); the
+    // pre-review draft correctly did nothing but `c.open(name); ok = c.compile()` for each —
+    // reusing that known-good code with no setCode() call at all. Self-review rewrote this into a
+    // version that adds `c.setFunctionName(name)` (a no-op self-rename) and a brand-new
+    // `c.setCode(...)` with a fabricated, wrong-syntax body — neither function actually compiled
+    // (both returned False). Self-review has no docs or history telling it what the existing code
+    // actually is, so inventing a replacement is a guess, never a legitimate fix, when the draft
+    // correctly relied on reuse instead.
+    const QHash<QString, bool> preSessions = openSessionsHaveSetCode(preReviewDraft);
+    const QHash<QString, bool> postSessions = openSessionsHaveSetCode(postReviewCode);
+    for (auto it = preSessions.constBegin(); it != preSessions.constEnd(); ++it)
+    {
+        if (it.value())
+            continue; // draft already had its own setCode() for this name — not this pattern
+        if (!postSessions.value(it.key(), false))
+            continue; // self-review's edit still has no setCode() for this name either — fine
+        return "The script you were reviewing correctly reused the EXISTING compiled function \"" + it.key() +
+               "\" — opening it and recompiling with NO setCode() call, relying on whatever code "
+               "is already loaded — but your own edit added a setCode() call for that SAME "
+               "function with fabricated content. You have no way to know what the existing, "
+               "already-working code actually is — inventing a replacement is a guess, not a fix. "
+               "Restore the reviewed draft's behavior for \"" +
+               it.key() + "\": open it and recompile with no setCode() call of your own.";
+    }
+    return {};
+}
+
+QString QtiSasAiContent::selfReviewPyQtVersionSubstitution(const QString &preReviewDraft,
+                                                           const QString &postReviewCode) const
+{
+    // Confirmed live: a pre-review draft correctly imported `from PyQt6.QtGui import QColor, QFont`
+    // (this build's real binding). Self-review's own output — while fixing an UNRELATED issue
+    // elsewhere in the same script — silently rewrote that line to `from PyQt5.QtGui import QColor,
+    // QFont`. PyQt5 doesn't exist in this environment; the script reached actual execution and
+    // crashed with "ModuleNotFoundError: No module named 'PyQt5'" a full round-trip later. Self-
+    // review regenerates the WHOLE script from scratch every pass rather than patching only the
+    // lines it was actually asked to fix, so an unrelated-but-already-correct import has no
+    // protection from being silently "re-derived" from the model's own general training-data priors
+    // (which skew heavily toward the far more common PyQt5) instead of copied verbatim — the same
+    // root cause as selfReviewFunctionNameSubstitution/selfReviewEnumConstantRegression above, just
+    // never covered for PyQt major version before. Self-review has no way to observe which PyQt
+    // version this build actually embeds (no docs, no history), so it has no legitimate basis to
+    // switch between them either direction.
+    static const QStringList qtClassNames = {"QColor", "QFont", "QPen", "QBrush", "QFrame", "Qt"};
+    static const QRegularExpression importLineRe(R"(from\s+PyQt(5|6)\.\w+\s+import\s+([^\n]+))");
+    auto versionsByClass = [](const QString &code) {
+        QHash<QString, QString> versionOf;
+        QRegularExpressionMatchIterator it = importLineRe.globalMatch(code);
+        while (it.hasNext())
+        {
+            const QRegularExpressionMatch m = it.next();
+            const QString version = m.captured(1);
+            const QString namesPart = m.captured(2);
+            for (const QString &className : qtClassNames)
+            {
+                const QRegularExpression classRe(R"(\b)" + QRegularExpression::escape(className) + R"(\b)");
+                if (classRe.match(namesPart).hasMatch())
+                    versionOf[className] = version;
+            }
+        }
+        return versionOf;
+    };
+    const QHash<QString, QString> preVersions = versionsByClass(preReviewDraft);
+    const QHash<QString, QString> postVersions = versionsByClass(postReviewCode);
+    for (const QString &className : qtClassNames)
+    {
+        if (!preVersions.contains(className) || !postVersions.contains(className))
+            continue;
+        if (preVersions.value(className) == postVersions.value(className))
+            continue;
+        return "Your last response changed \"" + className + "\"'s import from PyQt" + preVersions.value(className) +
+               " (in the reviewed draft) to PyQt" + postVersions.value(className) +
+               " — self-review has no way to know which PyQt major version this build actually "
+               "embeds, so switching between them is more likely a hallucinated regression than a "
+               "real fix. Restore the import to PyQt" +
+               preVersions.value(className) + " exactly as it was in the reviewed draft.";
+    }
+    return {};
+}
+
 QString QtiSasAiContent::guessedNameCandidateListMistake(const QString &code)
 {
     // Confirmed live: instead of using the concrete window name explicitly established earlier in
@@ -1977,6 +3976,14 @@ QString QtiSasAiContent::guessedNameCandidateListMistake(const QString &code)
     // (a `break` right after the found-check, or indexing/popping element 0 of an accumulated
     // list after the loop) to avoid flagging a script that legitimately processes EVERY item in a
     // list of names it was genuinely given, which has no such first-match-only signal.
+    //
+    // ALSO confirmed live in the identical shape applied to a table COLUMN name instead of an
+    // object name: `for c in ["residuals", "Fit Residuals", "residues", "Fit Residues"]: if c in
+    // cols: res_col = c; break` — guessing among 4 spellings of the residuals column, when
+    // "residues" is the single confirmed-correct name (used directly, no guessing, by the very
+    // next split-mode part in the SAME conversation). Same root cause, same fix: recognize `if var
+    // in <container>:` membership testing as an equally strong "this is guessing candidates
+    // against a real list" signal alongside the fixed lookupFns call list below.
     static const QRegularExpression forLoopRe(R"re(\bfor\s+(\w+)\s+in\s+\[([^\[\]]+)\]\s*:)re");
     static const QRegularExpression stringLiteralRe(R"(["'][^"']*["'])");
     static const QStringList lookupFns = {"plot3D", "table", "matrix", "graphWindow", "note"};
@@ -1996,16 +4003,15 @@ QString QtiSasAiContent::guessedNameCandidateListMistake(const QString &code)
         }
         if (stringCount < 2)
             continue;
+        const QString trailing = code.mid(loopEnd);
+        static const QRegularExpression firstMatchOnlyRe(R"(\bbreak\b|\[\s*0\s*\]|\.pop\s*\(\s*0\s*\)|\bnext\s*\()");
+        if (!firstMatchOnlyRe.match(trailing).hasMatch())
+            continue;
         for (const QString &fn : lookupFns)
         {
             const QRegularExpression lookupCallRe(R"re(\b)re" + QRegularExpression::escape(fn) + R"re(\s*\(\s*)re" +
                                                   QRegularExpression::escape(var) + R"re(\s*\))re");
             if (!lookupCallRe.match(code).hasMatch())
-                continue;
-            const QString trailing = code.mid(loopEnd);
-            static const QRegularExpression firstMatchOnlyRe(
-                R"(\bbreak\b|\[\s*0\s*\]|\.pop\s*\(\s*0\s*\)|\bnext\s*\()");
-            if (!firstMatchOnlyRe.match(trailing).hasMatch())
                 continue;
             return "This script iterates over a hardcoded list of guessed candidate names (" + listContents.trimmed() +
                    ") and calls " + fn + "(" + var +
@@ -2017,16 +4023,262 @@ QString QtiSasAiContent::guessedNameCandidateListMistake(const QString &code)
                    "ones — if genuinely unknown, enumerate real objects (windows(), tableNames(), "
                    "matrixNames(), ...) instead of guessing.";
         }
+        const QRegularExpression membershipRe(R"re(\bif\s+)re" + QRegularExpression::escape(var) +
+                                              R"re(\s+in\s+(\w+)\s*:)re");
+        const QRegularExpressionMatch memberMatch = membershipRe.match(trailing);
+        if (memberMatch.hasMatch())
+        {
+            return "This script iterates over a hardcoded list of guessed candidate spellings (" +
+                   listContents.trimmed() + ") and checks `" + var + " in " + memberMatch.captured(1) +
+                   "` to find whichever one already exists, keeping only the FIRST match — this "
+                   "silently picks the WRONG column/name the moment more than one guessed spelling "
+                   "happens to exist, with no error at all. Use the single confirmed-correct name "
+                   "directly instead of guessing a list of plausible spellings — if genuinely "
+                   "unknown, print " +
+                   memberMatch.captured(1) +
+                   " via scriptPrint() in an EXPLORE "
+                   "round first and use the real name it shows.";
+        }
     }
     return {};
 }
 
-QList<AiKnownMistakeMatch> QtiSasAiContent::detectKnownMistakes(const QString &code,
-                                                                const QString &originalRequestText) const
+QString QtiSasAiContent::fragmentedStaticScriptPrintMistake(const QString &code)
+{
+    // Confirmed live: a script whose only job was printing a multi-paragraph static summary issued
+    // one scriptPrint("literal text") call per line (20+ calls in a row) instead of building ONE
+    // multi-line string and calling scriptPrint() a single time — exactly the pattern the "Tips for
+    // better results" doc section asks the model to avoid, but that section is advisory prose the
+    // model doesn't reliably follow (and self-review runs with includeDocs=false, so it never even
+    // sees it) — a mechanical check here is the only reliable enforcement. Narrow to RUNS of
+    // consecutive lines that are ONLY `scriptPrint("literal")`/`scriptPrint('literal')` with no
+    // concatenation, formatting, or variables — a script printing computed/looped values one at a
+    // time (the doc's own carve-out) never matches this shape.
+    static const QRegularExpression staticPrintLineRe(R"(^[ \t]*scriptPrint\(\s*(?:"[^"\\]*"|'[^'\\]*')\s*\)[ \t]*$)");
+    const QStringList lines = code.split('\n');
+    int run = 0;
+    for (const QString &line : lines)
+    {
+        if (staticPrintLineRe.match(line).hasMatch())
+        {
+            ++run;
+            if (run >= 4)
+                return "This script prints a long run of purely static text via one scriptPrint() "
+                       "call per line instead of one multi-line string + one call — build a single "
+                       "multi-line string and call scriptPrint() once instead (this doesn't apply to "
+                       "values printed one at a time as they're computed, e.g. progress inside a "
+                       "loop, or a value only known after an earlier call on the same line).";
+        }
+        else
+        {
+            run = 0;
+        }
+    }
+    return {};
+}
+
+QString QtiSasAiContent::doubleEscapedRawRegexMistake(const QString &code)
+{
+    // Confirmed live: `re.search(r"\\b" + re.escape(p) + r"\\b", c.code())` — a RAW string literal
+    // r"\\b" is literally the THREE characters backslash-backslash-b, not the single-backslash
+    // word-boundary escape \b. Python's re engine reads \\ as an escaped literal backslash, so the
+    // compiled pattern requires an actual backslash character immediately before/after the
+    // searched-for name — something that never appears in c.code() (or any typical compiled-
+    // function source) — so the match can NEVER succeed for ANY name, silently reporting every
+    // declared parameter as "unused" regardless of whether it's genuinely used. Harmless in
+    // outcome here (an informational scriptPrint warning, not a raise), but a real, misleading
+    // diagnostic printed as fact. Narrow, high-precision signal: a raw string starting with a
+    // DOUBLED backslash immediately before one of the common single-letter regex escapes
+    // (b/d/s/w, case-insensitive) is essentially always this exact mistake — a genuine intent to
+    // match a literal backslash character followed by that letter is vanishingly rare — combined
+    // with actual use of the re module's own matching functions elsewhere in the same script (the
+    // context that makes "this is meant as a regex escape" the overwhelmingly likely reading).
+    static const QRegularExpression reCallRe(
+        R"(\bre\.(?:search|match|fullmatch|findall|finditer|sub|subn|compile)\s*\()");
+    if (!reCallRe.match(code).hasMatch())
+        return {};
+    static const QRegularExpression doubledEscapeRe(R"(r["']\\\\[bdswBDSW])");
+    const QRegularExpressionMatch m = doubledEscapeRe.match(code);
+    if (!m.hasMatch())
+        return {};
+    return "This script uses a raw string literal (`" + m.captured(0) +
+           "...`) starting with a DOUBLED backslash before a regex escape letter, alongside a "
+           "real re.* call elsewhere in the script. In a raw string, \\\\ is TWO literal backslash "
+           "characters, not the single-backslash escape (\\b/\\d/\\s/\\w) it looks like — the "
+           "compiled pattern then requires an actual backslash character in the text being "
+           "searched, which is never present in typical compiled-function source code, so the "
+           "match silently fails every time with no error, misreporting things as absent that are "
+           "actually present. Use a single backslash instead: r\"\\b\" (word boundary), never "
+           "r\"\\\\b\".";
+}
+
+QString QtiSasAiContent::singletonCalledAsConstructorMistake(const QString &code)
+{
+    // Confirmed live, repeatedly and independently — the checklist already documents this exact
+    // incident in detail (generalChecklistRules(): "a review pass changed an already-correct
+    // `c = Compiler` into `c = Compiler()`, and the resulting TypeError triggered a cascade of
+    // retries guessing ever-more-unrelated alternatives... before exhausting the retry budget
+    // entirely") — and self-review still produces it. Compiler/Fittable/Dan are pre-existing
+    // GLOBAL SINGLETON instances exposed directly to Python, accessed via their bare name, never
+    // constructed. Calling one raises `TypeError: '<name>18' object is not callable` — the class
+    // name (compile18/fittable18/dan18) reveals the underlying C++ singleton. A checklist item
+    // alone doesn't reliably prevent this (same lesson as the math-import and QFrame-combo
+    // checklist items below); this makes it a mechanical, pre-execution certainty instead.
+    static const QHash<QString, QString> internalClassName = {
+        {"Compiler", "compile18"}, {"Fittable", "fittable18"}, {"Dan", "dan18"}};
+    for (auto it = internalClassName.constBegin(); it != internalClassName.constEnd(); ++it)
+    {
+        const QRegularExpression callRe(R"(\b)" + it.key() + R"(\s*\(\s*\))");
+        if (!callRe.match(code).hasMatch())
+            continue;
+        return "This script calls " + it.key() + "() as if it were a constructor — " + it.key() +
+               " is a pre-existing GLOBAL SINGLETON instance, exposed directly to Python and "
+               "accessed via its bare name (e.g. `c = " +
+               it.key() + "`), never called as a function. " + it.key() + "() raises `TypeError: '" + it.value() +
+               "' object is not callable` (the class name reveals the underlying C++ singleton). "
+               "Remove the parentheses.";
+    }
+    return {};
+}
+
+QString QtiSasAiContent::pyQt6FrameStyleComboMistake(const QString &code)
+{
+    // Confirmed live, at least twice independently — the checklist already documents this exact
+    // incident in detail (graphChecklistRules()): "a script styled a fit-result legend with
+    // exactly this QFrame combo; it ran with no error and no visual sign anything was wrong, the
+    // requested boxed/sunken legend frame just silently never appeared." QtiSAS's own
+    // Frame.FrameStyle enum (None_=0, Line=1, Shadow=2) is unrelated to PyQt6's
+    // QFrame.Shape/QFrame.Shadow and does an EXACT-value match, not bit-flag decoding — a PyQt6
+    // combo produces some int matching neither Line nor Shadow, so setFrameStyle() raises no
+    // error at all; the frame border simply never renders. A checklist item alone doesn't
+    // reliably prevent this — self-review has produced this exact combo again since that item was
+    // written — so this makes it a mechanical, pre-execution certainty instead.
+    static const QRegularExpression comboRe(
+        R"(setFrameStyle\s*\([^()]*\bQFrame\.\w+(?:\.\w+)?[^()]*\|[^()]*\bQFrame\.\w+(?:\.\w+)?[^()]*\))");
+    if (!comboRe.match(code).hasMatch())
+        return {};
+    return "This script calls setFrameStyle(QFrame.<Shape> | QFrame.<Shadow>) — a PyQt6 QFrame "
+           "bit-flag combo. QtiSAS's own Frame.FrameStyle enum (None_=0, Line=1, Shadow=2) is a "
+           "DIFFERENT, unrelated enum that does an EXACT-value match, not bit-flag decoding — the "
+           "PyQt6 combo produces some int matching neither Line nor Shadow, so this raises no "
+           "error but the frame border simply never renders, with no visual sign anything is "
+           "wrong. Use Frame.FrameStyle.Line.value or Frame.FrameStyle.Shadow.value instead — "
+           "never a PyQt6 QFrame.Shape/QFrame.Shadow value, combined or otherwise.";
+}
+
+QString QtiSasAiContent::fittableParametersDirectiveIgnoredMistake(const QString &code,
+                                                                   const QString &originalRequestText)
+{
+    // The checklist rule for this (fittableChecklistRules()) has been confirmed live, twice, to
+    // not reliably change output — self-review left the same gap in place both times. Mechanical
+    // check instead, same rationale as pyQt6FrameStyleComboMistake() above.
+    static const QRegularExpression directiveRe(R"re(\(([^()]+?)\s*-\s*(un)?fittable\s+parameters?\))re",
+                                                QRegularExpression::CaseInsensitiveOption);
+    const QRegularExpressionMatch dm = directiveRe.match(originalRequestText);
+    if (!dm.hasMatch())
+        return {};
+
+    static const QRegularExpression variesCallRe(R"re(setParamVaries\s*\(\s*"([^"]+)"\s*,)re");
+    QSet<QString> touchedParams;
+    QRegularExpressionMatchIterator it = variesCallRe.globalMatch(code);
+    while (it.hasNext())
+        touchedParams.insert(it.next().captured(1));
+    if (touchedParams.isEmpty())
+        return {}; // this part hasn't reached parameter configuration at all — not what this checks
+
+    QStringList namedParams;
+    for (const QString &p : dm.captured(1).split(',', Qt::SkipEmptyParts))
+        namedParams << p.trimmed();
+
+    // Confirmed live, repeatedly, on the identical request: every setParamVaries() call covers
+    // ONLY the named parameters — the "every OTHER parameter gets the opposite value" half of the
+    // directive is silently skipped, leaving their vary-state at Fittable's own default instead.
+    for (const QString &p : touchedParams)
+        if (!namedParams.contains(p, Qt::CaseInsensitive))
+            return {}; // some other parameter WAS touched — directive apparently already handled
+    const bool isUnfittableList = !dm.captured(2).isEmpty();
+    return "The request says \"(" + dm.captured(1).trimmed() + " - " + (isUnfittableList ? "un" : "") +
+           "fittable parameters)\", but this script's setParamVaries() calls cover ONLY those "
+           "named parameters — every OTHER parameter of this model must get an explicit "
+           "setParamVaries(name, " +
+           QString(isUnfittableList ? "True" : "False") +
+           ") call too, not be left at whatever Fittable's own default is. If the model's full "
+           "parameter list isn't already confirmed earlier in this conversation, run an EXPLORE "
+           "round calling f.paramNames() first to discover it (documented in "
+           "fittable-python-api.md) — never skip straight to setParamVaries() calls for only the "
+           "named parameters and leave the rest untouched.";
+}
+
+QString QtiSasAiContent::redundantFittableReconfigureMistake(const QString &code, const QString &earlierPartsCode)
+{
+    // Confirmed live, immediately downstream of fittableParametersDirectiveIgnoredMistake() above
+    // fixing part 1's parameter setup: part 2 called configure() AGAIN for the same model, with a
+    // wrong dataset list ([data_col, error_col] as if two separate datasets, instead of the error
+    // column via setWeightingDataset()) — silently discarding every setParamValue()/
+    // setParamLimits()/setParamVaries() call part 1 had just gotten right, since configure()
+    // re-initializes the whole Fittable session for whatever it's given.
+    if (earlierPartsCode.isEmpty())
+        return {};
+    static const QRegularExpression configureRe(R"re(\bconfigure\s*\(\s*"([^"]+)")re");
+    QString earlierModel;
+    QRegularExpressionMatchIterator earlierIt = configureRe.globalMatch(earlierPartsCode);
+    while (earlierIt.hasNext())
+        earlierModel = earlierIt.next().captured(1); // last one wins — the currently-configured model
+    if (earlierModel.isEmpty())
+        return {};
+    const QRegularExpressionMatch thisMatch = configureRe.match(code);
+    if (!thisMatch.hasMatch() || thisMatch.captured(1) != earlierModel)
+        return {};
+    return "This script calls configure(\"" + earlierModel +
+           "\", ...) again, but an earlier part "
+           "in this same conversation already configured Fittable for this exact model — "
+           "configure() re-initializes the whole session, silently discarding every "
+           "setParamValue()/setParamLimits()/setParamVaries() call that earlier part made. Remove "
+           "this redundant configure() call entirely and continue directly from where the earlier "
+           "part left off (f = Fittable is enough to rebind the alias); if this part also needs "
+           "weighting enabled, call setWeightingEnabled()/setWeightingDataset() directly — never "
+           "re-configure() to add it.";
+}
+
+QString QtiSasAiContent::fittableSelectStageBeforeFunctionMistake(const QString &code)
+{
+    // fittable-python-api.md: selectStage(s) with s != "init" raises RuntimeError while Fittable
+    // is still in "init" stage; configure()/setFunction() is what moves it out. Confirmed live:
+    // selectStage("simulate") called before configure(), failing at runtime with exactly that
+    // error, both documented worked examples show configure()/setFunction() called first.
+    static const QRegularExpression selectStageRe(R"(\bselectStage\s*\(\s*(['"])([^'"]*)\1\s*\))");
+    static const QRegularExpression functionSelectRe(R"(\b(?:configure|setFunction)\s*\()");
+    QRegularExpressionMatch stageMatch;
+    QRegularExpressionMatchIterator it = selectStageRe.globalMatch(code);
+    while (it.hasNext())
+    {
+        const QRegularExpressionMatch m = it.next();
+        if (m.captured(2).compare("init", Qt::CaseInsensitive) != 0)
+        {
+            stageMatch = m;
+            break;
+        }
+    }
+    if (!stageMatch.hasMatch())
+        return {};
+    const QRegularExpressionMatch functionMatch = functionSelectRe.match(code);
+    if (functionMatch.hasMatch() && functionMatch.capturedStart() < stageMatch.capturedStart())
+        return {};
+    return "This script calls selectStage(\"" + stageMatch.captured(2) +
+           "\") before "
+           "configure()/setFunction() has selected a function — Fittable is still in its \"init\" "
+           "stage at that point, and selectStage() raises RuntimeError (\"call setFunction() "
+           "first\") for any target besides \"init\" while there. Call configure(...) or "
+           "setFunction(...) BEFORE selectStage(...).";
+}
+
+QList<AiKnownMistakeMatch> QtiSasAiContent::detectKnownMistakes(const QString &code, const QString &originalRequestText,
+                                                                const QString &earlierPartsCode,
+                                                                bool exploreScript) const
 {
     // Dispatches EVERY pattern below unconditionally and collects ALL matches, in the SAME order
     // these were previously checked in as separate AiAssistant.cpp local variables/if-else branches
-    // — one dispatch point replacing what used to be 16 separate single-purpose pure virtual
+    // — one dispatch point replacing what used to be 25 separate single-purpose pure virtual
     // methods here. See AiContentProvider::detectKnownMistakes()'s doc comment for the full
     // "collect all, don't stop at first" rationale, and each private helper below for its own
     // "confirmed live" incident writeup.
@@ -2034,15 +4286,52 @@ QList<AiKnownMistakeMatch> QtiSasAiContent::detectKnownMistakes(const QString &c
     QString explanation = compiledCodeSelfShadowBug(code);
     if (!explanation.isEmpty())
         matches << AiKnownMistakeMatch{"compiled-function defect detected", explanation};
+    explanation = compilerRedeclaredReservedNameMistake(code);
+    if (!explanation.isEmpty())
+        matches << AiKnownMistakeMatch{"setCode() redeclares a pre-declared name", explanation};
+    explanation = compilerYNameNeverAssignedMistake(code);
+    if (!explanation.isEmpty())
+        matches << AiKnownMistakeMatch{"setCode() never assigns the dependent variable", explanation};
     explanation = fitCurveNameReconstructionMismatch(code);
     if (!explanation.isEmpty())
         matches << AiKnownMistakeMatch{"fitCurve name mismatch detected", explanation};
     explanation = unrequestedAutoexecImmediateRun(code, originalRequestText);
     if (!explanation.isEmpty())
         matches << AiKnownMistakeMatch{"unrequested immediate autoexec run detected", explanation};
+    explanation = changeFolderNoOpMistake(code);
+    if (!explanation.isEmpty())
+        matches << AiKnownMistakeMatch{"no-op changeFolder(activeFolder()) call detected", explanation};
+    explanation = tableCellRowColSwapMistake(code);
+    if (!explanation.isEmpty())
+        matches << AiKnownMistakeMatch{"Table cell row/col argument order likely swapped", explanation};
+    explanation = compilerSetCodeNestedFunctionMistake(code);
+    if (!explanation.isEmpty())
+        matches << AiKnownMistakeMatch{"nested function definition inside setCode() detected", explanation};
+    explanation = compilerFittableOnlyMethodMistake(code);
+    if (!explanation.isEmpty())
+        matches << AiKnownMistakeMatch{"Fittable-only method called on a Compiler object", explanation};
+    explanation = setParamNamesMissingAllMistake(code);
+    if (!explanation.isEmpty())
+        matches << AiKnownMistakeMatch{"nonexistent setParamNames() detected", explanation};
+    explanation = compilerNonexistentMethodMistake(code);
+    if (!explanation.isEmpty())
+        matches << AiKnownMistakeMatch{"nonexistent Compiler method detected", explanation};
+    explanation = compilerSetCodeCppSyntaxMistake(code);
+    if (!explanation.isEmpty())
+        matches << AiKnownMistakeMatch{"invalid C++ syntax inside setCode()/setIncludedFunctions() detected",
+                                       explanation};
+    explanation = compilerMissingAiNamespaceMistake(code);
+    if (!explanation.isEmpty())
+        matches << AiKnownMistakeMatch{"compiled function missing the ai/ namespace prefix", explanation};
     explanation = zeroBasedTableIndexMistake(code);
     if (!explanation.isEmpty())
         matches << AiKnownMistakeMatch{"0-based table/matrix index detected", explanation};
+    explanation = scriptPrintMultipleArgumentsMistake(code);
+    if (!explanation.isEmpty())
+        matches << AiKnownMistakeMatch{"scriptPrint() called with multiple arguments", explanation};
+    explanation = hallucinatedPlotDesignationCaseMistake(code);
+    if (!explanation.isEmpty())
+        matches << AiKnownMistakeMatch{"nonexistent Table.PlotDesignation member detected", explanation};
     explanation = staleFitStatisticMistake(code);
     if (!explanation.isEmpty())
         matches << AiKnownMistakeMatch{"hardcoded chi2/dof detected", explanation};
@@ -2052,6 +4341,25 @@ QList<AiKnownMistakeMatch> QtiSasAiContent::detectKnownMistakes(const QString &c
     explanation = unannouncedModelNameSubstitution(code, originalRequestText);
     if (!explanation.isEmpty())
         matches << AiKnownMistakeMatch{"unannounced model name substitution detected", explanation};
+    explanation = discoveredNameInsteadOfRequestedMistake(code, originalRequestText);
+    if (!explanation.isEmpty())
+        matches << AiKnownMistakeMatch{"wildcard search used instead of the requested name", explanation};
+    // Both of these assert "the requested action never happened" by requiring a WRITE call
+    // (compile()/newTable()...) in `code` — unsatisfiable for an EXPLORE script, whose write calls
+    // explorePrefixBeforeFirstWriteCall() has already cut away. See detectKnownMistakes()'s
+    // exploreScript doc comment for the infinite loop this caused.
+    if (!exploreScript)
+    {
+        explanation = reuseInsteadOfCompileMistake(code, originalRequestText, earlierPartsCode);
+        if (!explanation.isEmpty())
+            matches << AiKnownMistakeMatch{"requested compile never happened", explanation};
+        explanation = requestedCreationNeverHappenedMistake(code, originalRequestText, earlierPartsCode);
+        if (!explanation.isEmpty())
+            matches << AiKnownMistakeMatch{"requested table/matrix/graph/note creation never happened", explanation};
+    }
+    explanation = hardcodedWinnerWithoutLiveComparisonMistake(code, originalRequestText, earlierPartsCode);
+    if (!explanation.isEmpty())
+        matches << AiKnownMistakeMatch{"hardcoded winner model name with no live comparison", explanation};
     explanation = hallucinatedLegendMethodMistake(code);
     if (!explanation.isEmpty())
         matches << AiKnownMistakeMatch{"nonexistent Legend method detected", explanation};
@@ -2061,12 +4369,18 @@ QList<AiKnownMistakeMatch> QtiSasAiContent::detectKnownMistakes(const QString &c
     explanation = conditionalMaximizeWindowMistake(code);
     if (!explanation.isEmpty())
         matches << AiKnownMistakeMatch{"maximizeWindow() conditionally gated behind graph-reuse check", explanation};
+    explanation = curveExistenceGuardTitleMismatch(code);
+    if (!explanation.isEmpty())
+        matches << AiKnownMistakeMatch{"curve-existence guard can never match a real curve title", explanation};
     explanation = windowNameMethodCallMistake(code);
     if (!explanation.isEmpty())
         matches << AiKnownMistakeMatch{"setWindowName() called as a method", explanation};
     explanation = nonexistentExistMatrixMistake(code);
     if (!explanation.isEmpty())
         matches << AiKnownMistakeMatch{"nonexistent existMatrix() detected", explanation};
+    explanation = creationChainedMethodCallMistake(code);
+    if (!explanation.isEmpty())
+        matches << AiKnownMistakeMatch{"method call chained onto a constructor's setter result", explanation};
     explanation = qti3DImportMistake(code);
     if (!explanation.isEmpty())
         matches << AiKnownMistakeMatch{"nonexistent Qti3D import detected", explanation};
@@ -2076,10 +4390,106 @@ QList<AiKnownMistakeMatch> QtiSasAiContent::detectKnownMistakes(const QString &c
     explanation = plotStyleStringArgumentMistake(code);
     if (!explanation.isEmpty())
         matches << AiKnownMistakeMatch{"string passed to a plot-style setter", explanation};
+    explanation = matrixViewTypeIntMistake(code);
+    if (!explanation.isEmpty())
+        matches << AiKnownMistakeMatch{"bare int passed to Matrix.setViewType()", explanation};
+    explanation = missingPyQtImportMistake(code);
+    if (!explanation.isEmpty())
+        matches << AiKnownMistakeMatch{"PyQt class used without a matching import", explanation};
+    explanation = missingRandomImportMistake(code);
+    if (!explanation.isEmpty())
+        matches << AiKnownMistakeMatch{"random module used without import", explanation};
     explanation = guessedNameCandidateListMistake(code);
     if (!explanation.isEmpty())
         matches << AiKnownMistakeMatch{"guessed a list of candidate names instead of using the known one", explanation};
+    explanation = fragmentedStaticScriptPrintMistake(code);
+    if (!explanation.isEmpty())
+        matches << AiKnownMistakeMatch{"static text split across one scriptPrint() call per line", explanation};
+    explanation = doubleEscapedRawRegexMistake(code);
+    if (!explanation.isEmpty())
+        matches << AiKnownMistakeMatch{"doubled backslash in raw regex string", explanation};
+    explanation = singletonCalledAsConstructorMistake(code);
+    if (!explanation.isEmpty())
+        matches << AiKnownMistakeMatch{"Compiler/Fittable/Dan called as a constructor", explanation};
+    explanation = pyQt6FrameStyleComboMistake(code);
+    if (!explanation.isEmpty())
+        matches << AiKnownMistakeMatch{"PyQt6 QFrame combo passed to setFrameStyle()", explanation};
+    explanation = fittableParametersDirectiveIgnoredMistake(code, originalRequestText);
+    if (!explanation.isEmpty())
+        matches << AiKnownMistakeMatch{"fittable/unfittable parameters directive only partially applied", explanation};
+    explanation = redundantFittableReconfigureMistake(code, earlierPartsCode);
+    if (!explanation.isEmpty())
+        matches << AiKnownMistakeMatch{"redundant Fittable.configure() discards earlier part's setup", explanation};
+    explanation = fittableSelectStageBeforeFunctionMistake(code);
+    if (!explanation.isEmpty())
+        matches << AiKnownMistakeMatch{"selectStage() called before configure()/setFunction()", explanation};
     return matches;
+}
+
+QString QtiSasAiContent::explorePrefixBeforeFirstWriteCall(const QString &code) const
+{
+    // Confirmed live: an EXPLORE-labeled script opened with a few harmless read-only lines
+    // (Compiler.categories()/functionNames() filtering) then, in the SAME response, went on to
+    // create a real table, compile two real fit functions, run two real fits, and build a real
+    // graph — all executed for real, since nothing upstream distinguishes "labeled EXPLORE" from
+    // "safe to run as EXPLORE." Deliberately narrow to TOP-LEVEL (unindented) matches only — cutting
+    // inside an indented if/for block would leave a syntactically broken fragment behind; every
+    // confirmed incident (and every EXPLORE example in ai-python-api.md) has these calls as flat
+    // top-level statements, so this is not a real loss of coverage for the case that matters.
+    //
+    // Confirmed live, second incident, worse than the first: an EXPLORE script for a compile task
+    // ran c.new(), setFunctionName(), setGroup(), setYName(), setXName(), setInfo(),
+    // setParamCount(), setParamNamesAll(), setParamInitsAll(), setParamLimitsAll(),
+    // setParamVariesAll(), setParamDescrsAll(), and setCode() — every one a genuine, documented
+    // Compiler API call (verified against compile-python-api.md, not a hallucination) — and NONE of
+    // them were in this list, so all of it executed for real, fully configuring a new function in
+    // Compiler's live editing buffer, cut short only at the very last line, ok = c.compile(). The
+    // buffer was left populated but never saved, and (compounding with the caller's own
+    // action-script-marker shortcut — see handleExploreResponse()'s matching fix) the whole part
+    // was then wrongly declared done without ever actually compiling anything. Added the
+    // Compiler-authoring calls (and Fittable's configure(), the same kind of gap for the fit-setup
+    // side) so the cut happens at c.new()/f.configure() itself, long before any real state gets
+    // mutated.
+    static const QRegularExpression writeCallRe(
+        R"(^[ \t]*(?:\w+\s*=\s*)?(?:\w+\.)?(?:newTable|newMatrix|newNote|newGraph|newLegend|addCurve|)"
+        R"(insertCurve|addErrorBars|maximizeWindow|closeGraph|setCell|setCellData|setText|)"
+        R"(setColData|setRowData|appendRowData|setColName|setColNames|setColumnRole|deleteRows|)"
+        R"(removeCol|insertColumns|recalculate|setCommand|normalize|setRandomValues|)"
+        R"(setNormalRandomValues|setNumRows|setNumCols|importASCII|exportASCII|notifyChanges|)"
+        R"(replot|compile|save|delete|fit|simulate|plotResults|simulateCurve|plot|new|)"
+        R"(setFunctionName|setGroup|setYName|setXName|setInfo|setParamCount|setParamNamesAll|)"
+        R"(setParamInitsAll|setParamLimitsAll|setParamVariesAll|setParamDescrsAll|setCode|)"
+        R"(configure)\s*\()");
+    // Indentation allowed. The old form required the call at column 0 (an explicit
+    // !line.at(0).isSpace() guard), so any write call nested in if/else/for/try was invisible —
+    // confirmed live: an EXPLORE bundled a complete configure+fit inside "else:"/"try:", nothing
+    // truncated, and the whole fit ran under the # EXPLORE marker. Worse than the read-only
+    // invariant alone: the "EXPLORE already ran the action script — done" shortcut then declared
+    // the item finished, so self-review and all of detectKnownMistakes() were skipped entirely.
+    //
+    // Matched line-by-line against the string-literal-stripped code (that guard's real purpose),
+    // so a quoted setText("... newTable ...") still cannot trip it. Offsets come from the ORIGINAL
+    // lines, since the return value slices `code`; codeWithoutStringLiterals() replaces literals
+    // in place without changing line count or line lengths.
+    // An INDENTED match cuts back to the start of its enclosing top-level statement, not to the
+    // matching line: cutting mid-block would leave "else:"/"try:" with an empty body, a
+    // SyntaxError, and this prefix is EXECUTED. That was the original column-0 guard's real
+    // concern — but refusing indented lines outright let the write run instead, which is worse.
+    const QStringList lines = code.split('\n');
+    const QStringList strippedLines = codeWithoutStringLiterals(code).split('\n');
+    int offset = 0;
+    int topLevelOffset = 0;
+    for (int i = 0; i < lines.size(); ++i)
+    {
+        const QString &probe = i < strippedLines.size() ? strippedLines.at(i) : lines.at(i);
+        const bool atTopLevel = !probe.isEmpty() && !probe.at(0).isSpace();
+        if (!probe.trimmed().isEmpty() && writeCallRe.match(probe).hasMatch())
+            return code.left(atTopLevel ? offset : topLevelOffset);
+        if (atTopLevel)
+            topLevelOffset = offset;
+        offset += static_cast<int>(lines.at(i).length() + 1); // +1 for the '\n' split() consumed
+    }
+    return code;
 }
 
 QString QtiSasAiContent::retryHintForError(const QString &errContext) const

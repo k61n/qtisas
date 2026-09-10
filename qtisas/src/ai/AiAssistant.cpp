@@ -19,7 +19,9 @@ Description: AI assistant implementation
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QMetaEnum>
 #include <QNetworkRequest>
+#include <QPair>
 #include <QRegularExpression>
 #include <QSet>
 #include <QTextStream>
@@ -171,7 +173,7 @@ bool AiAssistant::clearUserRules()
 // pass can actually check reliably.
 QString AiAssistant::selfReviewChecklist() const
 {
-    QString checklist = m_content ? m_content->selfReviewChecklist() : QString();
+    QString checklist = m_content ? m_content->selfReviewChecklist(selectedDocTopics, splitModeActive) : QString();
     for (const QString &r : AiAssistant::userRules())
         checklist += "- " + r + "\n";
     return checklist;
@@ -191,23 +193,89 @@ QString AiAssistant::extractAvailableBlock(const QString &err)
 // Strips "at <ai>:N" / "at <ai-explore>:N" location suffixes before the exact-repeat comparison
 // below — the line number shifts whenever surrounding script structure changes (e.g. self-review
 // adding a guard), so two runs of the same underlying failure could otherwise produce
-// byte-different error text and slip past the "identical error repeated" check.
+// byte-different error text and slip past the "same diagnosis repeated" check.
 QString AiAssistant::normalizeErrorForDedup(const QString &err)
 {
-    static const QRegularExpression re(R"(\bat <[^>]+>:\d+\b)");
+    // Strips the WHOLE "at <ai>:N — <quoted source line>" suffix, not just the line number — the
+    // quoted source text legitimately differs between two attempts sharing the exact same root
+    // cause (e.g. `best_fc` still undefined) whenever the model reorders/rewrites surrounding
+    // code while making the identical underlying mistake. Confirmed live: a NameError for
+    // `best_fc` (a "fresh execution per round" violation — split-mode part 4 assumed part 3's
+    // local variable was still bound) failed twice in a row, quoting `l2.insertCurve(best_fc,
+    // ...)` the first time and `l1.insertCurve(best_fc, ...)` the second (the two insertCurve
+    // calls got reordered) — same exception, same message, different quoted line, so the old
+    // line-number-only strip still left these comparing unequal. `[^\n]*` (not `.*` with a
+    // multiline flag) deliberately stops at the next newline rather than needing a pattern
+    // option, matching this file's other single-line-safe regexes.
+    static const QRegularExpression lineRe(R"(\bat <[^>]+>:\d+[^\n]*)");
+    // errContext is the full captured result.output when non-empty, not just the bare exception
+    // (see its assignment above — preceding prints often carry the useful diagnostic detail) —
+    // but that means genuinely-identical retries (same code, same error) still carry real
+    // wall-clock noise from anything printed before the failure, e.g. a fit's own progress log
+    // ("Fit done: 7 ms - 2 iteration(s)..."). Confirmed live: the same script hit the same
+    // AttributeError 6+ times in a row (33+ minutes of retries) because each attempt's "X ms"
+    // timing never matched the last byte-for-byte, so this dedup check never once fired despite
+    // the actual failure being 100% identical every time. Iteration counts and chi2/R²/Q values
+    // are left alone — those are deterministic for identical inputs and SHOULD still contribute
+    // to detecting a genuine difference; only the timing figure is inherently non-reproducible
+    // noise on an otherwise-identical run.
+    static const QRegularExpression timingRe(R"(\b\d+\s*ms\b)");
     QString normalized = err;
-    normalized.replace(re, "at <script>:N");
+    normalized.replace(lineRe, "at <script>:N");
+    normalized.replace(timingRe, "N ms");
     return normalized;
+}
+
+QString AiAssistant::functionNotFoundNameFromError(const QString &errContext)
+{
+    static const QRegularExpression re(R"([Ff]unction\s+'([^']+)'\s+not found)");
+    const QRegularExpressionMatch m = re.match(errContext);
+    return m.hasMatch() ? m.captured(1) : QString();
+}
+
+QStringList AiAssistant::compiledFunctionNamesFromHistory(const QList<QPair<QString, QString>> &history)
+{
+    QStringList names;
+    static const QRegularExpression re(R"(setFunctionName\s*\(\s*["']([^"']+)["']\s*\))");
+    for (const auto &turn : history)
+    {
+        QRegularExpressionMatchIterator it = re.globalMatch(turn.second);
+        while (it.hasNext())
+        {
+            const QString name = it.next().captured(1);
+            if (!names.contains(name))
+                names << name;
+        }
+    }
+    return names;
+}
+
+// Word-boundary match of `topic` against `text` — used everywhere a topic name is looked for in
+// freeform model text (doc-selection answers, split-part descriptions/DOCS fields) instead of
+// plain QString::contains(), which would let "graph3d" (containing the literal characters
+// "graph") silently satisfy a check meant for the standalone topic "graph" too, regardless of
+// intent. Confirmed live this isn't harmless overlap the way it looks: graph-python-api.md's
+// "legend" (newLegend()/setLegend(), a 2D text-box widget) and graph3d-python-api.md's "legend"
+// (showLegend(), a colorscale toggle) are same-named but unrelated APIs — auto-including "graph"
+// for every graph3d-only task injects a differently-behaving, same-named method into context
+// rather than just padding it with redundant information.
+static bool textNamesTopic(const QString &text, const QString &topic)
+{
+    static QHash<QString, QRegularExpression> cache;
+    auto it = cache.find(topic);
+    if (it == cache.end())
+        it = cache.insert(topic, QRegularExpression(R"(\b)" + QRegularExpression::escape(topic) + R"(\b)",
+                                                    QRegularExpression::CaseInsensitiveOption));
+    return it.value().match(text).hasMatch();
 }
 
 // Doc-selection round-trip: the real request
 // is held in pendingRequestText until this cheap, ai-doc-only pre-request comes back naming
 // which topic docs are actually relevant, so the (much larger) real request(s) below only carry
-// those. Substring match against a known topic list rather than strict comma-list parsing —
-// robust to the model wrapping its answer in a sentence instead of a bare list. Note "graph3d"
-// also contains "graph", so asking for graph3d harmlessly pulls in the graph doc too — acceptable
-// over-inclusion, not worth the complexity to avoid. Empty/"all"/anything unrecognized means
-// "load everything" — the safe default, never a hard failure.
+// those. textNamesTopic() rather than strict comma-list parsing — robust to the model wrapping
+// its answer in a sentence instead of a bare list, without the "graph3d" substring false-positive
+// plain contains() would have (see that function's doc comment). Empty/"all"/anything
+// unrecognized means "load everything" — the safe default, never a hard failure.
 // Sentinel meaning "genuinely zero topic docs" — distinct from an empty QStringList, which
 // filterDocsByTopic() deliberately treats as "ambiguous, fail open to everything" (see its own
 // comment). Without this distinction there is no way to express "this turn needs no API
@@ -217,6 +285,70 @@ QString AiAssistant::normalizeErrorForDedup(const QString &err)
 // already-large history, compounding turn over turn until the request exceeded the model's
 // context window entirely (HTTP 400) and ended the conversation.
 static const QString kNoDocsSentinel = QStringLiteral("__none__");
+
+// Human-readable label for a split-plan part's doc topics, in the 3 places that print/reconstruct
+// "DOCS: X" — must not conflate the sentinel with genuinely-empty (see kNoDocsSentinel's comment
+// above): an empty list's "all" fallback is correct there, but would be actively misleading here
+// (announcing "docs: all" for a part that was deliberately given zero docs, e.g. under
+// DocsMode::Integrated — see handleSplitPlanResponse()'s parse loop).
+static QString docTopicsDisplayLabel(const QStringList &topics)
+{
+    if (topics == QStringList{kNoDocsSentinel})
+        return "none";
+    return topics.isEmpty() ? "all" : topics.join(", ");
+}
+
+// Shared by handleDocSelectionResponse() below and splitPartTopicsFromAnswer() further down —
+// dedicated synonym regexes for topic names that rarely appear verbatim in natural prose:
+// "fittable" (the class name itself) and "graph3d" (users say "3D surface"/"3D plot", never the
+// literal topic name) — confirmed live via ai-test-requests.md's own "3D surface plot" fixture
+// entry, which detected zero topics at all before this regex was added.
+static const QHash<QString, QRegularExpression> topicSynonymRe = {
+    // "simulate"/"simulated" added — confirmed live: "plot simulated 'ai/PorodPowerLaw' curve with
+    // log-log axes and proper formatting" needs to look up the table simulateCurve() created
+    // (named "simulatedCurve-<function>", a naming convention documented ONLY in
+    // fittable-python-api.md — see its "simulateCurve()'s output table" section, including the
+    // warning against reaching for plot("simulatedCurve-<function>", ...) as a formula string
+    // instead), but got no "fittable" topic at all: it has no "fit"-rooted word, no "chi2", no
+    // "fitcurve". The SIBLING part ("simulate curve from compiled ... function without fitting
+    // real data") only happened to get "fittable" by accident — it contains the word "fitting"
+    // inside "without fitting real data", a NEGATION, not an actual fit action — not because
+    // simulateCurve() itself (the real reason either part needs these docs) was ever matched.
+    // (?!\s*(?:function|model)s?\b) added — confirmed live: "compile two custom fit functions"
+    // matched bare \bfit\b and force-added fittable to a part whose script only ever called
+    // Compiler, regardless of what DOCS the model itself had already correctly said (compile
+    // only) — this mechanical backstop ran unconditionally on the model's answer either way.
+    // "fit function"/"fit model" name what's being AUTHORED, not an action calling into Fittable.
+    {"fittable", QRegularExpression(R"(\bfit(s|ted|ting)?\b(?!\s*(?:function|model)s?\b)|chi2|chi²|fitcurve|)"
+                                    R"(\bsimulat(e|ed|ing|ion)\b)",
+                                    QRegularExpression::CaseInsensitiveOption)},
+    {"graph3d",
+     QRegularExpression(R"(\b3d\b|\bsurface\s*plot\b|\bplot3d\b)", QRegularExpression::CaseInsensitiveOption)},
+    // table/matrix/graph/note/compile added for LIST mode's mechanical per-item doc-topic
+    // assignment (beginListRequest()), which has no model-generated DOCS field to fall back on
+    // the way splitPartTopicsFromAnswer()/handleDocSelectionResponse() do — these five need to
+    // carry the full keyword-matching weight on their own, unlike fittable/graph3d above (which
+    // were only ever meant as a backstop for cases the model's own answer already mostly covered).
+    {"table",
+     QRegularExpression(R"(\btables?\b|\bcolumns?\b|\bspreadsheet\b)", QRegularExpression::CaseInsensitiveOption)},
+    {"matrix", QRegularExpression(R"(\bmatri(?:x|ces)\b)", QRegularExpression::CaseInsensitiveOption)},
+    {"graph", QRegularExpression(R"(\bplot(?:s|ted|ting)?\b|\bgraphs?\b|\bcharts?\b|\blegend\b)",
+                                 QRegularExpression::CaseInsensitiveOption)},
+    {"note", QRegularExpression(R"(\bnotes?\b)", QRegularExpression::CaseInsensitiveOption)},
+    {"compile", QRegularExpression(R"(\bcompil(?:e|ed|ing|er)\b)", QRegularExpression::CaseInsensitiveOption)},
+};
+
+// True if topic's own keyword regex matches text — shared by splitPartTopicsFromAnswer() (widens
+// a DOCS-field selection) and handleDocSelectionResponse()'s backstop (narrows a free-text one).
+static bool topicSynonymMatch(const QString &topic, const QString &text)
+{
+    const auto it = topicSynonymRe.constFind(topic);
+    if (it == topicSynonymRe.constEnd() || !it.value().match(text).hasMatch())
+        return false;
+    if (topic == "graph" && topicSynonymRe.value("graph3d").match(text).hasMatch())
+        return false;
+    return true;
+}
 
 void AiAssistant::handleDocSelectionResponse(const QString &code)
 {
@@ -233,16 +365,53 @@ void AiAssistant::handleDocSelectionResponse(const QString &code)
     // "container"/presentation topics first, then the "verb" topics (compile,
     // fittable) last so the one actually driving the final action sits closest to
     // the request itself (same "lost in the middle" rationale as the baseline
-    // prepend below). "graph3d" must be checked after "graph" is fine here since both
-    // are matched independently against the model's answer text below.
+    // prepend below). Match order doesn't affect correctness either way — each topic is checked
+    // independently via textNamesTopic() below.
     const QStringList knownTopics = m_content ? m_content->knownDocTopics() : QStringList();
     QStringList selected;
     if (!lower.contains("all"))
         for (const QString &topic : knownTopics)
-            if (lower.contains(topic))
+            if (textNamesTopic(lower, topic))
                 selected << topic;
+    // Backstop against a topic surviving purely because the model's free-text answer echoed back
+    // part of the topic index it was just shown, not because the request implies it — confirmed
+    // live twice: "configures analysis defaults" and a note+table+autoexec item both selected
+    // matrix/graph/graph3d/compile with nothing in the request actually touching them.
+    for (const QString &topic : knownTopics)
+        if (selected.contains(topic) && !topicSynonymMatch(topic, pendingRequestText))
+            selected.removeAll(topic);
+    startRequestWithSelectedTopics(selected, QStringLiteral("AI doc selection"));
+}
+
+// Every known topic whose OWN keyword regex matches the request text — the same predicate
+// handleDocSelectionResponse() used only as a narrowing filter, applied additively instead.
+//
+// Confirmed live: "Compile a custom Porod power-law fit function ... then simulate a curve from
+// it" selected `compile` alone, with no `fittable` — yet simulateCurve()/the Fittable stage API
+// live only in the fittable docs, and topicSynonymRe's own "fittable" entry already matches
+// "simulat(e|ed|ing|ion)". The model simply omitted it, and nothing on the non-split path could
+// add a topic back: only split mode widens (see splitPartTopicsFromAnswer()), so a NOSPLIT run
+// had no backstop at all. Under-selection is the expensive failure here — the part then guesses
+// the API and burns its whole retry budget — while over-selection costs prompt tokens only.
+//
+// Note this makes the model's own doc-selection answer redundant BY CONSTRUCTION: narrowing kept
+// {model-selected AND keyword-matched}, so adding widening leaves {keyword-matched} regardless of
+// what the model said. That is why beginNonSplitRequest() no longer asks it at all — the answer
+// could not change the outcome, and asking cost a full round-trip (13-18s measured) per request.
+QStringList AiAssistant::docTopicsFromRequestText(const QString &text) const
+{
+    QStringList topics;
+    for (const QString &topic : (m_content ? m_content->knownDocTopics() : QStringList()))
+        if (topicSynonymMatch(topic, text))
+            topics << topic;
+    return topics;
+}
+
+// Shared tail of both topic-selection paths: report, prepend the baseline, dispatch.
+void AiAssistant::startRequestWithSelectedTopics(const QStringList &selected, const QString &label)
+{
     if (m_host)
-        m_host->print("▸▸▸ AI doc selection: " + (selected.isEmpty() ? QString("all") : selected.join(", ")));
+        m_host->print("▸▸▸ " + label + ": " + (selected.isEmpty() ? QString("all") : selected.join(", ")));
     // The content provider's own baseline topics (assistant workflow rules, and the handful of
     // functions used in nearly every script) always ride along with whatever was actually
     // selected, PREPENDED so they land first in the prompt and the task-specific topic(s) end up
@@ -254,77 +423,343 @@ void AiAssistant::handleDocSelectionResponse(const QString &code)
                                     : ((m_content ? m_content->baselineDocTopics() : QStringList()) + selected));
 }
 
-// Extracts every quoted name in `requestText` explicitly described as already EXISTING — the
-// word "existing" followed by up to 3 other words then a quoted string, e.g. `the existing
-// "Sphere" form-factor model` or `existing table "SAXS_data"`. Deliberately keys off this one
-// literal word rather than trying to infer "referenced vs. created" from creation-verb heuristics
-// (fragile, and this codebase's own confirmed-live incidents all used exactly this phrasing) — a
-// request that doesn't use the word "existing" for a name gets no check at all (fail-open by
-// construction, favoring zero false positives over full coverage). Host-independent: pure text
-// pattern matching, no QtiSAS-specific vocabulary involved.
-QStringList extractExistingEntityNames(const QString &requestText)
+// Extracts every quoted name in `requestText` implied to already exist, paired with the KNOWN
+// kind ("window" — see existingEntityVerificationPrompt()'s doc comment on why table/matrix/note/
+// graph collapse to this one label) when the word directly before the quote names one of them, or
+// an empty string when genuinely unknown — via either of two patterns:
+//   1. The word "existing" followed by up to 3 other words then a quoted string, e.g. `the
+//      existing "Sphere" form-factor model` (no noun before the quote — unknown kind) or
+//      `existing table "SAXS_data"` (known: window).
+//   2. A READ-oriented verb (fit/plot/read/analyze) followed by up to 2 other words then an
+//      object-type noun (table/matrix/note/graph) then a quoted string, e.g. `Fit table
+//      "SAXS_data"` — the same implied-existence reading ai-python-api.md's own EXPLORE rule
+//      already gives this phrasing.
+// Pattern 2 is deliberately narrower than a bare verb+quote match — it requires the object-type
+// noun directly before the quote, and skips any match with "new" between the verb and the noun
+// (e.g. "plot a new graph 'Y'") — to keep this a CREATE-vs-READ distinction, not a blanket trigger
+// on every verb+quote combination. Host-independent: pure text pattern matching, no
+// QtiSAS-specific vocabulary involved.
+//
+// The known kind is derived the SAME way for both patterns — whichever one matched, check whether
+// the word immediately before the quote is table/matrix/note/graph — rather than baking it only
+// into pattern 2's own capture, so "existing table \"X\"" (pattern 1) is recognized as a known
+// window reference exactly like "fit table \"X\"" (pattern 2) is. A name matched twice keeps
+// whichever match found a known kind. Never a "function"/"compile" kind here: the noun list is
+// deliberately table/matrix/note/graph only, so a function/model reference (e.g. "the existing
+// 'sasviewmodels/sphere' form-factor model") stays unknown — there is no dedicated function-noun
+// detection.
+QList<QPair<QString, QString>> extractExistingEntityNames(const QString &requestText)
 {
-    QStringList names;
-    static const QRegularExpression re(R"re(\bexisting\b(?:\s+\S+){0,3}?\s*"([^"]+)")re",
-                                       QRegularExpression::CaseInsensitiveOption);
-    QRegularExpressionMatchIterator it = re.globalMatch(requestText);
-    while (it.hasNext())
+    QList<QPair<QString, QString>> names;
+    static const QRegularExpression existingRe(R"re(\bexisting\b(?:\s+\S+){0,3}?\s*"([^"]+)")re",
+                                               QRegularExpression::CaseInsensitiveOption);
+    static const QRegularExpression verbImpliedRe(
+        R"re(\b(?:fit|plot|read|analyze)\b(?:\s+\S+){0,2}?\s+(?:table|matrix|note|graph)\s*"([^"]+)")re",
+        QRegularExpression::CaseInsensitiveOption);
+    static const QRegularExpression trailingNounRe(R"(\b(?:table|matrix|note|graph)\s*$)",
+                                                   QRegularExpression::CaseInsensitiveOption);
+    // Function-kind nouns, the counterpart to trailingNounRe's window nouns. Checked on BOTH sides
+    // of the quoted name, because the natural phrasing puts the noun AFTER it: real requests say
+    // `the existing "sasviewmodels/sphere" form-factor model`, where nothing before the quote
+    // names a kind at all. A before-quote form ("the fit function \"x\"") is covered too.
+    // Two-token window after the name reaches across a qualifier like "form-factor".
+    static const QRegularExpression functionNounBeforeRe(R"(\b(?:model|models|function|functions|library)\s*$)",
+                                                         QRegularExpression::CaseInsensitiveOption);
+    static const QRegularExpression functionNounAfterRe(
+        R"(^(?:\s+\S+){0,2}?\s+(?:model|models|function|functions|library)\b)",
+        QRegularExpression::CaseInsensitiveOption);
+    for (const QRegularExpression &re : {existingRe, verbImpliedRe})
     {
-        const QString name = it.next().captured(1);
-        if (!names.contains(name))
-            names << name;
+        QRegularExpressionMatchIterator it = re.globalMatch(requestText);
+        while (it.hasNext())
+        {
+            const QRegularExpressionMatch m = it.next();
+            const QString between = requestText.mid(m.capturedStart(0), m.capturedStart(1) - m.capturedStart(0));
+            if (between.contains("new", Qt::CaseInsensitive))
+                continue;
+            const QString name = m.captured(1);
+            // `between` always ends with the pattern's own literal opening quote character (both
+            // patterns end with \s*"(...)"), which would otherwise defeat trailingNounRe's \s*$
+            // anchor — strip it before checking what word precedes the quote.
+            const QString beforeQuote = between.chopped(1);
+            // A function noun pins the kind just as well as a window noun, and the caller widens an
+            // unknown kind to ALL THREE checks — so without this, `the existing
+            // "sasviewmodels/sphere" form-factor model` paid a window check that could only ever
+            // print MISSING (confirmed live). Window noun wins when both appear, e.g. "the existing
+            // model graph \"x\"": a graph really is a window, whatever else the phrase calls it.
+            const bool hasWindowNoun = trailingNounRe.match(beforeQuote).hasMatch();
+            const bool hasFunctionNoun =
+                !hasWindowNoun && (functionNounBeforeRe.match(beforeQuote).hasMatch() ||
+                                   functionNounAfterRe.match(requestText.mid(m.capturedEnd(0))).hasMatch());
+            const QString knownKind = hasWindowNoun     ? QStringLiteral("window")
+                                      : hasFunctionNoun ? QStringLiteral("function")
+                                                        : QString();
+            bool merged = false;
+            for (QPair<QString, QString> &entry : names)
+            {
+                if (entry.first != name)
+                    continue;
+                if (entry.second.isEmpty() && !knownKind.isEmpty())
+                    entry.second = knownKind;
+                merged = true;
+                break;
+            }
+            if (!merged)
+                names << qMakePair(name, knownKind);
+        }
+    }
+
+    // Third pattern, on its own because it needs a guard the other two don't: a bare kind noun
+    // immediately followed by a quoted name, ANYWHERE in the request. Both patterns above are
+    // distance-limited from their anchor word, and confirmed live that loses the most explicit
+    // signal a request can carry — `Fit the existing "sasviewmodels/sphere" ... against table
+    // "SAXS_data" columns I and dI` names the kind AND the name outright, yet "SAXS_data" sits ~15
+    // tokens past "existing" and the verb "Fit" is nowhere near "table", so neither pattern saw it.
+    // That was the one name whose state actually mattered: it had been created with 0 rows, and the
+    // fit died on "failed to read data for the selected dataset(s)" a minute and a half later.
+    //
+    // The guard is not optional. This shape also matches a CREATION target ("Create a table
+    // \"GaussPeak\" with 200 rows"), and a creation target reported as an existing name comes back
+    // MISSING — which the verification prompt answers with "stop and report to the user", killing
+    // an item before it does anything. Creation of a name is a different mechanism entirely (see
+    // splitPlanCreationNames()); this one must only ever claim names the request treats as INPUT.
+    static const QRegularExpression kindNounRe(R"re(\b(table|matrix|note|graph)\s*"([^"]+)")re",
+                                               QRegularExpression::CaseInsensitiveOption);
+    // "plot\w*" belongs here: plot()/plotResults() CREATE a window (app-python-api.md says so
+    // outright), and splitPlanCreationNames() already counts "plot" as a creation verb for the
+    // collision check. Confirmed live, and this pattern's own regression: "Plot the fit results
+    // from the previous step into graph \"FitResults\"" had FitResults extracted as an EXISTING
+    // name, came back MISSING, and the whole item was refused with "reply with the correct name" —
+    // for a graph the request was plainly asking to CREATE.
+    static const QRegularExpression creationVerbRe(
+        R"(\b(?:creat\w*|mak\w*|build\w*|generat\w*|synthesi\w*|plot\w*|draw\w*|add|adds|adding|new)\b)",
+        QRegularExpression::CaseInsensitiveOption);
+    // Clause-scoped lookback, NOT a fixed character window. A fixed 40 chars was wrong in both
+    // directions: too short to see the "Plot" 48 characters before `graph "FitResults"`, and
+    // widening it would have reached into an earlier, unrelated clause and disqualified a genuine
+    // input ("Create a table \"Out\" ..., then fit table \"RawScan\"" must still check RawScan).
+    // Scoping to the current clause — back to the nearest clause boundary — gets both right,
+    // because a creation verb governs the clause it appears in, not the whole request.
+    //
+    // A BARE comma is deliberately NOT a boundary. It was, and an enumeration inside the very
+    // clause that holds the creation verb then cut the verb off: confirmed live, "Plot the winning
+    // model's data, fit curve, and residuals into graph \"GaussPeakFit\"" left a lookback of only
+    // "and residuals into ", so a graph the request was plainly creating was reported as an
+    // existing name — and it really did match a stale GaussPeakFit.fif left by an earlier run, so
+    // the fact fed back was true, irrelevant, and about the wrong kind of object entirely. Only a
+    // comma that actually introduces a new predicate (", then fit ...") still counts, which is the
+    // one case the comma was added for. Widening this errs toward skipping a check rather than
+    // claiming a creation target, which is the safe direction: a skipped check costs nothing here,
+    // while a wrong claim feeds a false fact and, in auto-run mode, refuses the item outright.
+    static const QRegularExpression clauseBoundaryRe(R"([.;\n]|,\s*(?:then|next|afterwards?|finally|after that)\b)",
+                                                     QRegularExpression::CaseInsensitiveOption);
+    QRegularExpressionMatchIterator kindIt = kindNounRe.globalMatch(requestText);
+    while (kindIt.hasNext())
+    {
+        const QRegularExpressionMatch m = kindIt.next();
+        const int matchStart = static_cast<int>(m.capturedStart(0));
+        const QString before = requestText.left(matchStart);
+        // Last boundary's END, not its start: a ", then" boundary is several characters long, and
+        // keeping its own text in the lookback would leave nothing wrong but reads as sloppy.
+        int boundaryEnd = 0;
+        QRegularExpressionMatchIterator boundaryIt = clauseBoundaryRe.globalMatch(before);
+        while (boundaryIt.hasNext())
+            boundaryEnd = static_cast<int>(boundaryIt.next().capturedEnd(0));
+        const QString lookback = before.mid(boundaryEnd); // whole clause when there is no boundary
+        if (creationVerbRe.match(lookback).hasMatch())
+            continue;
+        const QString name = m.captured(2);
+        bool merged = false;
+        for (QPair<QString, QString> &entry : names)
+        {
+            if (entry.first != name)
+                continue;
+            if (entry.second.isEmpty())
+                entry.second = QStringLiteral("window");
+            merged = true;
+            break;
+        }
+        if (!merged)
+            names << qMakePair(name, QStringLiteral("window"));
     }
     return names;
 }
 
-// Returns the subset of `checkedNames` for which `scriptOutput` contains a "MISSING: <name>" line
-// — deterministic substring matching against the verification script's own printed output, never
-// a semantic interpretation of it. Host-independent: the "EXISTS: "/"MISSING: " prefixes are
-// defined by AiContentProvider::existingEntityVerificationPrompt()'s own prompt text, but checking
-// for them is plain string work.
-QStringList missingEntityNames(const QString &scriptOutput, const QStringList &checkedNames)
+// Returns the subset of `checkedNames` (name, knownKind-or-empty pairs from
+// extractExistingEntityNames()) found missing.
+//
+// A KNOWN-kind name trusts ONLY its own labeled line ("(window) MISSING: <name>") — sidesteps the
+// VERDICT self-contradiction risk below entirely. An UNKNOWN-kind name (still gets all three
+// checks — window/compile/fittable) falls back to VERDICT+fail-open: only "missing" if the
+// verdict says so AND no "EXISTS: <name>" substring appears anywhere (confirmed live: the model's
+// own labeled lines correctly found "(compile) EXISTS: ..."/"(fittable) EXISTS: ..." while its own
+// VERDICT line still said "MISSING" — self-contradictory, not a script bug).
+QStringList missingEntityNames(const QString &scriptOutput, const QList<QPair<QString, QString>> &checkedNames)
 {
     QStringList missing;
-    for (const QString &name : checkedNames)
-        if (scriptOutput.contains("MISSING: " + name))
+    for (const QPair<QString, QString> &entry : checkedNames)
+    {
+        const QString &name = entry.first;
+        const QString &knownKind = entry.second;
+        if (!knownKind.isEmpty())
+        {
+            // EXISTS must win over a contradicting MISSING for the same label — mirrors the
+            // unknown-kind branch below (and splitPlanCreationCollisions()'s own fail-closed
+            // rule), since a check-script can print both lines for the same name.
+            if (scriptOutput.contains("(" + knownKind + ") MISSING: " + name) &&
+                !scriptOutput.contains("(" + knownKind + ") EXISTS: " + name))
+                missing << name;
+            continue;
+        }
+        if (scriptOutput.contains("VERDICT: MISSING " + name) && !scriptOutput.contains("EXISTS: " + name))
             missing << name;
+    }
     return missing;
+}
+
+void AiAssistant::resetPendingRoundTrips()
+{
+    awaitingSelfReview = false;
+    awaitingDocSelection = false;
+    awaitingSelfReviewSkepticismRetry = false;
+    awaitingSelfReviewScopeRetry = false;
+    awaitingSelfReviewFunctionNameRetry = false;
+    awaitingSelfReviewIncompletenessRetry = false;
+    awaitingSelfReviewLookupRegressionRetry = false;
+    awaitingSelfReviewEnumRegressionRetry = false;
+    awaitingSelfReviewCompileSequenceRetry = false;
+    awaitingSelfReviewPyQtVersionRetry = false;
+    awaitingSelfReviewFabricatedSetCodeRetry = false;
+    awaitingSelfReviewCreationNameRetry = false;
+    awaitingSelfReviewExploreGroupRetry = false;
+    awaitingExistenceCheckScript = false;
+    awaitingSplitPlanCreationCheckScript = false;
+    awaitingContinuationCheck = false;
+    awaitingSplitPlan = false;
+    awaitingSplitMerge = false;
+    awaitingSplitMergeRetry = false;
+    awaitingListTransform = false;
 }
 
 void AiAssistant::beginRequest(const QString &aiText, bool autoRunValue, bool wantsSplit)
 {
+    // Checked here too, not just inside ask() (which still keeps its own copy of this guard as a
+    // safety net for any internal chained call) — confirmed live: a request submitted while
+    // another was still in flight got THIS FAR before the busy-guard buried inside some nested
+    // ask() call finally rejected it, but by then every reset below had already run and mutated
+    // shared state (pendingRequestText, originalRequestText, splitModeActive, m_lastScriptUnrun,
+    // ...) that the ALREADY-in-flight request's own still-pending async response would read once
+    // it returned — a real, if narrow, race between a request that never actually got submitted
+    // and one genuinely in progress. Rejecting before any reset runs makes an overlapping request
+    // a true no-op: no state change, no history entry, nothing.
+    if (m_busy)
+    {
+        emit errorOccurred("▸▸▸ AI: previous request still in progress.");
+        return;
+    }
     // Per-request state reset — moved here from ApplicationWindow::askAi() so that function stops
     // reaching into AiAssistant's internal fields directly (see this method's header doc comment).
     autoRun = autoRunValue;
     autoContinueCount = 0;
-    awaitingSelfReview = false;
+    consecutiveExploreCount = 0;
+    lastExploreOutput.clear();
+    lastExploreCode.clear();
+    // Every pending round-trip, not the three that used to be listed here — see
+    // resetPendingRoundTrips()'s doc comment for the crash a hand-picked subset caused.
+    resetPendingRoundTrips();
+    // A script left over from a request the user has since moved on from is no longer safely "the
+    // thing 'run it' refers to" — see hasUnrunLastScript()'s doc comment. Reached only for a
+    // request ApplicationWindow's "run it" fast path did NOT consume (that path returns before
+    // ever calling beginRequest()), so any request landing here supersedes it unconditionally.
+    m_lastScriptUnrun = false;
     selectedDocTopics.clear();
-    lastAvailableBlock.clear();
-    lastRetryError.clear();
-    isErrorRetryCorrection = false;
+    resetErrorRetryState();
     splitModeActive = wantsSplit;
-    awaitingSplitPlan = false;
-    awaitingSplitMerge = false;
+    splitPlanFixupRoundsUsed = 0;
+    lastSplitPlanFixupComplaints.clear();
+    splitPlanCreationNameRetryRoundsUsed = 0;
+    splitPlanSandboxExemptNames.clear();
     splitPlan.clear();
     splitPartIndex = -1;
     splitPartScripts.clear();
     pendingRequestText = aiText;
+    pendingLiveFactsNote.clear();
     // Set only on the FIRST request of a conversation — see originalRequestText's declaration for
-    // why this must NOT be overwritten by every subsequent short follow-up.
-    if (originalRequestText.isEmpty())
+    // why this must NOT be overwritten by every subsequent short follow-up. Also refreshed
+    // whenever m_history is empty, even if originalRequestText already holds text from an earlier
+    // request — confirmed live: a request that gets blocked before ever producing a real
+    // history-adding exchange (e.g. this file's own split-plan collision halt) leaves
+    // originalRequestText set to ITS text with m_history still empty; the ONLY other place that
+    // refreshes this anchor is handleContinuationCheckResponse(), but dispatchAfterExistenceCheck()
+    // skips that whole check whenever m_history.isEmpty() ("nothing in history could conflict with
+    // this request"). The next, entirely unrelated request then satisfies neither refresh
+    // condition, so every fixup-retry prompt for it keeps resending the PRIOR request's text as
+    // "Original request" — confirmed live: a request mentioning "an adjustable exponent parameter"
+    // leaked that exact phrase into a later, unrelated request's generated plan this way, the
+    // phrase never having appeared in the later request's own text at all. An empty history means
+    // (by dispatchAfterExistenceCheck()'s own stated reasoning) nothing could meaningfully be a
+    // continuation of anything, so whatever's currently anchored is safe to overwrite.
+    if (originalRequestText.isEmpty() || m_history.isEmpty())
         originalRequestText = aiText;
 
-    if (m_content)
+    // Generate-only mode (autoRun == false) skips existence verification altogether.
+    //
+    // Nothing this session generated has been executed, so a name the request treats as existing is
+    // very often something an EARLIER, equally unexecuted item was going to create — "missing" is
+    // the normal state there, not a problem. Confirmed live in a generate-only LIST: item 7's
+    // table-creation script was shown and never run, so item 9's check reported
+    // "VERDICT: MISSING SAXS_data" for a table the run itself had just declined to create.
+    //
+    // Three things wrong with checking anyway: it costs a full round-trip (measured at 24.2s on
+    // that item) to learn something already implied by "nothing has run"; it executes a script and
+    // prints to the console in a mode where the user asked for neither, which is the same contract
+    // exploreDisposition() now respects; and its MISSING verdict feeds a refusal that would abort
+    // the item outright. The verdict's one useful effect — making the model write defensively — is
+    // obtained for free by telling it the situation instead (see existenceUncheckedNote()), and the
+    // model already does it unprompted: a generate-only item produced
+    // "if n is None: n = newNote(\"Batch\")" with no check at all.
+    //
+    // The check keeps its full force when scripts WILL run, which is when overwriting or reading a
+    // live object can actually destroy something.
+    if (m_content && autoRun)
     {
-        const QStringList existingNames = extractExistingEntityNames(aiText);
+        const QList<QPair<QString, QString>> existingNames = extractExistingEntityNames(aiText);
         if (!existingNames.isEmpty())
         {
+            QList<QPair<QString, QStringList>> names;
+            for (const QPair<QString, QString> &entry : existingNames)
+                names << qMakePair(entry.first, entry.second.isEmpty() ? QStringList() : QStringList{entry.second});
             pendingExistenceCheckRequestText = aiText;
             awaitingExistenceCheckScript = true;
-            ask(m_content->existingEntityVerificationPrompt(existingNames), true, QString(), QStringList(), false,
-                false);
+            // expectsCode=false: without it, Integrated mode attaches exploreModeReminder() here too,
+            // and confirmed live, the model returned a bare "EXPLORE" instead of the real check script.
+            //
+            // Topics hint appended explicitly (unlike every other call here, this one had none at
+            // all) — under Integrated mode that left this call with zero RAG scoping, falling back
+            // to generic unscoped retrieval. baselineDocTopics() ("ai"/"app") only, same as every
+            // other preflight-style call in this file — not the full entity-kind list, which would
+            // balloon this cheap check to whole-corpus size the way an unrelated single-topic part
+            // did (see splitPlanPreflightPrompt()'s "table alongside matrix" rule).
+            // includeDataProbe: only worth the extra line when this request will actually USE the
+            // data behind a named table — see the virtual's own doc comment for the 0-row incident.
+            static const QRegularExpression dataUseRe(R"(\bfit\w*\b|\bplot\w*\b|\bgraph\w*\b|\bchi2\b)",
+                                                      QRegularExpression::CaseInsensitiveOption);
+            const bool wantsDataProbe = dataUseRe.match(aiText).hasMatch();
+            ask(m_content->existingEntityVerificationPrompt(names, wantsDataProbe) + topicsHintLine(QStringList()),
+                true, QString(), QStringList(), false, false, false);
             return;
         }
+    }
+    else
+    {
+        // Generate-only mode: the facts the skipped round-trip would have produced, read straight
+        // out of the host instead — same VERDICT content, no call, nothing executed. See
+        // AiContentProvider::liveEntityFactsNote()'s doc comment for why this is stronger than the
+        // script it replaces, not merely cheaper.
+        QString factsSummary;
+        pendingLiveFactsNote = liveEntityFactsFor(aiText, &factsSummary);
+        if (!factsSummary.isEmpty() && m_host)
+            m_host->print("▸▸▸ AI: " + factsSummary);
     }
     dispatchAfterExistenceCheck(aiText);
 }
@@ -351,9 +786,14 @@ void AiAssistant::handleExistenceCheckScriptResponse(const QString &code)
         dispatchAfterExistenceCheck(aiText);
         return;
     }
-    const QStringList checkedNames = extractExistingEntityNames(aiText);
+    const QList<QPair<QString, QString>> checkedNames = extractExistingEntityNames(aiText);
     const QStringList missing = missingEntityNames(result.output, checkedNames);
-    if (!missing.isEmpty())
+    // Gated on autoRun even though beginRequest() no longer starts a check in generate-only mode: a
+    // reply for a check dispatched while auto-run was still on can land here after the flag changed,
+    // and refusing the request then would be the one outcome generate-only mode must never produce
+    // — "Nothing was created or run" is trivially true there, and the missing name is usually what
+    // an earlier unexecuted item would have created.
+    if (!missing.isEmpty() && autoRun)
     {
         QStringList quoted;
         for (const QString &n : missing)
@@ -369,6 +809,58 @@ void AiAssistant::handleExistenceCheckScriptResponse(const QString &code)
 
 void AiAssistant::dispatchAfterExistenceCheck(const QString &aiText)
 {
+    // The continuation-check gate below now runs regardless of splitModeActive — confirmed live:
+    // it used to live only in the splitModeActive branch (effectively inside what's now
+    // dispatchByMode()), so any non-auto-run request skipped it entirely and, with it, the
+    // originalRequestText refresh handleContinuationCheckResponse() performs. A conversation that
+    // did one auto-run split request ("new Table") followed by a plain, non-auto-run one ("new
+    // Matrix and Graph") left originalRequestText frozen on "new Table" for the second request,
+    // which then got prefixed with a misleading "your actual goal is: new Table" reminder and
+    // duly regenerated a table nobody asked for that turn. Gating on splitModeActive here instead
+    // of inside dispatchByMode() fixes that for both modes at once.
+    awaitingDocSelection = false;
+    if (!m_content)
+    {
+        // No content provider to phrase any preflight with (shouldn't happen in practice — see
+        // setContentProvider()'s call sites) — fall back to a plain request instead of firing
+        // ask() with an empty prompt and leaving a flag stuck waiting on nothing.
+        startRequest(QStringList());
+        return;
+    }
+    // listModeActive: startNextListItem() already advanced m_contextHistoryStart deterministically
+    // for this item, so asking the model to judge "new or continuation?" would both be redundant
+    // and reintroduce the judgment call that leak came from.
+    if (m_history.isEmpty() || listModeActive)
+    {
+        // Fresh conversation — nothing in history could conflict with this request, so the
+        // continuation-check would just be a wasted round-trip. Unchanged from before this check
+        // existed.
+        dispatchByMode(aiText);
+        return;
+    }
+    // History exists — could belong to this same ongoing task, or to an earlier, unrelated
+    // request (see awaitingContinuationCheck's doc comment for the confirmed-live failure this
+    // guards against). Defer dispatch until handleContinuationCheckResponse() decides which.
+    pendingDispatchRequestText = aiText;
+    awaitingContinuationCheck = true;
+    // includeHistory=true (unlike every other preflight call in this file): the real, settings-
+    // windowed conversation history is exactly the context this judgment needs — not just what was
+    // ASKED in the prior turn, but what it actually PRODUCED (e.g. a created object's real name).
+    // Confirmed live: an earlier version restated only m_history.last().first (the prior turn's raw
+    // request text, e.g. "new note") with no history at all, so a follow-up referencing "the
+    // note"/"this note" by name couldn't be recognized as a continuation. Real history also makes
+    // originalRequestText moot as an anchor here (it's frozen on the FIRST message of the whole
+    // conversation and never updated — the wrong anchor for this judgment regardless).
+    // docTopics=QStringList() (not {"ai"}): the actual prompt text carries noDocsHintLine()'s own
+    // unconditional "TOPICS: none", so an empty docTopics here keeps the "topics hint: ..."
+    // diagnostic (buildSendingDiagnostic()) honest about what's genuinely sent — {"ai"} used to
+    // print "topics hint: ai" for a call whose real wire text always says "TOPICS: none".
+    ask(m_content->continuationCheckPreflightPrompt(aiText) + noDocsHintLine(), true, QString(), QStringList(), false,
+        true, false);
+}
+
+void AiAssistant::dispatchByMode(const QString &aiText)
+{
     if (splitModeActive)
         beginSplitPlanDecomposition(aiText);
     else
@@ -377,50 +869,34 @@ void AiAssistant::dispatchAfterExistenceCheck(const QString &aiText)
 
 void AiAssistant::beginNonSplitRequest(const QString &aiText)
 {
-    if (!m_content || docsMode() == DocsMode::Integrated)
-    {
-        // No doc content is ever attached in Integrated mode regardless of topic, so asking
-        // "which topics do you need" would just be a wasted extra round-trip — go straight to the
-        // real request. Same fallback as beginSplitPlanDecomposition() when m_content is null.
-        awaitingDocSelection = false;
-        startRequest(QStringList());
-        return;
-    }
-    awaitingDocSelection = true;
-    // includeHistory=false: this prompt already inlines aiText itself and asks nothing about the
-    // rest of the conversation — same reasoning as the split-plan preflight's own includeHistory
-    // argument.
-    ask(m_content->docSelectionPreflightPrompt(aiText), true, QString(), {"ai"}, false, false);
+    // Doc topics are chosen MECHANICALLY from the request text — no LLM pre-flight. This used to
+    // ask the model "which documentation topics do you need?" and then filter its answer down to
+    // the topics whose own keywords actually appear in the request. That filter made the answer
+    // irrelevant: keeping {model-selected AND keyword-matched} and then (as of the fittable/
+    // simulate under-selection incident) also adding {keyword-matched AND NOT model-selected}
+    // leaves exactly {keyword-matched} — the model's reply could no longer change the outcome, so
+    // the round-trip was pure cost, measured at 13-18s per request. See
+    // docTopicsFromRequestText()'s doc comment for the incident and for why under-selection is
+    // the expensive direction.
+    //
+    // Zero matches is NOT an error: it falls through to the empty-list "send everything" fallback
+    // startRequestWithSelectedTopics() already implements, same as an unrecognized model answer
+    // did. Topic order stays knownDocTopics()' own deliberate order (containers before verbs) —
+    // see handleDocSelectionResponse()'s comment on why that order matters in the prompt.
+    startRequestWithSelectedTopics(docTopicsFromRequestText(aiText), QStringLiteral("AI doc topics"));
 }
 
 void AiAssistant::beginSplitPlanDecomposition(const QString &aiText)
 {
-    awaitingDocSelection = false;
-    if (!m_content)
-    {
-        // No content provider to phrase either preflight with (shouldn't happen in practice —
-        // see setContentProvider()'s call sites) — fall back to a plain request instead of firing
-        // ask() with an empty prompt and leaving a flag stuck waiting on nothing.
-        startRequest(QStringList());
-        return;
-    }
-    if (m_history.isEmpty())
-    {
-        // Fresh conversation — nothing in history could conflict with this request, so the
-        // continuation-check would just be a wasted round-trip. Unchanged from before this check
-        // existed.
-        awaitingSplitPlan = true;
-        ask(m_content->splitPlanPreflightPrompt(aiText), true, QString(), {"ai"}, false, false);
-        return;
-    }
-    // History exists — could belong to this same ongoing task, or to an earlier, unrelated
-    // request (see awaitingContinuationCheck's doc comment for the confirmed-live failure this
-    // guards against). Defer the split-plan preflight until handleContinuationCheckResponse()
-    // decides which.
-    pendingSplitRequestText = aiText;
-    awaitingContinuationCheck = true;
-    ask(m_content->continuationCheckPreflightPrompt(aiText, originalRequestText), true, QString(), {"ai"}, false,
-        false);
+    // The continuation-check gate (history empty? existing conversation?) now lives one level up,
+    // in dispatchAfterExistenceCheck() — this only dispatches the decomposition preflight itself,
+    // for a request already confirmed (or fresh enough) to decompose right now.
+    awaitingSplitPlan = true;
+    // docTopics=QStringList() (not {"ai"}): see continuationCheckPreflightPrompt()'s call site
+    // just above for why — noDocsHintLine() already puts the real "TOPICS: none" in the prompt
+    // text itself, so this only needs to keep the "topics hint: ..." diagnostic honest.
+    ask(m_content->splitPlanPreflightPrompt(aiText, docsMode() == DocsMode::Integrated) + noDocsHintLine(), true,
+        QString(), QStringList(), false, false, false);
 }
 
 void AiAssistant::handleContinuationCheckResponse(const QString &code)
@@ -437,43 +913,119 @@ void AiAssistant::handleContinuationCheckResponse(const QString &code)
     }
     if (answer.contains("NEW"))
     {
-        clearHistory();
-        // Re-anchor to THIS request as the new baseline goal — mirrors what a genuinely fresh
-        // askAi() call does (originalRequestText "set once, the first call after history is
-        // cleared"); leaving it empty here would lose the anchor for every later self-review/
-        // retry prompt that restates it.
-        originalRequestText = pendingSplitRequestText;
+        // NOT clearHistory() — the stored transcript is kept in full regardless of this verdict
+        // (see m_contextHistoryStart's doc comment); only future calls' CONTEXT excludes turns
+        // before this point, not "show history"/the record itself. An earlier version called
+        // clearHistory() here, so a later message merely judged "unrelated" permanently erased
+        // real earlier turns (e.g. "Hi") a user might still want to recall.
+        m_contextHistoryStart = m_history.size();
         if (m_host)
-            m_host->print("▸▸▸ AI: this looks like a new, unrelated task — starting fresh "
-                          "(previous conversation context cleared).");
+            m_host->print("▸▸▸ AI: this looks like a new, unrelated task — earlier conversation "
+                          "won't be resent as context from here on (still available via "
+                          "\"history\").");
     }
+    // Re-anchor to THIS request as the new baseline goal — unconditionally, regardless of the
+    // CONTINUE/NEW verdict above. pendingDispatchRequestText is, by construction, the request
+    // dispatchAfterExistenceCheck() deferred (its only writer, and this is the only reader), so
+    // it's the correct "actual goal" anchor for whatever happens next even when the check says
+    // CONTINUE. Gating this on NEW left originalRequestText stuck on a stale, unrelated earlier
+    // task whenever the check misjudged a genuinely new request as a continuation — confirmed
+    // live: a "make a new matrix" anchor kept leaking into every retry prompt for an unrelated
+    // later 3D-surface-plot request, because CONTINUE was judged and this line never ran.
+    originalRequestText = pendingDispatchRequestText;
     // CONTINUE, or anything unrecognized — fail-open (same philosophy as every other
     // verify-and-retry in this class): proceed exactly as the fresh-conversation path would,
-    // history intact.
+    // history intact. dispatchByMode() (not beginSplitPlanDecomposition() directly) since this
+    // request may or may not want split mode — see dispatchAfterExistenceCheck()'s doc comment.
     if (!m_content)
     {
         startRequest(QStringList());
         return;
     }
-    awaitingSplitPlan = true;
-    ask(m_content->splitPlanPreflightPrompt(pendingSplitRequestText), true, QString(), {"ai"}, false, false);
+    dispatchByMode(pendingDispatchRequestText);
 }
 
-void AiAssistant::startRequest(const QStringList &docTopics)
+QString AiAssistant::topicsHintLine(const QStringList &docTopics) const
+{
+    // Always includes baselineDocTopics(), same reasoning as startSplitPart()'s own inline
+    // equivalent — this is pure signal for an optional server-side retrieval step, not the
+    // "none" LOCAL-attachment choice docTopics itself protects at its own call sites, so it's
+    // never gated by that choice. kNoDocsSentinel filtered out — it's a LOCAL attachment
+    // placeholder, not a real topic name a retrieval proxy could ever match a file on.
+    const QStringList baselineTopics = m_content ? m_content->baselineDocTopics() : QStringList();
+    QStringList hintTopics = baselineTopics;
+    for (const QString &topic : docTopics)
+        if (topic != kNoDocsSentinel && !hintTopics.contains(topic))
+            hintTopics << topic;
+    if (docsMode() == DocsMode::Integrated && !hintTopics.isEmpty())
+        return "\n\nTOPICS: " + hintTopics.join(", ");
+    return {};
+}
+
+QString AiAssistant::noDocsHintLine() const
+{
+    return docsMode() == DocsMode::Integrated ? "\n\nTOPICS: none" : QString();
+}
+
+void AiAssistant::startRequest(const QStringList &docTopics, const QString &resolvedTaskDescription)
 {
     selectedDocTopics = docTopics;
-    // Restate the ORIGINAL request explicitly whenever this turn's own text differs
-    // from it (i.e. every short follow-up like "try again"/"noch mal") — see
-    // originalRequestText's declaration. Without this, the model tends to
-    // continue from its own last SCRIPT in history (e.g. a substitute table already
-    // identified as wrong) rather than re-deriving the goal from the real request,
-    // which appears only once, much earlier in a growing, code-dominated history.
-    const QString requestForModel = (pendingRequestText == originalRequestText)
-                                        ? pendingRequestText
-                                        : ("Original request for this conversation — the actual goal; do not drift "
-                                           "from its explicitly named resources just because this message is short:\n" +
-                                           originalRequestText + "\n\nCurrent message:\n" + pendingRequestText);
-    ask(requestForModel, true, QString(), docTopics);
+    QString requestForModel;
+    if (!resolvedTaskDescription.isEmpty())
+    {
+        // Called from handleSplitPlanResponse()'s single-part shortcut: a plan that settled on
+        // exactly one part is collapsed into a direct (non-split) call to skip split-mode's
+        // per-part/merge overhead — but that part's OWN description already went through
+        // splitPartsMissingCreationName()'s check, which requires it to name any created object
+        // concretely (see that function's doc comment). Confirmed live: discarding this and
+        // falling back to the bare original request instead produced a shown split-plan
+        // ("create a table named 'MyTable'...") that then contradicted itself when the actual
+        // generation call, given only the bare ambiguous original text with no name at all,
+        // asked the user to specify a name the plan had already settled on one paragraph earlier.
+        // Using the part's resolved description keeps what's shown and what's actually generated
+        // consistent.
+        requestForModel =
+            (pendingRequestText == originalRequestText)
+                ? ("Generate a script for exactly this task: " + resolvedTaskDescription)
+                : ("Original request for this conversation — the actual goal; do not drift "
+                   "from its explicitly named resources just because this message is short:\n" +
+                   originalRequestText + "\n\nGenerate a script for exactly this task: " + resolvedTaskDescription);
+    }
+    else
+    {
+        // Restate the ORIGINAL request explicitly whenever this turn's own text differs
+        // from it (i.e. every short follow-up like "try again"/"noch mal") — see
+        // originalRequestText's declaration. Without this, the model tends to
+        // continue from its own last SCRIPT in history (e.g. a substitute table already
+        // identified as wrong) rather than re-deriving the goal from the real request,
+        // which appears only once, much earlier in a growing, code-dominated history.
+        requestForModel = (pendingRequestText == originalRequestText)
+                              ? pendingRequestText
+                              : ("Original request for this conversation — the actual goal; do not drift "
+                                 "from its explicitly named resources just because this message is short:\n" +
+                                 originalRequestText + "\n\nCurrent message:\n" + pendingRequestText);
+    }
+    // historyText: always the user's own literal current message, never requestForModel — neither
+    // the TOPICS: hint appended below nor the "Original request for this conversation..."
+    // reminder wrapper built above belong in stored history/"show history". Confirmed live (the
+    // TOPICS: case): appending the hint straight onto requestForModel and letting THAT get stored
+    // verbatim leaked "TOPICS: ai, app" into m_history, which then kept resurfacing in every later
+    // reference to this turn. Confirmed live again (the reminder-wrapper case, previously missed
+    // by this same fix): a short follow-up that triggered the "Original request..." wrapper stored
+    // that whole multi-line wrapper as the turn's "question" instead of the actual short message
+    // typed, corrupting "show history" and every future consumer of m_history's raw text.
+    const QString textForHistory = pendingRequestText;
+
+    // Confirmed live: every request that resolves to a single part (handleSplitPlanResponse()'s
+    // single-part shortcut calls startRequest(), never startSplitPart()) was reaching the server
+    // with files=None — completely unscoped retrieval — despite the client's own "topics hint:
+    // ..." diagnostic implying otherwise (that diagnostic describes selectedDocTopics, for LOCAL
+    // doc attachment, a different thing entirely from the TOPICS: line topicsHintLine() builds,
+    // which is the only thing qtisas-rag's files_from_topics() actually parses).
+    requestForModel += topicsHintLine(docTopics);
+    requestForModel += pendingLiveFactsNote;
+
+    ask(requestForModel, true, QString(), docTopics, true, true, true, textForHistory);
 }
 
 QString AiAssistant::originalRequestReminder() const
@@ -485,32 +1037,61 @@ QString AiAssistant::originalRequestReminder() const
            originalRequestText + "\n\n";
 }
 
+// listModeActive stays true only while another item follows, and the next item is dispatched
+// immediately below — so there is no idle window where an unrelated manual request's success could
+// be misread as the abandoned item finishing (confirmed live before this was handled at all).
 QString AiAssistant::splitModeGiveUpNote()
 {
-    if (!splitModeActive)
-        return {};
-    const QString note = QString("\n\n(split-mode part %1/%2 — later parts were not attempted; "
-                                 "merge was never requested.)")
-                             .arg(splitPartIndex + 1)
-                             .arg(splitPlan.size());
-    splitModeActive = false;
+    QString note;
+    if (splitModeActive)
+    {
+        note = QString("\n\n(split-mode part %1/%2 — later parts were not attempted; merge was "
+                       "never requested.)")
+                   .arg(splitPartIndex + 1)
+                   .arg(splitPlan.size());
+        splitModeActive = false;
+    }
+    if (listModeActive)
+    {
+        // Skip the failed item, don't abandon the list: confirmed live four times, one stuck item
+        // discarded every remaining item plus all the work already completed (e.g. items 8-12 and
+        // ~8min lost to a setParamCount mismatch confined to item 8). Items are independent
+        // enough that a later one usually still runs; continued on the next event-loop turn so
+        // this failure message is emitted before the next item's own output.
+        const bool moreItems = listItemIndex + 1 < listItems.size();
+        note += moreItems ? QString("\n\n(LIST item %1/%2 failed — skipping it and continuing with "
+                                    "the next item.)")
+                                .arg(listItemIndex + 1)
+                                .arg(listItems.size())
+                          : QString("\n\n(LIST item %1/%2 failed — it was the last item.)")
+                                .arg(listItemIndex + 1)
+                                .arg(listItems.size());
+        if (moreItems)
+        {
+            QTimer::singleShot(0, this, [this]() {
+                if (listModeActive)
+                    startNextListItem();
+            });
+        }
+        else
+        {
+            listModeActive = false;
+            listItems.clear();
+            listItemIndex = -1;
+            awaitingListTransform = false;
+        }
+    }
     return note;
 }
 
-// Parses one "DOCS: ..." field from a split-plan line using the EXACT SAME topic-matching
-// semantics as handleDocSelectionResponse() above — kept as a separate helper so split mode
-// carries zero risk to that already-tuned path. Also unions in any topic keyword found in the
-// part's own description (mechanical backstop against an incomplete/wrong DOCS field), with
-// dedicated synonym regexes for topic names that rarely appear verbatim in natural prose:
-// "fittable" (the class name itself) and "graph3d" (users say "3D surface"/"3D plot", never the
-// literal topic name) — confirmed live via ai-test-requests.md's own "3D surface plot" fixture
-// entry, which detected zero topics at all before this regex was added.
-static const QHash<QString, QRegularExpression> topicSynonymRe = {
-    {"fittable",
-     QRegularExpression(R"(\bfit(s|ted|ting)?\b|chi2|chi²|fitcurve)", QRegularExpression::CaseInsensitiveOption)},
-    {"graph3d",
-     QRegularExpression(R"(\b3d\b|\bsurface\s*plot\b|\bplot3d\b)", QRegularExpression::CaseInsensitiveOption)},
-};
+void AiAssistant::recordGiveUpInHistory(const QString &reason, const QString &lastError)
+{
+    m_history.append({"[[internal: automatic retry loop ended]]",
+                      "[[internal: this task did NOT complete successfully — " + reason +
+                          (lastError.isEmpty() ? QString() : (".\nLast error:\n" + lastError)) +
+                          "\nIf asked about this task's status, report that it FAILED or did not finish, "
+                          "quoting the actual error above — never claim success.]]"});
+}
 
 QStringList splitPartTopicsFromAnswer(const QString &docsField, const QString &description,
                                       const QStringList &knownTopics)
@@ -521,14 +1102,14 @@ QStringList splitPartTopicsFromAnswer(const QString &docsField, const QString &d
     QStringList keywordMatches;
     for (const QString &topic : knownTopics)
     {
-        if (descLower.contains(topic))
+        if (textNamesTopic(descLower, topic))
         {
             keywordMatches << topic;
             continue;
         }
-        const auto it = topicSynonymRe.constFind(topic);
-        if (it != topicSynonymRe.constEnd() && it.value().match(description).hasMatch())
-            keywordMatches << topic;
+        if (!topicSynonymMatch(topic, description))
+            continue;
+        keywordMatches << topic;
     }
 
     // "all" means fail-open to the entire doc corpus (see filterDocsByTopic()'s comment: an EMPTY
@@ -542,7 +1123,7 @@ QStringList splitPartTopicsFromAnswer(const QString &docsField, const QString &d
 
     QStringList selected;
     for (const QString &topic : knownTopics)
-        if (lower.contains(topic))
+        if (textNamesTopic(lower, topic))
             selected << topic;
     for (const QString &topic : keywordMatches)
         if (!selected.contains(topic))
@@ -565,8 +1146,27 @@ QList<int> splitPartsMissingCreationName(const QList<AiAssistant::SplitPart> &pl
     // ...") the same way — confirmed live: an unnamed one left a later part with no real name to
     // look up via plot3D("name"), so it just rebuilt the whole surface from scratch instead (see
     // Direction 8, which requires setWindowName() on the code side of this same problem).
+    //
+    // "3d"/"mesh" added to the noun group — confirmed live, a THIRD wording slipped past even the
+    // "surface" fix above: "create 3D plot of sin(x)*cos(y) ... using filled mesh style" has
+    // neither "graph" nor "surface", only "plot" as a bare verb with no qualifying noun following
+    // it at all. Left unnamed, the resulting window got named after the FORMULA itself
+    // ("sin(x)*cos(y)"), and the next part spent 10 rounds guessing plausible-sounding names
+    // before one happened to satisfy Direction 5 by coincidence (a word already present in that
+    // LATER part's own description) — the eventual "success" still silently created a second,
+    // orphaned window rather than ever finding the first one.
+    // "curve" added to the noun group, mirroring the same fix in splitPlanUnnecessaryFragments()
+    // below — confirmed live: "plot the simulated Porod curve with log-log scale and proper axis
+    // formatting" creates a new graph window (via plot()/insertCurve()) exactly like any other
+    // plot-creating description, but wasn't recognized as a creation step at all because "curve"
+    // wasn't in this noun list, so its missing quoted name went unchecked.
+    // "function" made plural-tolerant (function(s)?) — same gap as splitPlanUnnecessaryFragments()'s
+    // own copy of this pattern: "compile two custom fit functions" (plural) matched neither
+    // singular "function" nor "curves?"'s own explicit plural handling, so a multi-function
+    // compile part's missing name went unchecked entirely rather than flagged.
     static const QRegularExpression creationVerbRe(
-        R"(\b(compile|create|make|build|plot)\b.*\b(function|table|graph|matrix|note|panels?|surface)\b)",
+        R"(\b(compile|create|make|build|plot)\b.*)"
+        R"(\b(functions?|table|graph|matrix|note|panels?|surface|3d|mesh|curves?)\b)",
         QRegularExpression::CaseInsensitiveOption);
     static const QRegularExpression quotedNameRe(R"(['"][^'"]+['"])");
     QList<int> missing;
@@ -574,6 +1174,923 @@ QList<int> splitPartsMissingCreationName(const QList<AiAssistant::SplitPart> &pl
         if (creationVerbRe.match(plan[i].description).hasMatch() && !quotedNameRe.match(plan[i].description).hasMatch())
             missing << i;
     return missing;
+}
+
+// Maps a matched creation noun (creationVerbRe's captured object-type word) to the labeled
+// existence-check line(s) — see existingEntityVerificationPrompt() — whose EXISTS actually means a
+// collision is destructive for THAT kind of creation.
+//   - a function name colliding with Compiler.functionNames()/Fittable.fitFunctions() overwrites
+//     the .fif/.cpp/.so/.dylib files in place, no backup, no confirmation.
+//   - table/matrix/note/graph all share ONE underlying namespace — app-python-api.md's own
+//     windows() ("all open windows regardless of type") and setWindowName()'s cross-type
+//     ValueError confirm QtiSAS never lets two of these coexist under the same name — so there is
+//     exactly one real thing to check ("window"), not four independent ones.
+//   - table/graph collisions are destructive (Table::clear() wipes every cell; a reused graph
+//     clears its curves). Matrix collisions only resize (lower severity). Note collisions look
+//     safe ONLY for a same-type match (the existing note is returned untouched) — but confirmed
+//     live by code inspection: newNote()'s own SIP binding only checks for an EXISTING NOTE by
+//     that name; if a DIFFERENT window type already holds it, that check misses it entirely, and
+//     ApplicationWindow::newNote() then silently substitutes a completely different
+//     auto-generated name via alreadyUsedName() — no error, no warning, and the script's own note
+//     ends up under a name it never asked for. Since the mechanical check can only ask "does ANY
+//     window have this name" (not "is the SAME-TYPE window the one holding it"), note gets the
+//     same {"window"} label as the others rather than an exemption — an occasional unnecessary
+//     halt on a genuinely-safe note reuse is a smaller cost than silently missing this.
+static QStringList creationCollisionLabelsForNoun(const QString &noun)
+{
+    const QString lower = noun.toLower();
+    if (lower.startsWith("function"))
+        return {"compile", "fittable"};
+    // A note's script TAB is in no registry at all — not the shared window-name registry
+    // (setWindowName() knows nothing about tabs; they are addressed by renameTab()/tab() index or
+    // label), and obviously not the compiled-function one. So there is nothing a tab name can
+    // collide WITH, and an empty label list makes the caller skip it entirely.
+    //
+    // Confirmed live: "create a script tab named 'AutoExecScript' in the 'Batch' note" had no
+    // recognized noun at "tab", so the capture ran on to the next one it did recognize — "note" —
+    // and checked the TAB's name against the window registry. That printed
+    // "(window) MISSING: AutoExecScript" and spent a whole round-trip proving a tab is not a
+    // window. Worse, a MISSING verdict is what the existence gate refuses requests on, so a
+    // differently-worded part could have had the item aborted outright over a name that was never
+    // meant to be a window in the first place.
+    // Exact match, NOT startsWith("tab") — that also swallows "table", which stripped the window
+    // label off every table creation and silently disabled the overwrite guard for tables. Caught
+    // by splitPlanCreationNames_collectsCompileAndTableNames() within a minute of writing it.
+    if (lower == "tab" || lower == "tabs")
+        return {};
+    return {"window"}; // table, matrix, note, graph, panel(s), surface, 3d, mesh, curve(s)
+}
+
+// Collects the quoted name of every part the plan is actually about to CREATE, paired with which
+// labeled existence-check line(s) a collision on that name would actually need to match to be
+// destructive (see creationCollisionLabelsForNoun() above) — checking a name against every one of
+// the three kinds regardless of what's being created would both under- and over-block: a compile
+// part would wrongly halt on an unrelated pre-existing TABLE sharing the name (compiling never
+// touches tables at all), while a note-creation part would need never block at all. Reuses
+// creationVerbRe (same as splitPartsMissingCreationName() above) to decide "this part creates
+// something", paired with a CAPTURING quoted-name match instead of a presence check. Deliberately
+// reuses creationVerbRe rather than a broader "any quoted name in any part" scan — a part that only
+// REFERENCES an already-created object by name (e.g. "configure fittable to use function
+// 'ai/Gaussian'") must never be treated as if it were about to create that name fresh, or a
+// legitimate reuse of a genuinely pre-existing object would wrongly halt the whole plan.
+// A part naming more than one distinct object of DIFFERENT kinds in its own description is a rare
+// enough shape (the split-plan prompt otherwise pushes toward one creation per part) that every
+// quoted name in such a part is approximated as needing the SAME label set, derived from the
+// part's own single creationVerbRe match — not worth a more precise per-name noun association.
+QList<QPair<QString, QStringList>> splitPlanCreationNames(const QList<AiAssistant::SplitPart> &plan)
+{
+    // Confirmed live: a split-plan fixup round merged a compile part and a simulate part into ONE
+    // ("compile custom Porod power-law fit function ... named 'ai/PorodFit' and simulate curve
+    // from it without fitting real data") — greedy .* here matched as much as possible, so
+    // creationVerbRe's own noun capture backtracked all the way to the LAST noun in the
+    // description ("curve", from the simulate clause) instead of the one actually tied to the
+    // compile verb ("function"). That mapped 'ai/PorodFit' to {"graph"} instead of
+    // {"compile","fittable"}, so splitPlanCreationCollisions() checked the wrong labeled line,
+    // found no "(graph) EXISTS", and silently let a genuine, confirmed compile/fittable collision
+    // through uncaught — exactly the destructive case this whole check exists to stop. Lazy .*?
+    // instead finds the CLOSEST noun after the verb, which is the one actually describing what
+    // that verb creates, regardless of what unrelated creation-shaped words appear later in the
+    // same merged description.
+    static const QRegularExpression creationVerbRe(
+        R"(\b(compile|create|make|build|plot)\b.*?)"
+        R"(\b(functions?|tabs?|table|graph|matrix|note|panels?|surface|3d|mesh|curves?)\b)",
+        QRegularExpression::CaseInsensitiveOption);
+    // Confirmed live: "... function named 'ai/PorodFit' in category 'test' ..." has TWO quoted
+    // strings; a bare quote scan wrongly checked "test" for existence too. Restricted to the name
+    // following "named"/"called", matching namedQuotedRe's own convention elsewhere in this file.
+    static const QRegularExpression quotedNameCaptureRe(R"(\b(?:named|called)\s+(['"])([^'"]+)\1)",
+                                                        QRegularExpression::CaseInsensitiveOption);
+    QList<QPair<QString, QStringList>> result;
+    for (const AiAssistant::SplitPart &part : plan)
+    {
+        const QRegularExpressionMatch verbMatch = creationVerbRe.match(part.description);
+        if (!verbMatch.hasMatch())
+            continue;
+        const QStringList labels = creationCollisionLabelsForNoun(verbMatch.captured(2));
+        if (labels.isEmpty())
+            continue; // no recognized noun matched -- nothing to check
+        QRegularExpressionMatchIterator it = quotedNameCaptureRe.globalMatch(part.description);
+        while (it.hasNext())
+        {
+            const QString name = it.next().captured(2);
+            bool merged = false;
+            for (QPair<QString, QStringList> &entry : result)
+            {
+                if (entry.first != name)
+                    continue;
+                for (const QString &label : labels)
+                    if (!entry.second.contains(label))
+                        entry.second << label;
+                merged = true;
+                break;
+            }
+            if (!merged)
+                result << qMakePair(name, labels);
+        }
+    }
+    return result;
+}
+
+// Checks each (name, relevantLabels) entry from splitPlanCreationNames() against ONLY the labeled
+// per-check line(s) relevant to how that name is actually being created — e.g. a table-creation
+// name is a real collision only if the script's own "(window) EXISTS: <name>" line says so; an
+// unrelated "(compile) EXISTS: <name>" line for the SAME string is irrelevant, since compiling and
+// creating a table touch completely separate storage (confirmed live: a table and a fit function
+// CAN legitimately share a name with no conflict at all). Never consults the combined VERDICT
+// line — that line answers "does this exist as ANY kind", which is the wrong question here and
+// would make this exactly as over-broad as checking all three.
+//
+// Fails CLOSED, same as missingEntityNames() fails OPEN in the opposite direction, and for the
+// mirrored reason: a single matching labeled line is enough to flag a collision, because the
+// downside of a false positive here (an unnecessary halt) is far cheaper than the downside of a
+// false negative (a silent, unbackuped overwrite of a real file — see
+// creationCollisionLabelsForNoun()'s doc comment for which kinds are actually destructive).
+//
+// Confirmed live: a check-script can print BOTH "(window) EXISTS: X" and "(window) MISSING: X"
+// for the same X (a broken/self-contradictory script). A prior version of this function treated
+// that as "no evidence, skip" — confirmed live to be the wrong direction: it silently proceeded to
+// newTable()'s resize-and-clear path against a name that, in one observed case, genuinely already
+// held a real table. EXISTS being present at all is treated as a collision regardless of whatever
+// else the same broken script also printed — reverted back to that, deliberately, per the fail-
+// CLOSED reasoning above: an unnecessary halt is always the cheaper mistake here.
+QStringList splitPlanCreationCollisions(const QString &scriptOutput,
+                                        const QList<QPair<QString, QStringList>> &checkedNames)
+{
+    QStringList collisions;
+    for (const QPair<QString, QStringList> &entry : checkedNames)
+    {
+        for (const QString &label : entry.second)
+        {
+            if (!scriptOutput.contains("(" + label + ") EXISTS: " + entry.first))
+                continue;
+            collisions << entry.first;
+            break;
+        }
+    }
+    return collisions;
+}
+
+// compile-python-api.md Rule 6: "ai/" is reserved, disposable scratch for AI-authored one-offs —
+// a collision there is expected reuse, never a destructive surprise, so it must never block.
+// Table/matrix/graph names are untouched — Rule 6 says nothing about those.
+bool isRule6SandboxExemptCreationName(const QString &name, const QStringList &labels)
+{
+    return name.startsWith("ai/", Qt::CaseInsensitive) && (labels.contains("compile") || labels.contains("fittable"));
+}
+
+// Removes any collision covered by isRule6SandboxExemptCreationName() above, appending each
+// removed name to `sandboxExempt` (if non-null).
+QStringList splitPlanCollisionsAfterSandboxExemption(const QStringList &collisions,
+                                                     const QList<QPair<QString, QStringList>> &checkedNames,
+                                                     QStringList *sandboxExempt)
+{
+    QStringList remaining = collisions;
+    for (int i = static_cast<int>(remaining.size()) - 1; i >= 0; --i)
+    {
+        const QString &name = remaining[i];
+        QStringList labels;
+        for (const QPair<QString, QStringList> &entry : checkedNames)
+            if (entry.first == name)
+                labels = entry.second;
+        if (!isRule6SandboxExemptCreationName(name, labels))
+            continue;
+        if (sandboxExempt)
+            *sandboxExempt << name;
+        remaining.removeAt(i);
+    }
+    return remaining;
+}
+
+// Skips the verification round-trip entirely for a name covered by
+// isRule6SandboxExemptCreationName() above — its collision-check answer can never change the
+// outcome (Rule 6 lets it through either way), so asking is pure waste. Returns `checkedNames`
+// with those entries removed, appending each to `skipped` (if non-null).
+QList<QPair<QString, QStringList>> splitPlanCreationNamesNeedingCheck(
+    const QList<QPair<QString, QStringList>> &checkedNames, QStringList *skipped)
+{
+    QList<QPair<QString, QStringList>> remaining;
+    for (const QPair<QString, QStringList> &entry : checkedNames)
+    {
+        if (isRule6SandboxExemptCreationName(entry.first, entry.second))
+        {
+            if (skipped)
+                *skipped << entry.first;
+            continue;
+        }
+        remaining << entry;
+    }
+    return remaining;
+}
+
+// Mechanically applies compile-python-api.md's Rule 6 ("ai/" namespace prefix for any newly
+// compiled function) to a compile part's own description, once, right when the split-plan is
+// parsed — rather than leaving each generation/retry round of that part to apply the rule
+// correctly from doc guidance alone. Confirmed live: every observed compile part used the bare
+// name regardless of doc content being present. Only rewrites the name following "named" in a
+// "compile ... function" description — this has no equivalent for non-split requests (see
+// compilerMissingAiNamespaceMistake()'s doc comment for the mechanical post-hoc check covering
+// that case instead).
+static void applyAiNamespaceToCompileParts(QList<AiAssistant::SplitPart> &plan)
+{
+    static const QRegularExpression compileFunctionRe(R"(\bcompile\b.*\bfunction\b)",
+                                                      QRegularExpression::CaseInsensitiveOption);
+    static const QRegularExpression namedQuotedRe(R"(\bnamed\s+(['"])([^'"]+)\1)",
+                                                  QRegularExpression::CaseInsensitiveOption);
+    for (AiAssistant::SplitPart &part : plan)
+    {
+        if (!compileFunctionRe.match(part.description).hasMatch())
+            continue;
+        const QRegularExpressionMatch m = namedQuotedRe.match(part.description);
+        if (!m.hasMatch() || m.captured(2).startsWith("ai/"))
+            continue;
+        part.description.replace(m.capturedStart(2), m.capturedLength(2), "ai/" + m.captured(2));
+    }
+}
+
+// applyAiNamespaceToCompileParts() above only corrects the COMPILE part's OWN description — it
+// does nothing about OTHER parts in the same plan that reference the SAME function by its bare,
+// unprefixed name. Confirmed live: a compile part named 'ai/PorodPowerLaw' (the model's own
+// choice this time, not even needing the rewrite above) while every one of 5 LATER parts
+// referenced the same function as bare 'PorodPowerLaw' — each part individually satisfies
+// splitPartsMissingCreationName() (it DOES state a quoted name), so nothing else catches this;
+// it's a genuine name MISMATCH across parts, not a missing name. This is exactly the failure
+// shape splitPartScopeViolation()'s Direction 3 doc comment already describes causing "a real
+// runtime ValueError several parts later" when a later part's generated script ends up opening/
+// configuring the WRONG (bare) name while the compiled function actually lives under the
+// "ai/"-prefixed one. Rewrites every later part's bare, quoted reference to match the compile
+// part's own canonical (correctly "ai/"-prefixed) name, so every part's description is
+// internally consistent before any part's script is ever generated.
+void reconcileCompiledFunctionNameAcrossParts(QList<AiAssistant::SplitPart> &plan)
+{
+    static const QRegularExpression compileFunctionRe(R"(\bcompile\b.*\bfunction\b)",
+                                                      QRegularExpression::CaseInsensitiveOption);
+    static const QRegularExpression namedQuotedRe(R"(\bnamed\s+(['"])([^'"]+)\1)",
+                                                  QRegularExpression::CaseInsensitiveOption);
+    for (const AiAssistant::SplitPart &compilePart : plan)
+    {
+        if (!compileFunctionRe.match(compilePart.description).hasMatch())
+            continue;
+        const QRegularExpressionMatch m = namedQuotedRe.match(compilePart.description);
+        if (!m.hasMatch() || !m.captured(2).startsWith("ai/", Qt::CaseInsensitive))
+            continue;
+        const QString canonicalName = m.captured(2);
+        const QString bareName = canonicalName.mid(3);
+        if (bareName.isEmpty())
+            continue;
+        const QRegularExpression bareQuotedRe("(['\"])" + QRegularExpression::escape(bareName) + "\\1",
+                                              QRegularExpression::CaseInsensitiveOption);
+        for (AiAssistant::SplitPart &part : plan)
+        {
+            if (&part == &compilePart)
+                continue;
+            part.description.replace(bareQuotedRe, "\\1" + canonicalName + "\\1");
+        }
+    }
+}
+
+// Confirmed live: a fixup round left two non-adjacent parts with byte-identical descriptions
+// (would have compiled/simulated the same thing twice) — no other check catches this. Fixed
+// mechanically, no model round-trip: nothing to negotiate about two identical strings. Scans
+// backward so removal never invalidates an index still to be checked; DOCS are unioned in.
+void dedupeSplitPlanExactDuplicateParts(QList<AiAssistant::SplitPart> &plan, QStringList *removedDescriptions)
+{
+    for (int i = static_cast<int>(plan.size() - 1); i > 0; --i)
+    {
+        for (int j = 0; j < i; ++j)
+        {
+            if (plan[i].description != plan[j].description)
+                continue;
+            for (const QString &topic : plan[i].docTopics)
+                if (!plan[j].docTopics.contains(topic))
+                    plan[j].docTopics << topic;
+            if (removedDescriptions)
+                *removedDescriptions << plan[i].description;
+            plan.removeAt(i);
+            break;
+        }
+    }
+}
+
+// Confirmed live, 3 separate times: asked to invent a different placeholder name for a colliding
+// one, the model just re-emitted the identical name unchanged. Once the model-based retry budget
+// Folds every part splitPlanUnnecessaryFragments() flags back into the part it belongs to, instead
+// of asking the model to do it.
+//
+// Confirmed live, item 6 of the fixture: "Plot a 3D surface ... then add a legend and axis labels"
+// decomposed into "plot the surface" + "add a legend and axis labels to the 3D surface plot", the
+// second being pure configuration of what the first just created. The complaint was raised, the
+// model resent the SAME plan unchanged, and the loop gave up ("not converging, proceeding anyway")
+// — shipping the very fragment it had objected to. Both parts also carried an identical DOCS field,
+// which splitPlanAdjacentSameDocs() independently detected and which is suppressed at the complaint
+// site precisely because it is the same verdict: these are one action, not two.
+//
+// The parent is always i-1: splitPlanUnnecessaryFragments() only ever flags a part whose immediate
+// predecessor is itself a creation part (or an already-flagged part, chaining backwards). Merging in
+// DESCENDING index order therefore keeps every earlier index valid and collapses a chain correctly —
+// 3 into 2, then 2 into 1.
+void mergeSplitPlanUnnecessaryFragments(QList<AiAssistant::SplitPart> &plan, QStringList *mergedAway)
+{
+    const QList<int> fragments = splitPlanUnnecessaryFragments(plan);
+    for (int k = static_cast<int>(fragments.size()) - 1; k >= 0; --k)
+    {
+        const int i = fragments[k];
+        if (i <= 0 || i >= plan.size())
+            continue;
+        const AiAssistant::SplitPart fragment = plan[i];
+        AiAssistant::SplitPart &parent = plan[i - 1];
+        // ", then <fragment>" keeps the original request's own sequencing readable in the merged
+        // description. Lower-casing a leading capital avoids "..., then Add a legend"; guarded on
+        // the second character so "3D"/"NaN"-style starts are left intact.
+        QString tail = fragment.description;
+        if (tail.size() > 1 && tail[0].isUpper() && tail[1].isLower())
+            tail[0] = tail[0].toLower();
+        parent.description += ", then " + tail;
+        // Union the topics, dropping the "no docs" sentinel — it means "this part needs none",
+        // which cannot survive a merge with a part that does need some.
+        QStringList topics;
+        for (const QStringList &src : {parent.docTopics, fragment.docTopics})
+            for (const QString &t : src)
+                if (t != kNoDocsSentinel && !topics.contains(t))
+                    topics << t;
+        parent.docTopics = topics.isEmpty() ? QStringList{kNoDocsSentinel} : topics;
+        plan.removeAt(i);
+        if (mergedAway)
+            *mergedAway << fragment.description;
+    }
+}
+
+// is exhausted, generating the alternate name in C++ instead is guaranteed to actually differ and
+// terminates immediately — nothing left to negotiate with the model. Only used for a name the
+// fixup process itself invented (never one the user typed), so there is nothing surprising about
+// the rename to explain back.
+QString mechanicalAlternateSplitPlanName(const QString &oldName, const QList<AiAssistant::SplitPart> &plan)
+{
+    for (int suffix = 2; suffix < 100; ++suffix)
+    {
+        const QString candidate = oldName + "_" + QString::number(suffix);
+        bool used = false;
+        for (const AiAssistant::SplitPart &part : plan)
+            if (part.description.contains(candidate))
+            {
+                used = true;
+                break;
+            }
+        if (!used)
+            return candidate;
+    }
+    return oldName + "_" + QString::number(QDateTime::currentMSecsSinceEpoch());
+}
+
+// Rewrites every occurrence of each colliding name across every part's description with a
+// Gives every creation part that never named its object a concrete, quoted name — mechanically,
+// instead of spending a fixup round asking the model for one.
+//
+// Confirmed live, item 6 of the test fixture ("Plot a 3D surface of sin(x)*cos(y) ... then add a
+// legend and axis labels"): four fixup rounds demanded a quoted name, none produced one, and the
+// item then DIED at generation. The deadlock is structural, not a model failure — the request
+// names no window, so splitPartScopeViolation()'s Direction 5 (the created window's name must
+// appear in the governing description) rejects EVERY possible name, including the two the model
+// tried. Asking harder cannot fix that; supplying the name can, and it closes both halves at once:
+// no complaint to raise, and a description Direction 5 can match against.
+//
+// It also makes the part visible to the creation-collision check: splitPlanCreationNames() keys off
+// quoted names, so an unnamed creation part was silently exempt from the overwrite guard entirely.
+//
+// The name must be plain alphanumeric — setWindowName() rejects anything else, which is exactly why
+// encoding the formula ("sin(x)*cos(y)") can never work. Preferred nouns first so the name means
+// something ("Surface" for a 3D surface), then any ordinary word from the description, then a
+// generic fallback; uniqueness across the plan reuses mechanicalAlternateSplitPlanName().
+void assignSplitPlanCreationNames(QList<AiAssistant::SplitPart> &plan, QStringList *assigned)
+{
+    static const QStringList kPreferredNouns = {"surface", "mesh", "map",   "curve",  "peak", "scan", "results",
+                                                "graph",   "plot", "table", "matrix", "note", "fit",  "data"};
+
+    // Deliberately excludes the words that describe the ACTION or its styling rather than the
+    // object — a window called "Filled" or "Using" would be worse than useless to a later part.
+    static const QStringList kStopWords = {"create", "creates", "make", "build",  "generate", "plot",
+                                           "plots",  "add",     "adds", "using",  "with",     "from",
+                                           "over",   "into",    "and",  "the",    "for",      "style",
+                                           "filled", "range",   "axis", "labels", "legend",   "new"};
+    static const QRegularExpression wordRe(R"(\b([A-Za-z][A-Za-z0-9]{2,})\b)");
+    for (int idx : splitPartsMissingCreationName(plan))
+    {
+        const QString desc = plan[idx].description;
+        QString base;
+        for (const QString &noun : kPreferredNouns)
+        {
+            static const QRegularExpression::PatternOptions ci = QRegularExpression::CaseInsensitiveOption;
+            if (QRegularExpression("\\b" + noun + "\\b", ci).match(desc).hasMatch())
+            {
+                base = noun;
+                break;
+            }
+        }
+        if (base.isEmpty())
+        {
+            QRegularExpressionMatchIterator it = wordRe.globalMatch(desc);
+            while (it.hasNext())
+            {
+                const QString word = it.next().captured(1);
+                if (!kStopWords.contains(word.toLower()))
+                {
+                    base = word;
+                    break;
+                }
+            }
+        }
+        if (base.isEmpty())
+            base = QStringLiteral("Result");
+        base[0] = base[0].toUpper();
+        QString name = base;
+        bool taken = false;
+        for (const AiAssistant::SplitPart &part : plan)
+            if (part.description.contains("\"" + name + "\""))
+            {
+                taken = true;
+                break;
+            }
+        if (taken)
+            name = mechanicalAlternateSplitPlanName(base, plan);
+        plan[idx].description += QString(" named \"%1\"").arg(name);
+        if (assigned)
+            *assigned << name;
+    }
+}
+
+// mechanically-generated alternate (see mechanicalAlternateSplitPlanName() above), collecting
+// "<old> -> <new>" into `renames` (if non-null) for the print line callers show the user.
+void mechanicallyRenameSplitPlanCollisions(QList<AiAssistant::SplitPart> &plan, const QStringList &collidingNames,
+                                           QStringList *renames)
+{
+    for (const QString &oldName : collidingNames)
+    {
+        const QString newName = mechanicalAlternateSplitPlanName(oldName, plan);
+        for (AiAssistant::SplitPart &part : plan)
+            part.description.replace(oldName, newName);
+        if (renames)
+            *renames << oldName + " -> " + newName;
+    }
+}
+
+// splitPlanPreflightPrompt() extensively instructs naming consistency and when NOT to
+// over-fragment, but never requires the parts to collectively cover every distinct action the
+// original request actually asks for — nothing downstream checked this either. Confirmed live,
+// severe: a request combining "create a table... compile two fit functions... fit both...
+// compare chi2/dof... plot the winner..." was decomposed into a SINGLE part covering only "create
+// table + compile" — the fit/compare/plot clauses never appeared in ANY part, yet the run
+// completed after that one part and reported "all 1 part(s) completed" as if the whole request
+// had been fulfilled. Deliberately narrow, high-precision action-verb groups (rather than a
+// general clause-coverage NLP heuristic) to keep false positives rare: each group only fires if
+// its keyword(s) appear in the ORIGINAL REQUEST TEXT but no synonym from that SAME group appears
+// anywhere across the combined part descriptions — a request that never mentions "compare" at all
+// is untouched by that group regardless of how the plan is split. Generic/host-independent (plain
+// English action words, no QtiSAS-specific API knowledge needed), same reasoning as
+// splitPartsMissingCreationName() above for living here rather than behind AiContentProvider.
+QStringList splitPlanMissingRequestedActions(const QString &originalRequestText,
+                                             const QList<AiAssistant::SplitPart> &plan)
+{
+    struct ActionGroup
+    {
+        QString label;
+        QRegularExpression re;
+    };
+    static const QList<ActionGroup> groups = {
+        {"compile", QRegularExpression(R"(\bcompile\b)", QRegularExpression::CaseInsensitiveOption)},
+        // Negative lookahead excludes "fit function"/"fitting function" — naming WHAT was
+        // compiled (a noun phrase), not describing the fitting ACTION itself. Confirmed live: a
+        // part's description said "compile custom Gaussian peak fit function..." (compiling only)
+        // with no part anywhere actually performing a fit — without this exclusion, that same
+        // phrase would have falsely satisfied the "fit" group and hidden a genuine coverage gap.
+        //
+        // Negative lookbehind excludes "without/never/not fitting" — confirmed live, severe: a
+        // request explicitly saying "...simulate a curve from it without fitting any real data"
+        // still matched this group (on "fitting"), so the retry loop demanded a part that
+        // performs fitting — a requirement directly CONTRADICTING what the request actually
+        // asked for. Structurally unsatisfiable: no plan can simultaneously honor "without
+        // fitting" and add a fitting part, so this false positive burned the entire fixup-round
+        // budget every single time this phrasing occurred, every round ending in "still has
+        // unresolved issue(s) — proceeding anyway" rather than ever converging.
+        {"fit", QRegularExpression(R"((?<!\b(?:without|never|not)\s)\bfit(?:ting)?\b(?!\s+function))",
+                                   QRegularExpression::CaseInsensitiveOption)},
+        {"compare models / report a winner",
+         QRegularExpression(R"(\bcompar(?:e|ison|ing)\b|\bwhich\s+\w*\s*model|\bfits?\s+better\b|\bwinner\b)",
+                            QRegularExpression::CaseInsensitiveOption)},
+        // "plot3D"/"graph3D" (no space) confirmed live to NOT match \bplot\b/\bgraph\b — "t"/"h"
+        // immediately followed by a digit is not a \b transition (digits count as \w too), so a
+        // request literally saying "new plot3D" was wrongly flagged as never having asked for a
+        // plot/graph action at all. "3d"/"3D" as an optional suffix on both words closes this.
+        {"plot/graph", QRegularExpression(R"(\bplot(?:ting|3d)?\b|\bgraph(?:3d)?\b|\bchart\b)",
+                                          QRegularExpression::CaseInsensitiveOption)},
+        // Confirmed live, severe: "...simulate a curve from it without fitting any real data" —
+        // the simulate part was silently dropped during a fixup round, leaving only the compile
+        // part, and nothing caught it since "simulate" wasn't a tracked action group at all.
+        {"simulate", QRegularExpression(R"(\bsimulat(?:e|ion|ing)\b)", QRegularExpression::CaseInsensitiveOption)},
+    };
+    QString combinedDescriptions;
+    for (const AiAssistant::SplitPart &p : plan)
+        combinedDescriptions += p.description + "\n";
+    QStringList missing;
+    for (const ActionGroup &g : groups)
+    {
+        if (!g.re.match(originalRequestText).hasMatch())
+            continue;
+        if (!g.re.match(combinedDescriptions).hasMatch())
+            missing << g.label;
+    }
+    return missing;
+}
+
+// Detects a "(with X)"-style qualifying detail in the ORIGINAL request whose key word never
+// appears anywhere across the combined part descriptions — confirmed live: "...sphere form factor
+// (with background) plus 4% Gaussian noise" produced a part description reading "...for sphere
+// form factor plus 4% Gaussian noise" — "(with background)" silently disappeared already at this
+// decomposition step, before any code was ever generated (see splitPlanPreflightPrompt()'s own
+// rule on this). Checks only the FIRST significant word of the detail (e.g. "background" out of
+// "background subtraction") rather than the full phrase — a full-phrase match would be too strict
+// against reasonable paraphrasing.
+QStringList splitPlanDroppedParentheticalDetail(const QString &originalRequestText,
+                                                const QList<AiAssistant::SplitPart> &plan)
+{
+    static const QRegularExpression parentheticalRe(R"(\(with\s+([^()]+)\))",
+                                                    QRegularExpression::CaseInsensitiveOption);
+    QString combinedDescriptions;
+    for (const AiAssistant::SplitPart &p : plan)
+        combinedDescriptions += p.description + "\n";
+    QStringList missing;
+    QRegularExpressionMatchIterator it = parentheticalRe.globalMatch(originalRequestText);
+    while (it.hasNext())
+    {
+        const QString detail = it.next().captured(1).trimmed();
+        const QString keyWord = detail.split(' ', Qt::SkipEmptyParts).value(0);
+        if (keyWord.isEmpty())
+            continue;
+        const QRegularExpression keyWordRe(QRegularExpression::escape(keyWord),
+                                           QRegularExpression::CaseInsensitiveOption);
+        if (!keyWordRe.match(combinedDescriptions).hasMatch())
+            missing << ("\"(with " + detail + ")\"");
+    }
+    return missing;
+}
+
+// The mirror image of splitPlanMissingRequestedActions() above: that check catches a requested
+// action MISSING from the plan (under-coverage); this one catches a PART whose action was never
+// requested at all (over-coverage). Confirmed live, severe: a request that only said "Create a
+// table ... and fill it with synthetic ... intensities ... plus 3% Gaussian noise" — zero mention
+// of plotting, fitting, comparing, or graph styling — was decomposed into a 9-part plan where
+// parts 2-9 built an entire unrequested SAXS analysis pipeline (plot, fit, overlay, legend,
+// log-log scale, ticks, scientific notation). Every OTHER mechanical check available at the time
+// passed cleanly on that plan (each part was well-named, none was a pure fill-only fragment of
+// another) precisely because none of them ever compares a part's action against the ORIGINAL
+// REQUEST rather than against the rest of the plan. Same deliberately narrow, high-precision
+// action-verb groups as splitPlanMissingRequestedActions() (duplicated rather than shared, same
+// reasoning as requestedCreationNeverHappenedMistake()/selfReviewCreationNameSubstitution()'s
+// separate CreationKind lists in QtiSasAiContent.cpp) to keep false positives rare — a part doing
+// something none of these four groups recognizes (e.g. "create a table") is never flagged here
+// regardless of whether it was requested, exactly like its sibling.
+QList<int> splitPlanUnrequestedActions(const QString &originalRequestText, const QList<AiAssistant::SplitPart> &plan)
+{
+    struct ActionGroup
+    {
+        QString label;
+        QRegularExpression re;
+    };
+    static const QList<ActionGroup> groups = {
+        {"compile", QRegularExpression(R"(\bcompile\b)", QRegularExpression::CaseInsensitiveOption)},
+        {"fit", QRegularExpression(R"((?<!\b(?:without|never|not)\s)\bfit(?:ting)?\b(?!\s+function))",
+                                   QRegularExpression::CaseInsensitiveOption)},
+        {"compare models / report a winner",
+         QRegularExpression(R"(\bcompar(?:e|ison|ing)\b|\bwhich\s+\w*\s*model|\bfits?\s+better\b|\bwinner\b)",
+                            QRegularExpression::CaseInsensitiveOption)},
+        // "plot3D"/"graph3D" (no space) confirmed live to NOT match \bplot\b/\bgraph\b — "t"/"h"
+        // immediately followed by a digit is not a \b transition (digits count as \w too), so a
+        // request literally saying "new plot3D" was wrongly flagged as never having asked for a
+        // plot/graph action at all. "3d"/"3D" as an optional suffix on both words closes this.
+        {"plot/graph", QRegularExpression(R"(\bplot(?:ting|3d)?\b|\bgraph(?:3d)?\b|\bchart\b)",
+                                          QRegularExpression::CaseInsensitiveOption)},
+        // Kept in sync with splitPlanMissingRequestedActions()'s own "simulate" group above.
+        {"simulate", QRegularExpression(R"(\bsimulat(?:e|ion|ing)\b)", QRegularExpression::CaseInsensitiveOption)},
+    };
+    QList<int> unrequested;
+    for (int i = 0; i < plan.size(); ++i)
+        for (const ActionGroup &g : groups)
+            if (g.re.match(plan[i].description).hasMatch() && !g.re.match(originalRequestText).hasMatch())
+            {
+                unrequested << i;
+                break;
+            }
+    return unrequested;
+}
+
+// A part whose ENTIRE job is filling/configuring/finishing what the IMMEDIATELY PRECEDING part
+// just created, with no other distinct action of its own, should have been ONE part per
+// splitPlanPreflightPrompt()'s own worked example ("create a table and immediately fill it with
+// computed values" is ONE part, not two: filling has no independent value without the creation,
+// and both would need to re-run together on any failure regardless). Confirmed live: a plan split
+// "create a 50x50 matrix named 'X'" from "fill every cell of 'X' using formula ... via
+// setFormula()/calculate()" into two parts — part 1's own generated script redundantly finished
+// part 2's job too (nothing else for a bare "create" part to legitimately do), and the eventual
+// merge step then folded the two back together WRONG (a duplicate newMatrix() call instead of one
+// clean creation) rather than the single coherent part this always should have been.
+//
+// Deliberately narrow — matches ONLY a part whose description STARTS with a fill/populate/
+// calculate/configure verb and contains no other action word, immediately following a part that
+// created an object of the matching kind — to keep false positives rare: a part that also fits,
+// compiles, or plots (a genuinely distinct, independently-durable action) is a legitimate separate
+// part even if it touches the same object, and is deliberately not flagged.
+//
+// fillOnlyRe originally only covered table/matrix-filling wording (fill/populate/calculate/
+// compute) — confirmed live: a plan split "plot a 3D surface ... using filled mesh style" from
+// "add axis labels and a legend to that same graph" into two parts, and this check never even
+// looked closer at the second part, since "add" wasn't in the verb list — styling/configuring a
+// just-created graph has exactly the same "no independent value without the creation" property as
+// filling a just-created table, just with different verbs. Added add/set/label/style/configure to
+// cover it. otherActionRe's own word list dropped bare "graph" for the same incident: descriptions
+// overwhelmingly use "graph" as a NOUN referring to the thing just created ("that same graph",
+// "the 3D surface graph"), not as a verb — matching it here wrongly treated every such reference
+// as "doing something else distinct" and excluded the flag. "plot" already covers the genuine
+// verb sense ("plot the results too").
+//
+// creationRe originally recognized only compile/create/make/build — confirmed live, still missed
+// the SAME incident above even after the fillOnlyRe/otherActionRe fixes: "plot the 'SurfaceData'
+// table as a 3D surface using filled mesh style" uses "plot", not any of those four, so the part
+// BEFORE the styling one was never recognized as a creation step at all, and the loop's
+// `!creationRe.match(plan[i-1]...)` guard skipped the pair before ever reaching fillOnlyRe/
+// otherActionRe. splitPartsMissingCreationName() (below) already learned this exact lesson for a
+// different purpose — its creationVerbRe includes "plot" plus panels?/surface/3d/mesh in the noun
+// group for the same reason ("create 3D plot of sin(x)*cos(y) ... using filled mesh style" has
+// neither "graph" nor "table"). Mirrored here instead of inventing a narrower variant.
+QList<int> splitPlanUnnecessaryFragments(const QList<AiAssistant::SplitPart> &plan)
+{
+    // "curve" added to the noun group — confirmed live: "plot the simulated Porod curve with
+    // log-log scale and proper axis formatting" was never recognized as a creation step at all
+    // (no "graph"/"table"/etc, only "curve", which wasn't in this list), so the styling-only parts
+    // that followed it never even got their PRECEDING part checked as a creation step in the first
+    // place — the whole chain below it went uninspected.
+    // "function" made plural-tolerant (function(s)?) — "compile two custom fit functions" (plural,
+    // the natural phrasing for a multi-function compile part) matched neither "function" nor
+    // "curves?"'s own explicit plural handling, so this creation step went unrecognized the same
+    // way the singular-only "curve" gap once did, silently skipping the fill-only check for
+    // whatever part follows it.
+    static const QRegularExpression creationRe(
+        R"(\b(compile|create|make|build|plot)\b.*)"
+        R"(\b(functions?|table|graph|matrix|note|panels?|surface|3d|mesh|curves?)\b)",
+        QRegularExpression::CaseInsensitiveOption);
+    // "finalize" added — confirmed live: "finalize the graph styling including line style and
+    // color" is exactly the same fill-only shape as "add"/"style"/"configure", just a different
+    // verb never covered before.
+    static const QRegularExpression fillOnlyRe(
+        R"(^\s*(fill|populate|calculate|compute|add|set|label|style|configure|finalize)\b)",
+        QRegularExpression::CaseInsensitiveOption);
+    // "plot" here is meant to catch a filler part that ALSO does its own genuine plotting
+    // (verb usage, e.g. "plot the residuals too") — not a filler part that merely REFERS to the
+    // graph a preceding part already created (noun usage, e.g. "add a legend to the Porod plot",
+    // "tick settings for the log-log plot"). Confirmed live: bare \bplot\b matched both, so every
+    // styling part in a real plot→title→scale→ticks→style chain that happened to end its
+    // description with "... plot" was wrongly treated as if it performed its own distinct
+    // plotting action, and none of them were ever flagged. The negative lookahead excludes "plot"
+    // when it is the description's trailing content word (optionally followed by one punctuation
+    // mark) — the confirmed noun-usage shape — while still matching genuine mid-sentence verb
+    // usage ("plot the results too") unchanged.
+    //
+    // Confirmed live, a SECOND noun-usage shape the above alone still missed: once split-plan
+    // descriptions started repeating the created object's exact name in every later part (per the
+    // naming-consistency instructions elsewhere in this same prompt), "plot" stopped being
+    // sentence-trailing at all — "...to the Porod curve plot named 'PorodPowerLaw'" and "...for
+    // the plot named 'PorodPowerLaw'" both have real content AFTER "plot", so the original
+    // trailing-word check no longer excluded them, and a 3-part styling chain went entirely
+    // unflagged again. Extended to also exclude "plot" immediately followed by an optional
+    // "named '<X>'"/"called '<X>'" clause before the end. A THIRD shape in the SAME incident:
+    // "the plot's major and minor tick settings" — the possessive "plot's" is unambiguously a
+    // noun reference (nothing conjugates as "plot's" as a verb), so it's excluded outright,
+    // regardless of position in the sentence.
+    //
+    // Confirmed live, a FOURTH noun-usage shape the above three still missed: "configure plot
+    // with log-log axes, axis labels, and title" — here "plot" is the direct OBJECT of this
+    // part's own leading filler verb ("configure PLOT"), not trailing, not followed by a naming
+    // clause, not possessive — none of the three existing exclusions applied, so this exact
+    // description (part of a real compile→simulate→plot→configure→legend chain) went unflagged
+    // and the whole styling tail was never merged. Excludes "plot" whenever it immediately
+    // follows one of fillOnlyRe's own verbs (the same list, reused here) — "configure/set/
+    // style/... PLOT" is reliably a noun-object in that position, regardless of what comes after
+    // it, unlike "plot the residuals too" where "plot" itself is the leading verb.
+    //
+    // Fifth shape, confirmed live: "...3D surface plot 'surface_data'" — a trailing quoted name
+    // with no "named"/"called" at all. Made that keyword optional in the trailing-name clause.
+    //
+    // Sixth shape, confirmed live: bare \bfit\b never matches the natural plural "fits" ("configure
+    // and run FITS using Gaussian and Lorentzian models..." — no word boundary between "fit" and
+    // the trailing "s"). A part whose own description used the plural got wrongly treated as having
+    // no distinct action of its own and force-merged into a PRECEDING "compile a custom fit
+    // function" part, even though running an actual fit against data is a genuinely distinct,
+    // independently valuable action, not a mere continuation of compiling the function definition
+    // — exactly the "also fits, compiles, or plots" exemption this whole regex exists to grant, just
+    // missed by the singular-only pattern. Made fit(s?) plural-tolerant, same as compile/compare;
+    // kept the "not followed by 'function(s)'" exclusion so "compile a custom ... fit function"
+    // itself still doesn't count as a genuine fitting action here.
+    static const QRegularExpression otherActionRe(
+        R"(\bfits?\b(?!\s+functions?)|\b(compiles?|compares?)\b|)"
+        R"((?<!\b(?:fill|populate|calculate|compute|add|set|label|style|configure|finalize)\s)\bplots?\b)"
+        R"((?!'s)(?!(?:\s+(?:(?:named|called)\s+)?['"][^'"]*['"])?\s*[.,]?\s*$))",
+        QRegularExpression::CaseInsensitiveOption);
+
+    // Chains forward past the first filler: a creation step is often followed by SEVERAL
+    // fill-only parts in a row (create plot → title/legend → axis scale → ticks → line style),
+    // and only the first one has a PRECEDING part that itself matches creationRe — the rest only
+    // continue what an EARLIER part created, not what the immediately preceding filler did.
+    // Confirmed live: without this, a 5-part styling chain after one plot-creation part had only
+    // its first link flagged, leaving 3 more unnecessary fragments unreported to the retry prompt.
+    QList<int> unnecessary;
+    for (int i = 1; i < plan.size(); ++i)
+    {
+        const bool precedingIsCreationOrChainedFiller =
+            creationRe.match(plan[i - 1].description).hasMatch() || unnecessary.contains(i - 1);
+        if (!precedingIsCreationOrChainedFiller)
+            continue;
+        if (!fillOnlyRe.match(plan[i].description).hasMatch())
+            continue;
+        if (otherActionRe.match(plan[i].description).hasMatch())
+            continue;
+        unnecessary << i;
+    }
+    return unnecessary;
+}
+
+// Mechanical backstop for rule 6 ("never leave two parts where the LATER one needs no NEW DOCS
+// ground beyond the EARLIER one") — originally a pure equality check on adjacent parts' topic
+// lists. Confirmed live: a round-1 exact-equality match ([ai, app, fittable] on both a "run the
+// fits" and a "compare chi2/dof" part) got the model to restructure the plan, but the later part's
+// topics ended up [ai, app, fittable] against the earlier part's [ai, app, fittable, table] — a
+// subset, not an exact match — so this check went quiet from round 2 onward even though the two
+// parts still did the identical comparison twice, by two different methods, in the final merged
+// script. Widened to also catch the LATER part's topics being a (non-strict) subset of the
+// EARLIER's — the later part bringing no new documentation ground is the actual redundancy signal.
+//
+// Deliberately ONE-DIRECTIONAL, not "subset in either direction" — confirmed live this matters: a
+// "configure fittable and run both fits" part ([fittable]) followed by a "compare chi2/dof and plot
+// into a graph" part ([fittable, graph]) got flagged here for 3 fixup rounds straight (the model
+// correctly never complied, since there was nothing wrong to fix) purely because the EARLIER part's
+// topics happened to be a subset of the LATER's. That's the opposite signal from the confirmed
+// incident above: the later part needs something ADDITIONAL (graph) the earlier one didn't, which
+// means it's doing genuinely more work, not re-deriving the same thing — comparing/plotting fit
+// results is legitimately separate work from producing them. Only "later ⊆ earlier" indicates
+// redundancy; "earlier ⊆ later" indicates the opposite. "none"/ambiguous parts are excluded either
+// side.
+QList<int> splitPlanAdjacentSameDocs(const QList<AiAssistant::SplitPart> &plan)
+{
+    QList<int> same;
+    for (int i = 1; i < plan.size(); ++i)
+    {
+        const QStringList &prev = plan[i - 1].docTopics;
+        const QStringList &cur = plan[i].docTopics;
+        const bool prevNoneOrAmbiguous = prev.isEmpty() || prev == QStringList{kNoDocsSentinel};
+        const bool curNoneOrAmbiguous = cur.isEmpty() || cur == QStringList{kNoDocsSentinel};
+        if (prevNoneOrAmbiguous || curNoneOrAmbiguous)
+            continue;
+        const QSet<QString> prevSet(prev.cbegin(), prev.cend());
+        const QSet<QString> curSet(cur.cbegin(), cur.cend());
+        if ((curSet - prevSet).isEmpty())
+            same << i;
+    }
+    return same;
+}
+
+// Mechanical backstop for the (previously prose-only, always-on, never actually pinpointing a
+// part) rule that a part whose DOCS list includes fittable must ACTUALLY call into Fittable itself
+// (configure/run/simulate a fit) — merely compiling a new function's definition via Compiler never
+// needs it. Confirmed live: "compile custom fit functions 'ai/Gaussian' and 'ai/Lorentzian'" (a
+// pure Compiler action, no Fittable call anywhere in it) kept DOCS: [..., fittable, compile] for 3
+// fixup rounds straight despite the always-on prose rule saying exactly this. The downstream
+// damage wasn't cosmetic either: splitPlanAdjacentSameDocs() then saw the NEXT part's real fittable
+// work as needing no topic beyond this compile-only part's (inflated) topic set, and kept
+// generating a "merge them" complaint that was actually WRONG advice — merging would have thrown
+// away the genuine, correct separation between compiling and fitting. A specific, numbered
+// complaint naming the exact violating part (matching every OTHER rule in this fixup loop, all of
+// which converge far more reliably than bare always-on prose alone) is the fix, same lesson as
+// every other checker in this file.
+QList<int> splitPlanCompileOnlyHasFittable(const QList<AiAssistant::SplitPart> &plan)
+{
+    static const QRegularExpression compileActionRe(R"(\bcompil\w*\b)", QRegularExpression::CaseInsensitiveOption);
+    // Genuine Fittable usage — configuring/running/simulating a fit via Fittable itself, as opposed
+    // to merely compiling a function's definition via Compiler. "fit(s)" excludes a trailing
+    // "function(s)" the same way otherActionRe's own fit alternative does, for the same reason:
+    // "compile a custom ... fit function" contains the substring "fit" but performs no fitting
+    // action at all.
+    static const QRegularExpression genuineFittableRe(
+        R"(\bconfigur\w*\b|\brun\b|\bperform\w*\b|\bsimulat\w*\b|\bfits?\b(?!\s+functions?))",
+        QRegularExpression::CaseInsensitiveOption);
+
+    QList<int> flagged;
+    for (int i = 0; i < plan.size(); ++i)
+    {
+        if (!plan[i].docTopics.contains(QStringLiteral("fittable"), Qt::CaseInsensitive))
+            continue;
+        if (!compileActionRe.match(plan[i].description).hasMatch())
+            continue;
+        if (genuineFittableRe.match(plan[i].description).hasMatch())
+            continue;
+        flagged << i;
+    }
+    return flagged;
+}
+
+// A part whose ENTIRE job is comparing/deciding/reporting a winner, with no NEW named/durable
+// object of its own, has no independent value in isolation — the same "no independent value on its
+// own" principle splitPlanUnnecessaryFragments() already applies to fill-only styling parts (merge
+// into whatever CREATED the thing being styled), just pointed the other way for a decision step:
+// a pure comparison exists ONLY to feed a later decision (which curve to plot, which result to
+// report), so it belongs with whatever CONSUMES that decision, never with whatever merely produced
+// the values being compared. Reasoned, not yet confirmed live: split-execution's "later parts can't
+// share Python variables, only printed output" rule means that if a "compare X vs Y, pick a winner"
+// part is left standing alone between the part that fitted X/Y and the part that plots the winner,
+// the SAME comparison gets redone twice — once here to report it, once again inside the plotting
+// part's own forced re-derivation from the fitCurve/result tables (it has no other way to know
+// which one to plot). Merging compare INTO its consumer computes the decision exactly once and
+// reuses it for both the report and the plot-curve selection. Reuses the "compare models / report a
+// winner" wording already defined inline in unrequestedActionGroups() above (duplicated rather than
+// shared, matching this file's existing pattern of small regex duplication across independent
+// checkers — see splitPlanUnnecessaryFragments()'s own comment on mirroring creationRe rather than
+// inventing a narrower variant).
+QList<int> splitPlanCompareOnlyMergesForward(const QList<AiAssistant::SplitPart> &plan)
+{
+    static const QRegularExpression compareOnlyRe(
+        R"(\bcompar(?:e|ison|ing)\b|\bwhich\s+\w*\s*model|\bfits?\s+better\b|\bwinner\b)",
+        QRegularExpression::CaseInsensitiveOption);
+    // If the compare-only part ALSO creates its own named object (e.g. "compare X and Y, then plot
+    // the winner into graph 'Z'" as one already-merged description), it's not a bare decision step
+    // anymore and this check doesn't apply — creationRe mirrored from splitPlanUnnecessaryFragments.
+    static const QRegularExpression createsOwnObjectRe(
+        R"(\b(compile|create|make|build|plot)\b.*)"
+        R"(\b(functions?|table|graph|matrix|note|panels?|surface|3d|mesh|curves?)\b)",
+        QRegularExpression::CaseInsensitiveOption);
+
+    QList<int> forwardMergeIndices; // index i: part i should merge FORWARD into part i+1
+    for (int i = 0; i + 1 < plan.size(); ++i)
+    {
+        if (!compareOnlyRe.match(plan[i].description).hasMatch())
+            continue;
+        if (createsOwnObjectRe.match(plan[i].description).hasMatch())
+            continue;
+        forwardMergeIndices << i;
+    }
+    return forwardMergeIndices;
+}
+
+// Mechanical backstop for rule 4 ("never invent a table/matrix when the request already gives an
+// analytical formula") — rule 4 only ever reaches the model on the FIRST preflight call;
+// buildSplitPlanFixupRetryPrompt() has its own separate, fixed rule list that never repeats it,
+// so a table/matrix invented in round 1's own FINAL answer had no way to be caught in rounds 2-3.
+// Confirmed live: rule 4's own reworded text still didn't stop it happening in the real app even
+// though isolated single-call tests converged clean — this checker gives the fixup loop a
+// complaint to act on, which rounds 2-3 otherwise never had for this failure shape at all.
+// The consuming part doesn't reliably repeat the table/matrix's own quoted name (rule 9's naming-
+// consistency instruction is often ignored — confirmed live elsewhere in this file) — e.g. "plot
+// 3D surface named 'X' using the table data" never re-mentions the table's own name at all. Keyed
+// on plot+table/matrix co-occurrence instead of exact-name matching for that reason.
+QList<int> splitPlanUnnecessaryDataTable(const QString &originalRequestText, const QList<AiAssistant::SplitPart> &plan)
+{
+    static const QRegularExpression formulaRe(R"(\b(?:sin|cos|tan|exp|log|sqrt)\s*\(\s*[xy]\s*\))",
+                                              QRegularExpression::CaseInsensitiveOption);
+    static const QRegularExpression tableCreationRe(
+        R"(\b(?:create|make|build|generate|construct|produce|set\s*up)\b.*\b(?:table|matrix)\b)",
+        QRegularExpression::CaseInsensitiveOption);
+    // No longer requires "table"/"matrix" to appear in the CONSUMING part's own description —
+    // confirmed live: "plot 3D surface of sin(x)*cos(y)... named 'surface_plot'" never says
+    // "table" anywhere, so the old plotUsingDataRe (which required that word) never matched, and a
+    // real 40,000-row table got built and then silently never used — the final newPlot3D() call
+    // plotted straight from the formula string regardless. The outer originalRequestText guards
+    // below already establish the table was never actually requested, so any later plotting part
+    // is enough on its own; requiring it to also name-check "table" added a false-negative risk
+    // for no real safety benefit.
+    static const QRegularExpression plotUsingDataRe(R"(\b(?:plot|graph|chart|surface)\b)",
+                                                    QRegularExpression::CaseInsensitiveOption);
+
+    QList<int> unnecessary;
+    if (!formulaRe.match(originalRequestText).hasMatch())
+        return unnecessary;
+    // If the ORIGINAL request itself (not just a part's own description) explicitly asks to
+    // create a table/matrix, that object was deliberately requested — never something to remove
+    // just because a formula also happens to be present. Confirmed live: "Create a 150x50 matrix
+    // 'SphereMap11' and fill every cell using the formula sin(x)*cos(y) ... via setFormula() and
+    // calculate(). Plot than matrix" — "Create" is the request's own first word, and it names the
+    // real Matrix API methods explicitly — still got its matrix-creation part removed across 3
+    // fixup rounds, discarding a deliberately-requested persistent object for an ungrounded
+    // "plot from formula" rewrite that may never create anything actually named "SphereMap11".
+    if (tableCreationRe.match(originalRequestText).hasMatch())
+        return unnecessary;
+    for (int i = 0; i < plan.size(); ++i)
+    {
+        if (!tableCreationRe.match(plan[i].description).hasMatch())
+            continue;
+        for (int j = i + 1; j < plan.size(); ++j)
+        {
+            if (plotUsingDataRe.match(plan[j].description).hasMatch())
+            {
+                unnecessary << i;
+                break;
+            }
+        }
+    }
+    return unnecessary;
 }
 
 // True if `code`, after stripping comments and blank lines the same way
@@ -598,29 +2115,266 @@ bool isEmptyActionScript(const QString &code)
     });
 }
 
+// splitPlanPreflightPrompt() (QtiSasAiContent.cpp) and buildSplitPlanFixupRetryPrompt() below both
+// ask for a two-stage DRAFT / ---CHECK--- / ---FINAL--- answer — everything before the marker is
+// the model's own working draft and self-review, not the answer; parsing it too would double-count
+// parts that appear in both the draft and the (possibly corrected) final list. Falls back to the
+// whole response unchanged when no marker is present — a model can still answer either prompt with
+// a plain PART list and no marker at all, and that response must be used as-is.
+//
+// Confirmed live: the model doesn't always use the marker as a single opening delimiter the way
+// the prompt asks — one real response bracketed its answer with "---FINAL---" on BOTH sides (open
+// and close), so "everything after the LAST marker" landed after the CLOSING one and returned
+// nothing, discarding an otherwise fully correct, self-corrected plan and forcing an unnecessary
+// fallback to non-split mode. Tries multiple candidate sections in order and uses the first
+// non-empty one: between the first two markers (handles the open/close-bracket shape); after the
+// last marker (the originally intended shape, still handles it correctly since with only one
+// marker "first two" doesn't apply); before the first marker (recovers the draft itself if the
+// model wrote a marker but never actually produced anything after or between).
+// Confirmed live against a non-mlx backend: a model that otherwise obeys "when asked a question,
+// answer in plain text" (kBasePromptTemplate) can still default to wrapping its whole split-plan
+// answer in scriptPrint(...)/print(...) calls — either one call per line, or a single call whose
+// string argument itself contains escaped "\n" sequences instead of real newlines. Either shape
+// defeats partRe, since a genuine plan line then reads scriptPrint('PART: ... | DOCS: ...'), not
+// PART: ... | DOCS: .... Runs BEFORE splitPlanFinalSection(): unwrapping first means a
+// "---FINAL---" marker sitting inside a wrapped string's quotes is found the same way a real one
+// would be, with no leftover call syntax (a trailing "))") contaminating what gets extracted
+// afterward. Fails open — a line that isn't a bare scriptPrint(...)/print(...) call is kept
+// unchanged, and if nothing at all unwrapped, `code` is returned byte-identical.
+QString unwrapScriptPrintCalls(const QString &code)
+{
+    static const QRegularExpression dq(R"re(^\s*(?:scriptPrint|print)\s*\(\s*"((?:[^"\\]|\\.)*)"\s*\)\s*$)re");
+    static const QRegularExpression sq(R"(^\s*(?:scriptPrint|print)\s*\(\s*'((?:[^'\\]|\\.)*)'\s*\)\s*$)");
+    auto unescape = [](QString s) {
+        s.replace("\\n", "\n").replace("\\t", "\t");
+        s.replace("\\\"", "\"").replace("\\'", "'");
+        s.replace("\\\\", "\\");
+        return s;
+    };
+
+    QStringList outLines;
+    bool anyUnwrapped = false;
+    for (const QString &line : code.split('\n'))
+    {
+        QRegularExpressionMatch m = dq.match(line);
+        if (!m.hasMatch())
+            m = sq.match(line);
+        if (m.hasMatch())
+        {
+            anyUnwrapped = true;
+            outLines << unescape(m.captured(1)).split('\n');
+        }
+        else
+        {
+            outLines << line;
+        }
+    }
+    return anyUnwrapped ? outLines.join('\n') : code;
+}
+
+QString splitPlanFinalSection(const QString &code)
+{
+    static const QRegularExpression finalMarkerRe(R"(-{2,}\s*FINAL\s*-{2,})",
+                                                  QRegularExpression::CaseInsensitiveOption);
+    QList<QRegularExpressionMatch> markers;
+    QRegularExpressionMatchIterator it = finalMarkerRe.globalMatch(code);
+    while (it.hasNext())
+        markers << it.next();
+    if (markers.isEmpty())
+        return code;
+
+    QStringList candidates;
+    if (markers.size() >= 2)
+        candidates << code.mid(markers[0].capturedEnd(), markers[1].capturedStart() - markers[0].capturedEnd());
+    candidates << code.mid(markers.last().capturedEnd());
+    candidates << code.left(markers.first().capturedStart());
+    for (const QString &candidate : candidates)
+        if (!candidate.trimmed().isEmpty())
+            return candidate;
+    return code;
+}
+
+// Rewritten as a numbered rule list plus a draft/check/final two-stage answer format — same
+// restructuring already applied to splitPlanPreflightPrompt() (see that function's own doc
+// comment for the general rationale), for the same reason: the ORIGINAL prose-paragraph version
+// of THIS prompt reproducibly caused two distinct failures live, confirmed via direct, isolated
+// testing against the raw model (bypassing this whole app): a repetition-loop (60-184s of
+// looped/garbage output) on a graph3d styling-fragmentation complaint, and outright format
+// abandonment — a bare pseudocode function-call list instead of PART/DOCS lines, ALSO inventing
+// unrequested scope (plotting/fitting/residuals never asked for) — on the SAXS_data "187-parts"
+// complaint, twice independently.
+//
+// Validated the same way splitPlanPreflightPrompt() was: re-sent both confirmed-broken complaints
+// verbatim against the raw model with this restructured prompt. The graph3d 2-part fragmentation
+// case now merges cleanly into one part, fast, well-formed, no loop. The SAXS_data 3-part CHAIN
+// fragmentation case still doesn't fully converge on the merge in one round even with an explicit
+// "merge the entire chain" rule (5) — a real, unresolved model-reasoning limit for a 3-deep
+// dependency chain specifically — but critically, the response itself stayed clean, fast, and
+// well-formed every time this was tested: valid PART/DOCS lines, no repetition, no hallucinated
+// scope. That's a strictly safer failure than either original failure mode: the existing
+// kMaxSplitPlanFixupRounds retry loop (with its own stuck-detection) already tolerates "still not
+// perfect after N rounds" by proceeding anyway, so a well-formed-but-imperfect plan costs nothing
+// extra, where a repetition-loop cost 60-184s and format abandonment cost the whole split-mode
+// attempt.
+//
+// Rule 6 (topic vocabulary) exists because an early draft of this rewrite let the model invent
+// new DOCS phrases ("table creation, table structure", "noise addition, data noise") instead of
+// reusing a real topic name — confirmed live in the same isolated testing above. Deliberately
+// constrained to topics already present in the previous plan (not the full docTopicIndex(), which
+// is never sent in this fixup-retry call at all) since this call is correcting an EXISTING plan's
+// mistakes, not choosing topics from scratch.
+static QString buildSplitPlanFixupRetryPrompt(const QString &originalRequestText, const QString &previousPlanText,
+                                              const QString &complaintsText)
+{
+    QStringList rules;
+    rules << "Fix every problem listed above, all at once — do not leave any of them unresolved, "
+             "and do not introduce a new one.";
+    rules << "Every part that creates a table, graph, or compiled function MUST state its exact "
+             "name in quotes in its own description — invent a short descriptive placeholder name "
+             "yourself right now if the original request left it unnamed (e.g. \"compile custom "
+             "fit function named '<PlaceholderFunction>'\" — a placeholder illustrating the FORMAT "
+             "only, never a name to actually use).";
+    rules << "Every distinct action the original request asks for must be covered by at least one "
+             "part.";
+    rules << "A flagged qualifying detail from the original request (e.g. \"(with background)\") "
+             "missing from every part's description must be added back into whichever part's "
+             "description covers that action — worded however is natural, not necessarily verbatim "
+             "— never left out.";
+    rules << "A part whose action was never requested anywhere in the ORIGINAL request text at all "
+             "must be REMOVED from the plan entirely — do not keep it, and do not merge it into "
+             "another part (there is nothing to merge; it should simply not exist).";
+    rules << "A part that only fills/configures what an earlier part already created, with no "
+             "other distinct action of its own, must be merged into the SAME part as whatever it "
+             "depends on. If this applies to a CHAIN of consecutive parts (each one only "
+             "filling/configuring what the part before it created), merge the ENTIRE CHAIN into "
+             "ONE single part, not just the adjacent pair closest to each other — DOCS list is the "
+             "union of every part merged this way, and the final plan must never contain two parts "
+             "left in the same dependency chain. This applies with NO exception to a graph's "
+             "(2D or 3D) creation and every piece of its OWN styling/configuration — mesh/line "
+             "style, colors, rotation, scale, axis labels/titles, axis numeric format, legend, "
+             "title, layout: all of it belongs in the SAME part as the creation, no matter how many "
+             "distinct styling actions the request lists, and no matter how natural a separate "
+             "\"now style it\" part may look. Confirmed live, repeatedly, in this exact spot: a "
+             "\"create/plot a graph\" part followed by an \"add legend\" (or axis-labels, or "
+             "mesh-style) part gets flagged here every fixup round in a row without ever actually "
+             "being merged — this is the single most persistent failure this fixup loop sees, so "
+             "treat any part whose job is graph styling as needing to fold into its graph's "
+             "creation part FIRST, before any other restructuring this round.";
+    rules << "Two adjacent parts flagged because the LATER one needs no DOCS topic beyond what the "
+             "EARLIER one already needed (identical topic sets, or the later a subset of the "
+             "earlier) must be merged into ONE part covering both actions, DOCS field the union of "
+             "both, not left as two separate parts.";
+    rules << "A flagged table/matrix-creation part must be REMOVED entirely, and the later part "
+             "that plotted it rewritten to plot straight from the original request's own formula "
+             "instead (plot3D(\"<formula>\", ...) or the equivalent) — never left referencing the "
+             "now-removed table/matrix by name.";
+    rules << "A part whose DOCS list includes fittable but whose own description only compiles a "
+             "new fit function (never configuring or running an existing one) must have fittable "
+             "removed from that DOCS field — compiling alone never needs it; only a part whose "
+             "script actually calls Fittable itself (f.configure(), f.fit(), ...) does.";
+    rules << "A part whose ENTIRE job is comparing/deciding/reporting a winner (e.g. \"compare "
+             "chi2/dof and determine the better model\") and that creates no new named object of "
+             "its own must be merged FORWARD into the part right after it, never backward into "
+             "whatever part produced the values it compares — a bare comparison has no independent "
+             "value; it only exists to feed the decision the NEXT part needs (e.g. which curve to "
+             "plot), and split-execution can't carry that decision forward as a live variable, only "
+             "as printed text, so leaving it standing alone forces the same comparison to be "
+             "silently redone inside the part that actually needs the answer.";
+    rules << "Do not otherwise change the plan, and do not invent a different scenario — every "
+             "part/DOCS field not implicated by a problem above must stay exactly as it was.";
+    rules << "Every DOCS field must use ONLY topic names already appearing in the ORIGINAL plan "
+             "above (e.g. \"table\", \"graph3d\", \"fittable\", ...) — never invent a new topic "
+             "label or description phrase in its place.";
+
+    QStringList numberedRules;
+    for (int i = 0; i < rules.size(); ++i)
+        numberedRules << QString("%1. %2").arg(i + 1).arg(rules[i]);
+
+    return "Original request:\n" + originalRequestText + "\n\nYour previous split plan:\n" + previousPlanText +
+           "\n\nThat plan has the following problem(s):\n" + complaintsText +
+           "\n\nFollow these rules IN ORDER OF PRIORITY:\n\n" + numberedRules.join("\n\n") +
+           "\n\nAnswer in TWO stages.\n\n"
+           "Stage 1 — DRAFT: write your corrected PART/DOCS list, one PART per line, nothing "
+           "else:\nPART: <description> | DOCS: <topics, or \"none\">\n\n"
+           "Stage 2 — CHECK, then FINAL: on a new line write exactly \"---CHECK---\", then "
+           "briefly verify your draft actually fixes every problem listed above and introduces no "
+           "new one. Then write exactly \"---FINAL---\" followed by the corrected list.";
+}
+
+// Confirmed live: a colliding name flagged by splitPlanCreationCollisions() is often one the
+// ORIGINAL request never mentioned at all — it was invented by this same fixup process's own
+// "invent a placeholder name" rule (e.g. the request just said "compile a custom Porod power-law
+// fit function", never naming it; the plan invented 'ai/PorodFit', which happened to already
+// exist). Halting and asking the USER to supply a different name is the wrong remediation for a
+// name the user never chose in the first place — there is nothing for them to correct. This
+// prompt instead asks the model to invent a DIFFERENT placeholder for exactly the same part(s),
+// updating every other part that references the old name so the plan stays internally consistent
+// (mirrors reconcileCompiledFunctionNameAcrossParts()'s own concern), otherwise unchanged. Reuses
+// the same PART/DOCS answer format handleSplitPlanResponse() already parses, so the response goes
+// back through the exact same pipeline (naming/fragment/action checks and the collision check
+// itself all run again naturally) rather than a bespoke parser.
+// allFunctionKind: whether EVERY colliding name is a compile/fittable creation (never mixed with
+// table/matrix/note/graph in the same round) — confirmed live: this prompt's own "ai/" example was
+// the ONLY naming illustration given, and got applied to a TABLE rename too even though "ai/" is
+// Rule 6's compile/fittable-only sandbox convention. Only offered as the example when it's
+// actually true for every name being renamed this round.
+static QString buildSplitPlanCreationCollisionRenamePrompt(const QString &originalRequestText,
+                                                           const QString &previousPlanText,
+                                                           const QStringList &collidingNames, bool allFunctionKind)
+{
+    QStringList quoted;
+    for (const QString &n : collidingNames)
+        quoted << "'" + n + "'";
+    const QString namingExample = allFunctionKind
+                                      ? "e.g. the \"ai/\" prefix for a compiled function"
+                                      : "e.g. a distinguishing suffix like \"_2\" — the \"ai/\" prefix is ONLY "
+                                        "for a compiled/fittable function, never for a table/matrix/note/graph";
+    return "Original request:\n" + originalRequestText + "\n\nYour split plan:\n" + previousPlanText +
+           "\n\nThe placeholder name(s) " + quoted.join(", ") +
+           " you invented already exist as something else — the original request never asked for "
+           "that specific name, so invent a DIFFERENT placeholder for the part(s) that create " +
+           (collidingNames.size() == 1 ? "it" : "them") + " instead (same naming convention as before, " +
+           namingExample +
+           "). Update every OTHER part that references the old name so it uses the new one "
+           "instead — the plan must stay internally consistent. Do not otherwise change the plan. "
+           "Answer with the corrected PART/DOCS list, one PART per line, nothing else:\nPART: "
+           "<description> | DOCS: <topics, or \"none\">";
+}
+
 void AiAssistant::handleSplitPlanResponse(const QString &code)
 {
     awaitingSplitPlan = false;
     splitPlan.clear();
     splitPartScripts.clear();
     splitPartIndex = -1;
-    // Set only when THIS response is itself the naming-retry's answer — read once, right before
-    // the flag that would otherwise get overwritten by the completeness check further down.
-    const bool isNamingRetryResponse = awaitingSplitPlanNamingRetry;
-    awaitingSplitPlanNamingRetry = false;
-
     const QStringList knownTopics = m_content ? m_content->knownDocTopics() : QStringList();
     static const QRegularExpression partRe(R"(^\s*PART\s*:\s*(.+?)\s*\|\s*DOCS\s*:\s*(.+?)\s*$)",
                                            QRegularExpression::CaseInsensitiveOption);
-    const QStringList lines = code.split('\n');
+    const QStringList lines = splitPlanFinalSection(unwrapScriptPrintCalls(code)).split('\n');
     for (const QString &line : lines)
     {
         const QRegularExpressionMatch m = partRe.match(line);
         if (!m.hasMatch())
             continue;
         const QString description = m.captured(1).trimmed();
+        // No LOCAL doc content is ever attached in Integrated mode regardless of topic (same
+        // fact beginNonSplitRequest() already short-circuits on) — but unlike that path, nothing
+        // here skips ASKING for per-part topics, since splitting and doc-topic assignment come
+        // out of the same preflight call. These topics are still kept (not blanked) even in
+        // Integrated mode: startSplitPart() forwards them as a "TOPICS: ..." hint line in the
+        // per-part prompt text, for a server-side RAG backend to key its own retrieval on — see
+        // that call site's doc comment. A deployment not using such a backend just sees a few
+        // extra, harmless words of prompt text.
         splitPlan << SplitPart{description, splitPartTopicsFromAnswer(m.captured(2), description, knownTopics)};
     }
+    applyAiNamespaceToCompileParts(splitPlan);
+    reconcileCompiledFunctionNameAcrossParts(splitPlan);
+    QStringList removedDuplicateParts;
+    dedupeSplitPlanExactDuplicateParts(splitPlan, &removedDuplicateParts);
+    if (!removedDuplicateParts.isEmpty() && m_host)
+        m_host->print(QString("▸▸▸ AI split-plan: removed %1 duplicate part(s) (identical to an "
+                              "earlier part).")
+                          .arg(removedDuplicateParts.size()));
 
     if (splitPlan.isEmpty())
     {
@@ -631,29 +2385,25 @@ void AiAssistant::handleSplitPlanResponse(const QString &code)
         // mode entirely instead and reuse the same "which doc topics do you need" pre-flight a
         // plain (non-split) request already uses (ApplicationWindow::askAi()'s docsMode==Selective).
         if (m_host)
-            m_host->print("▸▸▸ AI split-plan: unparseable — abandoning split mode, asking which "
-                          "doc topics this request needs instead of attaching all of them.\n"
+            m_host->print("▸▸▸ AI split-plan: unparseable — abandoning split mode, selecting doc "
+                          "topics from the request text instead of attaching all of them.\n"
                           "▸▸▸ AI split-plan raw response (for diagnosing the parse failure):\n" +
                           code);
         splitModeActive = false;
         if (m_content)
         {
-            awaitingDocSelection = true;
-            // Same prompt wording as ApplicationWindow::askAi()'s own doc-selection pre-flight —
-            // both now source it from AiContentProvider so AiAssistant.cpp stays free of
-            // QtiSAS-specific string literals (see AiContentProvider.h). includeHistory=false:
-            // this prompt is a narrow, self-contained "which topics does the request below need"
-            // question — it already inlines originalRequestText and asks nothing about the rest
-            // of the conversation; same history-bleeding risk and fix as the split-plan preflight
-            // it's falling back from.
-            ask(m_content->docSelectionPreflightPrompt(originalRequestText), true, QString(), {"ai"}, false, false);
+            // Same mechanical selection beginNonSplitRequest() uses — see docTopicsFromRequestText()
+            // for why the doc-selection LLM pre-flight this used to fire could not affect the
+            // outcome. Falling back from a failed split plan is exactly when NOT to spend another
+            // round-trip.
+            startRequestWithSelectedTopics(docTopicsFromRequestText(originalRequestText),
+                                           QStringLiteral("AI doc topics"));
         }
         else
         {
-            // No content provider to phrase the doc-selection question with (shouldn't happen
-            // in practice — see setContentProvider()'s call sites) — fall back to the pre-fix
-            // behavior (single part, full doc corpus) instead of firing ask() with an empty
-            // prompt and leaving awaitingDocSelection stuck waiting on nothing.
+            // No content provider (shouldn't happen in practice — see setContentProvider()'s call
+            // sites) — fall back to a plain request instead of firing ask() with an empty prompt
+            // and leaving awaitingDocSelection stuck waiting on nothing.
             startRequest(QStringList());
         }
         return;
@@ -668,77 +2418,431 @@ void AiAssistant::handleSplitPlanResponse(const QString &code)
             splitPlan.removeLast();
     }
 
-    // One-shot verify-and-retry on the decomposition step itself: the prompt already explicitly
-    // instructs fixing every created object's name in the part that creates it, but that
-    // instruction alone has a confirmed non-trivial miss rate (see
-    // splitPartsMissingCreationName()'s comment). Never retries a second time — isNamingRetryResponse
-    // guards this whole block so the retry's own answer is accepted regardless of outcome, same
-    // fail-open philosophy as every other split-mode parsing fallback here.
-    if (!isNamingRetryResponse)
+    // Combined, capped verify-and-retry on the decomposition step itself. These four checks
+    // (naming completeness, action coverage, unnecessary fragmentation, unrequested actions) used
+    // to be independent one-shot blocks, each individually documented as "never retries a second
+    // time... so a plan that still fails proceeds anyway rather than retrying forever" — but that
+    // guarantee only held per individual check, not for the combined process. Confirmed live,
+    // severe: a real plan ping-ponged between "missing explicit name(s)" and "unnecessary
+    // fragmentation" THREE FULL CYCLES (6 wasted round-trips, one taking 111s) before converging —
+    // each retry prompt showed the model only ONE class of complaint, so fixing it (e.g. adding a
+    // name by re-splitting a merged part back apart) had no visibility into the OTHER constraint
+    // it was simultaneously breaking, and nothing bounded the TOTAL round-trips across the three
+    // independently-one-shot gates. Checking all four together every round and folding every
+    // currently-detected complaint into ONE retry prompt gives the model the complete picture each
+    // time instead of whack-a-mole; splitPlanFixupRoundsUsed guarantees termination (fail-open,
+    // accept the plan as-is) even if the model still can't satisfy everything.
+    static const int kMaxSplitPlanFixupRounds = 3;
+    // Name the unnamed BEFORE any check runs — see assignSplitPlanCreationNames() for the live
+    // deadlock this replaces. missingNames below is then empty by construction in the normal case,
+    // so no fixup round is ever spent on a complaint the model demonstrably cannot satisfy.
+    QStringList mechanicallyNamed;
+    assignSplitPlanCreationNames(splitPlan, &mechanicallyNamed);
+    if (!mechanicallyNamed.isEmpty() && m_host)
+        m_host->print("▸▸▸ AI split-plan: named unnamed creation part(s) mechanically — " +
+                      mechanicallyNamed.join(", ") +
+                      " (the request named none, and every check "
+                      "downstream needs a concrete name to match against).");
+    // Then fold back any part that is pure configuration of the one before it — see
+    // mergeSplitPlanUnnecessaryFragments() for the live non-convergence this replaces. Runs AFTER
+    // naming so the merged description keeps the name that was just assigned.
+    QStringList mergedFragments;
+    mergeSplitPlanUnnecessaryFragments(splitPlan, &mergedFragments);
+    if (!mergedFragments.isEmpty() && m_host)
+        m_host->print("▸▸▸ AI split-plan: merged back " + QString::number(mergedFragments.size()) +
+                      " part(s) that only configured what an earlier part created — \"" +
+                      mergedFragments.join("\", \"") + "\" (one action, not two).");
+    const QList<int> missingNames = splitPartsMissingCreationName(splitPlan);
+    const QStringList missingActions = splitPlanMissingRequestedActions(originalRequestText, splitPlan);
+    const QList<int> unnecessaryFragments = splitPlanUnnecessaryFragments(splitPlan);
+    const QList<int> unrequestedActions = splitPlanUnrequestedActions(originalRequestText, splitPlan);
+    const QList<int> adjacentSameDocs = splitPlanAdjacentSameDocs(splitPlan);
+    const QList<int> unnecessaryDataTables = splitPlanUnnecessaryDataTable(originalRequestText, splitPlan);
+    const QStringList droppedDetails = splitPlanDroppedParentheticalDetail(originalRequestText, splitPlan);
+    const QList<int> compileOnlyFittable = splitPlanCompileOnlyHasFittable(splitPlan);
+    const QList<int> compareOnlyForward = splitPlanCompareOnlyMergesForward(splitPlan);
+    const bool planHasFixableIssues =
+        !missingNames.isEmpty() || !missingActions.isEmpty() || !unnecessaryFragments.isEmpty() ||
+        !unrequestedActions.isEmpty() || !adjacentSameDocs.isEmpty() || !unnecessaryDataTables.isEmpty() ||
+        !droppedDetails.isEmpty() || !compileOnlyFittable.isEmpty() || !compareOnlyForward.isEmpty();
+    QStringList complaints;
+    if (planHasFixableIssues)
     {
-        const QList<int> missing = splitPartsMissingCreationName(splitPlan);
-        if (!missing.isEmpty())
-        {
-            QStringList complaints;
-            for (int i : missing)
-                complaints << QString("Part %1 (\"%2\") creates something but never states its "
-                                      "name in quotes.")
+        // Removal always wins over a "keep and fix" complaint about the SAME part — a part flagged
+        // as unrequested won't exist afterward, so naming/merging/replacing it is moot, and asking
+        // for both at once gives the model two contradictory instructions it can't jointly satisfy.
+        // Confirmed live: a plot part never asked for in the original request kept BOTH "state its
+        // name" and "must be REMOVED entirely... there is nothing to merge" every round for 3
+        // rounds straight, never converging on either. unnecessaryFragments/unnecessaryDataTables
+        // carry the same "shouldn't exist separately" verdict, just from a different checker — a
+        // part they flag must suppress missingNames/adjacentSameDocs too, not just unrequestedActions'
+        // own. toRemove (the full union) handles that; the two narrower sets below give each
+        // removal-type checker priority over the ones after it so a part gets exactly one removal
+        // complaint instead of stacking near-duplicates from multiple checkers agreeing it's dead.
+        const QSet<int> unrequestedSet(unrequestedActions.cbegin(), unrequestedActions.cend());
+        const QSet<int> unnecessaryFragmentsSet(unnecessaryFragments.cbegin(), unnecessaryFragments.cend());
+        const QSet<int> toRemove = unrequestedSet + unnecessaryFragmentsSet +
+                                   QSet<int>(unnecessaryDataTables.cbegin(), unnecessaryDataTables.cend());
+        const QSet<int> compileOnlyFittableSet(compileOnlyFittable.cbegin(), compileOnlyFittable.cend());
+        const QSet<int> compareOnlyForwardSet(compareOnlyForward.cbegin(), compareOnlyForward.cend());
+        for (int i : missingNames)
+            if (!toRemove.contains(i))
+                complaints << QString("Part %1 (\"%2\") creates something but never states its name "
+                                      "in quotes.")
                                   .arg(i + 1)
                                   .arg(splitPlan[i].description);
-            // Reconstructs the plan actually produced, in the same PART/DOCS format it was parsed
-            // from, so the retry can show it back to the model instead of merely describing it.
-            QStringList planLines;
-            for (const SplitPart &p : splitPlan)
-                planLines << QString("PART: %1 | DOCS: %2")
-                                 .arg(p.description)
-                                 .arg(p.docTopics.isEmpty() ? "all" : p.docTopics.join(", "));
-            if (m_host)
-                m_host->print("▸▸▸ AI split-plan: missing explicit name(s) — asking the model to "
-                              "fix and resend the plan once.");
-            awaitingSplitPlan = true;
-            awaitingSplitPlanNamingRetry = true;
-            // This ask() call is a fresh, standalone request — addToHistory=false on the initial
-            // decomposition call above means neither the original request nor the plan it produced
-            // is otherwise visible here, so both are restated explicitly below rather than relying
-            // on history the model can't actually see. includeHistory=false enforces that same
-            // intent programmatically — this was previously left at its default (true), an
-            // oversight matching the same bug fixed in the initial decomposition call and
-            // requestSplitMerge(): restating everything explicitly in the prompt only prevents
-            // history-bleeding if history is actually excluded, not just narrated around.
-            ask("Original request:\n" + originalRequestText + "\n\nYour previous split plan:\n" + planLines.join("\n") +
-                    "\n\nThat plan is missing required explicit names:\n" + complaints.join("\n") +
-                    "\n\nEvery part that creates a table, graph, or compiled function MUST state "
-                    "its exact name in quotes in its own description (e.g. \"compile custom fit "
-                    "function named '<PlaceholderFunction>'\" — a placeholder illustrating the "
-                    "FORMAT only, never a name to actually use). Add ONLY the missing name(s) to "
-                    "the plan above — do not otherwise change it, and do not invent a different "
-                    "scenario. Resend the COMPLETE corrected plan, same PART/DOCS format as "
-                    "before, one PART per line, nothing else.",
-                true, QString(), {"ai"}, false, false);
-            return;
-        }
+        if (!missingActions.isEmpty())
+            complaints << ("That plan never covers the following action(s) explicitly requested "
+                           "above, in ANY part's description: " +
+                           missingActions.join(", ") + ".");
+        if (!droppedDetails.isEmpty())
+            complaints << ("The original request's qualifying detail(s) " + droppedDetails.join(", ") +
+                           " never appear in ANY part's description — add them back to whichever "
+                           "part's description covers that action, worded however is natural.");
+        for (int i : unnecessaryFragments)
+            if (!unrequestedSet.contains(i))
+                complaints << QString("Part %1 (\"%2\") only fills/configures what Part %3 (\"%4\") "
+                                      "just created, with no other distinct action of its own.")
+                                  .arg(i + 1)
+                                  .arg(splitPlan[i].description)
+                                  .arg(i)
+                                  .arg(splitPlan[i - 1].description);
+        for (int i : unrequestedActions)
+            complaints << QString("Part %1 (\"%2\") performs an action the original request never "
+                                  "asked for at all.")
+                              .arg(i + 1)
+                              .arg(splitPlan[i].description);
+        for (int i : adjacentSameDocs)
+            // A part's inflated (wrongly-including-fittable) DOCS field can make the FOLLOWING
+            // part look topically redundant with it when it isn't — the fix there is trimming the
+            // preceding part's DOCS field, not merging two genuinely distinct actions. Suppressed
+            // here in favor of the compileOnlyFittable complaint below, which names the real fix.
+            // Also suppressed when Part i itself is a pure compare-only step the OTHER checker
+            // below wants merged FORWARD into Part i+1 instead — the topically-driven backward
+            // merge this loop would otherwise suggest is the wrong direction for that part.
+            if (!toRemove.contains(i) && !compileOnlyFittableSet.contains(i - 1) && !compareOnlyForwardSet.contains(i))
+                complaints << QString("Part %1 (\"%2\") needs no DOCS topic beyond what Part %3 "
+                                      "(\"%4\") already needed — merge them into one part.")
+                                  .arg(i + 1)
+                                  .arg(splitPlan[i].description)
+                                  .arg(i)
+                                  .arg(splitPlan[i - 1].description);
+        for (int i : compileOnlyFittable)
+            complaints << QString("Part %1 (\"%2\")'s DOCS list includes fittable, but its own "
+                                  "description only compiles a function's definition — never "
+                                  "configures or runs one. Remove fittable from that DOCS field; "
+                                  "compiling alone never needs it.")
+                              .arg(i + 1)
+                              .arg(splitPlan[i].description);
+        for (int i : compareOnlyForward)
+            if (!toRemove.contains(i + 1))
+                complaints << QString("Part %1 (\"%2\") has no durable object of its own — it only "
+                                      "decides something Part %3 (\"%4\") needs, and split-execution "
+                                      "can't share that decision as a live variable across parts, "
+                                      "only as printed text. Merge Part %1 FORWARD into Part %3, not "
+                                      "backward into whatever produced the values it compares.")
+                                  .arg(i + 1)
+                                  .arg(splitPlan[i].description)
+                                  .arg(i + 2)
+                                  .arg(splitPlan[i + 1].description);
+        for (int i : unnecessaryDataTables)
+            if (!unrequestedSet.contains(i) && !unnecessaryFragmentsSet.contains(i))
+                complaints << QString("Part %1 (\"%2\") creates a table/matrix that a later part "
+                                      "only plots — but the original request already gives the data "
+                                      "as a formula. Remove this part and plot straight from the "
+                                      "formula instead.")
+                                  .arg(i + 1)
+                                  .arg(splitPlan[i].description);
+    }
+    // Confirmed live, twice, independently: the resent plan can carry the EXACT same unresolved
+    // complaint round after round (the model doesn't merge what it's asked to merge) — see
+    // lastSplitPlanFixupComplaints' doc comment. Detecting that up front, before spending another
+    // round-trip, is strictly better than discovering it only after asking again: same outcome,
+    // fewer wasted calls.
+    const bool stuck = planHasFixableIssues && complaints == lastSplitPlanFixupComplaints;
+    if (planHasFixableIssues && !stuck && splitPlanFixupRoundsUsed < kMaxSplitPlanFixupRounds)
+    {
+        // Reconstructs the plan actually produced, in the same PART/DOCS format it was parsed
+        // from, so the retry can show it back to the model instead of merely describing it.
+        QStringList planLines;
+        for (const SplitPart &p : splitPlan)
+            planLines << QString("PART: %1 | DOCS: %2").arg(p.description).arg(docTopicsDisplayLabel(p.docTopics));
+        ++splitPlanFixupRoundsUsed;
+        lastSplitPlanFixupComplaints = complaints;
+        if (m_host)
+            m_host->print(QString("▸▸▸ AI split-plan: %1 issue(s) detected — asking the model to fix "
+                                  "and resend the plan (round %2/%3).\n\n  - ")
+                              .arg(complaints.size())
+                              .arg(splitPlanFixupRoundsUsed)
+                              .arg(kMaxSplitPlanFixupRounds) +
+                          complaints.join("\n  - "));
+        awaitingSplitPlan = true;
+        // This ask() call is a fresh, standalone request — addToHistory=false on the initial
+        // decomposition call above means neither the original request nor the plan it produced
+        // is otherwise visible here, so both are restated explicitly below rather than relying
+        // on history the model can't actually see. includeHistory=false enforces that same
+        // intent programmatically.
+        // docTopics=QStringList() (not {"ai"}): see beginSplitPlanDecomposition()'s call site for
+        // why — noDocsHintLine() already puts the real "TOPICS: none" in the prompt text itself.
+        ask(buildSplitPlanFixupRetryPrompt(originalRequestText, planLines.join("\n"), complaints.join("\n")) +
+                noDocsHintLine(),
+            true, QString(), QStringList(), false, false, false);
+        return;
+    }
+    if (planHasFixableIssues && m_host)
+    {
+        if (stuck)
+            m_host->print(QString("▸▸▸ AI split-plan: same issue(s) came back unchanged after %1 "
+                                  "fixup round(s) — not converging, proceeding anyway instead of "
+                                  "spending the remaining round(s).\n\n  - ")
+                              .arg(splitPlanFixupRoundsUsed) +
+                          complaints.join("\n  - "));
+        else
+            m_host->print(QString("▸▸▸ AI split-plan: still has unresolved issue(s) after %1 fixup "
+                                  "round(s) — proceeding anyway rather than retrying indefinitely."
+                                  "\n\n  - ")
+                              .arg(kMaxSplitPlanFixupRounds) +
+                          complaints.join("\n  - "));
     }
 
+    // The plan is now fully finalized (fixup converged or gave up) — show it now, before anything
+    // else, regardless of whether the collision check below ends up halting the request: a halt
+    // must never leave the user unable to see what the plan actually finalized to (confirmed
+    // live: with the summary print previously living inside finalizeSplitPlanAndLaunch(), a
+    // collision halt skipped it entirely, hiding the very plan structure needed to tell whether an
+    // earlier fixup round's complaint — e.g. a duplicated part — actually got resolved or not).
     if (m_host)
     {
+        // Show the topics actually scoped per part (baseline "ai"/"app" + the part's own), not
+        // just what the model named — startSplitPart() prepends baseline before every real
+        // request, so the announcement should match instead of silently omitting it. This must
+        // hold for a none/ambiguous part too: startSplitPart()'s own hintTopics
+        // (baselineTopics + (noneOrAmbiguous ? QStringList() : part.docTopics)) still includes
+        // baseline unconditionally even then — confirmed live: this line used to fall back to the
+        // bare partTopics for exactly that case, printing "[docs: none]"/"[docs: all]" for a part
+        // whose real TOPICS hint was actually "ai, app" once it ran.
+        const QStringList baselineTopics = m_content ? m_content->baselineDocTopics() : QStringList();
         QStringList summary;
         for (int i = 0; i < splitPlan.size(); ++i)
+        {
+            const QStringList &partTopics = splitPlan[i].docTopics;
+            const bool noneOrAmbiguous = partTopics.isEmpty() || partTopics == QStringList{kNoDocsSentinel};
+            const QStringList effectiveTopics = baselineTopics + (noneOrAmbiguous ? QStringList() : partTopics);
             summary << QString("  %1. %2 [docs: %3]")
                            .arg(i + 1)
                            .arg(splitPlan[i].description)
-                           .arg(splitPlan[i].docTopics.isEmpty() ? "all" : splitPlan[i].docTopics.join(", "));
-        m_host->print("▸▸▸ AI split-plan (" + QString::number(splitPlan.size()) + " part(s)):\n" + summary.join("\n"));
+                           .arg(docTopicsDisplayLabel(effectiveTopics));
+        }
+        m_host->print("▸▸▸ AI split-plan (" + QString::number(splitPlan.size()) + " part(s)):\n\n" +
+                      summary.join("\n"));
+    }
+
+    // One last check before anything actually runs: does any part's own to-be-created name
+    // (splitPlanCreationNames()) already exist? See splitPlanCreationCollisions()'s doc comment
+    // for why a silent recompile/table-clear/graph-clear/note-misnaming over an existing object is
+    // a real risk. Skipped entirely (no extra round-trip) when the plan creates nothing
+    // check-worthy, matching this file's general "don't spend a call on a check with nothing to
+    // check" practice.
+    // A name Rule 6 already exempts unconditionally (see isRule6SandboxExemptCreationName())
+    // never needs asking about — its collision-check answer can't change the outcome either way,
+    // so skip the round-trip for it entirely rather than checking and discarding the answer.
+    QStringList skippedAsExempt;
+    const QList<QPair<QString, QStringList>> creationNames =
+        splitPlanCreationNamesNeedingCheck(splitPlanCreationNames(splitPlan), &skippedAsExempt);
+    if (!skippedAsExempt.isEmpty())
+    {
+        splitPlanSandboxExemptNames << skippedAsExempt;
+        if (m_host)
+            m_host->print(QString("▸▸▸ AI split-plan: skipping existence-check for %1 — an \"ai/\" "
+                                  "compile/fittable collision is always safe to overwrite "
+                                  "(compile-python-api.md Rule 6).")
+                              .arg(skippedAsExempt.join(", ")));
+    }
+    if (!creationNames.isEmpty() && m_content)
+    {
+        awaitingSplitPlanCreationCheckScript = true;
+        // expectsCode=false/includeHistory=false: same reasoning as beginRequest()'s "existing X"
+        // verification call this mirrors — a bare check script, not a continuation of history.
+        // includeDataProbe=false: these names are about to be CREATED, so there is no existing
+        // dataset to report a shape for — this stays the minimal collision probe.
+        ask(m_content->existingEntityVerificationPrompt(creationNames, false) + topicsHintLine(QStringList()), true,
+            QString(), QStringList(), false, false, false);
+        return;
+    }
+    finalizeSplitPlanAndLaunch();
+}
+
+void AiAssistant::finalizeSplitPlanAndLaunch()
+{
+    // A plan that settled on exactly one part is, by definition, not actually being split — run
+    // it as a plain request instead of paying for split-mode's overhead (the "Split-mode part 1 of
+    // 1" framing in startSplitPart()'s prompt, and — the real cost — requestSplitMerge()'s entire
+    // extra round-trip afterward asking the model to "merge" a single script with nothing to merge
+    // it against). This is deliberately checked here, AFTER the three retries above, not as an
+    // early return before them: a one-part plan can still be missing a name, missing coverage, or
+    // (moot for a single part) fragmented, and those checks apply exactly the same regardless of
+    // how many parts the plan settled on.
+    if (splitPlan.size() == 1)
+    {
+        if (m_host)
+            m_host->print("▸▸▸ AI split-plan: single part — running directly without split-mode "
+                          "overhead.");
+        splitModeActive = false;
+        const bool noneOrAmbiguous =
+            splitPlan[0].docTopics.isEmpty() || splitPlan[0].docTopics == QStringList{kNoDocsSentinel};
+        startRequest(noneOrAmbiguous
+                         ? splitPlan[0].docTopics
+                         : ((m_content ? m_content->baselineDocTopics() : QStringList()) + splitPlan[0].docTopics),
+                     splitPlan[0].description);
+        return;
     }
     startSplitPart(0);
 }
 
+void AiAssistant::handleSplitPlanCreationCheckScriptResponse(const QString &code)
+{
+    awaitingSplitPlanCreationCheckScript = false;
+    if (!m_host)
+        return;
+    QString syntaxError;
+    if (!m_host->canCompile(code, &syntaxError))
+    {
+        // Fail open — same philosophy as handleExistenceCheckScriptResponse(): a broken
+        // verification script must never become a new way to get permanently stuck.
+        m_host->print("▸▸▸ AI: creation-name collision check script wasn't valid Python — skipping "
+                      "the check, proceeding.");
+        finalizeSplitPlanAndLaunch();
+        return;
+    }
+    const AiScriptResult result = m_host->runScript(code, "<ai-existence-check>");
+    if (!result.error.isEmpty())
+    {
+        m_host->print("▸▸▸ AI: creation-name collision check script errored — skipping the check, "
+                      "proceeding.");
+        finalizeSplitPlanAndLaunch();
+        return;
+    }
+    const QList<QPair<QString, QStringList>> checkedNames = splitPlanCreationNames(splitPlan);
+    QStringList collisions = splitPlanCreationCollisions(result.output, checkedNames);
+    QStringList sandboxExempt;
+    collisions = splitPlanCollisionsAfterSandboxExemption(collisions, checkedNames, &sandboxExempt);
+    if (!sandboxExempt.isEmpty())
+    {
+        splitPlanSandboxExemptNames << sandboxExempt;
+        if (m_host)
+            m_host->print(QString("▸▸▸ AI split-plan: %1 already exist(s) under \"ai/\" — treated as "
+                                  "disposable scratch (compile-python-api.md Rule 6), proceeding to "
+                                  "recompile over it.")
+                              .arg(sandboxExempt.join(", ")));
+    }
+
+    if (!collisions.isEmpty())
+    {
+        // A collision on a name the user never actually asked for (it was invented by this same
+        // fixup process's own placeholder rule) has nothing for the user to correct — see
+        // buildSplitPlanCreationCollisionRenamePrompt()'s doc comment. Only a name that genuinely
+        // appears in the user's own original wording is a real ambiguity worth halting for.
+        QStringList userSpecified, aiInvented;
+        for (const QString &n : collisions)
+            (originalRequestText.contains(n, Qt::CaseInsensitive) ? userSpecified : aiInvented) << n;
+
+        static const int kMaxSplitPlanCreationNameRetryRounds = 2;
+        if (userSpecified.isEmpty() && !aiInvented.isEmpty() &&
+            splitPlanCreationNameRetryRoundsUsed < kMaxSplitPlanCreationNameRetryRounds)
+        {
+            ++splitPlanCreationNameRetryRoundsUsed;
+            QStringList planLines;
+            for (const SplitPart &p : splitPlan)
+                planLines << QString("PART: %1 | DOCS: %2").arg(p.description).arg(docTopicsDisplayLabel(p.docTopics));
+            if (m_host)
+                m_host->print(QString("▸▸▸ AI split-plan: invented name(s) %1 already exist — asking "
+                                      "the model to invent different one(s) (round %2/%3).")
+                                  .arg(aiInvented.join(", "))
+                                  .arg(splitPlanCreationNameRetryRoundsUsed)
+                                  .arg(kMaxSplitPlanCreationNameRetryRounds));
+            awaitingSplitPlan = true;
+            bool allFunctionKind = true;
+            for (const QString &n : aiInvented)
+            {
+                QStringList labels;
+                for (const QPair<QString, QStringList> &entry : checkedNames)
+                    if (entry.first == n)
+                        labels = entry.second;
+                if (!labels.contains("compile") && !labels.contains("fittable"))
+                {
+                    allFunctionKind = false;
+                    break;
+                }
+            }
+            // docTopics=QStringList() (not {"ai"}): see beginSplitPlanDecomposition()'s call site
+            // for why — noDocsHintLine() already puts the real "TOPICS: none" in the prompt text.
+            ask(buildSplitPlanCreationCollisionRenamePrompt(originalRequestText, planLines.join("\n"), aiInvented,
+                                                            allFunctionKind) +
+                    noDocsHintLine(),
+                true, QString(), QStringList(), false, false, false);
+            return;
+        }
+
+        // The model-based retry above has been given every chance it gets — confirmed live, 3
+        // separate times, it just re-emits the same colliding name unchanged. A name the user
+        // never asked for has nothing to negotiate, so generate the alternate mechanically instead
+        // of a hard halt: guaranteed to actually differ, and terminates immediately.
+        if (userSpecified.isEmpty() && !aiInvented.isEmpty())
+        {
+            QStringList renames;
+            mechanicallyRenameSplitPlanCollisions(splitPlan, aiInvented, &renames);
+            if (m_host)
+                m_host->print("▸▸▸ AI split-plan: the model didn't invent a different name after " +
+                              QString::number(kMaxSplitPlanCreationNameRetryRounds) +
+                              " round(s) — renamed mechanically instead: " + renames.join(", "));
+            finalizeSplitPlanAndLaunch();
+            return;
+        }
+
+        QStringList quoted;
+        for (const QString &n : collisions)
+            quoted << "\"" + n + "\"";
+        m_host->print("▸▸▸ AI: stopping — " + quoted.join(", ") +
+                      (collisions.size() == 1 ? " already exists" : " already exist") +
+                      ", and compiling/creating over " + (collisions.size() == 1 ? "it" : "them") +
+                      " silently overwrites the existing one, with no backup and no confirmation. "
+                      "Nothing was created or run. Reply with a different name, or say \"overwrite "
+                      "it\"/\"reuse it\" to explicitly authorize that instead.");
+        splitModeActive = false;
+        splitPlan.clear();
+        splitPartScripts.clear();
+        splitPartIndex = -1;
+        return;
+    }
+    finalizeSplitPlanAndLaunch();
+}
+
 void AiAssistant::startSplitPart(int index)
 {
+    // Belt and braces behind resetPendingRoundTrips(): splitPlan[index] is an UNCHECKED QList
+    // access, so a stale caller reaching here after the plan was cleared read out of bounds and
+    // faulted on the garbage SplitPart's docTopics (confirmed live, SIGSEGV in growAppend()).
+    // Any future path that loses track of the plan should get a message, never a crash.
+    if (index < 0 || index >= splitPlan.size())
+    {
+        if (m_host)
+            m_host->print(QString("▸▸▸ AI: internal — split part %1 requested but the plan holds %2 "
+                                  "part(s); abandoning split mode for this request.")
+                              .arg(index)
+                              .arg(splitPlan.size()));
+        splitModeActive = false;
+        splitPartIndex = -1;
+        return;
+    }
     splitPartIndex = index;
     // Each part gets its own fresh per-request state — same reset ApplicationWindow::askAi()
     // does for a brand-new whole request — so a part's retries are judged against the full
     // m_maxAutoContinue budget, not whatever was left over from an earlier part.
     autoContinueCount = 0;
+    consecutiveExploreCount = 0;
+    lastExploreOutput.clear();
+    lastExploreCode.clear();
+    consecutiveDocRetryCount = 0;
     awaitingSelfReview = false;
     lastAvailableBlock.clear();
     lastRetryError.clear();
@@ -752,6 +2856,29 @@ void AiAssistant::startSplitPart(int index)
                             ? part.docTopics
                             : ((m_content ? m_content->baselineDocTopics() : QStringList()) + part.docTopics);
 
+    // No LOCAL doc content is ever attached in Integrated mode (buildSystemPrompt()'s own
+    // short-circuit), but a server-side RAG proxy sitting in front of the actual model can use
+    // this line to scope ITS OWN retrieval to just these topics instead of searching its whole
+    // corpus — e.g. qtisas-rag's core.py already supports per-file retrieval scoping but had no
+    // per-request signal to drive it with until this line existed. On its own line, after
+    // part.description ends, so nothing parsing that description out of the prompt (client- or
+    // server-side) can ever capture this text as part of it. A deployment not using such a proxy
+    // just sees a few extra, harmless words of prompt text.
+    //
+    // Always includes baselineDocTopics() ("ai"/"app" — assistant workflow rules plus the handful
+    // of app-level calls used in nearly every script), same as selectedDocTopics above, even when
+    // this part named no specific topics of its own (noneOrAmbiguous) — deliberately NOT gated by
+    // that guard the way selectedDocTopics is: that guard exists to respect an EXPLICIT "none"
+    // answer for LOCAL doc attachment (a real zero-docs choice worth honoring there), but this
+    // hint has no such tradeoff to protect — it's pure signal for an optional server-side
+    // retrieval step, and there's no reason a part with no NAMED topics should get LESS scoping
+    // than falling back to baseline, rather than none at all.
+    const QStringList baselineTopics = m_content ? m_content->baselineDocTopics() : QStringList();
+    const QStringList hintTopics = baselineTopics + (noneOrAmbiguous ? QStringList() : part.docTopics);
+    const QString topicsHint = (docsMode() == DocsMode::Integrated && !hintTopics.isEmpty())
+                                   ? "\n\nTOPICS: " + hintTopics.join(", ")
+                                   : QString();
+
     QStringList allParts;
     for (int i = 0; i < splitPlan.size(); ++i)
         allParts << QString("%1. %2%3")
@@ -760,11 +2887,46 @@ void AiAssistant::startSplitPart(int index)
                         .arg(i == index ? "   <-- THIS PART — generate ONLY this one now"
                                         : (i < index ? "  (already ran successfully)" : ""));
 
+    // Isolated, single-line block repeated as the VERY LAST thing in the prompt — separate from
+    // the "Full plan for context" listing above, where this part's own (often short) description
+    // sits immediately next to OTHER parts' (sometimes much longer/denser) descriptions, with only
+    // a small arrow marker distinguishing which one is actually current. Confirmed live: given
+    // exactly that shape (a short "compile a function" line sitting right above a long, multi-
+    // clause "configure, compare, plot, style" line), a part generated the LATER, longer part's
+    // content instead of its own — the model latched onto the more substantial-looking neighbor
+    // despite the arrow. Position alone wasn't the gap (the existing "Generate a script for ONLY
+    // this part: ..." line already sits at the very end of the prompt) — this block has nothing
+    // else in it to compete with instead: no neighboring part descriptions, no plan-listing
+    // formatting, just this part's own task, so there's nothing for attention to drift to.
+    const QString currentRequestBlock = "\n\n=== CURRENT REQUEST — the ONLY thing to generate now ===\n" +
+                                        QString::number(index + 1) + ". " + part.description +
+                                        "\n=== END CURRENT REQUEST ===";
+
+    // Confirmed live: even though the split-plan level already skipped/exempted an existence
+    // check for one of these names (Rule 6 sandbox), the model still re-derived "does this exist?"
+    // itself inside its own EXPLORE step, wasting a round on a question the system already
+    // settled. Telling the part outright, right next to its isolated task block, stops that.
+    QStringList exemptNamesInThisPart;
+    for (const QString &name : splitPlanSandboxExemptNames)
+        if (part.description.contains(name) && !exemptNamesInThisPart.contains(name))
+            exemptNamesInThisPart << name;
+    const QString sandboxExemptNote =
+        exemptNamesInThisPart.isEmpty()
+            ? QString()
+            : ("\n\nNote: " + exemptNamesInThisPart.join(", ") +
+               " already confirmed safe to compile/overwrite without checking existence first "
+               "(reserved \"ai/\" namespace, compile-python-api.md Rule 6) — skip any existence "
+               "check for it and proceed directly.");
+
     const QString prompt =
+        "Your actual task is stated in the \"=== CURRENT REQUEST ===\" section at the very end of "
+        "this message — read that section first if it helps. Everything between here and there "
+        "(the full plan, the original request, prior turns) is reference material to consult while "
+        "doing that task, not a list of additional things to do.\n\n"
         "Split-mode part " + QString::number(index + 1) + " of " + QString::number(splitPlan.size()) +
         ".\n\nFull plan for context — do not redo an earlier part, do not jump ahead to a later one:\n" +
         allParts.join("\n") + "\n\nOriginal request (baseline goal for the whole plan):\n" + originalRequestText +
-        "\n\nGenerate a script for ONLY this part: " + part.description +
+        "\n\nGenerate a script for ONLY this part: " + part.description + topicsHint +
         "\n\nThis part's description above is the COMPLETE task for this script — perform it now. "
         "The other parts listed above are shown for context only (what already ran, what comes "
         "next); they are separate, already-decided tasks, never a backup that will additionally "
@@ -779,11 +2941,15 @@ void AiAssistant::startSplitPart(int index)
                          "an earlier part's script is still bound; only the conversation's PRINTED output "
                          "carries forward between separate script runs, never the Python objects "
                          "themselves (the same rule that already governs EXPLORE rounds)."
-                   : QString());
-    // includeDocs=true, addToHistory defaults true: this exchange (part description + resulting
-    // script) is exactly the kind of turn later parts and the final merge call need to see in
-    // history — same as startRequest()'s own initial-request call.
-    ask(prompt, true, QString(), selectedDocTopics);
+                   : QString()) +
+        currentRequestBlock + sandboxExemptNote;
+    // historyText: a short "Part N of M: <description>" instead of `prompt` itself — the ONE call
+    // in this file not already following startRequest()'s own rule (raw scaffolding must never be
+    // what gets stored in m_history). Confirmed live: the full plan re-listing was being saved
+    // verbatim every part, compounding into the "N older turn(s) omitted" budget pressure seen in
+    // every multi-part trace, and duplicating stale "THIS PART" markers across history.
+    const QString historyText = QString("Part %1 of %2: %3").arg(index + 1).arg(splitPlan.size()).arg(part.description);
+    ask(prompt, true, QString(), selectedDocTopics, true, true, true, historyText);
 }
 
 void AiAssistant::advanceSplitPart(const QString &code)
@@ -800,18 +2966,187 @@ void AiAssistant::advanceSplitPart(const QString &code)
         startSplitPart(next);
         return;
     }
-    if (!m_splitMergeEnabled)
+    // listModeActive also skips the merge — it's a NEVER-EXECUTED reference script (see
+    // handleSplitMergeResponse()'s own comment), and firing it here would block the next list
+    // item behind an extra, pointless round-trip: this AiAssistant only ever has one request in
+    // flight (see m_busy), so a pending merge call would reject startNextListItem()'s own ask().
+    if (!m_splitMergeEnabled || listModeActive)
     {
         if (m_host)
-            m_host->print(QString("▸▸▸ AI split-mode: all %1 part(s) completed — merge step skipped (disabled).")
-                              .arg(splitPlan.size()));
+            m_host->print(QString("▸▸▸ AI split-mode: all %1 part(s) completed — merge step skipped (%2).")
+                              .arg(splitPlan.size())
+                              .arg(listModeActive ? "LIST mode" : "disabled"));
         splitModeActive = false; // split-mode conversation state ends here, same as after a merge
+        if (listModeActive)
+            advanceListItem();
         return;
     }
     if (m_host)
         m_host->print(
             QString("▸▸▸ AI split-mode: all %1 part(s) completed — requesting merged script.").arg(splitPlan.size()));
     requestSplitMerge();
+}
+
+void AiAssistant::beginListRequest(const ParsedListRequest &parsed, bool splitByDefault, bool reviewByDefault,
+                                   bool exploreByDefault, bool autoRunValue)
+{
+    if (!parsed.instructionBlock.isEmpty())
+    {
+        // Remembered across this call's async gap — handleListTransformResponse() needs all of
+        // this once the response arrives, but its own signature (matching every other response
+        // handler in this class) only receives the response text.
+        pendingListRawItems = parsed.items;
+        pendingListForceSplit = parsed.forceSplit;
+        pendingListForceNoSplit = parsed.forceNoSplit;
+        pendingListForceReview = parsed.forceReview;
+        pendingListForceNoReview = parsed.forceNoReview;
+        pendingListForceExplore = parsed.forceExplore;
+        pendingListForceNoExplore = parsed.forceNoExplore;
+        pendingListSplitByDefault = splitByDefault;
+        pendingListReviewByDefault = reviewByDefault;
+        pendingListExploreByDefault = exploreByDefault;
+        pendingListAutoRun = autoRunValue;
+        awaitingListTransform = true;
+        QStringList numbered;
+        for (int i = 0; i < parsed.items.size(); ++i)
+            numbered << QString("%1. %2").arg(i + 1).arg(parsed.items[i]);
+        const QString transformPrompt =
+            "Apply the following instruction to EVERY item in the numbered list below, then "
+            "return ONLY the modified numbered list, same format (\"N. <item text>\"), one item "
+            "per line, nothing else — no markdown fences, no explanation, no extra commentary "
+            "before or after the list.\n\nInstruction: " +
+            parsed.instructionBlock + "\n\nList:\n" + numbered.join("\n");
+        // includeDocs=false: pure textual transformation, no QtiSAS API knowledge needed — same
+        // reasoning as self-review's own internal-plumbing calls. expectsCode=false: the answer
+        // is a numbered list, never Python. addToHistory=false/includeHistory=false: self-
+        // contained scaffolding that shouldn't leak into history as its own turn — each list item
+        // gets its own proper history entry once it actually runs, via the normal pipeline.
+        // noDocsHintLine() too, not just includeDocs=false: without it Integrated mode sent no
+        // TOPICS: line at all, so the server's unscoped fallback attached ai+app whole plus 8 MMR
+        // sections — measured live at 46,332 tokens and ~2min of prefill for a text rewrite.
+        ask(transformPrompt + noDocsHintLine(), false, QString(), QStringList(), false, false, false);
+        return;
+    }
+    startListItems(parsed.items, parsed.forceSplit, parsed.forceNoSplit, parsed.forceReview, parsed.forceNoReview,
+                   parsed.forceExplore, parsed.forceNoExplore, splitByDefault, reviewByDefault, exploreByDefault,
+                   autoRunValue);
+}
+
+void AiAssistant::handleListTransformResponse(const QString &code)
+{
+    awaitingListTransform = false;
+    QStringList items = parseNumberedListItems(code);
+    if (items.size() < 2)
+    {
+        // Fail open — same philosophy as every other verify-and-retry in this class: couldn't
+        // parse the transform response as a list, so fall back to running the ORIGINAL,
+        // untransformed items rather than getting permanently stuck.
+        if (m_host)
+            m_host->print("▸▸  AI LIST: transform response wasn't a parseable numbered list — "
+                          "running the original, untransformed items instead.");
+        items = pendingListRawItems;
+    }
+    startListItems(items, pendingListForceSplit, pendingListForceNoSplit, pendingListForceReview,
+                   pendingListForceNoReview, pendingListForceExplore, pendingListForceNoExplore,
+                   pendingListSplitByDefault, pendingListReviewByDefault, pendingListExploreByDefault,
+                   pendingListAutoRun);
+}
+
+void AiAssistant::startListItems(const QStringList &items, bool forceSplit, bool forceNoSplit, bool forceReview,
+                                 bool forceNoReview, bool forceExplore, bool forceNoExplore, bool splitByDefault,
+                                 bool reviewByDefault, bool exploreByDefault, bool autoRunValue)
+{
+    listModeActive = true;
+    m_listTotalTimer.start();
+    listItems.clear();
+    for (const QString &text : items)
+    {
+        ListItem item;
+        item.text = text;
+        // Mechanical, no LLM call — see topicSynonymRe's own doc comment on the entries added
+        // specifically for this.
+        for (auto it = topicSynonymRe.cbegin(); it != topicSynonymRe.cend(); ++it)
+            if (it.value().match(text).hasMatch())
+                item.docTopics << it.key();
+        listItems << item;
+    }
+    listItemIndex = -1;
+    listItemForceSplit = forceSplit;
+    listItemForceNoSplit = forceNoSplit;
+    listItemForceReview = forceReview;
+    listItemForceNoReview = forceNoReview;
+    listItemForceExplore = forceExplore;
+    listItemForceNoExplore = forceNoExplore;
+    listSplitByDefault = splitByDefault;
+    listReviewByDefault = reviewByDefault;
+    listExploreByDefault = exploreByDefault;
+    autoRun = autoRunValue;
+    // Mirrors m_contextHistoryStart's exact mechanism — see m_listHistoryStart's own doc comment.
+    m_listHistoryStart = m_history.size();
+    startNextListItem();
+}
+
+// Elapsed time for the item that JUST finished, formatted like m_lastCallMs's own "Xsec" — printed
+// once, at the point the NEXT item starts (or the list completes), never retroactively edited into
+// an already-printed line. Empty before any item has actually finished (listItemIndex < 0).
+QString AiAssistant::listItemElapsedNote() const
+{
+    if (listItemIndex < 0 || !m_listItemTimer.isValid())
+        return {};
+    const QString item = QString("took %1sec").arg(static_cast<double>(m_listItemTimer.elapsed()) / 1000.0, 0, 'f', 1);
+    if (!m_listTotalTimer.isValid())
+        return " (" + item + ")";
+    // Running total since the LIST started, so a long list's accumulated cost is visible without
+    // adding up every per-item figure by hand. Minutes once past 60s — a bare "1574.3sec" on a
+    // 12-item list is accurate but not readable at a glance.
+    const qint64 totalMs = m_listTotalTimer.elapsed();
+    const QString total = totalMs < 60000
+                              ? QString("%1sec total").arg(static_cast<double>(totalMs) / 1000.0, 0, 'f', 1)
+                              : QString("%1min %2sec total").arg(totalMs / 60000).arg((totalMs % 60000) / 1000);
+    return " (" + item + ", " + total + ")";
+}
+
+void AiAssistant::startNextListItem()
+{
+    const QString finishedNote = listItemElapsedNote();
+    ++listItemIndex;
+    if (listItemIndex >= listItems.size())
+    {
+        listModeActive = false;
+        if (m_host)
+            m_host->print(QString("▸▸  AI LIST: all %1 item(s) completed%2.").arg(listItems.size()).arg(finishedNote));
+        return;
+    }
+    const ListItem &item = listItems[listItemIndex];
+    if (m_host)
+        m_host->print(QString("▸▸  AI LIST: item %1/%2%3 — %4")
+                          .arg(listItemIndex + 1)
+                          .arg(listItems.size())
+                          .arg(finishedNote)
+                          .arg(item.text));
+    m_listItemTimer.start();
+    const bool wantsSplit = listItemForceSplit ? true : listItemForceNoSplit ? false : listSplitByDefault;
+    setSelfReviewEnabled(listItemForceReview ? true : listItemForceNoReview ? false : listReviewByDefault);
+    // Re-applied per item, exactly like self-review above: every list item runs through the normal
+    // single-request pipeline, and nothing else restores these between items.
+    setExploreEnabled(listItemForceExplore ? true : listItemForceNoExplore ? false : listExploreByDefault);
+    // Each item is a genuinely fresh, independent request — not a follow-up to the previous item
+    // — so originalRequestText must be cleared first; beginRequest() only sets it when empty (see
+    // its own doc comment), which is exactly the "new top-level request" behavior every item needs.
+    originalRequestText.clear();
+    // Closed at THIS item's boundary. Briefly widened to the whole LIST so a back-reference ("plot
+    // the fit results from the previous step") had something behind it; reverted after that made
+    // later items replay earlier items' SCRIPTS prepended to their own — confirmed live, one run
+    // where item 4 re-created item 2's table and re-did item 3's work while never creating the note
+    // it was asked for, and items 9-11 each re-ran the whole create+fit+plot pipeline. A dangling
+    // reference costs one EXPLORE round; script-latching silently produces the wrong work.
+    m_contextHistoryStart = m_history.size();
+    beginRequest(item.text, autoRun, wantsSplit);
+}
+
+void AiAssistant::advanceListItem()
+{
+    startNextListItem();
 }
 
 void AiAssistant::requestSplitMerge()
@@ -853,7 +3188,10 @@ void AiAssistant::requestSplitMerge()
     // later in the SAME conversation (without an explicit "clear history" in between) let its merge
     // step pull in a PRIOR, different request's own parts instead of only the ones just listed
     // above — "only clear history helps" was the reported symptom.
-    ask(mergePrompt, false, QString(), QStringList(), false, false);
+    // expectsCode=false: merge combines already-verified code, it never explores — the
+    // EXPLORE-mechanism reminder buildSystemPrompt() would otherwise add (expectsCode defaults
+    // true) is pure noise here, never applicable to what this call actually does.
+    ask(mergePrompt + noDocsHintLine(), false, QString(), QStringList(), false, false, false);
 }
 
 // Extracts the one significant (non-blank, non-comment) line from a script — used to check
@@ -1005,7 +3343,11 @@ void AiAssistant::handleSplitMergeResponse(const QString &code)
                            numbered.join("\n\n");
             awaitingSplitMerge = true;
             awaitingSplitMergeRetry = true;
-            ask(retryPrompt, false, QString(), QStringList(), false, false);
+            // expectsCode=false: same reasoning as requestSplitMerge()'s own call — a merge retry
+            // never explores either.
+            // noDocsHintLine() to match the first merge call's own — without it this retry reached
+            // the server with no TOPICS: line and took the unscoped whole-corpus fallback.
+            ask(retryPrompt + noDocsHintLine(), false, QString(), QStringList(), false, false, false);
             return;
         }
     }
@@ -1015,66 +3357,352 @@ void AiAssistant::handleSplitMergeResponse(const QString &code)
     m_host->print(QString("▸▸▸ AI split-mode merged script (%1 — NOT executed, verify before reuse):\n\n")
                       .arg(compilable ? "syntax-checked OK" : "NOT syntactically valid") +
                   code);
+    // Lets a follow-up "run it" execute this exact merged script — see hasUnrunLastScript()'s doc
+    // comment. Every ask() in the split-mode pipeline has addToHistory=false by design (keeps
+    // per-part scaffolding out of history), so without this, the merged script was never in
+    // m_history at all: "run it" here would either fall through to the model (risking the same
+    // reinterpretation hallucination this fast path exists to avoid) or, worse, run some
+    // unrelated stale entry. Gated on compilable, same as the plain non-split "AI code (not run)"
+    // path's own isRealActionScript check.
+    if (compilable)
+    {
+        m_history.append({originalRequestText, code});
+        markLastScriptUnrun();
+    }
 }
 
+// The dedicated "# Action script" marker LINE the model uses when it bundles a complete action
+// script into the same response as its EXPLORE probe instead of keeping the two phases apart.
+// Hoisted to file scope because handleExploreResponse() now has two users: the disabled-EXPLORE
+// refusal below (which hands the bundled half back as a draft to revise) and the "already ran the
+// action script" shortcut further down. MUST be a marker LINE, never a bare substring search —
+// see that shortcut's own call site for the confirmed-live incident where .contains("action
+// script") matched an EXPLORE script's unrelated note-to-self and wrongly ended the task.
+static const QRegularExpression kActionScriptMarkerRe(R"(^[ \t]*#+[ \t\-]*action script\b)",
+                                                      QRegularExpression::CaseInsensitiveOption |
+                                                          QRegularExpression::MultilineOption);
+
 // Two-phase agentic loop: EXPLORE script — run, capture output, feed back to AI.
-void AiAssistant::handleExploreResponse(const QString &code)
+// EXPLORE handling is split four ways: this policy function decides WHETHER a probe may run, and
+// the three functions below carry out the chosen outcome. It used to be one 247-line function
+// mixing policy, presentation, execution and prompt-building, which is why the disabled-EXPLORE
+// path ended up duplicating the round-budget check — every new rule had to be threaded into a
+// branch that also did four other things. Every "should this probe run" rule now lives here.
+AiAssistant::ExploreDisposition AiAssistant::exploreDisposition() const
 {
-    // Reset unconditionally, even though this flag is normally cleared where the
-    // self-review response is consumed below: if self-review itself ever returns
-    // an # EXPLORE script instead of a corrected action script, execution returns
-    // early from THIS branch and never reaches that reset. Left stale, the next
-    // real candidate script (produced after this EXPLORE round via "Now generate
-    // the action script.") would be wrongly treated as an already-reviewed
-    // self-review result and skip the mandatory review entirely.
-    awaitingSelfReview = false;
+    // Off in Preferences, or NOEXPLORE on this request.
+    if (!m_exploreEnabled)
+        return ExploreDisposition::Refuse;
+    // Generate-only mode (bare Enter/Click, autoRun == false): the user asked to SEE a script, not
+    // to have anything executed against their project. A probe is model-authored code, and the
+    // read-only guarantee is a blocklist of recognized write calls, not a sandbox —
+    // explorePrefixBeforeFirstWriteCall()'s own doc comment records two confirmed-live leaks, one
+    // of which ran an entire Compiler authoring sequence (c.new() through setCode()) for real
+    // because none of those calls were in the list. Running that when the user declined execution
+    // is a contract violation with a demonstrated, non-zero chance of real mutation.
+    if (!autoRun)
+        return ExploreDisposition::Refuse;
+    return ExploreDisposition::Run;
+}
+
+// Charges this round against the shared EXPLORE/error-retry budget, reporting and recording the
+// give-up when it is spent. `refusing` only selects the wording — a model that keeps sending probes
+// at a refusing host and one that keeps exploring without ever producing a script are the same
+// non-convergence, and the same budget has to stop both.
+bool AiAssistant::exploreRoundBudgetExhausted(bool refusing)
+{
+    if (++autoContinueCount <= maxAutoContinue())
+        return false;
+    recordGiveUpInHistory(refusing ? QString("stopped after %1 rounds — kept returning # EXPLORE scripts while "
+                                             "EXPLORE was not available")
+                                         .arg(maxAutoContinue())
+                                   : QString("stopped after %1 automatic EXPLORE/retry rounds").arg(maxAutoContinue()),
+                          QString());
     if (m_host)
-        m_host->print("▸▸▸ AI code (exploring):\n\n" + code);
-    if (++autoContinueCount > maxAutoContinue())
     {
-        if (m_host)
-        {
-            QString msg = "▸▸▸ AI: stopped after " + QString::number(maxAutoContinue()) +
-                          " automatic EXPLORE/retry rounds — no action script produced yet.";
-            msg += splitModeGiveUpNote();
-            m_host->print(msg);
-        }
-        return;
+        QString msg = refusing ? "▸▸▸ AI: stopped after " + QString::number(maxAutoContinue()) +
+                                     " rounds — the AI kept returning # EXPLORE scripts, but probe rounds are "
+                                     "not available for this request."
+                               : "▸▸▸ AI: stopped after " + QString::number(maxAutoContinue()) +
+                                     " automatic EXPLORE/retry rounds — no action script produced yet.";
+        msg += splitModeGiveUpNote();
+        m_host->print(msg);
     }
+    return true;
+}
+
+// exploreModeReminder() asks for "# EXPLORE: <purpose>" on the first line — surfaced here so a long
+// trace is scannable without reading the whole script. Falls back to the plain header when no
+// purpose is given (an older/bare "# EXPLORE" still matches this file's own detection regex, which
+// only requires a word boundary after EXPLORE).
+void AiAssistant::printExploreScript(const QString &code)
+{
     if (!m_host)
         return;
-    // Display already happened live during runScript() itself — do NOT print exploreResult.output
-    // here too, see that method's doc comment on why that would double every scriptPrint() line.
-    const AiScriptResult exploreResult = m_host->runScript(code, "<ai-explore>");
-    const QString out = exploreResult.output.isEmpty() ? "(no output)" : exploreResult.output;
+    static const QRegularExpression explorePurposeRe(R"(^#\s*EXPLORE\s*:?\s*(.*)$)",
+                                                     QRegularExpression::CaseInsensitiveOption);
+    const int firstLineEnd = static_cast<int>(code.indexOf('\n'));
+    const QString firstLine = firstLineEnd < 0 ? code : code.left(firstLineEnd);
+    const QRegularExpressionMatch purposeMatch = explorePurposeRe.match(firstLine);
+    const QString purpose = purposeMatch.hasMatch() ? purposeMatch.captured(1).trimmed() : QString();
+    m_host->print(purpose.isEmpty() ? "▸▸▸ AI code (exploring):\n\n" + code
+                                    : "▸▸▸ AI code (exploring: " + purpose + "):\n\n" + code);
+}
 
-    // The model sometimes bundles a complete action script into the same response
-    // as EXPLORE (marked by a dedicated "# Action script" comment LINE) instead of
-    // keeping the two-phase split intact — that combined script already ran above.
-    // Asking for "the action script" again would redundantly re-run the whole
-    // thing: confirmed live, it recompiled the same fit function, regenerated the
-    // same table, and refit, all from scratch. Skip the follow-up when that marker
-    // is present AND this run raised no error — the task is already done. If it
-    // DID error, fall through to the normal path below so the failure still gets
-    // surfaced.
-    // MUST be a dedicated marker line, not a bare substring search — a plain
-    // .contains("action script") also matches an EXPLORE script's own unrelated
-    // comment merely mentioning the words in passing (confirmed live: "# -- after
-    // seeing real output, write the action script:" is a note-to-self inside a
-    // pure read-only EXPLORE script, not a bundled action script), which wrongly
-    // ended the task right there — twice in a row, including once when the user's
-    // new instruction ("select yourself column") was never even attempted.
-    static const QRegularExpression actionScriptMarkerRe(R"(^[ \t]*#+[ \t\-]*action script\b)",
-                                                         QRegularExpression::CaseInsensitiveOption |
-                                                             QRegularExpression::MultilineOption);
-    if (exploreResult.error.isEmpty() && actionScriptMarkerRe.match(code).hasMatch())
+// Shows the probe without running it and asks for the action script instead.
+//
+// buildSystemPrompt() already stops asking for probe rounds when EXPLORE is off, but that alone
+// cannot prevent one: outside Integrated docs mode the API corpus carries its own "Agentic Explore
+// Mode" rules, so the model can still open with "# EXPLORE" on the docs' authority. Refuse it once
+// — never run it (the setting would mean nothing), and never dead-end the request either, which is
+// the failure this whole path exists to avoid.
+void AiAssistant::refuseExploreRound(const QString &code)
+{
+    if (exploreRoundBudgetExhausted(/*refusing=*/true))
+        return;
+    // Split the reply at the "# ACTION SCRIPT" marker, when there is one: the probe half is what
+    // gets shown as "not run", and the action half is either handed back for revision (below) or —
+    // in generate-only mode — simply shown as the answer.
+    const QRegularExpressionMatch bundledMatch = kActionScriptMarkerRe.match(code);
+    const QString bundledDraft = bundledMatch.hasMatch() ? code.mid(bundledMatch.capturedStart()).trimmed() : QString();
+    const QString probeOnly = bundledMatch.hasMatch() ? code.left(bundledMatch.capturedStart()).trimmed() : code;
+    if (m_host)
+        m_host->print(m_exploreEnabled ? "▸▸▸ AI code (EXPLORE not run — generate-only mode):\n\n" + probeOnly
+                                       : "▸▸▸ AI code (EXPLORE disabled — not run):\n\n" + probeOnly);
+    // Generate-only mode with the action script ALREADY in the reply: show it and stop. Asking again
+    // would spend a whole round-trip reproducing code that is on screen, and nothing is going to run
+    // it, so a script written before the model knew no probe output was coming can at worst be
+    // suboptimal — never harmful. Deliberately NOT done when auto-run is on and only the EXPLORE
+    // setting is off: there the script WOULD execute, so a draft resting on unverified assumptions
+    // has to be rewritten knowing it must read those values at run time.
+    //
+    // Routed back through responseReady() rather than printed directly, so the action half takes the
+    // exact same path any other answer does — host-side display, markLastScriptUnrun() for a later
+    // "run it", and (the reason this matters) the LIST advance that lives in that handler. Printing
+    // it here instead would stall a generate-only LIST on this item forever. Deferred by one event
+    // loop turn, matching how list continuation is scheduled elsewhere in this file, so this item's
+    // own output is fully emitted before the next one starts.
+    if (!autoRun && !bundledDraft.isEmpty())
     {
-        m_host->print("▸▸▸ AI: EXPLORE response already included and ran the action script — done.");
+        if (m_host)
+            m_host->print("▸▸▸ AI: the reply also carried a complete action script — showing that "
+                          "instead of asking for it again, since nothing runs in generate-only mode.");
+        QTimer::singleShot(0, this, [this, bundledDraft]() { emit responseReady(bundledDraft); });
         return;
     }
+    // A response that bundles "# EXPLORE" AND a complete "# ACTION SCRIPT" into one reply gets its
+    // action half handed back instead of thrown away. Discarding it outright is exactly the
+    // condition the run path's own discardedDraftBlock exists to avoid — see its doc comment: a
+    // draft dropped without feedback had invented a nonexistent group ("custom:sans"), and the very
+    // next round, now holding the real list, wrote the identical invented name again because
+    // nothing tied the rewrite to what had just been rejected. Confirmed live here too: this path's
+    // first real firing discarded a bundled draft carrying that same "custom:sans".
+    const QString bundledDraftBlock =
+        bundledDraft.isEmpty()
+            ? QString()
+            : "\n\nYou bundled this action script into the same response, written BEFORE you knew no "
+              "exploration output was coming (discarded, never executed):\n```\n" +
+                  bundledDraft +
+                  "\n```\nRevise THAT script rather than starting over — but treat every value in it "
+                  "that only a probe could have confirmed (a group name, a function name, a column "
+                  "label, a template name) as an unverified guess: either replace it with something "
+                  "the documentation states outright, or have the script read it at run time. Do not "
+                  "carry such a guess through unchanged just because you already wrote it once.";
+    const QString followUp =
+        originalRequestReminder() +
+        "The script above was a \"# EXPLORE\" probe, but probe rounds are NOT AVAILABLE for this "
+        "request — it was NOT executed, and nothing was read from the project. You will not receive "
+        "any exploration output, now or later, so do not wait for it and do not ask again.\n\n"
+        "Write and return the ACTION script right now (no # EXPLORE marker), working only from the API "
+        "documentation and this conversation. Where a probe would have told you a live value, write "
+        "code that reads it AT RUN TIME inside the action script itself and branches on what it finds "
+        "— that is the supported way to handle unknown project state here, and it needs no separate "
+        "round-trip. Do not invent a value you would have checked, and do not drop part of the task "
+        "because you could not check it first." +
+        bundledDraftBlock;
+    // Same call shape as requestActionScriptAfterExplore()'s own ask() — see its
+    // topicsHintLine()/historyText notes for why the hinted text is not what gets stored.
+    ask(followUp + topicsHintLine(selectedDocTopics), true, QString(), selectedDocTopics, true, true, true, followUp);
+}
 
-    ask(originalRequestReminder() + "Exploration output:\n```\n" + out + "\n```\nNow generate the action script.", true,
-        QString(), selectedDocTopics);
+// Runs the probe's read-only prefix and returns its output. False means "stop here" — either there
+// is no host, or the response bundled an action script that has now already run.
+bool AiAssistant::runExploreProbe(const QString &code, QString *output, QString *discardedDraft)
+{
+    if (!m_host)
+        return false;
+    // EXPLORE is supposed to be strictly read-only (ai-python-api.md's own rule) — nothing before
+    // this point mechanically enforces that, so a response that bundles real write/create calls in
+    // with its EXPLORE lines would otherwise execute all of it for real. Run only the safe,
+    // read-only PREFIX; a host-side-only note (never sent back to the model) flags that a suffix was
+    // skipped, purely for local transparency. See
+    // AiContentProvider::explorePrefixBeforeFirstWriteCall()'s doc comment for the confirmed-live
+    // incident this closes — and for the two it did NOT, which is why exploreDisposition() refuses
+    // to run any probe at all in generate-only mode.
+    const QString safeCode = m_content->explorePrefixBeforeFirstWriteCall(code);
+    // Everything cut away above (empty when nothing was truncated) — kept only long enough to seed
+    // the follow-up prompt, never executed, never stored past this call. Confirmed live: asked to
+    // compile "ai/PorodFit", the discarded draft here invented a nonexistent group ("custom:sans",
+    // matching none of the real c.groups()) before it could have seen the real list; simply
+    // discarding it meant the very next round, now holding that real list in its own prompt, wrote
+    // the identical invented group again — nothing tied the regeneration to what had just become
+    // visible. Feeding this draft back alongside the real exploration output gives the model
+    // something concrete to revise instead of a blank slate with no reason to differ.
+    *discardedDraft = code.mid(safeCode.length());
+    if (safeCode.length() != code.length())
+        m_host->print("▸▸▸ AI: this EXPLORE script contained write/action calls past the point shown "
+                      "above — only the read-only prefix was executed; the rest was skipped.");
+    // Same mechanical scan runActionScript() already runs before executing a candidate script —
+    // EXPLORE previously skipped it entirely and could crash at runtime (e.g. scriptPrint()'s
+    // multi-arg mistake) on something already cataloged and normally caught for free beforehand.
+    const QList<AiKnownMistakeMatch> knownMistakes =
+        m_content ? m_content->detectKnownMistakes(safeCode, originalRequestText, splitPartScripts.join("\n\n"),
+                                                   /*exploreScript=*/true)
+                  : QList<AiKnownMistakeMatch>();
+    if (!knownMistakes.isEmpty())
+    {
+        QStringList headers, explanations;
+        for (const AiKnownMistakeMatch &m : knownMistakes)
+        {
+            headers << m.header;
+            explanations << m.explanation;
+        }
+        m_host->print("▸▸▸ AI: this EXPLORE script was blocked before running — " + headers.join("; ") + ".");
+        *output = explanations.join("\n\n");
+        return true;
+    }
+    // Display already happened live during runScript() itself — do NOT print exploreResult.output
+    // here too, see that method's doc comment on why that would double every scriptPrint() line.
+    const AiScriptResult exploreResult = m_host->runScript(safeCode, "<ai-explore>");
+    *output = exploreResult.output.isEmpty() ? "(no output)" : exploreResult.output;
+
+    // The model sometimes bundles a complete action script into the same response as EXPLORE
+    // (marked by a dedicated "# Action script" comment LINE) instead of keeping the two-phase split
+    // intact — that combined script already ran above. Asking for "the action script" again would
+    // redundantly re-run the whole thing: confirmed live, it recompiled the same fit function,
+    // regenerated the same table, and refit, all from scratch. Skip the follow-up when that marker
+    // is present AND this run raised no error — the task is already done. If it DID error, fall
+    // through to the normal path so the failure still gets surfaced.
+    // MUST be a dedicated marker line, not a bare substring search — a plain
+    // .contains("action script") also matches an EXPLORE script's own unrelated comment merely
+    // mentioning the words in passing (confirmed live: "# -- after seeing real output, write the
+    // action script:" is a note-to-self inside a pure read-only EXPLORE script, not a bundled action
+    // script), which wrongly ended the task right there — twice in a row, including once when the
+    // user's new instruction ("select yourself column") was never even attempted.
+    // Checked against `safeCode` (what actually ran), not the original `code` — if the marker sits
+    // past explorePrefixBeforeFirstWriteCall()'s cut point, that bundled action script was skipped,
+    // not executed, so "already done" would be wrong.
+    //
+    // Confirmed live: that reasoning alone isn't enough — explorePrefixBeforeFirstWriteCall() only
+    // cuts starting at a matched WRITE-CALL line, so a marker COMMENT sitting anywhere before that
+    // call survives truncation intact even when everything the marker was introducing (a real
+    // c.compile() call, in the confirmed incident) got cut away right after it. `safeCode`
+    // containing the marker text is therefore not proof the action script actually ran in full —
+    // only `safeCode.length() == code.length()` (nothing was truncated at all) is. Requiring that
+    // explicitly closes the gap regardless of how complete that write-call list happens to be.
+    if (safeCode.length() == code.length() && exploreResult.error.isEmpty() &&
+        kActionScriptMarkerRe.match(safeCode).hasMatch())
+    {
+        m_host->print("▸▸▸ AI: EXPLORE response already included and ran the action script — done.");
+        return false;
+    }
+    return true;
+}
+
+// Feeds the exploration output back and asks for the action script, escalating when the model keeps
+// probing instead of producing one.
+void AiAssistant::requestActionScriptAfterExplore(const QString &code, const QString &output,
+                                                  const QString &discardedDraft)
+{
+    // Kept for maybeDispatchSelfReview()'s exploreGroupsIgnoredMistake() check — see
+    // lastExploreOutput's own doc comment (AiAssistant.h) for why this needs to survive past this
+    // function's return.
+    lastExploreOutput = output;
+
+    // Confirmed live: with the full request history intact (no truncation — the transcript's own
+    // "N history turn(s)" headers showed no omission) and every fact already printed earlier in this
+    // SAME conversation, six straight EXPLORE rounds re-verified already-known state (table columns,
+    // curve counts, a table's existence) instead of ever comparing it against the exact string that
+    // had actually failed — burning the entire remaining autoContinueCount budget on zero net
+    // progress before the request died at the round cap. The soft "Now generate the action script"
+    // phrasing below is already sent every round and was plainly not enough on its own to break that
+    // loop. Past kMaxConsecutiveExplore, escalate to a much more direct instruction instead of
+    // repeating the same phrasing a fourth/fifth/sixth time.
+    // A byte-identical repeat means this round produced nothing new to converge on — waiting for the
+    // round cap just spends another 40-50s reproducing it. Confirmed live: the same EXPLORE script
+    // came back 3 rounds running, unchanged.
+    const bool repeatedIdenticalExplore = !lastExploreCode.isEmpty() && code == lastExploreCode;
+    lastExploreCode = code;
+    if (repeatedIdenticalExplore && m_host)
+        m_host->print("▸▸▸ AI: this EXPLORE script is identical to the previous round's — exploring "
+                      "again can't add anything, asking for the action script instead.");
+
+    ++consecutiveExploreCount;
+    static const int kMaxConsecutiveExplore = 3;
+    // Empty whenever nothing was truncated (the common case) — both followUp branches below are then
+    // byte-for-byte identical to before this block existed.
+    const QString discardedDraftBlock =
+        discardedDraft.trimmed().isEmpty()
+            ? QString()
+            : "\n\nBefore seeing the exploration output below, you had already started writing this "
+              "(discarded, never executed):\n```\n" +
+                  discardedDraft.trimmed() +
+                  "\n```\nRevise it "
+                  "using the real values below instead of the ones you guessed — don't repeat a value "
+                  "you invented before you could see this data. NOTE: this is a FRAGMENT, cut at the "
+                  "first write call, so its own setup lines (\"f = Fittable\", \"c = Compiler\", "
+                  "\"import random\", PyQt imports, ...) are very likely missing — they were on the "
+                  "other side of the cut. Do not return it as-is: every script runs in a fresh "
+                  "namespace, so rewrite the setup lines it needs at the top. Confirmed live: this "
+                  "fragment began at \"f.configure(...)\" and was returned verbatim, dying on "
+                  "\"NameError: name 'f' is not defined\".";
+    const QString followUp =
+        (consecutiveExploreCount >= kMaxConsecutiveExplore || repeatedIdenticalExplore)
+            ? originalRequestReminder() + "Exploration output:\n```\n" + output + "\n```" + discardedDraftBlock +
+                  "\nThis is EXPLORE round " + QString::number(consecutiveExploreCount) +
+                  " in a row with no action-script attempt in between. STOP EXPLORING NOW — everything "
+                  "needed is already in this conversation's own history, including your own prior "
+                  "EXPLORE output. Do NOT return another # EXPLORE script. Write and return the "
+                  "corrected ACTION script right now (no # EXPLORE marker), using the facts you have "
+                  "already confirmed — do not re-verify anything you already checked earlier in this "
+                  "exchange."
+            : originalRequestReminder() + "Exploration output:\n```\n" + output + "\n```" + discardedDraftBlock +
+                  "\nNow generate the action script.";
+    // TOPICS: hint for an optional server-side RAG proxy — confirmed live missing here too (see
+    // startRequest()'s doc comment on the same gap and topicsHintLine()'s doc comment): this call
+    // generates the real action script right after an EXPLORE round, exactly the kind of call that
+    // benefits from topic-scoped retrieval, and previously had no hint line at all.
+    // historyText=followUp (pre-hint): see startRequest()'s doc comment on why the hinted text must
+    // never be what actually gets stored in m_history.
+    ask(followUp + topicsHintLine(selectedDocTopics), true, QString(), selectedDocTopics, true, true, true, followUp);
+}
+
+// Two-phase agentic loop orchestration: decide, then carry out. Each step's own doc comment above
+// carries the confirmed-live incidents that shaped it.
+void AiAssistant::handleExploreResponse(const QString &code)
+{
+    // Reset unconditionally, even though this flag is normally cleared where the self-review
+    // response is consumed: if self-review itself ever returns an # EXPLORE script instead of a
+    // corrected action script, execution returns early from here and never reaches that reset. Left
+    // stale, the next real candidate script (produced after this EXPLORE round via "Now generate the
+    // action script.") would be wrongly treated as an already-reviewed self-review result and skip
+    // the mandatory review entirely.
+    awaitingSelfReview = false;
+    if (exploreDisposition() == ExploreDisposition::Refuse)
+    {
+        refuseExploreRound(code);
+        return;
+    }
+    // Display BEFORE the budget check, so the round that exhausts the budget still shows what was
+    // asked for rather than only the give-up line.
+    printExploreScript(code);
+    if (exploreRoundBudgetExhausted(/*refusing=*/false))
+        return;
+    QString output;
+    QString discardedDraft;
+    if (!runExploreProbe(code, &output, &discardedDraft))
+        return;
+    requestActionScriptAfterExplore(code, output, discardedDraft);
 }
 
 // Despite every generation/retry prompt instructing "return ONLY executable Python code," a
@@ -1214,6 +3842,83 @@ static QString buildEnumRegressionRetryPrompt(const QString &regressionExplanati
            "\n```\nReturn THAT script, corrected only for genuine checklist violations if any — "
            "do not replace the constant with a string or a different value again. Return ONLY "
            "executable Python code — no explanation, no markdown fences.";
+}
+
+// Backstop 7's one-shot corrective prompt (see maybeDispatchSelfReview()'s use of
+// AiContentProvider::selfReviewCompileSequenceRegression()): self-review dropped one or more
+// required Compiler setup calls (setFunctionName/setGroup/setParamCount/setParamNamesAll/
+// setParamInitsAll/setParamLimitsAll/setParamVariesAll) while still calling compile(), with no
+// basis to do so.
+static QString buildCompileSequenceRetryPrompt(const QString &regressionExplanation, const QString &preReviewDraft)
+{
+    return "Your last response still calls Compiler.compile(), but dropped one or more required "
+           "setup calls that the reviewed script had:\n\n" +
+           regressionExplanation +
+           "\n\nHere is the script you were originally asked to review, which had the complete, "
+           "correct setup:\n```python\n" +
+           preReviewDraft +
+           "\n```\nReturn THAT script, corrected only for genuine checklist violations if any — do "
+           "not drop any of its Compiler setup calls again. Return ONLY executable Python code — no "
+           "explanation, no markdown fences.";
+}
+
+// Backstop 8's one-shot corrective prompt (see maybeDispatchSelfReview()'s use of
+// AiContentProvider::selfReviewPyQtVersionSubstitution()): self-review changed an already-correct
+// PyQt import's major version (PyQt5<->PyQt6) for the same Qt class, with no basis to do so.
+static QString buildPyQtVersionRetryPrompt(const QString &regressionExplanation, const QString &preReviewDraft)
+{
+    return "Your last response changed a PyQt import's major version with no basis to do so:\n\n" +
+           regressionExplanation +
+           "\n\nHere is the script you were originally asked to review, which used the correct PyQt "
+           "version:\n```python\n" +
+           preReviewDraft +
+           "\n```\nReturn THAT script, corrected only for genuine checklist violations if any — do "
+           "not change its PyQt import version again. Return ONLY executable Python code — no "
+           "explanation, no markdown fences.";
+}
+
+// Backstop 9's one-shot corrective prompt (see maybeDispatchSelfReview()'s use of
+// AiContentProvider::selfReviewFabricatedSetCodeMistake()): self-review added a fabricated
+// Compiler.setCode() call for a function the draft correctly reused via open()+compile() with no
+// setCode() of its own.
+static QString buildFabricatedSetCodeRetryPrompt(const QString &regressionExplanation, const QString &preReviewDraft)
+{
+    return "Your last response added a fabricated Compiler.setCode() call with no basis to do "
+           "so:\n\n" +
+           regressionExplanation +
+           "\n\nHere is the script you were originally asked to review, which correctly reused the "
+           "existing compiled function:\n```python\n" +
+           preReviewDraft +
+           "\n```\nReturn THAT script, corrected only for genuine checklist violations if any — do "
+           "not add a setCode() call for a function it correctly reused without one. Return ONLY "
+           "executable Python code — no explanation, no markdown fences.";
+}
+
+// Backstop 10's one-shot corrective prompt (see maybeDispatchSelfReview()'s use of
+// AiContentProvider::selfReviewCreationNameSubstitution()): self-review changed the name passed to
+// a creation call (newTable/newMatrix/newGraph/newNote) that the draft already had correct.
+static QString buildCreationNameRetryPrompt(const QString &regressionExplanation, const QString &preReviewDraft)
+{
+    return "Your last response changed a creation call's name with no basis to do so:\n\n" + regressionExplanation +
+           "\n\nHere is the script you were originally asked to review, which used the correct "
+           "name:\n```python\n" +
+           preReviewDraft +
+           "\n```\nReturn THAT script, corrected only for genuine checklist violations if any — do "
+           "not change that name again. Return ONLY executable Python code — no explanation, no "
+           "markdown fences.";
+}
+
+// The one-shot corrective prompt for AiContentProvider::exploreGroupsIgnoredMistake() (see
+// maybeDispatchSelfReview()'s use of it): unlike the backstop prompts above, this checks the
+// ORIGINAL candidate itself, not a self-review regression — so, unlike those, it doesn't demand a
+// revert; setGroup() with a brand-new name is a legitimate answer, this just asks the model to
+// confirm that's actually what it meant rather than an unnoticed leftover guess.
+static QString buildExploreGroupsIgnoredRetryPrompt(const QString &mismatchExplanation, const QString &candidate)
+{
+    return "Before this runs:\n\n" + mismatchExplanation + "\n\nHere is the script:\n```python\n" + candidate +
+           "\n```\nIf you meant to reuse an existing group, change setGroup(...) to one of the ones "
+           "listed above. If a new group is genuinely intentional, return the script unchanged. "
+           "Return ONLY executable Python code — no explanation, no markdown fences.";
 }
 
 // The scope-reduction-check paragraph prepended to the mandatory self-review prompt — empty
@@ -1405,7 +4110,12 @@ static QString buildSelfReviewRequestPrompt(const QString &code, const QString &
 
 void AiAssistant::askSelfReviewRound(const QString &prompt)
 {
-    ask(prompt, false, QString(), QStringList(), false, false);
+    // expectsCode=false: self-review reviews an ALREADY-generated candidate and returns it
+    // corrected-or-unchanged — it never decides whether to explore first (that decision belongs
+    // to the initial generation this candidate already came from), so the EXPLORE-mechanism
+    // reminder buildSystemPrompt() would otherwise add (expectsCode defaults true) is pure noise
+    // here, sent on every self-review round of every part of every retry.
+    ask(prompt + noDocsHintLine(), false, QString(), QStringList(), false, false, false);
 }
 
 bool AiAssistant::maybeDispatchSelfReview(QString &code, bool &compilable, QString &syntaxError)
@@ -1591,6 +4301,136 @@ bool AiAssistant::maybeDispatchSelfReview(QString &code, bool &compilable, QStri
         }
     }
 
+    // A seventh, distinct one-shot mechanical backstop: self-review has no basis to drop required
+    // Compiler setup calls (setFunctionName/setGroup/setParamCount/setParamNamesAll/
+    // setParamInitsAll/setParamLimitsAll/setParamVariesAll) from an already-complete compile()
+    // sequence — confirmed live: a correct, complete setup was replaced wholesale with old-style
+    // raw-array C-function code missing setGroup()/parameter declarations entirely, raising
+    // ValueError: "compile: group is empty" on the very next run. Different in kind from backstops
+    // 3/5/6 above (a name/lookup/enum swap) — this is a structural regression in a required
+    // multi-call sequence, not a single wrong value.
+    const bool isCompileSequenceRetryResult = awaitingSelfReviewCompileSequenceRetry;
+    awaitingSelfReviewCompileSequenceRetry = false;
+    if (isSelfReviewResult && !isCompileSequenceRetryResult && m_content)
+    {
+        const QString regression = m_content->selfReviewCompileSequenceRegression(preReviewDraft, code);
+        if (!regression.isEmpty())
+        {
+            if (m_host)
+                m_host->print("▸▸▸ AI self-review: dropped required Compiler setup calls while "
+                              "still compiling — asking it to revert once.");
+            awaitingSelfReview = true;
+            awaitingSelfReviewCompileSequenceRetry = true;
+            askSelfReviewRound(buildCompileSequenceRetryPrompt(regression, preReviewDraft));
+            return true;
+        }
+    }
+
+    // An eighth, distinct one-shot mechanical backstop: self-review has no way to observe which
+    // PyQt major version this build actually embeds (no docs, no history), so it has no legitimate
+    // basis to switch an already-correct import between PyQt5 and PyQt6 for the same Qt class —
+    // confirmed live: a correct `from PyQt6.QtGui import QColor, QFont` draft was silently rewritten
+    // to `from PyQt5.QtGui import QColor, QFont` while self-review fixed an UNRELATED issue
+    // elsewhere in the same script; PyQt5 doesn't exist in this environment, and the script reached
+    // actual execution and crashed with ModuleNotFoundError a full round-trip later. Different in
+    // kind from backstop 3 (a name substitution) — this is an unrelated-line regression introduced
+    // as a side effect of self-review regenerating the whole script rather than patching only what
+    // it was asked to fix.
+    const bool isPyQtVersionRetryResult = awaitingSelfReviewPyQtVersionRetry;
+    awaitingSelfReviewPyQtVersionRetry = false;
+    if (isSelfReviewResult && !isPyQtVersionRetryResult && m_content)
+    {
+        const QString regression = m_content->selfReviewPyQtVersionSubstitution(preReviewDraft, code);
+        if (!regression.isEmpty())
+        {
+            if (m_host)
+                m_host->print("▸▸▸ AI self-review: changed a PyQt import's major version with no "
+                              "basis to do so — asking it to revert once.");
+            awaitingSelfReview = true;
+            awaitingSelfReviewPyQtVersionRetry = true;
+            askSelfReviewRound(buildPyQtVersionRetryPrompt(regression, preReviewDraft));
+            return true;
+        }
+    }
+
+    // A ninth, distinct one-shot mechanical backstop: self-review has no docs or history telling
+    // it what an EXISTING compiled function's code actually is, so it has no legitimate basis to
+    // invent a setCode() call for a function the draft correctly reused via open()+compile() with
+    // no setCode() of its own — confirmed live, severe: EXPLORE had already printed the existing,
+    // correct code for two functions; the draft correctly did nothing but reopen and recompile
+    // them; self-review rewrote this into a version with a brand-new, fabricated setCode() call
+    // for each — neither function actually compiled. Different in kind from backstop 7 above
+    // (dropped required calls from an already-complete sequence) — this is a call ADDED where the
+    // draft correctly had none, the same root cause in the opposite direction.
+    const bool isFabricatedSetCodeRetryResult = awaitingSelfReviewFabricatedSetCodeRetry;
+    awaitingSelfReviewFabricatedSetCodeRetry = false;
+    if (isSelfReviewResult && !isFabricatedSetCodeRetryResult && m_content)
+    {
+        const QString regression = m_content->selfReviewFabricatedSetCodeMistake(preReviewDraft, code);
+        if (!regression.isEmpty())
+        {
+            if (m_host)
+                m_host->print("▸▸▸ AI self-review: fabricated a setCode() call for a function that "
+                              "was correctly being reused — asking it to revert once.");
+            awaitingSelfReview = true;
+            awaitingSelfReviewFabricatedSetCodeRetry = true;
+            askSelfReviewRound(buildFabricatedSetCodeRetryPrompt(regression, preReviewDraft));
+            return true;
+        }
+    }
+
+    // A tenth, distinct one-shot mechanical backstop: self-review has no access to the original
+    // request text, so it has no legitimate basis to alter a creation call's (newTable/newMatrix/
+    // newGraph/newNote) name away from what the pre-review draft already got right — confirmed
+    // live: a request naming the table "SAXS_data" survived correctly into the pre-review draft;
+    // self-review's rewrite silently dropped the underscore ("SAXSdata") in BOTH the newTable()
+    // call and an unrelated scriptPrint() confirmation string in the same script — the second
+    // occurrence rules out any C++-side name sanitization (which would never touch a plain print
+    // string), confirming this is self-review's own text-level typo, not a runtime effect.
+    const bool isCreationNameRetryResult = awaitingSelfReviewCreationNameRetry;
+    awaitingSelfReviewCreationNameRetry = false;
+    if (isSelfReviewResult && !isCreationNameRetryResult && m_content)
+    {
+        const QString regression = m_content->selfReviewCreationNameSubstitution(preReviewDraft, code);
+        if (!regression.isEmpty())
+        {
+            if (m_host)
+                m_host->print("▸▸▸ AI self-review: changed a creation call's name with no basis to "
+                              "do so — asking it to revert once.");
+            awaitingSelfReview = true;
+            awaitingSelfReviewCreationNameRetry = true;
+            askSelfReviewRound(buildCreationNameRetryPrompt(regression, preReviewDraft));
+            return true;
+        }
+    }
+
+    // DIFFERENT IN KIND from the ten backstops above (all gated on isSelfReviewResult, since they
+    // check self-review's OWN edits against preReviewDraft): this checks the ORIGINAL candidate
+    // itself against real EXPLORE console output from earlier in this SAME part, so it's gated the
+    // opposite way — on the FIRST pass, before self-review has even run once. consecutiveExploreCount
+    // > 0 is the signal that this candidate genuinely followed an unbroken EXPLORE streak (it and
+    // lastExploreOutput share the exact same reset lifecycle — see lastExploreOutput's doc comment).
+    // compilable/m_selfReviewEnabled mirror the mandatory-dispatch gate just below: no point asking
+    // a self-review-family round to confirm a setGroup() choice in a script that won't even compile,
+    // or when the user has turned self-review off entirely.
+    const bool isExploreGroupRetryResult = awaitingSelfReviewExploreGroupRetry;
+    awaitingSelfReviewExploreGroupRetry = false;
+    if (!isSelfReviewResult && !isExploreGroupRetryResult && compilable && m_selfReviewEnabled &&
+        consecutiveExploreCount > 0 && m_content)
+    {
+        const QString mismatch = m_content->exploreGroupsIgnoredMistake(code, lastExploreOutput);
+        if (!mismatch.isEmpty())
+        {
+            if (m_host)
+                m_host->print("▸▸▸ AI: setGroup() ignores the groups EXPLORE just printed — asking "
+                              "it to confirm or fix that once.");
+            awaitingSelfReview = true;
+            awaitingSelfReviewExploreGroupRetry = true;
+            askSelfReviewRound(buildExploreGroupsIgnoredRetryPrompt(mismatch, code));
+            return true;
+        }
+    }
+
     // m_selfReviewEnabled off (a user setting — see AiSettings::selfReviewEnabled's doc comment):
     // skip the mandatory review pass entirely, straight to runActionScript(). Checked here rather
     // than at the top of the function since every backstop block above only ever fires on
@@ -1629,34 +4469,83 @@ bool AiAssistant::maybeDispatchSelfReview(QString &code, bool &compilable, QStri
 }
 
 // Call after maybeDispatchSelfReview() returns false, passing the `compilable` it computed.
-void AiAssistant::runActionScript(const QString &code, bool compilable, const QString &syntaxError)
+void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const QString &syntaxError)
 {
     if (!m_host)
         return;
 
+    // Repaired, not reported: see AiContentProvider::compilerParamCountRepair()'s doc comment for
+    // the confirmed-live retry loop that made asking pointless. Printed so the edit is never silent.
+    QString code = rawCode;
+    if (compilable && m_content)
+    {
+        const QString countRepaired = m_content->compilerParamCountRepair(code);
+        if (!countRepaired.isEmpty())
+        {
+            m_host->print("▸▸▸ AI: auto-corrected setParamCount() to match the parameter lists this "
+                          "script actually provides — running the corrected version below.");
+            code = countRepaired;
+        }
+        const QString yNameRepaired = m_content->compilerYNameAssignmentRepair(code);
+        if (!yNameRepaired.isEmpty())
+        {
+            m_host->print("▸▸▸ AI: auto-corrected setCode() to assign the dependent variable "
+                          "directly instead of declaring a local — running the corrected version below.");
+            code = yNameRepaired;
+        }
+    }
+
     // Recognizing "this looks like a plot" / "this looks like a fit" is host-API-specific
     // knowledge, not generic orchestration — lives behind AiContentProvider, not hardcoded here.
     // See AiContentProvider.h's splitPartScopeViolation() doc comment.
-    const QString scopeViolation = (compilable && splitModeActive && m_content)
-                                       ? m_content->splitPartScopeViolation(code, splitPlan[splitPartIndex].description,
-                                                                            splitPartScripts.join("\n\n"))
-                                       : QString();
+    // Also for a NON-split request, whose scope is simply the whole request text. Previously gated
+    // on splitModeActive, so anything "running directly without split-mode overhead" got no scope
+    // guard at all — confirmed live in one LIST run: "create a table with 50 rows" also plotted it,
+    // renamed and maximized the window; two other items added unrequested styling.
+    const QString scopeDescription = splitModeActive && splitPartIndex < splitPlan.size()
+                                         ? splitPlan[splitPartIndex].description
+                                         : originalRequestText;
+    const QString scopeViolation =
+        (compilable && m_content && !scopeDescription.isEmpty())
+            ? m_content->splitPartScopeViolation(code, scopeDescription, splitPartScripts.join("\n\n"))
+            : QString();
+    // The under-delivery counterpart, checked against the same scopeDescription and reported in the
+    // same round as the overreach one — see missingRequestedDeliverables()'s doc comment.
+    const QString missingDeliverables = (compilable && m_content && !scopeDescription.isEmpty())
+                                            ? m_content->missingRequestedDeliverables(code, scopeDescription)
+                                            : QString();
     // Unconditional (not gated on splitModeActive) — every pattern detectKnownMistakes() checks is
     // a genuine defect regardless of split mode (e.g. a Compiler setCode() self-shadow bug compiles
     // with no error, so nothing else in the pipeline would ever catch it before it silently
     // corrupts a fit) — see AiContentProvider::detectKnownMistakes()'s doc comment for the full
-    // family and why this is one call instead of 16. Collects ALL matching patterns, not just the
-    // first — see that doc comment's "collect all, don't stop at first" rationale.
-    const QList<AiKnownMistakeMatch> knownMistakes = (compilable && m_content)
-                                                         ? m_content->detectKnownMistakes(code, originalRequestText)
-                                                         : QList<AiKnownMistakeMatch>();
+    // family and why this is one call instead of 16. splitPartScripts is empty outside split mode,
+    // so this naturally passes an empty earlierPartsCode there — no separate gating needed, same
+    // reasoning as splitPartScopeViolation's own earlierPartsCode argument above. Collects ALL
+    // matching patterns, not just the first — see that doc comment's "collect all, don't stop at
+    // first" rationale.
+    const QList<AiKnownMistakeMatch> knownMistakes =
+        (compilable && m_content)
+            ? m_content->detectKnownMistakes(code, originalRequestText, splitPartScripts.join("\n\n"))
+            : QList<AiKnownMistakeMatch>();
     // Unconditional and host-independent — see isEmptyActionScript()'s doc comment. Confirmed
     // live: self-review's "ONLY executable code" instruction broke down entirely, returning a
     // checklist-reasoning dump formatted as comments instead of any actual script.
     const bool emptyScript = compilable && isEmptyActionScript(code);
 
+    // Checked before the syntax branch: a fabricated conversation almost always fails to compile,
+    // so "SyntaxError" would be all the model ever heard about it — naming the wrong problem
+    // entirely. Confirmed live three times.
+    const QString fabricated = m_content ? m_content->fabricatedConversationCheck(code) : QString();
+
     QString errContext;
-    if (!compilable)
+    if (!fabricated.isEmpty())
+    {
+        m_host->print("▸▸▸ AI code (blocked — script invents further conversation turns):\n\n" + code);
+        if (!m_history.isEmpty())
+            m_history.last().second = "(blocked before running — fabricated conversation turns; corrected below)";
+        errContext = fabricated;
+    }
+    else if (!compilable)
     {
         // Used to just print "not runnable" and stop here — a permanent, silent dead end with no
         // retry and no give-up message, confirmed live: a stray leftover markdown-fence remnant
@@ -1686,34 +4575,43 @@ void AiAssistant::runActionScript(const QString &code, bool compilable, const QS
         if (!m_history.isEmpty())
             m_history.last().second = "(invalid response — not valid Python, omitted)";
     }
-    else if (!scopeViolation.isEmpty())
+    else if (!scopeViolation.isEmpty() || !missingDeliverables.isEmpty() || !knownMistakes.isEmpty())
     {
-        // Blocked BEFORE running — unlike a runtime error, the violation is knowable up front
-        // from the code and this part's own description alone, and running it first would mean
-        // e.g. an out-of-scope newGraph() call already creating a real, duplicate window before
-        // the retry below even fires.
-        m_host->print("▸▸▸ AI code (blocked — out of scope for this part):\n\n" + code);
-        errContext = scopeViolation;
-    }
-    else if (!knownMistakes.isEmpty())
-    {
-        // Blocked BEFORE running, same reasoning as the scope-violation branch above — see
-        // AiContentProvider::detectKnownMistakes()'s doc comment for the full family of patterns
-        // checked here, each with its own "confirmed live" incident writeup in QtiSasAiContent.cpp.
-        // detectKnownMistakes() now collects EVERY matching pattern instead of stopping at the
-        // first — a single script can genuinely trip more than one independent pattern at once, and
-        // reporting only one meant the model burned a whole retry round per defect instead of fixing
-        // them all from a single grounded prompt. Single-match wording is unchanged from before this
-        // change; only 2+ matches get the numbered "N known issues" framing.
+        // Blocked BEFORE running — unlike a runtime error, these are knowable up front from the
+        // code (and this part's own description) alone, and running it first would mean e.g. an
+        // out-of-scope newGraph() call already creating a real, duplicate window before the retry
+        // below even fires. See AiContentProvider::detectKnownMistakes()'s doc comment for the
+        // pattern family, each with its own "confirmed live" writeup in QtiSasAiContent.cpp.
+        //
+        // Scope violation and known mistakes report TOGETHER, not as exclusive branches: they are
+        // independent analyses of the same script, and keeping them separate meant only one defect
+        // per round was ever named. Confirmed live: a simulate part's script both plotted (out of
+        // scope) AND called selectStage() before setFunction() — two rounds at ~90s each to hear
+        // about them one at a time. This is the same "collect all, don't stop at the first"
+        // reasoning detectKnownMistakes() already applies internally, extended one level up.
         QStringList headers;
         QStringList explanations;
+        if (!scopeViolation.isEmpty())
+        {
+            headers << "out of scope for this part";
+            explanations << scopeViolation;
+        }
+        if (!missingDeliverables.isEmpty())
+        {
+            headers << "requested deliverable missing";
+            explanations << missingDeliverables;
+        }
         for (const AiKnownMistakeMatch &m : knownMistakes)
         {
             headers << m.header;
             explanations << m.explanation;
         }
         m_host->print("▸▸▸ AI code (blocked — " + headers.join("; ") + "):\n\n" + code);
-        if (knownMistakes.size() == 1)
+        // Blocked never ran, so it must not stay in history as this part's answer — same patch
+        // (and same guaranteed-last-entry invariant) as the self-review/invalid-response ones above.
+        if (!m_history.isEmpty())
+            m_history.last().second = "(blocked before running — " + headers.join("; ") + "; corrected below)";
+        if (explanations.size() == 1)
         {
             errContext = explanations.first();
         }
@@ -1733,6 +4631,10 @@ void AiAssistant::runActionScript(const QString &code, bool compilable, const QS
         // Blocked BEFORE running — an all-comments script is a silent no-op, not a completed
         // action; running it would report "success" (no exception) for a part that did nothing.
         m_host->print("▸▸▸ AI code (blocked — no executable code, comments only):\n\n" + code);
+        // Never ran, and comment-only prose in history is exactly what the invalid-response
+        // placeholder above exists to keep the model from building on.
+        if (!m_history.isEmpty())
+            m_history.last().second = "(blocked before running — no executable code; corrected below)";
         errContext =
             "This script contains no executable code at all — only comments (possibly an "
             "explanation of your own reasoning instead of an actual answer). Return ONLY "
@@ -1743,7 +4645,17 @@ void AiAssistant::runActionScript(const QString &code, bool compilable, const QS
     }
     else
     {
-        m_host->print("▸▸▸ AI code (running):\n\n" + code);
+        // Trailing blank line (regardless of whether `code` itself already ends in one) so the
+        // script's own live scriptPrint() output — appended immediately after by runScript()
+        // below — is visually separated from the echoed code instead of running straight into
+        // its last line.
+        // A real attempt at the actual fix is being made — breaks any streak of pure-diagnostic
+        // EXPLORE rounds tracked by consecutiveExploreCount (see its doc comment in AiAssistant.h).
+        // lastExploreOutput shares that exact lifecycle — cleared here too.
+        consecutiveExploreCount = 0;
+        lastExploreOutput.clear();
+        lastExploreCode.clear();
+        m_host->print("▸▸▸ AI code (running):\n\n" + code.trimmed() + "\n\n");
         // Runs via runScript() (AiScriptHost) — see AiScriptResult's doc comment. Display already
         // happened live during runScript() itself — do NOT print result.output here too, see
         // that method's doc comment on why that would double every scriptPrint() line (confirmed
@@ -1755,8 +4667,14 @@ void AiAssistant::runActionScript(const QString &code, bool compilable, const QS
         // run look like a failure.
         if (result.error.isEmpty())
         {
+            // A genuine success breaks any chain of doc-retries that led here — see
+            // consecutiveDocRetryCount's doc comment in AiAssistant.h for why this resets ONLY on
+            // success, not on every attempt like consecutiveExploreCount does.
+            consecutiveDocRetryCount = 0;
             if (splitModeActive)
                 advanceSplitPart(code);
+            else if (listModeActive)
+                advanceListItem();
             return;
         }
         // result.output holds everything printed during the run, INCLUDING the exception text —
@@ -1764,15 +4682,25 @@ void AiAssistant::runActionScript(const QString &code, bool compilable, const QS
         // the useful diagnostic detail is often in a PRECEDING print, not the exception text itself.
         errContext = result.output.isEmpty() ? result.error : result.output;
     }
-    // Broader, complementary check to the one below: if the error is byte-for-byte identical to
-    // the previous retry's, the correction attempt changed nothing at all — confirmed live, an
-    // empty-table fit raised the exact same RuntimeError for all 10 retries with the exact same
-    // code resubmitted unchanged each time. That error names no specific alternative (unlike
-    // the dataset-not-found case below), so the "Available X:" check can't catch it — an exact
-    // repeat is its own signal regardless of the error's shape.
+    // Broader, complementary check to the one below: if errContext is byte-for-byte identical to
+    // the previous retry's, the SAME diagnosis was handed back twice and wasn't acted on either
+    // time — confirmed live two different ways: (1) an empty-table fit raised the exact same
+    // RuntimeError for all 10 retries with the exact same code resubmitted unchanged each time;
+    // (2) a mechanical detectKnownMistakes() block (qti3DImportMistake) fired on TWO VISIBLY
+    // DIFFERENT wrong import lines in a row (`from qti.api import Qti3D`, then `import Qti3D`) —
+    // the CODE changed between attempts, but the explanation text is deliberately identical
+    // regardless of which specific wrong form was guessed (see that check's own doc comment), so
+    // errContext still matched and this correctly stopped rather than waiting for a third,
+    // equally-wrong guess. errContext (not the code) is what's compared — that error names no
+    // specific alternative (unlike the dataset-not-found case below), so the "Available X:" check
+    // can't catch it — an exact repeat of the DIAGNOSIS is its own signal regardless of whether the
+    // code attempts themselves differed.
     if (normalizeErrorForDedup(errContext) == normalizeErrorForDedup(lastRetryError))
     {
-        QString msg = "▸▸▸ AI: stopping — identical error repeated with no change:\n" + errContext +
+        recordGiveUpInHistory("stopping — same diagnosis repeated, not corrected", errContext);
+        QString msg = "▸▸▸ AI: stopping — the same corrective explanation was given twice in a row "
+                      "and wasn't applied either time:\n" +
+                      errContext +
                       "\n\nFurther retries are unlikely to help without new "
                       "information. Please advise and try again.";
         msg += splitModeGiveUpNote();
@@ -1793,8 +4721,10 @@ void AiAssistant::runActionScript(const QString &code, bool compilable, const QS
     const QString availableBlock = extractAvailableBlock(errContext);
     if (!availableBlock.isEmpty() && availableBlock == lastAvailableBlock)
     {
-        QString msg = "▸▸▸ AI: stopping — repeated error against the same fixed "
-                      "alternatives:\n" +
+        recordGiveUpInHistory("stopping — same list of alternatives offered twice, not used", errContext);
+        QString msg = "▸▸▸ AI: stopping — the same list of available alternatives was offered "
+                      "twice in a row, and the requested name still wasn't corrected to one of "
+                      "them:\n" +
                       availableBlock +
                       "\n\nThe requested name doesn't seem to exist. Please confirm "
                       "the correct name (or load/create the data) and try again.";
@@ -1808,16 +4738,14 @@ void AiAssistant::runActionScript(const QString &code, bool compilable, const QS
 
     if (++autoContinueCount > maxAutoContinue())
     {
+        recordGiveUpInHistory(
+            QString("script failed again after %1 automatic retries — giving up").arg(maxAutoContinue()), errContext);
         QString msg = "▸▸▸ AI: script failed again after " + QString::number(maxAutoContinue()) +
                       " automatic retries — giving up.\nLast error:\n" + errContext;
         msg += splitModeGiveUpNote();
         m_host->print(msg);
         return;
     }
-
-    // includeDocs=false: this call can repeat up to maxAutoContinue() times, and resending full
-    // docs on every retry would compound with growing history until it blows the context window.
-    // The model already has a doc-informed script attempt in its own history to correct from.
 
     // Marks the candidate as an error-retry correction so the self-review scope-reduction check
     // fires (see self-review's IMPORTANT block) — gated on the error actually naming a concrete
@@ -1826,27 +4754,91 @@ void AiAssistant::runActionScript(const QString &code, bool compilable, const QS
     // Re-grounds a retry against a KNOWN, recurring failure signature — see
     // AiContentProvider::retryHintForError()'s doc comment. Empty (the common case) when
     // errContext matches nothing known.
-    const QString retryHint = m_content ? m_content->retryHintForError(errContext) : QString();
+    QString retryHint = m_content ? m_content->retryHintForError(errContext) : QString();
+    // Re-grounds against THIS conversation's own prior compiles, not just static docs — see
+    // functionNotFoundNameFromError()/compiledFunctionNamesFromHistory()'s doc comments.
+    if (!functionNotFoundNameFromError(errContext).isEmpty())
+    {
+        const QStringList compiledNames = compiledFunctionNamesFromHistory(m_history);
+        if (!compiledNames.isEmpty())
+            retryHint += "REMINDER: earlier in this exact conversation you already attempted to "
+                         "compile: \"" +
+                         compiledNames.join("\", \"") +
+                         "\". Verify with f.fitFunctions() (a METHOD call on the Fittable "
+                         "instance, never a bare global) which of these actually succeeded "
+                         "before inventing yet another new function name.\n\n";
+    }
     const QString creationCallExamples = m_content ? m_content->creationCallExamples() : QString();
     const QString lookupExample = m_content ? m_content->lookupByNameExamples().section(',', 0, 0) : QString();
-    ask(retryHint + originalRequestReminder() + "The action script raised an error:\n```\n" + errContext +
-            "\n```\nProvide a corrected script. IMPORTANT: if this "
-            "error names a specific available option — an exact "
-            "dataset/function/column name, a valid range, or "
-            "similar (e.g. \"Available datasets: X\") — the fix is "
-            "almost always to use that exact value. Do not guess a "
-            "different name, vary unrelated call syntax instead, or "
-            "repeat the same failing line unchanged. IMPORTANT: if the output above shows this "
-            "script already executed some lines successfully before the error, do not blindly "
-            "rewrite the WHOLE script from scratch — an earlier successful side-effecting call "
-            "(" +
-            creationCallExamples +
-            ", ...) already took effect live "
-            "and does not need to run again; check whether its target already exists (e.g. " +
-            lookupExample +
-            " is not None) before repeating it, or restructure so the fix comes "
-            "after what already succeeded instead of duplicating it.",
-        false);
+    // Re-attaches the SAME doc topics already selected for this request (selectedDocTopics is set
+    // once during doc selection and persists for the request's lifetime — see its declaration in
+    // AiAssistant.h) rather than leaving this round doc-free. Confirmed live, repeatedly, in one
+    // long correction chain: with no docs, successive corrective rounds drifted further from the
+    // documented API with each attempt instead of converging — a hallucinated Compiler.
+    // addParameter() (no such method; the real API is 5 separate setParamXAll() bulk setters), a
+    // 2-item Fittable dataset list built from one table's own X/Y columns (fittable-python-api.md's
+    // own documented "WRONG" example, reproduced fresh), and Compiler()/Fittable() called as
+    // constructors (the exact incident retryHintForError() already exists to re-ground, but only
+    // reactively, after a matching error appears) — none of these were the specific defect the
+    // PRECEDING round was blocked for; they were introduced fresh while regenerating unrelated
+    // code with nothing but memory to fall back on. A correction that rewrites substantial code
+    // needs the same grounding real generation does; self-review's own checklist-only pass
+    // (askSelfReviewRound()) is deliberately left doc-free, since that pass isn't generating code
+    // from API knowledge in the first place — this path is different: it's regeneration, not review.
+    //
+    // Capped at kMaxConsecutiveDocRetries: past that many consecutive doc-attached corrections with
+    // no success in between, fall back to no docs for this round — see consecutiveDocRetryCount's
+    // doc comment in AiAssistant.h for the context-window-overflow risk this bounds.
+    ++consecutiveDocRetryCount;
+    static const int kMaxConsecutiveDocRetries = 2;
+    const bool retryIncludeDocs = consecutiveDocRetryCount <= kMaxConsecutiveDocRetries;
+    // Split-mode part anchor, same "Generate a script for ONLY this part: ..." phrasing
+    // startSplitPart() itself uses (see its prompt at this file's other reference) — qtisas-rag's
+    // _PART_DESCRIPTION_RE recognizes this literal phrase and narrows its retrieval query to just
+    // the captured description. Without it, this retry's own text carries no task-identifying
+    // content whenever originalRequestReminder() is empty (the common case: pendingRequestText
+    // already equals originalRequestText), and qtisas-rag's history-based fallback anchors on
+    // messages[0] instead — confirmed live, that's whatever the FIRST turn of the whole
+    // conversation was, which is only "this part's task" when nothing preceded it. A prior,
+    // unrelated task left in history (continuation-check judged CONTINUE, so it was never
+    // cleared) poisoned the retry's retrieval query with that stale first turn instead.
+    const QString splitPartAnchor =
+        splitModeActive ? ("Generate a script for ONLY this part: " + splitPlan[splitPartIndex].description + "\n\n")
+                        : QString();
+    const QString retryPromptBase =
+        splitPartAnchor + retryHint + originalRequestReminder() + "The action script raised an error:\n```\n" +
+        errContext +
+        "\n```\nProvide a corrected script. IMPORTANT: if this "
+        "error names a specific available option — an exact "
+        "dataset/function/column name, a valid range, or "
+        "similar (e.g. \"Available datasets: X\") — the fix is "
+        "almost always to use that exact value. Do not guess a "
+        "different name, vary unrelated call syntax instead, or "
+        "repeat the same failing line unchanged. IMPORTANT: if the output above shows this "
+        "script already executed some lines successfully before the error, do not blindly "
+        "rewrite the WHOLE script from scratch — an earlier successful side-effecting call "
+        "(" +
+        creationCallExamples +
+        ", ...) already took effect live "
+        "and does not need to run again; check whether its target already exists (e.g. " +
+        lookupExample +
+        " is not None) before repeating it, or restructure so the fix comes "
+        "after what already succeeded instead of duplicating it. IMPORTANT: change only what "
+        "this error actually implicates — confirmed live, a retry that correctly fixed one line "
+        "also silently dropped an unrelated, still-needed import several lines earlier that had "
+        "nothing to do with the error, breaking a part of the script that was already correct. "
+        "Keep every other line exactly as it was, even when rewriting the whole script.";
+    // TOPICS: hint for an optional server-side RAG proxy — confirmed live missing here too (see
+    // startRequest()'s doc comment on the same gap and topicsHintLine()'s doc comment). This is
+    // the main error-retry call, fired after EVERY runtime error — the single most common
+    // code-regeneration path in the whole system — and had no hint line at all until now.
+    // Deliberately NOT gated by retryIncludeDocs: that cap exists to bound LOCAL doc content
+    // (real token weight) after repeated consecutive retries, but this hint is a few words with
+    // no such cost — no reason to drop it just because local re-attachment paused. historyText=
+    // retryPromptBase (pre-hint): see startRequest()'s doc comment on why the hinted text must
+    // never be what actually gets stored in m_history.
+    ask(retryPromptBase + topicsHintLine(selectedDocTopics), retryIncludeDocs, QString(),
+        retryIncludeDocs ? selectedDocTopics : QStringList(), true, true, true, retryPromptBase);
 }
 
 // "%1" is filled in by AiContentProvider::apiCallingConventionHint() at request time (see ask())
@@ -1854,14 +4846,24 @@ void AiAssistant::runActionScript(const QString &code, bool compilable, const QS
 // this literal so AiAssistant.cpp never has to name a single QtiSAS function itself. "%2"/"%3"/"%4"
 // are filled the same way, by assistantIdentityIntro()/existenceVerificationFunctionExamples()/
 // noOpPrintFunctionName() respectively — see ask()'s construction of sysPrompt below.
-static const QString kBasePromptTemplate =
-    "%2"
-    "When asked for code, return ONLY the raw executable Python code — no markdown fences, no explanation. "
-    "%1"
-    "Format code with one statement per line and standard 4-space indentation for blocks. "
-    "When asked a question, answer concisely in plain text. "
-    "You have NO filesystem access — do not pretend to read, write, or list files. "
-    "NEVER import QApplication from PyQt5/PyQt6 — it will crash the application.\n\n"
+// Host-independent (PyQt6/QColor etc. are the same fact for any host, not a QtiSAS-specific API
+// name) — unlike apiCallingConventionHint() and friends below, so this lives here as a plain
+// constant rather than a new AiContentProvider virtual. Added to the ALWAYS-SENT base prompt,
+// closest to generation now that docs sit before the system prompt (see build_augmented_prompt()'s
+// doc comment on the RAG server side) — this exact rule already existed four other places (a doc
+// RULE #1, a PRE-FLIGHT checklist item, the self-review checklist, a worked example) and still
+// missed the first draft repeatedly in every one of them; this is the one place that's always
+// present and never depends on self-review or a topic doc happening to be attached.
+static const QString kPyQtImportBaseRule =
+    "If a script uses QColor, QFont, QPen, Qt, QFrame, or QBrush, it MUST start with the matching "
+    "import (from PyQt6.QtGui/.QtCore/.QtWidgets) — none of these are in the default namespace.";
+
+// Extracted out of kBasePromptTemplate below — four narrow, single-incident rules (all about
+// existence-checking/stale-conclusion handling) that were being sent unconditionally on every
+// call, even for parts with nothing to do with any of that (e.g. "compile a function"). Only
+// spliced in when buildSystemPrompt()'s own relevance check finds existence/missing/not-found
+// language in what's actually being asked — see that function's own doc comment.
+static const QString kExistenceHandlingRules =
     "If the current message says or implies that something reported missing earlier in this "
     "conversation now exists (e.g. \"try again\", \"it exists now\", \"I created the table\", "
     "\"new table\", or any other phrasing implying the state changed), actually attempt the "
@@ -1872,11 +4874,11 @@ static const QString kBasePromptTemplate =
     "the same canned \"does not exist\" report every time, without a single fresh attempt at "
     "the actual call.\n\n"
     "STRUCTURAL RULE, not dependent on recognizing any particular phrase above: NEVER state that "
-    "something doesn't exist / wasn't found by returning a bare %4 with no actual "
+    "something doesn't exist / wasn't found by returning a bare %2 with no actual "
     "verification call in that same script — a \"doesn't exist\" claim is only trustworthy if "
-    "THIS response's own code just checked it (%3, etc.), not "
+    "THIS response's own code just checked it (%1, etc.), not "
     "because an earlier turn concluded it. If you're about to write a negative-conclusion "
-    "%4 and the script has no real check backing it, add the check instead of trusting "
+    "%2 and the script has no real check backing it, add the check instead of trusting "
     "memory — this holds regardless of how the user's message is worded, including short or "
     "ambiguous follow-ups you don't have a specific rule for. Confirmed live: asked to retry after "
     "\"new table\" — a phrasing not covered by the examples above — the reply was the exact same "
@@ -1897,6 +4899,18 @@ static const QString kBasePromptTemplate =
     "turns earlier instead — predictably failing with the exact list it had just been shown "
     "moments before. If a value was directly confirmed by code output earlier in THIS response "
     "chain, use that value, not one from further back.\n\n";
+
+static const QString kBasePromptTemplate =
+    "%2"
+    "When asked for code, return ONLY the raw executable Python code — no markdown fences, no explanation. "
+    "%1"
+    "Format code with one statement per line and standard 4-space indentation for blocks. "
+    "When asked a question, answer concisely in plain text. "
+    "You have NO filesystem access — do not pretend to read, write, or list files. "
+    "NEVER import QApplication from PyQt6 — it will crash the application. "
+    "%3\n\n"
+    "%4"
+    "%5";
 
 static const QString kDocsIntro = "QtiSAS Python API documentation is provided below. "
                                   "Use it to answer questions about available classes and functions.\n\n";
@@ -2125,6 +5139,7 @@ AiAssistant::AiAssistant(QObject *parent)
 void AiAssistant::clearHistory()
 {
     m_history.clear();
+    m_contextHistoryStart = 0;
     m_lastScriptUnrun = false;
     m_pendingUserText.clear();
     m_cachedDocs.clear();
@@ -2164,7 +5179,9 @@ void AiAssistant::runLastScript(const QString &confirmationMessage)
     // below (the SAME one runActionScript() itself runs) will block this script — rather than by
     // the caller before this even starts. Confirmed live: printing "no re-generation needed"
     // unconditionally beforehand was wrong exactly when a correction cycle fired right after it.
-    const bool blocked = m_content && !m_content->detectKnownMistakes(code, originalRequestText).isEmpty();
+    const bool blocked =
+        m_content &&
+        !m_content->detectKnownMistakes(code, originalRequestText, splitPartScripts.join("\n\n")).isEmpty();
     if (m_host && !blocked)
         m_host->print(confirmationMessage);
     runActionScript(code, true, QString());
@@ -2260,6 +5277,85 @@ bool AiAssistant::parseReviewMarker(const QString &text, bool reviewByDefault, Q
     return reviewByDefault || reviewMatch;
 }
 
+bool AiAssistant::parseExploreMarker(const QString &text, bool exploreByDefault, QString *effectiveTextOut)
+{
+    // "NOEXPLORE" checked first, exactly as parseReviewMarker() checks "NOREVIEW" before "REVIEW":
+    // the negative form contains the positive one as a substring, so testing the positive first
+    // would match the tail of the negative and invert the caller's intent.
+    QString afterNoExplore;
+    if (findAndStripCapitalMarker(text, "NO\\s*EXPLORE", &afterNoExplore))
+    {
+        if (effectiveTextOut)
+            *effectiveTextOut = afterNoExplore;
+        return false;
+    }
+    QString afterExplore;
+    const bool exploreMatch = findAndStripCapitalMarker(text, "EXPLORE", &afterExplore);
+    if (effectiveTextOut)
+        *effectiveTextOut = exploreMatch ? afterExplore : text;
+    return exploreByDefault || exploreMatch;
+}
+
+AiAssistant::ParsedListRequest AiAssistant::parseListRequest(const QString &text)
+{
+    // Case-sensitive, capital-only, unlike parseSplitMarker()'s CaseInsensitiveOption above — see
+    // this function's own header doc comment for why: this bypasses the whole split-plan LLM
+    // decomposition, a much larger effect than that marker's simple on/off toggle, so it's worth
+    // requiring a deliberate, unambiguous marker rather than matching casually.
+    static const QRegularExpression markerRe(R"(^\s*LIST\b)");
+    ParsedListRequest result;
+    const QRegularExpressionMatch markerMatch = markerRe.match(text);
+    if (!markerMatch.hasMatch())
+        return result;
+
+    const QString afterMarker = text.mid(markerMatch.capturedLength());
+    result.items = parseNumberedListItems(afterMarker);
+    if (result.items.size() < 2)
+        return {}; // fail open — not enough numbered items to call this a list (isList stays false)
+
+    result.isList = true;
+    // Everything before the first numbered item is the instruction_block region — re-locate it
+    // with the same item regex parseNumberedListItems() uses internally, since that function only
+    // returns the captured text, not the match positions this needs.
+    static const QRegularExpression itemRe(R"(^\s*\d+[.)]\s+.+$)", QRegularExpression::MultilineOption);
+    const QRegularExpressionMatch firstItemMatch = itemRe.match(afterMarker);
+    QString region = afterMarker.left(firstItemMatch.capturedStart());
+
+    // SPLIT/NOSPLIT/REVIEW/NOREVIEW/EXPLORE/NOEXPLORE are checked and stripped from this region
+    // FIRST — whatever text remains afterward becomes the real instruction_block, sent to the model
+    // verbatim. Markers alone (nothing left after stripping) never trigger that transformation call
+    // at all, since a bare set of flags needs no model involvement. A marker NOT stripped here
+    // doesn't just fail to take effect, it actively misfires: it survives as leftover text, making
+    // the region look like a real instruction_block, and "Instruction: NOEXPLORE" then gets applied
+    // to every item of the list by the transformation call.
+    result.forceNoSplit = findAndStripCapitalMarker(region, "NO\\s*SPLIT", &region);
+    if (!result.forceNoSplit)
+        result.forceSplit = findAndStripCapitalMarker(region, "SPLIT", &region);
+    result.forceNoReview = findAndStripCapitalMarker(region, "NO\\s*REVIEW", &region);
+    if (!result.forceNoReview)
+        result.forceReview = findAndStripCapitalMarker(region, "REVIEW", &region);
+    result.forceNoExplore = findAndStripCapitalMarker(region, "NO\\s*EXPLORE", &region);
+    if (!result.forceNoExplore)
+        result.forceExplore = findAndStripCapitalMarker(region, "EXPLORE", &region);
+
+    result.instructionBlock = region.trimmed();
+    return result;
+}
+
+QStringList AiAssistant::parseNumberedListItems(const QString &text)
+{
+    // "N. text"/"N) text" pattern, one match per line — 2+ required by parseListRequest() (a
+    // single numbered mention isn't a list), but this function itself just returns whatever it
+    // finds, empty or not, since handleListTransformResponse() needs to distinguish "found 0/1"
+    // (fall back to the original items) from "found 2+" itself.
+    static const QRegularExpression itemRe(R"(^\s*\d+[.)]\s+(.+)$)", QRegularExpression::MultilineOption);
+    QStringList items;
+    QRegularExpressionMatchIterator it = itemRe.globalMatch(text);
+    while (it.hasNext())
+        items << it.next().captured(1).trimmed();
+    return items;
+}
+
 bool AiAssistant::looksLikeNewTaskReply(const QString &reply)
 {
     static const QRegularExpression newRe(R"(\b(new|different|unrelated|separate)\b)",
@@ -2308,7 +5404,9 @@ bool AiAssistant::runHistoryScript(int oneBasedIndex)
     const QString code = stripCodeFences(m_history[oneBasedIndex - 1].second);
     // Same reasoning as runLastScript(): printed only once it's known this won't be blocked by
     // the mechanical detectKnownMistakes() check runActionScript() itself is about to run.
-    const bool blocked = m_content && !m_content->detectKnownMistakes(code, originalRequestText).isEmpty();
+    const bool blocked =
+        m_content &&
+        !m_content->detectKnownMistakes(code, originalRequestText, splitPartScripts.join("\n\n")).isEmpty();
     if (m_host && !blocked)
         m_host->print(
             QString("▸▸▸ AI: running turn #%1's script directly (no re-generation needed).").arg(oneBasedIndex));
@@ -2316,27 +5414,174 @@ bool AiAssistant::runHistoryScript(int oneBasedIndex)
     return true;
 }
 
-QString AiAssistant::buildSystemPrompt(const QString &systemPrompt, bool includeDocs, const QStringList &docTopics)
+// The EXPLORE slot of the base prompt, which is now three-valued rather than two: invite a probe,
+// forbid one, or say nothing.
+//
+// Forbidding matters independently of not inviting — see exploreUnavailableNote()'s doc comment for
+// the 6-of-12 measurement. Note the invitation stays Integrated-mode-only (every other mode already
+// receives the full "Agentic Explore Mode" doc section, so repeating it here would duplicate), while
+// the PROHIBITION is sent in every mode: it exists precisely to contradict that doc section, so
+// withholding it exactly where the section is present would defeat the point.
+QString AiAssistant::liveEntityFactsFor(const QString &requestText, QString *consoleLine) const
 {
+    if (!m_content || !m_host)
+        return {};
+    const QList<QPair<QString, QString>> existingNames = extractExistingEntityNames(requestText);
+    if (existingNames.isEmpty())
+        return {};
+    QStringList names;
+    for (const QPair<QString, QString> &entry : existingNames)
+        names << entry.first;
+    // The host is asked, not consulted-and-second-guessed: the extracted KIND hint (entry.second —
+    // what the request's own wording claimed the name was) is deliberately NOT used to filter the
+    // answer. That hint is the request's assumption, and the whole point here is to report what is
+    // really there, including the case where the two disagree.
+    const QList<QStringList> kinds = m_host->entityKinds(names);
+    // A host that can't answer returns nothing (see AiScriptHost.h) — say nothing rather than
+    // reporting every name as missing, which would be a confident lie in the costly direction.
+    if (kinds.size() != names.size())
+        return {};
+    QList<QPair<QString, QStringList>> facts;
+    QStringList summary;
+    for (int i = 0; i < names.size(); ++i)
+    {
+        facts << qMakePair(names[i], kinds[i]);
+        summary << "\"" + names[i] + "\": " + (kinds[i].isEmpty() ? QString("not found") : kinds[i].join("+"));
+    }
+    if (consoleLine)
+        *consoleLine = "project state — " + summary.join("; ");
+    return m_content->liveEntityFactsNote(facts);
+}
+
+QString AiAssistant::generatedScriptWarning(const QString &code) const
+{
+    if (!m_content || code.isEmpty())
+        return {};
+    // Same scope description runActionScript() uses: this part's own job in split mode, otherwise
+    // this turn's request. pendingRequestText, not originalRequestText — a LIST item sets the
+    // former per item, while the latter stays anchored to the first request of the conversation.
+    const QString scopeDescription = (splitModeActive && splitPartIndex >= 0 && splitPartIndex < splitPlan.size())
+                                         ? splitPlan[splitPartIndex].description
+                                         : pendingRequestText;
+    if (scopeDescription.isEmpty())
+        return {};
+
+    // All three of runActionScript()'s pre-run ANALYSES, not just the deliverable one. They were
+    // reachable ONLY from the auto-run path, so a generate-only script had never in this project's
+    // history been looked at by any of them — confirmed live by what that let through unremarked
+    // across three consecutive 12-item runs: QFont(...) with no "from PyQt6.QtGui import QFont"
+    // anywhere (missingPyQtImportMistake) and random.gauss() with no "import random"
+    // (missingRandomImportMistake). Nothing was wrong with either check; neither was ever called
+    // here.
+    //
+    // runActionScript()'s two REPAIRS (compilerParamCountRepair(), compilerYNameAssignmentRepair())
+    // are deliberately NOT included. They rewrite the script rather than describe it, and on this
+    // path the script is both what gets printed and — via markLastScriptUnrun()/runLastScript(),
+    // which re-reads m_history.last() — what a later "run it" would execute, so applying one here
+    // means patching history too. That is a behaviour change, not a missing call.
+    //
+    // Collect-all rather than first-match, same reasoning as the auto-run branch's own: the user is
+    // reading one printed script and gets exactly one chance to be told everything wrong with it.
+    // splitPartScripts is empty outside split mode, so earlierPartsCode passes through naturally.
+    QStringList headers;
+    QStringList explanations;
+    const QString missingDeliverables = m_content->missingRequestedDeliverables(code, scopeDescription);
+    if (!missingDeliverables.isEmpty())
+    {
+        headers << "requested deliverable missing";
+        explanations << missingDeliverables;
+    }
+    const QString scopeViolation =
+        m_content->splitPartScopeViolation(code, scopeDescription, splitPartScripts.join("\n\n"));
+    if (!scopeViolation.isEmpty())
+    {
+        headers << "out of scope";
+        explanations << scopeViolation;
+    }
+    for (const AiKnownMistakeMatch &m :
+         m_content->detectKnownMistakes(code, originalRequestText, splitPartScripts.join("\n\n")))
+    {
+        headers << m.header;
+        explanations << m.explanation;
+    }
+    if (explanations.isEmpty())
+        return {};
+    if (explanations.size() == 1)
+        return headers.first() + " — " + explanations.first();
+    QStringList numbered;
+    for (int i = 0; i < explanations.size(); ++i)
+        numbered << QString("%1. %2").arg(i + 1).arg(explanations.at(i));
+    return headers.join("; ") + " — " + QString::number(explanations.size()) + " separate issues in this script:\n\n" +
+           numbered.join("\n\n");
+}
+
+QString AiAssistant::exploreSlotText(bool expectsCode) const
+{
+    if (!m_content)
+        return {};
+    // A preflight whose answer is plain text (a PART/DOCS plan, a doc topic list, ...) gets neither
+    // — see buildSystemPrompt()'s own note on why mentioning scripts there skews the answer.
+    if (!expectsCode)
+        return {};
+    if (!m_exploreEnabled || !autoRun)
+        return m_content->exploreUnavailableNote();
+    return docsMode() == DocsMode::Integrated ? m_content->exploreModeReminder() : QString();
+}
+
+QString AiAssistant::buildSystemPrompt(const QString &systemPrompt, bool includeDocs, const QStringList &docTopics,
+                                       bool expectsCode, const QString &userText)
+{
+    // exploreModeReminder() only for Integrated mode (every other mode already gets the FULL
+    // "Agentic Explore Mode" doc section attached wholesale, so repeating it here would be pure
+    // duplication — see that hook's own doc comment in AiContentProvider.h) AND only when THIS
+    // call actually expects a script back — never for a preflight whose answer is plain text (a
+    // PART/DOCS plan, a doc topic list, ...). Confirmed live: reminding the model it can return a
+    // script right before a call that explicitly wants a plain-text plan measurably increased how
+    // often it returned one instead of the plan — see ask()'s expectsCode doc comment.
+    //
+    // kExistenceHandlingRules is only spliced in (via %4) when `userText` actually looks like it
+    // involves existence-checking — see kExistenceHandlingRules' own doc comment on why this used
+    // to be unconditional. Empty `userText` (no caller-provided text to check) fails OPEN —
+    // included by default — so a future call site that doesn't pass it doesn't silently lose this
+    // rule; ask() always passes its own userText, so this only ever applies to some other caller.
+    static const QRegularExpression existenceRelevanceRe(R"(\bexist\w*\b|\bmissing\b|\bnot\s+found\b)",
+                                                         QRegularExpression::CaseInsensitiveOption);
+    const bool needsExistenceRules = userText.isEmpty() || existenceRelevanceRe.match(userText).hasMatch();
+    const QString existenceRulesText =
+        needsExistenceRules
+            ? kExistenceHandlingRules.arg(m_content ? m_content->existenceVerificationFunctionExamples() : QString())
+                  .arg(m_content ? m_content->noOpPrintFunctionName() : QString())
+            : QString();
     QString sysPrompt = kBasePromptTemplate.arg(m_content ? m_content->apiCallingConventionHint() : QString())
                             .arg(m_content ? m_content->assistantIdentityIntro() : QString())
-                            .arg(m_content ? m_content->existenceVerificationFunctionExamples() : QString())
-                            .arg(m_content ? m_content->noOpPrintFunctionName() : QString());
+                            .arg(kPyQtImportBaseRule)
+                            .arg(existenceRulesText)
+                            .arg(exploreSlotText(expectsCode));
 
     if (!systemPrompt.isEmpty())
         return sysPrompt + systemPrompt;
 
     // The API docs are tens of thousands of tokens, and every ask() call is a stateless HTTP
-    // request that must resend the full system prompt. Callers pass includeDocs=false for the
-    // error-retry loop specifically (ApplicationWindow::askAi()) — that's the one call site
-    // that can repeat up to m_maxAutoContinue times, and re-attaching the docs on every one of
-    // those retries compounds with the growing message history until it blows the model's
-    // context window (seen live: "maximum context length" after 2-3 retries on one request).
-    // The initial request and the EXPLORE-output-to-action-script call still get full docs —
-    // each happens once per request, and the action-script call in particular needs accurate
-    // API reference or the model falls back to hallucinated, non-existent methods. docTopics
-    // (set by ApplicationWindow::askAi() from a preceding doc-selection round-trip) narrows
-    // this to just the relevant files — see filterDocsByTopic().
+    // request that must resend the full system prompt. `askSelfReviewRound()` (the checklist-
+    // compliance pass and its regression backstops) is the one call site that still deliberately
+    // passes includeDocs=false — it isn't generating code from API knowledge, so full doc content
+    // adds cost with no benefit there (see maybeDispatchSelfReview()'s doc comment). Every other
+    // call site — initial generation, the EXPLORE-output-to-action-script follow-up, and
+    // runActionScript()'s error/block-retry — passes includeDocs=true with selectedDocTopics
+    // (narrowed to just the relevant files — see filterDocsByTopic()), since all three actually
+    // regenerate substantial code and were confirmed live to drift into hallucinated APIs without
+    // it (see runActionScript()'s doc comment on the specific incidents this closed).
+    //
+    // RESIDUAL RISK, not yet hit again but worth watching: this docs-on-every-retry design was
+    // ORIGINALLY includeDocs=false specifically for retries, precisely because resending docs on
+    // every one of up to m_maxAutoContinue attempts, compounding with growing history, was seen
+    // live to blow the context window ("maximum context length" after 2-3 retries on one
+    // request). windowedHistoryStart()'s ~80,000-char cap bounds the HISTORY portion of the
+    // payload regardless of includeDocs, but nothing caps the DOCS portion itself — a request
+    // whose selectedDocTopics span several large files, retried close to m_maxAutoContinue times
+    // (configurable well above the documented default of 4), could still reach this same failure
+    // mode again on a smaller-context-window model. No incident yet; flagging so a future report
+    // of "maximum context length" isn't mistaken for a new bug.
     //
     // DocsMode::Integrated skips this block entirely — no doc content is ever attached in
     // that mode, on the assumption the model/deployment already has QtiSAS's API knowledge
@@ -2369,6 +5614,11 @@ QString AiAssistant::buildSystemPrompt(const QString &systemPrompt, bool include
     return sysPrompt;
 }
 
+qsizetype AiAssistant::historyLowerBound() const
+{
+    return qMax(m_contextHistoryStart, m_listHistoryStart);
+}
+
 qsizetype AiAssistant::windowedHistoryStart(bool includeHistory) const
 {
     // Cap how much of the growing conversation gets resent — every ask() call is a stateless
@@ -2388,7 +5638,13 @@ qsizetype AiAssistant::windowedHistoryStart(bool includeHistory) const
         return start;
 
     qint64 historyChars = 0;
-    for (qsizetype i = m_history.size() - 1; i >= 0; --i)
+    // i never goes below m_contextHistoryStart, OR m_listHistoryStart while a LIST is in
+    // progress (see that field's own doc comment) — turns before either boundary belong to a
+    // task/list the continuation-check or the current LIST call has already moved past;
+    // excluding them from what gets sent is independent of, and stacks with, the token-budget
+    // cutoff below. m_listHistoryStart stays 0 outside LIST mode, so qMax is a no-op then.
+    const qsizetype lowerBound = historyLowerBound();
+    for (qsizetype i = m_history.size() - 1; i >= lowerBound; --i)
     {
         const qint64 entryChars = m_history[i].first.size() + m_history[i].second.size();
         if (historyChars > 0 && historyChars + entryChars > kMaxHistoryCharsForRequest)
@@ -2420,20 +5676,62 @@ static QString resolveEndpoint(QString baseUrl, bool isAnthropic)
     return isAnthropic ? baseUrl + "/v1/messages" : baseUrl + "/v1/chat/completions";
 }
 
-QString AiAssistant::buildSendingDiagnostic(qint64 payloadSize, qsizetype historyStart,
-                                            const QStringList &docTopics) const
+QString AiAssistant::buildSendingDiagnostic(qint64 payloadSize, qsizetype historyStart, qsizetype contextBoundary,
+                                            const QStringList &docTopics, bool includeHistory) const
 {
     // Rough estimate only (~4 bytes/token is a common heuristic for English/code text) — there's
     // no real tokenizer here. Purpose is to give visibility into request size *before* a "maximum
     // context length" HTTP error, not to be exact (the error itself already reports a precise
     // count, but only after rejecting the request).
-    const QString historyPart = historyStart > 0
-                                    ? QString("%1/%2 history turn(s) (%3 older omitted to stay under budget)")
-                                          .arg(m_history.size() - historyStart)
-                                          .arg(m_history.size())
-                                          .arg(historyStart)
-                                    : QString("%1 history turn(s)").arg(m_history.size());
-    const QString docsPart = docTopics.isEmpty() ? QString() : QString(", docs: %1").arg(docTopics.join(", "));
+    //
+    // includeHistory==false makes windowedHistoryStart() return m_history.size() (i.e. historyStart
+    // > 0, same as an actually-trimmed-for-budget case) unconditionally, regardless of how small the
+    // real payload is — that's a deliberate per-call-type exclusion (self-review, split-plan
+    // preflight, continuation-check, ...), not budget-driven trimming, and needs its own wording so
+    // it doesn't misleadingly claim turns were "omitted to stay under budget" when none were ever
+    // considered for inclusion in the first place.
+    // Two independent exclusions reach this as one historyStart, and conflating them was
+    // confirmed live to send a reader hunting a phantom budget problem: a new-task call printed
+    // "0/3 (3 older omitted to stay under budget)" when the char budget was never consulted at
+    // all — all 3 turns sat before m_contextHistoryStart. Attributed separately, and stacked when
+    // both genuinely applied.
+    const qsizetype boundaryExcluded = qBound(qsizetype(0), contextBoundary, historyStart);
+    const qsizetype budgetExcluded = historyStart - boundaryExcluded;
+    QStringList reasons;
+    if (boundaryExcluded > 0)
+        reasons << QString("%1 from an earlier task").arg(boundaryExcluded);
+    if (budgetExcluded > 0)
+        reasons << QString("%1 older omitted to stay under budget").arg(budgetExcluded);
+
+    const QString historyPart =
+        !includeHistory
+            ? (m_history.isEmpty()
+                   ? QString("history not sent for this call")
+                   : QString("history not sent for this call (%1 turn(s) in conversation)").arg(m_history.size()))
+        : historyStart > 0 ? QString("%1/%2 history turn(s) (%3)")
+                                 .arg(m_history.size() - historyStart)
+                                 .arg(m_history.size())
+                                 .arg(reasons.join(", "))
+                           : QString("%1 history turn(s)").arg(m_history.size());
+    // kNoDocsSentinel gets special-cased rather than reusing docTopicsDisplayLabel() — that
+    // helper's "empty means all" convention is right for the split-plan announcement it serves,
+    // but wrong here: an empty docTopics reaching this diagnostic means "not applicable", so it
+    // stays suppressed entirely, same as before this sentinel case was added.
+    //
+    // Integrated mode gets its own wording ("topics hint", never "docs") — buildSystemPrompt()'s
+    // own short-circuit means NO doc content is EVER attached here regardless of what docTopics
+    // holds; printing "docs: table" for a call that attaches nothing is the exact misleading
+    // diagnostic the kNoDocsSentinel blanking (removed from handleSplitPlanResponse() when the
+    // TOPICS: hint line was added to startSplitPart()'s prompt) used to exist to prevent.
+    // Confirmed live: reintroduced exactly this way, real topic names now printing as "docs: ..."
+    // for every self-review/retry round of an Integrated-mode split part, not just the one call
+    // that actually carries the TOPICS: line.
+    const bool integrated = docsMode() == DocsMode::Integrated;
+    const QString docsLabel = integrated ? "topics hint" : "docs";
+    const QString docsPart = docTopics.isEmpty() ? QString()
+                             : docTopics == QStringList{kNoDocsSentinel}
+                                 ? QString(", %1: none").arg(docsLabel)
+                                 : QString(", %1: %2").arg(docsLabel, docTopics.join(", "));
     // m_lastCallMs is the PREVIOUS call's round-trip time (set in onReplyFinished, just before
     // this one started) — reported here rather than for this call, since this one hasn't
     // happened yet. -1 until the first call in the session completes.
@@ -2447,7 +5745,8 @@ QString AiAssistant::buildSendingDiagnostic(qint64 payloadSize, qsizetype histor
 }
 
 void AiAssistant::ask(const QString &userText, bool includeDocs, const QString &systemPrompt,
-                      const QStringList &docTopics, bool addToHistory, bool includeHistory)
+                      const QStringList &docTopics, bool addToHistory, bool includeHistory, bool expectsCode,
+                      const QString &historyText)
 {
     if (m_busy)
     {
@@ -2456,15 +5755,30 @@ void AiAssistant::ask(const QString &userText, bool includeDocs, const QString &
     }
     m_busy = true;
 
+    // Safety net, not the primary mechanism: callers append their own hint line (topicsHintLine()/
+    // noDocsHintLine()) because only they know the right scope. Four sites were found tonight that
+    // forgot, and each silently got the server's unscoped whole-corpus fallback instead — one of
+    // them 46,332 tokens for a text rewrite. Idempotent: skipped when a TOPICS: line is present.
+    static const QRegularExpression topicsLinePresentRe(R"(^TOPICS:\s)", QRegularExpression::MultilineOption);
+    const QString text = topicsLinePresentRe.match(userText).hasMatch()
+                             ? userText
+                             : userText + (includeDocs ? topicsHintLine(docTopics) : noDocsHintLine());
+
     // Auto-detect API format from URL: Anthropic Messages API vs OpenAI-compatible
     const bool isAnthropic = m_baseUrl.contains("anthropic.com", Qt::CaseInsensitive);
 
-    const QString sysPrompt = buildSystemPrompt(systemPrompt, includeDocs, docTopics);
+    const QString sysPrompt = buildSystemPrompt(systemPrompt, includeDocs, docTopics, expectsCode, text);
 
     QJsonObject body;
     body["model"] = m_model;
     body["stream"] = false; // always disable streaming — we read the complete response at once
-    body["max_tokens"] = m_maxTokens;
+    // OpenAI's reasoning-model family (o1/o3/o4/gpt-5...) rejects "max_tokens" and requires
+    // "max_completion_tokens" instead; Anthropic and OpenAI-compatible chat models keep "max_tokens".
+    static const QRegularExpression reasoningModelRe(R"(^(o[0-9]|gpt-5))", QRegularExpression::CaseInsensitiveOption);
+    if (!isAnthropic && reasoningModelRe.match(m_model).hasMatch())
+        body["max_completion_tokens"] = m_maxTokens;
+    else
+        body["max_tokens"] = m_maxTokens;
 
     // Build messages array including recent conversation history
     QJsonArray messages;
@@ -2481,7 +5795,7 @@ void AiAssistant::ask(const QString &userText, bool includeDocs, const QString &
             messages.append(QJsonObject{{"role", "user"}, {"content", m_history[i].first}});
             messages.append(QJsonObject{{"role", "assistant"}, {"content", m_history[i].second}});
         }
-        messages.append(QJsonObject{{"role", "user"}, {"content", userText}});
+        messages.append(QJsonObject{{"role", "user"}, {"content", text}});
         body["messages"] = messages;
     }
     else
@@ -2493,12 +5807,14 @@ void AiAssistant::ask(const QString &userText, bool includeDocs, const QString &
             messages.append(QJsonObject{{"role", "user"}, {"content", m_history[i].first}});
             messages.append(QJsonObject{{"role", "assistant"}, {"content", m_history[i].second}});
         }
-        messages.append(QJsonValue(QJsonObject{{"role", "user"}, {"content", userText}}));
+        messages.append(QJsonValue(QJsonObject{{"role", "user"}, {"content", text}}));
         body["messages"] = messages;
     }
 
-    // Store pending user text to save in history after response
-    m_pendingUserText = userText;
+    // Store pending user text to save in history after response — historyText, when given,
+    // overrides what gets saved (see ask()'s doc comment); userText above is unaffected, so the
+    // model always sees the real, fully-constructed prompt regardless of this override.
+    m_pendingUserText = historyText.isEmpty() ? userText : historyText;
     m_pendingAddToHistory = addToHistory;
 
     const QString endpoint = resolveEndpoint(m_baseUrl, isAnthropic);
@@ -2530,7 +5846,8 @@ void AiAssistant::ask(const QString &userText, bool includeDocs, const QString &
     }
 
     const QByteArray payload = QJsonDocument(body).toJson(QJsonDocument::Compact);
-    emit infoMessage(buildSendingDiagnostic(payload.size(), omittedTurns, docTopics));
+    emit infoMessage(
+        buildSendingDiagnostic(payload.size(), omittedTurns, historyLowerBound(), docTopics, includeHistory));
     // Stored for a possible transient-error retry (see onReplyFinished()'s emitHttpError) — a
     // fresh, user-initiated call always starts with a clean retry budget, even if a previous,
     // unrelated call had exhausted its own.
@@ -2559,6 +5876,11 @@ void AiAssistant::stop()
         m_busy = false;
         m_pendingUserText.clear();
     }
+    // Confirmed live: without this, the next request — even an obviously unrelated one typed
+    // right after Stop — still relied on the continuation-check's own model judgment to decide
+    // whether to advance this boundary, and that guess can be wrong, leaving the cancelled
+    // request's text as the retrieval anchor for everything after it.
+    m_contextHistoryStart = m_history.size();
 }
 
 // Ollama NDJSON streaming: each line is a JSON object with message.content + done flag.
@@ -2641,7 +5963,7 @@ void AiAssistant::onReplyFinished(QNetworkReply *reply)
 
     // Single point for all HTTP/network error reporting — used by both the
     // Qt-error path (network failure) and the post-streaming HTTP-code path.
-    constexpr int kMaxHttpRetries = 3;
+    constexpr int kMaxHttpRetries = 5;
     // Built from the content provider's own topic list rather than hardcoded, so this generic
     // HTTP-remediation text never has to name QtiSAS doc topics itself. Capped to a handful for a
     // readable inline example — the existing "..." after it already signals "not exhaustive".
@@ -2659,7 +5981,11 @@ void AiAssistant::onReplyFinished(QNetworkReply *reply)
         if (retryable && m_httpRetryCount < kMaxHttpRetries)
         {
             ++m_httpRetryCount;
-            int delayMs = 2000 << (m_httpRetryCount - 1); // 2s, 4s, 8s
+            // 1.5x backoff per attempt: 2s, 3s, 4.5s, 6.75s, 10.125s.
+            double delaySec = 2.0;
+            for (int i = 1; i < m_httpRetryCount; ++i)
+                delaySec *= 1.5;
+            int delayMs = static_cast<int>(delaySec * 1000);
             if (code == 429)
             {
                 bool ok = false;
@@ -2667,6 +5993,12 @@ void AiAssistant::onReplyFinished(QNetworkReply *reply)
                 if (ok && raSecs > 0)
                     delayMs = raSecs * 1000;
             }
+            // Cap the wait regardless of source — some providers (confirmed live: Cerebras) send an
+            // implausibly large Retry-After (observed: ~1084234s, ~12.5 days) that would otherwise
+            // stall the app for days instead of failing fast; 2 minutes is well past any legitimate
+            // short-term rate-limit backoff.
+            constexpr int kMaxRetryDelayMs = 120 * 1000;
+            delayMs = qMin(delayMs, kMaxRetryDelayMs);
             emit httpRetryStatus(QString("AI: HTTP %1 — retrying in %2s (attempt %3/%4)...")
                                      .arg(code)
                                      .arg(delayMs / 1000.0, 0, 'f', 1)
@@ -2720,12 +6052,24 @@ void AiAssistant::onReplyFinished(QNetworkReply *reply)
                                "it actually needs instead of attaching all of them together in one shot." +
                                splitModeGiveUpNote());
         }
-        else
+        else if (code > 0)
         {
             const QString detail =
                 body.left(300).trimmed().isEmpty() ? reply->errorString() : QString::fromUtf8(body.left(300).trimmed());
-            emit errorOccurred((code > 0 ? QString("AI HTTP %1: %2").arg(code).arg(detail) : detail) +
-                               splitModeGiveUpNote());
+            emit errorOccurred(QString("AI HTTP %1: %2").arg(code).arg(detail) + splitModeGiveUpNote());
+        }
+        else
+        {
+            // code == 0 means no HTTP status was ever received — a connection-level failure (TCP reset, backend
+            // crash) before any response. Name the actual NetworkError enum value too, and flag a local backend
+            // as the likely process-crash suspect.
+            const QString errName =
+                QString::fromLatin1(QMetaEnum::fromType<QNetworkReply::NetworkError>().valueToKey(reply->error()));
+            const bool isLocalBackend = m_baseUrl.contains("127.0.0.1") || m_baseUrl.contains("localhost");
+            QString msg = QString("AI: connection error (%1): %2").arg(errName, reply->errorString());
+            if (isLocalBackend)
+                msg += " — the local backend process may have crashed or closed the connection; check its own logs.";
+            emit errorOccurred(msg + splitModeGiveUpNote());
         }
     };
 
@@ -2745,10 +6089,20 @@ void AiAssistant::onReplyFinished(QNetworkReply *reply)
     if (!streamedAccumulated.isEmpty())
     {
         const QString response = streamedAccumulated.trimmed();
+        // Confirmed live: m_history used to store `response` (raw, markdown fences intact) while
+        // this signal emitted cleanResponse(response) — the first display/run always used the
+        // clean copy and worked, but runLastScript()/runHistoryScript() read straight from
+        // m_history with `compilable` hardcoded true (skipping the canCompile() gate that would
+        // otherwise have caught this), so "run it"/"run it again" fed the raw fenced text
+        // straight to the interpreter and failed with "SyntaxError: invalid syntax at <ai>:1" —
+        // line 1 being the literal "```python" fence. Cleaning once and storing/emitting the same
+        // string keeps every later reader of m_history[...].second consistent with what was
+        // actually shown to the user.
+        const QString cleaned = cleanResponse(response);
         if (!m_pendingUserText.isEmpty() && m_pendingAddToHistory)
-            m_history.append({m_pendingUserText, response});
+            m_history.append({m_pendingUserText, cleaned});
         m_pendingUserText.clear();
-        emit responseReady(cleanResponse(response));
+        emit responseReady(cleaned);
         return;
     }
 
@@ -2790,9 +6144,12 @@ void AiAssistant::onReplyFinished(QNetworkReply *reply)
     else
     {
         const QString response = text.trimmed();
+        // See the identical fix in the streamed-response branch above for why this stores the
+        // cleaned string, not the raw one.
+        const QString cleaned = cleanResponse(response);
         if (!m_pendingUserText.isEmpty() && m_pendingAddToHistory)
-            m_history.append({m_pendingUserText, response});
+            m_history.append({m_pendingUserText, cleaned});
         m_pendingUserText.clear();
-        emit responseReady(cleanResponse(response));
+        emit responseReady(cleaned);
     }
 }

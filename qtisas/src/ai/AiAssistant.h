@@ -67,23 +67,19 @@ class AiAssistant : public QObject
         m_content = content;
     }
 
-    // docTopics: when non-empty, only *-python-api.md/.pyi files whose name contains one of these
-    // (case-insensitive) substrings are sent, instead of the full doc set — see
-    // AiContentProvider::loadDocs(). addToHistory: false for internal plumbing exchanges
-    // (doc-topic selection, self-review) whose answer is consumed immediately and never needs to
-    // be recalled later — see the call sites in ApplicationWindow::askAi() for why keeping those
-    // out of m_history matters. includeHistory: false for a call whose prompt is already fully
-    // self-contained (every fact it needs — the script under review, the original request, the
-    // current message — is spelled out inline in userText itself) and gains nothing from also
-    // seeing prior turns. Confirmed live: self-review, deep into a long split-mode conversation
-    // (7-8 accumulated turns of prior parts' scripts resent as history on every call), twice
-    // returned an entirely different, older script from that history instead of reviewing the
-    // actual candidate placed in front of it — once reproducing a stale draft of the SAME script,
-    // once reproducing a completely unrelated EARLIER part's script outright. Since self-review's
-    // own prompt already inlines everything it needs, it never needed that history in the first
-    // place — omitting it removes the only thing it could have latched onto by mistake.
+    // docTopics: non-empty limits to matching *-python-api.md/.pyi files instead of the full doc set. addToHistory:
+    // false for internal plumbing (doc-topic selection, self-review) whose answer is consumed immediately, never
+    // recalled later. includeHistory: false when userText is self-contained, gaining nothing from prior turns.
+    // Confirmed live: self-review in a long split-mode conversation twice returned an unrelated OLDER script instead of
+    // the actual candidate. expectsCode: false for a preflight whose answer is plain text (a PART/DOCS plan, a topic
+    // list, ...), never Python — gates exploreModeReminder() out. Confirmed live: even a passing EXPLORE mention
+    // measurably increased the odds of a script back instead of the plan. historyText: non-empty is stored as this
+    // exchange's "Q" side in history instead of userText, for an internally-constructed prompt that would otherwise
+    // leak scaffolding into history; userText is still what's actually sent either way.
     void ask(const QString &userText, bool includeDocs = true, const QString &systemPrompt = QString(),
-             const QStringList &docTopics = QStringList(), bool addToHistory = true, bool includeHistory = true);
+             const QStringList &docTopics = QStringList(), bool addToHistory = true, bool includeHistory = true,
+             bool expectsCode = true, const QString &historyText = QString());
+
     // Needs setContentProvider() first — delegates to AiContentProvider::docTopicIndex().
     QString docTopicIndex() const;
 
@@ -94,17 +90,48 @@ class AiAssistant : public QObject
     // preset picker so both agree on the same migration rule.
     static DocsMode docsModeFromSettings(const QSettings &settings);
 
-    // Parses a leading "SPLIT:"/"NOSPLIT:" marker off `text` and decides whether split-mode should
-    // activate for this request, combined with `splitByDefault` (the host's persisted default:
-    // "SPLIT:" opts in when it's off, "NOSPLIT:" opts out for this one request when it's on).
-    // Purely generic text parsing with no host-specific knowledge, so it lives here rather than in
-    // the host's own request-entry-point code. `effectiveTextOut`, if non-null, receives `text`
-    // with the marker (if any) stripped — the form every later use of the request text should use.
+    // Finds "SPLIT"/"NOSPLIT" anywhere in `text` as a standalone, ALL-CAPS word (not glued to
+    // adjacent letters) and decides whether split-mode should activate, combined with
+    // `splitByDefault` (the host's persisted default). `effectiveTextOut`, if non-null, receives
+    // `text` with the marker removed and surrounding whitespace collapsed.
     static bool parseSplitMarker(const QString &text, bool splitByDefault, QString *effectiveTextOut = nullptr);
 
     // Same convention as parseSplitMarker() above, for "REVIEW"/"NOREVIEW" controlling self-review
     // instead of split-mode. `reviewByDefault` is the host's persisted default.
     static bool parseReviewMarker(const QString &text, bool reviewByDefault, QString *effectiveTextOut = nullptr);
+
+    // Same convention again, for "EXPLORE"/"NOEXPLORE" controlling whether the model is allowed a
+    // read-only probe round before writing the action script. `exploreByDefault` is the host's
+    // persisted default.
+    static bool parseExploreMarker(const QString &text, bool exploreByDefault, QString *effectiveTextOut = nullptr);
+
+    // Result of parseListRequest() below.
+    struct ParsedListRequest
+    {
+        bool isList = false;
+        bool forceSplit = false;     // "SPLIT" found in the instruction_block region
+        bool forceNoSplit = false;   // "NOSPLIT" found there
+        bool forceReview = false;    // "REVIEW" found there
+        bool forceNoReview = false;  // "NOREVIEW" found there
+        bool forceExplore = false;   // "EXPLORE" found there
+        bool forceNoExplore = false; // "NOEXPLORE" found there
+        QString instructionBlock;    // whatever's left after stripping the six markers above
+        QStringList items;           // each numbered item's own text, in order
+    };
+    // Detects a leading "LIST" marker (case-sensitive, capital-only — deliberately stricter than
+    // parseSplitMarker()'s looser convention, since this bypasses the whole split-plan LLM
+    // decomposition rather than just toggling it) followed by a numbered list (2+ lines matching
+    // "N. text"/"N) text"). SPLIT/NOSPLIT/REVIEW/NOREVIEW/EXPLORE/NOEXPLORE, in any combination or
+    // order, are found and
+    // stripped from the region between "LIST" and the first numbered item — only genuinely
+    // leftover text there becomes instruction_block, so a region that's markers-only never
+    // triggers the one-shot LLM transformation call instructionBlock otherwise causes. Returns
+    // isList=false (all other fields empty/default) when no marker or fewer than 2 numbered items
+    // are found — deliberately fails open to a normal request rather than misfiring on a request
+    // that merely happens to contain a number. Purely generic text parsing with no host-specific
+    // knowledge, so it lives here rather than in the host's own request-entry-point code, matching
+    // parseSplitMarker()'s own reasoning above.
+    static ParsedListRequest parseListRequest(const QString &text);
 
     // Classifies the REAL user's own free-form reply to the "is this a new task or a
     // continuation?" clarifying question (see awaitingContinuationClarification's doc comment) as
@@ -183,6 +210,23 @@ class AiAssistant : public QObject
     static QString extractAvailableBlock(const QString &err);
     static QString normalizeErrorForDedup(const QString &err);
 
+    // Extracts the missing name from a "Function 'X' not found"/"function 'x' not found." error
+    // (Compiler/Fittable's own wording, case varies by call site) — empty if the error doesn't
+    // match. Used to gate the compiled-function-history reminder below to the one error shape it
+    // actually helps with, rather than injecting it into every unrelated retry.
+    static QString functionNotFoundNameFromError(const QString &errContext);
+
+    // Scans every assistant-side turn in `history` for setFunctionName("Y") calls, returning the
+    // unique names in first-seen order — a record of every function this exact conversation has
+    // already tried to compile, regardless of whether that particular attempt is known to have
+    // succeeded. Confirmed live, severe: after two functions (GaussPeakModel, LorentzianPeakModel)
+    // genuinely compiled in the first, doc-informed attempt, later retries progressively lost
+    // track of them and fabricated THREE more distinct, never-compiled names in a row
+    // (gauss_peak, lorentz_peak, ai/Gauss) instead of reusing or even re-checking the real ones —
+    // m_history itself only ever stores generated code, never execution outcomes, so nothing
+    // grounded the model back to its own prior work once retries stopped resending docs.
+    static QStringList compiledFunctionNamesFromHistory(const QList<QPair<QString, QString>> &history);
+
     // Handles the doc-topic-selection round-trip's answer (parses topics, sets
     // selectedDocTopics, kicks off the real request). Call only when awaitingDocSelection is
     // true; it resets that flag itself. Needs setHost() to have been called first (uses it to
@@ -209,27 +253,33 @@ class AiAssistant : public QObject
     // generalizes from a single Fittable-only check into a universal, kind-agnostic one.
     void beginRequest(const QString &aiText, bool autoRunValue, bool wantsSplit);
 
-    // Entry point for starting split-mode decomposition of `aiText` — replaces a direct call to
-    // ask(m_content->splitPlanPreflightPrompt(aiText), ...) so the new-task-vs-continuation check
-    // (see awaitingContinuationCheck's doc comment) stays fully encapsulated here rather than
-    // leaking into ApplicationWindow::askAi(). Sets awaitingDocSelection=false and then EITHER:
-    // on a fresh conversation (m_history empty, nothing to conflict with) sets awaitingSplitPlan
-    // and dispatches the split-plan preflight directly, unchanged from before; OR, when history
-    // exists, sets awaitingContinuationCheck instead and dispatches the continuation-check
-    // preflight first, deferring the split-plan preflight (and awaitingSplitPlan) until
-    // handleContinuationCheckResponse() resolves it. Caller must NOT set awaitingSplitPlan itself
-    // — exactly one of the two "awaiting" flags is live at a time, decided internally here.
+    // Entry point for LIST mode — `parsed` is parseListRequest()'s own output. `splitByDefault`/
+    // `reviewByDefault` are the host's persisted settings, used only when neither of a pair's
+    // force flags is set. Non-empty parsed.instructionBlock first sends a one-shot NOSPLIT
+    // transformation call (see listModeActive's own doc comment); handleListTransformResponse()
+    // proceeds from there.
+    void beginListRequest(const ParsedListRequest &parsed, bool splitByDefault, bool reviewByDefault,
+                          bool exploreByDefault, bool autoRunValue);
+
+    // Extracts just the numbered items (no marker line) from arbitrary text — the response-side
+    // counterpart to parseListRequest()'s own item-extraction, reused by
+    // handleListTransformResponse() to re-parse the model's transformed list.
+    static QStringList parseNumberedListItems(const QString &text);
+
+    // Dispatches the split-plan decomposition preflight for `aiText` directly — no continuation-
+    // check gating here (see dispatchAfterExistenceCheck()'s doc comment; that gate now lives one
+    // level up and applies to both split and non-split requests). Sets awaitingSplitPlan=true.
     void beginSplitPlanDecomposition(const QString &aiText);
 
-    // Handles the continuation-check pre-flight's answer — see beginSplitPlanDecomposition() and
+    // Handles the continuation-check pre-flight's answer — see dispatchAfterExistenceCheck() and
     // AiContentProvider::continuationCheckPreflightPrompt(). Call only when awaitingContinuationCheck
     // is true (mirrors handleDocSelectionResponse()/handleSplitPlanResponse()'s own contract); it
     // resets that flag itself. CONTINUE or an unrecognized answer (fail-open, matching every other
-    // verify-and-retry in this class) dispatches the split-plan preflight with
-    // pendingSplitRequestText, history intact. NEW clears history/originalRequestText first,
-    // printing a transparent notice, then does the same. UNCLEAR prints a clarifying question and
-    // sets awaitingContinuationClarification instead of dispatching anything — the real user's own
-    // next typed reply answers it (see ApplicationWindow::askAi()'s own interception of that flag).
+    // verify-and-retry in this class) re-anchors originalRequestText to pendingDispatchRequestText
+    // and calls dispatchByMode() with it, history intact. NEW clears history first, printing a
+    // transparent notice, then does the same. UNCLEAR prints a clarifying question and sets
+    // awaitingContinuationClarification instead of dispatching anything — the real user's own next
+    // typed reply answers it (see ApplicationWindow::askAi()'s own interception of that flag).
     void handleContinuationCheckResponse(const QString &code);
 
     // Handles the "existing X" verification script's answer — see beginRequest()'s doc comment.
@@ -246,16 +296,73 @@ class AiAssistant : public QObject
     void handleExistenceCheckScriptResponse(const QString &code);
 
     // Restates the original-request anchor (see originalRequestText's declaration) and fires the
-    // real request with `docTopics` attached. Shared by handleDocSelectionResponse() (after a
-    // normal doc-selection answer) and by ApplicationWindow::askAi() directly when docsMode() is
-    // Integrated — that mode never attaches any doc content regardless of topics, so the
-    // doc-selection round-trip is skipped entirely and this is called with an empty topic list.
-    void startRequest(const QStringList &docTopics);
+    // real request with `docTopics` attached. Called by handleDocSelectionResponse() after a doc-
+    // selection answer (every mode, including Integrated, now runs that preflight — see
+    // beginNonSplitRequest()'s doc comment for why the topics chosen there matter under Integrated
+    // mode too), and directly with an empty topic list from the handful of "no content provider"
+    // fallbacks that can't phrase any preflight at all.
+    void startRequest(const QStringList &docTopics, const QString &resolvedTaskDescription = QString());
+
+    // "\n\nTOPICS: ..." line for an optional server-side RAG proxy to scope ITS OWN retrieval —
+    // shared by every real code-generation call site (startRequest(), the EXPLORE follow-up, the
+    // error-retry prompt; startSplitPart() builds its own equivalent inline since it also needs
+    // the per-part noneOrAmbiguous distinction). Returns an empty string outside
+    // DocsMode::Integrated or when there are no topics to hint at all. Always folds in
+    // baselineDocTopics() and drops kNoDocsSentinel — see the .cpp definition's doc comment for
+    // why (this is pure signal for an optional retrieval step, not the LOCAL doc-attachment
+    // choice docTopics itself protects at its own call sites).
+    QString topicsHintLine(const QStringList &docTopics) const;
+
+    // "\n\nTOPICS: none" — the explicit-zero-retrieval counterpart to topicsHintLine() above, for
+    // every split-mode preflight/retry call that only classifies, decomposes, or patches a plan
+    // (continuation-check, split-plan decomposition, and its naming/coverage/fragment retries).
+    // None of those need domain API doc content, but leaving them with no TOPICS: line at all
+    // previously left qtisas-rag's files_from_topics() returning None, which retrieve() then
+    // treats as "no signal — search the whole corpus" rather than "no docs wanted" (see core.py's
+    // matching files=[] handling). Empty outside DocsMode::Integrated, same as topicsHintLine().
+    QString noDocsHintLine() const;
 
     // Call only when `code` is confirmed to start with "# EXPLORE" (the caller keeps that check,
     // matching handleDocSelectionResponse's pattern); this method assumes it's definitely
     // handling one. Needs setHost() first (uses it for both print() and runScript()).
     void handleExploreResponse(const QString &code);
+
+    // EXPLORE is split into a policy point plus three units carrying out its outcome — see
+    // exploreDisposition()'s doc comment in the .cpp for why one 247-line function was the problem.
+    enum class ExploreDisposition
+    {
+        Run,    // execute the read-only prefix and feed its output back
+        Refuse, // show it, never run it, ask for the action script instead
+    };
+    // Every "may a probe run for this request" rule, in one place: the Preferences toggle, the
+    // NOEXPLORE marker, and generate-only mode.
+    ExploreDisposition exploreDisposition() const;
+    // Invite a probe, forbid one, or say nothing — see the .cpp definition.
+    // Warnings worth showing beside a script that is SHOWN and never run. Generate-only mode
+    // bypasses runActionScript() entirely (ApplicationWindow's own autoRun branch), so none of the
+    // pre-run analyses that mode's scripts would otherwise face — scope violation, known mistakes,
+    // self-review — ever see them. This is the one hook that path has, so a finding is REPORTED
+    // rather than retried: a retry would spend a round-trip in the one mode chosen for not spending
+    // them, and the user is reading the script anyway. Empty when nothing is worth saying.
+    QString generatedScriptWarning(const QString &code) const;
+
+    QString exploreSlotText(bool expectsCode) const;
+
+    // Builds the VERIFIED PROJECT STATE note for every name `requestText` calls existing, by asking
+    // the host what it actually holds — no script, no round-trip. Empty when the request names
+    // nothing, when there is no host/content provider, or when the host answers nothing.
+    // `consoleLine`, if non-null, also receives a one-line human summary of the same facts: this
+    // path replaces a check whose output the user USED to see scroll past, and silently deciding a
+    // name is missing would otherwise be invisible right up until the script creates something.
+    QString liveEntityFactsFor(const QString &requestText, QString *consoleLine = nullptr) const;
+    // Charges one round against the shared EXPLORE/error-retry budget; true once it is spent (the
+    // give-up has then already been reported and recorded).
+    bool exploreRoundBudgetExhausted(bool refusing);
+    void printExploreScript(const QString &code);
+    void refuseExploreRound(const QString &code);
+    // False means stop: no host, or the reply bundled an action script that has now already run.
+    bool runExploreProbe(const QString &code, QString *output, QString *discardedDraft);
+    void requestActionScriptAfterExplore(const QString &code, const QString &output, const QString &discardedDraft);
 
     // Sets `compilable` (via AiScriptHost::canCompile()) and returns true if self-review was
     // just dispatched (caller should return immediately without doing anything else with
@@ -289,10 +396,27 @@ class AiAssistant : public QObject
 
     // Handles the split-plan decomposition call's answer: parses "PART: ... | DOCS: ..." lines
     // into splitPlan, falling back to one synthetic part covering the whole request if nothing
-    // parses (same fail-open philosophy as an unrecognized doc-selection answer). Prints the
-    // plan, then starts part 0 via startSplitPart(). Call only when awaitingSplitPlan is true; it
-    // resets that flag itself. Needs setHost() first.
+    // parses (same fail-open philosophy as an unrecognized doc-selection answer). Call only when
+    // awaitingSplitPlan is true; it resets that flag itself. Needs setHost() first. Once the plan
+    // is fully finalized (fixup rounds converged or exhausted), prints the plan summary — always,
+    // even if the collision check below is about to halt the request; a halt must never leave the
+    // user unable to see what the plan actually finalized to — then hands off to
+    // finalizeSplitPlanAndLaunch(), either directly or after a round-trip verifying none of the
+    // plan's to-be-created names collide with something that already exists (see
+    // splitPlanCreationNames()/splitPlanCreationCollisions()).
     void handleSplitPlanResponse(const QString &code);
+
+    // Resumption point once handleSplitPlanResponse() has a fully finalized, already-printed plan
+    // with no pending creation-name collision check: collapses to a plain request if the plan
+    // settled on a single part, otherwise starts part 0 via startSplitPart().
+    void finalizeSplitPlanAndLaunch();
+
+    // Handles the creation-name collision-check script's answer — see
+    // handleSplitPlanResponse()'s doc comment. Call only when
+    // awaitingSplitPlanCreationCheckScript is true; it resets that flag itself. A collision halts
+    // the request outright (mirrors handleExistenceCheckScriptResponse()'s halt for a MISSING
+    // claimed-existing name); otherwise proceeds via finalizeSplitPlanAndLaunch().
+    void handleSplitPlanCreationCheckScriptResponse(const QString &code);
 
     // Starts generation for splitPlan[index]: resets the same per-request state a brand-new
     // whole request gets (autoContinueCount, awaitingSelfReview, lastAvailableBlock,
@@ -304,6 +428,37 @@ class AiAssistant : public QObject
     // executed with no error. Records `code` into splitPartScripts, then either starts the next
     // part (startSplitPart()) or, if that was the last part, fires the merge (requestSplitMerge()).
     void advanceSplitPart(const QString &code);
+
+    // " (took Xsec)" for the item that just finished (empty before any item has), same "Xsec"
+    // style as m_lastCallMs's own formatting — read by startNextListItem() right before it
+    // increments listItemIndex, so it always describes the PREVIOUS item, never the new one.
+    QString listItemElapsedNote() const;
+
+    // Dispatches listItems[listItemIndex] (already incremented by the caller) through the normal
+    // single-request pipeline — dispatchByMode()-equivalent, honoring listItemForceSplit/
+    // listItemForceNoSplit if set, otherwise the same per-request heuristic beginRequest() itself
+    // would use. No-ops (sets listModeActive=false) once listItemIndex runs past the end.
+    void startNextListItem();
+
+    // Shared tail end of beginListRequest()/handleListTransformResponse() — builds listItems
+    // (mechanical per-item doc-topic keyword matching, see topicSynonymRe) from `items` and
+    // starts the list running via startNextListItem().
+    void startListItems(const QStringList &items, bool forceSplit, bool forceNoSplit, bool forceReview,
+                        bool forceNoReview, bool forceExplore, bool forceNoExplore, bool splitByDefault,
+                        bool reviewByDefault, bool exploreByDefault, bool autoRunValue);
+
+    // The list-mode counterpart to advanceSplitPart() — called once a list item's OWN processing
+    // is FULLY done (whether that item ran split or non-split; for a split item this is after its
+    // own merge completes, not after each internal part). Increments listItemIndex and calls
+    // startNextListItem() for the next item, or ends the list if that was the last one.
+    void advanceListItem();
+
+    // Response handler for the one-shot instruction_block transformation call (see
+    // beginListRequest()) — re-parses `code` as a numbered list via parseNumberedListItems(),
+    // falls back to pendingListRawItems (fail-open, same philosophy as every other verify-and-
+    // retry in this class) if that yields fewer than 2 items, then proceeds exactly as the
+    // empty-instructionBlock path would have.
+    void handleListTransformResponse(const QString &code);
 
     // One-shot, terminal call: asks the model to collapse all of splitPartScripts into ONE
     // standalone script reproducing the same end result from a fresh session. Sets
@@ -411,6 +566,20 @@ class AiAssistant : public QObject
     {
         return m_selfReviewEnabled;
     }
+    // When true (default), a "# EXPLORE" response enters the two-phase loop: the read-only script
+    // runs, its real output is fed back, and only then is the action script requested. When false,
+    // buildSystemPrompt() stops asking for probe rounds and handleExploreResponse() refuses one
+    // that arrives anyway (see its own doc comment) — never silently running it, and never
+    // dead-ending the request either. Does not affect the existence-check/collision-check
+    // round-trips, which are QtiSAS's own machinery rather than model-initiated exploration.
+    void setExploreEnabled(bool on)
+    {
+        m_exploreEnabled = on;
+    }
+    bool exploreEnabled() const
+    {
+        return m_exploreEnabled;
+    }
 
     // Conversation-level orchestration state (doc-selection -> EXPLORE -> self-review ->
     // error-retry state machine). Each branch's handling has moved into the methods above, but
@@ -421,9 +590,62 @@ class AiAssistant : public QObject
     // from outside.
     bool autoRun = false;
     int autoContinueCount = 0;
-    // Consumed by resetErrorRetryState() — declared here so that reset has a real counter to
-    // clear; not yet incremented/read anywhere else in this commit.
+    // Consecutive # EXPLORE rounds with no intervening action-script attempt — a NARROWER,
+    // smaller sub-limit than autoContinueCount/maxAutoContinue() (the overall round budget for
+    // the whole request), specifically targeting "stuck exploring, never synthesizing a fix."
+    // Reset to 0 both at the same per-request/per-part points as autoContinueCount AND every time
+    // an action script actually gets attempted (see runActionScript()'s "AI code (running)"
+    // print) — so it measures ONLY an unbroken streak of pure diagnostics, not total rounds used.
+    // See handleExploreResponse()'s doc comment for the confirmed-live incident this closes: with
+    // the full request history intact (no truncation — ruled out directly from that transcript's
+    // own headers) and every fact already printed earlier in the SAME conversation, six straight
+    // EXPLORE rounds re-verified already-known state instead of ever comparing it against the
+    // string that had actually failed, burning the entire remaining autoContinueCount budget on
+    // zero net progress.
+    int consecutiveExploreCount = 0;
+    // The most recent EXPLORE round's captured console output (empty outside an unbroken EXPLORE
+    // streak) — shares consecutiveExploreCount's exact reset lifecycle (same three reset points:
+    // beginRequest(), startSplitPart(), and runActionScript() right where that counter resets),
+    // so it's valid precisely when consecutiveExploreCount > 0 is true. Confirmed live (twice) this
+    // was needed: EXPLORE printed the real Compiler.groups() list, and the very next round's write
+    // action called setGroup() with a name matching none of them — with nothing keeping the
+    // printed output around, there was no way to mechanically compare the two. See
+    // maybeDispatchSelfReview()'s exploreGroupsIgnoredMistake() check.
+    QString lastExploreOutput;
+    // Previous EXPLORE round's raw script, same reset lifecycle as lastExploreOutput above. Only
+    // to detect a byte-identical repeat: confirmed live, an EXPLORE returned the exact same script
+    // 3 rounds running at 37-50s each, so an unproductive loop can burn the whole retry budget.
+    QString lastExploreCode;
+    // Bounds how many CONSECUTIVE error/block retries in a row get full docs re-attached (see
+    // runActionScript()'s doc comment on why they're attached at all). Unlike
+    // consecutiveExploreCount, this must NOT reset on every action-script attempt — only on a
+    // genuine SUCCESS (result.error.isEmpty() in runActionScript()) or a fresh request/part — since
+    // it specifically counts an unbroken CHAIN of corrections that each still needed grounding, not
+    // total attempts; resetting on every attempt (success or failure alike) would make it always
+    // read 0 right when the next retry's inclusion decision is made. Caps the residual
+    // context-window risk documented in buildSystemPrompt(): resending full docs on every one of
+    // up to maxAutoContinue() retries, compounding with growing history, was the exact failure mode
+    // (seen live: "maximum context length") that motivated the original includeDocs=false-for-
+    // retries design this session's fix partially reverted — this keeps the benefit (grounding for
+    // the first couple of corrections, where the confirmed hallucinations actually happened)
+    // without letting a long chain compound indefinitely.
     int consecutiveDocRetryCount = 0;
+    // Clears every "a network reply for THIS is still coming" flag at once. Must be called by any
+    // path that abandons or supersedes an in-flight request, because the flags are what route an
+    // arriving reply to its handler — a stale one sends the NEXT reply into a handler whose state
+    // has already been torn down. Confirmed live (crash, SIGSEGV): the cancel path in
+    // ApplicationWindow::handleAiTextCommand() cleared splitPlan and four of these flags but not
+    // awaitingSplitPlanCreationCheckScript, so a creation-check reply arriving after a cancel ran
+    // handleSplitPlanCreationCheckScriptResponse() against an emptied plan, reached
+    // finalizeSplitPlanAndLaunch() -> startSplitPart(0), and read splitPlan[0] out of bounds; the
+    // garbage SplitPart's docTopics then faulted inside QList's growAppend(). beginRequest() had
+    // the same hole. Enumerating a subset by hand is what caused this, hence one shared reset.
+    //
+    // Deliberately EXCLUDES awaitingContinuationClarification: that one waits for the real user's
+    // own typed reply, not an HTTP response, so it is not this function's business — a caller that
+    // means to drop a pending question to the user must clear it explicitly.
+    void resetPendingRoundTrips();
+
     bool awaitingSelfReview = false;
     bool awaitingDocSelection = false;
     QString pendingRequestText;
@@ -515,6 +737,57 @@ class AiAssistant : public QObject
     // (HIDDENLINE) instead of the requested FILLEDMESH — silently wrong output, no error. Same
     // one-shot, fail-open philosophy as awaitingSelfReviewSkepticismRetry above.
     bool awaitingSelfReviewEnumRegressionRetry = false;
+    // One-shot: true only for the self-review pass answering the corrective retry fired when
+    // self-review's OWN edit dropped one or more required Compiler setup calls
+    // (setFunctionName/setGroup/setParamCount/setParamNamesAll/setParamInitsAll/setParamLimitsAll/
+    // setParamVariesAll) while still calling compile() — see maybeDispatchSelfReview()'s use of
+    // AiContentProvider::selfReviewCompileSequenceRegression(). Confirmed live: a correct, complete
+    // compile setup was replaced wholesale with old-style raw-array C-function code missing
+    // setGroup()/parameter declarations entirely, raising ValueError: "compile: group is empty" on
+    // the very next run. Same one-shot, fail-open philosophy as awaitingSelfReviewSkepticismRetry
+    // above.
+    bool awaitingSelfReviewCompileSequenceRetry = false;
+    // One-shot: true only for the self-review pass answering the corrective retry fired when
+    // self-review's OWN edit changed an already-correct PyQt import's major version (PyQt5<->PyQt6)
+    // for the same Qt class — see maybeDispatchSelfReview()'s use of
+    // AiContentProvider::selfReviewPyQtVersionSubstitution(). Confirmed live: a correct
+    // `from PyQt6.QtGui import QColor, QFont` draft (this build's real binding) was silently
+    // rewritten to `from PyQt5.QtGui import QColor, QFont` while self-review fixed an unrelated
+    // issue elsewhere in the same script — PyQt5 doesn't exist in this environment, and the script
+    // reached actual execution and crashed with ModuleNotFoundError a full round-trip later. Same
+    // one-shot, fail-open philosophy as awaitingSelfReviewSkepticismRetry above.
+    bool awaitingSelfReviewPyQtVersionRetry = false;
+    // One-shot: true only for the self-review pass answering the corrective retry fired when
+    // self-review's OWN edit added a fabricated Compiler.setCode() call for a function the draft
+    // correctly reused (open()+compile(), no setCode() of its own) — see
+    // maybeDispatchSelfReview()'s use of AiContentProvider::selfReviewFabricatedSetCodeMistake().
+    // Confirmed live, severe: EXPLORE had already printed the EXISTING, correct code for two
+    // functions; the draft correctly did nothing but reopen and recompile them; self-review
+    // rewrote this into a version with a brand-new, fabricated setCode() call for each — neither
+    // function actually compiled. Same one-shot, fail-open philosophy as
+    // awaitingSelfReviewSkepticismRetry above.
+    bool awaitingSelfReviewFabricatedSetCodeRetry = false;
+    // One-shot: true only for the self-review pass answering the corrective retry fired when
+    // self-review's OWN edit changed the name passed to a creation call (newTable/newMatrix/
+    // newGraph/newNote) that the pre-review draft already had correct — see
+    // maybeDispatchSelfReview()'s use of AiContentProvider::selfReviewCreationNameSubstitution().
+    // Confirmed live: a request naming the table "SAXS_data" survived correctly into the pre-review
+    // draft; self-review's rewrite silently dropped the underscore ("SAXSdata") in both the
+    // newTable() call and an unrelated scriptPrint() confirmation string in the same script. Same
+    // one-shot, fail-open philosophy as awaitingSelfReviewSkepticismRetry above.
+    bool awaitingSelfReviewCreationNameRetry = false;
+    // One-shot, but DIFFERENT IN KIND from the nine flags above (and gated the opposite way in
+    // maybeDispatchSelfReview() — on the ORIGINAL candidate, not on self-review's own output): true
+    // only for the self-review pass answering the corrective retry fired when a candidate's
+    // setGroup(...) argument matches none of the groups an immediately-preceding EXPLORE round
+    // actually printed — see maybeDispatchSelfReview()'s use of
+    // AiContentProvider::exploreGroupsIgnoredMistake(). Confirmed live, twice: EXPLORE printed the
+    // real Compiler.groups() list, and the next round's write action called
+    // setGroup("custom:sans") anyway, matching none of them. Not a hard error (setGroup() allows
+    // any new group), so — unlike the "revert this" framing of the flags above — the retry this
+    // fires only asks the model to confirm or fix its choice once; it never re-fires on the
+    // corrected reply even if a new group is still what comes back.
+    bool awaitingSelfReviewExploreGroupRetry = false;
 
     // Split-mode: true for a request that opted in via the client-side "SPLIT:" marker (see
     // ApplicationWindow::askAi()). While true, a successful action-script run in
@@ -530,6 +803,18 @@ class AiAssistant : public QObject
     // (via dispatchAfterExistenceCheck()) once it reports every referenced name found, or if the
     // check itself failed open. Not consumed/cleared by the check itself.
     QString pendingExistenceCheckRequestText;
+    // Set in beginRequest() when the existence-check round-trip is skipped (generate-only mode) and
+    // appended to the outgoing request by startRequest(). Appended THERE rather than folded into
+    // pendingRequestText because that string is also what gets stored as this turn's history text —
+    // see startRequest()'s textForHistory comment for the two confirmed-live leaks that caused.
+    QString pendingLiveFactsNote;
+    // True only while a finalized split plan's creation-name collision-check script (see
+    // handleSplitPlanResponse()'s doc comment) is in flight — checked whether the plan's own
+    // to-be-created names (splitPlanCreationNames()) already exist, so a silent recompile-over-an-
+    // existing-function (or table/graph/note/matrix) never happens unnoticed. Resumes into
+    // finalizeSplitPlanAndLaunch() once resolved. handleSplitPlanCreationCheckScriptResponse()
+    // resets this.
+    bool awaitingSplitPlanCreationCheckScript = false;
     // True only while beginSplitPlanDecomposition()'s continuation-check pre-flight (see
     // AiContentProvider::continuationCheckPreflightPrompt()) is in flight — mirrors
     // awaitingDocSelection/awaitingSplitPlan. Exactly one of this and awaitingSplitPlan is live at
@@ -546,20 +831,57 @@ class AiAssistant : public QObject
     // a new top-level request (mirrors how it already intercepts fixed text commands before normal
     // dispatch) — the reply answers this pending question, it is not itself a fresh request.
     bool awaitingContinuationClarification = false;
-    // The split-mode request text beginSplitPlanDecomposition() is gating behind the
-    // continuation-check (or the user's clarification) — resumed with once either resolves. Not
-    // consumed/cleared by the check itself, only by whichever branch finally dispatches the
-    // split-plan preflight.
-    QString pendingSplitRequestText;
+    // The request text dispatchAfterExistenceCheck() is gating behind the continuation-check (or
+    // the user's clarification) — resumed with once either resolves, via dispatchByMode(). Not
+    // split-mode-specific (despite the similar name) — this gate now applies to every request,
+    // split or not. Not consumed/cleared by the check itself, only by whichever branch finally
+    // dispatches.
+    QString pendingDispatchRequestText;
     // Mirrors awaitingDocSelection — true only while the decomposition pre-flight call is in
     // flight. handleSplitPlanResponse() resets it.
     bool awaitingSplitPlan = false;
-    // Set when handleSplitPlanResponse() sends the plan BACK to the model once, pointing out which
-    // part(s) failed to name an object they create despite the decomposition prompt already
-    // instructing this explicitly — see that method's naming-completeness check. Cleared as soon
-    // as the retry's own response is parsed, whether or not the naming gap is actually fixed this
-    // time, so a plan that still fails proceeds anyway rather than retrying forever.
-    bool awaitingSplitPlanNamingRetry = false;
+    // Combined, capped retry counter for handleSplitPlanResponse()'s three decomposition-fixup
+    // checks (naming completeness, action coverage, unnecessary fragmentation). These used to be
+    // three fully independent one-shot flags (awaitingSplitPlanNamingRetry/CoverageRetry/
+    // FragmentRetry), each individually documented as "never retries a second time... so a plan
+    // that still fails proceeds anyway rather than retrying forever" — but that guarantee only
+    // held per individual check, not for the combined process. Confirmed live, severe: a plan
+    // ping-ponged between "missing explicit name(s)" and "unnecessary fragmentation" THREE FULL
+    // CYCLES (6 wasted round-trips) before converging — each retry prompt showed the model only
+    // ONE class of complaint, so fixing it had no visibility into the OTHER constraint it was
+    // simultaneously breaking, and nothing bounded the TOTAL round-trips across the three
+    // independently-one-shot gates. handleSplitPlanResponse() now checks all three together every
+    // round and folds every currently-detected complaint into ONE retry prompt, bounded by this
+    // shared counter so the whole process is guaranteed to terminate (fail-open, accept the plan
+    // as-is) even if the model still can't satisfy everything. Reset to 0 in beginRequest() for
+    // every new top-level request.
+    int splitPlanFixupRoundsUsed = 0;
+    // The exact complaint list handed to the model on the most recent fixup retry — compared
+    // against the NEXT round's freshly-computed complaints in handleSplitPlanResponse(). Confirmed
+    // live, twice, independently (a matrix create+formula-fill plan, and an unrelated table
+    // create+synthetic-data-fill plan): the model resent a plan with the identical unresolved
+    // fragmentation complaint all 3 rounds straight through, so every round after the first was a
+    // guaranteed-futile round-trip (one measured at 28s) before falling through to "proceeding
+    // anyway" regardless. When this round's complaints exactly match this list, the process has
+    // provably stopped converging — stop retrying immediately instead of spending the rest of
+    // kMaxSplitPlanFixupRounds on rounds that cannot possibly do anything different. Reset
+    // (cleared) in beginRequest() alongside splitPlanFixupRoundsUsed.
+    QStringList lastSplitPlanFixupComplaints;
+    // Bounds the SEPARATE, later-stage retry that fires when splitPlanCreationCollisions() flags a
+    // name the fixup process itself invented (never mentioned in originalRequestText) — the model
+    // is asked to invent a different placeholder instead of halting to ask the user for a name they
+    // never chose in the first place (see buildSplitPlanCreationCollisionRenamePrompt()'s doc
+    // comment). Deliberately independent of splitPlanFixupRoundsUsed: this check only ever runs
+    // once the earlier fixup rounds already converged, so it needs its own small budget rather than
+    // competing with (or being blocked by) that counter's own cap. Reset to 0 in beginRequest().
+    int splitPlanCreationNameRetryRoundsUsed = 0;
+    // Names confirmed Rule-6 sandbox-exempt (either pre-emptively skipped by
+    // splitPlanCreationNamesNeedingCheck() or filtered out post-response by
+    // splitPlanCollisionsAfterSandboxExemption()) — confirmed live: the model still re-derives
+    // "does this already exist?" itself inside its own EXPLORE step for such a name, wasting a
+    // round on a question the system already settled. startSplitPart() tells the part outright
+    // instead. Reset (cleared) in beginRequest().
+    QStringList splitPlanSandboxExemptNames;
     // Mirrors awaitingDocSelection/awaitingSplitPlan — true only while the final, NEVER-EXECUTED
     // merge call (see requestSplitMerge()) is in flight. handleSplitMergeResponse() resets it.
     bool awaitingSplitMerge = false;
@@ -600,6 +922,68 @@ class AiAssistant : public QObject
     // requestSplitMerge() feeds to the merge call.
     QStringList splitPartScripts;
 
+    // LIST mode: a purely mechanical alternative to split-mode decomposition — the user writes
+    // the steps themselves as a numbered list (see ApplicationWindow::parseListRequest()), so
+    // each item is parsed directly instead of asking the model to invent a decomposition, then
+    // run one at a time as its own full, independent request via startRequest(). See
+    // beginListRequest()/startNextListItem()/advanceListItem().
+    bool listModeActive = false;
+    struct ListItem
+    {
+        QString text;          // this item's own request text, run via startRequest() as-is
+        QStringList docTopics; // mechanical keyword match against knownDocTopics() — see
+                               // beginListRequest()'s doc comment
+    };
+    QList<ListItem> listItems;
+    int listItemIndex = -1;
+    // Started when an item's own request begins (startNextListItem()); read by
+    // listItemElapsedNote() right before the NEXT item starts, to report how long the one that
+    // just finished actually took.
+    QElapsedTimer m_listItemTimer;
+    // Started once when the whole LIST begins, never restarted per item — the per-item timer above
+    // only says how long the last item took, which gives no sense of total cost on a long list.
+    QElapsedTimer m_listTotalTimer;
+    // From "SPLIT"/"NOSPLIT"/"REVIEW"/"NOREVIEW" found in the LIST request — forces every item's
+    // own split-vs-single and review-vs-not choice, overriding the normal per-request heuristic.
+    // Both false in a pair (bare "LIST") leaves that decision to the same heuristic any standalone
+    // request already uses.
+    bool listItemForceSplit = false;
+    bool listItemForceNoSplit = false;
+    bool listItemForceReview = false;
+    bool listItemForceNoReview = false;
+    bool listItemForceExplore = false;
+    bool listItemForceNoExplore = false;
+    // The host's persisted defaults, passed in once by beginListRequest() (same values
+    // ApplicationWindow::askAi() would otherwise resolve itself per request) — used by
+    // startNextListItem() for a bare "LIST" whose items get neither force flag above.
+    bool listSplitByDefault = false;
+    bool listReviewByDefault = false;
+    bool listExploreByDefault = true;
+    // Mirrors m_contextHistoryStart's exact mechanism (see its own doc comment), scoped to the
+    // currently-running LIST call instead of the continuation-check's "new task" boundary —
+    // windowedHistoryStart() takes the max of the two. Never trims m_history itself, only what
+    // gets SENT for a request while this LIST is in progress; the full transcript (every item,
+    // and anything before the LIST started) stays intact for "show history" regardless.
+    qsizetype m_listHistoryStart = 0;
+    // True only while the one-shot instruction_block transformation call (see beginListRequest())
+    // is in flight. handleListTransformResponse() resets it and, on a successful re-parse, is
+    // what actually populates listItems/calls startNextListItem() — beginListRequest() itself
+    // only gets that far directly when instructionBlock was empty to begin with.
+    bool awaitingListTransform = false;
+    // Remembered across the transform call's async gap, since beginListRequest()'s own
+    // parameters aren't available again once handleListTransformResponse() fires.
+    QStringList pendingListRawItems; // fail-open fallback if the transform response can't be parsed
+    bool pendingListForceSplit = false;
+    bool pendingListForceNoSplit = false;
+    bool pendingListForceReview = false;
+    bool pendingListForceNoReview = false;
+    bool pendingListForceExplore = false;
+    bool pendingListForceNoExplore = false;
+    bool pendingListSplitByDefault = false;
+    bool pendingListReviewByDefault = false;
+    bool pendingListExploreByDefault = true;
+    bool pendingListAutoRun = false;
+
   signals:
     void responseReady(const QString &text);
     void errorOccurred(const QString &error);
@@ -625,19 +1009,29 @@ class AiAssistant : public QObject
     // creating any table at all.
     QString originalRequestReminder() const;
 
-    // Dispatches `aiText` into split-mode decomposition or the plain doc-selection preflight,
-    // whichever splitModeActive calls for — the shared resumption point for beginRequest() once
-    // the existence-check gate (if any fired) has resolved. Mirrors beginSplitPlanDecomposition()'s
-    // own null-m_content fallback.
+    // The shared resumption point for beginRequest() once the existence-check gate (if any fired)
+    // has resolved. Runs the new-task-vs-continuation check (see awaitingContinuationCheck's doc
+    // comment) regardless of splitModeActive — deliberately, since this gate and the
+    // originalRequestText refresh it drives matter equally for a plain (non-split) follow-up, not
+    // just a split one (confirmed live: see this method's .cpp doc comment for the incident that
+    // exposed the gap when it was split-mode-only). On a fresh conversation (m_history empty,
+    // nothing to conflict with) or no content provider, dispatches immediately via
+    // dispatchByMode()/startRequest(); otherwise defers to handleContinuationCheckResponse().
     void dispatchAfterExistenceCheck(const QString &aiText);
 
-    // The plain (non-split) half of dispatchAfterExistenceCheck() — lifted out of
-    // ApplicationWindow::askAi() (which used to call this inline) so beginRequest()'s existence-
-    // check gate can resume into it the same way it resumes into beginSplitPlanDecomposition().
-    // Sets awaitingDocSelection=false and calls startRequest() directly when docsMode() is
-    // Integrated (no doc content is ever attached regardless of topic, so asking which topics are
-    // needed would be a wasted round-trip) or m_content is null; otherwise sets
-    // awaitingDocSelection=true and dispatches the doc-selection preflight.
+    // Dispatches `aiText` into split-mode decomposition or the plain doc-selection preflight,
+    // whichever splitModeActive calls for — called once the continuation-check gate (if any) has
+    // already resolved, by dispatchAfterExistenceCheck() directly (fresh conversation) or by
+    // handleContinuationCheckResponse() (history existed).
+    void dispatchByMode(const QString &aiText);
+
+    // The plain (non-split) half of dispatchByMode() — lifted out of ApplicationWindow::askAi()
+    // (which used to call this inline) so beginRequest()'s existence-check gate can resume into it
+    // the same way it resumes into beginSplitPlanDecomposition(). Sets awaitingDocSelection=false
+    // and calls startRequest() directly when docsMode() is Integrated (no doc content is ever
+    // attached regardless of topic, so asking which topics are needed would be a wasted round-trip)
+    // or m_content is null; otherwise sets awaitingDocSelection=true and dispatches the
+    // doc-selection preflight.
     void beginNonSplitRequest(const QString &aiText);
 
     // Shared by runActionScript()'s three "give up" branches and handleExploreResponse()'s
@@ -646,6 +1040,16 @@ class AiAssistant : public QObject
     // unrelated request doesn't inherit stale split state) — both as a side effect of one call.
     // Returns an empty string (no side effect) when not in split mode.
     QString splitModeGiveUpNote();
+
+    // Called by every "give up" branch (runActionScript()'s three, handleExploreResponse()'s
+    // round-cap) right before it returns. Appends a synthetic (user, assistant) pair to m_history
+    // recording that the task did NOT complete — m_history otherwise contains only the model's own
+    // generated code turns, never execution outcomes, so a give-up leaves no trace at all once the
+    // final failing ask() is never sent. Confirmed live, severe: with nothing recorded, a later
+    // "is it running?" status question in the SAME conversation had no signal to contradict the
+    // shape of the original request, and fabricated a complete, specific, false success narrative
+    // instead of reporting the actual unresolved error.
+    void recordGiveUpInHistory(const QString &reason, const QString &lastError);
 
     // Clears the retry-loop tracking state runActionScript()'s error path reads/writes
     // (lastRetryError, lastAvailableBlock, isErrorRetryCorrection, consecutiveDocRetryCount) —
@@ -657,7 +1061,17 @@ class AiAssistant : public QObject
     // from that OLD, unrelated retry cycle, so hitting the identical error again falsely tripped
     // "same corrective explanation given twice in a row" — a check meant to detect a live retry
     // loop going nowhere, not a deliberate, standalone re-run of something already known to fail.
+    // Doc topics matched mechanically from a request's own text — replaces the doc-selection LLM
+    // pre-flight on the non-split path. See the .cpp definition for the under-selection incident
+    // and for why the model's answer had become unable to change the result.
+    QStringList docTopicsFromRequestText(const QString &text) const;
+
+    // Reports the chosen topics under `label`, prepends the content provider's baseline topics,
+    // and dispatches. Shared by the mechanical path and handleDocSelectionResponse().
+    void startRequestWithSelectedTopics(const QStringList &selected, const QString &label);
+
     void resetErrorRetryState();
+
 
     // Appends one line per HTTP response to a persistent, cross-session log — timestamp, latency,
     // request size, HTTP status, and any provider-reported rate-limit headers found (name contains
@@ -671,9 +1085,15 @@ class AiAssistant : public QObject
     // Extracted pieces of ask() — see that method's own body for how they're assembled. Kept as
     // private members (not free functions) since each touches instance state (m_cachedDocs,
     // m_history, m_lastCallMs, ...), not just its own parameters.
-    QString buildSystemPrompt(const QString &systemPrompt, bool includeDocs, const QStringList &docTopics);
+    QString buildSystemPrompt(const QString &systemPrompt, bool includeDocs, const QStringList &docTopics,
+                              bool expectsCode = true, const QString &userText = QString());
     qsizetype windowedHistoryStart(bool includeHistory) const;
-    QString buildSendingDiagnostic(qint64 payloadSize, qsizetype historyStart, const QStringList &docTopics) const;
+    // Turns before this index belong to a task/list the conversation has already moved past, and
+    // are excluded independently of the char budget — shared by windowedHistoryStart() and the
+    // diagnostic so the two can attribute an exclusion to the right cause.
+    qsizetype historyLowerBound() const;
+    QString buildSendingDiagnostic(qint64 payloadSize, qsizetype historyStart, qsizetype contextBoundary,
+                                   const QStringList &docTopics, bool includeHistory) const;
 
     // Shared shape of self-review's three internal round-trips (the mandatory review itself, and
     // its two one-shot corrective backstops): no docs, no system-prompt override, and excluded
@@ -696,8 +1116,19 @@ class AiAssistant : public QObject
     int m_maxSplitParts = 8;
     bool m_splitMergeEnabled = true;
     bool m_selfReviewEnabled = true;
+    bool m_exploreEnabled = true;
     int m_localTimeoutSec = 600;
-    QList<QPair<QString, QString>> m_history; // (user, assistant) pairs
+    QList<QPair<QString, QString>> m_history; // (user, assistant) pairs — the FULL transcript,
+    // permanent; only an explicit user "clear history" command (ApplicationWindow.cpp) ever
+    // shrinks it. historyText() ("show history") always reads all of it from index 0.
+    // Index into m_history marking where the CURRENT task's context begins — turns before this
+    // point still exist (in full, for historyText()) but are excluded from what windowedHistoryStart()
+    // slices into a call's context, same idea as its own token-budget window, just a second,
+    // independent reason to exclude old turns rather than a second history list. Set by
+    // handleContinuationCheckResponse() on a NEW verdict — deliberately NOT by clearHistory()
+    // itself, so an explicit user wipe and an automatic "that's a different task" boundary stay
+    // distinct: the former also erases the transcript, the latter never does.
+    qsizetype m_contextHistoryStart = 0;
     // See hasUnrunLastScript()/markLastScriptUnrun()/runLastScript()'s doc comments — true
     // only while m_history.last() is a shown-but-not-executed candidate script "run it" can still
     // unambiguously refer to. beginRequest() clears it unconditionally for any request that isn't

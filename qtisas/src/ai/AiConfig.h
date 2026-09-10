@@ -48,6 +48,7 @@ class AiConfig : public QWidget
     QSpinBox *m_maxSplitParts;
     QCheckBox *m_splitRequestMerge;
     QCheckBox *m_selfReviewEnabled;
+    QCheckBox *m_exploreEnabled;
     QSpinBox *m_localTimeoutSec;
 
 };

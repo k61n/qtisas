@@ -46,6 +46,18 @@ struct AiSettings
     // is what this toggles.
     bool selfReviewEnabled = true;
 
+    // When true (default), the two-phase agentic EXPLORE loop is available: the model may answer
+    // with a "# EXPLORE" read-only probe script, QtiSAS runs it and feeds the real output back
+    // before asking for the action script — see AiAssistant::handleExploreResponse(). When false,
+    // exploreModeReminder() is dropped from the system prompt, AND a "# EXPLORE" script that
+    // arrives anyway is answered with a single "EXPLORE is disabled" re-prompt instead of being
+    // run: the API docs carry their own EXPLORE rules, so the model can still ask for a round on
+    // the corpus's authority alone and dropping the reminder cannot prevent that by itself.
+    // Deliberately does NOT touch the existence-check or split-plan collision-check round-trips —
+    // those also send read-only scripts, but they're deterministic machinery QtiSAS drives itself,
+    // not model-initiated exploration, and disabling them would silently remove collision guards.
+    bool exploreEnabled = true;
+
     // Loopback backends are latency-bound by local generation, not payload size (see ask()'s timeout note).
     // Raised 600s from 300s after a real "Operation canceled" at larger num_ctx — tunable since usage tracks it.
     int localTimeoutSec = 600;
@@ -64,6 +76,7 @@ inline void AiReadSettings(QSettings *settings, AiSettings &s)
     s.maxSplitParts = settings->value("/MaxSplitParts", s.maxSplitParts).toInt();
     s.splitRequestMerge = settings->value("/SplitRequestMerge", s.splitRequestMerge).toBool();
     s.selfReviewEnabled = settings->value("/SelfReviewEnabled", s.selfReviewEnabled).toBool();
+    s.exploreEnabled = settings->value("/ExploreEnabled", s.exploreEnabled).toBool();
     s.localTimeoutSec = settings->value("/LocalTimeoutSec", s.localTimeoutSec).toInt();
     settings->endGroup();
 }
@@ -77,6 +90,7 @@ inline void AiWriteSettings(QSettings *settings, const AiSettings &s)
     settings->setValue("/MaxSplitParts", s.maxSplitParts);
     settings->setValue("/SplitRequestMerge", s.splitRequestMerge);
     settings->setValue("/SelfReviewEnabled", s.selfReviewEnabled);
+    settings->setValue("/ExploreEnabled", s.exploreEnabled);
     settings->setValue("/LocalTimeoutSec", s.localTimeoutSec);
     settings->endGroup();
 }

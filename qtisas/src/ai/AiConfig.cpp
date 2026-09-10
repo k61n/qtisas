@@ -181,6 +181,19 @@ AiConfig::AiConfig(ApplicationWindow *app, QWidget *parent) : QWidget(parent), m
     lay->addWidget(m_selfReviewEnabled, 13, 0, 1, 2);
     connect(m_selfReviewEnabled, &QCheckBox::toggled, app, [app](bool on) { app->aiSettings.selfReviewEnabled = on; });
 
+    // When off, the model is no longer reminded it may probe first, and a "# EXPLORE" script that
+    // arrives anyway is refused once rather than run — trading the ability to check live state
+    // before acting for one fewer round-trip per request. The deterministic existence/collision
+    // checks QtiSAS drives itself are unaffected.
+    m_exploreEnabled = new QCheckBox(tr("Allow EXPLORE probe rounds"));
+    m_exploreEnabled->setToolTip(
+        tr("On (default): the AI may return a read-only \"# EXPLORE\" script to inspect live "
+           "project state, whose real output is fed back before the action script is written.\n"
+           "Off: no probe rounds — the AI must answer from the docs and conversation alone."));
+    m_exploreEnabled->setChecked(app->aiSettings.exploreEnabled);
+    lay->addWidget(m_exploreEnabled, 14, 0, 1, 2);
+    connect(m_exploreEnabled, &QCheckBox::toggled, app, [app](bool on) { app->aiSettings.exploreEnabled = on; });
+
     // Loopback backends are latency-bound by local generation, not payload size (see ask()'s timeout note).
     // Confirmed live: a large local context window can exceed a fixed timeout, so this must be tunable, not constant.
     auto *localTimeoutLabel = new QLabel(tr("Local backend timeout:"));
@@ -188,12 +201,12 @@ AiConfig::AiConfig(ApplicationWindow *app, QWidget *parent) : QWidget(parent), m
         tr("HTTP timeout for a loopback base URL (127.0.0.1/localhost) only — cloud backends use "
            "their own fixed budgets.\nRaise this if a local model's own context window/prompt "
            "size makes a single call take longer than the current value."));
-    lay->addWidget(localTimeoutLabel, 14, 0);
+    lay->addWidget(localTimeoutLabel, 15, 0);
     m_localTimeoutSec = new QSpinBox();
     m_localTimeoutSec->setRange(30, 3600);
     m_localTimeoutSec->setSuffix(tr(" s"));
     m_localTimeoutSec->setValue(app->aiSettings.localTimeoutSec);
-    lay->addWidget(m_localTimeoutSec, 14, 1);
+    lay->addWidget(m_localTimeoutSec, 15, 1);
     connect(m_localTimeoutSec, QOverload<int>::of(&QSpinBox::valueChanged), app,
             [app](int v) { app->aiSettings.localTimeoutSec = v; });
 

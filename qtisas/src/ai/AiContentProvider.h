@@ -17,6 +17,7 @@ Description: Abstract interface supplying the AI orchestration logic (AiAssistan
 #define AICONTENTPROVIDER_H
 
 #include <QList>
+#include <QPair>
 #include <QString>
 #include <QStringList>
 
@@ -47,8 +48,11 @@ class AiContentProvider
     // The mandatory pre-execution self-review checklist — curated, silent-failure-prone gotchas
     // specific to this host's own scripting API. AiAssistant appends the user-editable rules list
     // (a generic mechanism, not host-specific) after this, so this method returns ONLY the
-    // curated/hardcoded portion.
-    virtual QString selfReviewChecklist() const = 0;
+    // curated/hardcoded portion. docTopics/splitModeActive scope it to this call's own selected
+    // topics (same list already used to filter attached doc content) plus split-mode-specific
+    // rules only when actually in split mode — implementations should skip topic-specific
+    // sections whose topic isn't present, but always include host-wide/general rules regardless.
+    virtual QString selfReviewChecklist(const QStringList &docTopics, bool splitModeActive) const = 0;
 
     // Topic name -> description text shown to the model during doc-topic selection and split-mode
     // decomposition (e.g. "table — Table/column creation and editing...").
@@ -78,7 +82,12 @@ class AiContentProvider
     // split-mode parts. Host-specific because its guidance (naming conventions, EXPLORE's
     // fresh-namespace rule, table()/graphWindow()/compiled-function lookup-by-name, ...) only
     // makes sense in terms of this host's own scripting API.
-    virtual QString splitPlanPreflightPrompt(const QString &requestText) const = 0;
+    //
+    // `docsIntegrated`: true when AiAssistant's DocsMode::Integrated is active — no per-topic doc
+    // content will ever be attached to any part regardless of what DOCS list it's given. Passed
+    // through as a plain bool rather than AiAssistant::DocsMode itself, to avoid this
+    // host-independent interface depending back on AiAssistant's own type.
+    virtual QString splitPlanPreflightPrompt(const QString &requestText, bool docsIntegrated) const = 0;
 
     // The one-shot pre-flight prompt asking the model which doc topics `requestText` needs.
     // Host-specific only insofar as its topic list/index comes from this same provider — the
@@ -87,20 +96,21 @@ class AiContentProvider
     // prompt literals of its own, only orchestration/wiring.
     virtual QString docSelectionPreflightPrompt(const QString &requestText) const = 0;
 
-    // The one-shot pre-flight prompt asking whether `newRequestText` continues the task described
-    // by `priorRequestText`, is a new independent task, or is genuinely unclear — asked before
+    // The one-shot pre-flight prompt asking whether `newRequestText` continues the ongoing
+    // conversation or is a new, independent task, or is genuinely unclear — asked before
     // split-mode decomposition begins, only when there's existing conversation history/an existing
-    // original request that could conflict. Self-contained (restates both texts explicitly, needs
-    // no external history) for the same reason splitPlanPreflightPrompt()/
-    // docSelectionPreflightPrompt() are. Host-specific only in the sense every prompt in this
-    // family lives behind this interface so no host holds its own QString literals; the judgment
-    // itself is generic. Expected answer: exactly one word, "CONTINUE", "NEW", or "UNCLEAR".
-    // Confirmed live: without this, an action-generation/error-retry call (which legitimately
-    // needs SOME history — its own immediately-preceding attempt) could not tell "this task's own
-    // prior turn" apart from "an earlier, unrelated request's turn" in the same flat history, and
-    // latched onto the unrelated one instead.
-    virtual QString continuationCheckPreflightPrompt(const QString &newRequestText,
-                                                     const QString &priorRequestText) const = 0;
+    // original request that could conflict. Deliberately NOT self-contained this time: unlike
+    // splitPlanPreflightPrompt()/docSelectionPreflightPrompt(), this call's own ask() site passes
+    // includeHistory=true, so the real (settings-windowed) conversation history — including
+    // whatever the prior turn actually PRODUCED (e.g. a created object's real name), not just what
+    // was asked — arrives as genuine prior messages ahead of this text. Confirmed live: an earlier
+    // version restated only the prior turn's raw request text ("new note") with no history at all,
+    // so a follow-up referencing "the note"/"this note" by name couldn't be recognized as a
+    // continuation — the model was never told what the prior turn actually created. Host-specific
+    // only in the sense every prompt in this family lives behind this interface so no host holds
+    // its own QString literals; the judgment itself is generic. Expected answer: exactly one word,
+    // "CONTINUE", "NEW", or "UNCLEAR".
+    virtual QString continuationCheckPreflightPrompt(const QString &newRequestText) const = 0;
 
     // Suffix appended to every user request before sending it, steering the model's response
     // shape (raw runnable code vs. plain-text discussion). Host-specific because the autoRun
@@ -137,6 +147,50 @@ class AiContentProvider
     // comment for the same underlying concept, checked mechanically rather than named in a prompt.
     virtual QString noOpPrintFunctionName() const = 0;
 
+    // A compact reminder of the EXPLORE convention (return a read-only "# EXPLORE"-first-line
+    // script to check real state before committing to an action; QtiSAS runs it, feeds the
+    // output back, then the real action script follows) — spliced into the base system prompt,
+    // but ONLY for AiAssistant::DocsMode::Integrated (see buildSystemPrompt()'s call site).
+    // Every other mode already gets the FULL teaching for this (the "Agentic Explore Mode"
+    // section of this host's own doc corpus, attached wholesale), so injecting it there too
+    // would be pure duplication. Integrated mode never attaches doc content locally at all —
+    // whether the model ever learns EXPLORE exists then depends entirely on a server-side RAG
+    // backend's retrieval happening to surface that doc section for a given call's query text,
+    // which is neither guaranteed nor consistent across a conversation's many separate calls
+    // (self-review, retries, ...). Confirmed live: a request needing exactly one EXPLORE round
+    // to resolve a naming ambiguity instead spent 10 rounds guessing plausible window names by
+    // trial and error — the model never once tried checking real state, apparently because
+    // nothing in that conversation's later retrieval rounds happened to remind it EXPLORE was
+    // an option. Host-specific because it's phrased around this host's own scripting API
+    // (scriptPrint(), the specific marker convention), like every other hook in this interface.
+    virtual QString exploreModeReminder() const = 0;
+
+    // The opposite of exploreModeReminder(): text telling the model that probe rounds are NOT
+    // available for this request, so it must not return a "# EXPLORE" script at all.
+    //
+    // Needed because dropping the reminder is not the same as forbidding the thing. Confirmed live:
+    // with EXPLORE unavailable and the reminder correctly withheld, 6 of 12 LIST items still opened
+    // with a probe — the API corpus carries its own "Agentic Explore Mode" rules and a MANDATORY
+    // table, so the model was obeying the docs, not an invitation from here. Each of those cost a
+    // refusal plus a re-prompt: ~111s of a 596s run. Silence left the corpus unopposed; this states
+    // the contradiction explicitly, in the one place that knows the request's actual mode.
+    virtual QString exploreUnavailableNote() const = 0;
+
+    // States, as fact, what the host currently holds under each name the request calls existing —
+    // `facts` pairs each name with the kind label(s) AiScriptHost::entityKinds() reported for it,
+    // an empty list meaning nothing of any kind exists by that name. Returns empty when there is
+    // nothing worth saying.
+    //
+    // This is the generate-only replacement for existingEntityVerificationPrompt()'s whole
+    // round-trip, and strictly stronger than what it replaced: the same VERDICT facts, but read
+    // from live state instead of from a script the model had to write, so it cannot be a fabricated
+    // verdict (confirmed live: an entire check script was once a bare
+    // scriptPrint("MISSING: Disk") — no check call anywhere, and wrong), costs no call, and
+    // executes nothing in a mode where the user asked for no execution. It also carries what the
+    // probe never could: the name's actual KIND, so "exists, as a matrix" can stop a request that
+    // meant a table.
+    virtual QString liveEntityFactsNote(const QList<QPair<QString, QStringList>> &facts) const = 0;
+
     // A short, comma-separated list of this host's own side-effecting creation-call examples (e.g.
     // "plot(), newTable(), newGraph(), Compiler.compile()") — spliced into the error-retry prompt's
     // warning against blindly rewriting a whole script from scratch when an earlier line in the
@@ -165,6 +219,25 @@ class AiContentProvider
     // detected.
     virtual QString splitPartScopeViolation(const QString &code, const QString &partDescription,
                                             const QString &earlierPartsCode) const = 0;
+
+    // Names every DELIVERABLE `requestText` asks for that leaves a mechanical fingerprint in code,
+    // and whose fingerprint appears nowhere in `code` — "you were asked for residuals and there is
+    // no residuals column anywhere in this script". The under-delivery counterpart to
+    // splitPartScopeViolation() above, which catches doing too MUCH; that one's own underreach
+    // Direction only covers a missing fit call, and generalizing it per-Direction does not scale.
+    //
+    // Deliberately a presence test over the WHOLE script, never per-branch: a script that
+    // legitimately guards ("if gw is None: report and stop") still has to CONTAIN the calls in the
+    // branch that does the work, so a guard cannot trip this. Confirmed live, and the reason this
+    // exists: asked to plot the data, fit curve and residuals into a graph, one item's script
+    // contained no addCurve/insertCurve and no "residu" at all — its else-branch recoloured one
+    // existing curve instead, i.e. it performed a LATER item's task and none of its own, and
+    // nothing in the pipeline noticed.
+    //
+    // Host-specific for the same reason splitPartScopeViolation() is: the fingerprints are this
+    // host's own API calls. Returns a human-readable explanation to feed back for a corrected
+    // retry, or an empty string when every requested deliverable is accounted for.
+    virtual QString missingRequestedDeliverables(const QString &code, const QString &requestText) const = 0;
 
     // True if `script` is just a single call to this host's own "print a message and do nothing
     // else" function (e.g. scriptPrint(...)) — the shape a part takes when it gives up on its
@@ -200,9 +273,9 @@ class AiContentProvider
     virtual bool isUnverifiedMissingClaim(const QString &script) const = 0;
 
     // Runs EVERY known, host-specific, STATELESS pre-execution mistake pattern against `code` (and,
-    // for the two patterns that need it, `originalRequestText`) and collects ALL matches — one
-    // dispatch point replacing what used to be 16 separate single-purpose pure virtual methods here
-    // (compiled-function self-shadow bugs, fitCurve name-reconstruction
+    // for the patterns that need it, `originalRequestText` and/or `earlierPartsCode`) and collects
+    // ALL matches — one dispatch point replacing what used to be 25 separate single-purpose pure
+    // virtual methods here (compiled-function self-shadow bugs, fitCurve name-reconstruction
     // mismatches, 0-based Table/Matrix indexing, hallucinated Legend/GraphWindow methods,
     // nonexistent existMatrix()/Qti3D-import forms, guessed candidate-name lists, ...). Each
     // individual pattern is still implemented as its own private helper in QtiSasAiContent.cpp, with
@@ -216,16 +289,48 @@ class AiContentProvider
     //
     // Deliberately collects every match instead of stopping at the first, as earlier versions of
     // this method did. Confirmed live: a single blocked script legitimately tripped MULTIPLE
-    // independent patterns at once. Stopping at the first meant only one issue was ever surfaced per
-    // retry round — the model fixed that one, the corrected script tripped the second pattern on the
-    // very next round, and so on, burning a retry per independent defect instead of fixing all of
-    // them together from one grounded prompt. Every pattern here is a pure function of its inputs
-    // with no dependency on any other pattern's result, so running all of them against the same code
-    // snapshot and combining the matches is safe. Order is preserved (same fixed priority order as
-    // before) since it becomes the presentation order in the combined retry prompt — see
-    // AiAssistant::runActionScript()'s call site, which joins the list into one errContext.
-    virtual QList<AiKnownMistakeMatch> detectKnownMistakes(const QString &code,
-                                                           const QString &originalRequestText) const = 0;
+    // independent patterns at once (e.g. a hardcoded chi2/dof alongside a missing PyQt import).
+    // Stopping at the first meant only one issue was ever surfaced per retry round — the model fixed
+    // that one, the corrected script tripped the second pattern on the very next round, and so on,
+    // burning a retry per independent defect instead of fixing all of them together from one grounded
+    // prompt. Every pattern here is a pure function of its inputs with no dependency on any other
+    // pattern's result, so running all of them against the same code snapshot and combining the
+    // matches is safe. Order is preserved (same fixed priority order as before) since it becomes the
+    // presentation order in the combined retry prompt — see AiAssistant::runActionScript()'s call
+    // site, which joins the list into one errContext.
+    //
+    // `earlierPartsCode` is the concatenated, actually-executed code of every earlier,
+    // already-completed split-mode part (empty string outside split mode — see
+    // AiAssistant::runActionScript()'s call site, which passes splitPartScripts.join("\n\n")) —
+    // needed by patterns that check "was the requested action performed ANYWHERE in fulfilling the
+    // whole request," not just within this one script. Confirmed live: without this, a check
+    // requiring THIS part to contain a compile() call whenever the WHOLE original request mentions
+    // "compile" would wrongly block a later part that legitimately just fits/plots a function an
+    // EARLIER part already compiled — the intended division of labor in split mode, not a defect.
+    //
+    // exploreScript=true skips the "requested action never happened" checks: an EXPLORE script is
+    // read-only by construction (explorePrefixBeforeFirstWriteCall() cuts every write call away),
+    // so demanding newTable()/compile() in it is unsatisfiable. Confirmed live: that produced an
+    // infinite loop — the check told the model to add newTable(), the addition was truncated, the
+    // check fired again, byte-identical for 3+ rounds at 37-50s each.
+    virtual QList<AiKnownMistakeMatch> detectKnownMistakes(const QString &code, const QString &originalRequestText,
+                                                           const QString &earlierPartsCode,
+                                                           bool exploreScript = false) const = 0;
+
+    // An EXPLORE-labeled script is supposed to be strictly read-only reconnaissance — nothing
+    // upstream of this call mechanically enforces that; it's purely a prompt-level convention the
+    // model is expected to follow (see ai-python-api.md's "EXPLORE must be read-only" rule). This
+    // scans `code` for this host's own write/create calls (newTable(), Compiler.compile(),
+    // Fittable.fit(), newGraph(), addCurve(), ...) appearing at top-level (unindented) and, if any
+    // are found, returns just the prefix of `code` strictly BEFORE the first such line — the
+    // genuinely-read-only part actually worth running as EXPLORE. Returns `code` unchanged if no
+    // write call is found at top level. Confirmed live: a script that started with a few harmless
+    // `# EXPLORE` lines (categories(), functionNames() filtering) went on, in the SAME response, to
+    // create a real table, compile two real fit functions, run two real fits, and build a real
+    // graph — all executed for real under the EXPLORE label, since nothing distinguished "labeled
+    // EXPLORE" from "safe to run as EXPLORE." Host-specific because the write/create vocabulary is
+    // this host's own API surface, not something the orchestrator can name generically.
+    virtual QString explorePrefixBeforeFirstWriteCall(const QString &code) const = 0;
 
     // Checks whether self-review's own output changed the model-name argument to configure()/
     // setFunction() compared to `preReviewDraft` (the script it was actually asked to review).
@@ -257,15 +362,17 @@ class AiContentProvider
     virtual QString selfReviewFalseIncompletenessClaim(const QString &preReviewDraft,
                                                        const QString &postReviewCode) const = 0;
 
-    // Builds the "existing X" verification preflight prompt: asks the model to write ONE short,
-    // read-only Python script that checks each name in `names` against every plausible kind
-    // (table, matrix, note, graph, compiled/Fittable function) and prints exactly "EXISTS: <name>"
-    // or "MISSING: <name>" for each — no discovery/fuzzy search, the EXACT name only. Host-specific
-    // because it depends on this host's own existTable()/existMatrix()/note()/graphWindow()/
-    // Compiler.functionNames()/Fittable.fitFunctions() vocabulary. See
-    // AiAssistant::extractExistingEntityNames() for how `names` is derived from the request text,
-    // and AiAssistant::beginRequest()'s doc comment for the overall rationale.
-    virtual QString existingEntityVerificationPrompt(const QStringList &names) const = 0;
+    // Builds the "existing X" verification preflight prompt. `labels` per name narrows which
+    // check(s) apply ({"window"}, {"compile","fittable"}, or empty for genuinely unknown — checks
+    // everything). See AiAssistant::extractExistingEntityNames()/splitPlanCreationNames().
+    // `includeDataProbe` asks the generated script to report a named table's row count and column
+    // names alongside the bare exists/missing verdict — for a request that will FIT or PLOT that
+    // table, existence alone is the wrong question. Confirmed live: a table created with 0 rows
+    // reported EXISTS, the item proceeded, and fit() died ~90s later on "failed to read data for
+    // the selected dataset(s)". False for a pure name-collision check, which has no dataset to
+    // inspect and must stay a minimal read-only probe.
+    virtual QString existingEntityVerificationPrompt(const QList<QPair<QString, QStringList>> &names,
+                                                     bool includeDataProbe) const = 0;
 
     // Checks whether a pre-review draft correctly looked up an EXISTING object via
     // matrix(name)/table(name)/note(name)/graphWindow(name), but self-review's own output replaced
@@ -295,6 +402,119 @@ class AiContentProvider
     // an empty string if no such regression is found.
     virtual QString selfReviewEnumConstantRegression(const QString &preReviewDraft,
                                                      const QString &postReviewCode) const = 0;
+
+    // Checks whether a pre-review draft had a COMPLETE, correct Compiler compile setup (all of
+    // setFunctionName()/setGroup()/setParamCount()/setParamNamesAll()/setParamInitsAll()/
+    // setParamLimitsAll()/setParamVariesAll(), for whichever ones it actually used, before
+    // compile()), but self-review's own output still calls compile() while missing one or more of
+    // those calls the draft had — self-review has no basis to drop required setup calls from an
+    // already-complete sequence. Confirmed live: a correct, complete compile setup was replaced
+    // wholesale with old-style raw-array C-function code (`double Fn(double* x, double* par)`)
+    // missing setGroup()/parameter declarations entirely, raising ValueError: "compile: group is
+    // empty" on the very next run — different in kind from selfReviewFunctionNameSubstitution/
+    // selfReviewLookupToCreationRegression/selfReviewEnumConstantRegression above (a single wrong
+    // name/lookup/value): this is a structural regression in a required multi-call sequence, not
+    // one wrong value. Host-specific because it depends on this host's own Compiler setup-call
+    // vocabulary. Returns a human-readable explanation, or an empty string if no such regression is
+    // found (including when neither script calls compile() at all).
+    virtual QString selfReviewCompileSequenceRegression(const QString &preReviewDraft,
+                                                        const QString &postReviewCode) const = 0;
+
+    // Checks whether a pre-review draft correctly imported a Qt class (QColor, QFont, QPen, QBrush,
+    // QFrame, Qt) from ONE PyQt major version (PyQt5 or PyQt6), but self-review's own output
+    // imports that SAME class from the OTHER major version instead — self-review has no basis to
+    // switch between them, since it can't observe which one this build actually embeds. Confirmed
+    // live: a correct `from PyQt6.QtGui import QColor, QFont` draft (this build's real binding) was
+    // silently rewritten by self-review, while fixing an unrelated issue elsewhere in the same
+    // script, to `from PyQt5.QtGui import QColor, QFont` — PyQt5 doesn't exist in this environment,
+    // and the script reached actual execution and crashed with "ModuleNotFoundError: No module
+    // named 'PyQt5'" a full round-trip later, a wasted retry the other self-review regression
+    // backstops above don't cover (they check function names/lookups/enum constants/compile
+    // sequences — none of them look at WHICH PyQt major version an already-correct import uses).
+    // Self-review regenerates the whole script from scratch every pass rather than patching only
+    // the lines it was actually asked to fix, so an unrelated-but-correct import line has no
+    // protection from being silently "re-derived" from the model's own general training-data
+    // priors (which skew heavily toward the far more common PyQt5) instead of copied verbatim from
+    // the draft. Host-specific because it depends on this host's own PyQt-import calling
+    // convention. Returns a human-readable explanation of the substitution, or an empty string if
+    // no PyQt-version change is found (including when neither script imports any of these classes).
+    virtual QString selfReviewPyQtVersionSubstitution(const QString &preReviewDraft,
+                                                      const QString &postReviewCode) const = 0;
+
+    // Checks whether a pre-review draft correctly reused an EXISTING compiled function by opening
+    // it (Compiler.open(name)) and recompiling with NO setCode() call in between (relying on
+    // whatever code is already loaded) — but self-review's own output adds a setCode() call for
+    // that SAME function name where the draft had none, fabricating a replacement body from
+    // nothing. Self-review has no docs or history telling it what the existing, already-working
+    // code actually is, so any setCode() it invents here is a guess, not a fix. Confirmed live,
+    // severe: EXPLORE had already printed the EXISTING, correct code for two functions
+    // ("y = scale * exp(-pow((x - center) / width, 2.0) / 2.0) + background;"); the pre-review
+    // draft correctly did nothing but `c.open(name); ok = c.compile()` for each — reusing that
+    // known-good code. Self-review rewrote this into a version that adds `c.setFunctionName(name)`
+    // (a no-op self-rename) and a brand-new `c.setCode(...)` with a fabricated, wrong-syntax full
+    // C-function-signature body — neither function actually compiled (both returned False), and
+    // because nothing checked the result (see the companion detectKnownMistakes() pattern for
+    // that), the failure was silently swallowed and the whole request reported complete anyway.
+    // Different in kind from selfReviewCompileSequenceRegression above: that one catches required
+    // calls DROPPED from an already-complete sequence; this one catches a setCode() call ADDED
+    // where the draft correctly had none — the same root cause (whole-script regeneration touching
+    // something the requested fix never asked about) in the opposite direction. Host-specific
+    // because it depends on this host's own Compiler.open()/setCode()/compile() calling
+    // convention. Returns a human-readable explanation, or an empty string if no such fabrication
+    // is found (including when neither script opens a function with no setCode() of its own).
+    virtual QString selfReviewFabricatedSetCodeMistake(const QString &preReviewDraft,
+                                                       const QString &postReviewCode) const = 0;
+
+    // Checks whether a pre-review draft correctly named a newly-created object (newTable/newMatrix/
+    // newGraph/newNote) using the exact quoted name from the request, but self-review's own output
+    // still creates that SAME kind of object with a DIFFERENT name — self-review has no access to
+    // the original request text, so it has no legitimate basis to alter a creation name the draft
+    // already got right. Confirmed live: a request naming the table "SAXS_data" survived correctly
+    // into the pre-review draft; self-review's rewrite silently dropped the underscore ("SAXSdata")
+    // in BOTH the newTable() call and an unrelated scriptPrint() confirmation string in the same
+    // script — the second occurrence rules out any C++-side name sanitization (which would never
+    // touch a plain print string), confirming this is self-review's own text-level typo, not a
+    // runtime effect. Host-specific because it depends on this host's own creation-call vocabulary.
+    // Returns a human-readable explanation, or an empty string if no such substitution is found.
+    virtual QString selfReviewCreationNameSubstitution(const QString &preReviewDraft,
+                                                       const QString &postReviewCode) const = 0;
+
+    // Checks whether `code` calls setGroup(name) with a value that matches none of the groups an
+    // immediately-preceding EXPLORE round actually printed (a line containing "group"/"groups" plus
+    // a bracketed, quoted list — e.g. a c.groups() listing) — a different shape from every check
+    // above: those all compare a pre-review draft against self-review's own edit; this compares the
+    // ORIGINAL candidate against real EXPLORE console output from earlier in the SAME part, so it
+    // isn't reducible to the BEFORE/AFTER pattern either. setGroup() has no rule requiring an
+    // existing group (compile-python-api.md only bans an empty name or one containing '/'), so this
+    // can never be a hard error — a brand-new group is a legitimate answer — but real, just-printed
+    // data sitting unused next to an unrelated invented value is worth surfacing once. Confirmed
+    // live, twice: EXPLORE printed the real existing groups via c.groups(), and the very next
+    // round's write action called setGroup("custom:sans") anyway, matching none of them — even in
+    // the run where the printed list was complete and EXPLORE otherwise behaved well (found a real
+    // reference function via the documented functionNames("ALL") keyword-search pattern). The
+    // exploration ran, cost a full round-trip, and had zero effect on the output. Host-specific
+    // because it depends on this host's own Compiler.groups()/setGroup() vocabulary. Returns a
+    // human-readable explanation, or an empty string if there's no setGroup() call, no EXPLORE
+    // output naming groups at all, or the chosen group does appear in what was printed.
+    virtual QString exploreGroupsIgnoredMistake(const QString &code, const QString &exploreOutput) const = 0;
+
+    // Returns `code` with setParamCount() corrected to the length every setParam*All() list agrees
+    // on, or empty when there is nothing to repair or the lists disagree (then the intended count
+    // is a judgment call, not a fact). Repaired rather than reported because the model proved
+    // unable to act on it: qtisas's own ValueError names the exact mismatch and the retry came
+    // back byte-identical twice, which then discarded the rest of a 12-item LIST.
+    virtual QString compilerParamCountRepair(const QString &code) const = 0;
+
+    // Returns `code` with setCode()'s lone declaration turned into an assignment to the yName, or
+    // empty when there is nothing to repair or the body has several declarations (then which one
+    // was meant to be the result is a guess). Same rationale as the count repair above: confirmed
+    // live twice, "double I" -> clang error -> "double y" -> blocked cost two rounds every time.
+    virtual QString compilerYNameAssignmentRepair(const QString &code) const = 0;
+
+    // Non-empty when the script role-plays further turns ("USER:"/"ASSISTANT:" lines) with
+    // invented prompts, scripts and tool output. Checked even for a script that failed to
+    // compile — that is the usual way this surfaces, and "SyntaxError" names the wrong problem.
+    virtual QString fabricatedConversationCheck(const QString &code) const = 0;
 };
 
 #endif

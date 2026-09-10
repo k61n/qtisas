@@ -16,7 +16,9 @@ Description: Abstract interface between the AI orchestration logic (currently in
 #ifndef AISCRIPTHOST_H
 #define AISCRIPTHOST_H
 
+#include <QList>
 #include <QString>
+#include <QStringList>
 
 // Result of running one candidate script (an action script or an EXPLORE script). No separate
 // "did it even compile" flag: a SyntaxError is just another exception, captured in `error`
@@ -60,6 +62,17 @@ class AiScriptHost
     // markdown-fence remnant left in the extracted code produced "not runnable" with no further
     // AI response ever sent — a silent, permanent stall).
     virtual bool canCompile(const QString &code, QString *errorOut = nullptr) const = 0;
+
+    // For each name in `names`, what the host currently holds under it: an entry per name, each a
+    // (possibly empty) list of kind labels — "window", "compiled function", "fit function".
+    // An empty list means nothing of any kind is known by that name.
+    //
+    // Answered from the host's own live state, with NO script execution. That is the whole point:
+    // the same facts used to cost a generated read-only script plus a full round-trip (measured at
+    // 24.2s on one item), and could not be obtained at all in generate-only mode, where executing
+    // anything violates what the user asked for. A host that cannot answer may return an empty
+    // list per name; callers treat that as "unknown", never as "does not exist".
+    virtual QList<QStringList> entityKinds(const QStringList &names) = 0;
 };
 
 #endif

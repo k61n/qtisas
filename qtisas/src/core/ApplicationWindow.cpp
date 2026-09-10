@@ -6169,6 +6169,57 @@ AiScriptResult ApplicationWindow::runScript(const QString &code, const QString &
     return result;
 }
 
+// Answers the AI's "does this name already exist, and as what?" question straight from live state
+// — see AiScriptHost.h's entityKinds() comment for why this is not a generated script. Labels match
+// the ones AiAssistant's own existence-check parsing already uses ("table"/"matrix"/"note"/"graph"/
+// "3D plot"/"compile"/"fittable"), so both paths speak one vocabulary.
+QList<QStringList> ApplicationWindow::entityKinds(const QStringList &names)
+{
+    // Snapshot each registry ONCE, not per name: groupFunctions() rescans and re-reads every .fif
+    // file on disk, so asking it per name would multiply that by the number of names checked.
+    QHash<QString, QString> windowKinds;
+    const QList<MdiSubWindow *> windows = windowsList();
+    for (MdiSubWindow *w : windows)
+    {
+        if (!w)
+            continue;
+        QString kind = "window";
+        if (w->inherits("Table"))
+            kind = "table";
+        else if (w->inherits("Matrix"))
+            kind = "matrix";
+        else if (w->inherits("Note"))
+            kind = "note";
+        else if (w->inherits("MultiLayer"))
+            kind = "graph";
+        else if (w->inherits("Graph3D"))
+            kind = "3D plot";
+        windowKinds.insert(w->objectName(), kind);
+    }
+    // groupFunctions("ALL") rather than functionNames(): the latter calls selectCategory(), moving
+    // the Compile widget's own list selection — a visible UI side effect for what must be a purely
+    // passive question. It reports whichever dimensionality the widget is currently set to (1D vs
+    // 2D), so a name can be absent here and still exist as the other kind; a name reported present
+    // is always genuinely present, which is the direction that matters for a collision warning.
+    const QStringList compiled = compileWidget ? compileWidget->groupFunctions("ALL") : QStringList();
+    const QStringList fitFuncs = fittableWidget ? fittableWidget->fitFunctions() : QStringList();
+
+    QList<QStringList> result;
+    for (const QString &name : names)
+    {
+        QStringList kinds;
+        const auto it = windowKinds.constFind(name);
+        if (it != windowKinds.constEnd())
+            kinds << it.value();
+        if (compiled.contains(name))
+            kinds << "compile";
+        if (fitFuncs.contains(name))
+            kinds << "fittable";
+        result << kinds;
+    }
+    return result;
+}
+
 // Checks syntax only — WITHOUT running `code` — so the caller can decide "not runnable" (plain
 // English instead of code) vs. "worth running/self-reviewing" before ever touching scriptEnv. A
 // separate AiScriptHost method specifically so the orchestration logic that decides what to do
@@ -6296,6 +6347,25 @@ void ApplicationWindow::connectAiSignalsOnce()
             m_ai->handleExistenceCheckScriptResponse(code);
             return;
         }
+        // Split-plan creation-name collision-check round-trip — see
+        // AiAssistant::handleSplitPlanResponse()'s doc comment. Same early priority as the
+        // "existing X" verification check above (it's the same kind of bare check-script
+        // round-trip), checked right after it.
+        if (m_ai->awaitingSplitPlanCreationCheckScript)
+        {
+            m_ai->handleSplitPlanCreationCheckScriptResponse(code);
+            return;
+        }
+        // LIST mode's instruction_block transformation round-trip — see
+        // AiAssistant::beginListRequest()'s doc comment. Checked immediately after the
+        // existence-check above, before anything else: this is a self-contained, one-shot call
+        // that must never be misinterpreted as a continuation-check/doc-selection/split-plan
+        // response.
+        if (m_ai->awaitingListTransform)
+        {
+            m_ai->handleListTransformResponse(code);
+            return;
+        }
         // New-task-vs-continuation round-trip — see AiAssistant::handleContinuationCheckResponse()'s
         // doc comment. Checked before everything else below: its own answer must never be
         // misinterpreted as a doc-selection/split-plan response.
@@ -6362,6 +6432,11 @@ void ApplicationWindow::connectAiSignalsOnce()
                 // of going back through the model — see askAi()'s own "run it" interception.
                 m_ai->markLastScriptUnrun();
                 print("▸▸▸ AI code (not run):\n\n" + code);
+                // Reported, never retried — see AiAssistant::generatedScriptWarning()'s doc
+                // comment. Printed AFTER the script so it reads as a note on what you just saw.
+                const QString warning = m_ai->generatedScriptWarning(code);
+                if (!warning.isEmpty())
+                    print("▸▸▸ AI: not retried (generate-only): " + warning);
             }
             else
             {
@@ -6370,6 +6445,19 @@ void ApplicationWindow::connectAiSignalsOnce()
                 const QString extracted = tryExtractInformationalMessage(code);
                 print("▸▸▸ AI answer:\n\n" + (extracted.isEmpty() ? code : extracted));
             }
+            // A LIST in generate-only mode still has to advance. advanceListItem() is normally
+            // reached from runActionScript()'s post-execution hook, which never runs here — so
+            // without this the list generated item 1, printed it, and silently stopped, leaving
+            // items 2..N undispatched AND listModeActive stuck true. That stale flag is the live
+            // cross-request bug the cancel path already guards against: the next unrelated
+            // auto-run request would reach the same hook, see listModeActive, and dispatch item 2
+            // of an abandoned list as if it were that request's own continuation.
+            //
+            // Deliberately AFTER printing this item's script, and independent of
+            // isRealActionScript: a plain-text/informational answer is still that item's answer,
+            // and the list must move on either way rather than stalling on one non-script reply.
+            if (m_ai->listModeActive)
+                m_ai->advanceListItem();
         }
     });
     connect(m_ai, &AiAssistant::errorOccurred, this,
@@ -6385,6 +6473,16 @@ void ApplicationWindow::connectAiSignalsOnce()
 // any AI call — and thus before print() itself would ever be invoked for this request.
 void ApplicationWindow::echoAiRequest(const QString &effectiveText)
 {
+    // A LIST request (see AiAssistant::parseListRequest()) gets its own, single-arrow prefix and
+    // scriptOutputColor green — visually distinct from a normal "▸▸▸ AI request: ..." line, and
+    // consistent with the "▸▸ AI LIST: ..." status lines beginListRequest()/startNextListItem()
+    // print as it runs — coloring for both is owned entirely by PythonSyntaxHighlighter, not here
+    // (see its own matching check). Reuses parseListRequest() itself
+    // rather than re-deriving the same check, so this echo and the actual dispatch decision in
+    // askAi() can never disagree about what counts as a LIST request.
+    const bool isList = AiAssistant::parseListRequest(effectiveText).isList;
+    const QString headerText = (isList ? "▸    AI request: " : "▸▸▸ AI request: ") + effectiveText.split("\n").first();
+    const QColor normalFg = qApp->palette().color(QPalette::Text);
     if (!m_aiForceConsole && scriptWindow && scriptWindow->isVisible())
     {
         scriptWindow->showOutputPanel();
@@ -6394,16 +6492,16 @@ void ApplicationWindow::echoAiRequest(const QString &effectiveText)
         // the previous line was scriptPrintHighlighted()'s own green script-output color, append()
         // can silently continue in that same color instead of the normal default, confirmed live
         // (this exact header line rendered green right after a script's colored output). Force an
-        // explicit, definite foreground via qApp's own palette (not a hardcoded color, so this
-        // still respects whatever light/dark theme is active) instead of trusting append()'s
-        // inherited-format behavior.
+        // explicit, definite foreground instead of trusting append()'s inherited-format behavior.
         QTextCursor cursor(out->document());
         cursor.movePosition(QTextCursor::End);
-        if (!out->document()->isEmpty())
-            cursor.insertBlock();
         QTextCharFormat fmt;
-        fmt.setForeground(qApp->palette().color(QPalette::Text));
-        cursor.insertText("▸▸▸ AI request: " + effectiveText.split("\n").first(), fmt);
+        fmt.setForeground(normalFg);
+        // Newline+text in ONE insertText(), not insertBlock() then insertText() — see the matching
+        // comment in scriptPrintHighlighted()/scriptPrint(): the latter let
+        // PythonSyntaxHighlighter's isScriptOutput probe fire on the still-EMPTY new block first,
+        // leaving Python highlighting on top of what should be plain text.
+        cursor.insertText((out->document()->isEmpty() ? QString() : QString("\n")) + headerText, fmt);
         out->setTextCursor(cursor);
         out->setCurrentCharFormat(fmt);
         out->ensureCursorVisible();
@@ -6411,10 +6509,13 @@ void ApplicationWindow::echoAiRequest(const QString &effectiveText)
     else
     {
 #ifdef SCRIPTING_CONSOLE
-        if (QTextEdit *sc = scriptingConsole())
+        QTextEdit *sc = scriptingConsole();
+        if (sc)
             ScriptEdit::ensureOneTrailingBlank(sc);
+        scriptPrint(headerText);
+#else
+        scriptPrint(headerText);
 #endif
-        scriptPrint("▸▸▸ AI request: " + effectiveText.split("\n").first());
     }
 }
 
@@ -6429,14 +6530,25 @@ bool ApplicationWindow::handleAiTextCommand(const QString &trimmed)
         // request is in flight — ask() itself refuses to run at all while busy ("previous request
         // still in progress"), which would otherwise make it impossible to type this mid-request.
         m_ai->stop();
-        m_ai->awaitingSelfReview = false;
+        // Every pending round-trip, not a hand-picked few: a reply arriving after this cancel is
+        // routed by these flags alone, and one left set sends it into a handler whose state has
+        // just been cleared below. Confirmed live as a SIGSEGV — see resetPendingRoundTrips().
+        m_ai->resetPendingRoundTrips();
+        // Not covered by that reset (it waits for the user, not the network) but a cancel does
+        // drop the pending question, so clear it here.
+        m_ai->awaitingContinuationClarification = false;
         m_ai->autoContinueCount = 0;
         m_ai->splitModeActive = false;
-        m_ai->awaitingSplitPlan = false;
-        m_ai->awaitingSplitMerge = false;
         m_ai->splitPlan.clear();
         m_ai->splitPartIndex = -1;
         m_ai->splitPartScripts.clear();
+        // Same reasoning as the split-mode fields above — without this, a stale listModeActive
+        // left over from a stopped LIST could make a later, completely unrelated successful
+        // request get mistaken for "the next list item completing" by runActionScript()'s
+        // completion hook.
+        m_ai->listModeActive = false;
+        m_ai->listItems.clear();
+        m_ai->listItemIndex = -1;
         print("▸▸▸ AI: request cancelled.");
         return true;
     }
@@ -6577,18 +6689,43 @@ void ApplicationWindow::askAi(const QString &text, bool autoRun, bool forceConso
 
     m_aiForceConsole = forceConsole;
 
+    // LIST mode — see AiAssistant::parseListRequest()'s doc comment. Checked before the normal
+    // "SPLIT:"/"NOSPLIT:" single-request marker below: LIST is a completely different dispatch
+    // path (N independent full requests run in sequence, not one request that may itself split),
+    // so a match here must never fall through to parseSplitMarker()/beginRequest() at all.
+    const AiAssistant::ParsedListRequest parsedList = AiAssistant::parseListRequest(text);
+    if (parsedList.isList)
+    {
+        connectAiSignalsOnce();
+        echoAiRequest(text);
+        // splitByDefault forced OFF in generate-only mode, mirroring the plain-request fallback a
+        // few lines below: split mode advances between PARTS only when a part actually executes,
+        // so with no execution every item would emit part 1's script and lose parts 2..N (the
+        // next item then resets the split state, hiding it). One script per item is what
+        // generate-only can honestly deliver.
+        m_ai->beginListRequest(parsedList, autoRun && aiSettings.splitByDefault, aiSettings.selfReviewEnabled,
+                               aiSettings.exploreEnabled, autoRun);
+        return;
+    }
+
     // Split-mode trigger — see AiAssistant.h's splitModeActive doc comment and
     // AiAssistant::parseSplitMarker()'s doc comment for the "SPLIT"/"NOSPLIT" marker rules.
     QString effectiveText;
     bool wantsSplit = AiAssistant::parseSplitMarker(text, aiSettings.splitByDefault, &effectiveText);
     if (wantsSplit && !autoRun)
     {
-        // Split mode needs execution to advance, so it cannot honor "generate only". This used to
-        // force autoRun on, overriding the no-run choice the user actually made. Falling back to a
-        // plain, non-split request honors autoRun=false instead, losing only the decomposition —
-        // and no longer worth announcing, since it is now normal behavior rather than an override.
+        // Split mode needs execution to advance, so can't honor "generate only" — previously force-enabled autoRun,
+        // overriding the no-run choice. Now falls back to a plain, non-split request: autoRun=false is always honored
+        // (losing split decomposition here), no print since this is now normal behavior, not worth announcing.
         wantsSplit = false;
     }
+    // Chained onto effectiveText (already stripped of SPLIT/NOSPLIT), so REVIEW/NOREVIEW work
+    // together with either marker in any order/position.
+    m_ai->setSelfReviewEnabled(
+        AiAssistant::parseReviewMarker(effectiveText, aiSettings.selfReviewEnabled, &effectiveText));
+    // Chained onto effectiveText the same way, so EXPLORE/NOEXPLORE combines with the SPLIT and
+    // REVIEW markers in any order/position.
+    m_ai->setExploreEnabled(AiAssistant::parseExploreMarker(effectiveText, aiSettings.exploreEnabled, &effectiveText));
 
     // Chained onto effectiveText (already stripped of SPLIT/NOSPLIT), so REVIEW/NOREVIEW work
     // together with the split marker in any order/position.
@@ -6632,9 +6769,12 @@ void ApplicationWindow::scriptPrint(const QString &text)
         {
             QTextCursor cursor(out->document());
             cursor.movePosition(QTextCursor::End);
-            if (!out->document()->isEmpty())
-                cursor.insertBlock();
-            cursor.insertText(text, fmt);
+            // Newline+text in ONE insertText(), not insertBlock() then insertText() — see the
+            // matching comment in scriptPrintHighlighted(): the latter let
+            // PythonSyntaxHighlighter's isScriptOutput probe fire on the still-EMPTY new block
+            // first, missing this format and leaving Python highlighting (e.g. its numeric-color
+            // rule) on top of what should be plain text.
+            cursor.insertText((out->document()->isEmpty() ? QString() : QString("\n")) + text, fmt);
             out->setTextCursor(cursor);
             out->setCurrentCharFormat(fmt);
             out->ensureCursorVisible();
@@ -6651,9 +6791,8 @@ void ApplicationWindow::scriptPrint(const QString &text)
         {
             QTextCursor cursor(console->document());
             cursor.movePosition(QTextCursor::End);
-            if (!console->document()->isEmpty())
-                cursor.insertBlock();
-            cursor.insertText(text, fmt);
+            // See the matching comment in the scriptWindow branch above — same fix, same reason.
+            cursor.insertText((console->document()->isEmpty() ? QString() : QString("\n")) + text, fmt);
             console->setTextCursor(cursor);
             console->setCurrentCharFormat(fmt);
             console->ensureCursorVisible();
@@ -6719,9 +6858,10 @@ void ApplicationWindow::scriptPrintHighlighted(const QString &text)
             const QTextCharFormat previousFormat = out->currentCharFormat();
             QTextCursor cursor(out->document());
             cursor.movePosition(QTextCursor::End);
-            if (!out->document()->isEmpty())
-                cursor.insertBlock();
-            cursor.insertText(text, fmt);
+            // Newline+text in ONE insertText(), not insertBlock() then insertText() — the latter
+            // let PythonSyntaxHighlighter's isScriptOutput probe fire on the still-EMPTY new
+            // block first, missing the green format and leaving Python highlighting on top.
+            cursor.insertText((out->document()->isEmpty() ? QString() : QString("\n")) + text, fmt);
             // Without this, insertText() leaves its format as the cursor's "current" format —
             // append() (used by the plain, uncolored scriptPrint()/print() for every later line)
             // continues from whatever format the document last ended with, so every subsequent
@@ -6744,13 +6884,13 @@ void ApplicationWindow::scriptPrintHighlighted(const QString &text)
             const QTextCharFormat previousFormat = console->currentCharFormat();
             QTextCursor cursor(console->document());
             cursor.movePosition(QTextCursor::End);
-            if (!console->document()->isEmpty())
-                cursor.insertBlock();
-            cursor.insertText(text, fmt);
+            // See the matching comment in the scriptWindow branch above — same fix, same reason.
+            cursor.insertText((console->document()->isEmpty() ? QString() : QString("\n")) + text, fmt);
             // See the matching comment in the scriptWindow branch above — restores the format
             // that was actually in effect before this call, not an assumed default.
             cursor.setCharFormat(previousFormat);
             console->setTextCursor(cursor);
+            console->setCurrentCharFormat(previousFormat);
             console->ensureCursorVisible();
         }
     }

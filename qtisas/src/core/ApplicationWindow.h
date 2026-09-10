@@ -105,6 +105,7 @@ public:
     // AiScriptHost implementation. Together these are the only QtiSAS/Python-C-API-specific
     // dependency the AI orchestration logic in AiAssistant has — see AiScriptHost.h.
     AiScriptResult runScript(const QString &code, const QString &scriptName) override;
+    QList<QStringList> entityKinds(const QStringList &names) override;
 
     void print(const QString &message) override;
     bool canCompile(const QString &code, QString *errorOut = nullptr) const override;
