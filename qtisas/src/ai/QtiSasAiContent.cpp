@@ -959,12 +959,22 @@ const RequestedDeliverable kRequestedDeliverables[] = {
     {R"(\baxis (?:titles?|labels?)\b)", R"(\bset[XYZ]Title\b|\bsetAxisTitle\b|\bset[XYZ]AxisLabel\b)",
      "the axis titles/labels (none are set)"},
     {R"(\bminor tick)", R"(MinorTicks)", "the minor tick marks (no minor-tick call)"},
-    // Split from "active tab" below: adding a tab and activating one are different calls, and a
-    // script that only activates the window it already has has not added a tab.
-    {R"(\bscript tab\b)", R"(\baddTab\b|\beditorAt\b)",
-     "the script TAB itself (no addTab()/editorAt() — setText() alone writes into whatever tab already exists)"},
-    {R"(\bactive tab\b)", R"(\baddTab\b|\beditorAt\b|\bactivateWindow\b|\bsetActive)",
-     "keeping it as the ACTIVE tab (nothing activates a tab or window)"},
+    // Only an ADD demands addTab(). A new note already owns one tab — note-python-api.md's own
+    // example prints "3  (1 initial + 2 added)" — and setText() "replace[s] full text in the active
+    // editor tab", so "create a note WITH a script tab" is satisfied by writing into the tab that
+    // already exists. Confirmed live as a false positive: the three-line
+    // newNote()/setText()/setAutoexec() answer was blocked in every run, and each retry spent a
+    // round trip adding a SECOND tab to write into, leaving tab 0 empty for no gain.
+    // There is deliberately NO "active tab" entry beside these two: note-python-api.md states that
+    // addTab() already activates the tab it creates and that no Python call can activate a
+    // different, already-existing tab (setCurrentIndex/setActiveTab/setCurrentTab are not on Note).
+    // So "keep it as the active tab" is satisfied by doing nothing on a one-tab note, and by
+    // addTab() itself otherwise — such an entry could only ever demand that spurious second tab.
+    // activateWindow() would not have counted either way: it activates the WINDOW, not a tab.
+    {R"(\badd(?:s|ing)?\b[^.]{0,40}?\bscript tab\b)", R"(\baddTab\b)",
+     "the added script TAB (no addTab() — the request asks to ADD a tab to an existing note)"},
+    {R"(\bscript tab\b)", R"(\baddTab\b|\beditorAt\b|\bcurrentEditor\b|\bsetText\b)",
+     "the script tab's content (nothing writes a script into any tab)"},
     {R"(\bautoexec\b|\beach time the project loads\b|\bwhen the project (?:file )?is opened\b)", R"(\bsetAutoexec\b)",
      "auto-execution on project load (no setAutoexec() call)"},
     {R"(\bsimulate\b)", R"(\bsimulateCurve\b)", "the simulated curve (no simulateCurve() call)"},
