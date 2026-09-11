@@ -194,6 +194,9 @@
 #   function's domain and reuse it EXACTLY (byte-for-byte) — only invent a new one if nothing
 #   matches. Reusing near-variants inconsistently (e.g. "SANS" vs "sans" vs "Sans") fragments
 #   the Explorer category tree into duplicates instead of one real group.
+#   scanGroups() CLEARS the editor (group and function name) while it refreshes the explorer, so
+#   call it BEFORE new() — never between setFunctionName() and compile(), or compile() fails with
+#   "function name is empty" despite the setFunctionName() call sitting right above it.
 #   c.scanGroups(); existing = c.groups()
 #   match = next((g for g in existing if "sans" in g.lower()), None)
 #   c.setGroup(match if match else "custom:sans")   # reuse if found, else propose one

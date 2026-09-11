@@ -720,6 +720,21 @@ c.scanGroups()
 Rescans the library path and refreshes the category and function explorer lists.
 Always call this after `setPath()` or after adding new FIF files externally.
 
+> **It CLEARS the editor — call it BEFORE `new()`, never between `setFunctionName()` and
+> `compile()`.** Refreshing the explorer resets the editor fields as it goes, including the group
+> and function name. Confirmed live: `new()` → `setFunctionName("ai/PorodPowerLaw")` →
+> `scanGroups()` → ... → `compile()` failed with `compile: function name is empty` while the
+> `setFunctionName()` call sat three lines above it. Looking up a group name mid-sequence is the
+> natural reason to call it, so get the groups first:
+>
+> ```python
+> c.scanGroups()                      # first — it clears the editor
+> group = next((g for g in c.groups() if "porod" in g.lower()), "custom:porod")
+> c.new()
+> c.setFunctionName("ai/PorodPowerLaw")
+> c.setGroup(group)
+> ```
+
 ---
 
 ### open(fifName)
