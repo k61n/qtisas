@@ -132,6 +132,8 @@ class QtiSasAiContent : public AiContentProvider
     static QString pyQt6FrameStyleComboMistake(const QString &code);
     static QString fittableParametersDirectiveIgnoredMistake(const QString &code, const QString &originalRequestText);
     static QString redundantFittableReconfigureMistake(const QString &code, const QString &earlierPartsCode);
+    static QString compilerScanGroupsAfterNameMistake(const QString &code);
+    static QString fittableFitBeforeConfigureMistake(const QString &code);
     static QString fittableSelectStageBeforeFunctionMistake(const QString &code);
     static QHash<QString, bool> openSessionsHaveSetCode(const QString &code);
 };

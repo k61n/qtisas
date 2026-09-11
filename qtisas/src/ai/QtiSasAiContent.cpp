@@ -948,8 +948,13 @@ struct RequestedDeliverable
 
 const RequestedDeliverable kRequestedDeliverables[] = {
     {R"(\bresidual)", R"(residu)", "residuals (no residuals column is read or plotted anywhere)"},
-    {R"(\bfit curve\b)", R"(\baddCurve\b|\binsertCurve\b|\bplot\()",
-     "the fit curve (no addCurve()/insertCurve()/plot() call anywhere)"},
+    // plotResults() belongs here: fittable-python-api.md documents it as "plot data + fit curves in
+    // a named graph", i.e. the supported ONE-call path. Confirmed live as a false positive without
+    // it — a correct `f.plotResults("FitResults")` was blocked for having no addCurve/insertCurve,
+    // demanding manual curve insertion the docs never require. Note it covers data + fit only, so
+    // the separate "residuals" entry below still applies on its own.
+    {R"(\bfit curve\b)", R"(\baddCurve\b|\binsertCurve\b|\bplotResults\b|\bplot\()",
+     "the fit curve (no addCurve()/insertCurve()/plotResults()/plot() call anywhere)"},
     {R"(\blegend\b)", R"(\bnewLegend\b|\bshowLegend\b|\blegend\()", "the legend (nothing creates or shows one)"},
     {R"(\baxis (?:titles?|labels?)\b)", R"(\bset[XYZ]Title\b|\bsetAxisTitle\b|\bset[XYZ]AxisLabel\b)",
      "the axis titles/labels (none are set)"},
@@ -1271,17 +1276,42 @@ QString QtiSasAiContent::splitPartScopeViolation(const QString &code, const QStr
     // SECOND, extra setFunctionName() call for an unrelated, separately-named function smuggled
     // into an otherwise correctly single-scoped part); a mismatch on the very first call against
     // an explicitly named target is just as real a violation.
-    static const QRegularExpression explicitNameInDescriptionRe(R"(['"]([A-Za-z_][A-Za-z0-9_/]*)['"])");
+    // A quoted name only counts as naming a FUNCTION when it isn't introduced as some other kind of
+    // object. Confirmed live: a description reading `Create a table "GaussPeak" ... Plot ... into
+    // graph "GaussPeakFit"` asked for two functions WITHOUT naming either, yet both quoted names
+    // made descriptionNamesAFunction true — so the first-call exemption below switched off and the
+    // invented "ai/GaussianPeak"/"ai/LorentzianPeak" were flagged as another part's job. That is
+    // exactly the "blocks every possible name, unconditionally" failure the exemption exists to
+    // prevent, reached through a side door: the item was blocked twice and the run died on it.
+    static const QRegularExpression explicitNameInDescriptionRe(
+        R"((?<!\btable )(?<!\bmatrix )(?<!\bnote )(?<!\bgraph )(?<!\bwindow )['"]([A-Za-z_][A-Za-z0-9_/]*)['"])",
+        QRegularExpression::CaseInsensitiveOption);
     const bool descriptionNamesAFunction = explicitNameInDescriptionRe.match(partDescription).hasMatch();
     static const QRegularExpression setFunctionNameRe(R"(setFunctionName\(\s*["']([^"']+)["']\s*\))");
+    // How many invented names the description actually licenses: one per "function" it asks for,
+    // minimum one. Confirmed live in both directions — "compile a custom Porod power-law fit
+    // FUNCTION" (one) must still flag a second, smuggled compile job, while "Compile a custom
+    // Gaussian peak fit FUNCTION and a Lorentzian fit FUNCTION" (two) legitimately needs two
+    // invented names and used to have its second one blocked no matter what it was called, twice,
+    // killing the run. Counting the noun is what separates those two shapes.
+    static const QRegularExpression functionNounRe(R"(\bfunctions?\b)", QRegularExpression::CaseInsensitiveOption);
+    int inventedNamesAllowed = 0;
+    QRegularExpressionMatchIterator nounIt = functionNounRe.globalMatch(partDescription);
+    while (nounIt.hasNext())
+    {
+        nounIt.next();
+        ++inventedNamesAllowed;
+    }
+    inventedNamesAllowed = qMax(inventedNamesAllowed, 1);
+
     QRegularExpressionMatchIterator it = setFunctionNameRe.globalMatch(code);
     int setFunctionNameIndex = 0;
     while (it.hasNext())
     {
         const QString name = it.next().captured(1);
         const QString bareName = name.startsWith("ai/", Qt::CaseInsensitive) ? name.mid(3) : name;
-        const bool isFirstCompileCall = (setFunctionNameIndex++ == 0);
-        if ((!isFirstCompileCall || descriptionNamesAFunction) &&
+        const bool withinInventedAllowance = (setFunctionNameIndex++ < inventedNamesAllowed);
+        if ((!withinInventedAllowance || descriptionNamesAFunction) &&
             !partDescription.contains(name, Qt::CaseInsensitive) &&
             !partDescription.contains(bareName, Qt::CaseInsensitive))
             violations << "This part's own job (\"" + partDescription +
@@ -1375,7 +1405,15 @@ QString QtiSasAiContent::splitPartScopeViolation(const QString &code, const QStr
         // and the retry that followed converged on the WORSE name "Surface" (dropping "3D"
         // entirely) — which then silently created a stray NEW window instead of continuing to
         // update the "Surface3D" window the rest of the conversation had been building on.
-        static const QRegularExpression tokenRe(R"([A-Za-z]+|[0-9]+)");
+        // CamelCase counts as a word boundary: the rule's own intent is that a name "trace back to
+        // the description, just reordered", and "SinCosSurface" does — Sin, Cos and Surface are all
+        // in "Plot a 3D surface of sin(x)*cos(y)". Without the split it was one opaque token
+        // (`sincossurface`), matched nothing, and charged a round-trip at the same item in three
+        // consecutive runs before the model fell back to the literal word "surface". Unrelated
+        // names are still rejected: every piece must be present, so "ScatterPlot" against this
+        // description still fails on `scatter`/`plot`... and on `plot` it would pass only because
+        // the description really does say "Plot", which is the intended semantics.
+        static const QRegularExpression tokenRe(R"([A-Z][a-z]+|[A-Za-z]+|[0-9]+)");
         QSet<QString> nameTokens;
         QRegularExpressionMatchIterator nameTokIt = tokenRe.globalMatch(name);
         while (nameTokIt.hasNext())
@@ -3298,14 +3336,34 @@ QString QtiSasAiContent::conditionalMaximizeWindowMistake(const QString &code)
     if (!code.contains(QStringLiteral("arrangeLayers(")) && !code.contains(QStringLiteral("setCanvasGeometry(")))
         return {}; // not a stacked-panel recipe script — nothing to check
 
+    // The if-HEADER's own indentation is captured so the body can be delimited by DEPTH.
+    // Confirmed live as a false positive otherwise: the previous pattern took the body as "any
+    // following indented line", which inside an enclosing `else:` swallowed everything after the
+    // branch — including an if-level, genuinely UNCONDITIONAL maximizeWindow() — and blocked a
+    // correct script twice, until the repeat-detector gave up and killed the whole LIST item.
     static const QRegularExpression reuseBlockRe(
-        R"((\w+)\s*=\s*graphWindow\([^)]*\)\s*\n\s*if\s+\1\s+is\s+None\s*:\s*\n((?:[ \t]+\S.*\n?)+))");
+        R"(^([ \t]*)(\w+)[ \t]*=[ \t]*graphWindow\([^)]*\)[ \t]*\n\1if[ \t]+\2[ \t]+is[ \t]+None[ \t]*:[ \t]*\n)",
+        QRegularExpression::MultilineOption);
     const QRegularExpressionMatch m = reuseBlockRe.match(code);
     if (!m.hasMatch())
         return {}; // no "reuse existing graph" pattern present
 
-    const QString varName = m.captured(1);
-    const QString ifBlock = m.captured(2);
+    const QString varName = m.captured(2);
+    // The body is the run of lines indented STRICTLY deeper than the `if`. The first line back at
+    // the `if`'s own level (or shallower) ends it — and a maximizeWindow() there is unconditional,
+    // which is exactly what this check must not flag.
+    const qsizetype baseDepth = m.captured(1).size();
+    QString ifBlock;
+    for (const QString &line : code.mid(m.capturedEnd(0)).split('\n'))
+    {
+        if (line.trimmed().isEmpty())
+            continue; // blank lines belong to neither side
+        const qsizetype depth = line.size() - static_cast<qsizetype>(QStringView(line).trimmed().size());
+        if (depth <= baseDepth)
+            break;
+        ifBlock += line + '\n';
+    }
+
     const int totalCount = static_cast<int>(code.count(QStringLiteral("maximizeWindow(")));
     const int inBlockCount = static_cast<int>(ifBlock.count(QStringLiteral("maximizeWindow(")));
     if (inBlockCount == 0 || totalCount > inBlockCount)
@@ -4240,6 +4298,61 @@ QString QtiSasAiContent::redundantFittableReconfigureMistake(const QString &code
            "re-configure() to add it.";
 }
 
+QString QtiSasAiContent::compilerScanGroupsAfterNameMistake(const QString &code)
+{
+    // compile18::scanGroups() repopulates the explorer and CLEARS the editor fields as it goes —
+    // compile-explorer.cpp does lineEditGroupName->setText("") and lineEditFunctionName->setText("")
+    // — so a scanGroups() between setFunctionName() and compile() silently throws the name away.
+    // Confirmed live: a script ran new() -> setFunctionName("ai/PorodPowerLaw") -> scanGroups() ->
+    // ... -> compile() and died on "compile: function name is empty", which reads as a
+    // contradiction of the setFunctionName() call plainly sitting three lines above. Calling
+    // scanGroups() to look up a group name mid-sequence is the natural thing to do, which is why
+    // this needs catching rather than documenting alone.
+    static const QRegularExpression nameRe(R"(\bsetFunctionName\s*\()");
+    static const QRegularExpression scanRe(R"(\bscanGroups\s*\(\s*\))");
+    static const QRegularExpression compileRe(R"(\.\s*(?:compile|save)\s*\()");
+    const QRegularExpressionMatch nameMatch = nameRe.match(code);
+    if (!nameMatch.hasMatch())
+        return {};
+    const QRegularExpressionMatch compileMatch = compileRe.match(code, nameMatch.capturedEnd());
+    if (!compileMatch.hasMatch())
+        return {}; // name set but never compiled/saved here — nothing this check can say
+    const QRegularExpressionMatch scanMatch = scanRe.match(code, nameMatch.capturedEnd());
+    if (!scanMatch.hasMatch() || scanMatch.capturedStart() > compileMatch.capturedStart())
+        return {}; // no scanGroups() in the window between naming and compiling
+    return "This script calls scanGroups() AFTER setFunctionName() and before compile()/save(). "
+           "scanGroups() rescans the function explorer and clears the editor fields while it does "
+           "so — including the function name — so the name set above is gone by the time "
+           "compile() runs, which then fails with \"compile: function name is empty\" even though "
+           "setFunctionName() is plainly there. Call scanGroups()/groups() FIRST, before new(), "
+           "pick the group, and only then call new()/setFunctionName()/setGroup()/.../compile().";
+}
+
+QString QtiSasAiContent::fittableFitBeforeConfigureMistake(const QString &code)
+{
+    // The sibling of fittableSelectStageBeforeFunctionMistake() below, for fit() rather than
+    // selectStage(). fittable-python-api.md: "fit(), simulate(), plotResults() ... raise
+    // RuntimeError if stage isn't \"fit\"", and configure()/setFunction() is what gets it there.
+    // Confirmed live: a script called f.fit() with only a table lookup in front of it and died on
+    // "fit(): call setFunction() and selectDataset() first (stage must be \"fit\")" — one wasted
+    // round-trip for a precondition the docs state outright.
+    static const QRegularExpression fitRe(R"((?<![.\w])\w+\s*\.\s*fit\s*\(\s*\))");
+    static const QRegularExpression functionSelectRe(R"(\b(?:configure|setFunction)\s*\()");
+    const QRegularExpressionMatch fitMatch = fitRe.match(code);
+    if (!fitMatch.hasMatch())
+        return {};
+    const QRegularExpressionMatch functionMatch = functionSelectRe.match(code);
+    if (functionMatch.hasMatch() && functionMatch.capturedStart() < fitMatch.capturedStart())
+        return {};
+    return "This script calls fit() without configure()/setFunction() having selected a function "
+           "and dataset first, so it raises RuntimeError (\"fit(): call setFunction() and "
+           "selectDataset() first (stage must be \\\"fit\\\")\"). Reading the data table is not "
+           "enough — Fittable's own stage has to be moved out of \"init\". Call "
+           "configure(<function>, [<dataset>]) BEFORE fit(). Note that a PREVIOUS script's "
+           "configure() does not carry over: each script starts from whatever stage the UI is "
+           "actually in, which state()[\"stage\"] reports as \"init\"/\"ready\"/\"fitted\".";
+}
+
 QString QtiSasAiContent::fittableSelectStageBeforeFunctionMistake(const QString &code)
 {
     // fittable-python-api.md: selectStage(s) with s != "init" raises RuntimeError while Fittable
@@ -4423,6 +4536,12 @@ QList<AiKnownMistakeMatch> QtiSasAiContent::detectKnownMistakes(const QString &c
     explanation = fittableSelectStageBeforeFunctionMistake(code);
     if (!explanation.isEmpty())
         matches << AiKnownMistakeMatch{"selectStage() called before configure()/setFunction()", explanation};
+    explanation = fittableFitBeforeConfigureMistake(code);
+    if (!explanation.isEmpty())
+        matches << AiKnownMistakeMatch{"fit() called before configure()/setFunction()", explanation};
+    explanation = compilerScanGroupsAfterNameMistake(code);
+    if (!explanation.isEmpty())
+        matches << AiKnownMistakeMatch{"scanGroups() clears the function name set before it", explanation};
     return matches;
 }
 
