@@ -3287,6 +3287,20 @@ public:
         PyErr_SetString(PyExc_RuntimeError,
             "simulateCurve(): navigate to Simulate Curve tab first (stage must be \"simulate\")");
         sipIsErr = 1;
+    } else if (sipCpp->selectedDataset(1).isEmpty()) {
+        // configure(f, []) sets the dataset COUNT to 1 but selects nothing, so datasetCount() is a
+        // useless test here — the dataset row itself is empty. simulateSwitcher() then reads
+        // comboBoxDatasetSim->currentIndex(), which is -1 while nothing is selected (the combo is
+        // only filled once a dataset exists), and hands that -1 to generateSimulatedTable(). The
+        // failure surfaced as a bare "SystemError: ... returned a result with an exception set"
+        // with nothing to act on. A dataset is needed even for a uniform X range, which supplies
+        // only the X points, not the row the simulation is built from.
+        PyErr_SetString(PyExc_ValueError,
+            "simulateCurve(): no dataset is selected — pass one to configure(), e.g. "
+            "configure(function, [\"MyTable_y\"]). A dataset is required even with setSimUniformX(True): "
+            "the uniform range supplies the X points, but the simulation still reads the selected "
+            "dataset row. Create a small seed table if you have no real data to simulate against.");
+        sipIsErr = 1;
     } else {
         sipRes = sipCpp->simulateCurve();
     }
