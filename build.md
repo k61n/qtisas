@@ -110,7 +110,7 @@ Use PowerShell (as an example, you might have different paths):
         -DTIFF_ROOT="C:/qtisas_libs/msvc2022_64/tiff"
         -Dyaml-cpp_ROOT="C:/qtisas_libs/msvc2022_64/yaml_cpp"
         -DZLIB_ROOT="C:/qtisas_libs/msvc2022_64/zlib"
-        -DCMAKE_PREFIX_PATH="C:/Qt/6.11.1/msvc2022_64"
+        -DCMAKE_PREFIX_PATH="C:/Qt/6.11.2/msvc2022_64"
         -DPython3_ROOT_DIR="C:/Users/admin/AppData/Local/Programs/Python/Python314"
     cmake --build . --config Release
 

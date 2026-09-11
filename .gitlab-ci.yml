@@ -107,12 +107,12 @@ windows:
       -DGSL_ROOT="C:/qtisas_libs/$TOOL/gsl"
       -DHDF5_ROOT="C:/qtisas_libs/$TOOL/hdf5"
       -Dlibaec_ROOT="C:/qtisas_libs/$TOOL/libaec"
+      -DTIFF_ROOT="C:/qtisas_libs/$TOOL/libtiff"
       -Dmuparser_ROOT="C:/qtisas_libs/$TOOL/muparser"
       -Dqwt_ROOT="C:/qtisas_libs/$TOOL/qwt"
-      -DTIFF_ROOT="C:/qtisas_libs/$TOOL/tiff"
-      -Dyaml-cpp_ROOT="C:/qtisas_libs/$TOOL/yaml_cpp"
+      -Dyaml-cpp_ROOT="C:/qtisas_libs/$TOOL/yaml-cpp"
       -DZLIB_ROOT="C:/qtisas_libs/$TOOL/zlib"
-      -DCMAKE_PREFIX_PATH="C:/Qt/6.11.1/$TOOL"
+      -DCMAKE_PREFIX_PATH="C:/Qt/6.11.2/$TOOL"
       -DPython3_ROOT_DIR="C:/Users/$USER/AppData/Local/Programs/Python/Python314"
     - cmake.exe --build . --config Release
 
@@ -183,11 +183,11 @@ macos-release:
         -DGSL_ROOT=$CI_PROJECT_DIR/deps/gsl
         -DHDF5_ROOT=$CI_PROJECT_DIR/deps/hdf5
         -Dlibaec_ROOT=$CI_PROJECT_DIR/deps/libaec
+        -DTIFF_ROOT=$CI_PROJECT_DIR/deps/libtiff
         -Dmuparser_ROOT=$CI_PROJECT_DIR/deps/muparser
         -Dqwt_ROOT=$CI_PROJECT_DIR/deps/qwt
-        -DTIFF_ROOT=$CI_PROJECT_DIR/deps/tiff
-        -Dyaml-cpp_ROOT=$CI_PROJECT_DIR/deps/yaml_cpp
-        -DCMAKE_PREFIX_PATH=~/Qt/6.11.1/macos
+        -Dyaml-cpp_ROOT=$CI_PROJECT_DIR/deps/yaml-cpp
+        -DCMAKE_PREFIX_PATH=~/Qt/6.11.2/macos
         -DPython3_ROOT_DIR=$CI_PROJECT_DIR/deps/$PYTHONDIR
         -DCMAKE_OSX_SYSROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX13.3.sdk
         -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
@@ -197,15 +197,15 @@ macos-release:
         -DCMAKE_SYSTEM_IGNORE_PREFIX_PATH="/usr/local;/opt/homebrew"
     - /opt/homebrew/bin/cmake --build . --parallel $(sysctl -n hw.ncpu)
     - cd ../bin
-    - ~/Qt/6.11.1/macos/bin/macdeployqt qtisas.app -verbose=3 || true
+    - ~/Qt/6.11.2/macos/bin/macdeployqt qtisas.app -verbose=3 || true
     - cp ../install/osx/Info.plist_release qtisas.app/Contents/Info.plist
     - cp $(find ../deps -name "libzstd.1.*.*.dylib") qtisas.app/Contents/Frameworks/libzstd.1.dylib
     - cp $(find ../deps -name "libjpeg.*.dylib") qtisas.app/Contents/Frameworks
     - install_name_tool
         -change
-        $(otool -L ../deps/tiff/lib/libtiff.dylib | grep libjpeg | awk '{print $1}' | sort -u)
-        @rpath/$(basename $(otool -L ../deps/tiff/lib/libtiff.dylib | grep libjpeg | awk '{print $1}' | sort -u))
-        qtisas.app/Contents/Frameworks/libtiff.6.dylib
+        $(otool -L $(find ../deps -name libtiff.dylib) | grep libjpeg | awk '{print $1}' | sort -u)
+        @rpath/$(basename $(otool -L $(find ../deps -name libtiff.dylib) | grep libjpeg | awk '{print $1}' | sort -u))
+        qtisas.app/Contents/Frameworks/$(readlink $(find ../deps -name libtiff.dylib))
     - cp $(find ../deps -name "libsz.2.dylib") qtisas.app/Contents/Frameworks
     - cp $(find ../deps -name "libaec.0.dylib") qtisas.app/Contents/Frameworks
     - rm -rf qtisas.app/Contents/plugins
@@ -218,9 +218,9 @@ macos-release:
         qtisas.app/Contents/MacOS/qtisas
     - cp -r venv/lib/$PYTHONDIR/site-packages/PyQt6 qtisas.app/Contents/Resources/$PYTHONDIR/lib/$PYTHONDIR/site-packages
     - rm -rf qtisas.app/Contents/Resources/$PYTHONDIR/lib/$PYTHONDIR/site-packages/PyQt6/Qt6/lib
-    - cp -r ../deps/PyQt6/Qt6/lib qtisas.app/Contents/Resources/$PYTHONDIR/lib/$PYTHONDIR/site-packages/PyQt6/Qt6
+    - cp -r ../deps/pyqt6/Qt6/lib qtisas.app/Contents/Resources/$PYTHONDIR/lib/$PYTHONDIR/site-packages/PyQt6/Qt6
     - rm -rf qtisas.app/Contents/Resources/$PYTHONDIR/lib/$PYTHONDIR/site-packages/PyQt6/Qt6/plugins
-    - cp -r ../deps/PyQt6/Qt6/plugins qtisas.app/Contents/Resources/$PYTHONDIR/lib/$PYTHONDIR/site-packages/PyQt6/Qt6
+    - cp -r ../deps/pyqt6/Qt6/plugins qtisas.app/Contents/Resources/$PYTHONDIR/lib/$PYTHONDIR/site-packages/PyQt6/Qt6
     - cp ../install/osx/launcher qtisas.app/Contents/MacOS
     - perl -pi -e "s|%python%|${PYTHONDIR}|g" qtisas.app/Contents/MacOS/launcher
     - rm -rf qtisas.app/Contents/Frameworks/*.framework
@@ -251,7 +251,7 @@ windows-release:
   only:
     - tags@qtisas/qtisas
   script:
-    - $env:Path = "C:\Qt\6.11.1\$TOOL\bin;" + $env:Path
+    - $env:Path = "C:\Qt\6.11.2\$TOOL\bin;" + $env:Path
     - $env:Path = "C:\Qt\Tools\QtInstallerFramework\4.10\bin;" + $env:Path
     - git submodule update --init --recursive
     - if (Test-Path .\bin) { Remove-Item .\bin -Recurse -Force }
@@ -265,10 +265,10 @@ windows-release:
       -Dlibaec_ROOT="C:/qtisas_libs/$TOOL/libaec"
       -Dmuparser_ROOT="C:/qtisas_libs/$TOOL/muparser"
       -Dqwt_ROOT="C:/qtisas_libs/$TOOL/qwt"
-      -DTIFF_ROOT="C:/qtisas_libs/$TOOL/tiff"
-      -Dyaml-cpp_ROOT="C:/qtisas_libs/$TOOL/yaml_cpp"
+      -DTIFF_ROOT="C:/qtisas_libs/$TOOL/libtiff"
+      -Dyaml-cpp_ROOT="C:/qtisas_libs/$TOOL/yaml-cpp"
       -DZLIB_ROOT="C:/qtisas_libs/$TOOL/zlib"
-      -DCMAKE_PREFIX_PATH="C:/Qt/6.11.1/$TOOL"
+      -DCMAKE_PREFIX_PATH="C:/Qt/6.11.2/$TOOL"
       -DPython3_ROOT_DIR="C:\Users\$USER\AppData\Local\Programs\Python\Python314"
     - cmake --build . --config Release
     - cd ..
@@ -292,11 +292,11 @@ windows-release:
     - copy C:\qtisas_libs\$TOOL\hdf5\bin\msvcp140_2.dll install\win\packages\com.qtisas\data
     - copy C:\qtisas_libs\$TOOL\libaec\bin\szip.dll install\win\packages\com.qtisas\data
     - copy C:\qtisas_libs\$TOOL\muparser\bin\muparser.dll install\win\packages\com.qtisas\data
-    - copy C:\qtisas_libs\$TOOL\libjpeg\bin\jpeg62.dll install\win\packages\com.qtisas\data
+    - copy C:\qtisas_libs\$TOOL\libjpeg-turbo\bin\jpeg62.dll install\win\packages\com.qtisas\data
     - copy C:\qtisas_libs\$TOOL\qwt\bin\qwt.dll install\win\packages\com.qtisas\data
-    - copy C:\qtisas_libs\$TOOL\tiff\bin\tiff.dll install\win\packages\com.qtisas\data
+    - copy C:\qtisas_libs\$TOOL\libtiff\bin\tiff.dll install\win\packages\com.qtisas\data
     - copy C:\qtisas_libs\$TOOL\xz\bin\liblzma.dll install\win\packages\com.qtisas\data
-    - copy C:\qtisas_libs\$TOOL\yaml_cpp\bin\yaml-cpp.dll install\win\packages\com.qtisas\data
+    - copy C:\qtisas_libs\$TOOL\yaml-cpp\bin\yaml-cpp.dll install\win\packages\com.qtisas\data
     - copy C:\qtisas_libs\$TOOL\zlib\bin\z.dll install\win\packages\com.qtisas\data
     - copy C:\qtisas_libs\$TOOL\zstd\bin\zstd.dll install\win\packages\com.qtisas\data
     - mkdir install\win\packages\com.qtisas\data\python
