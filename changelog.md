@@ -1,3 +1,8 @@
+
+ * Drop Debian 11 support for future versions
+ * Use C++20
+ * upd Qt to 6.11.2
+
 # v0.17.1
 
  * aiconfig: fix Git URL
