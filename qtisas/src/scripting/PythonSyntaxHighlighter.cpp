@@ -125,7 +125,8 @@ void PythonSyntaxHighlighter::highlightBlock(const QString &text)
         charFmt.setBackground(aiColor);
         charFmt.setForeground(qApp->palette().color(QPalette::Text));
         setFormat(0, static_cast<int>(text.length()), charFmt);
-        const bool isProseHeader = text.startsWith("▸▸▸ AI answer:") || text.startsWith("▸▸▸ AI split-plan (");
+        const bool isProseHeader = text.startsWith("▸▸▸ AI answer:") || text.startsWith("▸▸▸ AI split-plan (") ||
+                                   text.startsWith("▸▸▸ AI: list ");
         setCurrentBlockState(isProseHeader ? aiAnswerBlockState : 0);
         return;
     }
@@ -169,6 +170,19 @@ void PythonSyntaxHighlighter::highlightBlock(const QString &text)
         blockFmt.setBackground(QBrush());
         QTextCursor c(currentBlock());
         c.setBlockFormat(blockFmt);
+    }
+
+    // Content-matched fallback for a stray bare print() that skipped scriptPrint()'s own coloring —
+    // checked after the background cleanup above so a header's highlight can't leak onto it.
+    static const QRegularExpression existenceCheckLineRe(
+        R"(^(\((window|compile|fittable)\) (EXISTS|MISSING): |VERDICT: (EXISTS|MISSING) ))");
+    if (existenceCheckLineRe.match(text).hasMatch())
+    {
+        QTextCharFormat fmt;
+        fmt.setForeground(scriptOutputColor);
+        setFormat(0, static_cast<int>(text.length()), fmt);
+        setCurrentBlockState(0);
+        return;
     }
 
     // Tint a cleaned "AI answer:" body dark blue, echoing header aiColor (see tryExtractInformationalMessage()).

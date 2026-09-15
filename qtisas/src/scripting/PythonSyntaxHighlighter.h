@@ -28,7 +28,7 @@ Description: Python syntax highlighting based on the Qt syntax highlighter examp
 // identically for both scriptPrint() and scriptPrintReplace(). Shared with PythonSyntaxHighlighter
 // (see highlightBlock()'s script-output detection), which is why this lives here rather than in
 // ApplicationWindow.cpp alongside its callers.
-inline const QColor scriptOutputColor(0x0f, 0x9d, 0x58);
+inline const QColor scriptOutputColor(30, 60, 100);
 
 class SyntaxHighlighter : public QSyntaxHighlighter
 {
