@@ -46,6 +46,7 @@ class QtiSasAiContent : public AiContentProvider
     bool isUnverifiedMissingClaim(const QString &script) const override;
     QList<AiKnownMistakeMatch> detectKnownMistakes(const QString &code, const QString &originalRequestText,
                                                    const QString &earlierPartsCode,
+                                                   const QString &laterPartsDescriptions = QString(),
                                                    bool exploreScript = false) const override;
     QString explorePrefixBeforeFirstWriteCall(const QString &code) const override;
     QString selfReviewFunctionNameSubstitution(const QString &preReviewDraft,
@@ -109,7 +110,8 @@ class QtiSasAiContent : public AiContentProvider
     static QString reuseInsteadOfCompileMistake(const QString &code, const QString &originalRequestText,
                                                 const QString &earlierPartsCode);
     static QString requestedCreationNeverHappenedMistake(const QString &code, const QString &originalRequestText,
-                                                         const QString &earlierPartsCode);
+                                                         const QString &earlierPartsCode,
+                                                         const QString &laterPartsDescriptions);
     static QString hardcodedWinnerWithoutLiveComparisonMistake(const QString &code, const QString &originalRequestText,
                                                                const QString &earlierPartsCode);
     static QString hallucinatedLegendMethodMistake(const QString &code);
@@ -123,8 +125,10 @@ class QtiSasAiContent : public AiContentProvider
     static QString setAutoexecOnScriptEditMistake(const QString &code);
     static QString plotStyleStringArgumentMistake(const QString &code);
     static QString matrixViewTypeIntMistake(const QString &code);
+    static QString bareColumnNameInColumnsListMistake(const QString &code);
     static QString missingPyQtImportMistake(const QString &code);
     static QString missingRandomImportMistake(const QString &code);
+    static QString pythonInputCallMistake(const QString &code);
     static QString guessedNameCandidateListMistake(const QString &code);
     static QString fragmentedStaticScriptPrintMistake(const QString &code);
     static QString doubleEscapedRawRegexMistake(const QString &code);

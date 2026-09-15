@@ -45,7 +45,7 @@ class PythonScript : public Script
 		void beginStdoutRedirect();
 		void endStdoutRedirect();
 
-		PyObject *PyCode, *modLocalDict, *modGlobalDict, *stdoutSave, *stderrSave;
+    PyObject *PyCode, *modLocalDict, *modGlobalDict, *stdoutSave, *stderrSave, *stdinSave;
 		bool isFunction, hasOldGlobals;
 };
 

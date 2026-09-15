@@ -308,6 +308,12 @@ class AiContentProvider
     // "compile" would wrongly block a later part that legitimately just fits/plots a function an
     // EARLIER part already compiled — the intended division of labor in split mode, not a defect.
     //
+    // `laterPartsDescriptions` is the symmetric case: descriptions (not code — they haven't run
+    // yet) of every split-mode part AFTER this one. Confirmed live: a 2-part plan's Part 1 ("create
+    // note X") was permanently blocked by requestedCreationNeverHappenedMistake() for not creating
+    // a table that Part 2's own description already claimed — earlierPartsCode had no way to exempt
+    // a deliverable that hasn't happened yet BECAUSE it's someone else's part, not a defect.
+    //
     // exploreScript=true skips the "requested action never happened" checks: an EXPLORE script is
     // read-only by construction (explorePrefixBeforeFirstWriteCall() cuts every write call away),
     // so demanding newTable()/compile() in it is unsatisfiable. Confirmed live: that produced an
@@ -315,6 +321,7 @@ class AiContentProvider
     // check fired again, byte-identical for 3+ rounds at 37-50s each.
     virtual QList<AiKnownMistakeMatch> detectKnownMistakes(const QString &code, const QString &originalRequestText,
                                                            const QString &earlierPartsCode,
+                                                           const QString &laterPartsDescriptions = QString(),
                                                            bool exploreScript = false) const = 0;
 
     // An EXPLORE-labeled script is supposed to be strictly read-only reconnaissance — nothing

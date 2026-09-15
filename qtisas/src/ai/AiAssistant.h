@@ -346,6 +346,11 @@ class AiAssistant : public QObject
     // them, and the user is reading the script anyway. Empty when nothing is worth saying.
     QString generatedScriptWarning(const QString &code) const;
 
+    // Descriptions of every split-mode part AFTER splitPartIndex, newline-joined (empty outside
+    // split mode or on the last part) — lets detectKnownMistakes() tell "nobody creates this" apart
+    // from "a LATER part creates this" (see AiContentProvider.h's doc comment).
+    QString laterSplitPartDescriptions() const;
+
     QString exploreSlotText(bool expectsCode) const;
 
     // Builds the VERIFIED PROJECT STATE note for every name `requestText` calls existing, by asking
@@ -439,6 +444,10 @@ class AiAssistant : public QObject
     // listItemForceNoSplit if set, otherwise the same per-request heuristic beginRequest() itself
     // would use. No-ops (sets listModeActive=false) once listItemIndex runs past the end.
     void startNextListItem();
+
+    // Prints the parsed item list once, up front, in the plain AI color (see
+    // PythonSyntaxHighlighter's matching "▸▸▸ AI: list " check).
+    void printParsedListItems(const QStringList &items, bool wasTransformed);
 
     // Shared tail end of beginListRequest()/handleListTransformResponse() — builds listItems
     // (mechanical per-item doc-topic keyword matching, see topicSynonymRe) from `items` and

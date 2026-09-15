@@ -338,6 +338,14 @@ static const QHash<QString, QRegularExpression> topicSynonymRe = {
     {"compile", QRegularExpression(R"(\bcompil(?:e|ed|ing|er)\b)", QRegularExpression::CaseInsensitiveOption)},
 };
 
+// Topic matching must inspect the user's request only; requestSuffix() is transport guidance.
+static QString topicAnalysisText(const QString &text)
+{
+    static const QString suffixMarker = QStringLiteral("\n\n(Answer in plain text if this is a question.");
+    const qsizetype suffixPos = text.indexOf(suffixMarker);
+    return suffixPos >= 0 ? text.left(suffixPos) : text;
+}
+
 // True if topic's own keyword regex matches text — shared by splitPartTopicsFromAnswer() (widens
 // a DOCS-field selection) and handleDocSelectionResponse()'s backstop (narrows a free-text one).
 static bool topicSynonymMatch(const QString &topic, const QString &text)
@@ -400,9 +408,10 @@ void AiAssistant::handleDocSelectionResponse(const QString &code)
 // could not change the outcome, and asking cost a full round-trip (13-18s measured) per request.
 QStringList AiAssistant::docTopicsFromRequestText(const QString &text) const
 {
+    const QString requestText = topicAnalysisText(text);
     QStringList topics;
     for (const QString &topic : (m_content ? m_content->knownDocTopics() : QStringList()))
-        if (topicSynonymMatch(topic, text))
+        if (topicSynonymMatch(topic, requestText))
             topics << topic;
     return topics;
 }
@@ -412,13 +421,10 @@ void AiAssistant::startRequestWithSelectedTopics(const QStringList &selected, co
 {
     if (m_host)
         m_host->print("▸▸▸ " + label + ": " + (selected.isEmpty() ? QString("all") : selected.join(", ")));
-    // The content provider's own baseline topics (assistant workflow rules, and the handful of
-    // functions used in nearly every script) always ride along with whatever was actually
-    // selected, PREPENDED so they land first in the prompt and the task-specific topic(s) end up
-    // closest to the actual request (avoids "lost in the middle" — see filterDocsByTopic()).
-    // Guarded on non-empty: an empty list is the "all"/unrecognized-answer fallback, and
-    // filterDocsByTopic() treats an empty topic list as "send everything" — adding entries here
-    // would wrongly turn that safe fallback into a narrow baseline-only filter instead.
+
+    // Baseline topics are PREPENDED so task-specific ones land closest to the request
+    // (avoids "lost in the middle" — see filterDocsByTopic()). Guarded on non-empty: an
+    // empty list means "send everything", and prepending here would wrongly narrow it.
     startRequest(selected.isEmpty() ? selected
                                     : ((m_content ? m_content->baselineDocTopics() : QStringList()) + selected));
 }
@@ -869,20 +875,9 @@ void AiAssistant::dispatchByMode(const QString &aiText)
 
 void AiAssistant::beginNonSplitRequest(const QString &aiText)
 {
-    // Doc topics are chosen MECHANICALLY from the request text — no LLM pre-flight. This used to
-    // ask the model "which documentation topics do you need?" and then filter its answer down to
-    // the topics whose own keywords actually appear in the request. That filter made the answer
-    // irrelevant: keeping {model-selected AND keyword-matched} and then (as of the fittable/
-    // simulate under-selection incident) also adding {keyword-matched AND NOT model-selected}
-    // leaves exactly {keyword-matched} — the model's reply could no longer change the outcome, so
-    // the round-trip was pure cost, measured at 13-18s per request. See
-    // docTopicsFromRequestText()'s doc comment for the incident and for why under-selection is
-    // the expensive direction.
-    //
-    // Zero matches is NOT an error: it falls through to the empty-list "send everything" fallback
-    // startRequestWithSelectedTopics() already implements, same as an unrecognized model answer
-    // did. Topic order stays knownDocTopics()' own deliberate order (containers before verbs) —
-    // see handleDocSelectionResponse()'s comment on why that order matters in the prompt.
+    // Doc topics are selected mechanically from request keywords; an LLM pre-flight was removed
+    // because its answer became irrelevant after keyword matching was added. Zero matches fall
+    // through to startRequestWithSelectedTopics()'s empty-list "send everything" fallback.
     startRequestWithSelectedTopics(docTopicsFromRequestText(aiText), QStringLiteral("AI doc topics"));
 }
 
@@ -1258,8 +1253,13 @@ QList<QPair<QString, QStringList>> splitPlanCreationNames(const QList<AiAssistan
     // Confirmed live: "... function named 'ai/PorodFit' in category 'test' ..." has TWO quoted
     // strings; a bare quote scan wrongly checked "test" for existence too. Restricted to the name
     // following "named"/"called", matching namedQuotedRe's own convention elsewhere in this file.
-    static const QRegularExpression quotedNameCaptureRe(R"(\b(?:named|called)\s+(['"])([^'"]+)\1)",
+    // Up to 3 intervening words tolerated (e.g. "the named 3D graph \"X\"") — without it, a quote
+    // separated from named/called by a noun/qualifier was never captured at all.
+    static const QRegularExpression quotedNameCaptureRe(R"(\b(?:named|called)\b(?:\s+\S+){0,3}?\s+(['"])([^'"]+)\1)",
                                                         QRegularExpression::CaseInsensitiveOption);
+    // Confirmed live: "the existing table named \"Metrics\"" captured "Metrics" as a creation
+    // target — a read-only reference, not what the part is about to create.
+    static const QRegularExpression existingWordRe(R"(\bexisting\b)", QRegularExpression::CaseInsensitiveOption);
     QList<QPair<QString, QStringList>> result;
     for (const AiAssistant::SplitPart &part : plan)
     {
@@ -1272,7 +1272,12 @@ QList<QPair<QString, QStringList>> splitPlanCreationNames(const QList<AiAssistan
         QRegularExpressionMatchIterator it = quotedNameCaptureRe.globalMatch(part.description);
         while (it.hasNext())
         {
-            const QString name = it.next().captured(2);
+            const QRegularExpressionMatch nameMatch = it.next();
+            const int lookbackStart = static_cast<int>(qMax(0, nameMatch.capturedStart(0) - 40));
+            const QString lookback = part.description.mid(lookbackStart, nameMatch.capturedStart(0) - lookbackStart);
+            if (existingWordRe.match(lookback).hasMatch())
+                continue;
+            const QString name = nameMatch.captured(2);
             bool merged = false;
             for (QPair<QString, QStringList> &entry : result)
             {
@@ -1672,8 +1677,10 @@ QStringList splitPlanMissingRequestedActions(const QString &originalRequestText,
         // unresolved issue(s) — proceeding anyway" rather than ever converging.
         {"fit", QRegularExpression(R"((?<!\b(?:without|never|not)\s)\bfit(?:ting)?\b(?!\s+function))",
                                    QRegularExpression::CaseInsensitiveOption)},
+        // Confirmed live: no trailing \b + \w* let this match "model" mid-word inside
+        // "sasviewmodels" — requiring "model(s)" as its own word fixes that false positive.
         {"compare models / report a winner",
-         QRegularExpression(R"(\bcompar(?:e|ison|ing)\b|\bwhich\s+\w*\s*model|\bfits?\s+better\b|\bwinner\b)",
+         QRegularExpression(R"(\bcompar(?:e|ison|ing)\b|\bwhich\s+models?\b|\bfits?\s+better\b|\bwinner\b)",
                             QRegularExpression::CaseInsensitiveOption)},
         // "plot3D"/"graph3D" (no space) confirmed live to NOT match \bplot\b/\bgraph\b — "t"/"h"
         // immediately followed by a digit is not a \b transition (digits count as \w too), so a
@@ -1759,7 +1766,7 @@ QList<int> splitPlanUnrequestedActions(const QString &originalRequestText, const
         {"fit", QRegularExpression(R"((?<!\b(?:without|never|not)\s)\bfit(?:ting)?\b(?!\s+function))",
                                    QRegularExpression::CaseInsensitiveOption)},
         {"compare models / report a winner",
-         QRegularExpression(R"(\bcompar(?:e|ison|ing)\b|\bwhich\s+\w*\s*model|\bfits?\s+better\b|\bwinner\b)",
+         QRegularExpression(R"(\bcompar(?:e|ison|ing)\b|\bwhich\s+models?\b|\bfits?\s+better\b|\bwinner\b)",
                             QRegularExpression::CaseInsensitiveOption)},
         // "plot3D"/"graph3D" (no space) confirmed live to NOT match \bplot\b/\bgraph\b — "t"/"h"
         // immediately followed by a digit is not a \b transition (digits count as \w too), so a
@@ -2013,7 +2020,7 @@ QList<int> splitPlanCompileOnlyHasFittable(const QList<AiAssistant::SplitPart> &
 QList<int> splitPlanCompareOnlyMergesForward(const QList<AiAssistant::SplitPart> &plan)
 {
     static const QRegularExpression compareOnlyRe(
-        R"(\bcompar(?:e|ison|ing)\b|\bwhich\s+\w*\s*model|\bfits?\s+better\b|\bwinner\b)",
+        R"(\bcompar(?:e|ison|ing)\b|\bwhich\s+models?\b|\bfits?\s+better\b|\bwinner\b)",
         QRegularExpression::CaseInsensitiveOption);
     // If the compare-only part ALSO creates its own named object (e.g. "compare X and Y, then plot
     // the winner into graph 'Z'" as one already-merged description), it's not a bare decision step
@@ -3027,9 +3034,22 @@ void AiAssistant::beginListRequest(const ParsedListRequest &parsed, bool splitBy
         ask(transformPrompt + noDocsHintLine(), false, QString(), QStringList(), false, false, false);
         return;
     }
+    printParsedListItems(parsed.items, false);
     startListItems(parsed.items, parsed.forceSplit, parsed.forceNoSplit, parsed.forceReview, parsed.forceNoReview,
                    parsed.forceExplore, parsed.forceNoExplore, splitByDefault, reviewByDefault, exploreByDefault,
                    autoRunValue);
+}
+
+void AiAssistant::printParsedListItems(const QStringList &items, bool wasTransformed)
+{
+    if (!m_host)
+        return;
+    QStringList summary;
+    for (int i = 0; i < items.size(); ++i)
+        summary << QString("  %1. %2").arg(i + 1).arg(items[i]);
+    const QString header =
+        wasTransformed ? "instruction applied to all " + QString::number(items.size()) : QString::number(items.size());
+    m_host->print("▸▸▸ AI: list " + header + " item(s):\n\n" + summary.join("\n"));
 }
 
 void AiAssistant::handleListTransformResponse(const QString &code)
@@ -3045,6 +3065,10 @@ void AiAssistant::handleListTransformResponse(const QString &code)
             m_host->print("▸▸  AI LIST: transform response wasn't a parseable numbered list — "
                           "running the original, untransformed items instead.");
         items = pendingListRawItems;
+    }
+    else
+    {
+        printParsedListItems(items, true);
     }
     startListItems(items, pendingListForceSplit, pendingListForceNoSplit, pendingListForceReview,
                    pendingListForceNoReview, pendingListForceExplore, pendingListForceNoExplore,
@@ -3557,7 +3581,7 @@ bool AiAssistant::runExploreProbe(const QString &code, QString *output, QString 
     // multi-arg mistake) on something already cataloged and normally caught for free beforehand.
     const QList<AiKnownMistakeMatch> knownMistakes =
         m_content ? m_content->detectKnownMistakes(safeCode, originalRequestText, splitPartScripts.join("\n\n"),
-                                                   /*exploreScript=*/true)
+                                                   laterSplitPartDescriptions(), /*exploreScript=*/true)
                   : QList<AiKnownMistakeMatch>();
     if (!knownMistakes.isEmpty())
     {
@@ -4525,7 +4549,8 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
     // first" rationale.
     const QList<AiKnownMistakeMatch> knownMistakes =
         (compilable && m_content)
-            ? m_content->detectKnownMistakes(code, originalRequestText, splitPartScripts.join("\n\n"))
+            ? m_content->detectKnownMistakes(code, originalRequestText, splitPartScripts.join("\n\n"),
+                                             laterSplitPartDescriptions())
             : QList<AiKnownMistakeMatch>();
     // Unconditional and host-independent — see isEmptyActionScript()'s doc comment. Confirmed
     // live: self-review's "ONLY executable code" instruction broke down entirely, returning a
@@ -5180,8 +5205,10 @@ void AiAssistant::runLastScript(const QString &confirmationMessage)
     // the caller before this even starts. Confirmed live: printing "no re-generation needed"
     // unconditionally beforehand was wrong exactly when a correction cycle fired right after it.
     const bool blocked =
-        m_content &&
-        !m_content->detectKnownMistakes(code, originalRequestText, splitPartScripts.join("\n\n")).isEmpty();
+        m_content && !m_content
+                          ->detectKnownMistakes(code, originalRequestText, splitPartScripts.join("\n\n"),
+                                                laterSplitPartDescriptions())
+                          .isEmpty();
     if (m_host && !blocked)
         m_host->print(confirmationMessage);
     runActionScript(code, true, QString());
@@ -5405,8 +5432,10 @@ bool AiAssistant::runHistoryScript(int oneBasedIndex)
     // Same reasoning as runLastScript(): printed only once it's known this won't be blocked by
     // the mechanical detectKnownMistakes() check runActionScript() itself is about to run.
     const bool blocked =
-        m_content &&
-        !m_content->detectKnownMistakes(code, originalRequestText, splitPartScripts.join("\n\n")).isEmpty();
+        m_content && !m_content
+                          ->detectKnownMistakes(code, originalRequestText, splitPartScripts.join("\n\n"),
+                                                laterSplitPartDescriptions())
+                          .isEmpty();
     if (m_host && !blocked)
         m_host->print(
             QString("▸▸▸ AI: running turn #%1's script directly (no re-generation needed).").arg(oneBasedIndex));
@@ -5451,6 +5480,16 @@ QString AiAssistant::liveEntityFactsFor(const QString &requestText, QString *con
     if (consoleLine)
         *consoleLine = "project state — " + summary.join("; ");
     return m_content->liveEntityFactsNote(facts);
+}
+
+QString AiAssistant::laterSplitPartDescriptions() const
+{
+    if (!splitModeActive)
+        return {};
+    QStringList later;
+    for (int i = splitPartIndex + 1; i < splitPlan.size(); ++i)
+        later << splitPlan[i].description;
+    return later.join("\n");
 }
 
 QString AiAssistant::generatedScriptWarning(const QString &code) const
@@ -5498,8 +5537,8 @@ QString AiAssistant::generatedScriptWarning(const QString &code) const
         headers << "out of scope";
         explanations << scopeViolation;
     }
-    for (const AiKnownMistakeMatch &m :
-         m_content->detectKnownMistakes(code, originalRequestText, splitPartScripts.join("\n\n")))
+    for (const AiKnownMistakeMatch &m : m_content->detectKnownMistakes(
+             code, originalRequestText, splitPartScripts.join("\n\n"), laterSplitPartDescriptions()))
     {
         headers << m.header;
         explanations << m.explanation;
@@ -5597,7 +5636,13 @@ QString AiAssistant::buildSystemPrompt(const QString &systemPrompt, bool include
                 emit infoMessage(status); // shown only on first load
         }
         if (!m_cachedDocs.isEmpty())
-            sysPrompt += kDocsIntro + filterDocsByTopic(m_cachedDocs, docTopics);
+        {
+            // Empty docTopics ("all") would otherwise fail open to the entire corpus — baseline
+            // (ai/app) is a cheaper, still-safe fallback for an unrecognized/topic-less request.
+            const QStringList effectiveTopics =
+                docTopics.isEmpty() && m_content ? m_content->baselineDocTopics() : docTopics;
+            sysPrompt += kDocsIntro + filterDocsByTopic(m_cachedDocs, effectiveTopics);
+        }
     }
 
     sysPrompt += QString("\n\nCurrent auto-continue limit: %1 total automatic EXPLORE/error-retry "

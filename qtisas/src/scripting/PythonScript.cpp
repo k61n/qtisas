@@ -463,24 +463,46 @@ bool PythonScript::exec()
 
 void PythonScript::beginStdoutRedirect()
 {
-	PyGILState_STATE state = PyGILState_Ensure();
-	stdoutSave = PyDict_GetItemString(env()->sysDict(), "stdout");
-	Py_XINCREF(stdoutSave);
-	stderrSave = PyDict_GetItemString(env()->sysDict(), "stderr");
-	Py_XINCREF(stderrSave);
-	env()->setQObject(this, "stdout", env()->sysDict());
-	env()->setQObject(this, "stderr", env()->sysDict());
-	PyGILState_Release(state);
+    PyGILState_STATE state = PyGILState_Ensure();
+    stdoutSave = PyDict_GetItemString(env()->sysDict(), "stdout");
+    Py_XINCREF(stdoutSave);
+    stderrSave = PyDict_GetItemString(env()->sysDict(), "stderr");
+    Py_XINCREF(stderrSave);
+    env()->setQObject(this, "stdout", env()->sysDict());
+    env()->setQObject(this, "stderr", env()->sysDict());
+
+    // Confirmed live: input() on the main GUI thread blocked on a real stdin read for 174+ seconds.
+    stdinSave = PyDict_GetItemString(env()->sysDict(), "stdin");
+    Py_XINCREF(stdinSave);
+    PyObject *ioModule = PyImport_ImportModule("io");
+    if (ioModule)
+    {
+        PyObject *stringIOClass = PyObject_GetAttrString(ioModule, "StringIO");
+        if (stringIOClass)
+        {
+            PyObject *emptyStdin = PyObject_CallObject(stringIOClass, nullptr);
+            if (emptyStdin)
+            {
+                PyDict_SetItemString(env()->sysDict(), "stdin", emptyStdin);
+                Py_DECREF(emptyStdin);
+            }
+            Py_DECREF(stringIOClass);
+        }
+        Py_DECREF(ioModule);
+    }
+    PyGILState_Release(state);
 }
 
 void PythonScript::endStdoutRedirect()
 {
-	PyGILState_STATE state = PyGILState_Ensure();
-	PyDict_SetItemString(env()->sysDict(), "stdout", stdoutSave);
-	Py_XDECREF(stdoutSave);
-	PyDict_SetItemString(env()->sysDict(), "stderr", stderrSave);
-	Py_XDECREF(stderrSave);
-	PyGILState_Release(state);
+    PyGILState_STATE state = PyGILState_Ensure();
+    PyDict_SetItemString(env()->sysDict(), "stdout", stdoutSave);
+    Py_XDECREF(stdoutSave);
+    PyDict_SetItemString(env()->sysDict(), "stderr", stderrSave);
+    Py_XDECREF(stderrSave);
+    PyDict_SetItemString(env()->sysDict(), "stdin", stdinSave);
+    Py_XDECREF(stdinSave);
+    PyGILState_Release(state);
 }
 
 bool PythonScript::setQObject(QObject *val, const char *name)

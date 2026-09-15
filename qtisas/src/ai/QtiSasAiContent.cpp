@@ -3098,7 +3098,8 @@ QString QtiSasAiContent::reuseInsteadOfCompileMistake(const QString &code, const
 }
 
 QString QtiSasAiContent::requestedCreationNeverHappenedMistake(const QString &code, const QString &originalRequestText,
-                                                               const QString &earlierPartsCode)
+                                                               const QString &earlierPartsCode,
+                                                               const QString &laterPartsDescriptions)
 {
     // Confirmed live: a request "Create a table \"SAXS_data\" with 3 columns Q, I, dI and fill it
     // with synthetic small-angle-scattering intensities for a sphere form factor plus 3% Gaussian
@@ -3140,6 +3141,10 @@ QString QtiSasAiContent::requestedCreationNeverHappenedMistake(const QString &co
             continue;
         const QRegularExpression creationCallRe(R"(\b)" + kind.creationCall + R"(\s*\()");
         if (creationCallRe.match(code).hasMatch() || creationCallRe.match(earlierPartsCode).hasMatch())
+            continue;
+        // A LATER part's own description already claims this exact name — that part, not this one,
+        // is responsible for creating it (see this function's split-mode doc comment above).
+        if (laterPartsDescriptions.contains(m.captured(1), Qt::CaseInsensitive))
             continue;
         return "The request explicitly asks to CREATE a " + kind.noun + " named \"" + m.captured(1) +
                "\", but this script never calls " + kind.creationCall +
@@ -3758,6 +3763,30 @@ QString QtiSasAiContent::matrixViewTypeIntMistake(const QString &code)
            "m.setViewType(Matrix.ViewType.TableView) — never a bare 0/1.";
 }
 
+QString QtiSasAiContent::bareColumnNameInColumnsListMistake(const QString &code)
+{
+    // Confirmed live, repeatedly: columnsList() always returns QUALIFIED "TableName_column"
+    // labels, never a bare column name, so "z" in columnsList(...) is unconditionally False
+    // regardless of whether the role is actually set.
+    static const QRegularExpression bareInColumnsListRe(
+        R"((["'])([A-Za-z][A-Za-z0-9]*)\1\s+(?:not\s+)?in\s+columnsList\(\s*Table\.PlotDesignation\.\w+\s*\))");
+    const QRegularExpressionMatch m = bareInColumnsListRe.match(code);
+    if (!m.hasMatch())
+        return {};
+    const QString name = m.captured(2);
+    return "This script checks \"" + name +
+           "\" in columnsList(Table.PlotDesignation....) — that "
+           "function returns QUALIFIED \"TableName_" +
+           name +
+           "\" labels, never the bare column name, "
+           "so this comparison is always False even when the role IS set correctly. Check "
+           "\"TableName_" +
+           name +
+           "\" in columnsList(...) instead (with the real table name), or "
+           "any(n.endswith(\"_" +
+           name + "\") for n in columnsList(...)).";
+}
+
 // Blanks triple-quoted string literals' interiors (kept same length/line count) so a usage scan
 // below can't mistake text embedded in a note/script-content string for a live call in `code`.
 static QString withTripleQuotedStringsBlanked(const QString &code)
@@ -3843,6 +3872,18 @@ QString QtiSasAiContent::missingRandomImportMistake(const QString &code)
            "`import random` line — `random` is not in the default namespace, so this raises "
            "NameError at runtime. Add `import random` near the top of the script instead of "
            "leaving this for a runtime retry to catch.";
+}
+
+QString QtiSasAiContent::pythonInputCallMistake(const QString &code)
+{
+    // Confirmed live: input() on the main GUI thread blocked on a real stdin read for 174+ seconds.
+    static const QRegularExpression usageRe(R"((?<![.\w])input\s*\()");
+    if (!usageRe.match(codeWithoutStringLiterals(code)).hasMatch())
+        return {};
+    return "This script calls input(...) — embedded scripts have no interactive console, so input() "
+           "can never be answered and instead BLOCKS THE ENTIRE APPLICATION on a real stdin read. "
+           "Never call input() here — get the value from a parameter, an existing table/object, or a "
+           "hardcoded default instead.";
 }
 
 QString QtiSasAiContent::selfReviewEnumConstantRegression(const QString &preReviewDraft,
@@ -4397,6 +4438,7 @@ QString QtiSasAiContent::fittableSelectStageBeforeFunctionMistake(const QString 
 
 QList<AiKnownMistakeMatch> QtiSasAiContent::detectKnownMistakes(const QString &code, const QString &originalRequestText,
                                                                 const QString &earlierPartsCode,
+                                                                const QString &laterPartsDescriptions,
                                                                 bool exploreScript) const
 {
     // Dispatches EVERY pattern below unconditionally and collects ALL matches, in the SAME order
@@ -4476,7 +4518,8 @@ QList<AiKnownMistakeMatch> QtiSasAiContent::detectKnownMistakes(const QString &c
         explanation = reuseInsteadOfCompileMistake(code, originalRequestText, earlierPartsCode);
         if (!explanation.isEmpty())
             matches << AiKnownMistakeMatch{"requested compile never happened", explanation};
-        explanation = requestedCreationNeverHappenedMistake(code, originalRequestText, earlierPartsCode);
+        explanation =
+            requestedCreationNeverHappenedMistake(code, originalRequestText, earlierPartsCode, laterPartsDescriptions);
         if (!explanation.isEmpty())
             matches << AiKnownMistakeMatch{"requested table/matrix/graph/note creation never happened", explanation};
     }
@@ -4516,12 +4559,18 @@ QList<AiKnownMistakeMatch> QtiSasAiContent::detectKnownMistakes(const QString &c
     explanation = matrixViewTypeIntMistake(code);
     if (!explanation.isEmpty())
         matches << AiKnownMistakeMatch{"bare int passed to Matrix.setViewType()", explanation};
+    explanation = bareColumnNameInColumnsListMistake(code);
+    if (!explanation.isEmpty())
+        matches << AiKnownMistakeMatch{"bare column name compared against columnsList()", explanation};
     explanation = missingPyQtImportMistake(code);
     if (!explanation.isEmpty())
         matches << AiKnownMistakeMatch{"PyQt class used without a matching import", explanation};
     explanation = missingRandomImportMistake(code);
     if (!explanation.isEmpty())
         matches << AiKnownMistakeMatch{"random module used without import", explanation};
+    explanation = pythonInputCallMistake(code);
+    if (!explanation.isEmpty())
+        matches << AiKnownMistakeMatch{"input() call would hang the application", explanation};
     explanation = guessedNameCandidateListMistake(code);
     if (!explanation.isEmpty())
         matches << AiKnownMistakeMatch{"guessed a list of candidate names instead of using the known one", explanation};
