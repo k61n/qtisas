@@ -1220,6 +1220,20 @@ void AxesDialog::updateAxisColor(int)
 	axisLabelColorButton->blockSignals(false);
 }
 
+// Graph::setScale() calls guessLogBreak() and discards start/end whenever the axis is log and no
+// break is set yet — correct for a fresh switch, but it also clobbers an already-valid positive
+// range. Equal, non-sentinel bounds still read as "no break" (ScaleEngine::hasBreak()) but skip
+// that gate, so a range already valid for log survives Apply unchanged.
+static void suppressLogBreakGuessIfRangeValid(int type, double start, double end, double &breakLeft, double &breakRight)
+{
+    if (ScaleEngine::isLog(static_cast<ScaleTransformation::Type>(type)) && breakLeft == -DBL_MAX &&
+        breakRight == DBL_MAX && start > 0.0 && end > 0.0)
+    {
+        breakLeft = 0.0;
+        breakRight = 0.0;
+    }
+}
+
 bool AxesDialog::updatePlot(QWidget *page)
 {
     QWidget *currentWidget = generalDialog->currentWidget();
@@ -1303,6 +1317,10 @@ bool AxesDialog::updatePlot(QWidget *page)
             breakLeft = qMin(boxBreakStart->value(), boxBreakEnd->value());
             breakRight = qMax(boxBreakStart->value(), boxBreakEnd->value());
         }
+        else
+        {
+            suppressLogBreakGuessIfRangeValid(boxScaleType->currentIndex(), start, end, breakLeft, breakRight);
+        }
 
         d_graph->setScale(a, start, end, step, boxMajorValue->value(), boxMinorValue->currentText().toInt(),
                           boxScaleType->currentIndex(), btnInvert->isChecked(), breakLeft, breakRight,
@@ -1334,12 +1352,16 @@ bool AxesDialog::updatePlot(QWidget *page)
             {
                 int primary = d_graph->oppositeAxis(a);
                 auto *pe = (ScaleEngine *)d_graph->axisScaleEngine(primary);
+                double primaryBreakLeft = pe->axisBreakLeft();
+                double primaryBreakRight = pe->axisBreakRight();
+                suppressLogBreakGuessIfRangeValid(boxScaleType->currentIndex(), start, end, primaryBreakLeft,
+                                                  primaryBreakRight);
                 d_graph->setScale(primary, start, end, step, boxMajorValue->value(),
                                   boxMinorValue->currentText().toInt(), boxScaleType->currentIndex(),
-                                  btnInvert->isChecked(), pe->axisBreakLeft(), pe->axisBreakRight(),
-                                  pe->breakPosition(), pe->stepBeforeBreak(), pe->stepAfterBreak(),
-                                  pe->minTicksBeforeBreak(), pe->minTicksAfterBreak(),
-                                  static_cast<int>(pe->typeAfterBreak()), pe->breakWidth(), pe->hasBreakDecoration());
+                                  btnInvert->isChecked(), primaryBreakLeft, primaryBreakRight, pe->breakPosition(),
+                                  pe->stepBeforeBreak(), pe->stepAfterBreak(), pe->minTicksBeforeBreak(),
+                                  pe->minTicksAfterBreak(), static_cast<int>(pe->typeAfterBreak()), pe->breakWidth(),
+                                  pe->hasBreakDecoration());
                 d_graph->replot();
                 d_graph->updateMarkersBoundingRect();
             }
