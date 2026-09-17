@@ -3574,7 +3574,7 @@ MultiLayer *ApplicationWindow::newGraph(const QString &caption)
     if (!ml)
         return nullptr;
 
-    ml->setMaximized(prevActiveWindow);
+    ml->setMaximized(prevActiveWindow, d_mdi_windows_area);
 
     Graph *g = ml->activeLayer();
     if (g)
@@ -3863,7 +3863,7 @@ Table *ApplicationWindow::newTable()
         return nullptr;
 
     initTable(t, generateUniqueName(tr("Table")));
-    t->setMaximized(prevActiveWindow);
+    t->setMaximized(prevActiveWindow, d_mdi_windows_area);
     updateWindowLists(t);
 
     return t;
@@ -3893,7 +3893,7 @@ Table *ApplicationWindow::newTable(const QString &caption, int r, int c)
         }
     }
 
-    t->setMaximized(prevActiveWindow);
+    t->setMaximized(prevActiveWindow, d_mdi_windows_area);
     updateWindowLists(t);
 
     return t;
@@ -4008,7 +4008,7 @@ Note* ApplicationWindow::newNote(const QString& caption)
 	connect(m, SIGNAL(dirPathChanged(const QString&)), this, SLOT(scriptsDirPathChanged(const QString&)));
 	connect(m, SIGNAL(currentEditorChanged()), this, SLOT(scriptingMenuAboutToShow()));
 
-    m->setMaximized(prevActiveWindow);
+    m->setMaximized(prevActiveWindow, d_mdi_windows_area);
     updateWindowLists(m);
 
     return m;
@@ -4078,7 +4078,7 @@ Matrix* ApplicationWindow::newMatrix(int rows, int columns)
     m->setCoordinates(1,columns,1,rows);
     m->setCoordinates(1,columns,1,rows);
 
-    m->setMaximized(prevActiveWindow);
+    m->setMaximized(prevActiveWindow, d_mdi_windows_area);
     updateWindowLists(m);
 
     return m;
@@ -4105,7 +4105,7 @@ Matrix* ApplicationWindow::newMatrix(const QString& caption, int r, int c)
     w->setCoordinates(1,c,1,r);
     w->setCoordinates(1,c,1,r);
 
-    w->setMaximized(prevActiveWindow);
+    w->setMaximized(prevActiveWindow, d_mdi_windows_area);
     updateWindowLists(w);
 
     return w;

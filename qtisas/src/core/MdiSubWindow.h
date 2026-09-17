@@ -122,7 +122,7 @@ public:
 
 	void setNormal();
 	void setMinimized();
-    void setMaximized(MdiSubWindow *initWidget = nullptr);
+    void setMaximized(MdiSubWindow *initWidget = nullptr, bool mdi_area_shown = true);
 
 	//! Show window making sure that layers in MultiLayer windows are not resized
 	void restoreWindow();

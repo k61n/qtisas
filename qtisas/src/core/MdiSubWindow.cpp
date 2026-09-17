@@ -248,7 +248,7 @@ void MdiSubWindow::setMinimized()
 	showMinimized();
 }
 
-void MdiSubWindow::setMaximized(MdiSubWindow *initWidget)
+void MdiSubWindow::setMaximized(MdiSubWindow *initWidget, bool mdi_area_shown)
 {
     if (initWidget)
     {
@@ -257,8 +257,19 @@ void MdiSubWindow::setMaximized(MdiSubWindow *initWidget)
         initWidget->showNormal();
     }
 
-    showMaximized();
-    d_status = Maximized;
+    // A standalone top-level window (e.g. "qtisas -c" mode, where subwindows
+    // aren't docked into an MDI area) has no workspace to fill -- show it at
+    // its normal size instead of blowing it up to the whole physical screen.
+    if (mdi_area_shown)
+    {
+        showMaximized();
+        d_status = Maximized;
+    }
+    else
+    {
+        showNormal();
+        d_status = Normal;
+    }
 
     if (d_folder)
         d_folder->setActiveWindow(this);
