@@ -846,8 +846,9 @@ public slots:
     void dragEnterEvent(QDragEnterEvent *e) override;
     void dropEvent(QDropEvent *e) override;
     void customEvent(QEvent *e) override;
-    
+
 #ifdef Q_OS_MACOS
+    void changeEvent(QEvent *e) override;
     void hideEvent(QHideEvent *) override;
 #endif
     
@@ -1251,6 +1252,8 @@ private:
 
 private slots:
     void copyStatusBarText(); //Copy the status bar text to the clipboard 2023
+
+    void recoverOffscreenTopLevelWidgets(Qt::ApplicationState state, QWidget *w = nullptr);
 
     void terminal(QString str);
     void removeWindows(QString pattern);

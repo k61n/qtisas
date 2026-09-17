@@ -661,14 +661,6 @@ void ApplicationWindow::init(bool factorySettings)
     }
     consoleWindow->setWidget(console);
     consoleWindow->hide();
-    // As in showScriptWindow(): restoreState() may put a FLOATING console on a screen that's gone.
-    connect(consoleWindow, &QDockWidget::visibilityChanged, this, [this](bool visible) {
-        if (!visible || !consoleWindow->isFloating())
-            return;
-        QScreen *mainScreen = this->screen();
-        if (mainScreen && !mainScreen->availableGeometry().contains(consoleWindow->pos()))
-            consoleWindow->move(mainScreen->availableGeometry().topLeft() + QPoint(50, 50));
-    });
     tabifyDockWidget(explorerWindow, consoleWindow);
 #endif
 
@@ -803,6 +795,65 @@ void ApplicationWindow::init(bool factorySettings)
     findColorMaps();
 
     qApp->installEventFilter(this);
+    connect(qApp, &QGuiApplication::applicationStateChanged, this,
+            [this](Qt::ApplicationState state) { recoverOffscreenTopLevelWidgets(state); });
+}
+
+void ApplicationWindow::recoverOffscreenTopLevelWidgets(Qt::ApplicationState state, QWidget *w)
+{
+    if (state != Qt::ApplicationActive)
+        return;
+
+    auto fixPosition = [this](QWidget *widget) {
+        if (!widget)
+            return;
+
+        QScreen *ownScreen = widget->screen();
+
+        // Widget has a valid screen and intersects its available area.
+        if (ownScreen && ownScreen->availableGeometry().intersects(widget->frameGeometry()))
+            return;
+
+        QScreen *mainScreen = this->screen();
+        if (!mainScreen)
+            return;
+
+        const QRect available = mainScreen->availableGeometry();
+
+        // Center the widget on the main screen.
+        QPoint newPos = available.center() - QPoint(widget->width() / 2, widget->height() / 2);
+
+        // Make sure at least the widget's top-left is inside
+        // the available screen area.
+        newPos.setX(qBound(available.left(), newPos.x(), available.right() - widget->width() + 1));
+        newPos.setY(qBound(available.top(), newPos.y(), available.bottom() - widget->height() + 1));
+
+        widget->move(newPos);
+    };
+
+    if (w)
+    {
+        fixPosition(w);
+        return;
+    }
+
+    for (QWidget *tw : QApplication::topLevelWidgets())
+    {
+        if (!tw || tw == this || !tw->isVisible())
+            continue;
+
+        const Qt::WindowType wtype = tw->windowType();
+
+        if (wtype == Qt::Popup || wtype == Qt::ToolTip)
+            continue;
+
+        QPointer<QWidget> guarded(tw);
+
+        QTimer::singleShot(0, this, [guarded, fixPosition]() {
+            if (guarded)
+                fixPosition(guarded);
+        });
+    }
 }
 
 void ApplicationWindow::updateExplorerWindowLayout(Qt::DockWidgetArea area)
@@ -13068,6 +13119,17 @@ void ApplicationWindow::customEvent(QEvent *e)
 		scriptingChangeEvent((ScriptingChangeEvent*)e);
 }
 
+#ifdef Q_OS_MACOS
+// A fullscreen-Space switch doesn't fire applicationStateChange
+// this window's own activation does, so it's a second trigger for the same recovery
+void ApplicationWindow::changeEvent(QEvent *e)
+{
+    QMainWindow::changeEvent(e);
+    if (e->type() == QEvent::ActivationChange && isActiveWindow())
+        recoverOffscreenTopLevelWidgets(Qt::ApplicationActive);
+}
+#endif
+
 void ApplicationWindow::deleteSelectedItems()
 {
 	if (folders->hasFocus() && folders->currentItem() != folders->topLevelItem(0))
@@ -20373,10 +20435,6 @@ void ApplicationWindow::showScriptWindow(bool parent)
 		scriptWindow->setAttribute(Qt::WA_DeleteOnClose);
 
 	if (!scriptWindow->isVisible()){
-        // Every show, not just creation: the restored d_script_win_rect may point at a screen that's gone.
-        QScreen *mainScreen = this->screen();
-        if (mainScreen && !mainScreen->availableGeometry().contains(scriptWindow->pos()))
-            scriptWindow->move(mainScreen->availableGeometry().topLeft() + QPoint(50, 50));
 		scriptWindow->show();
         if (parent && scriptWindow->windowHandle() && windowHandle())
             scriptWindow->windowHandle()->setTransientParent(windowHandle());
