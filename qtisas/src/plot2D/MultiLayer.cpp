@@ -26,10 +26,12 @@ Description: Multi layer widget
 #include <QPrinter>
 #include <QPushButton>
 #include <QSpinBox>
+#include <QPair>
 #include <QSvgGenerator>
 #include <QSvgRenderer>
 #include <QTextDocumentWriter>
 #include <QTextStream>
+#include <QVector>
 #include <QWidgetList>
 
 #ifdef Q_OS_WIN
@@ -1410,6 +1412,61 @@ QSize MultiLayer::layersBoundingSize()
     return d_canvas->size();
 }
 
+namespace
+{
+// See Graph.cpp's spliceClippedCanvas() for the single-layer version this
+// generalizes: QSvgGenerator can't clip at draw time, so each layer's
+// canvas-only content is generated separately and spliced into the chrome
+// document wrapped in its own real SVG clip-path.
+QByteArray extractCanvasGroupInner(const QByteArray &canvasOnly)
+{
+    QString s = QString::fromUtf8(canvasOnly);
+    int svgEnd = s.lastIndexOf(QStringLiteral("</svg>"));
+    int groupClose = svgEnd >= 0 ? s.lastIndexOf(QStringLiteral("</g>"), svgEnd) : -1;
+    int defsEnd = s.indexOf(QStringLiteral("</defs>"));
+    int groupOpenStart = defsEnd >= 0 ? s.indexOf(QStringLiteral("<g"), defsEnd) : -1;
+    int groupOpenEnd = groupOpenStart >= 0 ? s.indexOf(QStringLiteral(">"), groupOpenStart) + 1 : -1;
+    if (groupClose < 0 || groupOpenEnd <= 0 || groupOpenEnd > groupClose)
+        return QByteArray();
+    return s.mid(groupOpenEnd, groupClose - groupOpenEnd).toUtf8();
+}
+
+QByteArray spliceClippedCanvases(const QByteArray &chrome, const QVector<QPair<QByteArray, QRectF>> &layerCanvases)
+{
+    QString chromeStr = QString::fromUtf8(chrome);
+    int defsPos = chromeStr.indexOf(QStringLiteral("<defs>"));
+    int defsEndPos = defsPos >= 0 ? chromeStr.indexOf(QStringLiteral("</defs>"), defsPos) : -1;
+    int svgEnd = chromeStr.lastIndexOf(QStringLiteral("</svg>"));
+    int groupClosePos = svgEnd >= 0 ? chromeStr.lastIndexOf(QStringLiteral("</g>"), svgEnd) : -1;
+    if (defsEndPos < 0 || groupClosePos < 0)
+        return chrome; // unexpected structure -- fall back to chrome-only rather than producing garbage
+
+    QString clipDefs;
+    QString clippedGroups;
+    static QAtomicInt counter(0);
+    for (const auto &entry : layerCanvases)
+    {
+        const QByteArray inner = extractCanvasGroupInner(entry.first);
+        if (inner.isEmpty())
+            continue;
+        const QString clipId = QStringLiteral("qtisasCanvasClip%1").arg(counter.fetchAndAddOrdered(1));
+        const QRectF &r = entry.second;
+        clipDefs +=
+            QStringLiteral("<clipPath id=\"%1\"><rect x=\"%2\" y=\"%3\" width=\"%4\" height=\"%5\"/></clipPath>")
+                .arg(clipId)
+                .arg(r.left())
+                .arg(r.top())
+                .arg(r.width())
+                .arg(r.height());
+        clippedGroups += QStringLiteral("<g clip-path=\"url(#%1)\">%2</g>").arg(clipId, QString::fromUtf8(inner));
+    }
+
+    chromeStr.insert(groupClosePos, clippedGroups);
+    chromeStr.insert(defsEndPos, clipDefs);
+    return chromeStr.toUtf8();
+}
+}
+
 QByteArray MultiLayer::arraySVG(int reso, const QSizeF &customSize, int unit, double fontsFactor)
 {
     QSize size = layersBoundingSize();
@@ -1424,11 +1481,57 @@ QByteArray MultiLayer::arraySVG(int reso, const QSizeF &customSize, int unit, do
     generator.setOutputDevice(&buffer);
     generator.setResolution(defaultResolution);
 
-    if (maxw > 0 && maxh > 0)
+    if (maxw > 0 && maxh > 0 && !customSize.isValid())
+    {
+        QList<Graph *> lst = stackOrderedLayersList();
+        ScaledFontsPrintFilter pfilter(fontsFactor);
+
+        auto renderPass = [&](Graph *g, bool skipCanvas, bool canvasOnly) {
+            QByteArray bytes;
+            QBuffer buf(&bytes);
+            buf.open(QIODevice::WriteOnly);
+            QSvgGenerator gen;
+            gen.setOutputDevice(&buf);
+            gen.setSize(QSize(maxw, maxh));
+            gen.setResolution(defaultResolution);
+            gen.setViewBox(QRectF(0, 0, double(maxw), double(maxh)));
+            QPainter p(&gen);
+            g->print(&p, g->geometry(), pfilter, reso, skipCanvas, canvasOnly);
+            p.end();
+            return bytes;
+        };
+
+        // Pass A: chrome (title/axes/legend) for every layer in one document.
+        QByteArray chromeBytes;
+        {
+            QBuffer buf(&chromeBytes);
+            buf.open(QIODevice::WriteOnly);
+            QSvgGenerator gen;
+            gen.setOutputDevice(&buf);
+            gen.setSize(QSize(maxw, maxh));
+            gen.setResolution(defaultResolution);
+            gen.setViewBox(QRectF(0, 0, double(maxw), double(maxh)));
+            QPainter p(&gen);
+            foreach (Graph *g, lst)
+                g->print(&p, g->geometry(), pfilter, reso, /*skipCanvas=*/true, /*canvasOnly=*/false);
+            p.end();
+        }
+
+        // Pass B: one canvas-only document + clip rect per layer.
+        QVector<QPair<QByteArray, QRectF>> layerCanvases;
+        foreach (Graph *g, lst)
+        {
+            const QByteArray canvasBytes = renderPass(g, /*skipCanvas=*/false, /*canvasOnly=*/true);
+            layerCanvases.append({canvasBytes, g->svgClipRect(g->geometry(), pfilter, (int)defaultResolution)});
+        }
+
+        byteArray = spliceClippedCanvases(chromeBytes, layerCanvases);
+    }
+    else if (maxw > 0 && maxh > 0)
     {
         generator.setSize(QSize(maxw, maxh));
         generator.setViewBox(QRectF(0, 0, double(maxw), double(maxh)));
-        
+
         draw(&generator, customSize, unit, defaultResolution, fontsFactor, reso);
     }
     else

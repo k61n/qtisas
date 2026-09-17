@@ -227,7 +227,11 @@ class Graph: public QwtPlot
     bool adjustSpectrogram();
 
     void print(QPainter *, const QRect &rect, const ScaledFontsPrintFilter & = ScaledFontsPrintFilter(),
-               int reso = defaultResolution);
+               int reso = defaultResolution, bool skipCanvas = false, bool canvasOnly = false);
+    //! The canvas rect print()/printCanvas() would use for the given plotRect/pfilter/res,
+    //! padded to cover the canvas border stroke's outer half -- for building an SVG
+    //! clip-path around this layer's canvas content (see MultiLayer::arraySVG()).
+    QRectF svgClipRect(const QRect &plotRect, const ScaledFontsPrintFilter &pfilter, int res);
     void updateLayout() override;
     QRect canvasGeometry() const;
 		void setCanvasGeometry(const QRect &canvasRect);
