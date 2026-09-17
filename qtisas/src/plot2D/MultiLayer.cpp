@@ -1057,7 +1057,7 @@ QList<Graph*> MultiLayer::stackOrderedLayersList()
 
 QPixmap MultiLayer::canvasPixmap(const QSize &size, double scaleFontsFactor, bool transparent, int factorRES)
 {
-    QSize canvasSize = d_canvas->size();
+    QSize canvasSize = layersBoundingSize();
 
     QSize targetSize = size.isValid() ? size : canvasSize;
     targetSize *= factorRES;
@@ -1251,6 +1251,10 @@ void MultiLayer::exportVector(QPrinter *printer, bool fontEmbedding, int res, bo
 	if (!printer->resolution())
 		printer->setResolution(logicalDpiX());//we set screen resolution as default
 
+    // Bounding size of the actual layers, not the full canvas widget (which can
+    // be larger than the layers placed on it), matching arraySVG()/canvasPixmap().
+    const QSize boundingSize = layersBoundingSize();
+
 	printer->setDocName (objectName());
 	printer->setFontEmbeddingEnabled(fontEmbedding);
 	printer->setCreator("QtiSAS");
@@ -1276,8 +1280,8 @@ void MultiLayer::exportVector(QPrinter *printer, bool fontEmbedding, int res, bo
 		QPainter paint(printer);
 		QList<Graph*> lst = stackOrderedLayersList();
 
-        wfactor *= (double)size.width() / (double)d_canvas->width();
-        hfactor *= (double)size.height() / (double)d_canvas->height();
+        wfactor *= (double)size.width() / (double)boundingSize.width();
+        hfactor *= (double)size.height() / (double)boundingSize.height();
 
         paint.scale(wfactor * wfactor, hfactor * hfactor);
 
@@ -1299,8 +1303,8 @@ void MultiLayer::exportVector(QPrinter *printer, bool fontEmbedding, int res, bo
 
 		printer->setResolution(res);
         // to make compatible with QPageSize in Qt >= 5.3
-        QSize size_in_points = Graph::customPrintSize(QSizeF(d_canvas->width() * wfactor, d_canvas->height() * hfactor),
-                                                      FrameWidget::Unit::Point, res);
+        QSize size_in_points = Graph::customPrintSize(
+            QSizeF(boundingSize.width() * wfactor, boundingSize.height() * hfactor), FrameWidget::Unit::Point, res);
         printer->setPageSize(QPageSize(QSizeF(size_in_points), QPageSize::Point));
         QPainter paint(printer);
         paint.scale(wfactor * wfactor, hfactor * hfactor);
@@ -1316,7 +1320,7 @@ void MultiLayer::exportVector(QPrinter *printer, bool fontEmbedding, int res, bo
 	} else {
         // to make compatible with QPageSize in Qt >= 5.3
         QSize size_in_points =
-            Graph::customPrintSize(QSizeF(d_canvas->width(), d_canvas->height()), FrameWidget::Unit::Point, res);
+            Graph::customPrintSize(QSizeF(boundingSize.width(), boundingSize.height()), FrameWidget::Unit::Point, res);
         printer->setPageSize(QPageSize(QSizeF(size_in_points), QPageSize::Point));
 		QPainter paint(printer);
         paint.scale(wfactor * wfactor, hfactor * hfactor);
