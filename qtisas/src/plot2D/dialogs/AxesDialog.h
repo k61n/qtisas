@@ -111,6 +111,7 @@ private slots:
 
 protected:
     static QStringList minorTicksOptions(int scaleType);
+    static QString defaultMinorTicksValue(int scaleType);
     void applyCanvasFormatTo(Graph *g);
 	//! generate UI for the axes page
 	void initAxesPage();
