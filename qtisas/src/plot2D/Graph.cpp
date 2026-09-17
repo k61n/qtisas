@@ -8429,7 +8429,7 @@ void Graph::setLinOrLogAxis(int axis, bool logYN, bool changeAxisFormat, bool fo
 
     double step = 0.0;
     int majorTicks = 10;
-    int minorTicks = 5;
+    int minorTicks = 4;
     int type = 0;
     bool inverted = false;
 

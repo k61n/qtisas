@@ -466,7 +466,7 @@ class Graph: public QwtPlot
 
 		//! Set axis scale
 		void invertScale(int axis);
-    void setScale(int axis, double start, double end, double step = 0.0, int majorTicks = 5, int minorTicks = 5,
+    void setScale(int axis, double start, double end, double step = 0.0, int majorTicks = 9, int minorTicks = 4,
                   int type = 0, bool inverted = false, double left_break = -DBL_MAX, double right_break = DBL_MAX,
                   int pos = 50, double stepBeforeBreak = 0.0, double stepAfterBreak = 0.0, int minTicksBeforeBreak = 4,
                   int minTicksAfterBreak = 4, int typeAfterBreak = 0, int breakWidth = 4, bool breakDecoration = true);
