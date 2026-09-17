@@ -111,9 +111,20 @@ QString ScaleDraw::labelString(double value) const
         if (d_plot->parent())
             locale = d_plot->multiLayer()->locale();
         double v = transformValue(value);
-        if ((d_numeric_format == Superscripts) || (d_numeric_format == SuperscriptsGER))
+        // Automatic falls back to 'g'-style formatting, which for large/small
+        // magnitudes switches to bare "1e4" exponent notation; use the same
+        // dot-superscript style as SuperscriptsGER in that case instead.
+        bool useSuperscript = (d_numeric_format == Superscripts) || (d_numeric_format == SuperscriptsGER);
+        if (d_numeric_format == Automatic && v != 0.0)
+            useSuperscript = locale.toString(v, 'g', d_prec).contains(QLatin1Char('e'), Qt::CaseInsensitive);
+
+        if (useSuperscript)
         {
-            QString txt = locale.toString(v, 'e', d_prec);
+            // Automatic's mantissa precision comes from the decimal/'g' setting,
+            // which is meaningless for scientific notation (e.g. "1.000000e4");
+            // use 0 so the mantissa only carries digits when genuinely needed.
+            int mantissaPrec = (d_numeric_format == Automatic) ? 0 : d_prec;
+            QString txt = locale.toString(v, 'e', mantissaPrec);
             QStringList list = txt.split("e", Qt::SkipEmptyParts);
             if (list.isEmpty())
                 return {};
@@ -138,7 +149,7 @@ QString ScaleDraw::labelString(double value) const
                     return "-10<sup>" + s + "</sup>";
                 else
                 {
-                    if (d_numeric_format == SuperscriptsGER)
+                    if (d_numeric_format == SuperscriptsGER || d_numeric_format == Automatic)
                         return list[0] + QString(QChar(0x00B7)) + "10<sup>" + s + "</sup>";
                     else
                         return list[0] + QString(QChar(0x00D7)) + "10<sup>" + s + "</sup>";
