@@ -181,6 +181,9 @@ public slots:
 		const QSizeF& customSize = QSizeF (), int unit = FrameWidget::Pixel, double fontsFactor = 1.0, int compression = 0);
     QByteArray arraySVG(int reso = defaultResolution, const QSizeF &customSize = QSizeF(),
                         int unit = FrameWidget::Pixel, double fontsFactor = 1.0);
+    //! Tight bounding size of the actual layers/legends/enrichments, falling back to
+    //! the full canvas size when there are none.
+    QSize layersBoundingSize();
     bool exportSVG(const QString &fname, int reso = defaultResolution, const QSizeF &customSize = QSizeF(),
                    int unit = FrameWidget::Pixel, double fontsFactor = 1.0);
     void exportPDF(const QString& fname);

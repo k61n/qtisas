@@ -1373,7 +1373,7 @@ void MultiLayer::draw(QPaintDevice *device, const QSizeF &customSize, int unit, 
 	paint.end();
 	QApplication::restoreOverrideCursor();
 }
-QByteArray MultiLayer::arraySVG(int reso, const QSizeF &customSize, int unit, double fontsFactor)
+QSize MultiLayer::layersBoundingSize()
 {
     int maxw = 0;
     int maxh = 0;
@@ -1401,11 +1401,16 @@ QByteArray MultiLayer::arraySVG(int reso, const QSizeF &customSize, int unit, do
         }
     }
 
-    QSize size;
     if (maxw > 0 && maxh > 0)
-        size = QSize(maxw, maxh);
-    else
-        size = QSize(d_canvas->size());
+        return {maxw, maxh};
+    return d_canvas->size();
+}
+
+QByteArray MultiLayer::arraySVG(int reso, const QSizeF &customSize, int unit, double fontsFactor)
+{
+    QSize size = layersBoundingSize();
+    int maxw = layersList().isEmpty() ? 0 : size.width();
+    int maxh = layersList().isEmpty() ? 0 : size.height();
 
     QByteArray byteArray;
     QBuffer buffer(&byteArray);
@@ -1645,8 +1650,11 @@ void MultiLayer::printAllLayers(QPainter *painter)
 
     QRect paperRectPx(0, 0, paperWidthPx, paperHeightPx);
 
-    // Canvas rectangle (in screen pixels)
-    QRectF canvasRect = d_canvas->rect();
+    // Bounding rectangle of the actual layers/legends/enrichments (in screen
+    // pixels) -- not the full canvas widget, which can be larger than the
+    // layers actually placed on it and would otherwise scale/center against
+    // empty space.
+    QRectF canvasRect(QPointF(0, 0), layersBoundingSize());
 
     // Get screen DPI from canvas widget (assumed to be available)
     double screenDpiX = d_canvas->logicalDpiX();
