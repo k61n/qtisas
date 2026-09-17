@@ -8460,6 +8460,7 @@ void Graph::setLinOrLogAxis(int axis, bool logYN, bool changeAxisFormat, bool fo
     if (!changeAxisFormat)
     {
         auto scDiv = axisScaleDiv(axis);
+        bool rangeChanged = scDiv.isEmpty();
         if (!scDiv.isEmpty())
         {
             double minVal = scDiv.lowerBound();
@@ -8467,6 +8468,8 @@ void Graph::setLinOrLogAxis(int axis, bool logYN, bool changeAxisFormat, bool fo
 
             if (!forceRescale && minVal <= min && maxVal >= max)
                 return;
+
+            rangeChanged = !qFuzzyCompare(minVal + 1.0, min + 1.0) || !qFuzzyCompare(maxVal + 1.0, max + 1.0);
         }
 
         step = axisStep(axis);
@@ -8479,7 +8482,12 @@ void Graph::setLinOrLogAxis(int axis, bool logYN, bool changeAxisFormat, bool fo
             inverted = engine->testAttribute(QwtScaleEngine::Inverted);
         }
 
-        if (!scDiv.isEmpty())
+        // A genuinely wider/narrower range gets the normal fresh-axis cap; an
+        // unchanged range keeps whatever count is already drawn, so repeated
+        // rescales don't ratchet the cap down toward a degenerate low count.
+        if (rangeChanged)
+            majorTicks = 10;
+        else if (!scDiv.isEmpty())
             majorTicks = static_cast<int>(scDiv.ticks(QwtScaleDiv::MajorTick).count());
     }
 
