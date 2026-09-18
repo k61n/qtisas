@@ -12,6 +12,29 @@ Description: Batch fitting interface functions
 const int minColumnsBatchFitTable = 7;
 const int minRowsBatchFitTable = 20;
 
+namespace
+{
+// "1.000|fixed" marks that dataset's parameter fixed for Set-to-Set/Global fit, overriding the column's checkbox.
+QString batchParamValueText(const QString &cellText)
+{
+    const int pipe = static_cast<int>(cellText.indexOf(QLatin1Char('|')));
+    return pipe >= 0 ? cellText.left(pipe) : cellText;
+}
+
+bool batchParamIsFixed(const QString &cellText)
+{
+    const int pipe = static_cast<int>(cellText.indexOf(QLatin1Char('|')));
+    return pipe >= 0 && cellText.mid(pipe + 1) == QLatin1String("fixed");
+}
+
+// Writes a fitted value back into a batch cell while preserving any "|..." marker suffix.
+QString withBatchParamValue(const QString &oldCellText, const QString &newValueText)
+{
+    const int pipe = static_cast<int>(oldCellText.indexOf(QLatin1Char('|')));
+    return pipe >= 0 ? newValueText + oldCellText.mid(pipe) : newValueText;
+}
+} // namespace
+
 void fittable18::connectSlotBatch()
 {
     connect(pushButtonBatchToGlobal, &QPushButton::clicked, this, &fittable18::batchToGlobal);
@@ -677,7 +700,7 @@ bool fittable18::saveBatchTable(Table *&t, QString tableName)
 
         for (int j = 0; j < p; j++)
         {
-            t->setText(i, 7 + 2 * j, tableMultiFit->item(i + 1, j + start)->text());
+            t->setText(i, 7 + 2 * j, batchParamValueText(tableMultiFit->item(i + 1, j + start)->text()));
             t->setText(i, 7 + 2 * j + 1, "");
         }
     }
@@ -808,12 +831,15 @@ void fittable18::setBySetFitOrSim(bool fitYN)
 
     tablePara->blockSignals(true);
 
+    // Cached per-column: a per-dataset "|fixed" marker temporarily overrides fitYN0's checkState, restored here after.
+    QVector<Qt::CheckState> globalFitState(tableMultiFit->columnCount());
     for (int j = start; j < tableMultiFit->columnCount(); j++)
     {
         //+++ Start values & adjustibility trasfer
         auto *fitYN = (QTableWidgetItem *)tableMultiFit->item(0, j);
         auto *fitYN0 = (QTableWidgetItem *)tablePara->item(j - start, 1);
 
+        globalFitState[j] = fitYN->checkState();
         fitYN0->setCheckState(fitYN->checkState());
     }
 
@@ -907,7 +933,12 @@ void fittable18::setBySetFitOrSim(bool fitYN)
         //+++ MOVING OF PARAMETERS TO FITTING INTERFACE
         if (tableMultiFit->item(0, 0)->text() != "c" || progressIter == 1)
             for (int j = start; j < tableMultiFit->columnCount(); j++)
-                tablePara->item(j - start, 2)->setText(tableMultiFit->item(i + 1, j)->text());
+            {
+                const QString cellText = tableMultiFit->item(i + 1, j)->text();
+                tablePara->item(j - start, 2)->setText(batchParamValueText(cellText));
+                auto *fitYN0 = (QTableWidgetItem *)tablePara->item(j - start, 1);
+                fitYN0->setCheckState(batchParamIsFixed(cellText) ? Qt::Unchecked : globalFitState[j]);
+            }
 
         //+++ FITTING OF CURRENT DATASET
         setToSetNumber = i + 1;
@@ -931,7 +962,8 @@ void fittable18::setBySetFitOrSim(bool fitYN)
                        QString::number(tablePara->item(j, 3)->text().remove(QString(QChar(0x00B1))).toDouble(), 'G',
                                        spinBoxSignDigits->value()));
 
-            tableMultiFit->item(i + 1, j + start)->setText(tablePara->item(j, 2)->text());
+            auto *cell = tableMultiFit->item(i + 1, j + start);
+            cell->setText(withBatchParamValue(cell->text(), tablePara->item(j, 2)->text()));
         }
         t->setText(Nselected, 4, textLabelChi->text());
         t->setText(Nselected, 5, textLabelR2->text());
@@ -1118,8 +1150,10 @@ void fittable18::batchToGlobal()
         //+++ MOVING OF PARAMETERS TO FITTING INTERFACE
         for (int j = 0; j < p; j++)
         {
-            tablePara->item(j, 3 * i + 2)->setText(values[i * p + j]);
-            ((QTableWidgetItem *)tablePara->item(j, 3 * i + 1))->setCheckState(fitStatus[j]);
+            const QString &cellText = values[i * p + j];
+            tablePara->item(j, 3 * i + 2)->setText(batchParamValueText(cellText));
+            ((QTableWidgetItem *)tablePara->item(j, 3 * i + 1))
+                ->setCheckState(batchParamIsFixed(cellText) ? Qt::Unchecked : fitStatus[j]);
         }
     }
 }
