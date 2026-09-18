@@ -355,7 +355,14 @@ void fittable18::readBatchTable(const QString &tableName)
                     cols.prepend(QString(colTempReso[j]).remove(currentTable + "_"));
 
             resoCol->addItems(cols);
-            resoCol->setItemText(resoCol->currentIndex(), currentReso);
+
+            int resoIndex = resoCol->findText(currentReso);
+            if (resoIndex < 0)
+            {
+                resoCol->insertItem(0, currentReso);
+                resoIndex = 0;
+            }
+            resoCol->setCurrentIndex(resoIndex);
             resoShift++;
         }
 
@@ -887,7 +894,13 @@ void fittable18::setBySetFitOrSim(bool fitYN)
             else
                 s = tables[Nselected] + "_" + resoColList[Nselected];
 
-            resoColItem->setItemText(resoColItem->currentIndex(), s);
+            int resoItemIndex = resoColItem->findText(s);
+            if (resoItemIndex < 0)
+            {
+                resoColItem->insertItem(0, s);
+                resoItemIndex = 0;
+            }
+            resoColItem->setCurrentIndex(resoItemIndex);
             tableCurvechanged(5, 1);
         }
 
