@@ -1184,7 +1184,7 @@ void ApplicationWindow::setDefaultOptions()
     d_frame_widget_pen = QPen(Qt::black, 2, Qt::SolidLine);
 	legendTextColor = Qt::black;
 	legendBackground = Qt::white;
-    legendBackground.setAlpha(0);
+    legendBackground.setAlpha(255);
 	d_legend_default_angle = 0;
 	d_frame_geometry_unit = (int)FrameWidget::Scale;
 	d_layer_geometry_unit = (int)FrameWidget::Pixel;
@@ -7642,7 +7642,7 @@ void ApplicationWindow::readSettings()
     legendTextColor = settings->value("/TextColor", "#000000").value<QColor>(); // default color Qt::black
     legendBackground =
         settings->value("/BackgroundColor", QColor(Qt::white)).value<QColor>(); // default color Qt::white
-    legendBackground.setAlpha(settings->value("/Transparency", 0).toInt());     // transparent by default;
+    legendBackground.setAlpha(settings->value("/Transparency", 255).toInt());   // opaque by default;
     d_legend_default_angle = settings->value("/Angle", 0).toInt();
     d_frame_geometry_unit = settings->value("/DefaultGeometryUnit", FrameWidget::Scale).toInt();
     settings->endGroup(); // Legend
