@@ -336,9 +336,23 @@ void fittable18::readBatchTable(const QString &tableName)
             tableMultiFit->setCellWidget(activeDatasets + 1, 3, resoCol);
 
             cols.clear();
-            for (int j = 0; j < colTempReso.count(); j++)
+
+            QString currentInstrument = comboBoxInstrument->currentText();
+            if (currentInstrument.contains("Back"))
+                cols << "from_SPHERES";
+            else
+            {
+                cols << "calculated_in_\"ASCII.1D.SANS\"";
+                cols << "\"01%\":_sigma(Q)=0.01*Q";
+                cols << "\"02%\":_sigma(Q)=0.02*Q";
+                cols << "\"05%\":_sigma(Q)=0.05*Q";
+                cols << "\"10%\":_sigma(Q)=0.10*Q";
+                cols << "\"20%\":_sigma(Q)=0.20*Q";
+            }
+
+            for (qsizetype j = colTempReso.count(); j-- > 0;)
                 if (rxCol.match(colTempReso[j]).hasMatch())
-                    cols << QString(colTempReso[j]).remove(currentTable + "_");
+                    cols.prepend(QString(colTempReso[j]).remove(currentTable + "_"));
 
             resoCol->addItems(cols);
             resoCol->setItemText(resoCol->currentIndex(), currentReso);
