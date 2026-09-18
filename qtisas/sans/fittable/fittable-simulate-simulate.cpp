@@ -388,7 +388,10 @@ bool fittable18::addGeneralCurve(Graph *g, QString tableName, int m, Table *&tab
     {
         if (!table)
             return false;
-        g->insertCurve(table, tableName, style)->setAxes(0 + 2, int(rightYN));
+        DataCurve *newCurve = g->insertCurve(table, tableName, style);
+        if (!newCurve)
+            return false;
+        newCurve->setAxes(0 + 2, int(rightYN));
         const int newIndex = static_cast<int>(g->curveNamesList().indexOf(tableName));
         if (newIndex < 0)
             return false;
