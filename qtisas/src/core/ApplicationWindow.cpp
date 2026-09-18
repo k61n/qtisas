@@ -8761,13 +8761,26 @@ QString ApplicationWindow::getFileName(QWidget *parent, const QString &caption, 
 	if (selectedFilter)
 		*selectedFilter = fd.selectedNameFilter();
 
-	if (save){
-		QString file_name = fd.selectedFiles()[0];
-		QString selected_filter = fd.selectedNameFilter();
-		int pos1 = selected_filter.indexOf("*");
-		selected_filter = selected_filter.mid(pos1 + 1, selected_filter.length() - pos1 - 2);
-		if(!file_name.endsWith(selected_filter, Qt::CaseInsensitive))
-			file_name.append(selected_filter);
+    QString file_name = fd.selectedFiles()[0];
+
+    if (save)
+    {
+        // Extract the extension from a "*.ext" pattern in the filter text
+        QString selected_filter = fd.selectedNameFilter();
+        static const QRegularExpression extRe(R"(\*(\.[\w.]+))");
+        QRegularExpressionMatch match = extRe.match(selected_filter);
+        if (match.hasMatch())
+        {
+            QString ext = match.captured(1);
+            if (!file_name.endsWith(ext, Qt::CaseInsensitive))
+            {
+                // macOS's save panel can mangle the auto-appended extension
+                // (e.g. "a" -> "a.qtif" instead of "a.qti") -- cut at "." + ext
+                int cut = static_cast<int>(file_name.lastIndexOf(ext, -1, Qt::CaseInsensitive));
+                QString base = cut >= 0 ? file_name.left(cut) : file_name;
+                file_name = base + ext;
+            }
+        }
 
 		QFile file(file_name);
 		if(!file.open(QIODevice::WriteOnly)){
@@ -8779,7 +8792,7 @@ QString ApplicationWindow::getFileName(QWidget *parent, const QString &caption, 
 		file.remove();
 	}
 
-	return fd.selectedFiles()[0];
+    return file_name;
 }
 
 QString ApplicationWindow::getSaveProjectName(const QString& fileName, bool *compress, int scope)
