@@ -436,6 +436,12 @@ class Graph: public QwtPlot
     //! conversion) to plain pixel values matching its own viewBox -- a viewer that reads the leading number
     //! without honoring the "mm" unit renders a window ~2.8x smaller than the actual pixel content.
     static QByteArray withPixelSvgSize(const QByteArray &svg);
+    //! Strips every empty <g ...></g> left by Qt's SVG paint-state tracking (a pen/brush/font change that drew
+    //! nothing still opens/closes a group) -- zero visual effect, removed to shrink file size.
+    static QByteArray withoutEmptySvgGroups(const QByteArray &svg);
+    //! Strips attributes Qt's SVG generator writes unconditionally even when they equal the SVG spec's own
+    //! default (identity transform, opacity 1, vector-effect none) -- zero visual effect, smaller file.
+    static QByteArray withoutSvgDefaultAttributes(const QByteArray &svg);
 		void exportEMF(const QString& fname, const QSizeF& customSize = QSizeF(), int unit = FrameWidget::Pixel, double fontsFactor = 1.0);
 		void exportTeX(const QString& fname, bool color = true, bool escapeStrings = true, bool fontSizes = true,
 						const QSizeF& customSize = QSizeF(), int unit = FrameWidget::Pixel, double fontsFactor = 1.0);

@@ -1693,7 +1693,8 @@ QByteArray MultiLayer::arraySVG(int reso, const QSizeF &customSize, int unit, do
             draw(&generator, d_canvas->size(), unit, defaultResolution, fontsFactor);
     }
 
-    return Graph::withPixelSvgSize(Graph::withSvgFontFallback(byteArray));
+    return Graph::withPixelSvgSize(
+        Graph::withSvgFontFallback(Graph::withoutEmptySvgGroups(Graph::withoutSvgDefaultAttributes(byteArray))));
 }
 
 bool MultiLayer::exportSVG(const QString &fname, int reso, const QSizeF &customSize, int unit, double fontsFactor)

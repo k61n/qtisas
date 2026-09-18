@@ -2200,6 +2200,34 @@ QByteArray Graph::withPixelSvgSize(const QByteArray &svg)
     return result.toUtf8();
 }
 
+QByteArray Graph::withoutEmptySvgGroups(const QByteArray &svg)
+{
+    QString s = QString::fromUtf8(svg);
+    static const QRegularExpression emptyGroup(QStringLiteral("<g[^>]*>\\s*</g>\\s*"));
+    // Removing one empty group can leave its own parent empty in turn (e.g. a clip-path wrapper whose only
+    // child was itself empty) -- repeat until a pass removes nothing.
+    QString prev;
+    do
+    {
+        prev = s;
+        s.replace(emptyGroup, QString());
+    } while (s != prev);
+    return s.toUtf8();
+}
+
+QByteArray Graph::withoutSvgDefaultAttributes(const QByteArray &svg)
+{
+    QString s = QString::fromUtf8(svg);
+    // Qt's SVG generator writes these unconditionally on every element, even when they equal the SVG spec's
+    // own default -- explicit here only means "same as if the attribute were absent", so dropping them is a
+    // pure no-op visually. Only ever seen written with exactly these literal values in generated output.
+    s.remove(QStringLiteral(" transform=\"matrix(1,0,0,1,0,0)\""));
+    s.remove(QStringLiteral(" stroke-opacity=\"1\""));
+    s.remove(QStringLiteral(" fill-opacity=\"1\""));
+    s.remove(QStringLiteral(" vector-effect=\"none\""));
+    return s.toUtf8();
+}
+
 QByteArray Graph::arraySVG(int reso, const QSizeF &customSize, int unit, double fontsFactor, QRectF *outClipRect,
                            QSize *outDocSize)
 {
@@ -2214,7 +2242,8 @@ QByteArray Graph::arraySVG(int reso, const QSizeF &customSize, int unit, double 
         *outDocSize = docSize;
 
     // QSvgGenerator can't clip at draw time; wrap the canvas in a real SVG clip-path instead.
-    return withPixelSvgSize(withSvgFontFallback(spliceClippedCanvas(beforeBytes, canvasBytes, afterBytes, clipRect)));
+    return withPixelSvgSize(withSvgFontFallback(withoutEmptySvgGroups(
+        withoutSvgDefaultAttributes(spliceClippedCanvas(beforeBytes, canvasBytes, afterBytes, clipRect)))));
 }
 
 QRectF Graph::svgClipRect(const QRect &plotRect, const ScaledFontsPrintFilter &pfilter, int res)
