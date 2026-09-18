@@ -6724,7 +6724,7 @@ void Graph::printCanvas(QPainter *painter, const QRectF &canvasRect, const QwtSc
 
 void Graph::drawCanvas(QPainter *painter)
 {
-    QwtPainter::fillRect(painter, canvas()->contentsRect(), canvasBackground());
+    // autoFillBackground() already filled the canvas; filling again here double-blends a translucent color.
     QwtPlot::drawCanvas(painter);
 }
 
