@@ -428,6 +428,10 @@ class Graph: public QwtPlot
     //! since only the canvas pass can get a real clip.
     void buildSvgPasses(int reso, const QSizeF &customSize, int unit, double fontsFactor, QByteArray &beforeBytes,
                         QByteArray &canvasBytes, QByteArray &afterBytes, QRectF &clipRect, QSize &docSize);
+    //! Appends a generic fallback chain to every font-family in an exported SVG (e.g. "Helvetica Neue" ->
+    //! "Helvetica Neue, Helvetica, Arial, sans-serif") -- QSvgGenerator writes the literal requested family name,
+    //! which a non-Qt SVG viewer may resolve to a differently-metriced font, so text can overflow its frame.
+    static QByteArray withSvgFontFallback(const QByteArray &svg);
 		void exportEMF(const QString& fname, const QSizeF& customSize = QSizeF(), int unit = FrameWidget::Pixel, double fontsFactor = 1.0);
 		void exportTeX(const QString& fname, bool color = true, bool escapeStrings = true, bool fontSizes = true,
 						const QSizeF& customSize = QSizeF(), int unit = FrameWidget::Pixel, double fontsFactor = 1.0);

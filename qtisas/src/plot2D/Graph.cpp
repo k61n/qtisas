@@ -22,11 +22,13 @@ Description: Graph widget
 #include <QBuffer>
 #include <QImageReader>
 #include <QImageWriter>
+#include <QMap>
 #include <QMessageBox>
 #include <QPixmap>
 #include <QPainter>
 #include <QPaintEngine>
 #include <QMenu>
+#include <QRegularExpression>
 #include <QTextStream>
 #include <QPrintDialog>
 #include <QFileInfo>
@@ -2124,6 +2126,66 @@ void Graph::buildSvgPasses(int reso, const QSizeF &customSize, int unit, double 
     clipRect = svgClipRect(r, pfilter, res);
 }
 
+QByteArray Graph::withSvgFontFallback(const QByteArray &svg)
+{
+    // Metrically-compatible open substitutes (Liberation/Croscore fonts) come first where one exists, since they
+    // match the original's character widths exactly rather than just "looking similar" like a generic guess.
+    static const QMap<QString, QString> knownFallbacks = {
+        // sans-serif
+        {QStringLiteral("Helvetica Neue"), QStringLiteral("Helvetica, Arial, sans-serif")},
+        {QStringLiteral("Segoe UI"), QStringLiteral("Tahoma, Arial, sans-serif")},
+        {QStringLiteral("Arial"), QStringLiteral("Arimo, Liberation Sans, sans-serif")},
+        {QStringLiteral("Calibri"), QStringLiteral("Carlito, sans-serif")},
+        {QStringLiteral("Tahoma"), QStringLiteral("Verdana, sans-serif")},
+        {QStringLiteral("Verdana"), QStringLiteral("Geneva, sans-serif")},
+        {QStringLiteral("Trebuchet MS"), QStringLiteral("Verdana, sans-serif")},
+        {QStringLiteral("Century Gothic"), QStringLiteral("Futura, sans-serif")},
+        {QStringLiteral("Gill Sans"), QStringLiteral("Gill Sans MT, Calibri, sans-serif")},
+        {QStringLiteral("Optima"), QStringLiteral("Candara, sans-serif")},
+        {QStringLiteral("Candara"), QStringLiteral("Calibri, Segoe UI, sans-serif")},
+        {QStringLiteral("Lucida Grande"), QStringLiteral("Lucida Sans Unicode, sans-serif")},
+        // serif
+        {QStringLiteral("Times New Roman"), QStringLiteral("Liberation Serif, Times, serif")},
+        {QStringLiteral("Cambria"), QStringLiteral("Caladea, Georgia, serif")},
+        {QStringLiteral("Georgia"), QStringLiteral("Cambria, serif")},
+        {QStringLiteral("Palatino"), QStringLiteral("Palatino Linotype, Book Antiqua, Georgia, serif")},
+        {QStringLiteral("Book Antiqua"), QStringLiteral("Palatino Linotype, Georgia, serif")},
+        {QStringLiteral("Garamond"), QStringLiteral("Baskerville, Georgia, serif")},
+        {QStringLiteral("Constantia"), QStringLiteral("Georgia, serif")},
+        // monospace
+        {QStringLiteral("Courier New"), QStringLiteral("Liberation Mono, Courier, monospace")},
+        {QStringLiteral("Consolas"), QStringLiteral("Liberation Mono, Courier New, monospace")},
+        {QStringLiteral("Monaco"), QStringLiteral("Consolas, Courier New, monospace")},
+        {QStringLiteral("Andale Mono"), QStringLiteral("Consolas, Courier New, monospace")},
+    };
+    // Falling back a serif/monospace font (e.g. an unlisted one) to a generic sans-serif, or vice versa, would look
+    // wrong in a different way than the original bug -- guess by name instead of defaulting to sans-serif always.
+    static const QRegularExpression monoName(QStringLiteral("mono|courier|console|typewriter|consolas"),
+                                             QRegularExpression::CaseInsensitiveOption);
+    static const QRegularExpression serifName(
+        QStringLiteral("serif|times|georgia|garamond|roman|cambria|palatino|baskerville|constantia|didot|antiqua"),
+        QRegularExpression::CaseInsensitiveOption);
+
+    QString s = QString::fromUtf8(svg);
+    static const QRegularExpression re(QStringLiteral("font-family=\"([^\"]+)\""));
+    QRegularExpressionMatch match;
+    int pos = 0;
+    while ((match = re.match(s, pos)).hasMatch())
+    {
+        const QString family = match.captured(1);
+        QString genericFallback = QStringLiteral("sans-serif");
+        if (monoName.match(family).hasMatch())
+            genericFallback = QStringLiteral("monospace");
+        else if (serifName.match(family).hasMatch())
+            genericFallback = QStringLiteral("serif");
+        const QString fallback = knownFallbacks.value(family, genericFallback);
+        const QString replacement = QStringLiteral("font-family=\"%1, %2\"").arg(family, fallback);
+        s.replace(match.capturedStart(0), match.capturedLength(0), replacement);
+        pos = static_cast<int>(match.capturedStart(0) + replacement.length());
+    }
+    return s.toUtf8();
+}
+
 QByteArray Graph::arraySVG(int reso, const QSizeF &customSize, int unit, double fontsFactor, QRectF *outClipRect,
                            QSize *outDocSize)
 {
@@ -2138,7 +2200,7 @@ QByteArray Graph::arraySVG(int reso, const QSizeF &customSize, int unit, double 
         *outDocSize = docSize;
 
     // QSvgGenerator can't clip at draw time; wrap the canvas in a real SVG clip-path instead.
-    return spliceClippedCanvas(beforeBytes, canvasBytes, afterBytes, clipRect);
+    return withSvgFontFallback(spliceClippedCanvas(beforeBytes, canvasBytes, afterBytes, clipRect));
 }
 
 QRectF Graph::svgClipRect(const QRect &plotRect, const ScaledFontsPrintFilter &pfilter, int res)
