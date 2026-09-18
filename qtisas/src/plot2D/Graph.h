@@ -432,6 +432,10 @@ class Graph: public QwtPlot
     //! "Helvetica Neue, Helvetica, Arial, sans-serif") -- QSvgGenerator writes the literal requested family name,
     //! which a non-Qt SVG viewer may resolve to a differently-metriced font, so text can overflow its frame.
     static QByteArray withSvgFontFallback(const QByteArray &svg);
+    //! Rewrites the root <svg> tag's width/height from physical mm (QSvgGenerator's fixed 72dpi pixel->mm
+    //! conversion) to plain pixel values matching its own viewBox -- a viewer that reads the leading number
+    //! without honoring the "mm" unit renders a window ~2.8x smaller than the actual pixel content.
+    static QByteArray withPixelSvgSize(const QByteArray &svg);
 		void exportEMF(const QString& fname, const QSizeF& customSize = QSizeF(), int unit = FrameWidget::Pixel, double fontsFactor = 1.0);
 		void exportTeX(const QString& fname, bool color = true, bool escapeStrings = true, bool fontSizes = true,
 						const QSizeF& customSize = QSizeF(), int unit = FrameWidget::Pixel, double fontsFactor = 1.0);

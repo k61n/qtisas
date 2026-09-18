@@ -2186,6 +2186,20 @@ QByteArray Graph::withSvgFontFallback(const QByteArray &svg)
     return s.toUtf8();
 }
 
+QByteArray Graph::withPixelSvgSize(const QByteArray &svg)
+{
+    const QString s = QString::fromUtf8(svg);
+    static const QRegularExpression viewBoxRe(QStringLiteral("viewBox=\"0 0 ([\\d.]+) ([\\d.]+)\""));
+    const QRegularExpressionMatch vb = viewBoxRe.match(s);
+    if (!vb.hasMatch())
+        return svg; // unexpected structure -- leave the physical mm size as-is rather than guessing
+
+    static const QRegularExpression sizeRe(QStringLiteral("width=\"[^\"]*mm\"\\s*height=\"[^\"]*mm\""));
+    QString result = s;
+    result.replace(sizeRe, QStringLiteral("width=\"%1\" height=\"%2\"").arg(vb.captured(1), vb.captured(2)));
+    return result.toUtf8();
+}
+
 QByteArray Graph::arraySVG(int reso, const QSizeF &customSize, int unit, double fontsFactor, QRectF *outClipRect,
                            QSize *outDocSize)
 {
@@ -2200,7 +2214,7 @@ QByteArray Graph::arraySVG(int reso, const QSizeF &customSize, int unit, double 
         *outDocSize = docSize;
 
     // QSvgGenerator can't clip at draw time; wrap the canvas in a real SVG clip-path instead.
-    return withSvgFontFallback(spliceClippedCanvas(beforeBytes, canvasBytes, afterBytes, clipRect));
+    return withPixelSvgSize(withSvgFontFallback(spliceClippedCanvas(beforeBytes, canvasBytes, afterBytes, clipRect)));
 }
 
 QRectF Graph::svgClipRect(const QRect &plotRect, const ScaledFontsPrintFilter &pfilter, int res)
