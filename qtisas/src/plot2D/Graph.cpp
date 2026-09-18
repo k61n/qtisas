@@ -1668,23 +1668,8 @@ void Graph::copyImage()
     {
         int factorRES = scalingFactor - 2; // x1, x2, x3
 
-        QByteArray svgData = arraySVG(int(defaultResolution), QSizeF(), 1, 1.0);
-        QSvgRenderer renderer(svgData);
-
-
-        QSizeF imageSize = renderer.defaultSize();
-        QSize outputSize(qRound(factorRES * imageSize.width()), qRound(factorRES * imageSize.height()));
-
-        QImage image(outputSize, QImage::Format_ARGB32);
-
-        image.fill(Qt::transparent);
-
-        QPainter painter(&image);
-        painter.setRenderHint(QPainter::Antialiasing);
-        painter.setRenderHint(QPainter::TextAntialiasing);
-        painter.setRenderHint(QPainter::SmoothPixmapTransform);
-        renderer.render(&painter);
-        painter.end();
+        // Same clipped, z-order-correct rendering as exportImage() -- a bare QSvgRenderer ignores the clip-path.
+        QImage image = renderClippedImage(int(factorRES * defaultResolution), true);
 
         QApplication::clipboard()->setImage(image, QClipboard::Clipboard);
     }
@@ -1781,8 +1766,7 @@ void Graph::exportToFile(const QString &fileName)
     }
 }
 
-void Graph::exportImage(const QString &fileName, int quality, bool transparent, int dpi, const QSizeF &customSize,
-                        int unit, double fontsFactor, int compression)
+QImage Graph::renderClippedImage(int dpi, bool transparent, const QSizeF &customSize, int unit, double fontsFactor)
 {
     if (!dpi)
         dpi = logicalDpiX();
@@ -1796,13 +1780,24 @@ void Graph::exportImage(const QString &fileName, int quality, bool transparent, 
     // then scales by factorRES = dpi/72, giving a total pen factor of
     // dpi/logicalDpiX() — the correct physical size conversion.
     // Passing the target dpi here caused double-scaling: (dpi/logicalDpiX())×(dpi/72).
-    QByteArray svgData = arraySVG(defaultResolution, size, unit, fontsFactor);
-    QSvgRenderer renderer(svgData);
+    //
+    // Three separate passes, not one clipped QPainter render -- a single clip would mask chrome too (confirmed live).
+    QByteArray beforeBytes, canvasBytes, afterBytes;
+    QRectF clipRect;
+    QSize docSize;
+    buildSvgPasses(defaultResolution, size, unit, fontsFactor, beforeBytes, canvasBytes, afterBytes, clipRect, docSize);
+    QSvgRenderer beforeRenderer(beforeBytes);
+    QSvgRenderer canvasRenderer(canvasBytes);
+    QSvgRenderer afterRenderer(afterBytes);
 
     double factorRES = (double)dpi / (double)defaultResolution;
 
-    QSizeF imageSize = renderer.defaultSize();
+    QSizeF imageSize = beforeRenderer.defaultSize();
     QSize outputSize(qRound(factorRES * imageSize.width()), qRound(factorRES * imageSize.height()));
+
+    // Scale against docSize, not imageSize/factorRES, which drifts via a pixel<->mm round trip.
+    const double scaleX = docSize.width() > 0 ? (double)outputSize.width() / docSize.width() : factorRES;
+    const double scaleY = docSize.height() > 0 ? (double)outputSize.height() / docSize.height() : factorRES;
 
     QImage image(outputSize, QImage::Format_ARGB32);
 
@@ -1812,8 +1807,21 @@ void Graph::exportImage(const QString &fileName, int quality, bool transparent, 
     painter.setRenderHint(QPainter::Antialiasing);
     painter.setRenderHint(QPainter::TextAntialiasing);
     painter.setRenderHint(QPainter::SmoothPixmapTransform);
-    renderer.render(&painter);
+    beforeRenderer.render(&painter);
+    painter.setClipRect(QRectF(clipRect.left() * scaleX, clipRect.top() * scaleY, clipRect.width() * scaleX,
+                               clipRect.height() * scaleY));
+    canvasRenderer.render(&painter);
+    painter.setClipping(false);
+    afterRenderer.render(&painter);
     painter.end();
+
+    return image;
+}
+
+void Graph::exportImage(const QString &fileName, int quality, bool transparent, int dpi, const QSizeF &customSize,
+                        int unit, double fontsFactor, int compression)
+{
+    QImage image = renderClippedImage(dpi, transparent, customSize, unit, fontsFactor);
 
     if (fileName.right(4).contains("tif", Qt::CaseInsensitive))
         quality = 100;
@@ -2006,28 +2014,30 @@ bool Graph::exportSVG(const QString &fname, int reso, const QSizeF &customSize, 
 // +++ export svg-image to QByteArray
 namespace
 {
-// Splices canvasOnly's plot content into chrome (title/axes/legend), wrapped
-// in a real SVG clip-path -- QSvgGenerator can't clip at draw time (see
-// Graph::printCanvas()), but a clip-path written directly into the document
-// text is respected by every SVG viewer. Relies on QSvgGenerator's own fixed
-// output shape: exactly one top-level <g ...> right after </defs>, closing
-// right before </svg>, true across the Qt versions this app targets.
-QByteArray spliceClippedCanvas(const QByteArray &chrome, const QByteArray &canvasOnly, const QRectF &canvasRect)
+// Extracts a QSvgGenerator document's one top-level <g ...> content; empty on unexpected structure.
+QString extractSvgGroupInner(const QByteArray &svg)
 {
-    QString chromeStr = QString::fromUtf8(chrome);
-    QString canvasStr = QString::fromUtf8(canvasOnly);
+    QString s = QString::fromUtf8(svg);
+    int svgEnd = static_cast<int>(s.lastIndexOf(QStringLiteral("</svg>")));
+    int groupClose = svgEnd >= 0 ? static_cast<int>(s.lastIndexOf(QStringLiteral("</g>"), svgEnd)) : -1;
+    int defsEnd = static_cast<int>(s.indexOf(QStringLiteral("</defs>")));
+    int groupOpenStart = defsEnd >= 0 ? static_cast<int>(s.indexOf(QStringLiteral("<g"), defsEnd)) : -1;
+    int groupOpenEnd = groupOpenStart >= 0 ? static_cast<int>(s.indexOf(QStringLiteral(">"), groupOpenStart) + 1) : -1;
+    if (groupClose < 0 || groupOpenEnd <= 0 || groupOpenEnd > groupClose)
+        return {};
+    return s.mid(groupOpenEnd, groupClose - groupOpenEnd);
+}
 
-    int canvasSvgEnd = canvasStr.lastIndexOf(QStringLiteral("</svg>"));
-    int canvasGroupClose = canvasSvgEnd >= 0 ? canvasStr.lastIndexOf(QStringLiteral("</g>"), canvasSvgEnd) : -1;
-    int canvasDefsEnd = canvasStr.indexOf(QStringLiteral("</defs>"));
-    int canvasGroupOpenStart = canvasDefsEnd >= 0 ? canvasStr.indexOf(QStringLiteral("<g"), canvasDefsEnd) : -1;
-    int canvasGroupOpenEnd =
-        canvasGroupOpenStart >= 0 ? canvasStr.indexOf(QStringLiteral(">"), canvasGroupOpenStart) + 1 : -1;
+// Splices before/canvas(clipped)/after back together in print() paint order; QSvgGenerator can't clip at draw time.
+QByteArray spliceClippedCanvas(const QByteArray &before, const QByteArray &canvasOnly, const QByteArray &after,
+                               const QRectF &canvasRect)
+{
+    QString beforeStr = QString::fromUtf8(before);
+    const QString canvasInner = extractSvgGroupInner(canvasOnly);
+    const QString afterInner = extractSvgGroupInner(after);
 
-    if (canvasGroupClose < 0 || canvasGroupOpenEnd <= 0 || canvasGroupOpenEnd > canvasGroupClose)
-        return chrome; // unexpected structure -- fall back to chrome-only rather than producing garbage
-
-    const QString canvasInner = canvasStr.mid(canvasGroupOpenEnd, canvasGroupClose - canvasGroupOpenEnd);
+    if (canvasInner.isEmpty() && afterInner.isEmpty())
+        return before; // unexpected structure -- fall back to before-only rather than producing garbage
 
     static QAtomicInt counter(0);
     const QString clipId = QStringLiteral("qtisasCanvasClip%1").arg(counter.fetchAndAddOrdered(1));
@@ -2040,30 +2050,35 @@ QByteArray spliceClippedCanvas(const QByteArray &chrome, const QByteArray &canva
             .arg(canvasRect.height());
     const QString clippedCanvasGroup = QStringLiteral("<g clip-path=\"url(#%1)\">%2</g>").arg(clipId, canvasInner);
 
-    int defsPos = chromeStr.indexOf(QStringLiteral("<defs>"));
-    int defsEndPos = defsPos >= 0 ? chromeStr.indexOf(QStringLiteral("</defs>"), defsPos) : -1;
-    int svgEnd = chromeStr.lastIndexOf(QStringLiteral("</svg>"));
-    int groupClosePos = svgEnd >= 0 ? chromeStr.lastIndexOf(QStringLiteral("</g>"), svgEnd) : -1;
+    int defsPos = static_cast<int>(beforeStr.indexOf(QStringLiteral("<defs>")));
+    int defsEndPos = defsPos >= 0 ? static_cast<int>(beforeStr.indexOf(QStringLiteral("</defs>"), defsPos)) : -1;
+    int svgEnd = static_cast<int>(beforeStr.lastIndexOf(QStringLiteral("</svg>")));
+    int groupClosePos = svgEnd >= 0 ? static_cast<int>(beforeStr.lastIndexOf(QStringLiteral("</g>"), svgEnd)) : -1;
 
     if (defsEndPos < 0 || groupClosePos < 0)
-        return chrome;
+        return before;
 
-    chromeStr.insert(groupClosePos, clippedCanvasGroup);
-    // Inserting the canvas group shifted defsEndPos only if it comes after
+    // Insert after, then the clipped canvas, both before before's closing </g> -- matches print()'s paint order.
+    beforeStr.insert(groupClosePos, afterInner);
+    beforeStr.insert(groupClosePos, clippedCanvasGroup);
+    // Inserting the above shifted defsEndPos only if it comes after
     // groupClosePos, which it never does (defs is near the top) -- safe as-is.
-    chromeStr.insert(defsEndPos, clipDef);
+    beforeStr.insert(defsEndPos, clipDef);
 
-    return chromeStr.toUtf8();
+    return beforeStr.toUtf8();
 }
-}
+} // namespace
 
-QByteArray Graph::arraySVG(int reso, const QSizeF &customSize, int unit, double fontsFactor)
+void Graph::buildSvgPasses(int reso, const QSizeF &customSize, int unit, double fontsFactor, QByteArray &beforeBytes,
+                           QByteArray &canvasBytes, QByteArray &afterBytes, QRectF &clipRect, QSize &docSize)
 {
     QSize size = boundingRect().size();
     int res = (int)defaultResolution;
 
 	if (customSize.isValid())
 		size = Graph::customPrintSize(customSize, unit, res);
+
+    docSize = size;
 
     double effectiveFontsFactor = fontsFactor;
     if (effectiveFontsFactor == 0.0)
@@ -2087,7 +2102,7 @@ QByteArray Graph::arraySVG(int reso, const QSizeF &customSize, int unit, double 
 
     ScaledFontsPrintFilter pfilter(effectiveFontsFactor);
 
-    auto renderPass = [&](bool skipCanvas, bool canvasOnly) {
+    auto renderPass = [&](PrintScope scope) {
         QByteArray bytes;
         QBuffer buf(&bytes);
         buf.open(QIODevice::WriteOnly);
@@ -2097,18 +2112,33 @@ QByteArray Graph::arraySVG(int reso, const QSizeF &customSize, int unit, double 
         generator.setResolution(res);
         generator.setViewBox(QRectF(0, 0, size.width(), size.height()));
         QPainter p(&generator);
-        print(&p, r, pfilter, reso, skipCanvas, canvasOnly);
+        print(&p, r, pfilter, reso, scope);
         p.end();
         return bytes;
     };
 
-    // Pass A: everything except the canvas (title/axes/legend/enrichments).
-    const QByteArray chromeBytes = renderPass(/*skipCanvas=*/true, /*canvasOnly=*/false);
-    // Pass B: canvas content only (curves/symbols), same layout -- wrapped in
-    // a real SVG clip-path when spliced into the chrome above.
-    const QByteArray canvasBytes = renderPass(/*skipCanvas=*/false, /*canvasOnly=*/true);
+    // Same order print() draws in, so splicing preserves z-order.
+    beforeBytes = renderPass(PrintScope::BeforeCanvas);
+    canvasBytes = renderPass(PrintScope::CanvasOnly);
+    afterBytes = renderPass(PrintScope::AfterCanvas);
+    clipRect = svgClipRect(r, pfilter, res);
+}
 
-    return spliceClippedCanvas(chromeBytes, canvasBytes, svgClipRect(r, pfilter, res));
+QByteArray Graph::arraySVG(int reso, const QSizeF &customSize, int unit, double fontsFactor, QRectF *outClipRect,
+                           QSize *outDocSize)
+{
+    QByteArray beforeBytes, canvasBytes, afterBytes;
+    QRectF clipRect;
+    QSize docSize;
+    buildSvgPasses(reso, customSize, unit, fontsFactor, beforeBytes, canvasBytes, afterBytes, clipRect, docSize);
+
+    if (outClipRect)
+        *outClipRect = clipRect;
+    if (outDocSize)
+        *outDocSize = docSize;
+
+    // QSvgGenerator can't clip at draw time; wrap the canvas in a real SVG clip-path instead.
+    return spliceClippedCanvas(beforeBytes, canvasBytes, afterBytes, clipRect);
 }
 
 QRectF Graph::svgClipRect(const QRect &plotRect, const ScaledFontsPrintFilter &pfilter, int res)
@@ -5000,6 +5030,11 @@ void Graph::restoreBackgroundImage(const QStringList& lst)
 
 void Graph::updateMarkersBoundingRect(bool rescaleEvent)
 {
+    // Defer while restoring: canvas geometry isn't final yet, re-deriving enrichment coords now would bake in error.
+    ApplicationWindow *app = aw();
+    if (app && (app->d_opening_file || app->d_is_appending_file))
+        return;
+
     foreach (FrameWidget *f, d_enrichments)
     {
         if (!rescaleEvent)
@@ -7329,23 +7364,33 @@ void Graph::showEvent (QShowEvent * event)
   \param pfilter Print filter
 */
 void Graph::print(QPainter *painter, const QRect &plotRect, const ScaledFontsPrintFilter &pfilter, int res,
-                  bool skipCanvas, bool canvasOnly)
+                  PrintScope scope)
 {
 	if (painter == 0 || !painter->isActive() || !plotRect.isValid() || size().isNull())
 		return;
+
+    const bool wantBefore =
+        (scope == PrintScope::Full || scope == PrintScope::BeforeCanvas || scope == PrintScope::BeforeCanvasFrame);
+    const bool wantBack =
+        (scope == PrintScope::Full || scope == PrintScope::BeforeCanvas || scope == PrintScope::BackEnrichments);
+    const bool wantCanvas = (scope == PrintScope::Full || scope == PrintScope::CanvasOnly);
+    const bool wantAfter =
+        (scope == PrintScope::Full || scope == PrintScope::AfterCanvas || scope == PrintScope::AfterCanvasChrome);
+    const bool wantFront =
+        (scope == PrintScope::Full || scope == PrintScope::AfterCanvas || scope == PrintScope::FrontEnrichments);
 
 	deselect();
 
 	d_is_printing = true;
 
-    if (!canvasOnly)
+    if (wantBefore)
         printFrame(painter, plotRect);
 
 	painter->save();
 
 	int axisId;
 	int baseLineDists[QwtPlot::axisCnt];
-    if (!canvasOnly && (pfilter.options() & ScaledFontsPrintFilter::PrintFrameWithScales))
+    if (wantBefore && (pfilter.options() & ScaledFontsPrintFilter::PrintFrameWithScales))
     {
 		// In case of no background we set the backbone of
 		// the scale on the frame of the canvas.
@@ -7467,7 +7512,7 @@ void Graph::print(QPainter *painter, const QRect &plotRect, const ScaledFontsPri
 
     double fontFactor = pfilter.scaleFontsFactor();
     QList<FrameWidget *> enrichments = stackingOrderEnrichmentsList();
-    if (!canvasOnly)
+    if (wantBack)
     {
     foreach (FrameWidget *f, enrichments)
     {
@@ -7497,7 +7542,25 @@ void Graph::print(QPainter *painter, const QRect &plotRect, const ScaledFontsPri
             lw->setFont(fnt);
     }
     }
-    if (!skipCanvas)
+
+    // On screen a "sent to Back" enrichment is hidden by opaque widget stacking; print() has no such occlusion, so
+    // repaint the background here (at its real, unmodified alpha) to cover it the same way, only if one is visible.
+    if (wantBefore)
+    {
+        bool hasVisibleBack = false;
+        foreach (FrameWidget *f, enrichments)
+        {
+            if (f->isVisible() && !f->isOnTop())
+            {
+                hasVisibleBack = true;
+                break;
+            }
+        }
+        if (hasVisibleBack)
+            QwtPainter::fillRect(painter, plotRect, paletteBackgroundColor());
+    }
+
+    if (wantCanvas)
         printCanvas(painter, canvasRect, map, pfilter);
 
     foreach (QwtPlotItem *item, d_curves)
@@ -7541,7 +7604,7 @@ void Graph::print(QPainter *painter, const QRect &plotRect, const ScaledFontsPri
         }
     }
 
-    if (!canvasOnly && (pfilter.options() & ScaledFontsPrintFilter::PrintTitle) && (!titleLabel()->text().isEmpty()))
+    if (wantAfter && (pfilter.options() & ScaledFontsPrintFilter::PrintTitle) && (!titleLabel()->text().isEmpty()))
     {
 		QwtTextLabel *title = titleLabel();
 		QString old_title = title->text().text();
@@ -7570,7 +7633,7 @@ void Graph::print(QPainter *painter, const QRect &plotRect, const ScaledFontsPri
 
 	canvasRect = plotLayout()->canvasRect();
 
-    if (!canvasOnly)
+    if (wantAfter)
 	for ( axisId = 0; axisId < QwtPlot::axisCnt; axisId++ ){
 		QwtScaleWidget *scaleWidget = (QwtScaleWidget *)axisWidget(axisId);
 		if (scaleWidget){
@@ -7600,7 +7663,7 @@ void Graph::print(QPainter *painter, const QRect &plotRect, const ScaledFontsPri
 		}
 	}
 
-    if (!canvasOnly)
+    if (wantFront)
     {
     foreach (FrameWidget *f, enrichments)
     {
@@ -7633,8 +7696,9 @@ void Graph::print(QPainter *painter, const QRect &plotRect, const ScaledFontsPri
 
 	plotLayout()->invalidate();
 
-	// reset all widgets with their original attributes.
-    if (!canvasOnly && (pfilter.options() & ScaledFontsPrintFilter::PrintFrameWithScales))
+    // reset all widgets with their original attributes. Same wantBefore condition as baseLineDists[] above, since
+    // BeforeCanvas/AfterCanvas are separate print() calls that don't share that array.
+    if (wantBefore && (pfilter.options() & ScaledFontsPrintFilter::PrintFrameWithScales))
     {
 		// restore the previous base line dists
 		for (axisId = 0; axisId < QwtPlot::axisCnt; axisId++ ){

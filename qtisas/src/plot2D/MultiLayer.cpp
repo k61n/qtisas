@@ -22,11 +22,11 @@ Description: Multi layer widget
 #include <QMenu>
 #include <QMessageBox>
 #include <QPainter>
+#include <QPainterPath>
 #include <QPrintDialog>
 #include <QPrinter>
 #include <QPushButton>
 #include <QSpinBox>
-#include <QPair>
 #include <QSvgGenerator>
 #include <QSvgRenderer>
 #include <QTextDocumentWriter>
@@ -1145,8 +1145,7 @@ void MultiLayer::exportToFile(const QString &fileName)
     QMessageBox::critical(this, "QtiSAS - Error", "File format not handled, operation aborted!");
 }
 
-void MultiLayer::exportImage(const QString &fileName, int quality, bool transparent, int dpi, const QSizeF &customSize,
-                             int unit, double fontsFactor, int compression)
+QImage MultiLayer::renderClippedImage(int dpi, bool transparent, const QSizeF &customSize, int unit, double fontsFactor)
 {
     if (!dpi)
         dpi = logicalDpiX();
@@ -1155,26 +1154,90 @@ void MultiLayer::exportImage(const QString &fileName, int quality, bool transpar
     if (customSize.isValid())
         size = Graph::customPrintSize(customSize, unit, dpi);
 
-    QByteArray svgData = arraySVG(defaultResolution, size, unit, fontsFactor);
-    QSvgRenderer renderer(svgData);
-
     double factorRES = dpi / defaultResolution;
 
-    QSizeF imageSize = renderer.defaultSize();
-    QSize outputSize(qRound(factorRES * imageSize.width()), qRound(factorRES * imageSize.height()));
+    // Separate passes per layer (frame/canvas/chrome, each own unit above earlier layers), plus back/front
+    // enrichments batched below/above all layers, since a single clip/render would mask chrome too (confirmed live).
+    // buildSvgPasses() only handles the natural (no customSize) layout; fall back to plain unclipped otherwise.
+    QVector<QByteArray> backList, frameList, canvasList, chromeList, frontList;
+    QVector<QRectF> clipRects;
+    QSize docSize;
+    const bool built = !customSize.isValid() && buildSvgPasses(defaultResolution, fontsFactor, backList, frameList,
+                                                               canvasList, clipRects, chromeList, frontList, docSize);
+    QImage image;
+    QPainter painter;
 
-    QImage image(outputSize, QImage::Format_ARGB32);
+    if (built)
+    {
+        QSizeF imageSize(docSize);
+        if (!frameList.isEmpty())
+        {
+            QSvgRenderer sizer(frameList.first());
+            imageSize = sizer.defaultSize();
+        }
+        QSize outputSize(qRound(factorRES * imageSize.width()), qRound(factorRES * imageSize.height()));
 
+        // Scale against docSize, not imageSize/factorRES, which drifts via a pixel<->mm round trip.
+        const double scaleX = docSize.width() > 0 ? (double)outputSize.width() / docSize.width() : factorRES;
+        const double scaleY = docSize.height() > 0 ? (double)outputSize.height() / docSize.height() : factorRES;
 
-    image.fill(transparent ? Qt::transparent : Qt::white);
+        image = QImage(outputSize, QImage::Format_ARGB32);
+        image.fill(transparent ? Qt::transparent : Qt::white);
 
-    QPainter painter(&image);
-    painter.setRenderHint(QPainter::Antialiasing);
-    painter.setRenderHint(QPainter::TextAntialiasing);
-    painter.setRenderHint(QPainter::SmoothPixmapTransform);
-    renderer.render(&painter);
+        painter.begin(&image);
+        painter.setRenderHint(QPainter::Antialiasing);
+        painter.setRenderHint(QPainter::TextAntialiasing);
+        painter.setRenderHint(QPainter::SmoothPixmapTransform);
+        for (const QByteArray &back : backList)
+        {
+            QSvgRenderer backRenderer(back);
+            backRenderer.render(&painter);
+        }
+        for (int i = 0; i < frameList.size(); ++i)
+        {
+            QSvgRenderer frameRenderer(frameList.at(i));
+            frameRenderer.render(&painter);
+
+            QSvgRenderer canvasRenderer(canvasList.at(i));
+            const QRectF &r = clipRects.at(i);
+            painter.setClipRect(QRectF(r.left() * scaleX, r.top() * scaleY, r.width() * scaleX, r.height() * scaleY));
+            canvasRenderer.render(&painter);
+            painter.setClipping(false);
+
+            QSvgRenderer chromeRenderer(chromeList.at(i));
+            chromeRenderer.render(&painter);
+        }
+        for (const QByteArray &front : frontList)
+        {
+            QSvgRenderer frontRenderer(front);
+            frontRenderer.render(&painter);
+        }
+    }
+    else
+    {
+        QByteArray svgData = arraySVG(defaultResolution, size, unit, fontsFactor);
+        QSvgRenderer renderer(svgData);
+        QSizeF imageSize = renderer.defaultSize();
+        QSize outputSize(qRound(factorRES * imageSize.width()), qRound(factorRES * imageSize.height()));
+
+        image = QImage(outputSize, QImage::Format_ARGB32);
+        image.fill(transparent ? Qt::transparent : Qt::white);
+
+        painter.begin(&image);
+        painter.setRenderHint(QPainter::Antialiasing);
+        painter.setRenderHint(QPainter::TextAntialiasing);
+        painter.setRenderHint(QPainter::SmoothPixmapTransform);
+        renderer.render(&painter);
+    }
 
     painter.end();
+    return image;
+}
+
+void MultiLayer::exportImage(const QString &fileName, int quality, bool transparent, int dpi, const QSizeF &customSize,
+                             int unit, double fontsFactor, int compression)
+{
+    QImage image = renderClippedImage(dpi, transparent, customSize, unit, fontsFactor);
 
     if (fileName.right(4).contains("tif", Qt::CaseInsensitive))
         quality = 100;
@@ -1272,6 +1335,32 @@ void MultiLayer::exportVector(QPrinter *printer, bool fontEmbedding, int res, bo
     double wfactor = (double)res / (double)defaultResolution;
     double hfactor = (double)res / (double)defaultResolution;
 
+    // QPrinter supports real clipping, so no SVG splicing needed here, but the same z-order fix still applies:
+    // printing each layer's Graph::print() atomically would occlude/float Back/on-top enrichments per-layer only.
+    auto printLayersLayered = [reso = defaultResolution](QPainter &p, const QList<Graph *> &layers,
+                                                         const QVector<QRect> &rects,
+                                                         const ScaledFontsPrintFilter &pfilter) {
+        for (int i = 0; i < layers.size(); ++i)
+            layers.at(i)->print(&p, rects.at(i), pfilter, static_cast<int>(reso), Graph::PrintScope::BackEnrichments);
+
+        for (int i = 0; i < layers.size(); ++i)
+        {
+            Graph *g = layers.at(i);
+            const QRect &r = rects.at(i);
+            g->print(&p, r, pfilter, static_cast<int>(reso), Graph::PrintScope::BeforeCanvasFrame);
+
+            p.save();
+            p.setClipRect(g->svgClipRect(r, pfilter, static_cast<int>(reso)), Qt::IntersectClip);
+            g->print(&p, r, pfilter, static_cast<int>(reso), Graph::PrintScope::CanvasOnly);
+            p.restore();
+
+            g->print(&p, r, pfilter, static_cast<int>(reso), Graph::PrintScope::AfterCanvasChrome);
+        }
+
+        for (int i = 0; i < layers.size(); ++i)
+            layers.at(i)->print(&p, rects.at(i), pfilter, static_cast<int>(reso), Graph::PrintScope::FrontEnrichments);
+    };
+
 	if (customSize.isValid()){
 		QSize size = Graph::customPrintSize(customSize, unit, res);
 		if (res && res != printer->resolution())
@@ -1287,16 +1376,18 @@ void MultiLayer::exportVector(QPrinter *printer, bool fontEmbedding, int res, bo
 
         paint.scale(wfactor * wfactor, hfactor * hfactor);
 
+        QVector<QRect> rects;
 		foreach (Graph *g, lst){
 			QRect r = g->geometry();
 			r.setSize(QSize(int(r.width()*wfactor), int(r.height()*hfactor)));
 			r.moveTo(int(r.x()*wfactor), int(r.y()*hfactor));
-
-			if (fontsFactor == 0.0)
-				fontsFactor = Graph::customPrintSize(customSize, unit, logicalDpiX()).height()/(double)height();
-
-			g->print(&paint, r, ScaledFontsPrintFilter(fontsFactor));
+            rects.append(r);
 		}
+
+        if (fontsFactor == 0.0)
+            fontsFactor = Graph::customPrintSize(customSize, unit, logicalDpiX()).height() / (double)height();
+
+        printLayersLayered(paint, lst, rects, ScaledFontsPrintFilter(fontsFactor));
 		paint.end();
 	} else if (res && res != printer->resolution()){
 
@@ -1312,12 +1403,14 @@ void MultiLayer::exportVector(QPrinter *printer, bool fontEmbedding, int res, bo
         paint.scale(wfactor * wfactor, hfactor * hfactor);
 
 		QList<Graph*> lst = stackOrderedLayersList();
+        QVector<QRect> rects;
 		foreach (Graph *g, lst){
 			QRect r = g->geometry();
 			r.setSize(QSize(int(r.width()*wfactor), int(r.height()*hfactor)));
 			r.moveTo(int(r.x()*wfactor), int(r.y()*hfactor));
-			g->print(&paint, r, ScaledFontsPrintFilter(fontsFactor));
+            rects.append(r);
 		}
+        printLayersLayered(paint, lst, rects, ScaledFontsPrintFilter(fontsFactor));
 		paint.end();
 	} else {
         // to make compatible with QPageSize in Qt >= 5.3
@@ -1327,8 +1420,10 @@ void MultiLayer::exportVector(QPrinter *printer, bool fontEmbedding, int res, bo
 		QPainter paint(printer);
         paint.scale(wfactor * wfactor, hfactor * hfactor);
 		QList<Graph*> lst = stackOrderedLayersList();
-		foreach (Graph *g, lst)
-			g->print(&paint, g->geometry(), ScaledFontsPrintFilter(fontsFactor));
+        QVector<QRect> rects;
+        foreach (Graph *g, lst)
+            rects.append(g->geometry());
+        printLayersLayered(paint, lst, rects, ScaledFontsPrintFilter(fontsFactor));
 		paint.end();
 	}
 }
@@ -1416,62 +1511,143 @@ namespace
 {
 // See Graph.cpp's spliceClippedCanvas() for the single-layer version this
 // generalizes: QSvgGenerator can't clip at draw time, so each layer's
-// canvas-only content is generated separately and spliced into the chrome
-// document wrapped in its own real SVG clip-path.
-QByteArray extractCanvasGroupInner(const QByteArray &canvasOnly)
+// canvas-only content is generated separately and spliced in wrapped in its
+// own real SVG clip-path. Works for any QSvgGenerator document (before/canvas/after).
+QByteArray extractSvgGroupInner(const QByteArray &svg)
 {
-    QString s = QString::fromUtf8(canvasOnly);
-    int svgEnd = s.lastIndexOf(QStringLiteral("</svg>"));
-    int groupClose = svgEnd >= 0 ? s.lastIndexOf(QStringLiteral("</g>"), svgEnd) : -1;
-    int defsEnd = s.indexOf(QStringLiteral("</defs>"));
-    int groupOpenStart = defsEnd >= 0 ? s.indexOf(QStringLiteral("<g"), defsEnd) : -1;
-    int groupOpenEnd = groupOpenStart >= 0 ? s.indexOf(QStringLiteral(">"), groupOpenStart) + 1 : -1;
+    QString s = QString::fromUtf8(svg);
+    int svgEnd = static_cast<int>(s.lastIndexOf(QStringLiteral("</svg>")));
+    int groupClose = svgEnd >= 0 ? static_cast<int>(s.lastIndexOf(QStringLiteral("</g>"), svgEnd)) : -1;
+    int defsEnd = static_cast<int>(s.indexOf(QStringLiteral("</defs>")));
+    int groupOpenStart = defsEnd >= 0 ? static_cast<int>(s.indexOf(QStringLiteral("<g"), defsEnd)) : -1;
+    int groupOpenEnd = groupOpenStart >= 0 ? static_cast<int>(s.indexOf(QStringLiteral(">"), groupOpenStart) + 1) : -1;
     if (groupClose < 0 || groupOpenEnd <= 0 || groupOpenEnd > groupClose)
-        return QByteArray();
+        return {};
     return s.mid(groupOpenEnd, groupClose - groupOpenEnd).toUtf8();
 }
 
-QByteArray spliceClippedCanvases(const QByteArray &chrome, const QVector<QPair<QByteArray, QRectF>> &layerCanvases)
+// Concatenates each layer's frame/canvas(clipped)/chrome as one whole unit per layer in stack order (matching
+// on-screen z-order), with back/front enrichments batched once below/above all layers, not per-layer.
+QByteArray spliceLayerStacks(const QVector<QByteArray> &backList, const QVector<QByteArray> &frameList,
+                             const QVector<QByteArray> &canvasList, const QVector<QRectF> &clipRects,
+                             const QVector<QByteArray> &chromeList, const QVector<QByteArray> &frontList)
 {
-    QString chromeStr = QString::fromUtf8(chrome);
-    int defsPos = chromeStr.indexOf(QStringLiteral("<defs>"));
-    int defsEndPos = defsPos >= 0 ? chromeStr.indexOf(QStringLiteral("</defs>"), defsPos) : -1;
-    int svgEnd = chromeStr.lastIndexOf(QStringLiteral("</svg>"));
-    int groupClosePos = svgEnd >= 0 ? chromeStr.lastIndexOf(QStringLiteral("</g>"), svgEnd) : -1;
-    if (defsEndPos < 0 || groupClosePos < 0)
-        return chrome; // unexpected structure -- fall back to chrome-only rather than producing garbage
+    if (frameList.isEmpty())
+        return {};
+
+    QString baseStr = QString::fromUtf8(frameList.first());
+    int defsPos = static_cast<int>(baseStr.indexOf(QStringLiteral("<defs>")));
+    int defsEndPos = defsPos >= 0 ? static_cast<int>(baseStr.indexOf(QStringLiteral("</defs>"), defsPos)) : -1;
+    int svgEnd = static_cast<int>(baseStr.lastIndexOf(QStringLiteral("</svg>")));
+    int groupOpenStart = defsEndPos >= 0 ? static_cast<int>(baseStr.indexOf(QStringLiteral("<g"), defsEndPos)) : -1;
+    int groupOpenEnd =
+        groupOpenStart >= 0 ? static_cast<int>(baseStr.indexOf(QStringLiteral(">"), groupOpenStart) + 1) : -1;
+    int groupClosePos = svgEnd >= 0 ? static_cast<int>(baseStr.lastIndexOf(QStringLiteral("</g>"), svgEnd)) : -1;
+    if (defsEndPos < 0 || groupOpenEnd <= 0 || groupClosePos < groupOpenEnd)
+        return frameList.first(); // unexpected structure -- fall back rather than producing garbage
 
     QString clipDefs;
-    QString clippedGroups;
+    QString allLayersInner;
     static QAtomicInt counter(0);
-    for (const auto &entry : layerCanvases)
+
+    for (const QByteArray &back : backList)
+        allLayersInner += QString::fromUtf8(extractSvgGroupInner(back));
+
+    for (int i = 0; i < frameList.size(); ++i)
     {
-        const QByteArray inner = extractCanvasGroupInner(entry.first);
-        if (inner.isEmpty())
-            continue;
-        const QString clipId = QStringLiteral("qtisasCanvasClip%1").arg(counter.fetchAndAddOrdered(1));
-        const QRectF &r = entry.second;
-        clipDefs +=
-            QStringLiteral("<clipPath id=\"%1\"><rect x=\"%2\" y=\"%3\" width=\"%4\" height=\"%5\"/></clipPath>")
-                .arg(clipId)
-                .arg(r.left())
-                .arg(r.top())
-                .arg(r.width())
-                .arg(r.height());
-        clippedGroups += QStringLiteral("<g clip-path=\"url(#%1)\">%2</g>").arg(clipId, QString::fromUtf8(inner));
+        allLayersInner += QString::fromUtf8(extractSvgGroupInner(frameList.at(i)));
+
+        const QByteArray canvasInner = extractSvgGroupInner(canvasList.at(i));
+        if (!canvasInner.isEmpty())
+        {
+            const QString clipId = QStringLiteral("qtisasCanvasClip%1").arg(counter.fetchAndAddOrdered(1));
+            const QRectF &r = clipRects.at(i);
+            clipDefs +=
+                QStringLiteral("<clipPath id=\"%1\"><rect x=\"%2\" y=\"%3\" width=\"%4\" height=\"%5\"/></clipPath>")
+                    .arg(clipId)
+                    .arg(r.left())
+                    .arg(r.top())
+                    .arg(r.width())
+                    .arg(r.height());
+            allLayersInner +=
+                QStringLiteral("<g clip-path=\"url(#%1)\">%2</g>").arg(clipId, QString::fromUtf8(canvasInner));
+        }
+
+        allLayersInner += QString::fromUtf8(extractSvgGroupInner(chromeList.at(i)));
     }
 
-    chromeStr.insert(groupClosePos, clippedGroups);
-    chromeStr.insert(defsEndPos, clipDefs);
-    return chromeStr.toUtf8();
-}
-}
+    for (const QByteArray &front : frontList)
+        allLayersInner += QString::fromUtf8(extractSvgGroupInner(front));
 
-QByteArray MultiLayer::arraySVG(int reso, const QSizeF &customSize, int unit, double fontsFactor)
+    // Replace the template's single-layer inner content with every layer's combined content, in stack order.
+    baseStr.replace(groupOpenEnd, groupClosePos - groupOpenEnd, allLayersInner);
+    baseStr.insert(defsEndPos, clipDefs);
+    return baseStr.toUtf8();
+}
+} // namespace
+
+bool MultiLayer::buildSvgPasses(int reso, double fontsFactor, QVector<QByteArray> &backList,
+                                QVector<QByteArray> &frameList, QVector<QByteArray> &canvasList,
+                                QVector<QRectF> &clipRects, QVector<QByteArray> &chromeList,
+                                QVector<QByteArray> &frontList, QSize &docSize)
 {
     QSize size = layersBoundingSize();
     int maxw = layersList().isEmpty() ? 0 : size.width();
     int maxh = layersList().isEmpty() ? 0 : size.height();
+    docSize = QSize(maxw, maxh);
+
+    backList.clear();
+    frameList.clear();
+    canvasList.clear();
+    clipRects.clear();
+    chromeList.clear();
+    frontList.clear();
+
+    if (maxw <= 0 || maxh <= 0)
+        return false;
+
+    QList<Graph *> lst = stackOrderedLayersList();
+    ScaledFontsPrintFilter pfilter(fontsFactor);
+
+    auto renderPass = [&](Graph *g, Graph::PrintScope scope) {
+        QByteArray bytes;
+        QBuffer buf(&bytes);
+        buf.open(QIODevice::WriteOnly);
+        QSvgGenerator gen;
+        gen.setOutputDevice(&buf);
+        gen.setSize(QSize(maxw, maxh));
+        gen.setResolution(defaultResolution);
+        gen.setViewBox(QRectF(0, 0, double(maxw), double(maxh)));
+        QPainter p(&gen);
+        g->print(&p, g->geometry(), pfilter, reso, scope);
+        p.end();
+        return bytes;
+    };
+
+    // Kept per-layer (not batched) so a caller can stack each layer's whole unit, and enrichments separately
+    // so back/front can be batched below/above all layers instead -- see the declaration comment in MultiLayer.h.
+    foreach (Graph *g, lst)
+    {
+        backList.append(renderPass(g, Graph::PrintScope::BackEnrichments));
+        frameList.append(renderPass(g, Graph::PrintScope::BeforeCanvasFrame));
+        canvasList.append(renderPass(g, Graph::PrintScope::CanvasOnly));
+        clipRects.append(g->svgClipRect(g->geometry(), pfilter, (int)defaultResolution));
+        chromeList.append(renderPass(g, Graph::PrintScope::AfterCanvasChrome));
+        frontList.append(renderPass(g, Graph::PrintScope::FrontEnrichments));
+    }
+
+    return true;
+}
+
+QByteArray MultiLayer::arraySVG(int reso, const QSizeF &customSize, int unit, double fontsFactor,
+                                QVector<QRectF> *outClipRects, QSize *outDocSize)
+{
+    QSize size = layersBoundingSize();
+    int maxw = layersList().isEmpty() ? 0 : size.width();
+    int maxh = layersList().isEmpty() ? 0 : size.height();
+
+    if (outDocSize)
+        *outDocSize = QSize(maxw, maxh);
 
     QByteArray byteArray;
     QBuffer buffer(&byteArray);
@@ -1483,49 +1659,16 @@ QByteArray MultiLayer::arraySVG(int reso, const QSizeF &customSize, int unit, do
 
     if (maxw > 0 && maxh > 0 && !customSize.isValid())
     {
-        QList<Graph *> lst = stackOrderedLayersList();
-        ScaledFontsPrintFilter pfilter(fontsFactor);
+        QVector<QByteArray> backList, frameList, canvasList, chromeList, frontList;
+        QVector<QRectF> clipRects;
+        QSize docSize;
+        buildSvgPasses(reso, fontsFactor, backList, frameList, canvasList, clipRects, chromeList, frontList, docSize);
 
-        auto renderPass = [&](Graph *g, bool skipCanvas, bool canvasOnly) {
-            QByteArray bytes;
-            QBuffer buf(&bytes);
-            buf.open(QIODevice::WriteOnly);
-            QSvgGenerator gen;
-            gen.setOutputDevice(&buf);
-            gen.setSize(QSize(maxw, maxh));
-            gen.setResolution(defaultResolution);
-            gen.setViewBox(QRectF(0, 0, double(maxw), double(maxh)));
-            QPainter p(&gen);
-            g->print(&p, g->geometry(), pfilter, reso, skipCanvas, canvasOnly);
-            p.end();
-            return bytes;
-        };
+        // QSvgGenerator can't clip at draw time; spliceLayerStacks() wraps each canvas in a real SVG clip-path instead.
+        byteArray = spliceLayerStacks(backList, frameList, canvasList, clipRects, chromeList, frontList);
 
-        // Pass A: chrome (title/axes/legend) for every layer in one document.
-        QByteArray chromeBytes;
-        {
-            QBuffer buf(&chromeBytes);
-            buf.open(QIODevice::WriteOnly);
-            QSvgGenerator gen;
-            gen.setOutputDevice(&buf);
-            gen.setSize(QSize(maxw, maxh));
-            gen.setResolution(defaultResolution);
-            gen.setViewBox(QRectF(0, 0, double(maxw), double(maxh)));
-            QPainter p(&gen);
-            foreach (Graph *g, lst)
-                g->print(&p, g->geometry(), pfilter, reso, /*skipCanvas=*/true, /*canvasOnly=*/false);
-            p.end();
-        }
-
-        // Pass B: one canvas-only document + clip rect per layer.
-        QVector<QPair<QByteArray, QRectF>> layerCanvases;
-        foreach (Graph *g, lst)
-        {
-            const QByteArray canvasBytes = renderPass(g, /*skipCanvas=*/false, /*canvasOnly=*/true);
-            layerCanvases.append({canvasBytes, g->svgClipRect(g->geometry(), pfilter, (int)defaultResolution)});
-        }
-
-        byteArray = spliceClippedCanvases(chromeBytes, layerCanvases);
+        if (outClipRects)
+            *outClipRects = clipRects;
     }
     else if (maxw > 0 && maxh > 0)
     {
@@ -1654,24 +1797,8 @@ void MultiLayer::copyAllLayers()
     {
         int factorRES = scalingFactor - 2; // x1, x2, x3
 
-        QByteArray svgData = arraySVG(int(defaultResolution), QSizeF(), 1, 1.0);
-        QSvgRenderer renderer(svgData);
-
-
-        QSizeF imageSize = renderer.defaultSize();
-        QSize outputSize(qRound(factorRES * imageSize.width()), qRound(factorRES * imageSize.height()));
-
-        QImage image(outputSize, QImage::Format_ARGB32);
-
-
-        image.fill(Qt::transparent);
-
-        QPainter painter(&image);
-        painter.setRenderHint(QPainter::Antialiasing);
-        painter.setRenderHint(QPainter::TextAntialiasing);
-        painter.setRenderHint(QPainter::SmoothPixmapTransform);
-        renderer.render(&painter);
-        painter.end();
+        // Same clipped, z-order-correct rendering as exportImage() -- a bare QSvgRenderer ignores the clip-path.
+        QImage image = renderClippedImage(int(factorRES * defaultResolution), true);
 
         QApplication::clipboard()->setImage(image, QClipboard::Clipboard);
     }

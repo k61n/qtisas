@@ -226,8 +226,22 @@ class Graph: public QwtPlot
     bool adjustAspect(const QSize &orig);
     bool adjustSpectrogram();
 
+    //! Which part of the layer print() should paint, split at printCanvas() so the pieces keep correct z-order when
+    //! rendered/spliced as separate SVG passes; the Frame/Chrome/Enrichments splits let MultiLayer batch "send to
+    //! back"/"on top" enrichments across sibling layers (see Graph::buildSvgPasses(), MultiLayer::buildSvgPasses()).
+    enum class PrintScope
+    {
+        Full,
+        BeforeCanvas,
+        CanvasOnly,
+        AfterCanvas,
+        BeforeCanvasFrame,
+        BackEnrichments,
+        AfterCanvasChrome,
+        FrontEnrichments
+    };
     void print(QPainter *, const QRect &rect, const ScaledFontsPrintFilter & = ScaledFontsPrintFilter(),
-               int reso = defaultResolution, bool skipCanvas = false, bool canvasOnly = false);
+               int reso = defaultResolution, PrintScope scope = PrintScope::Full);
     //! The canvas rect print()/printCanvas() would use for the given plotRect/pfilter/res,
     //! padded to cover the canvas border stroke's outer half -- for building an SVG
     //! clip-path around this layer's canvas content (see MultiLayer::arraySVG()).
@@ -408,7 +422,12 @@ class Graph: public QwtPlot
     bool exportSVG(const QString &fname, int reso = defaultResolution, const QSizeF &customSize = QSizeF(),
                    int unit = FrameWidget::Pixel, double fontsFactor = 1.0);
     QByteArray arraySVG(int reso = defaultResolution, const QSizeF &customSize = QSizeF(),
-                        int unit = FrameWidget::Pixel, double fontsFactor = 1.0);
+                        int unit = FrameWidget::Pixel, double fontsFactor = 1.0, QRectF *outClipRect = nullptr,
+                        QSize *outDocSize = nullptr);
+    //! Renders before/canvas/after SVG passes separately, without splicing; used by arraySVG() and exportImage()
+    //! since only the canvas pass can get a real clip.
+    void buildSvgPasses(int reso, const QSizeF &customSize, int unit, double fontsFactor, QByteArray &beforeBytes,
+                        QByteArray &canvasBytes, QByteArray &afterBytes, QRectF &clipRect, QSize &docSize);
 		void exportEMF(const QString& fname, const QSizeF& customSize = QSizeF(), int unit = FrameWidget::Pixel, double fontsFactor = 1.0);
 		void exportTeX(const QString& fname, bool color = true, bool escapeStrings = true, bool fontSizes = true,
 						const QSizeF& customSize = QSizeF(), int unit = FrameWidget::Pixel, double fontsFactor = 1.0);
@@ -425,6 +444,10 @@ class Graph: public QwtPlot
 		void exportImage(const QString& fileName, int quality = 100, bool transparent = false,
 						 int dpi = 0, const QSizeF& customSize = QSizeF (),
 						 int unit = FrameWidget::Pixel, double fontsFactor = 1.0, int compression = 0);
+    //! Renders this layer to a raster QImage via the same clipped, z-order-correct multi-pass approach as
+    //! exportImage(), shared so other callers (e.g. copyImage()) get the same clipping/z-order behavior.
+    QImage renderClippedImage(int dpi, bool transparent, const QSizeF &customSize = QSizeF(),
+                              int unit = FrameWidget::Pixel, double fontsFactor = 1.0);
 
     void draw(QPaintDevice *, const QSize &size, double fontsFactor = 1.0, int reso = defaultResolution);
 		static QSize customPrintSize(const QSizeF& customSize, int unit, int dpi);

@@ -20,6 +20,7 @@ Description: Multi layer widget
 #include <QPushButton>
 #include <QTextDocument>
 #include <QToolButton>
+#include <QVector>
 
 #include "FrameWidget.h"
 #include "Graph.h"
@@ -179,8 +180,20 @@ public slots:
 		int dpi = 0, const QSizeF& customSize = QSizeF (), int unit = FrameWidget::Pixel, double fontsFactor = 1.0);
 	void exportImage(const QString& fileName, int quality = 100, bool transparent = false, int dpi = 0,
 		const QSizeF& customSize = QSizeF (), int unit = FrameWidget::Pixel, double fontsFactor = 1.0, int compression = 0);
+    //! Renders all layers to a raster QImage via the same clipped, z-order-correct multi-pass approach as
+    //! exportImage(), shared so other callers (e.g. copyAllLayers()) get the same clipping/z-order behavior.
+    QImage renderClippedImage(int dpi, bool transparent, const QSizeF &customSize = QSizeF(),
+                              int unit = FrameWidget::Pixel, double fontsFactor = 1.0);
     QByteArray arraySVG(int reso = defaultResolution, const QSizeF &customSize = QSizeF(),
-                        int unit = FrameWidget::Pixel, double fontsFactor = 1.0);
+                        int unit = FrameWidget::Pixel, double fontsFactor = 1.0,
+                        QVector<QRectF> *outClipRects = nullptr, QSize *outDocSize = nullptr);
+    //! Renders each layer's frame/canvas/chrome fragments separately (kept per-layer, not batched by phase, so a
+    //! caller can stack each layer's whole unit atop the next), plus a backList/frontList per layer for its
+    //! "sent to back"/"on top" enrichments (kept apart since those float above/below every sibling layer on screen).
+    //! Used by arraySVG()/exportImage(); returns false when there are no layers.
+    bool buildSvgPasses(int reso, double fontsFactor, QVector<QByteArray> &backList, QVector<QByteArray> &frameList,
+                        QVector<QByteArray> &canvasList, QVector<QRectF> &clipRects, QVector<QByteArray> &chromeList,
+                        QVector<QByteArray> &frontList, QSize &docSize);
     //! Tight bounding size of the actual layers/legends/enrichments, falling back to
     //! the full canvas size when there are none.
     QSize layersBoundingSize();
