@@ -2739,7 +2739,7 @@ QString Graph::saveScale()
         s += QString::number(qMin(scDiv.lowerBound(), scDiv.upperBound()), 'g', 15) + "\t";
         s += QString::number(qMax(scDiv.lowerBound(), scDiv.upperBound()), 'g', 15) + "\t";
 		s += QString::number(d_user_step[i], 'g', 15) + "\t";
-        s += QString::number(scDiv.ticks(QwtScaleDiv::MajorTick).count()) + "\t";
+        s += QString::number(axisMaxMajor(i)) + "\t";
 		s += QString::number(axisMaxMinor(i)) + "\t";
 
 		const ScaleEngine *sc_eng = (ScaleEngine *)axisScaleEngine(i);
