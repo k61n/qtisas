@@ -56,6 +56,10 @@ public:
 	bool hasTeXOutput(){return d_tex_output;};
 	void setTeXOutput(bool on = true){d_tex_output = on;};
 
+    //! Resolves %(...) placeholders and resizes to fit, like paintEvent() but callable directly (no paint event
+    //! needed) -- used after batch-restore once every curve in the multiLayer exists.
+    void updateSize();
+
 private:
 	PlotCurve* getCurve(const QString& s, int &point);
 	void drawVector(PlotCurve *c, QPainter *p, int x, int y, int l);

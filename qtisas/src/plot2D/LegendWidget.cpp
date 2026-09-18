@@ -12,6 +12,7 @@ Description: A 2D plot legend widget
 #include <iostream>
 
 #include <QPainter>
+#include <QPixmap>
 #include <QPolygon>
 #include <QRegularExpression>
 
@@ -55,6 +56,23 @@ d_tex_output(false)
 	setMouseTracking(true);
 	show();
 	setFocus();
+}
+
+void LegendWidget::updateSize()
+{
+    // Off-screen painter, purely so itemsHeight() has a valid device to read logicalDpiX()/Y() from.
+    QPixmap dummy(1, 1);
+    QPainter p(&dummy);
+
+    const int symbolLineLength = line_length + symbolsMaxWidth();
+    int width, height, textWidth, textHeight;
+    itemsHeight(&p, symbolLineLength, d_frame_pen.width(), width, height, textWidth, textHeight);
+    resize(width, height);
+
+    // Sync saved right/bottom to the new size, else stale values compound on each save/reopen; not full
+    // updateCoordinates(), since resize() never moves d_x/d_y and recomputing them would add rounding drift.
+    d_x_right = calculateRightValue();
+    d_y_bottom = calculateBottomValue();
 }
 
 void LegendWidget::paintEvent(QPaintEvent *e)
@@ -792,6 +810,7 @@ void LegendWidget::restore(Graph *g, const QStringList& lst)
 	QColor backgroundColor = Qt::white;
 	double x = 0.0, y = 0.0;
 	QStringList::const_iterator line;
+    bool onTop = true;
 	LegendWidget *l = new LegendWidget(g);
 	for (line = lst.begin(); line != lst.end(); line++){
         QString s = *line;
@@ -809,8 +828,10 @@ void LegendWidget::restore(Graph *g, const QStringList& lst)
 			y = s.remove("<y>").remove("</y>").toDouble();
 		else if (s.contains("<attachTo>"))
 			l->setAttachPolicy((FrameWidget::AttachPolicy)s.remove("<attachTo>").remove("</attachTo>").toInt());
-		else if (s.contains("<onTop>"))
-			l->setOnTop(s.remove("<onTop>").remove("</onTop>").toInt());
+        else if (s.contains("<onTop>"))
+            // Store, don't apply yet -- setOnTop() must run after setOriginCoord() below, once the widget has its
+            // real restored position (see ImageWidget::restore()/TexWidget::restore()).
+            onTop = s.remove("<onTop>").remove("</onTop>").toInt();
 		else if (s.contains("<visible>"))
 			l->setVisible(s.remove("<visible>").remove("</visible>").toInt());
 		else if (s.contains("<Text>")){
@@ -843,6 +864,7 @@ void LegendWidget::restore(Graph *g, const QStringList& lst)
 	if (l){
 		l->setBackgroundColor(backgroundColor);
 		l->setOriginCoord(x, y);
+        l->setOnTop(onTop);
 		g->add(l, false);
 	}
 }

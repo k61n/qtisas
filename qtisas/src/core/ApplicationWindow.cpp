@@ -5964,6 +5964,26 @@ ApplicationWindow* ApplicationWindow::openProject(const QString& fn, bool factor
     app->changeFolder(cf, true);
     QApplication::processEvents(); // allow setMaximized() to settle before show()
     app->show();
+
+    // LegendWidget placeholders only resolve/resize in paintEvent(); force that catch-up now that restore is complete.
+    foreach (MdiSubWindow *w, app->multilayerList())
+    {
+        auto *ml = qobject_cast<MultiLayer *>(w);
+        if (!ml)
+            continue;
+        foreach (Graph *g, ml->layersList())
+        {
+            // Deferred catch-up: updateMarkersBoundingRect() skips its work while d_opening_file was set.
+            g->updateMarkersBoundingRect();
+            foreach (FrameWidget *fw, g->enrichmentsList())
+            {
+                auto *l = qobject_cast<LegendWidget *>(fw);
+                if (l)
+                    l->updateSize();
+            }
+        }
+    }
+
 	return app;
 }
 
@@ -19310,8 +19330,30 @@ Folder* ApplicationWindow::appendProject(const QString& fn, Folder* parentFolder
 	changeFolder(cf);
 	blockSignals (false);
 	renamedTables = QStringList();
+
+    // Clear before the catch-up loop below -- updateMarkersBoundingRect() checks this flag and needs it false.
+    d_is_appending_file = false;
+
+    // Same restore-time enrichment-visibility gap as in openProject() -- see
+    // the comment there.
+    foreach (MdiSubWindow *w, multilayerList())
+    {
+        auto *ml = qobject_cast<MultiLayer *>(w);
+        if (!ml)
+            continue;
+        foreach (Graph *g, ml->layersList())
+        {
+            g->updateMarkersBoundingRect();
+            foreach (FrameWidget *fw, g->enrichmentsList())
+            {
+                auto *l = qobject_cast<LegendWidget *>(fw);
+                if (l)
+                    l->updateSize();
+            }
+        }
+    }
+
 	QApplication::restoreOverrideCursor();
-	d_is_appending_file = false;
 	return new_folder;
 }
 

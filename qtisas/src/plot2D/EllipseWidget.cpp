@@ -53,6 +53,7 @@ void EllipseWidget::restore(Graph *g, const QStringList& lst)
 	QStringList::const_iterator line;
 	QColor backgroundColor = Qt::white;
 	QBrush brush = QBrush();
+    bool onTop = true;
 	EllipseWidget *r = new EllipseWidget(g);
 	if (!r)
 		return;
@@ -77,8 +78,9 @@ void EllipseWidget::restore(Graph *g, const QStringList& lst)
 			bottom = s.remove("<bottom>").remove("</bottom>").toDouble();
 		else if (s.contains("<attachTo>"))
 			r->setAttachPolicy((FrameWidget::AttachPolicy)s.remove("<attachTo>").remove("</attachTo>").toInt());
-		else if (s.contains("<onTop>"))
-			r->setOnTop(s.remove("<onTop>").remove("</onTop>").toInt());
+        else if (s.contains("<onTop>"))
+            // Store, don't apply yet -- must run after setCoordinates() below (see LegendWidget::restore()).
+            onTop = s.remove("<onTop>").remove("</onTop>").toInt();
 		else if (s.contains("<visible>"))
 			r->setVisible(s.remove("<visible>").remove("</visible>").toInt());
 		else if (s.contains("<Background>"))
@@ -94,6 +96,7 @@ void EllipseWidget::restore(Graph *g, const QStringList& lst)
 	r->setBackgroundColor(backgroundColor);
 	r->setBrush(brush);
 	r->setCoordinates(x, y, right, bottom);
+    r->setOnTop(onTop);
 	g->add(r, false);
 }
 
