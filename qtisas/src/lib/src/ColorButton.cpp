@@ -42,20 +42,20 @@ ColorButton::ColorButton(QWidget *parent) : QtColorPicker(parent)
     connect(this, &ColorButton::clicked, this,
             [this]() { QTimer::singleShot(0, this, &ColorButton::repositionPopup); });
 
-    // Insert default colors
-    QStringList color_names = ColorBox::defaultColorNames();
+    // Insert indexed (Preferences/2D Plots-configured) colors first
+    QList<QColor> colors = ColorBox::colorList();
+    QStringList color_names = ColorBox::colorNames();
+    for (int i = 0; i < colors.count(); i++)
+        insertColor(colors[i], color_names[i]);
+
+    // Insert default colors, skipping any already present as indexed colors
+    QStringList defaultColorNames = ColorBox::defaultColorNames();
     QList<QColor> defaultColors = ColorBox::defaultColors();
     for (int i = 0; i < ColorBox::numPredefinedColors(); i++)
-        insertColor(defaultColors[i], color_names[i]);
-
-    // Insert user-defined colors
-    QList<QColor> colors = ColorBox::colorList();
-    color_names = ColorBox::colorNames();
-    for (int i = 0; i < colors.count(); i++)
     {
-        QColor c = colors[i];
-        if (!defaultColors.contains(c))
-            insertColor(c, color_names[i]);
+        QColor c = defaultColors[i];
+        if (!colors.contains(c))
+            insertColor(c, defaultColorNames[i]);
     }
 
     // Forward colorChanged signal
