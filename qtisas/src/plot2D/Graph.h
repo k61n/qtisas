@@ -157,7 +157,12 @@ class Graph: public QwtPlot
 		enum CurveType{Line, Scatter, LineSymbols, VerticalBars, Area, Pie, VerticalDropLines,
 			Spline, HorizontalSteps, Histogram, HorizontalBars, VectXYXY, ErrorBars,
 			Box, VectXYAM, VerticalSteps, ColorMap, GrayScale, Contour, Function, ImagePlot,
-			StackBar, StackColumn};
+        StackBar,
+        StackColumn,
+        BSpline,
+        Bezier,
+        AkimaSpline
+    };
 		enum LegendDisplayMode{Auto, ColumnName, ColumnComment, TableName, TableLegend, DataSetName};
 		enum AxisTitlePolicy{Default, ColName, ColComment, NameAndComment};
 

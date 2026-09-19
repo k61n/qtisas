@@ -1229,6 +1229,9 @@ void PlotDialog::initLinePage()
 	boxConnect->addItem(tr("Dots"));
 	boxConnect->addItem(tr("Spline"));
 	boxConnect->addItem(tr("Vertical Steps"));
+    boxConnect->addItem(tr("B-Spline"));
+    boxConnect->addItem(tr("Bezier"));
+    boxConnect->addItem(tr("Akima Spline"));
 	gl1->addWidget(boxConnect, 0, 1);
 
 	boxLineStyle = new PenStyleBox();
@@ -3120,11 +3123,18 @@ void PlotDialog::setActiveCurve(CurveTreeItem *item)
     }
 
     int style = c->style() + 1; // in Qwt 6.3 enum shifted by 1
-    // boxConnect items: 0 No line, 1 Lines, 2 Sticks, 3 Horizontal Steps, 4 Dots, 5 Spline, 6 Vertical Steps.
+    // boxConnect items: 0 No line, 1 Lines, 2 Sticks, 3 Horizontal Steps, 4 Dots, 5 Spline, 6 Vertical Steps,
+    // 7 B-Spline, 8 Bezier, 9 Akima Spline.
     if (curveType == Graph::Spline)
         style = 5;
     else if (curveType == Graph::VerticalSteps)
         style = 6;
+    else if (curveType == Graph::BSpline)
+        style = 7;
+    else if (curveType == Graph::Bezier)
+        style = 8;
+    else if (curveType == Graph::AkimaSpline)
+        style = 9;
     boxConnect->setCurrentIndex(style);
 
 	boxLineStyle->setStyle(c->pen().style());

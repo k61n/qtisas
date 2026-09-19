@@ -53,6 +53,10 @@ Description: Graph widget
 #include <qwt/qwt_text_label.h>
 #include <qwt/qwt_scale_map.h>
 #include <qwt/qwt_weeding_curve_fitter.h>
+#include <qwt/qwt_spline_curve_fitter.h>
+#include <qwt/qwt_spline_basis.h>
+#include <qwt/qwt_spline_pleasing.h>
+#include <qwt/qwt_spline_local.h>
 
 #include <ColorBox.h>
 #include <PatternBox.h>
@@ -3667,6 +3671,30 @@ CurveLayout Graph::initCurveLayout(int style, int curves, bool guessLayout)
 	return cl;
 }
 
+// Shared by updateCurveLayout() (project-restore path) and Graph::setCurveStyle() (interactive dialog path),
+// so the fitter-construction logic for these three spline types lives in one place.
+static void applySplineFitter(PlotCurve *c, Graph::CurveType type)
+{
+    auto *fitter = new QwtSplineCurveFitter();
+    switch (type)
+    {
+    case Graph::BSpline:
+        fitter->setSpline(new QwtSplineBasis());
+        break;
+    case Graph::Bezier:
+        fitter->setSpline(new QwtSplinePleasing());
+        break;
+    case Graph::AkimaSpline:
+        fitter->setSpline(new QwtSplineLocal(QwtSplineLocal::Akima));
+        break;
+    default:
+        break;
+    }
+    c->setCurveFitter(fitter); // QwtPlotCurve takes ownership, deletes any previous fitter
+    c->setStyle(QwtPlotCurve::Lines);
+    c->setCurveAttribute(QwtPlotCurve::Fitted);
+}
+
 void Graph::updateCurveLayout(PlotCurve* c, const CurveLayout *cL)
 {
 	if (!c)
@@ -3697,6 +3725,11 @@ void Graph::updateCurveLayout(PlotCurve* c, const CurveLayout *cL)
 			c->setStyle(QwtPlotCurve::Steps);
 			c->setCurveAttribute(QwtPlotCurve::Inverted);
 		break;
+    case BSpline:
+    case Bezier:
+    case AkimaSpline:
+        applySplineFitter(c, static_cast<Graph::CurveType>(c->plotStyle()));
+        break;
 		default:
 			c->setStyle((QwtPlotCurve::CurveStyle)cL->connectType);
 		break;
@@ -5806,6 +5839,24 @@ void Graph::setCurveStyle(int index, int s)
         s = QwtPlotCurve::Steps;
         c->setCurveAttribute(QwtPlotCurve::Inverted, false);
         c->setPlotStyle(VerticalSteps);
+    }
+    else if (s == 6) // B-Spline
+    {
+        s = QwtPlotCurve::Lines;
+        c->setPlotStyle(BSpline);
+        applySplineFitter(c, BSpline);
+    }
+    else if (s == 7) // Bezier
+    {
+        s = QwtPlotCurve::Lines;
+        c->setPlotStyle(Bezier);
+        applySplineFitter(c, Bezier);
+    }
+    else if (s == 8) // Akima Spline
+    {
+        s = QwtPlotCurve::Lines;
+        c->setPlotStyle(AkimaSpline);
+        applySplineFitter(c, AkimaSpline);
     }
     else if (s == QwtPlotCurve::Steps) // Horizontal Steps
     {
