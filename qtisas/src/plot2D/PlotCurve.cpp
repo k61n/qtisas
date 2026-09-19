@@ -14,6 +14,7 @@ Description: AbstractPlotCurve and DataCurve classes
 #include <QBuffer>
 #include <QDateTime>
 #include <QPainter>
+#include <QPainterPath>
 
 #include <qwt/qwt_painter.h>
 #include <qwt/qwt_scale_map.h>
@@ -32,6 +33,7 @@ Description: AbstractPlotCurve and DataCurve classes
 #include "ScaleDraw.h"
 #include "ScaleEngine.h"
 #include "SymbolBox.h"
+#include "VectorHatchBrush.h"
 
 PlotCurve::PlotCurve(const QString& name): QwtPlotCurve(name),
 d_type(0),
@@ -280,6 +282,31 @@ void PlotCurve::drawCurveSegments(QPainter *p, int style, const QwtScaleMap &xMa
         if (start < i)
             QwtPlotCurve::drawCurve(p, style, xMap, yMap, canvasRect, start, i - 1);
     }
+}
+
+// Qt's builtin hatch brush styles render at the wrong tile density on SVG/PDF paint engines -- for
+// print/export, draw the fill via VectorHatchBrush instead, which every paint engine renders identically.
+void PlotCurve::fillCurve(QPainter *p, const QwtScaleMap &xMap, const QwtScaleMap &yMap, const QRectF &canvasRect,
+                          QPolygonF &polygon) const
+{
+    const QBrush &br = brush();
+    if (!d_vector_hatch_print || !VectorHatchBrush::isHatchStyle(br.style()))
+    {
+        QwtPlotCurve::fillCurve(p, xMap, yMap, canvasRect, polygon);
+        return;
+    }
+
+    closePolyline(p, xMap, yMap, polygon);
+    if (polygon.count() <= 2)
+        return;
+
+    const QColor color = br.color().isValid() ? br.color() : pen().color();
+
+    QPainterPath path;
+    path.addPolygon(polygon);
+    path.closeSubpath();
+
+    VectorHatchBrush::fillPath(p, path, color, br.style());
 }
 
 /*!

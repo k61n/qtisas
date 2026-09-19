@@ -23,6 +23,7 @@ Description: Pie plot class
 #include "PenStyleBox.h"
 #include "PieCurve.h"
 #include "Table.h"
+#include "VectorHatchBrush.h"
 
 PieCurve::PieCurve(Table *t, const QString& name, int startRow, int endRow):
 	DataCurve(t, QString(), name, startRow, endRow),
@@ -123,8 +124,13 @@ void PieCurve::drawDisk(QPainter *painter, const QwtScaleMap &xMap, const QwtSca
 
     painter->save();
 
+    // Vector-hatch only during export (painter->device() isn't a QWidget then).
+    const QBrush diskBrush(color(0), QwtPlotCurve::brush().style());
+    const bool exportHatch =
+        VectorHatchBrush::isHatchStyle(diskBrush.style()) && dynamic_cast<QWidget *>(painter->device()) == nullptr;
+
     painter->setPen(pen());
-    painter->setBrush(QBrush(color(0), QwtPlotCurve::brush().style()));
+    painter->setBrush(exportHatch ? QBrush(Qt::NoBrush) : diskBrush);
 
     QPointF start(x_center + ray_x, y_center);
     QPainterPath path(start);
@@ -133,8 +139,16 @@ void PieCurve::drawDisk(QPainter *painter, const QwtScaleMap &xMap, const QwtSca
     QPointF aux = path.currentPosition();
     path.lineTo(aux.x(), aux.y() - thick);
     path.arcTo(pieRect, -180.0, 180.0);
+    if (exportHatch)
+        VectorHatchBrush::fillPath(painter, path, diskBrush.color(), diskBrush.style());
     painter->drawPath(path);
 
+    if (exportHatch)
+    {
+        QPainterPath top;
+        top.addEllipse(pieRect);
+        VectorHatchBrush::fillPath(painter, top, diskBrush.color(), diskBrush.style());
+    }
     painter->drawEllipse(pieRect);
 
     if (d_texts_list.size() > 0){
@@ -243,7 +257,11 @@ void PieCurve::drawSlices(QPainter *painter, const QwtScaleMap &xMap, const QwtS
 		const int value = (int)(q*5760);
 
         painter->setPen(pen());
-		painter->setBrush(QBrush(color(i), QwtPlotCurve::brush().style()));
+        // Vector-hatch only during export (painter->device() isn't a QWidget then).
+        const QBrush sliceBrush(color(i), QwtPlotCurve::brush().style());
+        const bool exportHatch =
+            VectorHatchBrush::isHatchStyle(sliceBrush.style()) && dynamic_cast<QWidget *>(painter->device()) == nullptr;
+        painter->setBrush(exportHatch ? QBrush(Qt::NoBrush) : sliceBrush);
 
 		double deg = q*360;
 		double start_3D_view_angle = start_angle[i];
@@ -282,6 +300,8 @@ void PieCurve::drawSlices(QPainter *painter, const QwtScaleMap &xMap, const QwtS
         	QPointF aux = path.currentPosition();
         	path.lineTo(aux.x(), aux.y() - thick);
         	path.arcTo(pieRect, -end_3D_view_angle, deg);
+            if (exportHatch)
+                VectorHatchBrush::fillPath(painter, path, sliceBrush.color(), sliceBrush.style());
         	painter->drawPath(path);
         } else {
             if (start_3D_view_angle >= 0 && start_3D_view_angle < 180){
@@ -298,6 +318,8 @@ void PieCurve::drawSlices(QPainter *painter, const QwtScaleMap &xMap, const QwtS
                 QPointF aux = path.currentPosition();
                 path.lineTo(aux.x(), aux.y() - thick);
                 path.arcTo(pieRect, -180, deg);
+                if (exportHatch)
+                    VectorHatchBrush::fillPath(painter, path, sliceBrush.color(), sliceBrush.style());
                 painter->drawPath(path);
 
                 path.moveTo(QPointF(x_center + ray_x, y_center));
@@ -307,10 +329,19 @@ void PieCurve::drawSlices(QPainter *painter, const QwtScaleMap &xMap, const QwtS
                 aux = path.currentPosition();
                 path.lineTo(aux.x(), aux.y() - thick);
                 path.arcTo(pieRect, -end_3D_view_angle, end_3D_view_angle);
+                if (exportHatch)
+                    VectorHatchBrush::fillPath(painter, path, sliceBrush.color(), sliceBrush.style());
                 painter->drawPath(path);
             }
         }
 
+        if (exportHatch)
+        {
+            QPainterPath top(pieRect.center());
+            top.arcTo(pieRect, (sign * angle) / 16.0, (sign * value) / 16.0);
+            top.closeSubpath();
+            VectorHatchBrush::fillPath(painter, top, sliceBrush.color(), sliceBrush.style());
+        }
 		painter->drawPie(pieRect, sign*angle, sign*value);
 		angle += value;
 

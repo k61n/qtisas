@@ -29,7 +29,9 @@ Description: A 2D plot legend widget
 #include "PieCurve.h"
 #include "PlotCurve.h"
 #include "VectorCurve.h"
+#include "VectorHatchBrush.h"
 #include <QPaintEvent>
+#include <QPainterPath>
 
 LegendWidget::LegendWidget(Graph *plot):FrameWidget(plot),
 d_angle(0),
@@ -206,7 +208,17 @@ void LegendWidget::drawSymbol(PlotCurve *c, int point, QPainter *p, int x, int y
 		p->save();
 		p->setPen (QPen(pen.color(), pen.widthF(), Qt::SolidLine, Qt::FlatCap, Qt::MiterJoin));
 		QRect lr = QRect(x, y - l/4, l, l/2);
-		p->setBrush(br);
+        // Vector-hatch only during export (painter->device() isn't a QWidget then).
+        if (VectorHatchBrush::isHatchStyle(br.style()) && dynamic_cast<QWidget *>(p->device()) == nullptr)
+        {
+            QPainterPath rp;
+            rp.addRect(lr);
+            // Scale the pitch to the swatch size so a few repeats still fit.
+            const double spacing = qMax(1.0, qMin(lr.width(), lr.height()) / 3.0);
+            VectorHatchBrush::fillPath(p, rp, br.color(), br.style(), spacing);
+        }
+        else
+            p->setBrush(br);
 		QwtPainter::drawRect(p, lr);
 		p->restore();
 		return;
@@ -221,7 +233,17 @@ void LegendWidget::drawSymbol(PlotCurve *c, int point, QPainter *p, int x, int y
 		if (c->type() == Graph::VerticalBars || c->type() == Graph::HorizontalBars ||
 			c->type() == Graph::Histogram || c->type() == Graph::Box){
 			QRect lr = QRect(x, y - l/4, l, l/2);
-			p->setBrush(c->brush());
+            const QBrush &cbrush = c->brush();
+            if (VectorHatchBrush::isHatchStyle(cbrush.style()) && dynamic_cast<QWidget *>(p->device()) == nullptr)
+            {
+                QPainterPath rp;
+                rp.addRect(lr);
+                // Scale the pitch to the swatch size so a few repeats still fit.
+                const double spacing = qMax(1.0, qMin(lr.width(), lr.height()) / 3.0);
+                VectorHatchBrush::fillPath(p, rp, cbrush.color(), cbrush.style(), spacing);
+            }
+            else
+                p->setBrush(cbrush);
 			QwtPainter::drawRect(p, lr);
 
 			p->restore();

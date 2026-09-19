@@ -447,6 +447,9 @@ class Graph: public QwtPlot
     //! Strips attributes Qt's SVG generator writes unconditionally even when they equal the SVG spec's own
     //! default (identity transform, opacity 1, vector-effect none) -- zero visual effect, smaller file.
     static QByteArray withoutSvgDefaultAttributes(const QByteArray &svg);
+    //! Qt's native hatch-brush <pattern> renders at twice the on-screen tile pitch in vector output --
+    //! scales each one down via patternTransform so the exported hatch stays real vector geometry.
+    static QByteArray withScaledPatternTiles(const QByteArray &svg);
 		void exportEMF(const QString& fname, const QSizeF& customSize = QSizeF(), int unit = FrameWidget::Pixel, double fontsFactor = 1.0);
 		void exportTeX(const QString& fname, bool color = true, bool escapeStrings = true, bool fontSizes = true,
 						const QSizeF& customSize = QSizeF(), int unit = FrameWidget::Pixel, double fontsFactor = 1.0);

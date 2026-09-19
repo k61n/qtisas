@@ -53,7 +53,8 @@ set(SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/TexWidget.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/TitlePicker.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/TranslateCurveTool.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/VectorCurve.cpp)
+    ${CMAKE_CURRENT_SOURCE_DIR}/VectorCurve.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/VectorHatchBrush.cpp)
 
 set(HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/dialogs/AssociationsDialog.h
@@ -109,7 +110,8 @@ set(HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/TexWidget.h
     ${CMAKE_CURRENT_SOURCE_DIR}/TitlePicker.h
     ${CMAKE_CURRENT_SOURCE_DIR}/TranslateCurveTool.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/VectorCurve.h)
+    ${CMAKE_CURRENT_SOURCE_DIR}/VectorCurve.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/VectorHatchBrush.h)
 
 set(INCLUDEDIRS
     ${CMAKE_CURRENT_SOURCE_DIR}/

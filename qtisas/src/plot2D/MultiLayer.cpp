@@ -1736,8 +1736,11 @@ QByteArray MultiLayer::arraySVG(int reso, const QSizeF &customSize, int unit, do
             draw(&generator, d_canvas->size(), unit, defaultResolution, fontsFactor);
     }
 
-    return Graph::withPixelSvgSize(
-        Graph::withSvgFontFallback(Graph::withoutEmptySvgGroups(Graph::withoutSvgDefaultAttributes(byteArray))));
+    byteArray = Graph::withoutSvgDefaultAttributes(byteArray);
+    byteArray = Graph::withScaledPatternTiles(byteArray);
+    byteArray = Graph::withoutEmptySvgGroups(byteArray);
+    byteArray = Graph::withSvgFontFallback(byteArray);
+    return Graph::withPixelSvgSize(byteArray);
 }
 
 bool MultiLayer::exportSVG(const QString &fname, int reso, const QSizeF &customSize, int unit, double fontsFactor)

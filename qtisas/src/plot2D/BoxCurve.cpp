@@ -10,6 +10,7 @@ Description: Box curve
  ******************************************************************************/
 
 #include <QPainter>
+#include <QPainterPath>
 
 #include <gsl/gsl_sort.h>
 #include <gsl/gsl_statistics.h>
@@ -18,6 +19,7 @@ Description: Box curve
 
 #include "BoxCurve.h"
 #include "Graph.h"
+#include "VectorHatchBrush.h"
 
 BoxCurve::BoxCurve(Table *t, const QString& name, int startRow, int endRow):
 	DataCurve(t, QString(), name, startRow, endRow),
@@ -130,11 +132,23 @@ void BoxCurve::drawBox(QPainter *painter, const QwtScaleMap &xMap,
 		b_upperq = yMap.transform(gsl_stats_quantile_from_sorted_data (dat, 1, size, 0.01*b_coeff));
 	}
 
+    // Vector-hatch only during export (painter->device() isn't a QWidget then).
+    const QBrush &boxBrush = QwtPlotCurve::brush();
+    const bool exportHatch =
+        VectorHatchBrush::isHatchStyle(boxBrush.style()) && dynamic_cast<QWidget *>(painter->device()) == nullptr;
+
 	//draw box
 	if (b_style == Rect)
 	{
         const auto r = QRectF(px - hbw, b_upperq, box_width, b_lowerq - b_upperq + 1);
-		painter->fillRect(r, QwtPlotCurve::brush());
+        if (exportHatch)
+        {
+            QPainterPath rp;
+            rp.addRect(r);
+            VectorHatchBrush::fillPath(painter, rp, boxBrush.color(), boxBrush.style());
+        }
+        else
+            painter->fillRect(r, boxBrush);
 		painter->drawRect(r);
 	}
 	else if (b_style == Diamond)
@@ -145,7 +159,16 @@ void BoxCurve::drawBox(QPainter *painter, const QwtScaleMap &xMap,
         pa[2] = QPointF(px, b_lowerq);
         pa[3] = QPointF(px - hbw, median);
 
-		painter->setBrush(QwtPlotCurve::brush());
+        if (exportHatch)
+        {
+            QPainterPath pp;
+            pp.addPolygon(pa);
+            pp.closeSubpath();
+            VectorHatchBrush::fillPath(painter, pp, boxBrush.color(), boxBrush.style());
+            painter->setBrush(Qt::NoBrush);
+        }
+        else
+            painter->setBrush(boxBrush);
 		painter->drawPolygon(pa);
 	}
 	else if (b_style == WindBox)
@@ -162,7 +185,16 @@ void BoxCurve::drawBox(QPainter *painter, const QwtScaleMap &xMap,
         pa[6] = QPointF(px - 0.4 * box_width, upperq);
         pa[7] = QPointF(px - hbw, b_upperq);
 
-		painter->setBrush(QwtPlotCurve::brush());
+        if (exportHatch)
+        {
+            QPainterPath pp;
+            pp.addPolygon(pa);
+            pp.closeSubpath();
+            VectorHatchBrush::fillPath(painter, pp, boxBrush.color(), boxBrush.style());
+            painter->setBrush(Qt::NoBrush);
+        }
+        else
+            painter->setBrush(boxBrush);
 		painter->drawPolygon(pa);
 	}
 	else if (b_style == Notch)
@@ -184,7 +216,16 @@ void BoxCurve::drawBox(QPainter *painter, const QwtScaleMap &xMap,
         pa[8] = QPointF(px - hbw, upperCI);
         pa[9] = QPointF(px - hbw, b_upperq);
 
-		painter->setBrush(QwtPlotCurve::brush());
+        if (exportHatch)
+        {
+            QPainterPath pp;
+            pp.addPolygon(pa);
+            pp.closeSubpath();
+            VectorHatchBrush::fillPath(painter, pp, boxBrush.color(), boxBrush.style());
+            painter->setBrush(Qt::NoBrush);
+        }
+        else
+            painter->setBrush(boxBrush);
 		painter->drawPolygon(pa);
 	}
 

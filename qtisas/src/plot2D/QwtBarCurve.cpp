@@ -10,12 +10,14 @@ Description: Bar curve
  ******************************************************************************/
 
 #include <QPainter>
+#include <QPainterPath>
 
 #include <qwt/qwt_painter.h>
 #include <qwt/qwt_scale_map.h>
 
 #include "Graph.h"
 #include "QwtBarCurve.h"
+#include "VectorHatchBrush.h"
 
 QwtBarCurve::QwtBarCurve(BarStyle style, Table *t, const QString& xColName, const QString& name, int startRow, int endRow):
     DataCurve(t, xColName, name, startRow, endRow),
@@ -58,7 +60,11 @@ void QwtBarCurve::drawSeries(QPainter *painter, const QwtScaleMap &xMap, const Q
 
 	painter->save();
     painter->setPen(pen());
-	painter->setBrush(QwtPlotCurve::brush());
+    const QBrush &barBrush = QwtPlotCurve::brush();
+    // Vector-hatch only during export (painter->device() isn't a QWidget then).
+    const bool exportHatch =
+        VectorHatchBrush::isHatchStyle(barBrush.style()) && dynamic_cast<QWidget *>(painter->device()) == nullptr;
+    painter->setBrush(exportHatch ? QBrush(Qt::NoBrush) : barBrush);
     qreal halfWidth = pen().widthF() / 4.0;
 
 	double dx, dy, ref;
@@ -152,6 +158,12 @@ void QwtBarCurve::drawSeries(QPainter *painter, const QwtScaleMap &xMap, const Q
 
 		if (d_is_stacked)
 			painter->fillRect(rect, Qt::white);
+        if (exportHatch)
+        {
+            QPainterPath rp;
+            rp.addRect(rect);
+            VectorHatchBrush::fillPath(painter, rp, barBrush.color(), barBrush.style());
+        }
 		painter->drawRect(rect);
 	}
 	painter->restore();

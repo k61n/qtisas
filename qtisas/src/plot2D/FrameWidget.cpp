@@ -22,6 +22,7 @@ Description: Base class for tool widgets in 2D plots
 #include "Graph.h"
 #include "MultiLayer.h"
 #include "PenStyleBox.h"
+#include "VectorHatchBrush.h"
 
 FrameWidget::FrameWidget(Graph *plot):QWidget(plot->multiLayer()->canvas()),
 	d_plot(plot),
@@ -187,6 +188,9 @@ QRectF FrameWidget::boundingRect() const
 void FrameWidget::drawFrame(QPainter *p, const QRect &rect, double curveLineScalingFactor)
 {
 	QColor background = palette().color(QPalette::Window);
+    // Vector-hatch only during export (painter->device() isn't a QWidget then).
+    const bool exportHatch =
+        VectorHatchBrush::isHatchStyle(d_brush.style()) && dynamic_cast<QWidget *>(p->device()) == nullptr;
 
 	p->save();
     if (d_frame == Line)
@@ -200,8 +204,18 @@ void FrameWidget::drawFrame(QPainter *p, const QRect &rect, double curveLineScal
 		QRect r = rect.adjusted(lw, lw, -lw - 1, -lw - 1);
 		if (background.alpha() != 0)
 			p->fillRect(r, background);
-		if (d_brush.style() != Qt::NoBrush)
-			p->setBrush(d_brush);
+        if (d_brush.style() != Qt::NoBrush)
+        {
+            if (exportHatch)
+            {
+                QPainterPath rp;
+                rp.addRect(r);
+                VectorHatchBrush::fillPath(p, rp, d_brush.color(), d_brush.style());
+                p->setBrush(Qt::NoBrush);
+            }
+            else
+                p->setBrush(d_brush);
+        }
 
         QwtPainter::drawRect(p, r);
 
@@ -236,8 +250,18 @@ void FrameWidget::drawFrame(QPainter *p, const QRect &rect, double curveLineScal
         pen.setWidthF(curveLineScalingFactor * pen.widthF());
         p->setPen(pen);
 
-		if (d_brush.style() != Qt::NoBrush)
-			p->setBrush(d_brush);
+        if (d_brush.style() != Qt::NoBrush)
+        {
+            if (exportHatch)
+            {
+                QPainterPath rp;
+                rp.addRect(r);
+                VectorHatchBrush::fillPath(p, rp, d_brush.color(), d_brush.style());
+                p->setBrush(Qt::NoBrush);
+            }
+            else
+                p->setBrush(d_brush);
+        }
 		QwtPainter::drawRect(p, r);
 
         pen.setCosmetic(true);
@@ -247,8 +271,17 @@ void FrameWidget::drawFrame(QPainter *p, const QRect &rect, double curveLineScal
 	} else {
 		if (background.alpha() != 0)
 			p->fillRect(rect, background);
-		if (d_brush.style() != Qt::NoBrush)
-			p->fillRect(rect, d_brush);
+        if (d_brush.style() != Qt::NoBrush)
+        {
+            if (exportHatch)
+            {
+                QPainterPath rp;
+                rp.addRect(rect);
+                VectorHatchBrush::fillPath(p, rp, d_brush.color(), d_brush.style());
+            }
+            else
+                p->fillRect(rect, d_brush);
+        }
 	}
 
 	p->restore();

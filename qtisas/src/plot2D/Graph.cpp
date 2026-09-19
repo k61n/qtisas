@@ -2270,6 +2270,22 @@ QByteArray Graph::withoutSvgDefaultAttributes(const QByteArray &svg)
     return s.toUtf8();
 }
 
+QByteArray Graph::withScaledPatternTiles(const QByteArray &svg)
+{
+    QString s = QString::fromUtf8(svg);
+    static const QRegularExpression patternOpen(QStringLiteral("<pattern id=\"fillpattern[^\"]*\"[^>]*>"));
+    QRegularExpressionMatch match;
+    int pos = 0;
+    while ((match = patternOpen.match(s, pos)).hasMatch())
+    {
+        const QString tag = match.captured(0);
+        const QString replacement = tag.left(tag.length() - 1) + QStringLiteral(" patternTransform=\"scale(0.5)\">");
+        s.replace(match.capturedStart(0), match.capturedLength(0), replacement);
+        pos = static_cast<int>(match.capturedStart(0) + replacement.length());
+    }
+    return s.toUtf8();
+}
+
 QByteArray Graph::arraySVG(int reso, const QSizeF &customSize, int unit, double fontsFactor, QRectF *outClipRect,
                            QSize *outDocSize)
 {
@@ -2284,8 +2300,12 @@ QByteArray Graph::arraySVG(int reso, const QSizeF &customSize, int unit, double 
         *outDocSize = docSize;
 
     // QSvgGenerator can't clip at draw time; wrap the canvas in a real SVG clip-path instead.
-    return withPixelSvgSize(withSvgFontFallback(withoutEmptySvgGroups(
-        withoutSvgDefaultAttributes(spliceClippedCanvas(beforeBytes, canvasBytes, afterBytes, clipRect)))));
+    QByteArray svg = spliceClippedCanvas(beforeBytes, canvasBytes, afterBytes, clipRect);
+    svg = withoutSvgDefaultAttributes(svg);
+    svg = withScaledPatternTiles(svg);
+    svg = withoutEmptySvgGroups(svg);
+    svg = withSvgFontFallback(svg);
+    return withPixelSvgSize(svg);
 }
 
 QRectF Graph::svgClipRect(const QRect &plotRect, const ScaledFontsPrintFilter &pfilter, int res)
@@ -7651,10 +7671,6 @@ void Graph::print(QPainter *painter, const QRect &plotRect, const ScaledFontsPri
 
     double curveLineScalingFactor = (double)res / (double)logicalDpiX();
 
-    // QSvgGenerator/QPrinter write hatch brushes at 2x the on-screen tile pitch; rebuilt below at
-    // half size and restored once printing is done.
-    QMap<PlotCurve *, QBrush> origHatchBrushes;
-
     // we set non-cosmetic pens in order to scale pen width
     foreach (QwtPlotItem *item, d_curves)
     {
@@ -7697,20 +7713,9 @@ void Graph::print(QPainter *painter, const QRect &plotRect, const ScaledFontsPri
                 c->setSymbol(s);
             }
 
-            QBrush brush = c->brush();
-            if (brush.style() >= Qt::Dense1Pattern && brush.style() <= Qt::DiagCrossPattern)
-            {
-                origHatchBrushes[c] = brush;
-                // Pattern tiling ignores the painter's transform, so a direct 4x4 fill just crops the
-                // native 8x8 bitmap's corner instead of shrinking it -- downscale the image instead.
-                QImage tile8(8, 8, QImage::Format_ARGB32_Premultiplied);
-                tile8.fill(Qt::transparent);
-                QPainter tp(&tile8);
-                tp.fillRect(0, 0, 8, 8, QBrush(brush.color(), brush.style()));
-                tp.end();
-                QImage tile4 = tile8.scaled(4, 4, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
-                c->setBrush(QBrush(QPixmap::fromImage(tile4)));
-            }
+            // Hatch styles now draw via PlotCurve::fillCurve() (see setVectorHatchOnPrint()).
+            const QBrush &brush = c->brush();
+            c->setVectorHatchOnPrint(brush.style() >= Qt::Dense1Pattern && brush.style() <= Qt::DiagCrossPattern);
 
             // FilterPoints/ClipPolygons both pre-cull points at/near the visible
             // boundary before painting -- a symbol whose data point sits right at
@@ -7812,8 +7817,7 @@ void Graph::print(QPainter *painter, const QRect &plotRect, const ScaledFontsPri
                 c->setSymbol(s);
             }
 
-            if (origHatchBrushes.contains(c))
-                c->setBrush(origHatchBrushes.value(c));
+            c->setVectorHatchOnPrint(false);
 
             c->setPaintAttribute(QwtPlotCurve::FilterPoints, true);
             c->setPaintAttribute(QwtPlotCurve::ClipPolygons, true);

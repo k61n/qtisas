@@ -19,6 +19,7 @@ Description: A widget displaying ellipses/circles in 2D plots
 #include "Graph.h"
 #include "PatternBox.h"
 #include "PenStyleBox.h"
+#include "VectorHatchBrush.h"
 
 EllipseWidget::EllipseWidget(Graph *plot):FrameWidget(plot)
 {
@@ -106,6 +107,10 @@ void EllipseWidget::drawFrame(QPainter *p, const QRect &rect, double curveLineSc
 	if (d_plot->antialiasing())
 		p->setRenderHints(QPainter::Antialiasing);
 
+    // Vector-hatch only during export (painter->device() isn't a QWidget then).
+    const bool exportHatch =
+        VectorHatchBrush::isHatchStyle(d_brush.style()) && dynamic_cast<QWidget *>(p->device()) == nullptr;
+
 	QPainterPath ellipse;
     if (d_frame == Line)
     {
@@ -119,8 +124,16 @@ void EllipseWidget::drawFrame(QPainter *p, const QRect &rect, double curveLineSc
 
 		ellipse.addEllipse(r);
 		p->fillPath(ellipse, palette().color(QPalette::Window));
-		if (d_brush.style() != Qt::NoBrush)
-			p->setBrush(d_brush);
+        if (d_brush.style() != Qt::NoBrush)
+        {
+            if (exportHatch)
+            {
+                VectorHatchBrush::fillPath(p, ellipse, d_brush.color(), d_brush.style());
+                p->setBrush(Qt::NoBrush);
+            }
+            else
+                p->setBrush(d_brush);
+        }
 
         p->drawEllipse(r);
 
@@ -130,8 +143,13 @@ void EllipseWidget::drawFrame(QPainter *p, const QRect &rect, double curveLineSc
 	} else {
 		ellipse.addEllipse(rect);
 		p->fillPath(ellipse, palette().color(QPalette::Window));
-		if (d_brush.style() != Qt::NoBrush)
-			p->fillPath(ellipse, d_brush);
+        if (d_brush.style() != Qt::NoBrush)
+        {
+            if (exportHatch)
+                VectorHatchBrush::fillPath(p, ellipse, d_brush.color(), d_brush.style());
+            else
+                p->fillPath(ellipse, d_brush);
+        }
 	}
 
 	p->restore();

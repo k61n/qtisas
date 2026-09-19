@@ -56,9 +56,17 @@ public:
 	//! Returns the number of symbols not to be drawn
 	int skipSymbolsCount(){return d_skip_symbols;};
 
+    //! Print/export only -- see VectorHatchBrush. Set by Graph::print() around the draw call.
+    void setVectorHatchOnPrint(bool on)
+    {
+        d_vector_hatch_print = on;
+    };
+
 protected:
     void drawCurve(QPainter *p, int style, const QwtScaleMap &xMap, const QwtScaleMap &yMap, const QRectF &canvasRect,
                    int from, int to) const override;
+    void fillCurve(QPainter *p, const QwtScaleMap &xMap, const QwtScaleMap &yMap, const QRectF &canvasRect,
+                   QPolygonF &polygon) const override;
     //! Draw the connecting line in contiguous runs of samples that map to finite
     //! canvas coordinates, so a value with no position on the scale (e.g. non-positive
     //! on a log axis) breaks the line locally instead of blanking it entirely.
@@ -81,6 +89,7 @@ protected:
 	double d_x_offset, d_y_offset;
 	bool d_side_lines;
 	int d_skip_symbols;
+    bool d_vector_hatch_print = false;
 };
 
 class DataCurve: public PlotCurve
