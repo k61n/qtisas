@@ -281,9 +281,11 @@ void ConfigDialog::initPlotsPage()
 
 	labelFrameWidth = new QLabel();
 	optionsLayout->addWidget(labelFrameWidth, 4, 0);
-	boxFrameWidth= new QSpinBox();
+    boxFrameWidth = new QDoubleSpinBox();
 	optionsLayout->addWidget(boxFrameWidth, 4, 1);
-	boxFrameWidth->setRange(1, 100);
+    boxFrameWidth->setDecimals(1);
+    boxFrameWidth->setRange(0.1, 100);
+    boxFrameWidth->setSingleStep(0.1);
 	boxFrameWidth->setValue(app->canvasFrameWidth);
 	if (!app->canvasFrameWidth){
 		labelFrameWidth->hide();
@@ -1753,8 +1755,10 @@ void ConfigDialog::initAxesPage()
 
 	lblAxesLineWidth = new QLabel();
 	axisOptionsLayout->addWidget(lblAxesLineWidth, 1, 0);
-	boxLineWidth= new QSpinBox();
-	boxLineWidth->setRange(0, 100);
+    boxLineWidth = new QDoubleSpinBox();
+    boxLineWidth->setDecimals(1);
+    boxLineWidth->setRange(0.1, 100);
+    boxLineWidth->setSingleStep(0.1);
 	boxLineWidth->setValue(app->axesLineWidth);
 	axisOptionsLayout->addWidget(boxLineWidth, 1, 1);
 

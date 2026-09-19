@@ -25,6 +25,7 @@ Description: Preferences dialog
 #include <QRadioButton>
 #include <QSlider>
 #include <QSpacerItem>
+#include <QDoubleSpinBox>
 #include <QSpinBox>
 #include <QStackedWidget>
 #include <QTableWidget>
@@ -193,7 +194,8 @@ private:
 	QComboBox *boxMajTicks, *boxMinTicks, *boxStyle, *boxCurveStyle, *boxSeparator, *boxLanguage, *boxDecimalSeparator;
 	QComboBox *boxClipboardLocale, *boxProjection;
 	QLabel *lblClipboardSeparator, *lblFloorStyle;
-	QSpinBox *boxMinutes, *boxLineWidth, *boxFrameWidth, *boxResolution, *boxMargin, *boxPrecision, *boxAppPrecision;
+    QDoubleSpinBox *boxLineWidth, *boxFrameWidth;
+    QSpinBox *boxMinutes, *boxResolution, *boxMargin, *boxPrecision, *boxAppPrecision;
 	QSpinBox *boxSymbolSize, *boxMinTicksLength, *boxMajTicksLength, *generatePointsBox;
 	DoubleSpinBox *boxCurveLineWidth;
 	ColorButton *btnWorkspace, *btnPanels, *btnPanelsText;

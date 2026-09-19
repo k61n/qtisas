@@ -702,7 +702,7 @@ void ScaleDraw::drawBreak(QPainter *painter) const
     painter->save();
     QPen pen = painter->pen();
     pen.setColor(d_plot->axisWidget(axis())->palette().color(QPalette::Active, QPalette::WindowText));
-    pen.setWidth(d_plot->axesLinewidth());
+    pen.setWidthF(d_plot->axesLinewidth());
     pen.setStyle(Qt::SolidLine);
     painter->setPen(pen);
 

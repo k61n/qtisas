@@ -24,6 +24,7 @@ Description: Axes preferences dialog
 #include <QListWidget>
 #include <QPushButton>
 #include <QRadioButton>
+#include <QDoubleSpinBox>
 #include <QSpinBox>
 #include <QStringList>
 #include <QTabWidget>
@@ -160,7 +161,8 @@ protected:
     QCheckBox *boxShowAxis{};
 
     QTextEdit *boxFormula{}, *boxTitle{};
-    QSpinBox *boxFrameWidth{}, *boxPrecision{}, *boxAngle{}, *boxBaseline{}, *boxAxesLinewidth{};
+    QDoubleSpinBox *boxFrameWidth{}, *boxAxesLinewidth{};
+    QSpinBox *boxPrecision{}, *boxAngle{}, *boxBaseline{};
     QPushButton *btnAxesFont{};
     QCheckBox *boxBackbones{}, *boxShowFormula{};
     ColorButton *boxAxisColor{};

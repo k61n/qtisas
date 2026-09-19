@@ -359,7 +359,7 @@ private:
 
 	QGroupBox *boxFramed;
 	ColorButton *boxFrameColor;
-	QSpinBox *boxFrameWidth;
+    QDoubleSpinBox *boxFrameWidth;
 	QPushButton *canvasDefaultBtn;
 	QSlider *canvasOpacitySlider, *bkgOpacitySlider;
 

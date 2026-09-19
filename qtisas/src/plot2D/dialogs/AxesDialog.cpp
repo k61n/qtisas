@@ -710,8 +710,10 @@ void AxesDialog::initFramePage()
     boxFramedLayout->addWidget( boxFrameColor, 0, 1 );
 
     boxFramedLayout->addWidget( new QLabel(tr( "Width" )), 1, 0 );
-    boxFrameWidth= new QSpinBox();
-    boxFrameWidth->setMinimum(1);
+    boxFrameWidth = new QDoubleSpinBox();
+    boxFrameWidth->setDecimals(1);
+    boxFrameWidth->setMinimum(0.1);
+    boxFrameWidth->setSingleStep(0.1);
     boxFramedLayout->addWidget( boxFrameWidth, 1, 1 );
 
     boxFramedLayout->setRowStretch( 2, 1 );
@@ -723,8 +725,10 @@ void AxesDialog::initFramePage()
     boxAxesLayout->addWidget( boxBackbones, 0, 0 );
 
     boxAxesLayout->addWidget( new QLabel(tr( "Line Width" )), 1, 0 );
-    boxAxesLinewidth = new QSpinBox();
-    boxAxesLinewidth->setRange( 1, 100 );
+    boxAxesLinewidth = new QDoubleSpinBox();
+    boxAxesLinewidth->setDecimals(1);
+    boxAxesLinewidth->setRange(0.1, 100);
+    boxAxesLinewidth->setSingleStep(0.1);
     boxAxesLayout->addWidget( boxAxesLinewidth, 1, 1 );
 
     boxAxesLayout->addWidget( new QLabel(tr( "Major ticks length" )), 2, 0 );
@@ -767,8 +771,8 @@ void AxesDialog::initFramePage()
 	connect(boxFrameColor, SIGNAL(colorChanged()), this, SLOT(applyCanvasFormat()));
 	connect(boxBackbones, SIGNAL(toggled(bool)), this, SLOT(applyCanvasFormat()));
 	connect(boxFramed, SIGNAL(toggled(bool)), this, SLOT(applyCanvasFormat()));
-	connect(boxFrameWidth, SIGNAL(valueChanged (int)), this, SLOT(applyCanvasFormat()));
-	connect(boxAxesLinewidth, SIGNAL(valueChanged (int)), this, SLOT(applyCanvasFormat()));
+    connect(boxFrameWidth, SIGNAL(valueChanged(double)), this, SLOT(applyCanvasFormat()));
+    connect(boxAxesLinewidth, SIGNAL(valueChanged(double)), this, SLOT(applyCanvasFormat()));
 	connect(boxMajorTicksLength, SIGNAL(valueChanged (int)), this, SLOT(changeMajorTicksLength(int)));
 	connect(boxMinorTicksLength, SIGNAL(valueChanged (int)), this, SLOT(changeMinorTicksLength(int)));
 }

@@ -97,6 +97,10 @@ Description: Graph widget
 Graph::Graph(int x, int y, int width, int height, QWidget* parent, Qt::WindowFlags f)
 : QwtPlot(parent)
 {
+    // Replaces the default QwtPlotCanvas (QFrame::lineWidth() is int-only) with one that can draw a
+    // fractional-width canvas frame border -- see GraphCanvas::drawBorder().
+    setCanvas(new GraphCanvas(this));
+
 	setWindowFlags(f);
 	setAttribute(Qt::WA_DeleteOnClose);
 	setAcceptDrops(true);
@@ -2327,8 +2331,7 @@ QRectF Graph::svgClipRect(const QRect &plotRect, const ScaledFontsPrintFilter &p
     // inside, half outside. The bottom/right inset already absorbs up to 1px
     // of that outer half (no extra padding needed there); top/left have no
     // inset at all, so they need exactly half the border's actual width.
-    auto *plotCanvas = (QwtPlotCanvas *)canvas();
-    const double lw = plotCanvas ? (double)res / logicalDpiX() * plotCanvas->lineWidth() : 0.0;
+    const double lw = (double)res / logicalDpiX() * canvasFrameWidth();
     const double halfLw = lw / 2.0;
     const double topLeftPad = halfLw;
     const double bottomRightPad = qMax(0.0, halfLw - 1.0);
@@ -2730,16 +2733,46 @@ QColor Graph::canvasFrameColor()
     return pal.color(QPalette::Active, QPalette::WindowText);
 }
 
-int Graph::canvasFrameWidth()
+void GraphCanvas::setFrameWidthF(double width)
 {
-    return ((QwtPlotCanvas *)canvas())->lineWidth();
+    if (d_frameWidthF == width)
+        return;
+    d_frameWidthF = width;
+    // QFrame's own lineWidth() is int-only; only used so Qwt's layout reserves enough space for the
+    // border. The actual line painted uses the precise width, in drawBorder() below.
+    QFrame::setLineWidth(static_cast<int>(std::ceil(width)));
+    update();
 }
 
-void Graph::setCanvasFrame(int width, const QColor& color)
+void GraphCanvas::drawBorder(QPainter *painter)
 {
-    auto c = dynamic_cast<QwtPlotCanvas *>(canvas());
+    if (frameShape() == QFrame::NoFrame || d_frameWidthF <= 0.0)
+        return;
+
+    QRectF r(rect());
+    const double half = d_frameWidthF / 2.0;
+    r.adjust(half, half, -half, -half);
+
+    painter->save();
+    painter->setPen(QPen(palette().color(QPalette::Active, QPalette::WindowText), d_frameWidthF));
+    painter->setBrush(Qt::NoBrush);
+    painter->drawRect(r);
+    painter->restore();
+}
+
+double Graph::canvasFrameWidth() const
+{
+    auto c = dynamic_cast<const GraphCanvas *>(canvas());
+    return c ? c->frameWidthF() : 0.0;
+}
+
+void Graph::setCanvasFrame(double width, const QColor &color)
+{
+    auto c = dynamic_cast<GraphCanvas *>(canvas());
+    if (!c)
+        return;
     QPalette pal = c->palette();
-    if (c->lineWidth() == width && pal.color(QPalette::Active, QPalette::WindowText) == color)
+    if (c->frameWidthF() == width && pal.color(QPalette::Active, QPalette::WindowText) == color)
 		return;
 #ifdef Q_OS_WIN
     c->setStyle(QStyleFactory::create("Fusion"));
@@ -2755,7 +2788,7 @@ void Graph::setCanvasFrame(int width, const QColor& color)
     }
     else
         c->setFrameShape(QFrame::NoFrame);
-    c->setLineWidth(width);
+    c->setFrameWidthF(width);
     pal.setColor(QPalette::WindowText, color);
     c->setPalette(pal);
 	emit modifiedGraph();
@@ -2811,7 +2844,7 @@ void Graph::loadAxesOptions(const QStringList& lst)
 	}
 }
 
-void Graph::setAxesLinewidth(int width)
+void Graph::setAxesLinewidth(double width)
 {
 	if (axesLinewidth() == width)
 		return;
@@ -2830,12 +2863,12 @@ void Graph::setAxesLinewidth(int width)
 	if (d_grid){
 		if (d_grid->xZeroLineMarker()){
 			QPen pen = d_grid->xZeroLineMarker()->linePen();
-			pen.setWidth(width);
+            pen.setWidthF(width);
 			d_grid->xZeroLineMarker()->setLinePen(pen);
 		}
 		if (d_grid->yZeroLineMarker()){
 			QPen pen = d_grid->yZeroLineMarker()->linePen();
-			pen.setWidth(width);
+            pen.setWidthF(width);
 			d_grid->yZeroLineMarker()->setLinePen(pen);
 		}
 	}
@@ -2844,7 +2877,7 @@ void Graph::setAxesLinewidth(int width)
 	emit modifiedGraph();
 }
 
-void Graph::loadAxesLinewidth(int width)
+void Graph::loadAxesLinewidth(double width)
 {
 	setAxesLinewidth(width);
 }
@@ -2852,12 +2885,10 @@ void Graph::loadAxesLinewidth(int width)
 QString Graph::saveCanvas()
 {
 	QString s="";
-    int w = canvasFrameWidth();
-    //if (w>0) //+++2019: 
-	{
-		s += "CanvasFrame\t" + QString::number(w)+"\t";
-		s += canvasFrameColor().name()+"\n";
-	}
+    double w = canvasFrameWidth();
+    s += "CanvasFrame\t" + QString::number(w) + "\t";
+    s += canvasFrameColor().name() + "\n";
+
     s += "CanvasBackground\t" + canvasBackground().color().name() + "\t";
     s += QString::number(canvasBackground().color().alpha()) + "\n";
 	return s;
@@ -6941,7 +6972,7 @@ void Graph::printCanvas(QPainter *painter, const QRectF &canvasRect, const QwtSc
 	painter->save();
 
     auto plotCanvas = (QwtPlotCanvas *)canvas();
-    int lw = qRound((double)painter->device()->logicalDpiX() / (double)logicalDpiX() * plotCanvas->lineWidth());
+    const double lw = (double)painter->device()->logicalDpiX() / (double)logicalDpiX() * canvasFrameWidth();
 
     QRectF fillRect(canvasRect.adjusted(0, 0, -1, -1));
 	QwtPainter::fillRect(painter, fillRect, canvasBackground());
@@ -6965,7 +6996,7 @@ void Graph::printCanvas(QPainter *painter, const QRectF &canvasRect, const QwtSc
 	if(lw > 0){
 		painter->save();
         QColor color = plotCanvas->palette().color(QPalette::Active, QPalette::WindowText);
-		painter->setPen (QPen(color, lw, Qt::SolidLine, Qt::SquareCap, Qt::MiterJoin));
+        painter->setPen(QPen(color, lw, Qt::SolidLine, Qt::SquareCap, Qt::MiterJoin));
 		painter->drawRect(fillRect);
 		painter->restore();
 	}
@@ -7274,12 +7305,12 @@ void Graph::drawBreak(QPainter *painter, const QRectF &rect, const QwtScaleMap m
     painter->restore();
 }
 
-int Graph::axesLinewidth() const
+double Graph::axesLinewidth() const
 {
 	for ( int axis = 0; axis < QwtPlot::axisCnt; axis++ ) {
         auto scaleDraw = axisScaleDraw(axis);
         if (scaleDraw)
-            return qRound(scaleDraw->penWidthF());
+            return scaleDraw->penWidthF();
 	}
 	return 0;
 }
@@ -8561,7 +8592,7 @@ bool Graph::adjustSpectrogram()
     replot();
 
     QSize canvasSize = canvas()->size();
-    int canvasWidth = canvasFrameWidth();
+    int canvasWidth = static_cast<int>(std::ceil(canvasFrameWidth()));
     int innerW = canvasSize.width() - 2 * canvasWidth;
     int innerH = canvasSize.height() - 2 * canvasWidth;
 
@@ -9040,7 +9071,7 @@ void Graph::spLogLinSwitcher(bool logYN)
 
     // Adjust canvas size
     QSize canvasSize = canvas()->size();
-    int canvasWidth = canvasFrameWidth();
+    int canvasWidth = static_cast<int>(std::ceil(canvasFrameWidth()));
     double newCanvasWidth =
         double(canvasSize.height() - 2 * canvasWidth) * double(numCols) / double(numRows) + 2 * double(canvasWidth);
     setCanvasSize(int(newCanvasWidth), canvasSize.height());

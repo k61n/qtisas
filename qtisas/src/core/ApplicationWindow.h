@@ -1508,9 +1508,11 @@ public:
 	//! Distance between the axes title and the backbone
 	int d_graph_axes_labels_dist;
 	//! Default axes linewidth
-	int axesLineWidth;
+    double axesLineWidth;
 	//@}
-	int majTicksStyle, minTicksStyle, legendFrameStyle, autoSaveTime, canvasFrameWidth;
+    int majTicksStyle, minTicksStyle, legendFrameStyle, autoSaveTime;
+    //! Default canvas frame width
+    double canvasFrameWidth;
 	QColor legendBackground, legendTextColor, defaultArrowColor;
     int defaultArrowHeadLength, defaultArrowHeadAngle, d_legend_default_angle, d_symbol_style, d_symbol_color;
     double defaultArrowLineWidth, defaultSymbolEdge;

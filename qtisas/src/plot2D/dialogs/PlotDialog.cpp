@@ -663,8 +663,10 @@ void PlotDialog::initCanvasPage()
 	l3->setBuddy(boxFrameColor);
 	boxFramedLayout->addWidget(l3, 0, 0);
 
-	boxFrameWidth = new QSpinBox();
-	boxFrameWidth->setMinimum(1);
+    boxFrameWidth = new QDoubleSpinBox();
+    boxFrameWidth->setDecimals(1);
+    boxFrameWidth->setMinimum(0.1);
+    boxFrameWidth->setSingleStep(0.1);
 	boxFramedLayout->addWidget( boxFrameWidth, 1, 1 );
 
 	QLabel *l2 = new QLabel("&" + tr("Width"));
@@ -702,7 +704,7 @@ void PlotDialog::initCanvasPage()
 	connect(canvasDefaultBtn, SIGNAL(clicked()), this, SLOT(setCanvasDefaultValues()));
 	connect(boxFrameColor, SIGNAL(colorChanged()), this, SLOT(applyCanvasFormat()));
 	connect(boxFramed, SIGNAL(toggled(bool)), this, SLOT(applyCanvasFormat()));
-	connect(boxFrameWidth, SIGNAL(valueChanged (int)), this, SLOT(applyCanvasFormat()));
+    connect(boxFrameWidth, SIGNAL(valueChanged(double)), this, SLOT(applyCanvasFormat()));
 	connect(boxCanvasColor, SIGNAL(colorChanged()), this, SLOT(applyCanvasFormat()));
 	connect(boxCanvasTransparency, SIGNAL(valueChanged(int)), this, SLOT(updateCanvasTransparency(int)));
 	connect(colorBtn, SIGNAL(toggled(bool)), canvasColorBox, SLOT(setVisible(bool)));

@@ -7574,10 +7574,10 @@ void ApplicationWindow::readSettings()
     settings->beginGroup("/2DPlots");
     settings->beginGroup("/General");
     titleOn = settings->value("/Title", true).toBool();
-    canvasFrameWidth = settings->value("/CanvasFrameWidth", 0).toInt();
+    canvasFrameWidth = settings->value("/CanvasFrameWidth", 0).toDouble();
     defaultPlotMargin = settings->value("/Margin", 0).toInt();
     drawBackbones = settings->value("/AxesBackbones", true).toBool();
-    axesLineWidth = settings->value("/AxesLineWidth", 1).toInt();
+    axesLineWidth = settings->value("/AxesLineWidth", 1).toDouble();
     autoscale2DPlots = settings->value("/Autoscale", true).toBool();
     autoScaleFonts = settings->value("/AutoScaleFonts", true).toBool();
     autoResizeLayers = settings->value("/AutoResizeLayers", true).toBool();
@@ -15542,7 +15542,7 @@ void ApplicationWindow::openGraph(ApplicationWindow* app, MultiLayer *plot, cons
 		else if (s.contains ("AxesLineWidth"))
 		{
 			QStringList fList=s.split("\t");
-			ag->loadAxesLinewidth(fList[1].toInt());
+            ag->loadAxesLinewidth(fList[1].toDouble());
 		}
 		else if (s.contains ("TickLabelsSpace"))
 		{
@@ -15594,7 +15594,7 @@ void ApplicationWindow::openGraph(ApplicationWindow* app, MultiLayer *plot, cons
 		else if (s.contains ("CanvasFrame")){
 			QStringList lst = s.split("\t");
             //if (!newYN) ag->setCanvasFrame(0);
-			ag->setCanvasFrame(lst[1].toInt(), QColor(lst[2]));
+            ag->setCanvasFrame(lst[1].toDouble(), QColor(lst[2]));
 		}
 		else if (s.contains ("CanvasBackground"))
 		{

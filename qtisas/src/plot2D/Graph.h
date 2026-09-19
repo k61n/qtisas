@@ -16,6 +16,7 @@ Description: Graph widget
 #include <cfloat>
 
 #include <QList>
+#include <QPainter>
 #include <QPointer>
 #include <QPrinter>
 #include <QVector>
@@ -26,6 +27,7 @@ Description: Graph widget
 #include <qwt/qwt_plot.h>
 #include <qwt/qwt_plot_curve.h>
 #include <qwt/qwt_plot_marker.h>
+#include <qwt/qwt_plot_canvas.h>
 #include <qwt/qwt_plot_magnifier.h>
 #include <qwt/qwt_plot_panner.h>
 #include <qwt/qwt_plot_zoomer.h>
@@ -112,6 +114,27 @@ class ScaledFontsPrintFilter
     Options d_options;
 };
 Q_DECLARE_OPERATORS_FOR_FLAGS(ScaledFontsPrintFilter::Options)
+
+//! QwtPlotCanvas subclass that draws its own border with a fractional-width QPen instead of QFrame's
+//! integer-only lineWidth() -- QFrame::setLineWidth() is still called (rounded up) purely so Qwt's
+//! layout code reserves enough space; the actual line painted is exactly d_frameWidthF wide.
+class GraphCanvas : public QwtPlotCanvas
+{
+  public:
+    explicit GraphCanvas(QwtPlot *plot) : QwtPlotCanvas(plot), d_frameWidthF(1.0){};
+
+    double frameWidthF() const
+    {
+        return d_frameWidthF;
+    };
+    void setFrameWidthF(double width);
+
+  protected:
+    void drawBorder(QPainter *painter) override;
+
+  private:
+    double d_frameWidthF;
+};
 
 /**
  * \brief A 2D-plotting widget.
@@ -218,8 +241,8 @@ class Graph: public QwtPlot
 		int majorTickLength() const;
 		void setTickLength (int minLength, int majLength);
 
-		int axesLinewidth() const;
-		void setAxesLinewidth(int width);
+    double axesLinewidth() const;
+    void setAxesLinewidth(double width);
 
     	void axisLabelFormat(int axis, char &f, int &prec) const;
 
@@ -699,7 +722,7 @@ class Graph: public QwtPlot
 		void setAxisLabelRotation(int axis, int rotation);
 
 		//! used when opening a project file
-		void loadAxesLinewidth(int width);
+    void loadAxesLinewidth(double width);
 
 		void drawAxesBackbones(bool yes);
 		bool axesBackbones(){return drawAxesBackbone;};
@@ -736,9 +759,9 @@ class Graph: public QwtPlot
 
 		//! \name Canvas Frame
 		//@{
-		void setCanvasFrame(int width = 1, const QColor& color =  QColor(Qt::black));
+    void setCanvasFrame(double width = 1, const QColor &color = QColor(Qt::black));
 		QColor canvasFrameColor();
-		int canvasFrameWidth();
+    double canvasFrameWidth() const;
 		//@}
 
 		//! \name Canvas Image Background
