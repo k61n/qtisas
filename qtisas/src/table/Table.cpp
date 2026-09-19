@@ -1537,7 +1537,20 @@ void Table::addCol(PlotDesignation pd)
 				max = index;
 		}
 	}
+    // Same freeze as setNumRows() -- avoids per-row repaint/signal overhead during the column insert.
+    auto *hh = d_table->horizontalHeader();
+    const auto oldMode = hh->sectionResizeMode(0);
+    hh->setUpdatesEnabled(false);
+    hh->setSectionResizeMode(QHeaderView::Fixed);
+    d_table->setUpdatesEnabled(false);
+    d_table->blockSignals(true);
+
 	d_table->insertColumn(cols);
+
+    d_table->blockSignals(false);
+    d_table->setUpdatesEnabled(true);
+    hh->setSectionResizeMode(oldMode);
+    hh->setUpdatesEnabled(true);
 
     QTableWidgetItem *it = d_table->item(0, cols);
     d_table->scrollToItem(it, QAbstractItemView::EnsureVisible);
@@ -1567,9 +1580,18 @@ void Table::addColumns(int c)
 		}
 	}
 	max++;
+
+    // Same freeze as setNumRows()/addCol() -- one guard around all c insertions instead of c separate ones.
+    auto *hh = d_table->horizontalHeader();
+    const auto oldMode = hh->sectionResizeMode(0);
+    hh->setUpdatesEnabled(false);
+    hh->setSectionResizeMode(QHeaderView::Fixed);
+    d_table->setUpdatesEnabled(false);
+    d_table->blockSignals(true);
+
     for (int i = 0; i < c; i++) {
 	    d_table->insertColumn(d_table->columnCount());
-        d_table->setColumnWidth(d_table->columnCount(), colWidth);
+        d_table->setColumnWidth(d_table->columnCount() - 1, colWidth);
 		comments << QString();
 		commands << "";
 		colTypes << Numeric;
@@ -1577,8 +1599,13 @@ void Table::addColumns(int c)
 		QString label = QString::number(max + i);
 		col_label << label;
 		col_plot_type << Y;
-		emit addedCol(objectName() + "_" + label);
+        emit addedCol(objectName() + "_" + label); // signal on Table itself, unaffected by d_table->blockSignals()
 	}
+
+    d_table->blockSignals(false);
+    d_table->setUpdatesEnabled(true);
+    hh->setSectionResizeMode(oldMode);
+    hh->setUpdatesEnabled(true);
 }
 
 void Table::clearCol()
@@ -3009,8 +3036,7 @@ void Table::importASCII(const QString &fname, const QString &sep, int ignoredLin
 	int r = d_table->rowCount();
 	switch(importAs){
 		case Overwrite:
-        if (d_table->rowCount() != rows)
-            setNumRows(rows);
+        // Grow columns before rows -- adding columns is cheap while the row count is still small.
         if (c != cols)
         {
             if (c < cols)
@@ -3022,6 +3048,8 @@ void Table::importASCII(const QString &fname, const QString &sep, int ignoredLin
                     emit removedCol(QString(objectName()) + "_" + oldHeader[i]);
             }
         }
+        if (d_table->rowCount() != rows)
+            setNumRows(rows);
 		break;
 		case NewColumns:
 			startCol = c;
