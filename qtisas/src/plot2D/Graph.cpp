@@ -2749,9 +2749,14 @@ void GraphCanvas::drawBorder(QPainter *painter)
     if (frameShape() == QFrame::NoFrame || d_frameWidthF <= 0.0)
         return;
 
+    // Qwt's layout reserves ceil(d_frameWidthF) pixels for the border (see setFrameWidthF()), so
+    // the painted line's inner edge must align with that reserved inset -- otherwise a fractional
+    // width leaves a visible gap between the border and the plot's tick area.
+    const double reserved = std::ceil(d_frameWidthF);
+    const double inset = reserved - d_frameWidthF / 2.0;
+
     QRectF r(rect());
-    const double half = d_frameWidthF / 2.0;
-    r.adjust(half, half, -half, -half);
+    r.adjust(inset, inset, -inset, -inset);
 
     painter->save();
     painter->setPen(QPen(palette().color(QPalette::Active, QPalette::WindowText), d_frameWidthF));
