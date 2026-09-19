@@ -296,6 +296,15 @@ void AxesDialog::initScalesPage()
 	connect(boxScaleType,SIGNAL(activated(int)), this, SLOT(updateMinorTicksList(int)));
     connect(boxScaleTypeAfterBreak, qOverload<int>(&QComboBox::activated), this,
             &AxesDialog::updateMinorTicksAfterList);
+    // Toggling the break itself skipped both scale-type slots above, leaving the before/after combos stale.
+    connect(boxAxesBreaks, &QGroupBox::toggled, this, [this](bool) {
+        updateMinorTicksList(boxScaleType->currentIndex());
+        updateMinorTicksAfterList(boxScaleTypeAfterBreak->currentIndex());
+        // Re-check isChecked() here, not the signal's "checked" param -- updatePlot() above can auto-reinstate
+        // a break (log10 + negative range) and re-toggle the box before we get here.
+        minorBoxLabel->setEnabled(!boxAxesBreaks->isChecked());
+        boxMinorValue->setEnabled(!boxAxesBreaks->isChecked());
+    });
 	connect(btnStep,SIGNAL(clicked()), this, SLOT(stepEnabled()));
 	connect(btnMajor,SIGNAL(clicked()), this, SLOT(stepDisabled()));
 }
@@ -1336,7 +1345,12 @@ bool AxesDialog::updatePlot(QWidget *page)
             auto *sc_engine = (ScaleEngine *)d_graph->axisScaleEngine(a);
             if (sc_engine->hasBreak())
             {
+                // Not a user toggle -- block signals or the toggled-handler would re-enter updatePlot().
+                boxAxesBreaks->blockSignals(true);
                 boxAxesBreaks->setChecked(true);
+                boxAxesBreaks->blockSignals(false);
+                minorBoxLabel->setEnabled(false);
+                boxMinorValue->setEnabled(false);
                 boxBreakStart->setValue(sc_engine->axisBreakLeft());
                 boxBreakEnd->setValue(sc_engine->axisBreakRight());
 
@@ -1660,7 +1674,12 @@ void AxesDialog::updateScale()
     else
         boxBreakEnd->setValue(start + 0.75*range);
 
+    // Just displaying stored state -- block signals or the toggled-handler would recompute break params.
+    boxAxesBreaks->blockSignals(true);
     boxAxesBreaks->setChecked(sc_engine->hasBreak());
+    boxAxesBreaks->blockSignals(false);
+    minorBoxLabel->setEnabled(!sc_engine->hasBreak());
+    boxMinorValue->setEnabled(!sc_engine->hasBreak());
     boxBreakPosition->setValue(sc_engine->breakPosition());
     boxBreakWidth->setValue(sc_engine->breakWidth());
     boxStepBeforeBreak->setValue(sc_engine->stepBeforeBreak());
@@ -2046,10 +2065,9 @@ QString AxesDialog::defaultMinorTicksValue(int scaleType)
 void AxesDialog::updateMinorTicksAfterList(int scaleType)
 {
     updatePlot();
-    const QString current = boxMinorTicksAfterBreak->currentText();
     boxMinorTicksAfterBreak->clear();
     boxMinorTicksAfterBreak->addItems(minorTicksOptions(scaleType));
-    boxMinorTicksAfterBreak->setEditText(current);
+    boxMinorTicksAfterBreak->setEditText(defaultMinorTicksValue(scaleType));
 }
 
 void AxesDialog::updateMinorTicksList(int scaleType)
@@ -2060,15 +2078,19 @@ void AxesDialog::updateMinorTicksList(int scaleType)
     boxMinorValue->addItems(minorTicksOptions(scaleType));
     boxMinorValue->setEditText(defaultMinorTicksValue(scaleType));
 
+    // "Before break" is the same segment as the main scale type, so it must stay in sync too.
+    boxMinorTicksBeforeBreak->clear();
+    boxMinorTicksBeforeBreak->addItems(minorTicksOptions(scaleType));
+    boxMinorTicksBeforeBreak->setEditText(defaultMinorTicksValue(scaleType));
+
     updatePlot();
 
     if (!boxAxesBreaks->isChecked())
     {
         boxScaleTypeAfterBreak->setCurrentIndex(scaleType);
-        const QString afterCount = boxMinorTicksAfterBreak->currentText();
         boxMinorTicksAfterBreak->clear();
         boxMinorTicksAfterBreak->addItems(minorTicksOptions(scaleType));
-        boxMinorTicksAfterBreak->setEditText(afterCount);
+        boxMinorTicksAfterBreak->setEditText(defaultMinorTicksValue(scaleType));
     }
 
     if (!d_graph) return;
