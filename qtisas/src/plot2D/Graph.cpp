@@ -7651,6 +7651,10 @@ void Graph::print(QPainter *painter, const QRect &plotRect, const ScaledFontsPri
 
     double curveLineScalingFactor = (double)res / (double)logicalDpiX();
 
+    // QSvgGenerator/QPrinter write hatch brushes at 2x the on-screen tile pitch; rebuilt below at
+    // half size and restored once printing is done.
+    QMap<PlotCurve *, QBrush> origHatchBrushes;
+
     // we set non-cosmetic pens in order to scale pen width
     foreach (QwtPlotItem *item, d_curves)
     {
@@ -7691,6 +7695,21 @@ void Graph::print(QPainter *painter, const QRect &plotRect, const ScaledFontsPri
                 pen.setCosmetic(false);
                 s->setPen(pen);
                 c->setSymbol(s);
+            }
+
+            QBrush brush = c->brush();
+            if (brush.style() >= Qt::Dense1Pattern && brush.style() <= Qt::DiagCrossPattern)
+            {
+                origHatchBrushes[c] = brush;
+                // Pattern tiling ignores the painter's transform, so a direct 4x4 fill just crops the
+                // native 8x8 bitmap's corner instead of shrinking it -- downscale the image instead.
+                QImage tile8(8, 8, QImage::Format_ARGB32_Premultiplied);
+                tile8.fill(Qt::transparent);
+                QPainter tp(&tile8);
+                tp.fillRect(0, 0, 8, 8, QBrush(brush.color(), brush.style()));
+                tp.end();
+                QImage tile4 = tile8.scaled(4, 4, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+                c->setBrush(QBrush(QPixmap::fromImage(tile4)));
             }
 
             // FilterPoints/ClipPolygons both pre-cull points at/near the visible
@@ -7792,6 +7811,9 @@ void Graph::print(QPainter *painter, const QRect &plotRect, const ScaledFontsPri
                 s->setPen(pen);
                 c->setSymbol(s);
             }
+
+            if (origHatchBrushes.contains(c))
+                c->setBrush(origHatchBrushes.value(c));
 
             c->setPaintAttribute(QwtPlotCurve::FilterPoints, true);
             c->setPaintAttribute(QwtPlotCurve::ClipPolygons, true);
