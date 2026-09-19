@@ -26,6 +26,7 @@ Description: Multi layer widget
 #include <QPrintDialog>
 #include <QPrinter>
 #include <QPushButton>
+#include <QRegularExpression>
 #include <QSpinBox>
 #include <QSvgGenerator>
 #include <QSvgRenderer>
@@ -1526,6 +1527,49 @@ QByteArray extractSvgGroupInner(const QByteArray &svg)
     return s.mid(groupOpenEnd, groupClose - groupOpenEnd).toUtf8();
 }
 
+// Extracts a QSvgGenerator document's own <defs> inner content (e.g. a brush's fill pattern).
+QString extractSvgDefsInner(const QByteArray &svg)
+{
+    QString s = QString::fromUtf8(svg);
+    int defsPos = static_cast<int>(s.indexOf(QStringLiteral("<defs>")));
+    int defsEnd = defsPos >= 0 ? static_cast<int>(s.indexOf(QStringLiteral("</defs>"), defsPos)) : -1;
+    if (defsPos < 0 || defsEnd < 0)
+        return {};
+    return s.mid(defsPos + 6, defsEnd - (defsPos + 6));
+}
+
+// Renames each id="X" in defsFragment to X<suffix> and updates the matching url(#X) refs, so defs merged in
+// from separately-rendered passes can't collide.
+void namespaceSvgIds(QString &defsFragment, QString &groupContent, const QString &suffix)
+{
+    static const QRegularExpression idRe(QStringLiteral("id=\"([^\"]+)\""));
+    QStringList ids;
+    QRegularExpressionMatchIterator it = idRe.globalMatch(defsFragment);
+    while (it.hasNext())
+        ids << it.next().captured(1);
+
+    for (const QString &id : ids)
+    {
+        const QString newId = id + suffix;
+        defsFragment.replace(QStringLiteral("id=\"%1\"").arg(id), QStringLiteral("id=\"%1\"").arg(newId));
+        defsFragment.replace(QStringLiteral("url(#%1)").arg(id), QStringLiteral("url(#%1)").arg(newId));
+        groupContent.replace(QStringLiteral("url(#%1)").arg(id), QStringLiteral("url(#%1)").arg(newId));
+    }
+}
+
+// Extracts one part's group content plus its own namespaced defs, appended to defsAccum.
+QString extractSvgPart(const QByteArray &svg, QString &defsAccum, QAtomicInt &counter)
+{
+    QString inner = QString::fromUtf8(extractSvgGroupInner(svg));
+    QString defs = extractSvgDefsInner(svg);
+    if (!defs.isEmpty())
+    {
+        namespaceSvgIds(defs, inner, QStringLiteral("_qm%1").arg(counter.fetchAndAddOrdered(1)));
+        defsAccum += defs;
+    }
+    return inner;
+}
+
 // Concatenates each layer's frame/canvas(clipped)/chrome as one whole unit per layer in stack order (matching
 // on-screen z-order), with back/front enrichments batched once below/above all layers, not per-layer.
 QByteArray spliceLayerStacks(const QVector<QByteArray> &backList, const QVector<QByteArray> &frameList,
@@ -1546,42 +1590,41 @@ QByteArray spliceLayerStacks(const QVector<QByteArray> &backList, const QVector<
     if (defsEndPos < 0 || groupOpenEnd <= 0 || groupClosePos < groupOpenEnd)
         return frameList.first(); // unexpected structure -- fall back rather than producing garbage
 
-    QString clipDefs;
+    QString defsAccum;
     QString allLayersInner;
     static QAtomicInt counter(0);
 
     for (const QByteArray &back : backList)
-        allLayersInner += QString::fromUtf8(extractSvgGroupInner(back));
+        allLayersInner += extractSvgPart(back, defsAccum, counter);
 
     for (int i = 0; i < frameList.size(); ++i)
     {
-        allLayersInner += QString::fromUtf8(extractSvgGroupInner(frameList.at(i)));
+        allLayersInner += extractSvgPart(frameList.at(i), defsAccum, counter);
 
-        const QByteArray canvasInner = extractSvgGroupInner(canvasList.at(i));
+        QString canvasInner = extractSvgPart(canvasList.at(i), defsAccum, counter);
         if (!canvasInner.isEmpty())
         {
             const QString clipId = QStringLiteral("qtisasCanvasClip%1").arg(counter.fetchAndAddOrdered(1));
             const QRectF &r = clipRects.at(i);
-            clipDefs +=
+            defsAccum +=
                 QStringLiteral("<clipPath id=\"%1\"><rect x=\"%2\" y=\"%3\" width=\"%4\" height=\"%5\"/></clipPath>")
                     .arg(clipId)
                     .arg(r.left())
                     .arg(r.top())
                     .arg(r.width())
                     .arg(r.height());
-            allLayersInner +=
-                QStringLiteral("<g clip-path=\"url(#%1)\">%2</g>").arg(clipId, QString::fromUtf8(canvasInner));
+            allLayersInner += QStringLiteral("<g clip-path=\"url(#%1)\">%2</g>").arg(clipId, canvasInner);
         }
 
-        allLayersInner += QString::fromUtf8(extractSvgGroupInner(chromeList.at(i)));
+        allLayersInner += extractSvgPart(chromeList.at(i), defsAccum, counter);
     }
 
     for (const QByteArray &front : frontList)
-        allLayersInner += QString::fromUtf8(extractSvgGroupInner(front));
+        allLayersInner += extractSvgPart(front, defsAccum, counter);
 
     // Replace the template's single-layer inner content with every layer's combined content, in stack order.
     baseStr.replace(groupOpenEnd, groupClosePos - groupOpenEnd, allLayersInner);
-    baseStr.insert(defsEndPos, clipDefs);
+    baseStr.insert(defsEndPos, defsAccum);
     return baseStr.toUtf8();
 }
 } // namespace

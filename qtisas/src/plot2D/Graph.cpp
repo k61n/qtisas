@@ -2034,19 +2034,50 @@ QString extractSvgGroupInner(const QByteArray &svg)
     return s.mid(groupOpenEnd, groupClose - groupOpenEnd);
 }
 
+// Extracts a QSvgGenerator document's own <defs> inner content (e.g. a brush's fill pattern).
+QString extractSvgDefsInner(const QByteArray &svg)
+{
+    QString s = QString::fromUtf8(svg);
+    int defsPos = static_cast<int>(s.indexOf(QStringLiteral("<defs>")));
+    int defsEnd = defsPos >= 0 ? static_cast<int>(s.indexOf(QStringLiteral("</defs>"), defsPos)) : -1;
+    if (defsPos < 0 || defsEnd < 0)
+        return {};
+    return s.mid(defsPos + 6, defsEnd - (defsPos + 6));
+}
+
+// Renames each id="X" in defsFragment to X<suffix> and updates the matching url(#X) refs, so defs merged in
+// from separately-rendered passes can't collide.
+void namespaceSvgIds(QString &defsFragment, QString &groupContent, const QString &suffix)
+{
+    static const QRegularExpression idRe(QStringLiteral("id=\"([^\"]+)\""));
+    QStringList ids;
+    QRegularExpressionMatchIterator it = idRe.globalMatch(defsFragment);
+    while (it.hasNext())
+        ids << it.next().captured(1);
+
+    for (const QString &id : ids)
+    {
+        const QString newId = id + suffix;
+        defsFragment.replace(QStringLiteral("id=\"%1\"").arg(id), QStringLiteral("id=\"%1\"").arg(newId));
+        defsFragment.replace(QStringLiteral("url(#%1)").arg(id), QStringLiteral("url(#%1)").arg(newId));
+        groupContent.replace(QStringLiteral("url(#%1)").arg(id), QStringLiteral("url(#%1)").arg(newId));
+    }
+}
+
 // Splices before/canvas(clipped)/after back together in print() paint order; QSvgGenerator can't clip at draw time.
 QByteArray spliceClippedCanvas(const QByteArray &before, const QByteArray &canvasOnly, const QByteArray &after,
                                const QRectF &canvasRect)
 {
     QString beforeStr = QString::fromUtf8(before);
-    const QString canvasInner = extractSvgGroupInner(canvasOnly);
-    const QString afterInner = extractSvgGroupInner(after);
+    QString canvasInner = extractSvgGroupInner(canvasOnly);
+    QString afterInner = extractSvgGroupInner(after);
 
     if (canvasInner.isEmpty() && afterInner.isEmpty())
         return before; // unexpected structure -- fall back to before-only rather than producing garbage
 
     static QAtomicInt counter(0);
-    const QString clipId = QStringLiteral("qtisasCanvasClip%1").arg(counter.fetchAndAddOrdered(1));
+    const int passId = counter.fetchAndAddOrdered(1);
+    const QString clipId = QStringLiteral("qtisasCanvasClip%1").arg(passId);
     const QString clipDef =
         QStringLiteral("<clipPath id=\"%1\"><rect x=\"%2\" y=\"%3\" width=\"%4\" height=\"%5\"/></clipPath>")
             .arg(clipId)
@@ -2054,6 +2085,13 @@ QByteArray spliceClippedCanvas(const QByteArray &before, const QByteArray &canva
             .arg(canvasRect.top())
             .arg(canvasRect.width())
             .arg(canvasRect.height());
+
+    // Each pass has its own <defs> (e.g. brush fill patterns) -- pull those across too.
+    QString canvasDefs = extractSvgDefsInner(canvasOnly);
+    QString afterDefs = extractSvgDefsInner(after);
+    namespaceSvgIds(canvasDefs, canvasInner, QStringLiteral("_qc%1").arg(passId));
+    namespaceSvgIds(afterDefs, afterInner, QStringLiteral("_qa%1").arg(passId));
+
     const QString clippedCanvasGroup = QStringLiteral("<g clip-path=\"url(#%1)\">%2</g>").arg(clipId, canvasInner);
 
     int defsPos = static_cast<int>(beforeStr.indexOf(QStringLiteral("<defs>")));
@@ -2069,7 +2107,7 @@ QByteArray spliceClippedCanvas(const QByteArray &before, const QByteArray &canva
     beforeStr.insert(groupClosePos, clippedCanvasGroup);
     // Inserting the above shifted defsEndPos only if it comes after
     // groupClosePos, which it never does (defs is near the top) -- safe as-is.
-    beforeStr.insert(defsEndPos, clipDef);
+    beforeStr.insert(defsEndPos, clipDef + canvasDefs + afterDefs);
 
     return beforeStr.toUtf8();
 }
