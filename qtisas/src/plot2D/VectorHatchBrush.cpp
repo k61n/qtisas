@@ -55,22 +55,47 @@ void fillPath(QPainter *p, const QPainterPath &path, const QColor &color, Qt::Br
 
     if (style >= Qt::Dense1Pattern && style <= Qt::Dense7Pattern)
     {
-        // Dense1 (densest) .. Dense7 (sparsest): approximate each level's fill fraction with a dot grid
-        // whose dot area is proportional to that fraction, rather than replicating Qt's exact bitmap.
-        const int level = style - Qt::Dense1Pattern + 1;
-        const double fillFraction = (8.0 - level) / 8.0;
-        const double dotSize = spacing * std::sqrt(fillFraction);
-        const int ySteps = steps(r.height());
-        const int xSteps = steps(r.width());
-        for (int iy = 0; iy <= ySteps; ++iy)
+        // Qt's native 8x8 dither bitmap per density level, extracted from the real QBrush pattern.
+        static const quint8 bits[7][8] = {
+            {0xFF, 0xDD, 0xFF, 0xFF, 0xFF, 0xDD, 0xFF, 0xFF}, // Dense1, fill 0.938
+            {0xEE, 0xFF, 0xBB, 0xFF, 0xEE, 0xFF, 0xBB, 0xFF}, // Dense2, fill 0.875
+            {0xAA, 0xDD, 0xAA, 0x77, 0xAA, 0xDD, 0xAA, 0x77}, // Dense3, fill 0.625
+            {0x55, 0xAA, 0x55, 0xAA, 0x55, 0xAA, 0x55, 0xAA}, // Dense4, fill 0.500
+            {0x55, 0x22, 0x55, 0x88, 0x55, 0x22, 0x55, 0x88}, // Dense5, fill 0.375
+            {0x11, 0x00, 0x44, 0x00, 0x11, 0x00, 0x44, 0x00}, // Dense6, fill 0.125
+            {0x00, 0x22, 0x00, 0x00, 0x00, 0x22, 0x00, 0x00}, // Dense7, fill 0.062
+        };
+        const int level = style - Qt::Dense1Pattern;
+        // Tile spans `spacing`, same convention as the line patterns below (half of native's raw
+        // 8px tile, which Retina's devicePixelRatio already halves on screen).
+        const double tile = spacing;
+        const double cell = tile / 8.0;
+        const int ySteps = static_cast<int>(r.height() / tile);
+        const int xSteps = static_cast<int>(r.width() / tile);
+
+        // Fill one tile (<=64 rects) at a time -- combining every tile into one path makes an SVG
+        // "d" attribute large enough that QSvgRenderer (used for PNG/JPEG export) discards it as
+        // invalid, rendering nothing.
+        for (int ty = 0; ty <= ySteps; ++ty)
         {
-            const double y = r.top() + iy * spacing;
-            for (int ix = 0; ix <= xSteps; ++ix)
+            for (int tx = 0; tx <= xSteps; ++tx)
             {
-                const double x = r.left() + ix * spacing;
-                QPainterPath dot;
-                dot.addRect(QRectF(x - dotSize / 2.0, y - dotSize / 2.0, dotSize, dotSize));
-                const QPainterPath clipped = path.intersected(dot);
+                QPainterPath tileDots;
+                for (int row = 0; row < 8; ++row)
+                {
+                    const quint8 mask = bits[level][row];
+                    if (!mask)
+                        continue;
+                    const double y = r.top() + ty * tile + row * cell;
+                    for (int col = 0; col < 8; ++col)
+                    {
+                        if (!(mask & (0x80 >> col)))
+                            continue;
+                        const double x = r.left() + tx * tile + col * cell;
+                        tileDots.addRect(QRectF(x, y, cell, cell));
+                    }
+                }
+                const QPainterPath clipped = path.intersected(tileDots);
                 if (!clipped.isEmpty())
                     p->fillPath(clipped, fillBrush);
             }
@@ -81,7 +106,7 @@ void fillPath(QPainter *p, const QPainterPath &path, const QColor &color, Qt::Br
 
     const bool drawHor = style == Qt::HorPattern || style == Qt::CrossPattern;
     const bool drawVer = style == Qt::VerPattern || style == Qt::CrossPattern;
-    // BDiag = "\", FDiag = "/"; DiagCross draws both.
+    // BDiag renders as "/", FDiag as "\" (opposite of what the names suggest, matched to native).
     const bool drawBDiag = style == Qt::BDiagPattern || style == Qt::DiagCrossPattern;
     const bool drawFDiag = style == Qt::FDiagPattern || style == Qt::DiagCrossPattern;
 
@@ -109,7 +134,7 @@ void fillPath(QPainter *p, const QPainterPath &path, const QColor &color, Qt::Br
         for (int i = 0; i <= n; ++i)
         {
             const double c = -r.height() + i * spacing;
-            strokeSegment(QPointF(r.left() + c, r.top()), QPointF(r.left() + c + r.height(), r.bottom()));
+            strokeSegment(QPointF(r.left() + c, r.bottom()), QPointF(r.left() + c + r.height(), r.top()));
         }
     }
     if (drawFDiag)
@@ -118,7 +143,7 @@ void fillPath(QPainter *p, const QPainterPath &path, const QColor &color, Qt::Br
         for (int i = 0; i <= n; ++i)
         {
             const double c = -r.height() + i * spacing;
-            strokeSegment(QPointF(r.left() + c, r.bottom()), QPointF(r.left() + c + r.height(), r.top()));
+            strokeSegment(QPointF(r.left() + c, r.top()), QPointF(r.left() + c + r.height(), r.bottom()));
         }
     }
 
