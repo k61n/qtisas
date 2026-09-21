@@ -58,6 +58,7 @@ Description: Multi layer widget
 #include "ScreenPickerTool.h"
 #include "SelectionMoveResizer.h"
 #include "Spectrogram.h"
+#include "VectorHatchBrush.h"
 
 LayerButton::LayerButton(const QString& text, QWidget* parent)
 : QPushButton(text, parent)
@@ -1652,6 +1653,9 @@ bool MultiLayer::buildSvgPasses(int reso, double fontsFactor, QVector<QByteArray
     QList<Graph *> lst = stackOrderedLayersList();
     ScaledFontsPrintFilter pfilter(fontsFactor);
 
+    // Reset once for the whole export, not per pass/layer -- otherwise two layers' patterns can
+    // collide on the same id, leaving one unresolved (renders as solid black, confirmed live).
+    VectorHatchBrush::resetPatternRegistry();
     auto renderPass = [&](Graph *g, Graph::PrintScope scope) {
         QByteArray bytes;
         QBuffer buf(&bytes);
@@ -1664,7 +1668,7 @@ bool MultiLayer::buildSvgPasses(int reso, double fontsFactor, QVector<QByteArray
         QPainter p(&gen);
         g->print(&p, g->geometry(), pfilter, reso, scope);
         p.end();
-        return bytes;
+        return VectorHatchBrush::applyPatternRegistry(bytes);
     };
 
     // Kept per-layer (not batched) so a caller can stack each layer's whole unit, and enrichments separately

@@ -306,7 +306,16 @@ void PlotCurve::fillCurve(QPainter *p, const QwtScaleMap &xMap, const QwtScaleMa
     path.addPolygon(polygon);
     path.closeSubpath();
 
-    VectorHatchBrush::fillPath(p, path, color, br.style());
+    // Clip to the canvas first: a curve with an extreme value (e.g. near-zero on a log scale) can
+    // produce a fill polygon far taller than the visible canvas, and the painter isn't clipped at
+    // paint time during export (Qwt applies clipping as a post-hoc wrapper instead).
+    QPainterPath clipRectPath;
+    clipRectPath.addRect(canvasRect);
+    const QPainterPath clippedPath = path.intersected(clipRectPath);
+    if (clippedPath.isEmpty())
+        return;
+
+    VectorHatchBrush::fillPath(p, clippedPath, color, br.style());
 }
 
 /*!

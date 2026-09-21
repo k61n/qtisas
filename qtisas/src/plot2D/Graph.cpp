@@ -86,6 +86,7 @@ Description: Graph widget
 #include "SelectionMoveResizer.h"
 #include "RangeSelectorTool.h"
 #include "PlotCurve.h"
+#include "VectorHatchBrush.h"
 #include "ApplicationWindow.h"
 #include "ScaleEngine.h"
 #include "RectangleWidget.h"
@@ -2150,6 +2151,9 @@ void Graph::buildSvgPasses(int reso, const QSizeF &customSize, int unit, double 
 
     ScaledFontsPrintFilter pfilter(effectiveFontsFactor);
 
+    // Reset once for all passes below, not per pass -- their marker indices must stay unique since
+    // the passes get merged into one document (two passes' same-numbered patterns would collide).
+    VectorHatchBrush::resetPatternRegistry();
     auto renderPass = [&](PrintScope scope) {
         QByteArray bytes;
         QBuffer buf(&bytes);
@@ -2162,7 +2166,7 @@ void Graph::buildSvgPasses(int reso, const QSizeF &customSize, int unit, double 
         QPainter p(&generator);
         print(&p, r, pfilter, reso, scope);
         p.end();
-        return bytes;
+        return VectorHatchBrush::applyPatternRegistry(bytes);
     };
 
     // Same order print() draws in, so splicing preserves z-order.
