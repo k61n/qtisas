@@ -2004,6 +2004,14 @@ void Graph::exportPdfNative(const QString &fileName, bool fontEmbedding, int res
         }
         else
         {
+            // Page is br.size() taken as-is (in points, 1:1), so the paint scale below must also be
+            // 1:1 -- reset wfactor/hfactor, don't leave them at their initial res/defaultResolution
+            // value (only right for the branch above, which scales both page and r together).
+            // Confirmed live: left un-reset, whenever res is 0 or exactly legacyPdfResolution (both
+            // routes here), the painter scale and the declared page size disagreed, so only a
+            // fraction of the page's content -- its top-left corner -- landed inside the page bounds.
+            wfactor = 1.0;
+            hfactor = 1.0;
             QSize size_in_points = Graph::customPrintSize(br.size(), FrameWidget::Unit::Point, res);
             writer.setPageSize(QPageSize(QSizeF(size_in_points), QPageSize::Point));
         }
@@ -2012,7 +2020,10 @@ void Graph::exportPdfNative(const QString &fileName, bool fontEmbedding, int res
         writer.setPageMargins(QMarginsF(0, 0, 0, 0));
 
         QPainter paint(&writer);
-        paint.scale(wfactor * wfactor, hfactor * hfactor);
+        // Not wfactor*wfactor (as in exportVector(QPrinter*, ...) above): that relies on the
+        // printer's own resolution == res, which QPdfWriter's fixed-72 pin (for hatch-pattern tiling)
+        // breaks -- r is already scaled by one factor of wfactor, so only one more is needed here.
+        paint.scale(wfactor, hfactor);
         print(&paint, r, ScaledFontsPrintFilter(fontsFactor), int(defaultResolution));
         paint.end();
     } // writer destroyed here, buffer holds the complete PDF

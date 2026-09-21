@@ -1507,6 +1507,10 @@ void MultiLayer::exportPdfNative(const QString &fileName, bool fontEmbedding, in
                                     Graph::PrintScope::FrontEnrichments);
         };
 
+        // Not wfactor*wfactor (as in exportVector(QPrinter*, ...) above): that relies on the
+        // printer's own resolution == res, which QPdfWriter's fixed-72 pin (for hatch-pattern tiling)
+        // breaks -- rects below are already scaled by one factor of wfactor, so only one more is
+        // needed at each paint.scale() call.
         if (customSize.isValid())
         {
             QSize size = Graph::customPrintSize(customSize, unit, res);
@@ -1517,7 +1521,7 @@ void MultiLayer::exportPdfNative(const QString &fileName, bool fontEmbedding, in
 
             wfactor *= (double)size.width() / (double)boundingSize.width();
             hfactor *= (double)size.height() / (double)boundingSize.height();
-            paint.scale(wfactor * wfactor, hfactor * hfactor);
+            paint.scale(wfactor, hfactor);
 
             QVector<QRect> rects;
             foreach (Graph *g, lst)
@@ -1543,7 +1547,7 @@ void MultiLayer::exportPdfNative(const QString &fileName, bool fontEmbedding, in
                 QSizeF(boundingSize.width() * wfactor, boundingSize.height() * hfactor), FrameWidget::Unit::Point, res);
             writer.setPageSize(QPageSize(QSizeF(size_in_points), QPageSize::Point));
             QPainter paint(&writer);
-            paint.scale(wfactor * wfactor, hfactor * hfactor);
+            paint.scale(wfactor, hfactor);
 
             QList<Graph *> lst = stackOrderedLayersList();
             QVector<QRect> rects;
@@ -1559,11 +1563,16 @@ void MultiLayer::exportPdfNative(const QString &fileName, bool fontEmbedding, in
         }
         else
         {
+            // See Graph::exportPdfNative()'s matching branch: page is boundingSize taken as-is (in
+            // points, 1:1), so the paint scale must also be 1:1 -- reset wfactor/hfactor rather than
+            // leaving them at their initial res/defaultResolution value.
+            wfactor = 1.0;
+            hfactor = 1.0;
             QSize size_in_points = Graph::customPrintSize(QSizeF(boundingSize.width(), boundingSize.height()),
                                                           FrameWidget::Unit::Point, res);
             writer.setPageSize(QPageSize(QSizeF(size_in_points), QPageSize::Point));
             QPainter paint(&writer);
-            paint.scale(wfactor * wfactor, hfactor * hfactor);
+            paint.scale(wfactor, hfactor);
             QList<Graph *> lst = stackOrderedLayersList();
             QVector<QRect> rects;
             foreach (Graph *g, lst)

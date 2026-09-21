@@ -262,7 +262,8 @@ QByteArray applyPatternRegistry(const QByteArray &svg)
     if (registry.isEmpty())
         return svg;
 
-    QString s = QString::fromUtf8(svg);
+    // Explicit length, not QString::fromUtf8(svg) -- see applyPatternRegistryPdf()'s matching comment.
+    QString s = QString::fromUtf8(svg.constData(), static_cast<int>(svg.size()));
     QString defsAddition;
     for (int i = 0; i < registry.size(); ++i)
     {
@@ -292,32 +293,45 @@ QByteArray applyPatternRegistryPdf(const QByteArray &pdf, bool grayscale)
 {
     const QVector<PatternEntry> &registry = patternRegistry();
     if (registry.isEmpty() && !grayscale)
+    {
         return pdf;
+    }
 
     // Our exports are always single-page, so the first /Contents and /Resources references belong
-    // to that one page.
-    const QString pdfText = QString::fromLatin1(pdf);
+    // to that one page. Explicit length, not QString::fromLatin1(pdf) -- that overload resolves to
+    // the (const char *, int size = -1) form via QByteArray's implicit conversion, defaulting to
+    // strlen() and truncating at the first embedded null byte in the compressed stream data (which
+    // can appear anywhere in the file, including before the page's own /Contents reference).
+    const QString pdfText = QString::fromLatin1(pdf.constData(), static_cast<int>(pdf.size()));
     const QRegularExpressionMatch contentsMatch =
         QRegularExpression(QStringLiteral("/Contents\\s+(\\d+)\\s+0\\s+R")).match(pdfText);
     const QRegularExpressionMatch resourcesMatch =
         QRegularExpression(QStringLiteral("/Resources\\s+(\\d+)\\s+0\\s+R")).match(pdfText);
     if (!contentsMatch.hasMatch() || (!registry.isEmpty() && !resourcesMatch.hasMatch()))
+    {
         return pdf;
+    }
     const int contentsObjNum = contentsMatch.captured(1).toInt();
     const int resourcesObjNum = resourcesMatch.hasMatch() ? resourcesMatch.captured(1).toInt() : -1;
 
     // --- Content stream: locate, decompress, rewrite marker fills as pattern references ---
     const int contentsBodyStart = findObjectBody(pdf, contentsObjNum);
     if (contentsBodyStart < 0)
+    {
         return pdf;
+    }
     const int contentsObjEnd = static_cast<int>(pdf.indexOf("endobj", contentsBodyStart));
     if (contentsObjEnd < 0)
+    {
         return pdf;
+    }
     const QByteArray contentsDict = pdf.mid(contentsBodyStart, contentsObjEnd - contentsBodyStart);
     const bool compressed = contentsDict.contains("/FlateDecode");
     const int streamKw = static_cast<int>(contentsDict.indexOf("stream"));
     if (streamKw < 0)
+    {
         return pdf;
+    }
     int dataStart = contentsBodyStart + streamKw + 6; // past "stream"
     if (pdf.mid(dataStart, 2) == "\r\n")
         dataStart += 2;
@@ -325,11 +339,15 @@ QByteArray applyPatternRegistryPdf(const QByteArray &pdf, bool grayscale)
         dataStart += 1;
     const int dataEnd = static_cast<int>(pdf.indexOf("endstream", dataStart));
     if (dataEnd < 0)
+    {
         return pdf;
+    }
     const QByteArray rawStream = pdf.mid(dataStart, dataEnd - dataStart);
     const QByteArray streamText = compressed ? zlibInflate(rawStream) : rawStream;
     if (streamText.isEmpty() && !rawStream.isEmpty())
+    {
         return pdf;
+    }
 
     // --- Resources dict: no stream, safe to edit as plain text -- only needed when adding pattern
     // objects; a grayscale-only pass with no hatch patterns doesn't touch it. ---
@@ -338,10 +356,14 @@ QByteArray applyPatternRegistryPdf(const QByteArray &pdf, bool grayscale)
     {
         const int resBodyStart = findObjectBody(pdf, resourcesObjNum);
         if (resBodyStart < 0)
+        {
             return pdf;
+        }
         const int resObjEnd = static_cast<int>(pdf.indexOf("endobj", resBodyStart));
         if (resObjEnd < 0)
+        {
             return pdf;
+        }
         resDict = pdf.mid(resBodyStart, resObjEnd - resBodyStart);
     }
 
@@ -349,7 +371,9 @@ QByteArray applyPatternRegistryPdf(const QByteArray &pdf, bool grayscale)
     const QRegularExpressionMatch rootMatch =
         QRegularExpression(QStringLiteral("/Root\\s+(\\d+\\s+0\\s+R)")).match(pdfText);
     if (!sizeMatch.hasMatch() || !rootMatch.hasMatch())
+    {
         return pdf;
+    }
     int nextObjNum = sizeMatch.captured(1).toInt();
     const QByteArray rootRef = rootMatch.captured(1).toLatin1();
 
@@ -359,7 +383,9 @@ QByteArray applyPatternRegistryPdf(const QByteArray &pdf, bool grayscale)
     while (startxrefIt.hasNext())
         lastStartxref = startxrefIt.next();
     if (!lastStartxref.hasMatch())
+    {
         return pdf;
+    }
     const QByteArray prevXrefOffset = lastStartxref.captured(1).toLatin1();
 
     // One pattern object per registry entry (color, style, spacing) -- see patternTileContentPdf()
@@ -372,7 +398,7 @@ QByteArray applyPatternRegistryPdf(const QByteArray &pdf, bool grayscale)
     // pattern name, restoring the plain colorspace right after that fill's own fill operator so
     // later, non-hatched fills (a bare color triple, no pattern name) aren't left pointing at
     // /Pattern. ---
-    const QString text = QString::fromLatin1(streamText);
+    const QString text = QString::fromLatin1(streamText.constData(), static_cast<int>(streamText.size()));
     QRegularExpression scnRe(QStringLiteral("([0-9.eE+-]+)\\s+([0-9.eE+-]+)\\s+([0-9.eE+-]+)\\s+scn"));
     QRegularExpression fillOpRe(QStringLiteral("(?<=\\s)(f\\*|f|B\\*|B|b\\*|b)(?=\\s)"));
 
@@ -433,7 +459,9 @@ QByteArray applyPatternRegistryPdf(const QByteArray &pdf, bool grayscale)
 
         const QRegularExpressionMatch fillMatch = fillOpRe.match(text, m.capturedEnd());
         if (!fillMatch.hasMatch())
+        {
             return pdf;
+        }
         out += text.mid(m.capturedEnd(), fillMatch.capturedEnd() - m.capturedEnd());
         out += QStringLiteral("\n/CSp cs");
         pos = static_cast<int>(fillMatch.capturedEnd());
@@ -473,7 +501,9 @@ QByteArray applyPatternRegistryPdf(const QByteArray &pdf, bool grayscale)
     const QByteArray newStreamRaw = out.toLatin1();
     const QByteArray newStreamData = compressed ? zlibDeflate(newStreamRaw) : newStreamRaw;
     if (newStreamData.isEmpty() && !newStreamRaw.isEmpty())
+    {
         return pdf;
+    }
 
     // --- Serialize the appended incremental-update objects, tracking byte offsets for the new xref ---
     QByteArray append;
@@ -503,14 +533,18 @@ QByteArray applyPatternRegistryPdf(const QByteArray &pdf, bool grayscale)
         {
             const int openPos = static_cast<int>(newResDict.indexOf("<<", patDictPos));
             if (openPos < 0)
+            {
                 return pdf;
+            }
             newResDict.insert(openPos + 2, patternEntries);
         }
         else
         {
             const int insertPos = static_cast<int>(newResDict.lastIndexOf(">>"));
             if (insertPos < 0)
+            {
                 return pdf;
+            }
             newResDict.insert(insertPos, "/Pattern <<\n" + patternEntries + ">>\n");
         }
         appendObj(resourcesObjNum, newResDict);
