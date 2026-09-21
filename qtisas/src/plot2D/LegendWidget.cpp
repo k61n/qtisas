@@ -239,7 +239,8 @@ void LegendWidget::drawSymbol(PlotCurve *c, int point, QPainter *p, int x, int y
                 QPainterPath rp;
                 rp.addRect(lr);
                 // Cap at the real fill's default pitch so the swatch isn't sparser than the bars.
-                const double spacing = qMin(4.0, qMax(1.0, qMin(lr.width(), lr.height()) / 3.0));
+                const double spacing =
+                    qMin(VectorHatchBrush::nativeTilePitch(p), qMax(1.0, qMin(lr.width(), lr.height()) / 3.0));
                 VectorHatchBrush::fillPath(p, rp, cbrush.color(), cbrush.style(), spacing);
             }
             else

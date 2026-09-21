@@ -1953,7 +1953,7 @@ void Graph::exportPdfNative(const QString &fileName, bool fontEmbedding, int res
     Q_UNUSED(fontEmbedding); // QPdfWriter always embeds fonts, no opt-out
     res = int(aw()->screen()->logicalDotsPerInch());
 
-    VectorHatchBrush::resetPatternRegistry();
+    VectorHatchBrush::resetPatternRegistry(aw()->screen()->devicePixelRatio());
 
     QBuffer buffer;
     buffer.open(QIODevice::WriteOnly);
@@ -2236,7 +2236,7 @@ void Graph::buildSvgPasses(int reso, const QSizeF &customSize, int unit, double 
 
     // Reset once for all passes below, not per pass -- their marker indices must stay unique since
     // the passes get merged into one document (two passes' same-numbered patterns would collide).
-    VectorHatchBrush::resetPatternRegistry();
+    VectorHatchBrush::resetPatternRegistry(aw()->screen()->devicePixelRatio());
     auto renderPass = [&](PrintScope scope) {
         QByteArray bytes;
         QBuffer buf(&bytes);

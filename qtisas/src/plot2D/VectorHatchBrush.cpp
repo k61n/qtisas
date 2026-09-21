@@ -23,6 +23,7 @@ Description: Vector (line/dot based) replacement for Qt's builtin hatch brush
 #include <QRegularExpression>
 #include <QSvgGenerator>
 #include <QVector>
+#include <QWidget>
 
 #include "VectorHatchBrush.h"
 
@@ -58,6 +59,12 @@ QVector<PatternEntry> &patternRegistry()
     static QVector<PatternEntry> registry;
     return registry;
 }
+
+// Set by resetPatternRegistry() at the start of a whole export: SVG/PDF export devices always report
+// devicePixelRatioF() == 1 themselves (real screens don't), so nativeTilePitch() can't tell
+// "exporting" from "genuinely on a DPR-1 screen" from the device alone -- this is the actual
+// triggering screen's DPR, needed so export density matches what that same screen's live graph shows.
+double g_exportReferenceDpr = 0.0;
 
 // Reserved near-black marker palette (R=1 prefix) -- astronomically unlikely to collide with a real
 // user-chosen fill color, and even in that edge case the marker looks like the real color on screen.
@@ -231,9 +238,22 @@ QByteArray patternTileContentPdf(int level, const QColor &color, bool grayscale)
 }
 } // namespace
 
-void resetPatternRegistry()
+double nativeTilePitch(QPainter *p)
+{
+    // A real on-screen widget reports its own actual DPR; an export device (QSvgGenerator/
+    // QPdfWriter) always reports 1 regardless of the triggering screen, so it falls back to the
+    // reference DPR resetPatternRegistry() was given for this export, if any.
+    const bool isExportDevice = p && p->device() && dynamic_cast<QWidget *>(p->device()) == nullptr;
+    const qreal dpr = (isExportDevice && g_exportReferenceDpr > 0.0) ? g_exportReferenceDpr
+                      : (p && p->device())                           ? p->device()->devicePixelRatioF()
+                                                                     : 1.0;
+    return 8.0 / (dpr > 0.0 ? dpr : 1.0);
+}
+
+void resetPatternRegistry(double exportReferenceDpr)
 {
     patternRegistry().clear();
+    g_exportReferenceDpr = exportReferenceDpr;
 }
 
 QByteArray applyPatternRegistry(const QByteArray &svg)
@@ -545,6 +565,9 @@ QByteArray applyPatternRegistryPdf(const QByteArray &pdf, bool grayscale)
 
 void fillPath(QPainter *p, const QPainterPath &path, const QColor &color, Qt::BrushStyle style, double spacing)
 {
+    if (spacing <= 0.0)
+        spacing = nativeTilePitch(p);
+
     p->save();
     // Clip to the painter's clip first: an extreme value (e.g. near-zero on a log scale) can produce
     // a fill path far taller than the visible canvas, ballooning the tile count for no visible gain.

@@ -1462,7 +1462,7 @@ void MultiLayer::exportPdfNative(const QString &fileName, bool fontEmbedding, in
     Q_UNUSED(fontEmbedding); // QPdfWriter always embeds fonts, no opt-out
     res = int(applicationWindow()->screen()->logicalDotsPerInch());
 
-    VectorHatchBrush::resetPatternRegistry();
+    VectorHatchBrush::resetPatternRegistry(applicationWindow()->screen()->devicePixelRatio());
 
     QBuffer buffer;
     buffer.open(QIODevice::WriteOnly);
@@ -1786,7 +1786,7 @@ bool MultiLayer::buildSvgPasses(int reso, double fontsFactor, QVector<QByteArray
 
     // Reset once for the whole export, not per pass/layer -- otherwise two layers' patterns can
     // collide on the same id, leaving one unresolved (renders as solid black, confirmed live).
-    VectorHatchBrush::resetPatternRegistry();
+    VectorHatchBrush::resetPatternRegistry(applicationWindow()->screen()->devicePixelRatio());
     auto renderPass = [&](Graph *g, Graph::PrintScope scope) {
         QByteArray bytes;
         QBuffer buf(&bytes);
