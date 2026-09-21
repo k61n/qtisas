@@ -12,9 +12,11 @@ Description: Multi layer widget
 
 #include <QApplication>
 #include <QBitmap>
+#include <QBuffer>
 #include <QCheckBox>
 #include <QClipboard>
 #include <QDir>
+#include <QFile>
 #include <QGroupBox>
 #include <QImageWriter>
 #include <QLabel>
@@ -24,6 +26,7 @@ Description: Multi layer widget
 #include <QPainter>
 #include <QPainterPath>
 #include <QPrintDialog>
+#include <QPdfWriter>
 #include <QPrinter>
 #include <QPushButton>
 #include <QRegularExpression>
@@ -1438,13 +1441,141 @@ void MultiLayer::exportVector(const QString& fileName, bool fontEmbedding, int r
 		return;
 	}
 
+    if (fileName.endsWith(QStringLiteral(".pdf"), Qt::CaseInsensitive))
+    {
+        exportPdfNative(fileName, fontEmbedding, res, color, customSize, unit, fontsFactor);
+        return;
+    }
+
 	QPrinter printer;
 	printer.setOutputFileName(fileName);
-    
+
 	if (fileName.contains(".eps"))
 		printer.setOutputFormat(QPrinter::PdfFormat);
 
 	exportVector(&printer, fontEmbedding, res, color, customSize, unit, fontsFactor);
+}
+
+void MultiLayer::exportPdfNative(const QString &fileName, bool fontEmbedding, int res, bool color,
+                                 const QSizeF &customSize, int unit, double fontsFactor)
+{
+    Q_UNUSED(fontEmbedding); // QPdfWriter always embeds fonts, no opt-out
+    res = int(applicationWindow()->screen()->logicalDotsPerInch());
+
+    VectorHatchBrush::resetPatternRegistry();
+
+    QBuffer buffer;
+    buffer.open(QIODevice::WriteOnly);
+    { // Scoped so writer/paint are fully destroyed (buffer complete) before post-processing below.
+        QPdfWriter writer(&buffer);
+        writer.setTitle(objectName());
+        writer.setCreator(QStringLiteral("QtiSAS"));
+        // See Graph::exportPdfNative(): pin to 72 for correct tiled-pattern fills, and compare against
+        // 600 below (not writer.resolution()) to keep this sizing math identical to the QPrinter path.
+        writer.setResolution(72);
+        writer.setPageOrientation(QPageLayout::Portrait);
+        writer.setPageMargins(QMarginsF(0, 0, 0, 0));
+        const int legacyPdfResolution = 600;
+
+        const QSize boundingSize = layersBoundingSize();
+        double wfactor = (double)res / (double)defaultResolution;
+        double hfactor = (double)res / (double)defaultResolution;
+
+        auto printLayersLayered = [reso = defaultResolution](QPainter &p, const QList<Graph *> &layers,
+                                                             const QVector<QRect> &rects,
+                                                             const ScaledFontsPrintFilter &pfilter) {
+            for (int i = 0; i < layers.size(); ++i)
+                layers.at(i)->print(&p, rects.at(i), pfilter, static_cast<int>(reso),
+                                    Graph::PrintScope::BackEnrichments);
+
+            for (int i = 0; i < layers.size(); ++i)
+            {
+                Graph *g = layers.at(i);
+                const QRect &r = rects.at(i);
+                g->print(&p, r, pfilter, static_cast<int>(reso), Graph::PrintScope::BeforeCanvasFrame);
+
+                p.save();
+                p.setClipRect(g->svgClipRect(r, pfilter, static_cast<int>(reso)), Qt::IntersectClip);
+                g->print(&p, r, pfilter, static_cast<int>(reso), Graph::PrintScope::CanvasOnly);
+                p.restore();
+
+                g->print(&p, r, pfilter, static_cast<int>(reso), Graph::PrintScope::AfterCanvasChrome);
+            }
+
+            for (int i = 0; i < layers.size(); ++i)
+                layers.at(i)->print(&p, rects.at(i), pfilter, static_cast<int>(reso),
+                                    Graph::PrintScope::FrontEnrichments);
+        };
+
+        if (customSize.isValid())
+        {
+            QSize size = Graph::customPrintSize(customSize, unit, res);
+            QSize size_in_points = Graph::customPrintSize(customSize, FrameWidget::Unit::Point, res);
+            writer.setPageSize(QPageSize(QSizeF(size_in_points), QPageSize::Point));
+            QPainter paint(&writer);
+            QList<Graph *> lst = stackOrderedLayersList();
+
+            wfactor *= (double)size.width() / (double)boundingSize.width();
+            hfactor *= (double)size.height() / (double)boundingSize.height();
+            paint.scale(wfactor * wfactor, hfactor * hfactor);
+
+            QVector<QRect> rects;
+            foreach (Graph *g, lst)
+            {
+                QRect r = g->geometry();
+                r.setSize(QSize(int(r.width() * wfactor), int(r.height() * hfactor)));
+                r.moveTo(int(r.x() * wfactor), int(r.y() * hfactor));
+                rects.append(r);
+            }
+
+            if (fontsFactor == 0.0)
+                fontsFactor = Graph::customPrintSize(customSize, unit, logicalDpiX()).height() / (double)height();
+
+            printLayersLayered(paint, lst, rects, ScaledFontsPrintFilter(fontsFactor));
+            paint.end();
+        }
+        else if (res && res != legacyPdfResolution)
+        {
+            wfactor *= (double)res / (double)logicalDpiX();
+            hfactor *= (double)res / (double)logicalDpiY();
+
+            QSize size_in_points = Graph::customPrintSize(
+                QSizeF(boundingSize.width() * wfactor, boundingSize.height() * hfactor), FrameWidget::Unit::Point, res);
+            writer.setPageSize(QPageSize(QSizeF(size_in_points), QPageSize::Point));
+            QPainter paint(&writer);
+            paint.scale(wfactor * wfactor, hfactor * hfactor);
+
+            QList<Graph *> lst = stackOrderedLayersList();
+            QVector<QRect> rects;
+            foreach (Graph *g, lst)
+            {
+                QRect r = g->geometry();
+                r.setSize(QSize(int(r.width() * wfactor), int(r.height() * hfactor)));
+                r.moveTo(int(r.x() * wfactor), int(r.y() * hfactor));
+                rects.append(r);
+            }
+            printLayersLayered(paint, lst, rects, ScaledFontsPrintFilter(fontsFactor));
+            paint.end();
+        }
+        else
+        {
+            QSize size_in_points = Graph::customPrintSize(QSizeF(boundingSize.width(), boundingSize.height()),
+                                                          FrameWidget::Unit::Point, res);
+            writer.setPageSize(QPageSize(QSizeF(size_in_points), QPageSize::Point));
+            QPainter paint(&writer);
+            paint.scale(wfactor * wfactor, hfactor * hfactor);
+            QList<Graph *> lst = stackOrderedLayersList();
+            QVector<QRect> rects;
+            foreach (Graph *g, lst)
+                rects.append(g->geometry());
+            printLayersLayered(paint, lst, rects, ScaledFontsPrintFilter(fontsFactor));
+            paint.end();
+        }
+    } // writer destroyed here, buffer holds the complete PDF
+
+    QFile file(fileName);
+    if (file.open(QIODevice::WriteOnly))
+        file.write(VectorHatchBrush::applyPatternRegistryPdf(buffer.data(), !color));
 }
 
 void MultiLayer::draw(QPaintDevice *device, const QSizeF &customSize, int unit, int res, double fontsFactor, int reso)

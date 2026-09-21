@@ -39,6 +39,11 @@ void resetPatternRegistry();
 //! Replaces marker-colored fills in svg with references to an injected <pattern>. Call on each pass's
 //! bytes right after generating them, before merging with any other pass.
 QByteArray applyPatternRegistry(const QByteArray &svg);
+
+//! PDF analog of applyPatternRegistry(): given a finished QPdfWriter-produced PDF's bytes, returns
+//! those bytes with marker-colored fills replaced by real PDF /Pattern references. grayscale also
+//! desaturates every other color operator in the document (QPdfWriter has no color-mode concept).
+QByteArray applyPatternRegistryPdf(const QByteArray &pdf, bool grayscale = false);
 } // namespace VectorHatchBrush
 
 #endif // VECTORHATCHBRUSH_H

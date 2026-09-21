@@ -31,6 +31,8 @@ Description: Graph widget
 #include <QRegularExpression>
 #include <QTextStream>
 #include <QPrintDialog>
+#include <QPdfWriter>
+#include <QFile>
 #include <QFileInfo>
 #include <QStyleFactory>
 #include <QSvgGenerator>
@@ -1930,13 +1932,94 @@ void Graph::exportVector(const QString& fileName, bool fontEmbedding, int res, b
 		return;
 	}
 
+    if (fileName.endsWith(QStringLiteral(".pdf"), Qt::CaseInsensitive))
+    {
+        exportPdfNative(fileName, fontEmbedding, res, color, customSize, unit, fontsFactor);
+        return;
+    }
+
 	QPrinter printer;
 	printer.setOutputFileName(fileName);
-    
+
 	if (fileName.contains(".eps"))
 		printer.setOutputFormat(QPrinter::PdfFormat);
 
 	exportVector(&printer, fontEmbedding, res, color, customSize, unit, fontsFactor);
+}
+
+void Graph::exportPdfNative(const QString &fileName, bool fontEmbedding, int res, bool color, const QSizeF &customSize,
+                            int unit, double fontsFactor)
+{
+    Q_UNUSED(fontEmbedding); // QPdfWriter always embeds fonts, no opt-out
+    res = int(aw()->screen()->logicalDotsPerInch());
+
+    VectorHatchBrush::resetPatternRegistry();
+
+    QBuffer buffer;
+    buffer.open(QIODevice::WriteOnly);
+    { // Scoped so writer/paint are fully destroyed (buffer complete) before post-processing below.
+        QPdfWriter writer(&buffer);
+        writer.setCreator(QStringLiteral("QtiSAS"));
+        writer.setTitle(multiLayer()->objectName());
+        // QPrinter silently ignores setResolution() for PDF output (always 600); QPdfWriter honors it,
+        // so pin it to match point units 1:1 or a tiled-pattern fill's repeat interval scales wrong
+        // (confirmed live). PDF content is vector, so this doesn't affect visual quality.
+        writer.setResolution(72);
+
+        QRect r = rect();
+        QRect br = boundingRect();
+        double wfactor = (double)res / (double)defaultResolution;
+        double hfactor = (double)res / (double)defaultResolution;
+        // Matches what QPrinter::resolution() always returned for PDF output in the code this replaces,
+        // so this sizing math (and hence visual output) stays identical to the old QPrinter path.
+        const int legacyPdfResolution = 600;
+
+        if (customSize.isValid())
+        {
+            QSize size = customPrintSize(customSize, unit, res);
+            if (fontsFactor == 0.0)
+                fontsFactor = customPrintSize(customSize, unit, logicalDpiX()).height() / (double)height();
+
+            QSize size_in_points = Graph::customPrintSize(QSizeF(size), FrameWidget::Unit::Point, res);
+            writer.setPageSize(QPageSize(QSizeF(size_in_points), QPageSize::Point));
+
+            if (br.width() != width() || br.height() != height())
+            {
+                wfactor *= (double)br.width() / (double)width();
+                hfactor *= (double)br.height() / (double)height();
+                r.setSize(QSize(qRound(size.width() / wfactor), qRound(size.height() / hfactor)));
+            }
+            else
+                r.setSize(size);
+        }
+        else if (res && res != legacyPdfResolution)
+        {
+            wfactor *= (double)res / (double)logicalDpiX();
+            hfactor *= (double)res / (double)logicalDpiY();
+
+            QSize size_in_points = Graph::customPrintSize(QSizeF(br.width() * wfactor, br.height() * hfactor),
+                                                          FrameWidget::Unit::Point, res);
+            writer.setPageSize(QPageSize(QSizeF(size_in_points), QPageSize::Point));
+            r.setSize(QSize(qRound(width() * wfactor), qRound(height() * hfactor)));
+        }
+        else
+        {
+            QSize size_in_points = Graph::customPrintSize(br.size(), FrameWidget::Unit::Point, res);
+            writer.setPageSize(QPageSize(QSizeF(size_in_points), QPageSize::Point));
+        }
+
+        writer.setPageOrientation(QPageLayout::Portrait);
+        writer.setPageMargins(QMarginsF(0, 0, 0, 0));
+
+        QPainter paint(&writer);
+        paint.scale(wfactor * wfactor, hfactor * hfactor);
+        print(&paint, r, ScaledFontsPrintFilter(fontsFactor), int(defaultResolution));
+        paint.end();
+    } // writer destroyed here, buffer holds the complete PDF
+
+    QFile file(fileName);
+    if (file.open(QIODevice::WriteOnly))
+        file.write(VectorHatchBrush::applyPatternRegistryPdf(buffer.data(), !color));
 }
 
 void Graph::print()

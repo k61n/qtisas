@@ -204,6 +204,9 @@ public slots:
 		const QSizeF& customSize = QSizeF (), int unit = FrameWidget::Pixel, double fontsFactor = 1.0);
 	void exportVector(QPrinter *printer, bool fontEmbedding, int res = 0, bool color = true,
 		const QSizeF& customSize = QSizeF (), int unit = FrameWidget::Pixel, double fontsFactor = 1.0);
+    //! .pdf path of exportVector(fileName, ...); see Graph::exportPdfNative() for why.
+    void exportPdfNative(const QString &fileName, bool fontEmbedding, int res, bool color, const QSizeF &customSize,
+                         int unit, double fontsFactor);
 
     void draw(QPaintDevice *, const QSizeF &customSize, int unit, int res, double fontsFactor = 1.0,
               int reso = defaultResolution);

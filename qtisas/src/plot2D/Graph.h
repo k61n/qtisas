@@ -486,6 +486,11 @@ class Graph: public QwtPlot
 						const QSizeF& customSize = QSizeF (), int unit = FrameWidget::Pixel, double fontsFactor = 1.0);
 		void exportVector(QPrinter *printer, bool fontEmbedding, int res = 0, bool color = true,
 						  const QSizeF& customSize = QSizeF (), int unit = FrameWidget::Pixel, double fontsFactor = 1.0);
+    //! .pdf path of exportVector(fileName, ...): QPdfWriter, which lets VectorHatchBrush use a real
+    //! tiled pattern for Dense1-7 (.eps/.ps/printing stay on the QPrinter path). color false also
+    //! desaturates the whole document (QPdfWriter has no color-mode concept, unlike QPrinter).
+    void exportPdfNative(const QString &fileName, bool fontEmbedding, int res, bool color, const QSizeF &customSize,
+                         int unit, double fontsFactor);
 		void exportImage(const QString& fileName, int quality = 100, bool transparent = false,
 						 int dpi = 0, const QSizeF& customSize = QSizeF (),
 						 int unit = FrameWidget::Pixel, double fontsFactor = 1.0, int compression = 0);
