@@ -7748,8 +7748,11 @@ void ApplicationWindow::readSettings()
         (QwtLinearColorMap::Mode)settings->value("/ColorMapMode", QwtLinearColorMap::ScaledColors).toInt());
     QList<QVariant> stop_values = settings->value("/ColorMapStops").toList();
     QStringList stop_colors = settings->value("/ColorMapColors").toStringList();
-    for (int i = 0; i < stop_colors.size(); i++)
-        d_3D_color_map->addColorStop(stop_values[i].toDouble(), QColor(stop_colors[i]));
+    if (stop_values.size() == stop_colors.size())
+    {
+        for (int i = 0; i < stop_colors.size(); i++)
+            d_3D_color_map->addColorStop(stop_values[i].toDouble(), QColor(stop_colors[i]));
+    }
     settings->endGroup(); // Colors
 
     settings->beginGroup("/Grids");
