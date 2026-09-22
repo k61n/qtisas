@@ -19,7 +19,10 @@ Description: QtiSAS's main window
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <string>
+
+#include <zlib.h>
 
 #include <QApplication>
 #include <QClipboard>
@@ -52,6 +55,8 @@ Description: QtiSAS's main window
 #include <QStringListModel>
 #include <QStyleFactory>
 #include <QSvgRenderer>
+#include <QTemporaryDir>
+#include <QTemporaryFile>
 #include <QTextBrowser>
 #include <QTextDocumentWriter>
 #include <QTextStream>
@@ -5446,11 +5451,11 @@ void ApplicationWindow::open()
 
 bool ApplicationWindow::isProjectFile(const QString& fn)
 {
-	if (fn.endsWith(".qti", Qt::CaseInsensitive) || fn.endsWith(".qti.gz", Qt::CaseInsensitive) ||
-		fn.endsWith(".qti~", Qt::CaseInsensitive) ||
-		fn.endsWith(".opj",Qt::CaseInsensitive) || fn.endsWith(".ogg",Qt::CaseInsensitive))
-		return true;
-	return false;
+    if (fn.endsWith(".qti", Qt::CaseInsensitive) || fn.endsWith(".qti.gz", Qt::CaseInsensitive) ||
+        fn.endsWith(".qti.svg", Qt::CaseInsensitive) || fn.endsWith(".qti~", Qt::CaseInsensitive) ||
+        fn.endsWith(".opj", Qt::CaseInsensitive) || fn.endsWith(".ogg", Qt::CaseInsensitive))
+        return true;
+    return false;
 }
 
 bool ApplicationWindow::isFileReadable(const QString& file_name)
@@ -5488,6 +5493,29 @@ ApplicationWindow* ApplicationWindow::open(const QString& fn, bool factorySettin
 		return this;
 	} else if (fn.endsWith(".py", Qt::CaseInsensitive))
 		return loadScript(fn);
+    else if (fn.endsWith(".qti.svg", Qt::CaseInsensitive))
+    {
+        const QString tempQtiPath = extractEmbeddedProjectFromSvg(fn);
+        if (tempQtiPath.isEmpty())
+        {
+            QMessageBox::critical(this, tr("QTISAS - File opening error"),
+                                  tr("The file: <b>%1</b> doesn't contain an embedded QtiSAS project.").arg(fn));
+            return nullptr;
+        }
+
+        ApplicationWindow *app = open(tempQtiPath, factorySettings, newProject);
+        QFile::remove(tempQtiPath);
+        if (app)
+        {
+            QString qtiPath = fn;
+            qtiPath.chop(4); // ".svg"
+            app->projectname = qtiPath;
+            app->setWindowTitle(tr("QtiSAS") + " - " + qtiPath);
+            app->recentProjects.removeAll(QDir::toNativeSeparators(tempQtiPath));
+            app->updateRecentProjectsList(fn);
+        }
+        return app;
+    }
 
 	QString fname = fn;
 	if (fn.endsWith(".qti.gz", Qt::CaseInsensitive)){//decompress using zlib
@@ -8822,8 +8850,8 @@ QString ApplicationWindow::getSaveProjectName(const QString& fileName, bool *com
 {
 	QString fn = fileName;
 	if (fileName.isEmpty()){
-		QString filter = tr("QtiPlot project") + " (*.qti);";
-		filter += tr("Compressed QtiPlot project") + " (*.qti.gz)";
+        QString filter = tr("QtiSAS[QtiPlot] project") + " (*.qti);";
+        filter += tr("Compressed QtiSAS[QtiPlot] project") + " (*.qti.gz)";
 
 		QString windowTitle = tr("Save Project As");
 		if (scope == 1)
@@ -19095,7 +19123,9 @@ Folder* ApplicationWindow::appendProject(const QString& fn, Folder* parentFolder
 	QFileInfo fi(fn);
 	workingDir = fi.absolutePath();
 
-	if (fn.endsWith(".qti")){
+    bool selfContainedSvg = fn.endsWith(".qti.svg", Qt::CaseInsensitive);
+    if (fn.endsWith(".qti") || selfContainedSvg)
+    {
 		QFileInfo f(fn);
 		if (!f.exists ()){
 			QMessageBox::critical(this, tr("QTISAS - File opening error"), tr("The file: <b>%1</b> doesn't exist!").arg(fn));
@@ -19114,7 +19144,21 @@ Folder* ApplicationWindow::appendProject(const QString& fn, Folder* parentFolder
 	QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
 
 	QString fname = fn;
-	if (fn.contains(".qti.gz")){//decompress using zlib
+    QString tempExtractedQti; // only set for selfContainedSvg
+    if (selfContainedSvg)
+    {
+        fname = extractEmbeddedProjectFromSvg(fn);
+        if (fname.isEmpty())
+        {
+            QApplication::restoreOverrideCursor();
+            QMessageBox::critical(this, tr("QTISAS - File opening error"),
+                                  tr("The file: <b>%1</b> doesn't contain an embedded QtiSAS project.").arg(fn));
+            return nullptr;
+        }
+        tempExtractedQti = fname;
+    }
+    else if (fn.contains(".qti.gz"))
+    { // decompress using zlib
         file_uncompress((char *)fname.toLocal8Bit().constData());
 		fname.remove(".gz");
 	}
@@ -19355,6 +19399,9 @@ Folder* ApplicationWindow::appendProject(const QString& fn, Folder* parentFolder
             }
         }
     }
+
+    if (!tempExtractedQti.isEmpty())
+        QFile::remove(tempExtractedQti);
 
 	QApplication::restoreOverrideCursor();
 	return new_folder;
@@ -22673,14 +22720,49 @@ void ApplicationWindow::saveGraphAsProject()
         return;
 
     bool compress = false;
-    QString fn = getSaveProjectName("", &compress, 1);
-    if (fn.isEmpty())
-        return;
+    QString fn;
+    if (imageFormat.contains("Self-Contained SVG"))
+    {
+        QString filter = tr("QtiSAS Self-Contained SVG project") + " (*.qti.svg)";
+        QString windowTitle = tr("Save Graph as Project");
+        QString selectedFilter;
+        fn = getFileName(this, windowTitle, workingDir, filter, &selectedFilter, true);
+        if (fn.isEmpty())
+            return;
+        QFileInfo fi(fn);
+        const QString dirPath = fi.absolutePath();
+        QString stem = fi.fileName();
+        bool stripped = true;
+        while (stripped)
+        {
+            stripped = false;
+            if (stem.endsWith(".qti.svg", Qt::CaseInsensitive))
+            {
+                stem.chop(8);
+                stripped = true;
+            }
+            else if (stem.endsWith(".svg", Qt::CaseInsensitive) || stem.endsWith(".qti", Qt::CaseInsensitive))
+            {
+                stem.chop(4);
+                stripped = true;
+            }
+        }
+        fn = dirPath + "/" + stem + ".qti.svg";
+        workingDir = dirPath;
+    }
+    else
+    {
+        fn = getSaveProjectName("", &compress, 1);
+        if (fn.isEmpty())
+            return;
+    }
 
     QString baseName = QFileInfo(fn).fileName();
-    if (baseName.endsWith(".qti.gz"))
+    if (baseName.endsWith(".qti.svg", Qt::CaseInsensitive))
+        baseName.chop(8);
+    else if (baseName.endsWith(".qti.gz", Qt::CaseInsensitive))
         baseName.chop(7);
-    else if (baseName.endsWith(".qti"))
+    else if (baseName.endsWith(".qti", Qt::CaseInsensitive))
         baseName.chop(4);
 
     saveGraphAsProject(qobject_cast<MultiLayer *>(w), QFileInfo(fn).absolutePath(), baseName, compress);
@@ -22696,7 +22778,8 @@ void ApplicationWindow::saveGraphAsProject(MultiLayer *plot, const QString &path
     const int res = resolution < 0 ? imageRes : resolution;
     QString fn = path + "/" + name + ".qti";
 
-    saveWindow(plot, fn, compress);
+    if (!fmt.contains("Self-Contained SVG"))
+        saveWindow(plot, fn, compress);
     if (plot->layersList().count() == 0)
         return;
 
@@ -22708,6 +22791,13 @@ void ApplicationWindow::saveGraphAsProject(MultiLayer *plot, const QString &path
             plot->exportSVG(fn);
         else if (plot->layersList().count() == 1)
             plot->activeLayer()->exportSVG(fn);
+    }
+    else if (fmt.contains("Self-Contained SVG"))
+    {
+        // .qti.svg, not plain .svg -- makes a project-carrying file recognizable at a glance and lets
+        // the file-open side fast-path on the extension alone instead of sniffing every .svg's content.
+        fn.replace(".qti.gz", ".qti.svg").replace(".qti", ".qti.svg");
+        exportGraphAsSelfContainedSvg(plot, fn);
     }
     else if (fmt == "TEX")
     {
@@ -22760,6 +22850,143 @@ void ApplicationWindow::saveGraphAsProject(MultiLayer *plot, const QString &path
         else if (plot->layersList().count() == 1)
             plot->activeLayer()->exportImage(fnOUT, 100, alpha, res, QSizeF(), 4, 1, 0);
     }
+}
+
+namespace
+{
+//! Gzip (not raw zlib deflate) decompression entirely in memory -- windowBits 15+16 tells zlib to
+//! expect/parse a gzip header+trailer instead of a plain zlib one, matching file_compress()'s output.
+QByteArray gzipInflate(const QByteArray &compressed)
+{
+    if (compressed.isEmpty())
+        return {};
+
+    z_stream strm;
+    memset(&strm, 0, sizeof(strm));
+    if (inflateInit2(&strm, 15 + 16) != Z_OK)
+        return {};
+
+    strm.next_in = reinterpret_cast<Bytef *>(const_cast<char *>(compressed.constData()));
+    strm.avail_in = static_cast<uInt>(compressed.size());
+
+    QByteArray out;
+    char buf[16384];
+    int ret;
+    do
+    {
+        strm.next_out = reinterpret_cast<Bytef *>(buf);
+        strm.avail_out = sizeof(buf);
+        ret = inflate(&strm, Z_NO_FLUSH);
+        if (ret != Z_OK && ret != Z_STREAM_END)
+        {
+            inflateEnd(&strm);
+            return {};
+        }
+        out.append(buf, static_cast<int>(sizeof(buf) - strm.avail_out));
+    } while (ret != Z_STREAM_END);
+
+    inflateEnd(&strm);
+    return out;
+}
+} // namespace
+
+QString ApplicationWindow::extractEmbeddedProjectFromSvg(const QString &svgFileName)
+{
+    QFile svgFile(svgFileName);
+    if (!svgFile.open(QIODevice::ReadOnly | QIODevice::Text))
+        return {};
+    const QString svgContent = QString::fromUtf8(svgFile.readAll());
+    svgFile.close();
+
+    const QRegularExpression re(QStringLiteral("qtisas:project=\"([^\"]+)\""));
+    const QRegularExpressionMatch m = re.match(svgContent);
+    if (!m.hasMatch())
+        return {};
+
+    const QByteArray projectBytes = QByteArray::fromBase64(m.captured(1).toLatin1());
+    if (projectBytes.isEmpty())
+        return {};
+
+    const QByteArray projectText = gzipInflate(projectBytes);
+    if (projectText.isEmpty())
+        return {};
+
+    QTemporaryDir tempDir;
+    if (!tempDir.isValid())
+        return {};
+    tempDir.setAutoRemove(false); // caller removes the extracted .qti once done with it
+
+    const QString baseName = QFileInfo(svgFileName).baseName();
+    QString qtiPath = tempDir.filePath(baseName + ".qti");
+
+    QFile qtiFile(qtiPath);
+    if (!qtiFile.open(QIODevice::WriteOnly))
+        return {};
+    qtiFile.write(projectText);
+    qtiFile.close();
+
+    return qtiPath;
+}
+
+bool ApplicationWindow::exportGraphAsSelfContainedSvg(MultiLayer *plot, const QString &fileName)
+{
+    if (!plot || fileName.isEmpty() || plot->layersList().count() == 0)
+        return false;
+
+    if (plot->layersList().count() > 1)
+        plot->exportSVG(fileName);
+    else
+        plot->activeLayer()->exportSVG(fileName);
+
+    // Reuse the existing, proven project writer (saveWindow()) rather than teaching it to write to
+    // memory -- it and everything it calls (Table::save(), Matrix::save(), ...) are path-based, so
+    // going through a real temp file is far less invasive than reworking that whole chain.
+    QTemporaryFile tempProject(QDir::temp().filePath("qtisas_embed_XXXXXX.qti"));
+    if (!tempProject.open())
+        return false;
+    const QString tempPath = tempProject.fileName();
+    tempProject.close(); // saveWindow() reopens this path itself
+
+    if (!saveWindow(plot, tempPath, true)) // true: gzip via file_compress(), same as any other project
+    {
+        QFile::remove(tempPath);
+        return false;
+    }
+
+    const QString gzPath = tempPath + ".gz";
+    QFile projectFile(gzPath);
+    if (!projectFile.open(QIODevice::ReadOnly))
+    {
+        QFile::remove(gzPath);
+        return false;
+    }
+    const QByteArray projectBytes = projectFile.readAll();
+    projectFile.close();
+    QFile::remove(gzPath);
+
+    QFile svgFile(fileName);
+    if (!svgFile.open(QIODevice::ReadOnly | QIODevice::Text))
+        return false;
+    QString svgContent = QString::fromUtf8(svgFile.readAll());
+    svgFile.close();
+
+    const int svgTagStart = static_cast<int>(svgContent.indexOf(QLatin1String("<svg")));
+    if (svgTagStart < 0)
+        return false;
+    const int svgTagEnd = static_cast<int>(svgContent.indexOf(QLatin1Char('>'), svgTagStart));
+    if (svgTagEnd < 0)
+        return false;
+
+    const QString injected = QStringLiteral(" xmlns:qtisas=\"https://www.qtisas.com/ns\" qtisas:project=\"%1\"")
+                                 .arg(QString::fromLatin1(projectBytes.toBase64()));
+    svgContent.insert(svgTagEnd, injected);
+
+    if (!svgFile.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text))
+        return false;
+    svgFile.write(svgContent.toUtf8());
+    svgFile.close();
+
+    return true;
 }
 
 // findActivePlot

@@ -628,6 +628,7 @@ void ConfigDialog::initQtiSasPage()
     imageFormatComboBox->addItem("XBM");
     imageFormatComboBox->addItem("XPM");
     imageFormatComboBox->addItem("Archive Graph: qti, pdf, svg, png, tiff");
+    imageFormatComboBox->addItem("Self-Contained SVG: svg + embedded project");
 
     if (app->imageFormat != "")
         imageFormatComboBox->setCurrentIndex(imageFormatComboBox->findText(app->imageFormat));

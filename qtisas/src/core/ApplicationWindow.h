@@ -797,6 +797,8 @@ public slots:
     void saveGraphAsProject();
     void saveGraphAsProject(MultiLayer *plot, const QString &path, const QString &name, bool compress = false,
                             const QString &format = QString(), int resolution = -1);
+    bool exportGraphAsSelfContainedSvg(MultiLayer *plot, const QString &fileName);
+    static QString extractEmbeddedProjectFromSvg(const QString &svgFileName);
 
     QString activeScriptingLanguage()
     {

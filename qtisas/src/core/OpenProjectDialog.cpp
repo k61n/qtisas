@@ -22,9 +22,8 @@ OpenProjectDialog::OpenProjectDialog(QWidget *parent, bool extended, Qt::WindowF
 	setWindowTitle(tr("QTISAS - Open Project"));
 	setFileMode(ExistingFile);
 	QStringList filters;
-	filters << tr("QtiPlot project") + " (*.qti)"
-		<< tr("Compressed QtiPlot project") + " (*.qti.gz)"
-		<< tr("Backup files") + " (*.qti~)";
+    filters << tr("QtiPlot project") + " (*.qti)" << tr("Compressed QtiPlot project") + " (*.qti.gz)"
+            << tr("Self-Contained SVG project") + " (*.qti.svg)" << tr("Backup files") + " (*.qti~)";
 
 	ApplicationWindow *app = qobject_cast<ApplicationWindow *>(parent);
 

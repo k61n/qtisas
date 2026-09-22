@@ -28,6 +28,18 @@
             <key>LSHandlerRank</key>
             <string>Owner</string>
         </dict>
+        <dict>
+            <key>CFBundleTypeName</key>
+            <string>QtiSAS Self-Contained SVG Project</string>
+            <key>CFBundleTypeExtensions</key>
+            <array>
+                <string>qti.svg</string>
+            </array>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+            <key>LSHandlerRank</key>
+            <string>Owner</string>
+        </dict>
     </array>
 </dict>
 </plist>
