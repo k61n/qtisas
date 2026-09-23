@@ -121,7 +121,7 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(ScaledFontsPrintFilter::Options)
 class GraphCanvas : public QwtPlotCanvas
 {
   public:
-    explicit GraphCanvas(QwtPlot *plot) : QwtPlotCanvas(plot), d_frameWidthF(1.0){};
+    explicit GraphCanvas(QwtPlot *plot) : QwtPlotCanvas(plot), d_frameWidthF(-1.0){};
 
     double frameWidthF() const
     {

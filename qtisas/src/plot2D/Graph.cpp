@@ -2875,7 +2875,9 @@ void Graph::setCanvasFrame(double width, const QColor &color)
     if (!c)
         return;
     QPalette pal = c->palette();
-    if (c->frameWidthF() == width && pal.color(QPalette::Active, QPalette::WindowText) == color)
+    const QFrame::Shape expectedShape = width > 0 ? QFrame::Box : QFrame::NoFrame;
+    if (c->frameWidthF() == width && c->frameShape() == expectedShape &&
+        pal.color(QPalette::Active, QPalette::WindowText) == color)
 		return;
 #ifdef Q_OS_WIN
     c->setStyle(QStyleFactory::create("Fusion"));
