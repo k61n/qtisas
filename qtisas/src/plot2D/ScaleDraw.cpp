@@ -587,26 +587,31 @@ void ScaleDraw::drawInwardTick(QPainter *painter, double value, int len) const
 			(tval < low && !d_plot->axisEnabled(QwtPlot::yLeft) && !clw)) draw = true;
 	}
 
+    // Undo layoutScale()'s legacy "- 1" on yLeft/xTop (screen only -- printScale() has no such term).
+    const double edgeFix =
+        (!d_plot->isPrinting() && (alignment() == LeftScale || alignment() == TopScale)) ? 1.0 : 0.0;
+
 	if (draw){
 		switch(alignment()){
 			case LeftScale:
 			{
-				QwtPainter::drawLine(painter, pos.x() + pw2, tval, pos.x() + len, tval);
+				QwtPainter::drawLine(painter, pos.x() + pw2 + edgeFix, tval, pos.x() + len + edgeFix, tval);
 				break;
 			}
 			case RightScale:
 			{
-            QwtPainter::drawLine(painter, pos.x() - pw2 - 1, tval, pos.x() - len - 1, tval);
+            // No "- 1": it started right/bottom a pixel inside the backbone while left/top started on it.
+            QwtPainter::drawLine(painter, pos.x() - pw2, tval, pos.x() - len, tval);
 				break;
 			}
 			case BottomScale:
 			{
-            QwtPainter::drawLine(painter, tval, pos.y() - pw2 - 1, tval, pos.y() - len - 1);
+            QwtPainter::drawLine(painter, tval, pos.y() - pw2, tval, pos.y() - len);
 				break;
 			}
 			case TopScale:
 			{
-				QwtPainter::drawLine(painter, tval, pos.y() + pw2, tval, pos.y() + len);
+				QwtPainter::drawLine(painter, tval, pos.y() + pw2 + edgeFix, tval, pos.y() + len + edgeFix);
 				break;
 			}
 		}

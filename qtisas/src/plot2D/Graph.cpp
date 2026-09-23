@@ -7165,9 +7165,13 @@ void Graph::drawInwardTicks(QPainter *painter, const QRectF &rect, const QwtScal
     int y1 = qRound(rect.top());
     int y2 = qRound(rect.bottom());
 
-    // The tick starts at the backbone, which a non-zero Stand-off holds outside the canvas; only the part from
-    // the canvas edge inwards is paintable here, ScaleDraw::draw() draws the rest in the scale widget's own area.
-    const int standOff = scale->margin();
+    // Anchor on the real backbone: layoutScale() folds in Stand-off, the frame inset, and a legacy "- 1" on
+    // yLeft/xTop only -- undone here so all four match. ScaleDraw::draw() paints the part outside the canvas.
+    const QwtScaleDraw *backboneDraw = scale->scaleDraw();
+    const bool inclusiveEdge = (axis == QwtPlot::yLeft || axis == QwtPlot::xTop);
+    const QPointF backbone = backboneDraw ? backboneDraw->pos() + QPointF(scale->pos() - canvas()->pos()) +
+                                                (inclusiveEdge ? QPointF(1.0, 1.0) : QPointF())
+                                          : QPointF();
 
 	QPalette pal = scale->palette();
     const QColor &color = pal.color(QPalette::Active, QPalette::WindowText);
@@ -7199,7 +7203,7 @@ void Graph::drawInwardTicks(QPainter *painter, const QRectF &rect, const QwtScal
     switch (axis)
     {
     case QwtPlot::yLeft:
-        x = x1 - standOff;
+        x = backboneDraw ? qRound(backbone.x()) : x1;
         low = y1 + majLen;
         high = y2 - majLen;
         if (min && minLen)
@@ -7230,7 +7234,7 @@ void Graph::drawInwardTicks(QPainter *painter, const QRectF &rect, const QwtScal
         break;
 
     case QwtPlot::yRight:
-        x = x2 + standOff;
+        x = backboneDraw ? qRound(backbone.x()) : x2;
         low = y1 + majLen;
         high = y2 - majLen;
         if (min && minLen)
@@ -7261,7 +7265,7 @@ void Graph::drawInwardTicks(QPainter *painter, const QRectF &rect, const QwtScal
         break;
 
     case QwtPlot::xBottom:
-        y = y2 + standOff;
+        y = backboneDraw ? qRound(backbone.y()) : y2;
         low = x1 + majLen;
         high = x2 - majLen;
         if (min && minLen)
@@ -7292,7 +7296,7 @@ void Graph::drawInwardTicks(QPainter *painter, const QRectF &rect, const QwtScal
         break;
 
     case QwtPlot::xTop:
-        y = y1 - standOff;
+        y = backboneDraw ? qRound(backbone.y()) : y1;
         low = x1 + majLen;
         high = x2 - majLen;
         if (min && minLen)
