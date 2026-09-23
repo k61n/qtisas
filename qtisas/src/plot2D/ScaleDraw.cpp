@@ -618,16 +618,19 @@ void ScaleDraw::draw(QPainter *painter, const QPalette& palette) const
 	drawBreak(painter);
 	QwtScaleDraw::draw(painter, palette);
 
-	if (!d_plot->isPrinting())
-		return;
-
+    // Also on screen, not only printing: with a non-zero Stand-off the tick starts in the gap between backbone
+    // and canvas, which only this widget may paint; Graph::drawInwardTicks() draws the rest, inside the canvas.
 	painter->save();
+
+    double dpiScale = (double)painter->device()->logicalDpiX() / (double)d_plot->logicalDpiX();
 
 	QPen pen = painter->pen();
     pen.setColor(palette.color(QPalette::WindowText));
+    // Set, not inherited, and per branch: printScale() substitutes 1 for a zero width and scales by DPI, while
+    // Graph::drawInwardTicks() passes penWidthF() through -- 0 there is a cosmetic pen, one DEVICE pixel.
+    pen.setWidthF(d_plot->isPrinting() ? (penWidthF() > 0 ? penWidthF() : 1.0) * dpiScale : penWidthF());
 	painter->setPen(pen);
 
-    double dpiScale = (double)painter->device()->logicalDpiX() / (double)d_plot->logicalDpiX();
     int majLen = qRound(d_plot->majorTickLength() * dpiScale);
     if (d_majTicks >= Both && majLen > 0)
     {

@@ -7165,6 +7165,10 @@ void Graph::drawInwardTicks(QPainter *painter, const QRectF &rect, const QwtScal
     int y1 = qRound(rect.top());
     int y2 = qRound(rect.bottom());
 
+    // The tick starts at the backbone, which a non-zero Stand-off holds outside the canvas; only the part from
+    // the canvas edge inwards is paintable here, ScaleDraw::draw() draws the rest in the scale widget's own area.
+    const int standOff = scale->margin();
+
 	QPalette pal = scale->palette();
     const QColor &color = pal.color(QPalette::Active, QPalette::WindowText);
 
@@ -7195,7 +7199,7 @@ void Graph::drawInwardTicks(QPainter *painter, const QRectF &rect, const QwtScal
     switch (axis)
     {
     case QwtPlot::yLeft:
-        x = x1;
+        x = x1 - standOff;
         low = y1 + majLen;
         high = y2 - majLen;
         if (min && minLen)
@@ -7226,7 +7230,7 @@ void Graph::drawInwardTicks(QPainter *painter, const QRectF &rect, const QwtScal
         break;
 
     case QwtPlot::yRight:
-        x = x2;
+        x = x2 + standOff;
         low = y1 + majLen;
         high = y2 - majLen;
         if (min && minLen)
@@ -7257,7 +7261,7 @@ void Graph::drawInwardTicks(QPainter *painter, const QRectF &rect, const QwtScal
         break;
 
     case QwtPlot::xBottom:
-        y = y2;
+        y = y2 + standOff;
         low = x1 + majLen;
         high = x2 - majLen;
         if (min && minLen)
@@ -7288,7 +7292,7 @@ void Graph::drawInwardTicks(QPainter *painter, const QRectF &rect, const QwtScal
         break;
 
     case QwtPlot::xTop:
-        y = y1;
+        y = y1 - standOff;
         low = x1 + majLen;
         high = x2 - majLen;
         if (min && minLen)
