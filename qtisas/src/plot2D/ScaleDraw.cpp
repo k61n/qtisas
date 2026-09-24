@@ -570,7 +570,9 @@ void ScaleDraw::drawInwardTick(QPainter *painter, double value, int len) const
     double majLen = tickLength(QwtScaleDiv::MajorTick);
 
     const int clw = d_plot->lineWidth();
-    const double tval = map.transform(value);
+    // Round exactly when Qwt rounds its own (outward) ticks, so an In/Out pair lands on one pixel row instead
+    // of splitting when the exact position falls near a half pixel -- visible mostly on log scales.
+    const double tval = QwtPainter::roundingAlignment(painter) ? qRound(map.transform(value)) : map.transform(value);
 
 	bool draw = false;
 	if ( orientation() == Qt::Vertical ){
@@ -587,16 +589,21 @@ void ScaleDraw::drawInwardTick(QPainter *painter, double value, int len) const
 			(tval < low && !d_plot->axisEnabled(QwtPlot::yLeft) && !clw)) draw = true;
 	}
 
-    // Undo layoutScale()'s legacy "- 1" on yLeft/xTop (screen only -- printScale() has no such term).
+    // Undo layoutScale()'s legacy "- 1" on yLeft/xTop (screen only -- printScale() has no such term). Only
+    // without a Stand-off: with one the whole tick sits outside the canvas, where it must stay centred on the
+    // backbone so an In/Out pair forms an even cross.
+    const QwtScaleWidget *sw = d_plot->axisWidget(axis());
     const double edgeFix =
-        (!d_plot->isPrinting() && (alignment() == LeftScale || alignment() == TopScale)) ? 1.0 : 0.0;
+        (!d_plot->isPrinting() && sw && sw->margin() == 0 && (alignment() == LeftScale || alignment() == TopScale))
+            ? 1.0
+            : 0.0;
 
 	if (draw){
 		switch(alignment()){
 			case LeftScale:
 			{
-				QwtPainter::drawLine(painter, pos.x() + pw2 + edgeFix, tval, pos.x() + len + edgeFix, tval);
-				break;
+            QwtPainter::drawLine(painter, pos.x() + pw2 + edgeFix, tval, pos.x() + len + edgeFix, tval);
+            break;
 			}
 			case RightScale:
 			{
@@ -611,8 +618,8 @@ void ScaleDraw::drawInwardTick(QPainter *painter, double value, int len) const
 			}
 			case TopScale:
 			{
-				QwtPainter::drawLine(painter, tval, pos.y() + pw2 + edgeFix, tval, pos.y() + len + edgeFix);
-				break;
+            QwtPainter::drawLine(painter, tval, pos.y() + pw2 + edgeFix, tval, pos.y() + len + edgeFix);
+            break;
 			}
 		}
 	}
