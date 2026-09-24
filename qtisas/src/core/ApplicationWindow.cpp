@@ -3464,7 +3464,7 @@ void ApplicationWindow::exportMatrix(const QString& exportFilter)
 		return;
 	imagesDirPath = ied->directory().path();
 
-	QString selected_filter = ied->selectedNameFilter().remove("*");
+    QString selected_filter = ImageExportDialog::filterSuffix(ied->selectedNameFilter());
 	QString file_name = ied->selectedFiles()[0];
 	if(!file_name.endsWith(selected_filter, Qt::CaseInsensitive))
 		file_name.append(selected_filter);
@@ -8422,7 +8422,7 @@ void ApplicationWindow::exportGraph(const QString& exportFilter)
 		return;
 	imagesDirPath = ied->directory().path();
 
-	QString selected_filter = ied->selectedNameFilter().remove("*");
+    QString selected_filter = ImageExportDialog::filterSuffix(ied->selectedNameFilter());
 	QString file_name = ied->selectedFiles()[0];
 	if(!file_name.endsWith(selected_filter, Qt::CaseInsensitive))
 		file_name.append(selected_filter);
@@ -8436,6 +8436,12 @@ void ApplicationWindow::exportGraph(const QString& exportFilter)
 		plot2D->exportTeX(file_name, ied->color(), ied->escapeStrings(), ied->exportFontSizes(), ied->customExportSize(), ied->sizeUnit(), ied->scaleFontsFactor());
 		return;
 	}
+
+    if (plot2D && selected_filter.contains(".py"))
+    {
+        plot2D->exportMatplotlibScript(file_name);
+        return;
+    }
 
 	if (selected_filter.contains(".eps") || selected_filter.contains(".pdf") ||
 		selected_filter.contains(".ps") || selected_filter.contains(".svg")) {
@@ -8484,7 +8490,7 @@ void ApplicationWindow::exportLayer()
 	imagesDirPath = ied->directory().path();
 
 	QString file_name = ied->selectedFiles()[0];
-	QString selected_filter = ied->selectedNameFilter().remove("*");
+    QString selected_filter = ImageExportDialog::filterSuffix(ied->selectedNameFilter());
 	if(!file_name.endsWith(selected_filter, Qt::CaseInsensitive))
 		file_name.append(selected_filter);
 
@@ -8495,6 +8501,8 @@ void ApplicationWindow::exportLayer()
         g->exportSVG(file_name);
 	else if (selected_filter.contains(".tex"))
 		g->exportTeX(file_name, ied->color(), ied->escapeStrings(), ied->exportFontSizes(), ied->customExportSize(), ied->sizeUnit(), ied->scaleFontsFactor());
+    else if (selected_filter.contains(".py"))
+        g->exportMatplotlibScript(file_name);
     else {
 		QList<QByteArray> list = QImageWriter::supportedImageFormats();
 		for (int i = 0; i < list.count(); i++){
@@ -8526,9 +8534,7 @@ void ApplicationWindow::exportAllGraphs()
 	QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
 
 	QString output_dir = ied->selectedFiles()[0];
-	QString file_suffix = ied->selectedNameFilter();
-    file_suffix = file_suffix.toLower();
-	file_suffix.remove("*");
+    QString file_suffix = ImageExportDialog::filterSuffix(ied->selectedNameFilter()).toLower();
 
 	bool confirm_overwrite = d_confirm_overwrite;
 	MultiLayer *plot2D;
@@ -8552,6 +8558,10 @@ void ApplicationWindow::exportAllGraphs()
 			plot3D = (Graph3D *)w;
 		} else
 			continue;
+
+        // The matplotlib export is 2D only: skip 3D windows before their (empty) file is created.
+        if (plot3D && file_suffix.contains(".py"))
+            continue;
 
 		QString file_name = output_dir + "/" + w->objectName() + file_suffix;
 		QFile f(file_name);
@@ -8590,10 +8600,18 @@ void ApplicationWindow::exportAllGraphs()
 		}
 		f.close();
 
-	if (plot2D && file_suffix.contains(".tex")){
-		plot2D->exportTeX(file_name, ied->color(), ied->escapeStrings(), ied->exportFontSizes(), ied->customExportSize(), ied->sizeUnit(), ied->scaleFontsFactor());
-		return;
-	}
+        if (plot2D && file_suffix.contains(".tex"))
+        {
+            plot2D->exportTeX(file_name, ied->color(), ied->escapeStrings(), ied->exportFontSizes(),
+                              ied->customExportSize(), ied->sizeUnit(), ied->scaleFontsFactor());
+            continue;
+        }
+
+        if (plot2D && file_suffix.contains(".py"))
+        {
+            plot2D->exportMatplotlibScript(file_name);
+            continue;
+        }
 
 		if (file_suffix.contains(".eps") || file_suffix.contains(".pdf") ||
 			file_suffix.contains(".ps") || file_suffix.contains(".svg")) {

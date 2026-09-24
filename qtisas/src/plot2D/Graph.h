@@ -477,6 +477,8 @@ class Graph: public QwtPlot
 		void exportTeX(const QString& fname, bool color = true, bool escapeStrings = true, bool fontSizes = true,
 						const QSizeF& customSize = QSizeF(), int unit = FrameWidget::Pixel, double fontsFactor = 1.0);
 
+    bool exportMatplotlibScript(const QString &fileName);
+
 		bool isExportingTeX(){return d_is_exporting_tex;};
 		void setTeXExportingMode(bool on = true){d_is_exporting_tex = on;};
 		bool escapeTeXStrings(){return d_tex_escape_strings;};

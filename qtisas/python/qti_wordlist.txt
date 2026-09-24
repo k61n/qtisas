@@ -150,6 +150,7 @@ exportRasterImage
 export
 exportVector
 exportTex
+exportMatplotlibScript
 importASCII
 exportASCII
 ArrowMarker

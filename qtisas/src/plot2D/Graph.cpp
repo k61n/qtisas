@@ -67,6 +67,7 @@ Description: Graph widget
 #include <PenStyleBox.h>
 #include <ScreenPickerTool.h>
 #include "Graph.h"
+#include "MatplotlibExport.h"
 #include "MultiLayer.h"
 #include "Grid.h"
 #include "CanvasPicker.h"
@@ -1763,6 +1764,11 @@ void Graph::exportToFile(const QString &fileName)
         exportEMF(fileName);
         return;
     }
+    else if (fileName.endsWith(".py", Qt::CaseInsensitive))
+    {
+        exportMatplotlibScript(fileName);
+        return;
+    }
     else
     {
         ApplicationWindow *app = aw();
@@ -2498,6 +2504,68 @@ void Graph::exportTeX(const QString& fname, bool color, bool escapeStrings, bool
 	draw(&tex, size, fontsFactor);
 
 	d_is_exporting_tex = false;
+}
+
+bool Graph::exportMatplotlibScript(const QString &fileName)
+{
+    using namespace MatplotlibExport;
+
+    QFile file(fileName);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text))
+    {
+        qWarning() << "Cannot open file for writing:" << file.errorString();
+        return false;
+    }
+
+    // Settle pending layout/resize events first, so the geometry read below is current.
+    QCoreApplication::sendPostedEvents();
+
+    QTextStream out(&file);
+    writeScriptPreamble(out, {this}, this);
+
+    const double dpiX = logicalDpiX() > 0 ? logicalDpiX() : 96.0;
+    const double dpiY = logicalDpiY() > 0 ? logicalDpiY() : 96.0;
+    // The figure encloses the layer plus any text box or shape hanging outside it, like QtiSAS's export.
+    QRect bounds(QPoint(0, 0), size());
+    const QPoint layerOrigin = pos();
+    foreach (FrameWidget *fw, enrichmentsList())
+        if (fw && fw->isVisible())
+            bounds = bounds.united(QRect(fw->pos() - layerOrigin, fw->size()));
+    foreach (LegendWidget *lw, textsList())
+        if (lw && lw->isVisible())
+            bounds = bounds.united(QRect(lw->pos() - layerOrigin, lw->size()));
+
+    const double w = bounds.width();
+    const double h = bounds.height();
+    // dpi = the screen's logical dpi, so figsize x dpi is the layer's pixel size and point sizes match.
+    out << QStringLiteral("fig = plt.figure(figsize=(%1, %2), dpi=%3)\n\n")
+               .arg(w / dpiX, 0, 'f', 3)
+               .arg(h / dpiY, 0, 'f', 3)
+               .arg(dpiY, 0, 'f', 0);
+    // The layer background keeps its alpha (usually fully transparent).
+    out << QStringLiteral("fig.patch.set_facecolor(%1)\n").arg(pyColorRGBA(paletteBackgroundColor()));
+    if (paletteBackgroundColor().alphaF() < 1.0)
+        out << QStringLiteral("fig.patch.set_alpha(%1)\n").arg(paletteBackgroundColor().alphaF(), 0, 'g', 3);
+    out << "\n";
+
+    // Axes at the canvas's real position: texts and shapes are placed as fractions of this canvas.
+    const QRect cr = canvas()->geometry();
+    out << QStringLiteral("ax = fig.add_axes([%1, %2, %3, %4])\n")
+               .arg(w > 0 ? (cr.x() - bounds.x()) / w : 0.0, 0, 'f', 4)
+               .arg(h > 0 ? (bounds.y() + h - cr.y() - cr.height()) / h : 0.0, 0, 'f', 4)
+               .arg(w > 0 ? cr.width() / w : 1.0, 0, 'f', 4)
+               .arg(h > 0 ? cr.height() / h : 1.0, 0, 'f', 4);
+
+    writeMatplotlibLayer(out, this, QStringLiteral("ax"), 0);
+
+    out << "plt.show()\n";
+    out.flush();
+    if (out.status() != QTextStream::Ok || file.error() != QFileDevice::NoError)
+    {
+        qWarning() << "Error writing file:" << file.errorString();
+        return false;
+    }
+    return true;
 }
 
 bool Graph::markerSelected()

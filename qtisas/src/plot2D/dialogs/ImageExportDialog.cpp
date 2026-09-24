@@ -44,15 +44,20 @@ ImageExportDialog::ImageExportDialog(MdiSubWindow *window, QWidget * parent, boo
 //		list << "EMF";
 #endif
 
-	if (qobject_cast<MultiLayer *> (d_window))
+    if (qobject_cast<MultiLayer *>(d_window))
+    {
         list << "TEX";
+        list << "PY";
+    }
+    else if (!d_window) // "Export all graphs": no single window
+        list << "PY";
 
 	if (qobject_cast<Graph3D *> (d_window))
         list << "PGF";
 
-	QStringList filters;
-	for(int i=0 ; i<list.count() ; i++)
-		filters << "*."+list[i].toLower();
+    QStringList filters;
+    for (int i = 0; i < list.count(); i++)
+        filters << (list[i] == "PY" ? tr("Python/Matplotlib Script (*.py)") : "*." + list[i].toLower());
 
 	filters.sort();
 	setNameFilters(filters);
@@ -65,6 +70,17 @@ ImageExportDialog::ImageExportDialog(MdiSubWindow *window, QWidget * parent, boo
 
 	connect(this, SIGNAL(filterSelected ( const QString & )),
 			this, SLOT(updateAdvancedOptions ( const QString & )));
+}
+
+QString ImageExportDialog::filterSuffix(const QString &filter)
+{
+    const int star = static_cast<int>(filter.lastIndexOf("*."));
+    if (star < 0)
+        return filter.startsWith('.') ? filter : QString();
+    int end = star + 2;
+    while (end < filter.size() && filter[end] != ' ' && filter[end] != ')')
+        ++end;
+    return filter.mid(star + 1, end - star - 1);
 }
 
 void ImageExportDialog::initAdvancedOptions()
@@ -297,6 +313,12 @@ void ImageExportDialog::updateAdvancedOptions (const QString & filter)
 		return;
 	}
 
+    if (filter.contains("*.py"))
+    {
+        d_extension_toggle->setEnabled(true);
+        return;
+    }
+
 	d_extension_toggle->setEnabled(true);
 	if (filter.contains("*.eps") || filter.contains("*.emf") ||
 		filter.contains("*.ps") || filter.contains("*.pdf") ||
@@ -432,7 +454,7 @@ void ImageExportDialog::accept()
 		return QFileDialog::accept();
 
 	QString file_name = selectedFiles()[0];
-	QString selected_filter = selectedNameFilter().remove("*");
+    QString selected_filter = filterSuffix(selectedNameFilter());
 	if(!file_name.endsWith(selected_filter, Qt::CaseInsensitive))
 		file_name.append(selected_filter);
 

@@ -81,6 +81,8 @@ public:
 	 */
     explicit ImageExportDialog(MdiSubWindow *window, QWidget *parent = nullptr, bool extended = true,
                                Graph *g = nullptr, Qt::WindowFlags flags = Qt::WindowFlags());
+    //! File extension (".png") of a name filter, bare ("*.png") or described ("... (*.py)").
+    static QString filterSuffix(const QString &filter);
 	//! For vector formats: returns the output resolution the user selected, defaulting to the screen resolution.
 	int vectorResolution() const { return d_vector_resolution->value(); };
 	//! For vector formats: returns whether colors should be enabled for ouput (default: true).

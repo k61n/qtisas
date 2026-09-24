@@ -2142,6 +2142,7 @@ sipRes = Py_BuildValue("(dd)", start, end);
 
   void exportTeX(const QString& fname, bool color = true, bool escapeStrings = true, bool fontSizes = true,
 				const QSizeF& customSize = QSizeF(), int unit = FrameWidget::Pixel, double fontsFactor = 1.0)/PyName=exportTex/;
+  bool exportMatplotlibScript(const QString &fileName);
   void exportImage(const QString& fileName, int quality = 100, bool transparent = false, int dpi = 72,
 		const QSizeF& customSize = QSizeF(), int unit = FrameWidget::Pixel, double fontsFactor = 1.0, int compression = 0);
   void exportVector(const QString&, bool, int = 72, bool = true,
@@ -2243,6 +2244,7 @@ public:
 		const QSizeF& customSize = QSizeF(), int unit = FrameWidget::Pixel, double fontsFactor = 1.0);
   void exportTeX(const QString& fname, bool color = true, bool escapeStrings = true, bool fontSizes = true,
 		const QSizeF& customSize = QSizeF(), int unit = FrameWidget::Pixel, double fontsFactor = 1.0)/PyName=exportTex/;
+  bool exportMatplotlibScript(const QString &fileName);
 
   void reverseWaterfallOrder();
 

@@ -110,6 +110,9 @@
 # exportImage(file,quality=100,transparent=False,dpi=72,customSize=QSizeF(),unit=Pixel,fontsFactor=1.0,compression=0)
 # exportVector(file,fontEmbedding,dpi=72,color=True,customSize=QSizeF(),unit=Pixel,fontsFactor=1.0)  # fontEmbedding required, no default
 # exportTex(file,color=True,escapeStrings=True,fontSizes=True,customSize=QSizeF(),unit=Pixel,fontsFactor=1.0)
+# exportMatplotlibScript(file)->bool  # standalone matplotlib .py script (= export("file.py")); False if unwritable
+#   run it OUTSIDE QtiSAS (python file.py / subprocess.Popen([sys.executable,file])) — NEVER exec() it inside:
+#   matplotlib's Qt backend in QtiSAS's process crashes the next modal dialog. Spectrograms not exported.
 
 # Graph — add curves:
 # ALWAYS pass a Table object — addCurve("tableName_col", type) raises TypeError at runtime (no string overload)
@@ -326,6 +329,9 @@
 # exportImage(file,quality=100,transparent=False,dpi=72,customSize=QSizeF(),unit=Pixel,fontsFactor=1.0,compression=0)
 # exportVector(file,fontEmbedding,dpi=72,color=True,customSize=QSizeF(),unit=Pixel,fontsFactor=1.0)  # fontEmbedding required, no default
 # exportTex(file,color=True,escapeStrings=True,fontSizes=True,customSize=QSizeF(),unit=Pixel,fontsFactor=1.0)
+# exportMatplotlibScript(file)->bool  # standalone matplotlib .py script (= export("file.py")); False if unwritable
+#   run it OUTSIDE QtiSAS (python file.py / subprocess.Popen([sys.executable,file])) — NEVER exec() it inside:
+#   matplotlib's Qt backend in QtiSAS's process crashes the next modal dialog. Spectrograms not exported.
 
 # RULE — do NOT override Preferences-controlled appearance defaults unless the request specifically
 #   asks for that styling. A new layer/curve already inherits correct defaults from Preferences ->

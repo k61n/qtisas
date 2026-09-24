@@ -89,6 +89,7 @@ set(HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/LnScaleEngine.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Log2ScaleEngine.h
     ${CMAKE_CURRENT_SOURCE_DIR}/LogitScaleEngine.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/MatplotlibExport.h
     ${CMAKE_CURRENT_SOURCE_DIR}/MultiLayer.h
     ${CMAKE_CURRENT_SOURCE_DIR}/MultiPeakFitTool.h
     ${CMAKE_CURRENT_SOURCE_DIR}/PieCurve.h

@@ -54,6 +54,7 @@ Description: Multi layer widget
 #include "ColorButton.h"
 #include "ImportExportPlugin.h"
 #include "LegendWidget.h"
+#include "MatplotlibExport.h"
 #include "Matrix.h"
 #include "MultiLayer.h"
 #include "PlotCurve.h"
@@ -1134,6 +1135,12 @@ void MultiLayer::exportToFile(const QString &fileName)
         return;
     }
 
+    if (fileName.endsWith(".py", Qt::CaseInsensitive))
+    {
+        exportMatplotlibScript(fileName);
+        return;
+    }
+
     // Check if file extension matches a supported raster image format
     const ApplicationWindow *app = applicationWindow();
     const QList<QByteArray> formats = QImageWriter::supportedImageFormats();
@@ -1937,6 +1944,86 @@ void MultiLayer::exportTeX(const QString& fname, bool color, bool escapeStrings,
 		g->setTeXExportingMode(false);
 }
 
+bool MultiLayer::exportMatplotlibScript(const QString &fileName)
+{
+    using namespace MatplotlibExport;
+
+    QFile file(fileName);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text))
+    {
+        qWarning() << "Cannot open file for writing:" << file.errorString();
+        return false;
+    }
+
+    // Settle pending layout/resize events first (posted events only: processEvents() would also run
+    // user input and timers mid-export), so the geometry read below is current.
+    QCoreApplication::sendPostedEvents();
+
+    QTextStream out(&file);
+    writeScriptPreamble(out, graphsList, layer(1));
+
+    const int n = static_cast<int>(graphsList.size());
+    const QSize boundingPx = layersBoundingSize();
+    const double dpiX = logicalDpiX() > 0 ? logicalDpiX() : 96.0;
+    const double dpiY = logicalDpiY() > 0 ? logicalDpiY() : 96.0;
+    const double totalW = boundingPx.width() > 0 ? boundingPx.width() : 1;
+    const double totalH = boundingPx.height() > 0 ? boundingPx.height() : 1;
+
+    // dpi = the screen's logical dpi, so figsize x dpi is the window's pixel size and point sizes match.
+    out << QStringLiteral("fig = plt.figure(figsize=(%1, %2), dpi=%3)\n\n")
+               .arg(totalW / dpiX, 0, 'f', 3)
+               .arg(totalH / dpiY, 0, 'f', 3)
+               .arg(dpiY, 0, 'f', 0);
+    // Figure background: d_canvas, the widget behind all layers (each layer paints its own below).
+    const QColor figureBg = d_canvas->palette().color(QPalette::Window);
+    out << QStringLiteral("fig.patch.set_facecolor(%1)\n").arg(pyColorRGBA(figureBg));
+    if (figureBg.alphaF() < 1.0)
+        out << QStringLiteral("fig.patch.set_alpha(%1)\n").arg(figureBg.alphaF(), 0, 'g', 3);
+    out << "\n";
+
+    for (int li = 0; li < n; ++li)
+    {
+        Graph *g = graphsList.at(li);
+        const QString axVar = n > 1 ? QStringLiteral("ax%1").arg(li) : QStringLiteral("ax");
+
+        // Layer background: a figure-level patch behind the axes, over the whole layer rect.
+        const QColor layerBg = g->paletteBackgroundColor();
+        if (layerBg.alpha() > 0)
+            out << QStringLiteral("fig.add_artist(mpatches.Rectangle((%1, %2), %3, %4, "
+                                  "transform=fig.transFigure, facecolor=%5, edgecolor=\"none\", zorder=-1))\n")
+                       .arg(g->x() / totalW, 0, 'f', 4)
+                       .arg(1.0 - (g->y() + g->height()) / totalH, 0, 'f', 4)
+                       .arg(g->width() / totalW, 0, 'f', 4)
+                       .arg(g->height() / totalH, 0, 'f', 4)
+                       .arg(pyColorRGBA(layerBg));
+
+        // Axes at the layer's CANVAS rect (not the layer rect, whose tick-label margin differs per layer),
+        // in figure fractions with a bottom-left origin; canvas()->pos() is relative to the layer.
+        const QRect geo(g->pos() + g->canvas()->pos(), g->canvas()->size());
+        const double left = geo.x() / totalW;
+        const double width = geo.width() / totalW;
+        const double bottom = 1.0 - (geo.y() + geo.height()) / totalH;
+        const double height = geo.height() / totalH;
+        out << QStringLiteral("%1 = fig.add_axes([%2, %3, %4, %5])\n")
+                   .arg(axVar)
+                   .arg(left, 0, 'f', 4)
+                   .arg(bottom, 0, 'f', 4)
+                   .arg(width, 0, 'f', 4)
+                   .arg(height, 0, 'f', 4);
+
+        writeMatplotlibLayer(out, g, axVar, li);
+    }
+
+    // No tight_layout(): it would move the add_axes() rects placed from QtiSAS's own layout.
+    out << "plt.show()\n";
+    out.flush();
+    if (out.status() != QTextStream::Ok || file.error() != QFileDevice::NoError)
+    {
+        qWarning() << "Error writing file:" << file.errorString();
+        return false;
+    }
+    return true;
+}
 
 void MultiLayer::copyAllLayers()
 {

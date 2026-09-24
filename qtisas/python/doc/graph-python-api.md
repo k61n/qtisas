@@ -248,6 +248,7 @@ gw.arrangeLayers(False, False)   # now correctly splits into 2 rows
 | `exportImage(file, quality=100, transparent=False, dpi=72, customSize=QSizeF(), unit=FrameWidget.Unit.Pixel, fontsFactor=1.0, compression=0)` | raster export |
 | `exportVector(file, fontEmbedding, dpi=72, color=True, customSize=QSizeF(), unit=FrameWidget.Unit.Pixel, fontsFactor=1.0)` | vector (PDF/SVG/EPS) export — `fontEmbedding` is required (no default) |
 | `exportTex(file, color=True, escapeStrings=True, fontSizes=True, customSize=QSizeF(), unit=FrameWidget.Unit.Pixel, fontsFactor=1.0)` | LaTeX/TikZ export |
+| `exportMatplotlibScript(file)` -> bool | standalone Python/matplotlib script reproducing the plot (all layers here; one layer on a Graph); `export("file.py")` does the same. Returns False if the file cannot be written. Run it OUTSIDE QtiSAS (`python file.py`, or `subprocess.Popen([sys.executable, file])` from the console) — never `exec()` it in QtiSAS: matplotlib's Qt backend inside QtiSAS's process crashes the next modal dialog. Spectrograms/color maps are not exported |
 
 ---
 
@@ -884,6 +885,7 @@ layer.grid().setMajPenY(QPen(QColor(200, 200, 200), 1, Qt.PenStyle.SolidLine))
 | `exportImage(file, quality=100, transparent=False, dpi=72, customSize=QSizeF(), unit=FrameWidget.Unit.Pixel, fontsFactor=1.0, compression=0)` | raster |
 | `exportVector(file, fontEmbedding, dpi=72, color=True, customSize=QSizeF(), unit=FrameWidget.Unit.Pixel, fontsFactor=1.0)` | vector (PDF/SVG/EPS) — `fontEmbedding` is required (no default), confirmed against the C++ implementation (unnamed in the SIP header itself) |
 | `exportTex(file, color=True, escapeStrings=True, fontSizes=True, customSize=QSizeF(), unit=FrameWidget.Unit.Pixel, fontsFactor=1.0)` | LaTeX/TikZ |
+| `exportMatplotlibScript(file)` -> bool | standalone Python/matplotlib script reproducing the plot (all layers here; one layer on a Graph); `export("file.py")` does the same. Returns False if the file cannot be written. Run it OUTSIDE QtiSAS (`python file.py`, or `subprocess.Popen([sys.executable, file])` from the console) — never `exec()` it in QtiSAS: matplotlib's Qt backend inside QtiSAS's process crashes the next modal dialog. Spectrograms/color maps are not exported |
 
 ---
 
