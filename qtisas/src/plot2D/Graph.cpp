@@ -1749,6 +1749,14 @@ void Graph::exportToFile(const QString &fileName)
         exportVector(fileName, true, defaultResolution);
         return;
     }
+    else if (fileName.endsWith(".qti.svg", Qt::CaseInsensitive))
+    {
+        // Before ".svg": the embedded project is always the whole window, so its window is exported.
+        if (MultiLayer *ml = multiLayer())
+            if (ApplicationWindow *app = ml->applicationWindow())
+                app->exportGraphAsSelfContainedSvg(ml, fileName);
+        return;
+    }
     else if (fileName.contains(".svg"))
     {
         exportSVG(fileName);

@@ -44,20 +44,30 @@ ImageExportDialog::ImageExportDialog(MdiSubWindow *window, QWidget * parent, boo
 //		list << "EMF";
 #endif
 
+    // QTISVG: the window's SVG with its project embedded -- whole windows only, not a single layer.
     if (qobject_cast<MultiLayer *>(d_window))
     {
         list << "TEX";
         list << "PY";
+        if (!d_layer)
+            list << "QTISVG";
     }
     else if (!d_window) // "Export all graphs": no single window
-        list << "PY";
+        list << "PY" << "QTISVG";
 
 	if (qobject_cast<Graph3D *> (d_window))
         list << "PGF";
 
     QStringList filters;
     for (int i = 0; i < list.count(); i++)
-        filters << (list[i] == "PY" ? tr("Python/Matplotlib Script (*.py)") : "*." + list[i].toLower());
+    {
+        if (list[i] == "PY")
+            filters << tr("Python/Matplotlib Script (*.py)");
+        else if (list[i] == "QTISVG")
+            filters << tr("Self-Contained SVG: svg + embedded project (*.qti.svg)");
+        else
+            filters << "*." + list[i].toLower();
+    }
 
 	filters.sort();
 	setNameFilters(filters);
@@ -293,6 +303,13 @@ void ImageExportDialog::updateAdvancedOptions (const QString & filter)
 		return;
 	}
 
+    // No export options for these; before "*.svg", which a ".qti.svg" filter must not reach.
+    if (filter.contains("*.py") || filter.contains("*.qti.svg"))
+    {
+        d_extension_toggle->setEnabled(true);
+        return;
+    }
+
 	if (filter.contains("*.svg")){
 		if (qobject_cast<Graph3D *> (d_window)){
 			d_extension_toggle->setEnabled(true);
@@ -312,12 +329,6 @@ void ImageExportDialog::updateAdvancedOptions (const QString & filter)
 		d_preview_button->setVisible(false);
 		return;
 	}
-
-    if (filter.contains("*.py"))
-    {
-        d_extension_toggle->setEnabled(true);
-        return;
-    }
 
 	d_extension_toggle->setEnabled(true);
 	if (filter.contains("*.eps") || filter.contains("*.emf") ||

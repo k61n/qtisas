@@ -1117,6 +1117,14 @@ void MultiLayer::exportToFile(const QString &fileName)
         }
     }
 
+    // Before plain ".svg": the window's SVG with its project embedded.
+    if (fileName.endsWith(".qti.svg", Qt::CaseInsensitive))
+    {
+        if (ApplicationWindow *app = applicationWindow())
+            app->exportGraphAsSelfContainedSvg(this, fileName);
+        return;
+    }
+
     if (fileName.endsWith(".svg", Qt::CaseInsensitive))
     {
         exportSVG(fileName);

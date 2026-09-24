@@ -8443,6 +8443,12 @@ void ApplicationWindow::exportGraph(const QString& exportFilter)
         return;
     }
 
+    if (plot2D && selected_filter.contains(".qti.svg"))
+    {
+        exportGraphAsSelfContainedSvg(plot2D, file_name);
+        return;
+    }
+
 	if (selected_filter.contains(".eps") || selected_filter.contains(".pdf") ||
 		selected_filter.contains(".ps") || selected_filter.contains(".svg")) {
 		if (plot3D)
@@ -8559,8 +8565,7 @@ void ApplicationWindow::exportAllGraphs()
 		} else
 			continue;
 
-        // The matplotlib export is 2D only: skip 3D windows before their (empty) file is created.
-        if (plot3D && file_suffix.contains(".py"))
+        if (plot3D && (file_suffix.contains(".py") || file_suffix.contains(".qti.svg")))
             continue;
 
 		QString file_name = output_dir + "/" + w->objectName() + file_suffix;
@@ -8610,6 +8615,12 @@ void ApplicationWindow::exportAllGraphs()
         if (plot2D && file_suffix.contains(".py"))
         {
             plot2D->exportMatplotlibScript(file_name);
+            continue;
+        }
+
+        if (plot2D && file_suffix.contains(".qti.svg"))
+        {
+            exportGraphAsSelfContainedSvg(plot2D, file_name);
             continue;
         }
 
