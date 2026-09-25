@@ -2184,6 +2184,10 @@ void MultiLayer::printAllLayers(QPainter *painter)
     double dpiScaleX = printerDpiX / screenDpiX;
     double dpiScaleY = printerDpiY / screenDpiY;
 
+    // Layers are scaled to printer pixels by dpiScaleX/Y; hatch tiles need the same reference, or
+    // nativeTilePitch() uses the QPrinter's devicePixelRatioF() (always 1): far too many, too small.
+    VectorHatchBrush::resetPatternRegistry(dpiScaleX);
+
     QRect cr = canvasRect.toRect(); // cropmarks rectangle
 
     if (d_scale_on_print)
@@ -2225,7 +2229,8 @@ void MultiLayer::printAllLayers(QPainter *painter)
             int width = int(g->frameGeometry().width() * dpiScaleX * scaleFactor);
             int height = int(g->frameGeometry().height() * dpiScaleY * scaleFactor);
 
-            g->print(painter, QRect(targetPos, QSize(width, height)), ScaledFontsPrintFilter(scaleFactor));
+            g->print(painter, QRect(targetPos, QSize(width, height)), ScaledFontsPrintFilter(scaleFactor),
+                     int(std::lround(printerDpiX)));
         }
     }
     else
@@ -2250,7 +2255,8 @@ void MultiLayer::printAllLayers(QPainter *painter)
             int width = int(g->width() * dpiScaleX);
             int height = int(g->height() * dpiScaleY);
 
-            g->print(painter, QRect(targetPos, QSize(width, height)), ScaledFontsPrintFilter(1.0));
+            g->print(painter, QRect(targetPos, QSize(width, height)), ScaledFontsPrintFilter(1.0),
+                     int(std::lround(printerDpiX)));
         }
     }
 
