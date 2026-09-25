@@ -70,6 +70,10 @@ class Script : public QObject
     virtual bool setQObject(const QObject*, const char*) { return false; }
     virtual bool setInt(int, const char*) { return false; }
     virtual bool setDouble(double, const char*) { return false; }
+    virtual bool setString(const QString &, const char *)
+    {
+        return false;
+    }
 
   signals:
     //! This is emitted whenever the code to be executed by exec() and eval() is changed.

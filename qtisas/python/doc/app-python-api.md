@@ -445,6 +445,23 @@ displayInfo("Processing complete.")
 
 ---
 
+## Running Scripts from the Command Line
+
+| Command | Effect |
+|---------|--------|
+| `qtisas -x script.py` | start QtiSAS and run the script; QtiSAS stays open (on error the script window shows it) |
+| `qtisas -x --quit script.py` | run, then quit: exit code 0 on success, 1 on error (error text on stderr) |
+| `qtisas -X script.py` | run without GUI, then quit: exit code 0/1 as above; 2D plots are not handled correctly without GUI |
+| `qtisas -x "print(1)"` | the argument is run as code when it is not a readable file (a missing `*.py` is reported instead) |
+
+In a script run this way:
+- `__file__` is the script's full path; the working directory is where QtiSAS was started, not the script's folder.
+- `sys.argv` is `['']`: arguments cannot be passed to the script.
+- `print()` goes to the QtiSAS console, not the terminal.
+- `globals` is QtiSAS's shared-variables module (`globals.x = 1`), not Python's `globals()`; use `builtins.globals()`.
+- `sys.executable` is the QtiSAS application, not a Python interpreter: to run a script in plain Python use
+  `os.path.join(sys.base_prefix, "python.exe" if os.name == "nt" else "bin/python3")`.
+
 ## Colour Palette
 
 The indexed colour list, user-configurable in preferences, is used by `setCurveLineColor(curveIndex, colorIndex)` and `setCurveSymbolColor(curveIndex, colorIndex|QColor)`.

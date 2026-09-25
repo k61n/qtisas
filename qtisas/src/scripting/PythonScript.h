@@ -38,6 +38,7 @@ class PythonScript : public Script
 		bool setQObject(QObject *val, const char *name);
     bool setInt(int val, const char *name) override;
     bool setDouble(double val, const char *name) override;
+    bool setString(const QString &val, const char *name) override;
     void setContext(QObject *context) override;
 
 	private:

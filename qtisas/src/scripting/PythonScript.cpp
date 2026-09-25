@@ -523,6 +523,21 @@ bool PythonScript::setInt(int val, const char *name)
 	return (env()->setInt(val, name, modLocalDict) && env()->setInt(val, name, modGlobalDict));
 }
 
+bool PythonScript::setString(const QString &val, const char *name)
+{
+    PyGILState_STATE state = PyGILState_Ensure();
+    if (!PyDict_GetItemString(modLocalDict, name))
+        compiled = notCompiled;
+    PyObject *str = PyUnicode_FromString(val.toUtf8().constData());
+    const bool ok = str && PyDict_SetItemString(modLocalDict, name, str) == 0 &&
+                    PyDict_SetItemString(modGlobalDict, name, str) == 0;
+    Py_XDECREF(str);
+    if (!ok)
+        PyErr_Clear();
+    PyGILState_Release(state);
+    return ok;
+}
+
 bool PythonScript::setDouble(double val, const char *name)
 {
 	PyGILState_STATE state = PyGILState_Ensure();

@@ -321,7 +321,7 @@ public slots:
 	 * \param fn is read as a Python script file and loaded in the command script window.
 	 * \param execute specifies if the script should be executed after opening.
 	 */
-	ApplicationWindow * loadScript(const QString& fn, bool execute = false, bool noGui = false);
+    ApplicationWindow *loadScript(const QString &fn, bool execute = false, bool noGui = false, bool quitAfter = false);
 
 	QList<MdiSubWindow *> windowsList();
 	QStringList windowsNameList();

@@ -4,6 +4,11 @@
 # table("name")/matrix("name")/note("name")/graphWindow("name") all return None if no
 # window with that name exists — always check "if x is None:" before use (see class-specific docs).
 
+# Command line: qtisas -x script.py (run, stay open) | -x --quit script.py (exit 0/1) | -X script.py (no GUI, exit 0/1)
+#   __file__ = script path; cwd = launch dir; sys.argv == ['']; print() -> QtiSAS console, not terminal
+#   globals is QtiSAS's shared module, NOT builtin globals() -> use builtins.globals()
+#   sys.executable is QtiSAS itself -> plain Python: os.path.join(sys.base_prefix, "bin/python3"|"python.exe")
+
 # Tables:
 table("name")->Table|None  newTable()->Table  newTable("name",rows,cols)->Table
 # newTable on an EXISTING name is DESTRUCTIVE, not a safe "reuse" — it resizes to rows/cols AND

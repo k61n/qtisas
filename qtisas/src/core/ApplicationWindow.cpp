@@ -18924,6 +18924,9 @@ void ApplicationWindow::parseCommandLineArguments(const QStringList &args)
     QString str;
     bool exec = false;
     bool noGui = false;
+    bool quitAfter = false;
+    // -X has no visible window: its startup errors go to stderr instead of a dialog nobody can close.
+    const bool noGuiRequested = args.contains("-X");
     bool default_settings = false;
     bool console = false;
     foreach (str, args)
@@ -18966,6 +18969,7 @@ void ApplicationWindow::parseCommandLineArguments(const QStringList &args)
             s += "-h " + tr("or") + " --help: " + tr("show command line options") + "\n";
             s += "-v " + tr("or") + " --version: " + tr("print QTISAS version") + "\n";
             s += "-x " + tr("or") + " --execute: " + tr("execute the script file given as argument") + "\n";
+            s += "--quit: " + tr("with -x, quit after the script (exit code 1 if it failed)") + "\n";
             s += "-X: " +
                  tr("execute the script file given as argument without displying the user interface. Warning: 2D plots "
                     "are not correctly handled in this functioning mode!") +
@@ -18988,10 +18992,14 @@ void ApplicationWindow::parseCommandLineArguments(const QStringList &args)
                 QMessageBox::critical(this, tr("QTISAS - Error"),
                                       tr("<b> %1 </b>: Wrong locale option or no translation available!").arg(locale));
         }
-        else if (str.startsWith("--execute") || str.startsWith("-x"))
+        else if (str == "-x" || str == "--execute")
             exec = true;
-        else if (str.startsWith("-X"))
+        else if (str == "-X")
             noGui = true;
+        else if (str == "--quit")
+            quitAfter = true;
+        else if (str.startsWith("-") && noGuiRequested)
+            std::cerr << "QtiSAS: unknown command line option " << str.toStdString() << std::endl;
         else if (str.startsWith("-") || str.startsWith("--"))
         {
             QMessageBox::critical(this, tr("QTISAS - Error"),
@@ -19025,6 +19033,19 @@ void ApplicationWindow::parseCommandLineArguments(const QStringList &args)
     if (!file_name.isEmpty())
     {
         bool directScript = !QFileInfo(file_name).isReadable();
+        // A missing script file, not Python code to run: report it instead of executing its name.
+        if (directScript && (console || exec || noGui) && file_name.endsWith(".py", Qt::CaseInsensitive))
+        {
+            if (noGui)
+            {
+                std::cerr << "QtiSAS: script file not found or not readable: " << file_name.toStdString() << std::endl;
+                exit(1);
+            }
+            QMessageBox::critical(this, tr("QTISAS - Error"),
+                                  tr("The script file <b>%1</b> doesn't exist or isn't readable!").arg(file_name));
+            initWindow();
+            return;
+        }
         if (directScript && !(console || exec || noGui))
         {
             this->isFileReadable(file_name);
@@ -19041,7 +19062,7 @@ void ApplicationWindow::parseCommandLineArguments(const QStringList &args)
                 scriptWindow->executeAll();
         }
         else if (exec || noGui)
-            loadScript(file_name, exec, noGui);
+            loadScript(file_name, exec, noGui, quitAfter);
         else
         {
             ApplicationWindow *app = open(file_name, default_settings);
@@ -20677,7 +20698,7 @@ void ApplicationWindow::cascade()
     modifiedProject();
 }
 
-ApplicationWindow * ApplicationWindow::loadScript(const QString& fn, bool execute, bool noGui)
+ApplicationWindow *ApplicationWindow::loadScript(const QString &fn, bool execute, bool noGui, bool quitAfter)
 {
 #ifdef SCRIPTING_PYTHON
     bool directScript = !QFileInfo(fn).isReadable();
@@ -20690,10 +20711,19 @@ ApplicationWindow * ApplicationWindow::loadScript(const QString& fn, bool execut
         if (directScript)
             se->setText(fn);
         else
+        {
             se->importASCII(fn);
+            se->setScriptString("__file__", QFileInfo(fn).absoluteFilePath());
+        }
 
 		se->executeAll();
 
+        // Exit status and error text for batch use: nothing else reports a failure without a GUI.
+        if (se->lastRunFailed())
+        {
+            std::cerr << se->errorMessage().toStdString() << std::endl;
+            exit(1);
+        }
 		exit(0);
 	} else {
 		QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
@@ -20702,13 +20732,24 @@ ApplicationWindow * ApplicationWindow::loadScript(const QString& fn, bool execut
 
 		showScriptWindow();
         directScript ? scriptWindow->newScript(fn) : scriptWindow->open(fn);
+        if (!directScript)
+            scriptWindow->editor()->setScriptString("__file__", QFileInfo(fn).absoluteFilePath());
 
 		QApplication::restoreOverrideCursor();
 
 		if (execute){
 			scriptWindow->hide();
     		scriptWindow->executeAll();
-			if (scriptWindow->editor()->error())
+            const bool failed = scriptWindow->editor()->lastRunFailed();
+            // --quit: end with the script's result, for test runners (exit() as -X does: the event loop
+            // hasn't started yet, and a normal close could stop at a "save project?" dialog).
+            if (quitAfter)
+            {
+                if (failed)
+                    std::cerr << scriptWindow->editor()->errorMessage().toStdString() << std::endl;
+                exit(failed ? 1 : 0);
+            }
+            if (failed)
 				showScriptWindow();
 		}
 		return this;

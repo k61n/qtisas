@@ -482,6 +482,11 @@ void ScriptEdit::execute()
 	d_error = false;
 }
 
+bool ScriptEdit::setScriptString(const QString &name, const QString &value)
+{
+    return myScript && myScript->setString(value, name.toUtf8().constData());
+}
+
 void ScriptEdit::executeAll()
 {
     clearErrorHighlighting();
@@ -508,6 +513,7 @@ void ScriptEdit::executeAll()
         }
         scriptPrint("");
         d_error = false;
+        d_last_run_failed = false;
         return;
     }
 
@@ -515,7 +521,8 @@ void ScriptEdit::executeAll()
     fname = fname.arg(objectName());
     myScript->setName(fname);
     myScript->setCode(toPlainText());
-    myScript->exec();
+    // Kept apart from d_error, which is cleared below once the error line is highlighted.
+    d_last_run_failed = !myScript->exec();
 
     highlightErrorLine(0);
     d_error = false;

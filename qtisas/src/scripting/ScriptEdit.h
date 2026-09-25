@@ -44,6 +44,17 @@ class ScriptEdit : public QTextEdit, public scripted
   	//! Map cursor positions to line numbers.
     int lineNumber(int pos) const;
 	bool error(){return d_error;};
+    //! True when the last executeAll() raised an error; errorMessage() holds its text.
+    bool lastRunFailed() const
+    {
+        return d_last_run_failed;
+    }
+    QString errorMessage() const
+    {
+        return d_err_message;
+    }
+    //! Set a string variable (e.g. __file__) in this editor's script namespace.
+    bool setScriptString(const QString &name, const QString &value);
 
     void setCompleter(QCompleter *c);
 	void setFileName(const QString& fn);
@@ -117,6 +128,7 @@ class ScriptEdit : public QTextEdit, public scripted
 	//! True if we are inside evaluate(), execute() or executeAll() there were errors.
 	bool d_error;
 	QString d_err_message;
+    bool d_last_run_failed = false;
 
 	QCompleter *d_completer;
 	SyntaxHighlighter *d_highlighter;
