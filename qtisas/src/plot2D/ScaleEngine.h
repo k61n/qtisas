@@ -167,6 +167,11 @@ public:
     {
         d_axis_length = length;
     }
+    //! Axis length (pixels) the break transform was last built for.
+    int axisLength() const
+    {
+        return d_axis_length;
+    }
 
 private:
 

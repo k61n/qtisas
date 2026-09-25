@@ -275,6 +275,8 @@ class Graph: public QwtPlot
     //! clip-path around this layer's canvas content (see MultiLayer::arraySVG()).
     QRectF svgClipRect(const QRect &plotRect, const ScaledFontsPrintFilter &pfilter, int res);
     void updateLayout() override;
+    void updateBreakTransforms(bool onlyIfResized = false);
+    void syncSecondaryAxes();
     QRect canvasGeometry() const;
 		void setCanvasGeometry(const QRect &canvasRect);
 		//!Convenience function for scripts

@@ -4710,31 +4710,13 @@ void Graph::updateScale()
 
     // Keep the axis widget's mapping in sync with the engine's break transform,
     // which divideScale() rebuilt with the current scale interval (e.g. after a zoom).
-    for (int i = 0; i < QwtPlot::axisCnt; i++)
-    {
-        auto *se = dynamic_cast<ScaleEngine *>(axisScaleEngine(i));
-        if (se && se->hasBreak())
-        {
-            auto scaleDiv = axisScaleDiv(i);
-            se->setAxisLength(i == QwtPlot::xBottom || i == QwtPlot::xTop ? canvas()->width() : canvas()->height());
-            se->divideScale(scaleDiv.lowerBound(), scaleDiv.upperBound(), axisMaxMajor(i), axisMaxMinor(i),
-                            d_user_step[i]);
-            axisWidget(i)->setTransformation(se->transformation());
-        }
-    }
+    updateBreakTransforms();
 
 	replot();
 
 	updateMarkersBoundingRect();
 
-    {
-        bool syncY, syncX;
-        syncScaleFlags(syncY, syncX);
-        if (syncX)
-            updateSecondaryAxis(QwtPlot::xTop);
-        if (syncY)
-            updateSecondaryAxis(QwtPlot::yRight);
-    }
+    syncSecondaryAxes();
 
 	replot();//TODO: avoid 2nd replot!
 	d_zoomer[0]->setZoomBase();
@@ -7728,7 +7710,36 @@ void Graph::updateLayout()
     canvas()->setGeometry(plotLayout()->canvasRect().toRect());
 	canvas()->setUpdatesEnabled(true);
 
+    updateBreakTransforms(true);
+
 	updatedLayout(this);
+}
+
+void Graph::syncSecondaryAxes()
+{
+    bool syncY, syncX;
+    syncScaleFlags(syncY, syncX);
+    if (syncX)
+        updateSecondaryAxis(QwtPlot::xTop);
+    if (syncY)
+        updateSecondaryAxis(QwtPlot::yRight);
+}
+
+void Graph::updateBreakTransforms(bool onlyIfResized)
+{
+    for (int i = 0; i < QwtPlot::axisCnt; i++)
+    {
+        auto *se = dynamic_cast<ScaleEngine *>(axisScaleEngine(i));
+        if (!se || !se->hasBreak())
+            continue;
+        const int length = i == QwtPlot::xBottom || i == QwtPlot::xTop ? canvas()->width() : canvas()->height();
+        if (onlyIfResized && se->axisLength() == length)
+            continue;
+        const QwtScaleDiv scaleDiv = axisScaleDiv(i);
+        se->setAxisLength(length);
+        se->divideScale(scaleDiv.lowerBound(), scaleDiv.upperBound(), axisMaxMajor(i), axisMaxMinor(i), d_user_step[i]);
+        axisWidget(i)->setTransformation(se->transformation());
+    }
 }
 
 /*!
