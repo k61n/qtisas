@@ -2822,7 +2822,7 @@ int PlotDialog::setPlotType(CurveTreeItem *item)
 				return -1;
 
             auto s = c->symbol();
-            if (s->style() == QwtSymbol::NoSymbol)
+            if (!s || s->style() == QwtSymbol::NoSymbol)
             {
 				boxPlotType->setCurrentIndex(0);
 				return Graph::Line;
@@ -4744,9 +4744,9 @@ void PlotDialog::applySymbolsFormatToCurve(QwtPlotCurve *c, bool fillColor, bool
 
 		int size = 2*boxSymbolSize->value() + 1;
 
-        QBrush br = symbol->brush();
+        QBrush br = symbol ? symbol->brush() : QBrush();
 		QColor fc = br.color();
-		if (fillColor)
+        if (fillColor || !symbol)
 			fc = boxFillColor->color();
 		fc.setAlphaF(0.01*boxSymbolTransparency->value());
 		br = QBrush(fc, Qt::SolidPattern);
@@ -4754,9 +4754,8 @@ void PlotDialog::applySymbolsFormatToCurve(QwtPlotCurve *c, bool fillColor, bool
 		if (!boxFillSymbol->isChecked())
 			br = QBrush();
 
-        QPen pen = QPen(symbol->pen().color(), boxPenWidth->value(), Qt::SolidLine, Qt::FlatCap, Qt::MiterJoin);
-		if (penColor)
-			pen.setColor(boxSymbolColor->color());
+        QPen pen = QPen(symbol && !penColor ? symbol->pen().color() : boxSymbolColor->color(), boxPenWidth->value(),
+                        Qt::SolidLine, Qt::FlatCap, Qt::MiterJoin);
 
         c->setSymbol(new QwtSymbol(boxSymbolStyle->selectedSymbol(), br, pen, QSize(size, size)));
 	} else if (imageSymbolBtn->isChecked()){
@@ -4785,7 +4784,8 @@ void PlotDialog::applySymbolsFormatToLayer(Graph *g)
 
 		QwtPlotCurve *c = (QwtPlotCurve *)it;
         
-        if (c->symbol()->style() != QwtSymbol::NoSymbol)
+        const QwtSymbol *symbol = c->symbol();
+        if (symbol && symbol->style() != QwtSymbol::NoSymbol)
 			applySymbolsFormatToCurve(c, false, false);
 	}
 	g->replot();
