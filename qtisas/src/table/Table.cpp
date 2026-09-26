@@ -24,6 +24,7 @@ Description: Table worksheet class
 #include <QProgressDialog>
 #include <QRegion>
 #include <QShortcut>
+#include <QSignalBlocker>
 #include <QTextDocumentWriter>
 #include <QTextStream>
 
@@ -412,9 +413,16 @@ void Table::cellEdited(QTableWidgetItem *it)
   	columnNumericFormat(col, &f, &precision);
   	bool ok = true;
   	double res = locale().toDouble(text, &ok);
-  	if (ok)
+    if (ok && isGroupedNumberWhenOmitted(text, locale()))
+    {
+        // Do not treat a grouped numeric literal as a Python expression.
+        QSignalBlocker blocker(d_table);
+        d_table->setText(row, col, QString());
+    }
+    else if (ok)
   		d_table->setText(row, col, locale().toString(res, f, precision));
-  	else {
+    else
+    {
   		Script *script = scriptEnv->newScript(d_table->text(row, col),
             this, QString("<%1_%2_%3>").arg(objectName()).arg(row+1).arg(col+1));
   		connect(script, SIGNAL(error(const QString&,const QString&,int)), scriptEnv, SIGNAL(error(const QString&,const QString&,int)));
@@ -697,11 +705,7 @@ bool Table::muParserCalculate(int col, int startRow, int endRow, int step, bool 
 					d_table->setText(i, col, dateTime(val).toString(fmt));
 			}
 		} else if (colType == Numeric){
-            //+++
-            //QLocale loc = locale();
-            QLocale loc = QLocale::c();
-            loc.setNumberOptions(QLocale::OmitGroupSeparator);
-            //---
+            QLocale loc = locale();
 			int prec;
 			char f;
 			columnNumericFormat(col, &f, &prec);
@@ -730,11 +734,10 @@ bool Table::muParserCalculate(int col, int startRow, int endRow, int step, bool 
 					return false;
 				}
 			}
-        } else if (colType == Numeric) {            //+++
-            //QLocale loc = locale();
-            QLocale loc = QLocale::c();
-            loc.setNumberOptions(QLocale::OmitGroupSeparator);
-            //---
+        }
+        else if (colType == Numeric)
+        {
+            QLocale loc = locale();
 			int prec;
 			char f;
 			columnNumericFormat(col, &f, &prec);
@@ -847,9 +850,7 @@ bool Table::calculate(int col, int startRow, int endRow, int step, bool forceMuP
     }
     else if (colType == Numeric)
     {
-        //QLocale loc = locale();
-        QLocale loc = QLocale::c();
-        loc.setNumberOptions(QLocale::OmitGroupSeparator);
+        QLocale loc = locale();
 
         int prec;
         char f;
@@ -1404,11 +1405,7 @@ QVarLengthArray<double> Table::col(int c)
 	int rows = d_table->rowCount();
 	QVarLengthArray<double> Y(rows);
 	
-    //+++
-    //QLocale l = locale();
-    QLocale l = QLocale::c();
-    l.setNumberOptions(QLocale::OmitGroupSeparator);
-    //---
+    QLocale l = colTypes[c] == Numeric ? locale() : QLocale::c();
     
 	for (int i = 0; i<rows; i++)
 		Y[i] = l.toDouble(d_table->text(i, c));
@@ -1425,11 +1422,7 @@ void Table::columnRange(int c, double *min, double *max)
 
     MySelection selection = getSelection();
 
-    //+++
-    //QLocale l = locale();
-    QLocale l = QLocale::c();
-    l.setNumberOptions(QLocale::OmitGroupSeparator);
-    //---
+    QLocale l = colTypes[c] == Numeric ? locale() : QLocale::c();
     
 	int startRow = selection.topRow();
 	for (int i = selection.topRow(); i <= selection.bottomRow(); i++){
@@ -1797,14 +1790,9 @@ void Table::pasteSelection()
 		if (aux > cols) cols = aux;
 	}
 
-    //+++
-    //QLocale l = locale();
-    //QLocale clipboardLocale = applicationWindow()->clipboardLocale();
-    QLocale l = QLocale::c();
-    l.setNumberOptions(QLocale::OmitGroupSeparator);
+    QLocale l = locale();
+    // Clipboard input remains fixed to C until its separate preference is re-enabled.
     QLocale clipboardLocale = QLocale::c();
-    clipboardLocale.setNumberOptions(QLocale::OmitGroupSeparator);
-    //---
     
 	bool allNumbers = true;
 	bool pasteComments = false;
@@ -2430,11 +2418,7 @@ void Table::saveToMemory()
 		}
 	}
 
-    //+++
-    //QLocale l = locale();
-    QLocale l = QLocale::c();
-    l.setNumberOptions(QLocale::OmitGroupSeparator);
-    //---
+    QLocale l = locale();
     for (int col = 0; col < cols; col++){
 		if (colTypes[col] == Numeric){
 			for (int row = 0; row < rows; row++){
@@ -2960,7 +2944,7 @@ void Table::setAscValues()
 		columnNumericFormat(selectedCol, &f, &prec);
 
 		for (int i = selection.topRow(); i <= selection.bottomRow(); i++)
-			setText(i, selectedCol, QString::number(i + 1, f, prec));
+            setText(i, selectedCol, locale().toString(static_cast<double>(i + 1), f, prec));
 
 		emit modifiedData(this, name);
 	}
@@ -3763,11 +3747,7 @@ void Table::setNumericPrecision(int prec)
 
 void Table::updateDecimalSeparators(const QLocale& oldSeparators)
 {
-    //+++
-    //QLocale l = locale();
-    QLocale l = QLocale::c();
-    l.setNumberOptions(QLocale::OmitGroupSeparator);
-    //---
+    QLocale l = locale();
     if (l == oldSeparators)
         return;
 
@@ -3782,10 +3762,9 @@ void Table::updateDecimalSeparators(const QLocale& oldSeparators)
 
         for (int j = 0; j<rows; j++){
             QString s = d_table->text(j, i);
-            if (!s.isEmpty()){
-				double val = oldSeparators.toDouble(s);
-                d_table->setText(j, i, l.toString(val, format, prec));
-			}
+            const QString converted = convertNumericText(s, oldSeparators, l, format, prec);
+            if (converted != s)
+                d_table->setText(j, i, converted);
 		}
 	}
 }
@@ -3957,11 +3936,7 @@ double Table::sum(int col, int startRow, int endRow)
 	if (endRow < 0 || endRow >= rows)
 		endRow = d_table->rowCount() - 1;
 
-    //+++
-    //QLocale l = locale();
-    QLocale l = QLocale::c();
-    l.setNumberOptions(QLocale::OmitGroupSeparator);
-    //---
+    QLocale l = locale();
 	double sum = 0.0;
 	for (int i = startRow; i <= endRow; i++){
 		QString s = d_table->text(i, col);
@@ -3985,11 +3960,7 @@ double Table::avg(int col, int startRow, int endRow)
 	if (endRow < 0 || endRow >= rows)
 		endRow = d_table->rowCount() - 1;
 
-    //+++
-    //QLocale l = locale();
-    QLocale l = QLocale::c();
-    l.setNumberOptions(QLocale::OmitGroupSeparator);
-    //---
+    QLocale l = locale();
 	double sum = 0.0;
 	int count = 0;
 	for (int i = startRow; i <= endRow; i++){
@@ -4020,11 +3991,7 @@ double Table::minColumnValue(int col, int startRow, int endRow)
 	if (endRow < 0 || endRow >= rows)
 		endRow = d_table->rowCount() - 1;
 
-    //+++
-    //QLocale l = locale();
-    QLocale l = QLocale::c();
-    l.setNumberOptions(QLocale::OmitGroupSeparator);
-    //---
+    QLocale l = locale();
 	double min = this->cell(startRow, col);
 	for (int i = startRow + 1; i <= endRow; i++){
 		QString s = d_table->text(i, col);
@@ -4051,11 +4018,7 @@ double Table::maxColumnValue(int col, int startRow, int endRow)
 	if (endRow < 0 || endRow >= rows)
 		endRow = d_table->rowCount() - 1;
 
-    //+++
-    //QLocale l = locale();
-    QLocale l = QLocale::c();
-    l.setNumberOptions(QLocale::OmitGroupSeparator);
-    //---
+    QLocale l = locale();
 	double max = this->cell(startRow, col);
 	for (int i = startRow + 1; i <= endRow; i++){
 		QString s = d_table->text(i, col);

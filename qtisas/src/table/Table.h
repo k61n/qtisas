@@ -51,6 +51,32 @@ public:
 	void setNumericPrecision(int prec);
 	//! Updates the decimal separators when importing ASCII files on user request
 	void updateDecimalSeparators(const QLocale& oldSeparators);
+    // Numeric-text rules are kept here so Table and its regression test use the same policy.
+    static bool isGroupedNumberWhenOmitted(const QString &text, const QLocale &locale)
+    {
+        if (!(locale.numberOptions() & QLocale::OmitGroupSeparator))
+            return false;
+
+        bool valid = false;
+        locale.toDouble(text, &valid);
+        if (!valid)
+            return false; // Expressions such as max(1,2) still go to the script engine.
+
+        QLocale withoutGrouping = locale;
+        withoutGrouping.setNumberOptions(locale.numberOptions() | QLocale::RejectGroupSeparator);
+        withoutGrouping.toDouble(text, &valid);
+        return !valid;
+    }
+    static QString convertNumericText(const QString &text, const QLocale &source, const QLocale &target, char format,
+                                      int precision)
+    {
+        if (text.isEmpty() || source == target)
+            return text;
+
+        bool ok = false;
+        const double value = source.toDouble(text, &ok);
+        return ok ? target.toString(value, format, precision) : text;
+    }
 	void setAutoUpdateValues(bool on = true);
 	virtual QString sizeToString();
 
