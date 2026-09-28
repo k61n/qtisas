@@ -8,6 +8,7 @@ Copyright (C) by the authors:
 Description: A QwtLinearColorMap editor widget
  ******************************************************************************/
 
+#include <algorithm>
 #include <cmath>
 
 #include <QCheckBox>
@@ -116,9 +117,9 @@ void ColorMapEditor::updateColorMap()
     QColor c_max = QColor(table->item(rows - 1, 1)->text());
     auto map = new LinearColorMap(c_min, c_max);
     
-    //+++
-    double min_val_local=((DoubleSpinBox*)table->cellWidget(0, 0))->value();
-    double max_val_local=((DoubleSpinBox*)table->cellWidget(rows-1, 0))->value();
+    // Stops are normalized to the data range; the sentinel rows only display the boundary levels
+    double min_val_local = min_val;
+    double max_val_local = max_val;
 
     auto range = QwtInterval(0, 1);
     map->setIntensityRange(range);
@@ -151,7 +152,10 @@ void ColorMapEditor::setColorMap(LinearColorMap *map0)
 
     color_map.reset(map);
 
-    int rows = (int)colors.size();
+    // Same layout as colorMapToTable(): sentinel rows 0 and N+1 around the N stops, so that
+    // updateColorMap() reads back all N stops and a load/apply round trip keeps every level
+    int stops = (int)colors.size();
+    int rows = stops + 2;
     table->blockSignals(true);
 
     table->setRowCount(rows);
@@ -164,10 +168,11 @@ void ColorMapEditor::setColorMap(LinearColorMap *map0)
 
     for (int i = 0; i < rows; i++)
     {
+        int stop = std::clamp(i - 1, 0, stops - 1);
         auto sb = new DoubleSpinBox();
         sb->setLocale(d_locale);
         sb->setDecimals(d_precision);
-        sb->setValue(min_val+colors[i]*width);
+        sb->setValue(min_val + colors[stop] * width);
 
         if (i == 0)
         {
@@ -198,32 +203,19 @@ void ColorMapEditor::setColorMap(LinearColorMap *map0)
             //sb->setSuffix(" > " + QString::number(max_val*width,'f',1));
             //sb->setRange(min_val, max_val);
         }
-        sb->setValue(min_val+colors[i]*width);
+        sb->setValue(min_val + colors[stop] * width);
 
         connect(sb, SIGNAL(activated(DoubleSpinBox *)), this, SLOT(spinBoxActivated(DoubleSpinBox *)));
 
         table->setCellWidget(i, 0, sb);
 
-        QColor c = color_map->color(i);
+        QColor c = color_map->color(stop);
 
         auto it = new QTableWidgetItem(c.name());
         it->setFlags(it->flags() & ~Qt::ItemIsEditable);
         it->setBackground(QBrush(c));
         it->setForeground(QBrush(c));
         table->setItem(i, 1, it);
-    }
-    // Boundary rows (1 and N-2) show same color as the adjacent sentinel rows
-    if (rows >= 4)
-    {
-        QColor c0 = QColor(table->item(0, 1)->text());
-        table->item(1, 1)->setText(c0.name());
-        table->item(1, 1)->setForeground(QBrush(c0));
-        table->item(1, 1)->setBackground(QBrush(c0));
-
-        QColor cN = QColor(table->item(rows - 1, 1)->text());
-        table->item(rows - 2, 1)->setText(cN.name());
-        table->item(rows - 2, 1)->setForeground(QBrush(cN));
-        table->item(rows - 2, 1)->setBackground(QBrush(cN));
     }
     table->blockSignals(false);
 
@@ -400,8 +392,8 @@ void ColorMapEditor::setScaledColorsLog(bool scale, bool fromCheckBox, bool lowL
     table->blockSignals(true);
     for (int i = 0; i < rows; i++) ((DoubleSpinBox*)table->cellWidget(i, 0))->blockSignals(true);
 
-    double initMinAbs = ((DoubleSpinBox*)table->cellWidget(0, 0))->value();
-    double initMaxAbs = ((DoubleSpinBox*)table->cellWidget(rows-1, 0))->value();
+    double initMinAbs = min_val;
+    double initMaxAbs = max_val;
     double initMin = ((DoubleSpinBox*)table->cellWidget(1, 0))->value();
     double initMax = ((DoubleSpinBox*)table->cellWidget(rows-2, 0))->value();
     
@@ -430,22 +422,20 @@ void ColorMapEditor::setScaledColorsLog(bool scale, bool fromCheckBox, bool lowL
             maxvalue=1.0;
         }
         
-        if (!fromCheckBox || initMin<initMinAbs||initMax>initMaxAbs||(scale&&initMax<=0.0)||(scale&&initMin<=0.0)||initMin>initMax|| ( initMinAbs!=minvalue0||initMaxAbs!=maxvalue||(scale&&initMin<=0) ) )
-        {
-            initMinAbs=minvalue0;
-            initMin=minvalue1;
-            
-            initMaxAbs=maxvalue;
-            initMax=maxvalue;
-        }
-        
-     }
+        // Always restart from the data range: limits kept across a log/linear switch would stay at the
+        // smallest positive value (log) after returning to linear
+        initMinAbs = minvalue0;
+        initMin = minvalue1;
+        initMaxAbs = maxvalue;
+        initMax = maxvalue;
+    }
 
     ((DoubleSpinBox*)table->cellWidget(1, 0))->setRange(initMinAbs, initMax);
     ((DoubleSpinBox*)table->cellWidget(rows-2, 0))->setRange(initMin, initMaxAbs);
 
-    ((DoubleSpinBox*)table->cellWidget(0, 0))->setValue(initMinAbs);
-    ((DoubleSpinBox*)table->cellWidget(rows-1, 0))->setValue(initMaxAbs);
+    // "<=" and ">" rows show the lowest and highest level: the colors that apply below and above them
+    ((DoubleSpinBox *)table->cellWidget(0, 0))->setValue(initMin);
+    ((DoubleSpinBox *)table->cellWidget(rows - 1, 0))->setValue(initMax);
     ((DoubleSpinBox*)table->cellWidget(1, 0))->setValue(initMin);
     ((DoubleSpinBox*)table->cellWidget(rows-2, 0))->setValue(initMax);
 		
