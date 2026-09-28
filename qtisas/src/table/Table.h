@@ -79,6 +79,8 @@ public:
     }
 	void setAutoUpdateValues(bool on = true);
 	virtual QString sizeToString();
+    //! Parse a numeric cell using this table's locale; leave value unchanged on failure.
+    bool tryNumericCell(int row, int col, double &value) const;
 
 	double avg(int col, int startRow = 0, int endRow = -1);
 	double sum(int col, int startRow = 0, int endRow = -1);

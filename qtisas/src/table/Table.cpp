@@ -2371,6 +2371,20 @@ double Table::cell(int row, int col)
 	return locale().toDouble(d_table->text(row, col));
 }
 
+bool Table::tryNumericCell(int row, int col, double &value) const
+{
+    if (row < 0 || row >= d_table->rowCount() || col < 0 || col >= d_table->columnCount())
+        return false;
+    const QString text = d_table->text(row, col);
+    if (text.isEmpty())
+        return false;
+    bool ok = false;
+    const double parsed = locale().toDouble(text, &ok);
+    if (ok)
+        value = parsed;
+    return ok;
+}
+
 void Table::setCell(int row, int col, double val)
 {
 	 if (col < 0 || col >= d_table->columnCount() ||
