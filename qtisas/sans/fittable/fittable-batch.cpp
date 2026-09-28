@@ -391,7 +391,8 @@ void fittable18::readBatchTable(const QString &tableName)
 
         for (int j = 0; j < p; j++)
             tableMultiFit->setItem(activeDatasets + 1, 3 + j + resoShift,
-                                   new QTableWidgetItem(batchTable->text(i, 7 + 2 * j)));
+                new QTableWidgetItem(Table::convertNumericText(batchTable->text(i, 7 + 2 * j), batchTable->locale(),
+                                                               QLocale::c(), 'G', QLocale::FloatingPointShortest)));
 
         activeDatasets++;
     }
@@ -501,6 +502,7 @@ bool fittable18::saveBatchTable(Table *&t, QString tableName)
     }
 
     t->blockSignals(true);
+    const QLocale resultLocale = t->locale();
 
     t->setColName(0, "Parameter");
     t->setColPlotDesignation(0, Table::None);
@@ -700,7 +702,9 @@ bool fittable18::saveBatchTable(Table *&t, QString tableName)
 
         for (int j = 0; j < p; j++)
         {
-            t->setText(i, 7 + 2 * j, batchParamValueText(tableMultiFit->item(i + 1, j + start)->text()));
+            t->setText(i, 7 + 2 * j,
+                       Table::convertNumericText(batchParamValueText(tableMultiFit->item(i + 1, j + start)->text()),
+                                                 QLocale::c(), resultLocale, 'G', QLocale::FloatingPointShortest));
             t->setText(i, 7 + 2 * j + 1, "");
         }
     }
@@ -728,6 +732,7 @@ void fittable18::setBySetFitOrSim(bool fitYN)
         QMessageBox::warning(this, "QtiSAS", "Cannot save/create Batch-Fitting Table! ");
         return;
     }
+    const QLocale resultLocale = t->locale();
 
     Graph *g;
     bool currentGraphAutoscaled = false;
@@ -821,8 +826,8 @@ void fittable18::setBySetFitOrSim(bool fitYN)
     auto *WrealYN = (QTableWidgetItem *)tableCurves->item(4, 0); //+++ weight check & Col
     auto *weightColItem = (QComboBoxInTable *)tableCurves->cellWidget(4, 1);
 
-    QTableWidgetItem *RrealYN; //+++ reso check & Col
-    QComboBoxInTable *resoColItem;
+    QTableWidgetItem *RrealYN = nullptr; //+++ reso check & Col
+    QComboBoxInTable *resoColItem = nullptr;
     if (checkBoxSANSsupport->isChecked())
     {
         RrealYN = (QTableWidgetItem *)tableCurves->item(5, 0);
@@ -956,17 +961,20 @@ void fittable18::setBySetFitOrSim(bool fitYN)
         //+++ TRANSFER OF OBTEINED PARAMETERS TO SET-BY-SET TABLE AND TO RESULT TABLE
         for (int j = 0; j < p; j++)
         {
+            const QString parameterText = QString::number(tablePara->item(j, 2)->text().toDouble(), 'G', prec);
             t->setText(Nselected, 2 * j + 7,
-                       QString::number(tablePara->item(j, 2)->text().toDouble(), 'G', spinBoxSignDigits->value()));
-            t->setText(Nselected, 2 * j + 8,
-                       QString::number(tablePara->item(j, 3)->text().remove(QString(QChar(0x00B1))).toDouble(), 'G',
-                                       spinBoxSignDigits->value()));
+                       Table::convertNumericText(parameterText, QLocale::c(), resultLocale, 'G', prec));
+            t->setText(
+                Nselected, 2 * j + 8,
+                QString::number(tablePara->item(j, 3)->text().remove(QString(QChar(0x00B1))).toDouble(), 'G', prec));
 
             auto *cell = tableMultiFit->item(i + 1, j + start);
             cell->setText(withBatchParamValue(cell->text(), tablePara->item(j, 2)->text()));
         }
-        t->setText(Nselected, 4, textLabelChi->text());
-        t->setText(Nselected, 5, textLabelR2->text());
+        t->setText(Nselected, 4,
+                   Table::convertNumericText(textLabelChi->text(), QLocale::c(), resultLocale, 'E', prec + 2));
+        t->setText(Nselected, 5,
+                   Table::convertNumericText(textLabelR2->text(), QLocale::c(), resultLocale, 'E', prec + 2));
         t->setText(Nselected, 6, textLabelTime->text());
         Nselected++;
 

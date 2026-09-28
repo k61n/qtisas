@@ -508,23 +508,30 @@ void fittable18::dataLimitsSimulation(int value){
 
     int N=t->numRows();
     int ii=0;
-    while(t->text(ii,xColIndex) == "" && ii<N) ii++;
+    double xValue = 0.0;
+    while (ii < N && !t->tryNumericCell(ii, xColIndex, xValue))
+        ii++;
     // +++
     int Ntot=0;
-    static const QRegularExpression rx(R"(((\-|\+)?\d*(\.|\,)\d*((e|E)(\-|\+)\d*)?)|((\-|\+)?\d+))");
     for (int j = 0; j < N; j++)
-        if (rx.match(t->text(j, xColIndex)).hasMatch())
+        if (t->tryNumericCell(j, xColIndex, xValue))
             Ntot++;
     if (Ntot<2) Ntot=1000;
     
     if (ii==N) return;
     
-    double min=t->text(ii,xColIndex).toDouble();
-    double max=t->text(ii,xColIndex).toDouble();
+    double min = 0.0;
+    t->tryNumericCell(ii, xColIndex, min);
+    double max = min;
     
     for (int j=ii;j<N;j++){
-        if ((t->text(j,xColIndex).toDouble())>max && t->text(j,xColIndex)!="") max=t->text(j,xColIndex).toDouble();
-        if (t->text(j,xColIndex).toDouble()<min && t->text(j,xColIndex)!="") min=t->text(j,xColIndex).toDouble();
+        if (t->tryNumericCell(j, xColIndex, xValue))
+        {
+            if (xValue > max)
+                max = xValue;
+            if (xValue < min)
+                min = xValue;
+        }
     }
     if(NQ=="Q"){
         textLabelRangeFirstLimit->setText(QString::number(GSL_MIN(1,Ntot)));

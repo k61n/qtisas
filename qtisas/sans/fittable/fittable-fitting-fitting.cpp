@@ -1879,7 +1879,15 @@ void fittable18::makeTableFromMatrix(const char *name, char **tableColNames, int
     
     //+++ transfet data to table
     t->blockSignals(true);
-    for (int rr=0; rr<mRows;rr++) for(int cc=0;cc<mCols;cc++) t->setText(rr,cc,QString::number(gsl_matrix_get(m,rr,cc),'E',digits));
+    const QLocale tableLocale = t->locale();
+    for (int rr = 0; rr < mRows; rr++)
+        for (int cc = 0; cc < mCols; cc++)
+        {
+            const double value = gsl_matrix_get(m, rr, cc);
+            t->setText(rr, cc,
+                       tableLocale == QLocale::c() ? QString::number(value, 'E', digits)
+                                                   : tableLocale.toString(value, 'E', digits));
+        }
     t->blockSignals(false);
 
     //+++ table actions
@@ -1894,4 +1902,3 @@ void fittable18::makeTableFromMatrix(const char *name, char **tableColNames, int
 
     t->adjustColumnsWidth(false);
 }
-

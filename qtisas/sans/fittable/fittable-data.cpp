@@ -458,8 +458,9 @@ bool fittable18::SetQandI(int &Ntotal, double*&Qtotal, double*&Itotal, double*&d
         N += table->numRows();
 
         int nReal = 0;
+        double xValue = 0.0;
         for (int ii = 0; ii < table->numRows(); ii++)
-            if ((table->text(ii, xColIndex)) != "")
+            if (table->tryNumericCell(ii, xColIndex, xValue))
                 nReal++;
 
         if (nReal <= 1)
@@ -479,16 +480,15 @@ bool fittable18::SetQandI(int &Ntotal, double*&Qtotal, double*&Itotal, double*&d
         else
         {
             int iistart = 0;
-            while ((table->text(iistart, xColIndex)) == "")
+            while (iistart < table->numRows() && !table->tryNumericCell(iistart, xColIndex, xValue))
                 iistart++;
-            double min = table->text(iistart, xColIndex).toDouble();
+            double min = xValue;
             double max = min;
 
             double value;
             for (int ii = iistart; ii < table->numRows(); ii++)
-                if (table->text(ii, xColIndex) != "")
+                if (table->tryNumericCell(ii, xColIndex, value))
                 {
-                    value = table->text(ii, xColIndex).toDouble();
                     if (value > max)
                         max = value;
                     if (value < min)
@@ -563,87 +563,61 @@ bool fittable18::SetQandI(int &Ntotal, double*&Qtotal, double*&Itotal, double*&d
         double wc = spinBoxWC->value();
         double wxmax = spinBoxWXMAX->value();
 
+        const int methodWeight = comboBoxWeightingMethod->currentIndex();
+
+        constexpr double InvalidCellValue = -911119.119911;
+        double cellValue, weightValue;
+
         for (int j = 0; j < table->numRows(); j++)
+        {
+            QQ[mnmn] = table->tryNumericCell(j, xColIndex, cellValue) ? cellValue : InvalidCellValue; // Q
+            II[mnmn] = table->tryNumericCell(j, yColIndex, cellValue) ? cellValue : InvalidCellValue; // I
+
+            if (!weightYN)
+                dII[mnmn] = 1.0;
+            else if (methodWeight != 0 && methodWeight != 2 && II[mnmn] == InvalidCellValue)
+                QQ[mnmn] = dII[mnmn] = InvalidCellValue;
+            else
             {
-                //Q
-                if (table->text(j,xColIndex)=="")
-                    QQ[mnmn]=-911119.119911;
-                else
-                    QQ[mnmn]=table->text(j,xColIndex).toDouble();
-                //I
-                if (table->text(j,yColIndex)=="")
-                    II[mnmn]=-911119.119911;
-                else
-                    II[mnmn]=table->text(j,yColIndex).toDouble();		    //dI
-                if (weightYN)
+                const bool hasWeight = table->tryNumericCell(j, table->colIndex(colWeight), weightValue);
+                switch (methodWeight)
                 {
-                    if (comboBoxWeightingMethod->currentIndex()==0)//+++ [ w = 1/dY² ]
-                    {
-                        if (table->text(j,table->colIndex(colWeight))=="" || table->text(j,table->colIndex(colWeight)).toDouble()==0)
-                            dII[mnmn]=-911119.119911;
-                        else
-                            dII[mnmn]=fabs(table->text(j,table->colIndex(colWeight)).toDouble());
-                    }
-                    else if (comboBoxWeightingMethod->currentIndex()==1) //+++ [ w = 1/Y  ]
-                    {
-                        if (II[mnmn]==-911119.119911)
-                        {
-                            QQ[mnmn]=-911119.119911;
-                            dII[mnmn]=-911119.119911;
-                        }
-                        else
-                            dII[mnmn]=sqrt(fabs(II[mnmn]));
-                    }
-                    else if (comboBoxWeightingMethod->currentIndex()==2)//+++ [ w = dY  ]
-                    {
-                        if (II[mnmn]==-911119.119911 || table->text(j,table->colIndex(colWeight)).toDouble()==0)
-                            dII[mnmn]=-911119.119911;
-                        else
-                            dII[mnmn]=1/sqrt(fabs(table->text(j,table->colIndex(colWeight)).toDouble()));
-                    }
-                    else if (comboBoxWeightingMethod->currentIndex()==3) //+++ [ w = 1/Y² ]
-                    {
-                        if (II[mnmn]==-911119.119911)
-                        {
-                            QQ[mnmn]=-911119.119911;
-                            dII[mnmn]=-911119.119911;
-                        }
-                        else
-                            dII[mnmn]=fabs(II[mnmn]);
-                    }
-                    else if (comboBoxWeightingMethod->currentIndex()==4) //+++ [ w = 1/Y^a ]
-                    {
-                        if (II[mnmn]==-911119.119911)
-                        {
-                            QQ[mnmn]=-911119.119911;
-                            dII[mnmn]=-911119.119911;
-                        }
-                        else
-                            dII[mnmn]=pow( fabs(II[mnmn]),wa/2);
-                    }
-                    else if (comboBoxWeightingMethod->currentIndex()==5) //+++ [ w = 1/|c^a+b*Y^a| ]
-                    {
-                        if (II[mnmn]==-911119.119911)
-                        {
-                            QQ[mnmn]=-911119.119911;
-                            dII[mnmn]=-911119.119911;
-                        }
-                        else
-                            dII[mnmn]=sqrt(pow(wc,wa)+wb*pow( fabs(II[mnmn]),wa));
-                    }
-                    else if (comboBoxWeightingMethod->currentIndex()==6) // +++ [ w = 1/ Y^a / c^|Xmax-X| ) ]
-                    {
-                        if (II[mnmn]==-911119.119911)
-                        {
-                            QQ[mnmn]=-911119.119911;
-                            dII[mnmn]=-911119.119911;
-                        }
-                        else
-                            dII[mnmn]=sqrt(pow(wc,fabs(wxmax-QQ[mnmn]))*pow( fabs(II[mnmn]),wa));
-                    }
+                case 0: //+++ [ w = 1/dY² ]
+                    dII[mnmn] = (!hasWeight || weightValue == 0) ? InvalidCellValue : std::fabs(weightValue);
+                    break;
+
+                case 1: //+++ [ w = 1/Y ]
+                    dII[mnmn] = std::sqrt(std::fabs(II[mnmn]));
+                    break;
+
+                case 2: //+++ [ w = dY ]
+                    dII[mnmn] = (II[mnmn] == InvalidCellValue || !hasWeight || weightValue == 0)
+                                    ? InvalidCellValue
+                                    : 1.0 / std::sqrt(std::fabs(weightValue));
+                    break;
+
+                case 3: //+++ [ w = 1/Y² ]
+                    dII[mnmn] = std::fabs(II[mnmn]);
+                    break;
+
+                case 4: //+++ [ w = 1/Y^a ]
+                    dII[mnmn] = std::pow(std::fabs(II[mnmn]), wa / 2.0);
+                    break;
+
+                case 5: //+++ [ w = sqrt(wc^a + wb * Y^a) ]
+                    dII[mnmn] = std::sqrt(std::pow(wc, wa) + wb * std::pow(std::fabs(II[mnmn]), wa));
+                    break;
+
+                case 6: // +++ [ w = sqrt(wc^|Xmax-X| * Y^a) ]
+                    dII[mnmn] =
+                        std::sqrt(std::pow(wc, std::fabs(wxmax - QQ[mnmn])) * std::pow(std::fabs(II[mnmn]), wa));
+                    break;
+
+                default:
+                    dII[mnmn] = 1.0;
                 }
-                else
-                    dII[mnmn]=1;
+            }
+
 
             // Sigma
             double resoValue = 0.0;
@@ -665,8 +639,11 @@ bool fittable18::SetQandI(int &Ntotal, double*&Qtotal, double*&Itotal, double*&d
                 else if (colReso == "from_SPHERES")
                     resoValue = (resoYN ? app()->sigma(QQ[mnmn]) : -fabs(app()->sigma(QQ[mnmn])));
                 else
-                    resoValue = (resoYN ? table->text(j, table->colIndex(colReso)).toDouble()
-                                        : -fabs(table->text(j, table->colIndex(colReso)).toDouble()));
+                {
+                    double sigmaValue = 0.0;
+                    table->tryNumericCell(j, table->colIndex(colReso), sigmaValue);
+                    resoValue = resoYN ? sigmaValue : -fabs(sigmaValue);
+                }
             }
             else
                 resoValue = 0.0;
@@ -820,13 +797,14 @@ bool fittable18::datasetChangedSim( int num)
 
         int N=t->numRows();
         int ii=0;
-        while(t->text(ii,xColIndex) == "" && ii<N) ii++;
+        double xValue = 0.0;
+        while (ii < N && !t->tryNumericCell(ii, xColIndex, xValue))
+            ii++;
         
         // +++
         Ntot=0;
-        static const QRegularExpression rx(R"(((\-|\+)?\d*(\.|\,)\d*((e|E)(\-|\+)\d*)?)|((\-|\+)?\d+))");
         for (int j = 0; j < N; j++)
-            if (rx.match(t->text(j, xColIndex)).hasMatch())
+            if (t->tryNumericCell(j, xColIndex, xValue))
                 Ntot++;
         if (Ntot<2) Ntot=1000;
         
@@ -839,13 +817,18 @@ bool fittable18::datasetChangedSim( int num)
         }
         else
         {
-            min=t->text(ii,xColIndex).toDouble();
-            max=t->text(ii,xColIndex).toDouble();
+            t->tryNumericCell(ii, xColIndex, min);
+            max = min;
             
             for (int j=ii;j<N;j++)
             {
-                if ((t->text(j,xColIndex).toDouble())>max && t->text(j,xColIndex)!="") max=t->text(j,xColIndex).toDouble();
-                if (t->text(j,xColIndex).toDouble()<min && t->text(j,xColIndex)!="") min=t->text(j,xColIndex).toDouble();
+                if (t->tryNumericCell(j, xColIndex, xValue))
+                {
+                    if (xValue > max)
+                        max = xValue;
+                    if (xValue < min)
+                        min = xValue;
+                }
             }
             
         }

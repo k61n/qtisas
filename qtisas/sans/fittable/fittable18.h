@@ -118,7 +118,6 @@ public:
     bool SetQandIgivenM( int &Ntotal, double * &Qtotal, double * &Itotal, double * &dItotal, double * &Sigmatotal, double * &Weighttotal, double * &Sigmaftotal, int m);
     bool simulateData( int & N, double * Q, double * & I, double * & dI, double * sigmaReso, double * sigmaf, bool progressShow );
     bool simulateDataTable(int source, int number, QString &simulatedTable, int N, double *Q, double *Idata, double *dI, double * sigma, double * Isim, Table * & t );
-    bool checkCell( QString & line );
     static int simulateNoSANS(int N, double *Q, double *&I, gsl_function FF, bool progressShow);
     static int simulateSANSpoly(int N, double *Q, double *&I, poly2_SANS &poly2, bool progressShow);
     static int simulateSANSreso(int N, double *Q, const double *sigma, double *&I, resoSANS &paraReso,

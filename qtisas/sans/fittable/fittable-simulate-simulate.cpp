@@ -877,9 +877,10 @@ bool fittable18::SetQandIuniform(int &N, double* &QQ, double* &sigmaQ, int m){
             }
             //~~~ number of points
             int Nsigma = 0;
-            static const QRegularExpression rx(R"(((\-|\+)?\d*(\.|\,)\d*((e|E)(\-|\+)\d*)?)|((\-|\+)?\d+))");
+            double qValue = 0.0;
+            double sigmaValue = 0.0;
             for (i = 0; i < t->numRows(); i++)
-                if (rx.match(t->text(i, 0)).hasMatch() && rx.match(t->text(i, colIndexSigma)).hasMatch())
+                if (t->tryNumericCell(i, 0, qValue) && t->tryNumericCell(i, colIndexSigma, sigmaValue))
                     Nsigma++;
 
             if (Nsigma < 3)
@@ -896,10 +897,10 @@ bool fittable18::SetQandIuniform(int &N, double* &QQ, double* &sigmaQ, int m){
             double sigmaMin, sigmaMax;
 
             for (i = 0; i < t->numRows(); i++)
-                if (rx.match(t->text(i, 0)).hasMatch() && rx.match(t->text(i, colIndexSigma)).hasMatch())
+                if (t->tryNumericCell(i, 0, qValue) && t->tryNumericCell(i, colIndexSigma, sigmaValue))
                 {
-                    QQsigma[Nsigma] = t->text(i, 0).toDouble();
-                    sigmaSigma[Nsigma] = t->text(i, colIndexSigma).toDouble();
+                    QQsigma[Nsigma] = qValue;
+                    sigmaSigma[Nsigma] = sigmaValue;
                     if (QQsigma[Nsigma] < Qmin)
                     {
                         Qmin = QQsigma[Nsigma];
@@ -1129,7 +1130,6 @@ bool fittable18::SetQandIgivenM(int &Ntotal, double*&Qtotal, double*&Itotal, dou
     double *sigmaf=new double[N];
     
     int i;
-    QString line;
     
     double wa = spinBoxWA->value();
     double wb = spinBoxWB->value();
@@ -1143,18 +1143,19 @@ bool fittable18::SetQandIgivenM(int &Ntotal, double*&Qtotal, double*&Itotal, dou
     for(i=0;i<N;i++)
     {
         //Q
-        line=t->text(i,xColIndex);
-        if ( checkCell(line) ) QQ[i]=line.toDouble();
+        double cellValue = 0.0;
+        if (t->tryNumericCell(i, xColIndex, cellValue))
+            QQ[i] = cellValue;
         else QQ[i]=-911119.119911;
         
         //I
-        line=t->text(i,yColIndex);
-        if ( checkCell(line) ) II[i]=line.toDouble();
+        if (t->tryNumericCell(i, yColIndex, cellValue))
+            II[i] = cellValue;
         else II[i]=-911119.119911;
         
         //dI
-        line=t->text(i,t->colIndex(colWeight));
-        if ( checkCell(line) ) dII[i]=line.toDouble();
+        if (t->tryNumericCell(i, t->colIndex(colWeight), cellValue))
+            dII[i] = cellValue;
         else if (!weightYN) dII[i]=0.0;
         else if (weightMethod!=0 && weightMethod!=2) dII[i]=0.0;
         else dII[i]=-911119.119911;
@@ -1223,11 +1224,9 @@ bool fittable18::SetQandIgivenM(int &Ntotal, double*&Qtotal, double*&Itotal, dou
             }
             else
             {
-                line = t->text(i, t->colIndex(colReso));
-                if (checkCell(line))
+                if (t->tryNumericCell(i, t->colIndex(colReso), cellValue))
                 {
-                    double val = line.toDouble();
-                    sigmaValue = (sign < 0.0) ? -fabs(val) : val;
+                    sigmaValue = (sign < 0.0) ? -fabs(cellValue) : cellValue;
                 }
                 else
                     sigmaValue = -911119.119911;
@@ -1671,22 +1670,29 @@ bool fittable18::simulateDataTable(int source, int number, QString &simulatedTab
     double yMin = lineEditImin->text().toDouble();
     bool xLogScale = checkBoxLogStep->isChecked();
 
+    const QLocale resultLocale = t->locale();
+    const auto numericText = [&resultLocale, prec](double value) {
+        // Keep the current ungrouped C output byte-for-byte; otherwise follow the result table.
+        return resultLocale == QLocale::c() ? QString::number(value, 'E', prec)
+                                            : resultLocale.toString(value, 'E', prec);
+    };
+
     for (int i = 0; i < N; i++)
     {
-        t->setText(i, 0, QString::number(Q[i], 'E', prec));
+        t->setText(i, 0, numericText(Q[i]));
         if (uniform && xLogScale && Isim[i] < yMin)
             t->setText(i, 1, "");
         else
-            t->setText(i, 1, QString::number(Isim[i], 'E', prec));
+            t->setText(i, 1, numericText(Isim[i]));
         if (uniform)
             t->setText(i, 2, "---");
         else
-            t->setText(i, 2, QString::number(Weight[i], 'E', prec));
-        t->setText(i, 3, QString::number(sigma[i], 'E', prec));
+            t->setText(i, 2, numericText(Weight[i]));
+        t->setText(i, 3, numericText(sigma[i]));
         if (uniform)
             t->setText(i, 4, "---");
         else
-            t->setText(i, 4, QString::number(Idata[i] - Isim[i], 'E', prec));
+            t->setText(i, 4, numericText(Idata[i] - Isim[i]));
     }
        
     int currentLine = 0;
@@ -1793,7 +1799,10 @@ bool fittable18::simulateDataTable(int source, int number, QString &simulatedTab
     for (int pp = 0; pp < p; pp++)
     {
         t->setText(pp, 7, F_paraList[pp]);
-        t->setText(pp, 8, tableParaSimulate->item(pp, 0)->text());
+        const QString valueText = tableParaSimulate->item(pp, 0)->text();
+        t->setText(
+            pp, 8,
+            Table::convertNumericText(valueText, QLocale::c(), resultLocale, 'G', QLocale::FloatingPointShortest));
         if (source == 1)
             t->setText(pp, 9, tablePara->item(pp, 3 * number + 3)->text());
         else if (source == 2)
@@ -1815,23 +1824,6 @@ bool fittable18::simulateDataTable(int source, int number, QString &simulatedTab
 
     t->setAutoUpdateValues(true);
     return true;
-}
-
-//***************************************************
-//*** checkCell
-//***************************************************
-bool fittable18::checkCell(QString &line){
-    static const QRegularExpression rx(R"(((\-|\+)?\d\d*(\.\d*)?((E\-|E\+)\d\d?\d?\d?)?))");
-    
-    line=line.trimmed();
-    line.replace(",",".");
-    line.replace("e","E");
-    line.replace("E","E0");
-    line.replace("E0+","E+0");
-    line.replace("E0-","E-0");
-    line.replace("E0","E+0");
-    line = rx.match(line).captured(1);
-    return rx.match(line).hasMatch();
 }
 
 //+++ Simulate No Reso with parallelization
