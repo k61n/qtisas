@@ -7095,9 +7095,6 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                         <property name="styleSheet">
                          <string notr="true"/>
                         </property>
-                        <property name="locale">
-                         <locale language="English" country="UnitedStates"/>
-                        </property>
                         <property name="prefix">
                          <string>a: </string>
                         </property>
@@ -7171,9 +7168,6 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                         </property>
                         <property name="styleSheet">
                          <string notr="true"/>
-                        </property>
-                        <property name="locale">
-                         <locale language="English" country="UnitedStates"/>
                         </property>
                         <property name="prefix">
                          <string>b: </string>
@@ -7249,9 +7243,6 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                         <property name="styleSheet">
                          <string notr="true"/>
                         </property>
-                        <property name="locale">
-                         <locale language="English" country="UnitedStates"/>
-                        </property>
                         <property name="prefix">
                          <string>c:</string>
                         </property>
@@ -7325,9 +7316,6 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                         </property>
                         <property name="styleSheet">
                          <string notr="true"/>
-                        </property>
-                        <property name="locale">
-                         <locale language="English" country="UnitedStates"/>
                         </property>
                         <property name="prefix">
                          <string>xmax: </string>
@@ -32395,7 +32383,7 @@ QTableCornerButton::section{
         <enum>QFrame::Box</enum>
        </property>
        <property name="text">
-        <string>v.8.5-19.05.2026</string>
+        <string>v.8.6-29.09.2026</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>

@@ -2751,6 +2751,21 @@ void ConfigDialog::apply()
                 ((Matrix *)w)->resetView();
         }
 
+#ifdef QTISAS
+        if (app->ascii1dWindow)
+            app->ascii1dWindow->setLocale(locale);
+        if (app->jnseWindow)
+            app->jnseWindow->setLocale(locale);
+        if (app->svdWindow)
+            app->svdWindow->setLocale(locale);
+        if (app->danWindow)
+            app->danWindow->setLocale(locale);
+        if (app->compileWindow)
+            app->compileWindow->setLocale(locale);
+        if (app->fittableWindow)
+            app->fittableWindow->setLocale(locale);
+#endif
+
 		switch (boxClipboardLocale->currentIndex()){
         	case 0:
             	app->setClipboardLocale(QLocale::system());

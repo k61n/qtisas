@@ -42630,9 +42630,6 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                    <property name="styleSheet">
                     <string notr="true"/>
                    </property>
-                   <property name="locale">
-                    <locale language="English" country="UnitedStates"/>
-                   </property>
                    <property name="maximum">
                     <double>100.000000000000000</double>
                    </property>
@@ -42771,9 +42768,6 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                    </property>
                    <property name="styleSheet">
                     <string notr="true"/>
-                   </property>
-                   <property name="locale">
-                    <locale language="English" country="UnitedStates"/>
                    </property>
                    <property name="maximum">
                     <double>100.000000000000000</double>
@@ -68415,9 +68409,6 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                       <property name="styleSheet">
                        <string notr="true"/>
                       </property>
-                      <property name="locale">
-                       <locale language="English" country="UnitedStates"/>
-                      </property>
                       <property name="prefix">
                        <string>Qmin: </string>
                       </property>
@@ -68497,9 +68488,6 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                       </property>
                       <property name="styleSheet">
                        <string notr="true"/>
-                      </property>
-                      <property name="locale">
-                       <locale language="English" country="UnitedStates"/>
                       </property>
                       <property name="prefix">
                        <string>Qmax: </string>
@@ -68747,9 +68735,6 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                       <property name="styleSheet">
                        <string notr="true"/>
                       </property>
-                      <property name="locale">
-                       <locale language="English" country="UnitedStates"/>
-                      </property>
                       <property name="suffix">
                        <string> %</string>
                       </property>
@@ -68891,9 +68876,6 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                       </property>
                       <property name="styleSheet">
                        <string notr="true"/>
-                      </property>
-                      <property name="locale">
-                       <locale language="English" country="UnitedStates"/>
                       </property>
                       <property name="suffix">
                        <string> %</string>
@@ -71935,7 +71917,7 @@ p, li { white-space: pre-wrap; }
          <number>1</number>
         </property>
         <property name="text">
-         <string>v.7.6-11.12.2025</string>
+         <string>v.7.7-29.09.2026</string>
         </property>
         <property name="alignment">
          <set>Qt::AlignCenter</set>
