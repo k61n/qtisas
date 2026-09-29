@@ -108,6 +108,7 @@ public slots:
 	//! Return the value of the cell as a double
 	double cell(int row, int col);
 	void setCell(int row, int col, double val);
+    void setCellOrText(int row, int col, const QString &text, const QLocale &sourceLocale);
 
 	QString text(int row, int col);
 	QStringList columnsList();

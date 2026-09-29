@@ -2397,6 +2397,27 @@ void Table::setCell(int row, int col, double val)
     d_table->setText(row, col, locale().toString(val, format, prec));
 }
 
+void Table::setCellOrText(int row, int col, const QString &text, const QLocale &sourceLocale)
+{
+    if (col < 0 || col >= d_table->columnCount() || row < 0 || row >= d_table->rowCount())
+        return;
+
+    if (colTypes[col] == Numeric)
+    {
+        bool ok = false;
+        const double value = sourceLocale.toDouble(text, &ok);
+        if (ok)
+        {
+            setCell(row, col, value);
+        }
+        else
+            clearCell(row, col);
+        return;
+    }
+
+    setText(row, col, text);
+}
+
 QString Table::text(int row, int col)
 {
 	return d_table->text(row, col);
