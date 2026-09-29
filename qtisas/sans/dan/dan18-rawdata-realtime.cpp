@@ -432,13 +432,19 @@ void dan18::rtSumRead(int numberFrames, QStringList inputFiles, QString tableNam
     int frameLength=tofHeaderBeforeLength+tofHeaderAfterLength+matrixInFileLength;
     
     Table *tableDat=app()->newTable(app()->generateUniqueName(tableName), numberFrames,2*inputFiles.count()+5);
-    tableDat->setColName(4,"Number");
-    tableDat->setColName(1,"from");
-    tableDat->setColName(2,"to");
-    tableDat->setColName(3,"NumberFrames");
-    tableDat->setColName(0,"NormalizedNumber");
-    
-    
+
+    tableDat->setColName(0, "NormalizedNumber");
+    tableDat->setColName(1, "from");
+    tableDat->setColName(2, "to");
+    tableDat->setColName(3, "NumberFrames");
+    tableDat->setColName(4, "Number");
+
+    tableDat->setColNumericFormat(0);
+    tableDat->setColNumericFormat(1);
+    tableDat->setColNumericFormat(2);
+    tableDat->setColNumericFormat(3);
+    tableDat->setColNumericFormat(4);
+
     QString sTOForRT="Real Time";
 
     QString s = inputFiles[0];
@@ -490,24 +496,26 @@ void dan18::rtSumRead(int numberFrames, QStringList inputFiles, QString tableNam
         tableDat->setColName(5 + 2 * i + 1, "NormalizedSum-" + s);
         tableDat->setColComment(5 + 2 * i, "File: " + s);
         tableDat->setColComment(5 + 2 * i + 1, "File: " + s);
+
+        tableDat->setColNumericFormat(5 + 2 * i);
+        tableDat->setColNumericFormat(Table::Decimal, 3, 5 + 2 * i + 1, false);
     }
 
-    int currentSumOfFrames=0;
+    int currentSumOfFrames = 0;
     int from, to, numberOfFrames;
-    
-    
-    for (int i=0;i<numberFrames;i++)
+
+    for (int i = 0; i < numberFrames; i++)
     {
-        numberOfFrames=geometricalSplitting[i]*mergedLinear;
-        from=currentSumOfFrames+1;
-        to=currentSumOfFrames+numberOfFrames;
-        currentSumOfFrames+=numberOfFrames;
-        
-        tableDat->setText(i,4,QString::number(i+1));
-        tableDat->setText(i,1,QString::number(from));
-        tableDat->setText(i,2,QString::number(to));
-        tableDat->setText(i,3,QString::number(numberOfFrames));
-        tableDat->setText(i,0,QString::number((from+to)/2.0));
+        numberOfFrames = geometricalSplitting[i] * mergedLinear;
+        from = currentSumOfFrames + 1;
+        to = currentSumOfFrames + numberOfFrames;
+        currentSumOfFrames += numberOfFrames;
+
+        tableDat->setCell(i, 4, i + 1);
+        tableDat->setCell(i, 1, from);
+        tableDat->setCell(i, 2, to);
+        tableDat->setCell(i, 3, numberOfFrames);
+        tableDat->setCell(i, 0, (from + to) / 2.0);
     }
     
     
@@ -554,10 +562,15 @@ void dan18::rtSumRead(int numberFrames, QStringList inputFiles, QString tableNam
             for (int ii=0; ii<matrixInFileLength; ii++) sMiddle<<streamInput.readLine();
             
             int sum=tofSumCulculate(sMiddle, matrixInFileLength, numberTofPerLine);
-            int currentMergedFrames=tableDat->text(j,3).toInt();
-            tableDat->setText(j,5+2*i,QString::number(sum));
-            tableDat->setText(j,5+2*i+1,QString::number(double(sum)/double(currentMergedFrames)/double(numberRepetitions),'f',3 ));
-            
+
+            const int currentMergedFrames = geometricalSplitting[j] * mergedLinear;
+
+            tableDat->setCell(j, 5 + 2 * i, sum);
+            if (currentMergedFrames <= 0 || numberRepetitions <= 0)
+                tableDat->clearCell(j, 5 + 2 * i + 1);
+            else
+                tableDat->setCell(j, 5 + 2 * i + 1, double(sum) / currentMergedFrames / numberRepetitions);
+
             // read post header
             for (int ii=0; ii<tofHeaderAfterLength; ii++) streamInput.readLine();
             
@@ -592,11 +605,17 @@ void dan18::rtSumReadBinary(int numberFrames, QStringList inputFiles, QString ta
     int DIM=comboBoxMDdata->currentText().toInt();
     
     Table *tableDat=app()->newTable(app()->generateUniqueName(tableName), numberFrames,2*inputFiles.count()+5);
-    tableDat->setColName(4,"Number");
-    tableDat->setColName(1,"from");
-    tableDat->setColName(2,"to");
-    tableDat->setColName(3,"NumberFrames");
-    tableDat->setColName(0,"NormalizedNumber");
+    tableDat->setColName(0, "NormalizedNumber");
+    tableDat->setColName(1, "from");
+    tableDat->setColName(2, "to");
+    tableDat->setColName(3, "NumberFrames");
+    tableDat->setColName(4, "Number");
+
+    tableDat->setColNumericFormat(0);
+    tableDat->setColNumericFormat(1);
+    tableDat->setColNumericFormat(2);
+    tableDat->setColNumericFormat(3);
+    tableDat->setColNumericFormat(4);
 
     QString sTOForRT="Real Time";
 
@@ -649,27 +668,28 @@ void dan18::rtSumReadBinary(int numberFrames, QStringList inputFiles, QString ta
         tableDat->setColName(5 + 2 * i + 1, "NormalizedSum-" + s);
         tableDat->setColComment(5 + 2 * i, "File: " + s);
         tableDat->setColComment(5 + 2 * i + 1, "File: " + s);
+
+        tableDat->setColNumericFormat(5 + 2 * i);
+        tableDat->setColNumericFormat(Table::Decimal, 3, 5 + 2 * i + 1, false);
     }
 
-    int currentSumOfFrames=0;
+    int currentSumOfFrames = 0;
     int from, to, numberOfFrames;
-    
-    
-    for (int i=0;i<numberFrames;i++)
+
+    for (int i = 0; i < numberFrames; i++)
     {
-        numberOfFrames=geometricalSplitting[i]*mergedLinear;
-        from=currentSumOfFrames+1;
-        to=currentSumOfFrames+numberOfFrames;
-        currentSumOfFrames+=numberOfFrames;
+        numberOfFrames = geometricalSplitting[i] * mergedLinear;
+        from = currentSumOfFrames + 1;
+        to = currentSumOfFrames + numberOfFrames;
+        currentSumOfFrames += numberOfFrames;
         
-        tableDat->setText(i,4,QString::number(i+1));
-        tableDat->setText(i,1,QString::number(from));
-        tableDat->setText(i,2,QString::number(to));
-        tableDat->setText(i,3,QString::number(numberOfFrames));
-        tableDat->setText(i,0,QString::number((from+to)/2.0));
+        tableDat->setCell(i, 0, (from + to) / 2.0);
+        tableDat->setCell(i, 1, from);
+        tableDat->setCell(i, 2, to);
+        tableDat->setCell(i, 3, numberOfFrames);
+        tableDat->setCell(i, 4, i + 1);
     }
-    
-    
+
     QStringList sMiddle;
     QString number;
     //
@@ -713,11 +733,14 @@ void dan18::rtSumReadBinary(int numberFrames, QStringList inputFiles, QString ta
                     sum += array[iii * DIM + jjj];
             delete[] array;
 
-            int currentMergedFrames = tableDat->text(j, 3).toInt();
-            tableDat->setText(j, 5 + 2 * i, QString::number(sum));
-            tableDat->setText(
-                j, 5 + 2 * i + 1,
-                QString::number(double(sum) / double(currentMergedFrames) / double(numberRepetitions), 'f', 3));
+            tableDat->setCell(j, 5 + 2 * i, sum);
+
+            const int currentMergedFrames = geometricalSplitting[j] * mergedLinear;
+
+            if (currentMergedFrames <= 0 || numberRepetitions <= 0)
+                tableDat->clearCell(j, 5 + 2 * i + 1);
+            else
+                tableDat->setCell(j, 5 + 2 * i + 1, double(sum) / currentMergedFrames / numberRepetitions);
 
             if (int((j + 1) / 10) * 10 == j + 1)
             {
@@ -1557,4 +1580,3 @@ bool dan18::addNheadersYaml(const QStringList &fileNumers, const QString &fileNa
 
     return true;
 }
-

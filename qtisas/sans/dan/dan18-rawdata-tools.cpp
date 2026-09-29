@@ -102,11 +102,13 @@ void dan18::newInfoTable(QString TableName)
     tableDat->setColComment(itC, "[m]");
     tableDat->setColPlotDesignation(itD, Table::None);
     tableDat->setColumnType(itD, Table::Numeric);
+    tableDat->setColNumericFormat(Table::Decimal, 3, itD, false);
 
     tableDat->setColName(itLambda, "lambda");
     tableDat->setColComment(itD, "[m]");
     tableDat->setColPlotDesignation(itLambda, Table::None);
     tableDat->setColumnType(itLambda, Table::Numeric);
+    tableDat->setColNumericFormat(Table::Decimal, 3, itLambda, false);
 
     tableDat->setColName(itBeam, "Beam");
     tableDat->setColComment(itLambda, "[A]");
@@ -116,15 +118,18 @@ void dan18::newInfoTable(QString TableName)
     tableDat->setColName(itSum, "Sum");
     tableDat->setColPlotDesignation(itSum, Table::Y);
     tableDat->setColumnType(itSum, Table::Numeric);
+    tableDat->setColNumericFormat(Table::Default, 13, itSum, false);
 
     tableDat->setColName(itDuration, "Duration");
     tableDat->setColComment(itDuration, "[sec]");
     tableDat->setColPlotDesignation(itDuration, Table::None);
     tableDat->setColumnType(itDuration, Table::Numeric);
+    tableDat->setColNumericFormat(Table::Default, 6, itDuration, false);
 
     tableDat->setColName(itCps, "cps");
     tableDat->setColPlotDesignation(itCps, Table::Y);
     tableDat->setColumnType(itCps, Table::Numeric);
+    tableDat->setColNumericFormat(Table::Default, 13, itCps, false);
 
     tableDat->setColName(itDate, "Date");
     tableDat->setColPlotDesignation(itDate, Table::None);
@@ -153,10 +158,12 @@ void dan18::newInfoTable(QString TableName)
     tableDat->setColName(itBeamwindowX, "Beamwindow-X");
     tableDat->setColPlotDesignation(itBeamwindowX, Table::None);
     tableDat->setColumnType(itBeamwindowX, Table::Numeric);
+    tableDat->setColNumericFormat(Table::Decimal, 2, itBeamwindowX, false);
 
     tableDat->setColName(itBeamwindowY, "Beamwindow-Y");
     tableDat->setColPlotDesignation(itBeamwindowY, Table::None);
     tableDat->setColumnType(itBeamwindowY, Table::Numeric);
+    tableDat->setColNumericFormat(Table::Decimal, 2, itBeamwindowY, false);
 
     tableDat->setColName(itOffset, "Offset");
     tableDat->setColPlotDesignation(itOffset, Table::None);
@@ -165,14 +172,17 @@ void dan18::newInfoTable(QString TableName)
     tableDat->setColName(itXposition, "X-Position");
     tableDat->setColPlotDesignation(itXposition, Table::None);
     tableDat->setColumnType(itXposition, Table::Numeric);
+    tableDat->setColNumericFormat(Table::Decimal, 3, itXposition, false);
 
     tableDat->setColName(itYposition, "Y-Position");
     tableDat->setColPlotDesignation(itYposition, Table::None);
     tableDat->setColumnType(itYposition, Table::Numeric);
+    tableDat->setColNumericFormat(Table::Decimal, 3, itYposition, false);
 
     tableDat->setColName(itSampleNr, "Sample-Nr");
     tableDat->setColPlotDesignation(itSampleNr, Table::None);
     tableDat->setColumnType(itSampleNr, Table::Numeric);
+    tableDat->setColNumericFormat(Table::Decimal, 0, itSampleNr, false);
 
     tableDat->setColName(itMotor1, "Motor-1");
     tableDat->setColPlotDesignation(itMotor1, Table::None);
@@ -186,14 +196,17 @@ void dan18::newInfoTable(QString TableName)
     tableDat->setColComment(itThickness, "[cm]");
     tableDat->setColPlotDesignation(itThickness, Table::None);
     tableDat->setColumnType(itThickness, Table::Numeric);
+    tableDat->setColNumericFormat(Table::Decimal, 2, itThickness, false);
 
     tableDat->setColName(itBeamWinXs, "BeamWin-Xs");
     tableDat->setColPlotDesignation(itBeamWinXs, Table::None);
     tableDat->setColumnType(itBeamWinXs, Table::Numeric);
+    tableDat->setColNumericFormat(Table::Decimal, 2, itBeamWinXs, false);
 
     tableDat->setColName(itBeamWinYs, "BeamWin-Ys");
     tableDat->setColPlotDesignation(itBeamWinYs, Table::None);
     tableDat->setColumnType(itBeamWinYs, Table::Numeric);
+    tableDat->setColNumericFormat(Table::Decimal, 2, itBeamWinYs, false);
 
     tableDat->setColName(itBeamWinXpos, "Beamwin-X-Pos");
     tableDat->setColPlotDesignation(itBeamWinXpos, Table::None);
@@ -263,14 +276,17 @@ void dan18::newInfoTable(QString TableName)
     tableDat->setColName(itSumvsmask, "Sum-vs-Mask");
     tableDat->setColPlotDesignation(itSumvsmask, Table::Y);
     tableDat->setColumnType(itSumvsmask, Table::Numeric);
+    tableDat->setColNumericFormat(Table::Default, 13, itSumvsmask, false);
 
     tableDat->setColName(itSumvsmaskdeadtimecorrected, "Sum-vs-Mask-Dead-Time-Corrected");
     tableDat->setColPlotDesignation(itSumvsmaskdeadtimecorrected, Table::Y);
     tableDat->setColumnType(itSumvsmaskdeadtimecorrected, Table::Numeric);
+    tableDat->setColNumericFormat(Table::Default, 13, itSumvsmaskdeadtimecorrected, false);
 
     tableDat->setColName(itQ2vsmask, "Q2-vs-Mask");
     tableDat->setColPlotDesignation(itQ2vsmask, Table::Y);
     tableDat->setColumnType(itQ2vsmask, Table::Numeric);
+    tableDat->setColNumericFormat(Table::Default, 13, itQ2vsmask, false);
 
     tableDat->setColName(itAttenuator, "Attenuator");
     tableDat->setColPlotDesignation(itAttenuator, Table::None);
@@ -283,34 +299,42 @@ void dan18::newInfoTable(QString TableName)
     tableDat->setColName(itSlicesCount, "Slices-Count");
     tableDat->setColPlotDesignation(itSlicesCount, Table::Y);
     tableDat->setColumnType(itSlicesCount, Table::Numeric);
+    tableDat->setColNumericFormat(Table::Decimal, 0, itSlicesCount, false);
 
     tableDat->setColName(itSlicesDuration, "Slices-Duration");
     tableDat->setColPlotDesignation(itSlicesDuration, Table::Y);
     tableDat->setColumnType(itSlicesDuration, Table::Numeric);
+    tableDat->setColNumericFormat(Table::Default, 6, itSlicesDuration, false);
 
     tableDat->setColName(itSlicesCurrentNumber, "Slices-Current-Number");
     tableDat->setColPlotDesignation(itSlicesCurrentNumber, Table::Y);
     tableDat->setColumnType(itSlicesCurrentNumber, Table::Numeric);
+    tableDat->setColNumericFormat(Table::Decimal, 0, itSlicesCurrentNumber, false);
 
     tableDat->setColName(itSlicesCurrentDuration, "Slices-Current-Duration");
     tableDat->setColPlotDesignation(itSlicesCurrentDuration, Table::Y);
     tableDat->setColumnType(itSlicesCurrentDuration, Table::Numeric);
+    tableDat->setColNumericFormat(Table::Decimal, 0, itSlicesCurrentDuration, false);
 
     tableDat->setColName(itSlicesCurrentMonitor1, "Slices-Current-Monitor1");
     tableDat->setColPlotDesignation(itSlicesCurrentMonitor1, Table::Y);
     tableDat->setColumnType(itSlicesCurrentMonitor1, Table::Numeric);
+    tableDat->setColNumericFormat(Table::Decimal, 0, itSlicesCurrentMonitor1, false);
 
     tableDat->setColName(itSlicesCurrentMonitor2, "Slices-Current-Monitor2");
     tableDat->setColPlotDesignation(itSlicesCurrentMonitor2, Table::Y);
     tableDat->setColumnType(itSlicesCurrentMonitor2, Table::Numeric);
+    tableDat->setColNumericFormat(Table::Decimal, 0, itSlicesCurrentMonitor2, false);
 
     tableDat->setColName(itSlicesCurrentMonitor3, "Slices-Current-Monitor3");
     tableDat->setColPlotDesignation(itSlicesCurrentMonitor3, Table::Y);
     tableDat->setColumnType(itSlicesCurrentMonitor3, Table::Numeric);
+    tableDat->setColNumericFormat(Table::Decimal, 0, itSlicesCurrentMonitor3, false);
 
     tableDat->setColName(itSlicesCurrentSum, "Slices-Current-Sum");
     tableDat->setColPlotDesignation(itSlicesCurrentSum, Table::Y);
     tableDat->setColumnType(itSlicesCurrentSum, Table::Numeric);
+    tableDat->setColNumericFormat(Table::Decimal, 0, itSlicesCurrentSum, false);
 
     tableDat->show();
 
@@ -485,11 +509,13 @@ void dan18::addToInfoTable()
         tableDat->setColComment(itC, "[m]");
         tableDat->setColPlotDesignation(itD, Table::None);
         tableDat->setColumnType(itD, Table::Numeric);
+        tableDat->setColNumericFormat(Table::Decimal, 3, itD, false);
 
         tableDat->setColName(itLambda, "lambda");
         tableDat->setColComment(itD, "[m]");
         tableDat->setColPlotDesignation(itLambda, Table::None);
         tableDat->setColumnType(itLambda, Table::Numeric);
+        tableDat->setColNumericFormat(Table::Decimal, 3, itLambda, false);
 
         tableDat->setColName(itBeam, "Beam");
         tableDat->setColComment(itLambda, "[A]");
@@ -499,15 +525,18 @@ void dan18::addToInfoTable()
         tableDat->setColName(itSum, "Sum");
         tableDat->setColPlotDesignation(itSum, Table::Y);
         tableDat->setColumnType(itSum, Table::Numeric);
+        tableDat->setColNumericFormat(Table::Default, 13, itSum, false);
 
         tableDat->setColName(itDuration, "Duration");
         tableDat->setColComment(itDuration, "[sec]");
         tableDat->setColPlotDesignation(itDuration, Table::None);
         tableDat->setColumnType(itDuration, Table::Numeric);
+        tableDat->setColNumericFormat(Table::Default, 6, itDuration, false);
 
         tableDat->setColName(itCps, "cps");
         tableDat->setColPlotDesignation(itCps, Table::Y);
         tableDat->setColumnType(itCps, Table::Numeric);
+        tableDat->setColNumericFormat(Table::Default, 13, itCps, false);
 
         tableDat->setColName(itDate, "Date");
         tableDat->setColPlotDesignation(itDate, Table::None);
@@ -536,10 +565,12 @@ void dan18::addToInfoTable()
         tableDat->setColName(itBeamwindowX, "Beamwindow-X");
         tableDat->setColPlotDesignation(itBeamwindowX, Table::None);
         tableDat->setColumnType(itBeamwindowX, Table::Numeric);
+        tableDat->setColNumericFormat(Table::Decimal, 2, itBeamwindowX, false);
 
         tableDat->setColName(itBeamwindowY, "Beamwindow-Y");
         tableDat->setColPlotDesignation(itBeamwindowY, Table::None);
         tableDat->setColumnType(itBeamwindowY, Table::Numeric);
+        tableDat->setColNumericFormat(Table::Decimal, 2, itBeamwindowY, false);
 
         tableDat->setColName(itOffset, "Offset");
         tableDat->setColPlotDesignation(itOffset, Table::None);
@@ -548,14 +579,17 @@ void dan18::addToInfoTable()
         tableDat->setColName(itXposition, "X-Position");
         tableDat->setColPlotDesignation(itXposition, Table::None);
         tableDat->setColumnType(itXposition, Table::Numeric);
+        tableDat->setColNumericFormat(Table::Decimal, 3, itXposition, false);
 
         tableDat->setColName(itYposition, "Y-Position");
         tableDat->setColPlotDesignation(itYposition, Table::None);
         tableDat->setColumnType(itYposition, Table::Numeric);
+        tableDat->setColNumericFormat(Table::Decimal, 3, itYposition, false);
 
         tableDat->setColName(itSampleNr, "Sample-Nr");
         tableDat->setColPlotDesignation(itSampleNr, Table::None);
         tableDat->setColumnType(itSampleNr, Table::Numeric);
+        tableDat->setColNumericFormat(Table::Decimal, 0, itSampleNr, false);
 
         tableDat->setColName(itMotor1, "Motor-1");
         tableDat->setColPlotDesignation(itMotor1, Table::None);
@@ -569,14 +603,17 @@ void dan18::addToInfoTable()
         tableDat->setColComment(itThickness, "[cm]");
         tableDat->setColPlotDesignation(itThickness, Table::None);
         tableDat->setColumnType(itThickness, Table::Numeric);
+        tableDat->setColNumericFormat(Table::Decimal, 2, itThickness, false);
 
         tableDat->setColName(itBeamWinXs, "BeamWin-Xs");
         tableDat->setColPlotDesignation(itBeamWinXs, Table::None);
         tableDat->setColumnType(itBeamWinXs, Table::Numeric);
+        tableDat->setColNumericFormat(Table::Decimal, 2, itBeamWinXs, false);
 
         tableDat->setColName(itBeamWinYs, "BeamWin-Ys");
         tableDat->setColPlotDesignation(itBeamWinYs, Table::None);
         tableDat->setColumnType(itBeamWinYs, Table::Numeric);
+        tableDat->setColNumericFormat(Table::Decimal, 2, itBeamWinYs, false);
 
         tableDat->setColName(itBeamWinXpos, "Beamwin-X-Pos");
         tableDat->setColPlotDesignation(itBeamWinXpos, Table::None);
@@ -666,34 +703,42 @@ void dan18::addToInfoTable()
         tableDat->setColName(itSlicesCount, "Slices-Count");
         tableDat->setColPlotDesignation(itSlicesCount, Table::Y);
         tableDat->setColumnType(itSlicesCount, Table::Numeric);
+        tableDat->setColNumericFormat(Table::Decimal, 0, itSlicesCount, false);
 
         tableDat->setColName(itSlicesDuration, "Slices-Duration");
         tableDat->setColPlotDesignation(itSlicesDuration, Table::Y);
         tableDat->setColumnType(itSlicesDuration, Table::Numeric);
+        tableDat->setColNumericFormat(Table::Default, 6, itSlicesDuration, false);
 
         tableDat->setColName(itSlicesCurrentNumber, "Slices-Current-Number");
         tableDat->setColPlotDesignation(itSlicesCurrentNumber, Table::Y);
         tableDat->setColumnType(itSlicesCurrentNumber, Table::Numeric);
+        tableDat->setColNumericFormat(Table::Decimal, 0, itSlicesCurrentNumber, false);
 
         tableDat->setColName(itSlicesCurrentDuration, "Slices-Current-Duration");
         tableDat->setColPlotDesignation(itSlicesCurrentDuration, Table::Y);
         tableDat->setColumnType(itSlicesCurrentDuration, Table::Numeric);
+        tableDat->setColNumericFormat(Table::Decimal, 0, itSlicesCurrentDuration, false);
 
         tableDat->setColName(itSlicesCurrentMonitor1, "Slices-Current-Monitor1");
         tableDat->setColPlotDesignation(itSlicesCurrentMonitor1, Table::Y);
         tableDat->setColumnType(itSlicesCurrentMonitor1, Table::Numeric);
+        tableDat->setColNumericFormat(Table::Decimal, 0, itSlicesCurrentMonitor1, false);
 
         tableDat->setColName(itSlicesCurrentMonitor2, "Slices-Current-Monitor2");
         tableDat->setColPlotDesignation(itSlicesCurrentMonitor2, Table::Y);
         tableDat->setColumnType(itSlicesCurrentMonitor2, Table::Numeric);
+        tableDat->setColNumericFormat(Table::Decimal, 0, itSlicesCurrentMonitor2, false);
 
         tableDat->setColName(itSlicesCurrentMonitor3, "Slices-Current-Monitor3");
         tableDat->setColPlotDesignation(itSlicesCurrentMonitor3, Table::Y);
         tableDat->setColumnType(itSlicesCurrentMonitor3, Table::Numeric);
+        tableDat->setColNumericFormat(Table::Decimal, 0, itSlicesCurrentMonitor3, false);
 
         tableDat->setColName(itSlicesCurrentSum, "Slices-Current-Sum");
         tableDat->setColPlotDesignation(itSlicesCurrentSum, Table::Y);
         tableDat->setColumnType(itSlicesCurrentSum, Table::Numeric);
+        tableDat->setColNumericFormat(Table::Decimal, 0, itSlicesCurrentSum, false);
     }
 
     tableDat->setNumRows(startRaw + filesNumber);
@@ -703,7 +748,7 @@ void dan18::addToInfoTable()
     //+++
     QString fnameOnly;
     int skip;
-    QString s,ss,nameMatrix,name2ndHeader;
+    QString s, nameMatrix, name2ndHeader;
     int iter;
     QStringList lst;
     int index;
@@ -721,8 +766,9 @@ void dan18::addToInfoTable()
     progress.setMaximumWidth(4000);
     progress.setLabelText("DAN - Getting File Information ...");
     progress.show();
-    
-    
+
+    QLocale headerLocale = QLocale::c();
+    headerLocale.setNumberOptions(QLocale::RejectGroupSeparator);
 
     for(iter=startRaw; iter<(startRaw+filesNumber);iter++)
     {
@@ -730,7 +776,7 @@ void dan18::addToInfoTable()
         if ( progress.wasCanceled() ) break;
         
 
-        tableDat->setText( iter, itFiles, selectedDat[iter-startRaw]);
+        tableDat->setText(iter, itFiles, selectedDat[iter - startRaw]);
         lst.clear();
 
         //+++ header
@@ -749,20 +795,18 @@ void dan18::addToInfoTable()
         //+++ Info [itSample]
         tableDat->setText(iter, itSample, sample->readName(name2ndHeader, lst));
         //+++ Run Nuber [itRuns]
-        tableDat->setText(iter,itRuns, nameMatrix);
+        tableDat->setText(iter, itRuns, nameMatrix);
         //+++ Collimation [itC]
-        tableDat->setText(iter, itC, QString::number(int(collimation->readCinM(name2ndHeader, lst))));
+        tableDat->setCell(iter, itC, int(collimation->readCinM(name2ndHeader, lst)));
         //+++ Detector Z [itD]
-        tableDat->setText(iter, itD, QString::number(detector->readDinM(name2ndHeader, lst), 'f', 3));
+        tableDat->setCell(iter, itD, detector->readDinM(name2ndHeader, lst));
         //+++ Lambda [itLambda]
-        tableDat->setText(
-            iter, itLambda,
-            QString::number(selector->readLambda(name2ndHeader, monitors->readDuration(name2ndHeader, lst), lst), 'f',
-                            3));
+        tableDat->setCell(iter, itLambda,
+                          selector->readLambda(name2ndHeader, monitors->readDuration(name2ndHeader, lst), lst));
         //+++ Sum [itSum]
-        tableDat->setText(iter, itSum, QString::number(monitors->readSum(name2ndHeader, 0.0, lst), 'G', 13));
+        tableDat->setCell(iter, itSum, monitors->readSum(name2ndHeader, 0.0, lst));
         //+++ Duration [itDuration]
-        tableDat->setText(iter, itDuration, QString::number(monitors->readDuration(name2ndHeader, lst)));
+        tableDat->setCell(iter, itDuration, monitors->readDuration(name2ndHeader, lst));
         //+++ Date [itDate]
         tableDat->setText(iter, itDate, sample->readDate(name2ndHeader, lst));
         //+++ Time [itTime]
@@ -776,42 +820,41 @@ void dan18::addToInfoTable()
         //+++ Field-4 [itField4]
         tableDat->setText(iter, itField4, parserHeader->readNumberString(name2ndHeader, "[Field-4]", lst));
         //+++ Beamwindow_X 	[itBeamwindowX]
-        tableDat->setText(
-            iter, itBeamwindowX,
-            QString::number(parserHeader->readNumberString(name2ndHeader, "[CA-X]", lst).toDouble(), 'f', 2));
+        tableDat->setCellOrText(iter, itBeamwindowX, parserHeader->readNumberString(name2ndHeader, "[CA-X]", lst),
+                                headerLocale);
         //+++ Beamwindow_Y 	[itBeamwindowY]
-        tableDat->setText(
-            iter, itBeamwindowY,
-            QString::number(parserHeader->readNumberString(name2ndHeader, "[CA-Y]", lst).toDouble(), 'f', 2));
+        tableDat->setCellOrText(iter, itBeamwindowY, parserHeader->readNumberString(name2ndHeader, "[CA-Y]", lst),
+                                headerLocale);
         //+++ Detector Offet [itOffset]
-        tableDat->setText(iter, itOffset, parserHeader->readNumberString(name2ndHeader, "[C,D-Offset]", lst));
+        tableDat->setCellOrText(iter, itOffset, parserHeader->readNumberString(name2ndHeader, "[C,D-Offset]", lst),
+                                headerLocale);
         //+++ DetectorX [itXposition]
-        tableDat->setText(iter, itXposition, QString::number(detector->readDetectorX(name2ndHeader, lst), 'f', 3));
+        tableDat->setCell(iter, itXposition, detector->readDetectorX(name2ndHeader, lst));
         //+++ DetectorY [itYposition]
-        tableDat->setText(iter, itYposition, QString::number(detector->readDetectorY(name2ndHeader, lst), 'f', 3));
+        tableDat->setCell(iter, itYposition, detector->readDetectorY(name2ndHeader, lst));
         //+++ Sample discription 	[itSampleNr]
-        ss = QString::number(sample->readPositionNumber(name2ndHeader, lst).toDouble(), 'f', 0);
-        tableDat->setText(iter, itSampleNr, ss);
+        tableDat->setCellOrText(iter, itSampleNr, sample->readPositionNumber(name2ndHeader, lst), headerLocale);
         //+++ SMotor-1 [itMotor1]
-        tableDat->setText(iter, itMotor1, sample->readMotor1(name2ndHeader, lst));
+        tableDat->setCellOrText(iter, itMotor1, sample->readMotor1(name2ndHeader, lst), headerLocale);
         //+++ SMotor-2 [itMotor2]
-        tableDat->setText(iter, itMotor2, sample->readMotor2(name2ndHeader, lst));
+        tableDat->setCellOrText(iter, itMotor2, sample->readMotor2(name2ndHeader, lst), headerLocale);
         //+++ Thickness [itThickness]
-        tableDat->setText(iter, itThickness, QString::number(sample->readThickness(name2ndHeader, lst), 'f', 2));
+        tableDat->setCell(iter, itThickness, sample->readThickness(name2ndHeader, lst));
         //+++ BeamWin-Xs 	[itBeamWinXs]
-        tableDat->setText(
-            iter, itBeamWinXs,
-            QString::number(parserHeader->readNumberString(name2ndHeader, "[SA-X]", lst).toDouble(), 'f', 2));
+        tableDat->setCellOrText(iter, itBeamWinXs, parserHeader->readNumberString(name2ndHeader, "[SA-X]", lst),
+                                headerLocale);
         //+++ BeamWin-Ys 	[itBeamWinYs]
-        tableDat->setText(
-            iter, itBeamWinYs,
-            QString::number(parserHeader->readNumberString(name2ndHeader, "[SA-Y]", lst).toDouble(), 'f', 2));
+        tableDat->setCellOrText(iter, itBeamWinYs, parserHeader->readNumberString(name2ndHeader, "[SA-Y]", lst),
+                                headerLocale);
         //+++ SA-Pos-X 	[itBeamWinXpos]
-        tableDat->setText(iter, itBeamWinXpos, parserHeader->readNumberString(name2ndHeader, "[SA-Pos-X]", lst));
+        tableDat->setCellOrText(iter, itBeamWinXpos, parserHeader->readNumberString(name2ndHeader, "[SA-Pos-X]", lst),
+                                headerLocale);
         //+++ SA-Pos-Y 	[itBeamWinYpos]
-        tableDat->setText(iter, itBeamWinXpos, parserHeader->readNumberString(name2ndHeader, "[SA-Pos-Y]", lst));
+        tableDat->setCellOrText(iter, itBeamWinYpos, parserHeader->readNumberString(name2ndHeader, "[SA-Pos-Y]", lst),
+                                headerLocale);
         //+++ Time-Factor [itTimeFactor]
-        tableDat->setText(iter, itTimeFactor, parserHeader->readNumberString(name2ndHeader, "[Duration-Factor]", lst));
+        tableDat->setCellOrText(iter, itTimeFactor,
+                                parserHeader->readNumberString(name2ndHeader, "[Duration-Factor]", lst), headerLocale);
         //+++ Comment1 [itComment1]
         tableDat->setText(iter, itComment1, sample->readComment1(name2ndHeader, lst));
         //+++ Comment2 		[itComment2]
@@ -821,13 +864,17 @@ void dan18::addToInfoTable()
         //+++ User Name [itWho]
         tableDat->setText(iter, itWho, sample->readUserName(name2ndHeader, lst));
         //+++ Selector [itSelector]
-        tableDat->setText(iter, itSelector, parserHeader->readNumberString(name2ndHeader, "[Selector]", lst));
+        tableDat->setCellOrText(iter, itSelector, parserHeader->readNumberString(name2ndHeader, "[Selector]", lst),
+                                headerLocale);
         //+++ Monitor1 [itMonitor1]
-        tableDat->setText(iter, itMonitor1, parserHeader->readNumberString(name2ndHeader, "[Monitor-1]", lst));
+        tableDat->setCellOrText(iter, itMonitor1, parserHeader->readNumberString(name2ndHeader, "[Monitor-1]", lst),
+                                headerLocale);
         //+++ Monitor2 		[itMonitor2]
-        tableDat->setText(iter, itMonitor2, parserHeader->readNumberString(name2ndHeader, "[Monitor-2]", lst));
+        tableDat->setCellOrText(iter, itMonitor2, parserHeader->readNumberString(name2ndHeader, "[Monitor-2]", lst),
+                                headerLocale);
         //+++ Monitor3 		[itMonitor3]
-        tableDat->setText(iter, itMonitor3, parserHeader->readNumberString(name2ndHeader, "[Monitor-3|Tr|ROI]", lst));
+        tableDat->setCellOrText(iter, itMonitor3,
+                                parserHeader->readNumberString(name2ndHeader, "[Monitor-3|Tr|ROI]", lst), headerLocale);
         //+++ RT-Current-Number [itRTnumber]
         tableDat->setText(iter, itRTnumber, QString::number(tofrt->readRtCurrentNumber(name2ndHeader, lst)));
         //+++ RT-Time-Factor [itRTtimefactor]
@@ -841,69 +888,79 @@ void dan18::addToInfoTable()
         //+++ Lenses
         tableDat->setText(iter, itLenses, parserHeader->readNumberString(name2ndHeader, "[Lenses]", lst));
         //+++ Slices-Count
-        tableDat->setText(
-            iter, itSlicesCount,
-            QString::number(parserHeader->readNumberString(name2ndHeader, "[Slices-Count]", lst).toDouble(), 'f', 0));
+        tableDat->setCellOrText(iter, itSlicesCount,
+                                parserHeader->readNumberString(name2ndHeader, "[Slices-Count]", lst), headerLocale);
         //+++ Slices-Duration
-        tableDat->setText(iter, itSlicesDuration, tofrt->readSlicesDuration(name2ndHeader, lst));
+        tableDat->setCellOrText(iter, itSlicesDuration, tofrt->readSlicesDuration(name2ndHeader, lst), headerLocale);
         //+++ Slices-Current-Number
-        tableDat->setText(
-            iter, itSlicesCurrentNumber,
-            QString::number(parserHeader->readNumberString(name2ndHeader, "[Slices-Current-Number]", lst).toDouble(),
-                            'f', 0));
+        tableDat->setCellOrText(iter, itSlicesCurrentNumber,
+                                parserHeader->readNumberString(name2ndHeader, "[Slices-Current-Number]", lst),
+                                headerLocale);
         //+++ Slices-Current-Duration
-        tableDat->setText(
-            iter, itSlicesCurrentDuration,
-            QString::number(parserHeader->readNumberString(name2ndHeader, "[Slices-Current-Duration]", lst).toDouble(),
-                            'f', 0));
+        tableDat->setCellOrText(iter, itSlicesCurrentDuration,
+                                parserHeader->readNumberString(name2ndHeader, "[Slices-Current-Duration]", lst),
+                                headerLocale);
         //+++ Slices-Current-Monitor1
-        tableDat->setText(
-            iter, itSlicesCurrentMonitor1,
-            QString::number(parserHeader->readNumberString(name2ndHeader, "[Slices-Current-Monitor1]", lst).toDouble(),
-                            'f', 0));
+        tableDat->setCellOrText(iter, itSlicesCurrentMonitor1,
+                                parserHeader->readNumberString(name2ndHeader, "[Slices-Current-Monitor1]", lst),
+                                headerLocale);
         //+++ Slices-Current-Monitor2
-        tableDat->setText(
-            iter, itSlicesCurrentMonitor2,
-            QString::number(parserHeader->readNumberString(name2ndHeader, "[Slices-Current-Monitor2]", lst).toDouble(),
-                            'f', 0));
+        tableDat->setCellOrText(iter, itSlicesCurrentMonitor2,
+                                parserHeader->readNumberString(name2ndHeader, "[Slices-Current-Monitor2]", lst),
+                                headerLocale);
         //+++ Slices-Current-Monitor3
-        tableDat->setText(
-            iter, itSlicesCurrentMonitor3,
-            QString::number(parserHeader->readNumberString(name2ndHeader, "[Slices-Current-Monitor3]", lst).toDouble(),
-                            'f', 0));
+        tableDat->setCellOrText(iter, itSlicesCurrentMonitor3,
+                                parserHeader->readNumberString(name2ndHeader, "[Slices-Current-Monitor3]", lst),
+                                headerLocale);
         //+++ Slices-Current-Sum
-        tableDat->setText(
-            iter, itSlicesCurrentSum,
-            QString::number(parserHeader->readNumberString(name2ndHeader, "[Slices-Current-Sum]", lst).toDouble(), 'f',
-                            0));
+        tableDat->setCellOrText(iter, itSlicesCurrentSum,
+                                parserHeader->readNumberString(name2ndHeader, "[Slices-Current-Sum]", lst),
+                                headerLocale);
         // cps
-        double cps = tableDat->text(iter, itSum).toDouble() / tableDat->text(iter, itDuration).toDouble() *
-                     tableDat->text(iter, itRTtimefactor).toDouble(); // 2015 RT-TOF
-        tableDat->setText(iter, itCps, QString::number(cps, 'G', 13));
+        double sumValue = 0.0;
+        double durationValue = 0.0;
+        const bool hasSum = tableDat->tryNumericCell(iter, itSum, sumValue);
+        const bool hasDuration = tableDat->tryNumericCell(iter, itDuration, durationValue);
+        bool hasTimeFactor = false;
+        const double timeFactor = tableDat->text(iter, itRTtimefactor).toDouble(&hasTimeFactor); // C-style Text column.
+        if (hasSum && hasDuration && durationValue != 0.0 && hasTimeFactor)
+        {
+            const double cps = sumValue / durationValue * timeFactor; // 2015 RT-TOF
+            tableDat->setCell(iter, itCps, cps);
+        }
+        else
+            tableDat->clearCell(iter, itCps);
 
         // integral
         if (checkBoxSumVsMask->isChecked())
         {
-            tableDat->setText(iter, itSumvsmask, QString::number(integralVSmaskSimmetrical(nameMatrix), 'G', 13));
-            tableDat->setText(iter, itSumvsmaskdeadtimecorrected,
-                              QString::number(integralVSmaskUniDeadTimeCorrected(nameMatrix), 'G', 13));
-            tableDat->setText(iter, itQ2vsmask, QString::number(Q2_VS_maskSimmetrical(nameMatrix), 'G', 13));
+            tableDat->setCell(iter, itSumvsmask, integralVSmaskSimmetrical(nameMatrix));
+            tableDat->setCell(iter, itSumvsmaskdeadtimecorrected, integralVSmaskUniDeadTimeCorrected(nameMatrix));
+            tableDat->setCell(iter, itQ2vsmask, Q2_VS_maskSimmetrical(nameMatrix));
         }
         else
         {
-            tableDat->setText( iter, itSumvsmask, "" );
-            tableDat->setText( iter, itSumvsmaskdeadtimecorrected, "" );	    
-            tableDat->setText( iter, itQ2vsmask, "" ); 
+            tableDat->clearCell(iter, itSumvsmask);
+            tableDat->clearCell(iter, itSumvsmaskdeadtimecorrected);
+            tableDat->clearCell(iter, itQ2vsmask);
         }
         // Frame Duration
-        double frameDuration=tableDat->text(iter,itDuration).toDouble();
-        frameDuration*=tableDat->text(iter,itRTrepetitions).toDouble();
-        if (tableDat->text(iter,itRTtimefactor).toDouble()!=0) frameDuration/=tableDat->text(iter,itRTtimefactor).toDouble();
-        tableDat->setText(iter,itRTframeduration,QString::number(frameDuration));//new
+        bool hasRepetitions = false;
+        const double repetitions = tableDat->text(iter, itRTrepetitions).toDouble(&hasRepetitions);
+        if (hasDuration && hasRepetitions && hasTimeFactor)
+        {
+            double frameDuration = durationValue * repetitions;
+            if (timeFactor != 0.0)
+                frameDuration /= timeFactor;
+            tableDat->setText(iter, itRTframeduration, QString::number(frameDuration));
+        }
+        else
+            tableDat->clearCell(iter, itRTframeduration);
         
         // Beam Size
         s = collimation->readCA(name2ndHeader, lst) + "|" + collimation->readSA(name2ndHeader, lst);
         tableDat->setText(iter, itBeam, s);
+
         
         // real D
         //tableDat->setText(iter,3,QString::number(tableDat->text(iter,3).toDouble()+tableDat->text(iter,17).toDouble(),'f',2));

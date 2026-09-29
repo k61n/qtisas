@@ -1585,50 +1585,48 @@ void dan18::radUniStandartMSmode(int md, gsl_matrix *Sample, gsl_matrix *SampleE
                 numAllQ++;
                 
             }
-            else
+            else if (numAllQ >= skipFirst)
             {
-                if (numAllQ>=skipFirst)
+                if (!((avg <= 0 || avgms <= 0) && checkBoxMaskNegativeQ->isChecked()))
                 {
-                    if ( !((avg<=0 || avgms<=0) && checkBoxMaskNegativeQ->isChecked()) )
+                    wOut->setNumRows(numRowsOut + 1);
+                    wOut->setCell(numRowsOut, 0, QQQ);
+                    wOut->setCell(numRowsOut, 1, III);
+                    wOut->setCell(numRowsOut, 2, dIII);
+
+                    wOutms->setNumRows(numRowsOut + 1);
+                    wOutms->setCell(numRowsOut, 0, QQQ);
+                    wOutms->setCell(numRowsOut, 1, IIIms);
+                    wOutms->setCell(numRowsOut, 2, dIIIms);
+
+                    //+++ Sigma output +++
+                    if (comboBox4thCol->currentIndex() == 0)
                     {
-                        wOut->setNumRows(numRowsOut+1);
-                        wOut->setText(numRowsOut,0,QString::number(QQQ,'E',8));
-                        wOut->setText(numRowsOut,1,QString::number(III,'E',8));
-                        wOut->setText(numRowsOut,2,QString::number(dIII,'E',8));
-                        
-                        wOutms->setNumRows(numRowsOut+1);
-                        wOutms->setText(numRowsOut,0,QString::number(QQQ,'E',8));
-                        wOutms->setText(numRowsOut,1,QString::number(IIIms,'E',8));
-                        wOutms->setText(numRowsOut,2,QString::number(dIIIms,'E',8));
-                        
-                        
-                        //+++ Sigma output +++
-                        if (comboBox4thCol->currentIndex()==0) {
-                            wOut->setText(numRowsOut,3, QString::number(sig,'E',8));
-                            wOutms->setText(numRowsOut,3, QString::number(sig,'E',8));
-                        }
-                        else if (comboBox4thCol->currentIndex()==1){
-                            wOut->setText(numRowsOut,3, QString::number(dq,'E',8));
-                            wOutms->setText(numRowsOut,3, QString::number(dq,'E',8));
-                        }
-                        else if (comboBox4thCol->currentIndex()==3){
-                            wOut->setText(numRowsOut,3, QString::number(dq,'E',8));
-                            wOut->setText(numRowsOut,4, QString::number(sig,'E',8));
-                            wOutms->setText(numRowsOut,3, QString::number(dq,'E',8));
-                            wOutms->setText(numRowsOut,4, QString::number(sig,'E',8));
-                            
-                        }
-                        
-                        numRowsOut++;
+                        wOut->setCell(numRowsOut, 3, sig);
+                        wOutms->setCell(numRowsOut, 3, sig);
                     }
-                    else negativeNumbersPosition<<numAllQ;
+                    else if (comboBox4thCol->currentIndex() == 1)
+                    {
+                        wOut->setCell(numRowsOut, 3, dq);
+                        wOutms->setCell(numRowsOut, 3, dq);
+                    }
+                    else if (comboBox4thCol->currentIndex() == 3)
+                    {
+                        wOut->setCell(numRowsOut, 3, dq);
+                        wOut->setCell(numRowsOut, 4, sig);
+                        wOutms->setCell(numRowsOut, 3, dq);
+                        wOutms->setCell(numRowsOut, 4, sig);
+                    }
+                    numRowsOut++;
                 }
-                numAllQ++;
-                
+                else
+                    negativeNumbersPosition << numAllQ;
             }
+
+            numAllQ++;
         }
     }
-    
+
     //+++ Calculate number last points 
     int scipLastReal=skipLast;
     
@@ -2745,45 +2743,37 @@ void dan18::radAvTableGeneration( QString &sampleMatrix, QString label, int N, d
         wOut->setColPlotDesignation(4,Table::xErr);
         wOut->setColNumericFormat(2, 8, 4, true);
     }
-    
+
+    const int anisotropyCol = 3 + colnumberInc - 1;
     if (checkBoxAnisotropyisChecked)
     {
-        wOut->setColName(3+colnumberInc-1,"Anisotropy"); wOut->setColComment(3+colnumberInc-1, label);
+        wOut->setColName(anisotropyCol, "Anisotropy");
+        wOut->setColComment(anisotropyCol, label);
+        wOut->setColNumericFormat(2, 8, anisotropyCol, true);
     }
-    
-    
+
     wOut->setHeaderColType();
-    
-    
 
-    for(int i=0;i<N;i++)
+    for (int i = 0; i < N; i++)
     {
+        wOut->setCell(i, 0, Q[i]);
+        wOut->setCell(i, 1, I[i]);
+        wOut->setCell(i, 2, dI[i]);
 
-        wOut->setText(i,0,QString::number(Q[i],'E',8));
-        wOut->setText(i,1,QString::number(I[i],'E',8));
-        wOut->setText(i,2,QString::number(dI[i],'E',8));
-    }
-    
-    //+++ Sigma output +++
-    if (comboBox4thCol->currentIndex()==0)
-    {
-        for(int i=0;i<N;i++) wOut->setText(i,3, QString::number(sigma[i],'E',8));
-    }
-    else if (comboBox4thCol->currentIndex()==1)
-    {
-        for(int i=0;i<N;i++) wOut->setText(i,3, QString::number(dQ[i],'E',8));
-    }
-    else if (comboBox4thCol->currentIndex()==3)
-    {
-        for(int i=0;i<N;i++)
+        //+++ Sigma output +++
+        if (comboBox4thCol->currentIndex() == 0)
+            wOut->setCell(i, 3, sigma[i]);
+        else if (comboBox4thCol->currentIndex() == 1)
+            wOut->setCell(i, 3, dQ[i]);
+        else if (comboBox4thCol->currentIndex() == 3)
         {
-        wOut->setText(i,3, QString::number(dQ[i],'E',8));
-        wOut->setText(i,4, QString::number(sigma[i],'E',8));
+            wOut->setCell(i, 3, dQ[i]);
+            wOut->setCell(i, 4, sigma[i]);
         }
+
+        if (checkBoxAnisotropyisChecked)
+            wOut->setCell(i, anisotropyCol, anisotropy[i]);
     }
-    
-    if (checkBoxAnisotropyisChecked) for(int i=0;i<N;i++) wOut->setText(i,3+colnumberInc-1, QString::number(anisotropy[i],'E',8));
-    
 
     //+++ adjust cols width
     wOut->adjustColumnsWidth(false);
@@ -3130,24 +3120,22 @@ void dan18::horizontalSlice(int md, gsl_matrix *Sample, gsl_matrix *SampleErr, g
                     +"   "+QString::number(dIII,'E',8)+"\n" ;
                 }
             }
-            
-            //+++  to Table  +++
-            if ( !(avg<=0 && checkBoxMaskNegativeQ->isChecked()) )
-                if (radioButtonOpenInProjectisChecked)
+
+            //+++ to Table +++
+            if (!(avg <= 0 && checkBoxMaskNegativeQ->isChecked()) && radioButtonOpenInProjectisChecked)
+            {
+                if (numRowsOut >= skipFirst)
                 {
-                    if (numRowsOut>=skipFirst)
-                    {
-                        wOut->setNumRows(numRowsOut-skipFirst+1);
-                        wOut->setText(numRowsOut-skipFirst,0,QString::number(QQQ,'E',8));
-                        wOut->setText(numRowsOut-skipFirst,1,QString::number(III,'E',8));
-                        wOut->setText(numRowsOut-skipFirst,2,QString::number(dIII,'E',8));
-                        if (comboBox4thCol->currentIndex()==0)
-                        {
-                            wOut->setText(numRowsOut-skipFirst,3,QString::number(sig,'E',8));
-                        }
-                    }
-                    numRowsOut++;
+                    wOut->setNumRows(numRowsOut - skipFirst + 1);
+                    wOut->setCell(numRowsOut - skipFirst, 0, QQQ);
+                    wOut->setCell(numRowsOut - skipFirst, 1, III);
+                    wOut->setCell(numRowsOut - skipFirst, 2, dIII);
+
+                    if (comboBox4thCol->currentIndex() == 0)
+                        wOut->setCell(numRowsOut - skipFirst, 3, sig);
                 }
+                numRowsOut++;
+            }
         }
     }
     
@@ -3450,26 +3438,25 @@ void dan18::verticalSlice(int md, gsl_matrix *Sample, gsl_matrix *SampleErr, gsl
                     +"   "+QString::number(dIII,'E',8)+"\n" ;
                 }
             }
-            //+++  to Table  +++
-            if ( !(avg<=0 && checkBoxMaskNegativeQ->isChecked()) )
-                if (radioButtonOpenInProjectisChecked)
+
+            //+++ to Table +++
+            if (!(avg <= 0 && checkBoxMaskNegativeQ->isChecked()) && radioButtonOpenInProjectisChecked)
+            {
+                if (numRowsOut >= skipFirst)
                 {
-                    if (numRowsOut>=skipFirst)
-                    {
-                        wOut->setNumRows(numRowsOut-skipFirst+1);
-                        wOut->setText(numRowsOut-skipFirst,0,QString::number(QQQ,'E',8));
-                        wOut->setText(numRowsOut-skipFirst,1,QString::number(III,'E',8));
-                        wOut->setText(numRowsOut-skipFirst,2,QString::number(dIII,'E',8));
-                        if (comboBox4thCol->currentIndex()==0)
-                        {
-                            wOut->setText(numRowsOut-skipFirst,3,QString::number(sig,'E',8));
-                        }
-                    }
-                    numRowsOut++;
+                    wOut->setNumRows(numRowsOut - skipFirst + 1);
+                    wOut->setCell(numRowsOut - skipFirst, 0, QQQ);
+                    wOut->setCell(numRowsOut - skipFirst, 1, III);
+                    wOut->setCell(numRowsOut - skipFirst, 2, dIII);
+
+                    if (comboBox4thCol->currentIndex() == 0)
+                        wOut->setCell(numRowsOut - skipFirst, 3, sig);
                 }
+                numRowsOut++;
+            }
         }
     }
-    
+
     //+++ remove last Points
     if (radioButtonOpenInProjectisChecked)
     {

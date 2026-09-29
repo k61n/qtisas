@@ -414,10 +414,12 @@ void dan18::tofSumRead(int numberFrames, QStringList inputFiles, QString tableNa
     int frameLength=tofHeaderBeforeLength+tofHeaderAfterLength+matrixInFileLength;
     
     Table *tableDat=app()->newTable(app()->generateUniqueName(tableName), numberFrames,inputFiles.count()+2);
-    tableDat->setColName(1,"Number");
-    tableDat->setColName(0,"NormalizedNumber");
-    
-    
+    tableDat->setColName(0, "NormalizedNumber");
+    tableDat->setColName(1, "Number");
+
+    tableDat->setColNumericFormat(0);
+    tableDat->setColNumericFormat(1);
+
     QString sTOForRT="Real Time";
     if (tableName.contains("TOF") || tableName.contains("tof")) sTOForRT="TOF";
 
@@ -451,10 +453,8 @@ void dan18::tofSumRead(int numberFrames, QStringList inputFiles, QString tableNa
         else if (inputFiles[0].contains("tof3_")) {normMumber+=spinBoxTofShift->value(); normMumber+=spinBoxRemove->value();}
         else if (inputFiles[0].contains("tof4_")) {normMumber=1+spinBoxTofShift->value()+spinBoxRemove->value();normMumber+=(i+0.5)*spinBoxMerge->value();}
         
-        tableDat->setText(i,0,QString::number(normMumber));
-        tableDat->setText(i,1,QString::number(i+1));
-        
-        
+        tableDat->setCell(i, 0, normMumber);
+        tableDat->setCell(i, 1, i + 1);
     }
     
     
@@ -496,7 +496,7 @@ void dan18::tofSumRead(int numberFrames, QStringList inputFiles, QString tableNa
             // read matrix
             for (int ii=0; ii<matrixInFileLength; ii++) sMiddle<<streamInput.readLine();
             
-            tableDat->setText(j,i+2,QString::number(tofSumCulculate(sMiddle, matrixInFileLength, numberTofPerLine)));
+            tableDat->setCell(j, i + 2, tofSumCulculate(sMiddle, matrixInFileLength, numberTofPerLine));
             
             // read post header
             for (int ii=0; ii<tofHeaderAfterLength; ii++) streamInput.readLine();
@@ -2157,5 +2157,3 @@ bool dan18::addNmatrixes2016matrix(QStringList files, QStringList fileNumers, QT
     
     return true;
 }
-
-

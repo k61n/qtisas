@@ -11,6 +11,8 @@ Description: SANS ascii merging tools
 #include "Folder.h"
 #include "globals.h"
 
+constexpr double InvalidCellValue = -99.99;
+
 void dan18::mergeSlots()
 {
     connect(pushButtonMerge, SIGNAL(clicked()), this, SLOT(mergeProject()));
@@ -141,18 +143,32 @@ bool dan18::checkTableRange(const QString &tName, int &Rows, int &Cols, double &
 
     Cols = t->numCols();
     Rows = t->numRows();
-    Qmin = t->text(0, 0).toDouble();
-    Qmax = Qmin;
 
-    for (int j = 1; j < Rows; j++)
+    if (Cols < 2 || Rows == 0)
+        return false;
+
+    double q, intensity;
+    bool hasQ = false;
+
+    for (int j = 0; j < Rows; j++)
     {
-        if (t->text(j, 0).toDouble() < Qmin)
-            Qmin = t->text(j, 0).toDouble();
-        if (t->text(j, 0).toDouble() > Qmax)
-            Qmax = t->text(j, 0).toDouble();
+        if (!t->tryNumericCell(j, 0, q) || !t->tryNumericCell(j, 1, intensity))
+            continue;
+
+        if (!hasQ)
+        {
+            Qmin = Qmax = q;
+            hasQ = true;
+            continue;
+        }
+
+        if (q < Qmin)
+            Qmin = q;
+        if (q > Qmax)
+            Qmax = q;
     }
 
-    if (Cols < 2 || Rows == 0 || Qmin == Qmax)
+    if (!hasQ || Qmin == Qmax)
         return false;
 
     return true;
@@ -174,28 +190,36 @@ bool dan18::addTable(const QString &table, gsl_matrix *&data, int &N, int Rows, 
     int coldQ = t->indexOf("dQ");
     int colAnisotropy = t->indexOf("Anisotropy");
 
-    double Q, I, dI, sigma, dQ, anisotropy;
-    
-    //+++ number filter
-    static const QRegularExpression rx(R"(((\-|\+)?(\d*)?(\.|\,)?\d*((e|E)(\-|\+)\d*)?))");
-    
     int NN = N - 1;
     bool first = true;
     if (NN > 0)
         first = false;
 
-    double Qmax, Qmin, middle, diff;
-    
+    double Q, I, dI, sigma, dQ, anisotropy;
+    double Qmax, Qmin, middle, diff, intensity;
+
     if (!first && overlap < 100)
     {
         Qmax = gsl_matrix_get(data, N - 1, 0);
-        Qmin = t->text(0, 0).toDouble();
+
+        bool hasFirstQ = false;
+
+        for (int row = 0; row < Rows; ++row)
+            if (t->tryNumericCell(row, 0, Qmin) && t->tryNumericCell(row, 1, intensity))
+            {
+                hasFirstQ = true;
+                break;
+            }
+
+        if (!hasFirstQ)
+            return false;
+
         middle = 0.5 * (Qmax + Qmin);
         diff = fabs(Qmax - Qmin);
 
         while (NN > 0 && gsl_matrix_get(data, NN, 0) > middle + diff / 2 * overlap / 100)
         {
-            gsl_matrix_set(data, NN, 0, -99.99);
+            gsl_matrix_set(data, NN, 0, InvalidCellValue);
             NN--;
         }
     }
@@ -204,33 +228,22 @@ bool dan18::addTable(const QString &table, gsl_matrix *&data, int &N, int Rows, 
     
     for (int i = 0; i < Rows; i++)
     {
-        if (rx.match(t->text(i, 0)).hasMatch() &&
-            (first || overlap == 100 || t->text(i, 0).toDouble() > (middle - diff / 2 * overlap / 100)))
-            Q = rx.match(t->text(i, 0)).captured(1).toDouble();
-        else
-            Q = -99.99;
-        if (rx.match(t->text(i, 1)).hasMatch())
-            I = rx.match(t->text(i, 1)).captured(1).toDouble();
-        else
-            I = -99.99;
-        if (coldI > 1 && rx.match(t->text(i, coldI)).hasMatch())
-            dI = rx.match(t->text(i, coldI)).captured(1).toDouble();
-        else
-            dI = -99.99;
-        if (colSigma > 1 && rx.match(t->text(i, colSigma)).hasMatch())
-            sigma = rx.match(t->text(i, colSigma)).captured(1).toDouble();
-        else
-            sigma = -99.99;
-        if (coldQ > 1 && rx.match(t->text(i, coldQ)).hasMatch())
-            dQ = rx.match(t->text(i, coldQ)).captured(1).toDouble();
-        else
-            dQ = -99.99;
-        if (colAnisotropy > 1 && rx.match(t->text(i, colAnisotropy)).hasMatch())
-            anisotropy = rx.match(t->text(i, colAnisotropy)).captured(1).toDouble();
-        else
-            anisotropy = -99.99;
+        if (!t->tryNumericCell(i, 0, Q) || !t->tryNumericCell(i, 1, I))
+            continue;
 
-        if (Q != -99.99 && I != -99.99)
+        if (!first && overlap < 100 && Q <= middle - diff / 2 * overlap / 100)
+            continue;
+
+        if (coldI <= 1 || !t->tryNumericCell(i, coldI, dI))
+            dI = InvalidCellValue;
+        if (colSigma <= 1 || !t->tryNumericCell(i, colSigma, sigma))
+            sigma = InvalidCellValue;
+        if (coldQ <= 1 || !t->tryNumericCell(i, coldQ, dQ))
+            dQ = InvalidCellValue;
+        if (colAnisotropy <= 1 || !t->tryNumericCell(i, colAnisotropy, anisotropy))
+            anisotropy = InvalidCellValue;
+
+        if (Q != InvalidCellValue && I != InvalidCellValue)
         {
             gsl_matrix_set(data, N, 0, Q);
             gsl_matrix_set(data, N, 1, I);
@@ -566,7 +579,7 @@ bool dan18::singleSampleMergeJoin(const QString &nameMerged, QStringList tablesT
             //--- finding of maximum of dataset [k] left from reference
             int QmaxInt = firstPointS[k + 1] - 1;
             double QmaxRef = gsl_matrix_get(data, QmaxInt, 0);
-            while (QmaxRef == -99.99)
+            while (QmaxRef == InvalidCellValue)
             {
                 QmaxInt--;
                 QmaxRef = gsl_matrix_get(data, QmaxInt, 0);
@@ -581,9 +594,11 @@ bool dan18::singleSampleMergeJoin(const QString &nameMerged, QStringList tablesT
                 double leftLevel = 0;
                 int numLeftLevel = 0;
                 double Q;
-                while (gsl_matrix_get(data, QmaxInt, 0) >= QminRef || gsl_matrix_get(data, QmaxInt, 0) == -99.99)
+                while (gsl_matrix_get(data, QmaxInt, 0) >= QminRef ||
+                       gsl_matrix_get(data, QmaxInt, 0) == InvalidCellValue)
                 {
-                    if (gsl_matrix_get(data, QmaxInt, 0) != -99.99 && gsl_matrix_get(data, QmaxInt, 1) != -99.99)
+                    if (gsl_matrix_get(data, QmaxInt, 0) != InvalidCellValue &&
+                        gsl_matrix_get(data, QmaxInt, 1) != InvalidCellValue)
                     {
                         Q = gsl_matrix_get(data, QmaxInt, 0);
                         leftLevel += gsl_matrix_get(data, QmaxInt, 1) * pow(Q, qExponent);
@@ -594,7 +609,8 @@ bool dan18::singleSampleMergeJoin(const QString &nameMerged, QStringList tablesT
 
                 for (int lp = 0; lp < plusLeft; lp++)
                 {
-                    if (gsl_matrix_get(data, QmaxInt, 0) != -99.99 && gsl_matrix_get(data, QmaxInt, 1) != -99.99)
+                    if (gsl_matrix_get(data, QmaxInt, 0) != InvalidCellValue &&
+                        gsl_matrix_get(data, QmaxInt, 1) != InvalidCellValue)
                     {
                         Q = gsl_matrix_get(data, QmaxInt, 0);
                         leftLevel += gsl_matrix_get(data, QmaxInt, 1) * pow(Q, qExponent);
@@ -605,9 +621,11 @@ bool dan18::singleSampleMergeJoin(const QString &nameMerged, QStringList tablesT
 
                 double rightLevel = 0;
                 int numRightLevel = 0;
-                while (gsl_matrix_get(data, QminInt, 0) <= QmaxRef || gsl_matrix_get(data, QminInt, 0) == -99.99)
+                while (gsl_matrix_get(data, QminInt, 0) <= QmaxRef ||
+                       gsl_matrix_get(data, QminInt, 0) == InvalidCellValue)
                 {
-                    if (gsl_matrix_get(data, QminInt, 0) != -99.99 && gsl_matrix_get(data, QminInt, 1) != -99.99)
+                    if (gsl_matrix_get(data, QminInt, 0) != InvalidCellValue &&
+                        gsl_matrix_get(data, QminInt, 1) != InvalidCellValue)
                     {
                         Q = gsl_matrix_get(data, QminInt, 0);
                         rightLevel += gsl_matrix_get(data, QminInt, 1) * pow(Q, qExponent);
@@ -618,7 +636,8 @@ bool dan18::singleSampleMergeJoin(const QString &nameMerged, QStringList tablesT
 
                 for (int rp = 0; rp < plusRight; rp++)
                 {
-                    if (gsl_matrix_get(data, QminInt, 0) != -99.99 && gsl_matrix_get(data, QminInt, 1) != -99.99)
+                    if (gsl_matrix_get(data, QminInt, 0) != InvalidCellValue &&
+                        gsl_matrix_get(data, QminInt, 1) != InvalidCellValue)
                     {
                         Q = gsl_matrix_get(data, QminInt, 0);
                         rightLevel += gsl_matrix_get(data, QminInt, 1) * pow(Q, qExponent);
@@ -633,7 +652,8 @@ bool dan18::singleSampleMergeJoin(const QString &nameMerged, QStringList tablesT
                     std::cout << QString::number(faktor, 'E', 5).toLocal8Bit().constData() << "\t";
                     for (int iii = firstPointS[k]; iii < firstPointS[k + 1]; iii++)
                     {
-                        if (gsl_matrix_get(data, iii, 0) != -99.99 && gsl_matrix_get(data, iii, 1) != -99.99)
+                        if (gsl_matrix_get(data, iii, 0) != InvalidCellValue &&
+                            gsl_matrix_get(data, iii, 1) != InvalidCellValue)
                         {
                             gsl_matrix_set(data, iii, 1, gsl_matrix_get(data, iii, 1) * faktor);
                             if (dIExist && scaleErrors)
@@ -660,7 +680,7 @@ bool dan18::singleSampleMergeJoin(const QString &nameMerged, QStringList tablesT
             //+++ finding of maximum of dataset [k-1] of "reference"
             int QmaxInt = firstPointS[k] - 1;
             double QmaxRef = gsl_matrix_get(data, QmaxInt, 0);
-            while (QmaxRef == -99.99)
+            while (QmaxRef == InvalidCellValue)
             {
                 QmaxInt--;
                 QmaxRef = gsl_matrix_get(data, QmaxInt, 0);
@@ -675,9 +695,11 @@ bool dan18::singleSampleMergeJoin(const QString &nameMerged, QStringList tablesT
                 double leftLevel = 0;
                 int numLeftLevel = 0;
                 double Q;
-                while (gsl_matrix_get(data, QmaxInt, 0) >= QminRef || gsl_matrix_get(data, QmaxInt, 0) == -99.99)
+                while (gsl_matrix_get(data, QmaxInt, 0) >= QminRef ||
+                       gsl_matrix_get(data, QmaxInt, 0) == InvalidCellValue)
                 {
-                    if (gsl_matrix_get(data, QmaxInt, 0) != -99.99 && gsl_matrix_get(data, QmaxInt, 1) != -99.99)
+                    if (gsl_matrix_get(data, QmaxInt, 0) != InvalidCellValue &&
+                        gsl_matrix_get(data, QmaxInt, 1) != InvalidCellValue)
                     {
                         Q = gsl_matrix_get(data, QmaxInt, 0);
                         leftLevel += gsl_matrix_get(data, QmaxInt, 1) * pow(Q, qExponent);
@@ -688,7 +710,8 @@ bool dan18::singleSampleMergeJoin(const QString &nameMerged, QStringList tablesT
 
                 for (int lp = 0; lp < plusLeft; lp++)
                 {
-                    if (gsl_matrix_get(data, QmaxInt, 0) != -99.99 && gsl_matrix_get(data, QmaxInt, 1) != -99.99)
+                    if (gsl_matrix_get(data, QmaxInt, 0) != InvalidCellValue &&
+                        gsl_matrix_get(data, QmaxInt, 1) != InvalidCellValue)
                     {
                         Q = gsl_matrix_get(data, QmaxInt, 0);
                         leftLevel += gsl_matrix_get(data, QmaxInt, 1) * pow(Q, qExponent);
@@ -699,9 +722,11 @@ bool dan18::singleSampleMergeJoin(const QString &nameMerged, QStringList tablesT
 
                 double rightLevel = 0;
                 int numRightLevel = 0;
-                while (gsl_matrix_get(data, QminInt, 0) <= QmaxRef || gsl_matrix_get(data, QminInt, 0) == -99.99)
+                while (gsl_matrix_get(data, QminInt, 0) <= QmaxRef ||
+                       gsl_matrix_get(data, QminInt, 0) == InvalidCellValue)
                 {
-                    if (gsl_matrix_get(data, QminInt, 0) != -99.99 && gsl_matrix_get(data, QminInt, 1) != -99.99)
+                    if (gsl_matrix_get(data, QminInt, 0) != InvalidCellValue &&
+                        gsl_matrix_get(data, QminInt, 1) != InvalidCellValue)
                     {
                         Q = gsl_matrix_get(data, QmaxInt, 0);
                         rightLevel += gsl_matrix_get(data, QminInt, 1) * pow(Q, qExponent);
@@ -712,7 +737,8 @@ bool dan18::singleSampleMergeJoin(const QString &nameMerged, QStringList tablesT
 
                 for (int rp = 0; rp < plusRight; rp++)
                 {
-                    if (gsl_matrix_get(data, QminInt, 0) != -99.99 && gsl_matrix_get(data, QminInt, 1) != -99.99)
+                    if (gsl_matrix_get(data, QminInt, 0) != InvalidCellValue &&
+                        gsl_matrix_get(data, QminInt, 1) != InvalidCellValue)
                     {
                         Q = gsl_matrix_get(data, QmaxInt, 0);
                         rightLevel += gsl_matrix_get(data, QminInt, 1) * pow(Q, qExponent);
@@ -732,7 +758,8 @@ bool dan18::singleSampleMergeJoin(const QString &nameMerged, QStringList tablesT
                         lastPoint = firstPointS[k + 1];
                     for (int iii = firstPointS[k]; iii < lastPoint; iii++)
                     {
-                        if (gsl_matrix_get(data, iii, 0) != -99.99 && gsl_matrix_get(data, iii, 1) != -99.99)
+                        if (gsl_matrix_get(data, iii, 0) != InvalidCellValue &&
+                            gsl_matrix_get(data, iii, 1) != InvalidCellValue)
                         {
                             gsl_matrix_set(data, iii, 1, gsl_matrix_get(data, iii, 1) * faktor);
                             if (scaleErrors)
@@ -787,28 +814,50 @@ bool dan18::singleSampleMergeRebin(const QString &nameMerged, QStringList tables
         nTableCleanned++;
         listCleanned << tablesToMerge[i];
     }
+    if (nTableCleanned == 0)
+        return false;
 
-    double qMin = 1000, qMax = -1000;
+    double qMin = 0.0, qMax = 0.0;
     double qCurrent;
 
     if (radioButton->isChecked())
     {
-        //+++ Q-range from data
+        bool hasQ = false;
+        bool hasPositiveQ = false;
+        double minPositiveQ = 0.0;
         for (int i = 0; i < nTableCleanned; i++)
         {
             app()->checkTableExistence(listCleanned[i], t);
 
             for (int rr = 0; rr < t->numRows(); rr++)
             {
-                qCurrent = t->text(rr, 0).toDouble();
-                if (!logScale && qCurrent < qMin)
-                    qMin = qCurrent;
-                if (logScale && qCurrent > 0 && qCurrent < qMin)
+                double intensity;
+                if (!t->tryNumericCell(rr, 0, qCurrent) || !t->tryNumericCell(rr, 1, intensity))
+                    continue;
+
+                if (logScale && qCurrent > 0 && (!hasPositiveQ || qCurrent < minPositiveQ))
+                {
+                    minPositiveQ = qCurrent;
+                    hasPositiveQ = true;
+                }
+
+                if (!hasQ)
+                {
+                    qMin = qMax = qCurrent;
+                    hasQ = true;
+                    continue;
+                }
+
+                if (qCurrent < qMin)
                     qMin = qCurrent;
                 if (qCurrent > qMax)
                     qMax = qCurrent;
             }
         }
+        if (!hasQ)
+            return false;
+        if (logScale && hasPositiveQ)
+            qMin = minPositiveQ;
     }
     else
     {
@@ -871,15 +920,20 @@ bool dan18::singleSampleMergeRebin(const QString &nameMerged, QStringList tables
 
             for (int rr = 0; rr < t->numRows(); rr++)
             {
-                qCurrent = t->text(rr, 0).toDouble();
+                if (!t->tryNumericCell(rr, 0, qCurrent))
+                    continue;
+
                 if (qCurrent < qMin || qCurrent > qMax)
                     continue;
 
-                iCurrent = t->text(rr, 1).toDouble();
+                if (!t->tryNumericCell(rr, 1, iCurrent))
+                    continue;
 
                 if (dIExist)
                 {
-                    diCurrent = t->text(rr, dICol).toDouble();
+                    if (!t->tryNumericCell(rr, dICol, diCurrent) || iCurrent == 0.0)
+                        continue;
+
                     if (diCurrent / iCurrent < errLowLimit || diCurrent / iCurrent > errUpperLimit)
                         continue;
                 }
@@ -905,13 +959,25 @@ bool dan18::singleSampleMergeRebin(const QString &nameMerged, QStringList tables
                     dI[currentPosition] += diCurrent * diCurrent;
 
                 if (sigmaExist)
-                    Sigma[currentPosition] += t->text(rr, sigmaCol).toDouble() * t->text(rr, sigmaCol).toDouble();
+                {
+                    double sigmaValue;
+                    if (t->tryNumericCell(rr, sigmaCol, sigmaValue))
+                        Sigma[currentPosition] += sigmaValue * sigmaValue;
+                }
 
                 if (dQExist)
-                    dQ[currentPosition] += t->text(rr, dQCol).toDouble() * t->text(rr, dQCol).toDouble();
+                {
+                    double dQValue;
+                    if (t->tryNumericCell(rr, dQCol, dQValue))
+                        dQ[currentPosition] += dQValue * dQValue;
+                }
 
                 if (anisotropyExist)
-                    anisotropy[currentPosition] += t->text(rr, anisotropyCol).toDouble();
+                {
+                    double anisotropyValue;
+                    if (t->tryNumericCell(rr, anisotropyCol, anisotropyValue))
+                        anisotropy[currentPosition] += anisotropyValue;
+                }
             }
         }
 
@@ -922,7 +988,7 @@ bool dan18::singleSampleMergeRebin(const QString &nameMerged, QStringList tables
             Qmin[i] = qMin;
             Qmax[i] = qMax;
             n[i] = 0;
-            Q[i] = -99.99;
+            Q[i] = InvalidCellValue;
             I[i] = 0;
             dI[i] = 0;
             dQ[i] = 0;
@@ -1216,41 +1282,41 @@ void dan18::saveMergedMatrix(QString name, const QString &labelList, gsl_matrix 
     
     for (int i = removeFirst; i < N - removeLast; i++)
     {
-        if (gsl_matrix_get(data, i, 0) != -99.99)
+        if (gsl_matrix_get(data, i, 0) != InvalidCellValue)
         {
-            t->setText(currentRow, 0, QString::number(gsl_matrix_get(data, i, 0), 'E'));
-            t->setText(currentRow, 1, QString::number(gsl_matrix_get(data, i, 1), 'E'));
+            t->setCell(currentRow, 0, gsl_matrix_get(data, i, 0));
+            t->setCell(currentRow, 1, gsl_matrix_get(data, i, 1));
 
             if (dIExist)
             {
-                if (gsl_matrix_get(data, i, 2) == -99.99)
+                if (gsl_matrix_get(data, i, 2) == InvalidCellValue)
                     t->clearCell(currentRow, dICol);
                 else
-                    t->setText(currentRow, dICol, QString::number(gsl_matrix_get(data, i, 2), 'E'));
+                    t->setCell(currentRow, dICol, gsl_matrix_get(data, i, 2));
             }
 
             if (sigmaExist)
             {
-                if (gsl_matrix_get(data, i, 3) == -99.99)
+                if (gsl_matrix_get(data, i, 3) == InvalidCellValue)
                     t->clearCell(currentRow, sigmaCol);
                 else
-                    t->setText(currentRow, sigmaCol, QString::number(gsl_matrix_get(data, i, 3), 'E'));
+                    t->setCell(currentRow, sigmaCol, gsl_matrix_get(data, i, 3));
             }
             
             if (dQExist)
             {
-                if (gsl_matrix_get(data, i, 4) == -99.99)
+                if (gsl_matrix_get(data, i, 4) == InvalidCellValue)
                     t->clearCell(currentRow, dQCol);
                 else
-                    t->setText(currentRow, dQCol, QString::number(gsl_matrix_get(data, i, 4), 'E'));
+                    t->setCell(currentRow, dQCol, gsl_matrix_get(data, i, 4));
             }
 
             if (anisotropyExist)
             {
-                if (gsl_matrix_get(data, i, 5) == -99.99)
+                if (gsl_matrix_get(data, i, 5) == InvalidCellValue)
                     t->clearCell(currentRow, anisotropyCol);
                 else
-                    t->setText(currentRow, anisotropyCol, QString::number(gsl_matrix_get(data, i, 5), 'E'));
+                    t->setCell(currentRow, anisotropyCol, gsl_matrix_get(data, i, 5));
             }
             currentRow++;
         }
@@ -1328,21 +1394,21 @@ void dan18::saveMergedMatrixAscii(QString name, gsl_matrix *data, int N, bool dI
     }
 
     for (int i = removeFirst; i < N - removeLast; i++)
-        if (gsl_matrix_get(data, i, 0) != -99.99)
+        if (gsl_matrix_get(data, i, 0) != InvalidCellValue)
         {
             stream << QString::number(gsl_matrix_get(data, i, 0), 'E');
             stream << "   " + QString::number(gsl_matrix_get(data, i, 1), 'E');
 
             if (dIExist)
             {
-                if (gsl_matrix_get(data, i, 2) == -99.99)
+                if (gsl_matrix_get(data, i, 2) == InvalidCellValue)
                     stream << "   ---";
                 else
                     stream << "   " + QString::number(gsl_matrix_get(data, i, 2), 'E');
             }
             if (dQExist)
             {
-                if (gsl_matrix_get(data, i, 4) == -99.99)
+                if (gsl_matrix_get(data, i, 4) == InvalidCellValue)
                     stream << "   ---";
                 else
                     stream << "   " + QString::number(gsl_matrix_get(data, i, 4), 'E');
@@ -1350,7 +1416,7 @@ void dan18::saveMergedMatrixAscii(QString name, gsl_matrix *data, int N, bool dI
 
             if (sigmaExist)
             {
-                if (gsl_matrix_get(data, i, 3) == -99.99)
+                if (gsl_matrix_get(data, i, 3) == InvalidCellValue)
                     stream << "   ---";
                 else
                     stream << "   " + QString::number(gsl_matrix_get(data, i, 3), 'E');
@@ -1358,7 +1424,7 @@ void dan18::saveMergedMatrixAscii(QString name, gsl_matrix *data, int N, bool dI
             
             if (anisotropyExist)
             {
-                if (gsl_matrix_get(data, i, 5) == -99.99)
+                if (gsl_matrix_get(data, i, 5) == InvalidCellValue)
                     stream << "   ---";
                 else
                     stream << "   " + QString::number(gsl_matrix_get(data, i, 5), 'E');

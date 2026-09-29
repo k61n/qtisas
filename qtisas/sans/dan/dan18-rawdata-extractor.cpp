@@ -291,7 +291,6 @@ void dan18::addColToInfoExtractor()
     }
     else if (lstNumericType.contains(what2add))
     {
-        ;
         tableDat->setColumnType(initNumberCols, Table::Numeric);
     }
     else if (what2add.contains("Motor-"))
@@ -308,7 +307,13 @@ void dan18::addColToInfoExtractor()
     if (what2add == "Monitor-3")
         what2add = "Monitor-3|Tr|ROI";
 
-    for(int iter=0; iter<tableDat->numRows();iter++) tableDat->setText(iter,initNumberCols,getHeaderInfoString(tableDat->text(iter,0), what2add));
+    QLocale sourceLocale = QLocale::c();
+    sourceLocale.setNumberOptions(QLocale::RejectGroupSeparator);
+    for (int iter = 0; iter < tableDat->numRows(); ++iter)
+    {
+        const QString source = getHeaderInfoString(tableDat->text(iter, 0), what2add);
+        tableDat->setCellOrText(iter, initNumberCols, source, sourceLocale);
+    }
 
     tableDat->table()->resizeColumnToContents(initNumberCols);
 
