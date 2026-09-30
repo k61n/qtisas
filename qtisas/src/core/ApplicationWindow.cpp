@@ -12239,7 +12239,7 @@ void ApplicationWindow::updateWindowLists(MdiSubWindow *w)
         if (lv && d_active_window)
             lv->ensureItemVisibility(d_active_window->objectName());
     }
-    else
+    else if (!w->isHidden())
         hiddenWindows->takeAt(hiddenWindows->indexOf(w));
 }
 
@@ -13426,9 +13426,8 @@ void ApplicationWindow::showTable(QAction *action)
 	Table *t = table(action->text());
 	if (!t) return;
 
-	updateWindowLists(t);
-
 	t->showMaximized();
+    updateWindowLists(t);
     auto items = lv->findItems(t->objectName(), Qt::MatchExactly | Qt::MatchCaseSensitive);
     QTreeWidgetItem *it = items.isEmpty() ? nullptr : items.first();
     if (it)
@@ -13439,7 +13438,6 @@ void ApplicationWindow::showTable(Table *w, const QString& curve)
 {
 	if (!w) return;
 
-    updateWindowLists(w);
 	int colIndex = w->colIndex(curve);
 	w->setSelectedCol(colIndex);
 	w->table()->clearSelection();
@@ -13447,6 +13445,7 @@ void ApplicationWindow::showTable(Table *w, const QString& curve)
     QTableWidgetItem *item = w->table()->item(0, colIndex);
 	w->table()->scrollToItem(item, QAbstractItemView::EnsureVisible);
     w->showNormal();
+    updateWindowLists(w);
     auto items = lv->findItems(w->objectName(), Qt::MatchExactly | Qt::MatchCaseSensitive);
     QTreeWidgetItem *it = items.isEmpty() ? nullptr : items.first();
     if (it)
