@@ -13,6 +13,7 @@ Description: Table(s) fitting interface
 #include "fittable18.h"
 #include "Folder.h"
 #include "globals.h"
+#include "numericLocale.h"
 
 fittable18::fittable18(QWidget *parent)
 : QWidget(parent)
@@ -53,44 +54,6 @@ ApplicationWindow *fittable18::app()
 //*******************************************
 //+++ numbers in FitTable widgets
 //*******************************************
-namespace
-{
-// Grouped input such as "1,234" is rejected when the locale omits group separators, as QString::toDouble() did
-QLocale strictLocale(QLocale locale)
-{
-    if (locale.numberOptions() & QLocale::OmitGroupSeparator)
-        locale.setNumberOptions(locale.numberOptions() | QLocale::RejectGroupSeparator);
-    return locale;
-}
-
-// Converts one number, keeping a leading "±"; text that is not a number (---, inf, empty) is returned unchanged
-QString convertNumber(const QString &text, const QLocale &source, const QLocale &target)
-{
-    if (source.decimalPoint() == target.decimalPoint() && source.groupSeparator() == target.groupSeparator())
-        return text;
-
-    const bool pm = text.startsWith(QChar(0x00B1));
-    bool ok = false;
-    const double value = strictLocale(source).toDouble(pm ? text.mid(1) : text, &ok);
-    if (!ok)
-        return text;
-    return (pm ? QString(QChar(0x00B1)) : QString()) + target.toString(value, 'g', QLocale::FloatingPointShortest);
-}
-
-// Converts both ends of a "left..right" or "center+-width" range
-QString convertRange(const QString &text, const QLocale &source, const QLocale &target)
-{
-    for (const QString &separator : {QStringLiteral(".."), QStringLiteral("+-"), QStringLiteral("-+")})
-    {
-        const qsizetype pos = text.indexOf(separator);
-        if (pos >= 0)
-            return convertNumber(text.left(pos), source, target) + separator +
-                   convertNumber(text.mid(pos + separator.size()), source, target);
-    }
-    return convertNumber(text, source, target);
-}
-} // namespace
-
 QLocale fittable18::uiLocale() const
 {
     return const_cast<fittable18 *>(this)->app()->locale();
@@ -98,7 +61,11 @@ QLocale fittable18::uiLocale() const
 
 double fittable18::uiToDouble(const QString &text, bool *ok) const
 {
-    return strictLocale(uiLocale()).toDouble(text, ok);
+    double value = 0.0;
+    const bool parsed = NumericLocale::toDouble(text, uiLocale(), value);
+    if (ok)
+        *ok = parsed;
+    return value;
 }
 
 QString fittable18::uiNumber(double value, char format, int precision) const
@@ -108,32 +75,32 @@ QString fittable18::uiNumber(double value, char format, int precision) const
 
 QString fittable18::uiFromLocale(const QString &text, const QLocale &source) const
 {
-    return convertNumber(text, source, uiLocale());
+    return NumericLocale::convert(text, source, uiLocale());
 }
 
 QString fittable18::uiToLocale(const QString &text, const QLocale &target) const
 {
-    return convertNumber(text, uiLocale(), target);
+    return NumericLocale::convert(text, uiLocale(), target);
 }
 
 QString fittable18::uiToC(const QString &text) const
 {
-    return convertNumber(text, uiLocale(), QLocale::c());
+    return NumericLocale::convert(text, uiLocale(), QLocale::c());
 }
 
 QString fittable18::cToUi(const QString &text) const
 {
-    return convertNumber(text, QLocale::c(), uiLocale());
+    return NumericLocale::convert(text, QLocale::c(), uiLocale());
 }
 
 QString fittable18::rangeUiToC(const QString &text) const
 {
-    return convertRange(text, uiLocale(), QLocale::c());
+    return NumericLocale::convertRange(text, uiLocale(), QLocale::c());
 }
 
 QString fittable18::rangeCToUi(const QString &text) const
 {
-    return convertRange(text, QLocale::c(), uiLocale());
+    return NumericLocale::convertRange(text, QLocale::c(), uiLocale());
 }
 
 void fittable18::changeEvent(QEvent *event)
@@ -150,7 +117,8 @@ void fittable18::convertWidgetNumbers(const QLocale &from, const QLocale &to)
 {
     const auto convertItem = [&from, &to](QTableWidgetItem *item, bool range) {
         if (item)
-            item->setText(range ? convertRange(item->text(), from, to) : convertNumber(item->text(), from, to));
+            item->setText(range ? NumericLocale::convertRange(item->text(), from, to)
+                                : NumericLocale::convert(item->text(), from, to));
     };
     const bool blockPara = tablePara->blockSignals(true);
     const bool blockSimulate = tableParaSimulate->blockSignals(true);
@@ -181,12 +149,12 @@ void fittable18::convertWidgetNumbers(const QLocale &from, const QLocale &to)
                 continue;
             const QString text = item->text();
             const qsizetype pipe = text.indexOf(QLatin1Char('|'));
-            item->setText(pipe >= 0 ? convertNumber(text.left(pipe), from, to) + text.mid(pipe)
-                                    : convertNumber(text, from, to));
+            item->setText(pipe >= 0 ? NumericLocale::convert(text.left(pipe), from, to) + text.mid(pipe)
+                                    : NumericLocale::convert(text, from, to));
         }
 
-    textLabelChi->setText(convertNumber(textLabelChi->text(), from, to));
-    textLabelR2->setText(convertNumber(textLabelR2->text(), from, to));
+    textLabelChi->setText(NumericLocale::convert(textLabelChi->text(), from, to));
+    textLabelR2->setText(NumericLocale::convert(textLabelR2->text(), from, to));
 
     // Q ranges of the datasets and of the simulation; N ranges are integers and stay unchanged
     for (int col = 1; col < tableCurves->columnCount(); col += 2)
@@ -201,12 +169,12 @@ void fittable18::convertWidgetNumbers(const QLocale &from, const QLocale &to)
           lineEditAbsErrPoly, lineEditRelErrPoly, lineEditSelectionRate, lineEditMutationRate})
     {
         const bool blocked = edit->blockSignals(true);
-        edit->setText(convertNumber(edit->text(), from, to));
+        edit->setText(NumericLocale::convert(edit->text(), from, to));
         edit->blockSignals(blocked);
     }
     for (QLabel *label :
          {textLabelRangeFirstLimit, textLabelRangeLastLimit, textLabelChi2Sim, textLabelChi2dofSim, textLabelR2sim})
-        label->setText(convertNumber(label->text(), from, to));
+        label->setText(NumericLocale::convert(label->text(), from, to));
 
     tablePara->blockSignals(blockPara);
     tableParaSimulate->blockSignals(blockSimulate);

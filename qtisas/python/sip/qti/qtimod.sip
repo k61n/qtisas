@@ -67,6 +67,7 @@ class Table: MdiSubWindow
 {
 %TypeHeaderCode
 #include "Table.h"
+#include "numericLocale.h"
 #include <QDate>
 #include <QTime>
 #include <QDateTime>
@@ -601,11 +602,8 @@ public:
   {
     // Python writes numbers in C ("1.5"): a Numeric column stores them in its own locale, like setCellData();
     // text that is not a C number ("---", labels) is kept as it is
-    QLocale c = QLocale::c();
-    c.setNumberOptions(QLocale::RejectGroupSeparator);
-    bool ok = false;
-    const double value = sipCpp->columnType(col) == Table::Numeric ? c.toDouble(*a2, &ok) : 0.0;
-    if (ok)
+    double value = 0.0;
+    if (sipCpp->columnType(col) == Table::Numeric && NumericLocale::toDouble(*a2, QLocale::c(), value))
       sipCpp->setCell(row, col, value);
     else
       sipCpp->setText(row, col, *a2);

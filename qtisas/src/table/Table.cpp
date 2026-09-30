@@ -41,6 +41,7 @@ Description: Table worksheet class
 #include "muParserScript.h"
 #include "SortDialog.h"
 #include "Table.h"
+#include "numericLocale.h"
 
 Table::Table(ScriptingEnv *env, int r, int c, const QString& label, ApplicationWindow* parent, const QString& name, Qt::WindowFlags f)
 : MdiSubWindow(label,parent,name,f), scripted(env)
@@ -413,7 +414,7 @@ void Table::cellEdited(QTableWidgetItem *it)
   	columnNumericFormat(col, &f, &precision);
   	bool ok = true;
   	double res = locale().toDouble(text, &ok);
-    if (ok && isGroupedNumberWhenOmitted(text, locale()))
+    if (ok && NumericLocale::isGroupedWhenOmitted(text, locale()))
     {
         // Do not treat a grouped numeric literal as a Python expression.
         QSignalBlocker blocker(d_table);
@@ -3808,7 +3809,7 @@ void Table::updateDecimalSeparators(const QLocale& oldSeparators)
 
         for (int j = 0; j<rows; j++){
             QString s = d_table->text(j, i);
-            const QString converted = convertNumericText(s, oldSeparators, l, format, prec);
+            const QString converted = NumericLocale::convert(s, oldSeparators, l, format, prec);
             if (converted != s)
                 d_table->setText(j, i, converted);
 		}

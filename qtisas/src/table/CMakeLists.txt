@@ -12,6 +12,7 @@ set(SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Header.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Myselection.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Mytable.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/numericLocale.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/SetColValuesDialog.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/SortDialog.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Table.cpp
@@ -24,6 +25,7 @@ set(HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/Header.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Myselection.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Mytable.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/numericLocale.h
     ${CMAKE_CURRENT_SOURCE_DIR}/SetColValuesDialog.h
     ${CMAKE_CURRENT_SOURCE_DIR}/SortDialog.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Table.h
