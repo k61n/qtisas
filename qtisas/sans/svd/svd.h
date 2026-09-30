@@ -45,6 +45,18 @@ public slots:
     void slotTableNsvdChanged(int row, int col);
     void slotReadDataFromTable();
     void findSvdTables();
+
+  protected:
+    void changeEvent(QEvent *event) override;
+
+  private:
+    double uiToDouble(const QString &text) const;
+    QString uiNumber(double value) const;
+    QString uiToC(const QString &text) const;
+    QString cToUi(const QString &text) const;
+    // A number of a table cell, in the interface's format
+    QString tableToUi(Table *t, int row, int col) const;
+    QLocale d_widgetLocale;
 };
 
 #endif

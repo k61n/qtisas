@@ -12,8 +12,9 @@ Description: Singular value decomposition interface (SANS)
 #include <QSettings>
 #include <QString>
 
-#include "svd.h"
+#include "numericLocale.h"
 #include "settings.h"
+#include "svd.h"
 
 
 svd::svd(QWidget *parent) : QWidget(parent)
@@ -39,6 +40,8 @@ svd::svd(QWidget *parent) : QWidget(parent)
     tableMsvd->setColumnWidth(1, 125);
     tableNsvd->setColumnWidth(0, 150);
     tableNsvd->setColumnWidth(1, 125);
+
+    d_widgetLocale = locale();
 }
 
 svd::~svd()
@@ -51,8 +54,8 @@ void svd::writeSettings()
     QSettings *settings = Settings::DefaultSettings();
 
     settings->beginGroup("/SVD");
-    settings->setValue("/RhoH", lineEditRhoH->text());
-    settings->setValue("/RhoD", lineEditRhoD->text());
+    settings->setValue("/RhoH", uiToC(lineEditRhoH->text()));
+    settings->setValue("/RhoD", uiToC(lineEditRhoD->text()));
     settings->setValue("/Msvd", spinBoxMsvd->value());
     settings->setValue("/Nsvd", spinBoxNsvd->value());
 
@@ -63,7 +66,7 @@ void svd::writeSettings()
     {
         ss = " ";
         if (tableMsvd->item(ii, 0))
-            ss = tableMsvd->item(ii, 0)->text();
+            ss = uiToC(tableMsvd->item(ii, 0)->text());
         TabList << ss;
     }
 
@@ -76,7 +79,7 @@ void svd::writeSettings()
     {
         ss = " ";
         if (tableMsvd->item(ii, 1))
-            ss = tableMsvd->item(ii, 1)->text();
+            ss = uiToC(tableMsvd->item(ii, 1)->text());
         TabList << ss;
     }
     if (TabList.count() > 0)
@@ -108,13 +111,13 @@ void svd::writeSettings()
 
         ss = " ";
         if (tableNsvd->item(ii, 1))
-            ss = tableNsvd->item(ii, 1)->text();
+            ss = uiToC(tableNsvd->item(ii, 1)->text());
 
         svdSLDinH << ss;
 
         ss = " ";
         if (tableNsvd->item(ii, 2))
-            ss = tableNsvd->item(ii, 2)->text();
+            ss = uiToC(tableNsvd->item(ii, 2)->text());
 
         svdSLDinD << ss;
     }
@@ -146,10 +149,10 @@ void svd::readSettings()
     settings->beginGroup("/SVD");
     QString ss = settings->value("/RhoH", "-0.56e10").toString();
     if (ss != "")
-        lineEditRhoH->setText(ss);
+        lineEditRhoH->setText(cToUi(ss));
     ss = settings->value("/RhoD", "+6.34e10").toString();
     if (ss != "")
-        lineEditRhoD->setText(ss);
+        lineEditRhoD->setText(cToUi(ss));
 
     int nn = settings->value("/Nsvd", 2).toInt();
     spinBoxNsvd->setValue(nn);
@@ -176,14 +179,14 @@ void svd::readSettings()
         {
             ss = svdSolventComp[ii];
             auto *_item2 = new QTableWidgetItem();
-            _item2->setText(ss);
+            _item2->setText(cToUi(ss));
             tableMsvd->setItem(ii, 0, _item2);
         }
         if (ii < svdSolvSLD.count())
         {
             ss = svdSolvSLD[ii];
             auto *_item3 = new QTableWidgetItem();
-            _item3->setText(ss);
+            _item3->setText(cToUi(ss));
             tableMsvd->setItem(ii, 1, _item3);
         }
     }
@@ -205,19 +208,69 @@ void svd::readSettings()
         {
             ss = svdSLDinH[ii];
             auto *_item2 = new QTableWidgetItem();
-            _item2->setText(ss);
+            _item2->setText(cToUi(ss));
             tableNsvd->setItem(ii, 1, _item2);
         }
         if (ii < svdSLDinD.count())
         {
             ss = svdSLDinD[ii];
             auto *_item3 = new QTableWidgetItem();
-            _item3->setText(ss);
+            _item3->setText(cToUi(ss));
             tableNsvd->setItem(ii, 2, _item3);
         }
     }
     settings->endGroup();
     delete settings;
+}
+//+++ numbers in the SVD interface
+double svd::uiToDouble(const QString &text) const
+{
+    double value = 0.0;
+    NumericLocale::toDouble(text, locale(), value);
+    return value;
+}
+
+QString svd::uiNumber(double value) const
+{
+    return locale().toString(value, 'e', 5);
+}
+
+QString svd::uiToC(const QString &text) const
+{
+    return NumericLocale::convert(text, locale(), QLocale::c(), 'e', 5);
+}
+
+QString svd::cToUi(const QString &text) const
+{
+    return NumericLocale::convert(text, QLocale::c(), locale(), 'e', 5);
+}
+
+QString svd::tableToUi(Table *t, int row, int col) const
+{
+    return NumericLocale::convert(t->text(row, col), t->cellLocale(col), locale(), 'e', 5);
+}
+
+void svd::changeEvent(QEvent *event)
+{
+    QWidget::changeEvent(event);
+    if (event->type() != QEvent::LocaleChange || locale() == d_widgetLocale)
+        return;
+
+    const QLocale from = d_widgetLocale, to = locale();
+    const auto convert = [&from, &to](const QString &text) { return NumericLocale::convert(text, from, to, 'e', 5); };
+    for (QLineEdit *edit : {lineEditRhoH, lineEditRhoD})
+        edit->setText(convert(edit->text()));
+    for (QTableWidget *table : {tableMsvd, tableNsvd})
+    {
+        const bool blocked = table->blockSignals(true);
+        const int first = table == tableMsvd ? 0 : 1; // tableMsvd: H/D fraction and SLD; tableNsvd: SLD in H and D
+        for (int row = 0; row < table->rowCount(); row++)
+            for (int col = first; col < first + 2; col++)
+                if (QTableWidgetItem *item = table->item(row, col))
+                    item->setText(convert(item->text()));
+        table->blockSignals(blocked);
+    }
+    d_widgetLocale = to;
 }
 //+++ app(this): connection to QtiPlot
 ApplicationWindow *app(QWidget *widget)
@@ -267,8 +320,8 @@ void svd::slotReadSvdData(QString tableName)
         nn++;
 
     nn--;
-    lineEditRhoH->setText(t->text(0, 1));
-    lineEditRhoD->setText(t->text(0, 2));
+    lineEditRhoH->setText(tableToUi(t, 0, 1));
+    lineEditRhoD->setText(tableToUi(t, 0, 2));
 
     spinBoxNsvd->setValue(nn);
     for (int ii = 0; ii < nn; ii++)
@@ -278,11 +331,11 @@ void svd::slotReadSvdData(QString tableName)
         tableNsvd->setItem(ii, 0, _item1);
 
         auto *_item2 = new QTableWidgetItem();
-        _item2->setText(t->text(ii + 1, 1));
+        _item2->setText(tableToUi(t, ii + 1, 1));
         tableNsvd->setItem(ii, 1, _item2);
 
         auto *_item3 = new QTableWidgetItem();
-        _item3->setText(t->text(ii + 1, 2));
+        _item3->setText(tableToUi(t, ii + 1, 2));
         tableNsvd->setItem(ii, 2, _item3);
     }
 
@@ -294,11 +347,11 @@ void svd::slotReadSvdData(QString tableName)
     for (int ii = 0; ii < nn; ii++)
     {
         auto *_item1 = new QTableWidgetItem();
-        _item1->setText(t->text(ii, 4));
+        _item1->setText(tableToUi(t, ii, 4));
         tableMsvd->setItem(ii, 0, _item1);
 
         auto *_item2 = new QTableWidgetItem();
-        _item2->setText(t->text(ii, 5));
+        _item2->setText(tableToUi(t, ii, 5));
         tableMsvd->setItem(ii, 1, _item2);
 
         auto *_item3 = new QTableWidgetItem();
@@ -369,29 +422,23 @@ void svd::slotSVD1dataTransfer(const QString &Name, int Nsvd, QStringList TexT, 
 
     // Solvent Parameters
     tableRho->setText(0, 0, "Solvent SLD");
-    tableRho->setText(0, 1, lineEditRhoH->text());
-    tableRho->setText(0, 2, lineEditRhoD->text());
+    tableRho->setCell(0, 1, uiToDouble(lineEditRhoH->text()));
+    tableRho->setCell(0, 2, uiToDouble(lineEditRhoD->text()));
 
     // Transfer of Data: from SLDcomponent-Matrix and TexT-QStringList to tableRho
     for (int nn = 0; nn < Nsvd; nn++)
     {
         tableRho->setText(nn + 1, 0, TexT[nn]);
-        gslTemp = gsl_matrix_get(SLDcomponent, nn, 0);
-        ss = ss.setNum(gslTemp);
-        tableRho->setText(nn + 1, 1, ss);
-        gslTemp = gsl_matrix_get(SLDcomponent, nn, 1);
-        ss = ss.setNum(gslTemp);
-        tableRho->setText(nn + 1, 2, ss);
+        tableRho->setCell(nn + 1, 1, gsl_matrix_get(SLDcomponent, nn, 0));
+        tableRho->setCell(nn + 1, 2, gsl_matrix_get(SLDcomponent, nn, 1));
     }
 
     // Transfer of Data: from Dcomposition-QStringList, SLDsolvent-Vector and FileNames-QStringList to tableRho
     for (int mm = 0; mm < Msvd; mm++)
     {
         tableRho->setText(mm, 3, FileNames[mm]);
-        tableRho->setText(mm, 4, Dcomposition[mm]);
-        gslTemp = gsl_vector_get(SLDsolvent, mm);
-        ss = ss.setNum(gslTemp);
-        tableRho->setText(mm, 5, ss);
+        tableRho->setCell(mm, 4, Dcomposition[mm].toDouble()); // C
+        tableRho->setCell(mm, 5, gsl_vector_get(SLDsolvent, mm));
     }
 
     // Number of active column
@@ -410,8 +457,7 @@ void svd::slotSVD1dataTransfer(const QString &Name, int Nsvd, QStringList TexT, 
             gslTemp = ss.toDouble();
             rhoHD = gsl_matrix_get(SLDcomponent, nn, 0) +
                     gslTemp * (gsl_matrix_get(SLDcomponent, nn, 1) - gsl_matrix_get(SLDcomponent, nn, 0));
-            ss = ss.setNum(rhoHD);
-            tableRho->setText(mm, coln, ss);
+            tableRho->setCell(mm, coln, rhoHD);
         }
         coln++;
     }
@@ -426,18 +472,14 @@ void svd::slotSVD1dataTransfer(const QString &Name, int Nsvd, QStringList TexT, 
             tableRho->setColNumericFormat(2, 12, coln, true); // Format
             for (int ll = 0; ll < Msvd; ll++)
             {
-                ss = tableRho->text(ll, 6 + nn - 1);
-                rho1 = ss.toDouble();
-                ss = tableRho->text(ll, 6 + mm - 1);
-                rho2 = ss.toDouble();
-                ss = tableRho->text(ll, 5);
-                rhoHD = ss.toDouble();
+                rho1 = tableRho->cell(ll, 6 + nn - 1);
+                rho2 = tableRho->cell(ll, 6 + mm - 1);
+                rhoHD = tableRho->cell(ll, 5);
 
                 gslTemp = (rho1 - rhoHD) * (rho2 - rhoHD);
                 if (nn != mm)
                     gslTemp *= 2;
-                ss = ss.setNum(gslTemp);
-                tableRho->setText(ll, coln, ss);
+                tableRho->setCell(ll, coln, gslTemp);
                 gsl_matrix_set(A, ll, coln - KN, gslTemp);
             }
             coln++;
@@ -473,8 +515,7 @@ void svd::slotSVD1dataTransfer(const QString &Name, int Nsvd, QStringList TexT, 
             tableRho->setColNumericFormat(2, 12, coln, true);
             for (int ll = 0; ll < Msvd; ll++)
             {
-                ss = ss.setNum(gsl_matrix_get(U, ll, coln - KN));
-                tableRho->setText(ll, coln, ss);
+                tableRho->setCell(ll, coln, gsl_matrix_get(U, ll, coln - KN));
             }
             coln++;
         }
@@ -491,8 +532,7 @@ void svd::slotSVD1dataTransfer(const QString &Name, int Nsvd, QStringList TexT, 
             tableRho->setColNumericFormat(2, 12, coln, true);
             for (int ll = 0; ll < N; ll++)
             {
-                ss = ss.setNum(gsl_matrix_get(V, ll, coln - KN));
-                tableRho->setText(ll, coln, ss);
+                tableRho->setCell(ll, coln, gsl_matrix_get(V, ll, coln - KN));
             }
             coln++;
         }
@@ -504,8 +544,7 @@ void svd::slotSVD1dataTransfer(const QString &Name, int Nsvd, QStringList TexT, 
     // Print of S-vector to tableRho (s1,s2...sN)
     for (int ll = 0; ll < N; ll++)
     {
-        ss = ss.setNum(gsl_vector_get(S, ll));
-        tableRho->setText(ll, coln, ss);
+        tableRho->setCell(ll, coln, gsl_vector_get(S, ll));
     }
     coln++;
 
@@ -536,12 +575,11 @@ void svd::slotSVD1dataTransfer(const QString &Name, int Nsvd, QStringList TexT, 
         //
         for (int kk = 0; kk < K; kk++)
         {
-            tableRho->setText(kk, coln + mm * 3, t->text(kk, 0));
-            tableRho->setText(kk, coln + mm * 3 + 1, t->text(kk, 1));
-            tableRho->setText(kk, coln + mm * 3 + 2, t->text(kk, 2));
+            for (int col = 0; col < 3; col++)
+                tableRho->setCellOrText(kk, coln + mm * 3 + col, t->text(kk, col), t->cellLocale(col));
 
-            gsl_matrix_set(Idata, kk, mm, t->text(kk, 1).toDouble());
-            gsl_matrix_set(dIdata, kk, mm, t->text(kk, 2).toDouble());
+            gsl_matrix_set(Idata, kk, mm, t->cell(kk, 1));
+            gsl_matrix_set(dIdata, kk, mm, t->cell(kk, 2));
         }
     }
 
@@ -621,8 +659,8 @@ void svd::slotSVD1dataTransfer(const QString &Name, int Nsvd, QStringList TexT, 
         {
             gslTemp = gsl_vector_get(x, nn);
 
-            tableRho->setText(kk, coln + 2 * nn, QString::number(gslTemp));
-            tableRho->setText(kk, coln + 2 * nn + 1, QString::number(fabs(gslTemp * error)));
+            tableRho->setCell(kk, coln + 2 * nn, gslTemp);
+            tableRho->setCell(kk, coln + 2 * nn + 1, fabs(gslTemp * error));
             if (Nsvd == 2)
             {
                 if (nn == 0)
@@ -638,12 +676,12 @@ void svd::slotSVD1dataTransfer(const QString &Name, int Nsvd, QStringList TexT, 
             S33 = 2 * S12 + S11 + S22;
             S23 = 0.5 * (S11 - S22 - S33);
             S13 = 0.5 * (-S11 + S22 - S33);
-            tableRho->setText(kk, coln + 6, QString::number(S13));
-            tableRho->setText(kk, coln + 7, QString::number(fabs(S13 * error)));
-            tableRho->setText(kk, coln + 8, QString::number(S23));
-            tableRho->setText(kk, coln + 9, QString::number(fabs(S23 * error)));
-            tableRho->setText(kk, coln + 10, QString::number(S33));
-            tableRho->setText(kk, coln + 11, QString::number(fabs(S33 * error)));
+            tableRho->setCell(kk, coln + 6, S13);
+            tableRho->setCell(kk, coln + 7, fabs(S13 * error));
+            tableRho->setCell(kk, coln + 8, S23);
+            tableRho->setCell(kk, coln + 9, fabs(S23 * error));
+            tableRho->setCell(kk, coln + 10, S33);
+            tableRho->setCell(kk, coln + 11, fabs(S33 * error));
         }
     }
 
@@ -668,13 +706,11 @@ void svd::slotSVD1dataTransfer(const QString &Name, int Nsvd, QStringList TexT, 
             Bk = 0;
             for (int nn = 0; nn < N; nn++)
             {
-                ss = tableRho->text(kk, KN - N + nn);
-                gslTemp = ss.toDouble();
+                gslTemp = tableRho->cell(kk, KN - N + nn);
                 Bk += gsl_matrix_get(A, mm, nn) * gslTemp;
                 gslTemp = gsl_matrix_get(A, mm, nn);
             }
-            ss = ss.setNum(Bk);
-            tableRho->setText(kk, coln, ss);
+            tableRho->setCell(kk, coln, Bk);
         }
         coln++;
     }
@@ -692,11 +728,8 @@ NoTableLabel:;
 //+++ Chech rhoHD
 void svd::slotCheckRhoHD()
 {
-    double change;
-    change = lineEditRhoH->text().toDouble();
-    lineEditRhoH->setText(QString::number(change, 'e', 5));
-    change = lineEditRhoD->text().toDouble();
-    lineEditRhoD->setText(QString::number(change, 'e', 5));
+    lineEditRhoH->setText(uiNumber(uiToDouble(lineEditRhoH->text())));
+    lineEditRhoD->setText(uiNumber(uiToDouble(lineEditRhoD->text())));
 }
 //+++ SVD
 void svd::slotTableMsvdChanged(int raw, int col)
@@ -706,20 +739,22 @@ void svd::slotTableMsvdChanged(int raw, int col)
     QString text = "";
     if (tableMsvd->item(raw, 0))
         text = tableMsvd->item(raw, 0)->text();
-    double textD = text.toDouble();
+    double textD = uiToDouble(text);
     if ((textD < 0 || textD > 1))
         textD = 0.0;
 
-    tableMsvd->item(raw, 0)->setText(QString::number(textD, 'e', 5));
+    // no fraction yet when the table name is typed first
+    if (tableMsvd->item(raw, 0))
+        tableMsvd->item(raw, 0)->setText(uiNumber(textD));
 
     if (col == 0)
     {
-        double RhoH = lineEditRhoH->text().toDouble();
-        double RhoD = lineEditRhoD->text().toDouble();
+        double RhoH = uiToDouble(lineEditRhoH->text());
+        double RhoD = uiToDouble(lineEditRhoD->text());
 
         if (!tableMsvd->item(raw, 1))
             tableMsvd->setItem(raw, 1, new QTableWidgetItem());
-        tableMsvd->item(raw, 1)->setText(QString::number(RhoH + textD * (RhoD - RhoH), 'e', 5));
+        tableMsvd->item(raw, 1)->setText(uiNumber(RhoH + textD * (RhoD - RhoH)));
     }
     else if (col == 1)
     {
@@ -727,8 +762,8 @@ void svd::slotTableMsvdChanged(int raw, int col)
         text = "";
         if (_item1)
             text = _item1->text();
-        textD = text.toDouble();
-        _item1->setText(QString::number(textD, 'e', 5));
+        textD = uiToDouble(text);
+        _item1->setText(uiNumber(textD));
     }
     else if (col == 2)
     {
@@ -769,11 +804,11 @@ void svd::slotSVD1dataTransfer()
         text = "";
         if (tableMsvd->item(mm, 1))
             text = tableMsvd->item(mm, 1)->text();
-        gsl_vector_set(SLDsolvent, mm, text.toDouble());
+        gsl_vector_set(SLDsolvent, mm, uiToDouble(text));
         text = "";
         if (tableMsvd->item(mm, 0))
             text = tableMsvd->item(mm, 0)->text();
-        Dcomposition.append(text);
+        Dcomposition.append(uiToC(text)); // C: read with toDouble() by the calculation
         text = "";
         if (tableMsvd->item(mm, 2))
             text = tableMsvd->item(mm, 2)->text();
@@ -784,11 +819,11 @@ void svd::slotSVD1dataTransfer()
         text = "";
         if (tableNsvd->item(nn, 1))
             text = tableNsvd->item(nn, 1)->text();
-        gsl_matrix_set(SLDcomponent, nn, 0, text.toDouble());
+        gsl_matrix_set(SLDcomponent, nn, 0, uiToDouble(text));
         text = "";
         if (tableNsvd->item(nn, 2))
             text = tableNsvd->item(nn, 2)->text();
-        gsl_matrix_set(SLDcomponent, nn, 1, text.toDouble());
+        gsl_matrix_set(SLDcomponent, nn, 1, uiToDouble(text));
         text = "";
         if (tableNsvd->item(nn, 0))
             text = tableNsvd->item(nn, 0)->text();
@@ -810,8 +845,8 @@ void svd::slotTableNsvdChanged(int row, int col)
 
         if (_item)
             text = _item->text();
-        double textD = text.toDouble();
-        _item->setText(QString::number(textD, 'e', 5));
+        double textD = uiToDouble(text);
+        _item->setText(uiNumber(textD));
     }
 }
 //+++ Read data from a table to the interface
