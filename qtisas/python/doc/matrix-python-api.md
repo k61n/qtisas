@@ -60,9 +60,9 @@ print(m.numRows(), m.numCols())
 
 | Method | Returns | Notes |
 |--------|---------|-------|
-| `text(row, col)` | `str` | raw cell text |
+| `text(row, col)` | `str` | cell text as displayed, in the application's numerical format (e.g. `1,5` with German settings); read numbers with `cell()` |
 | `cell(row, col)` | `float` | numeric value |
-| `setText(row, col, value)` | — | write string to cell |
+| `setText(row, col, value)` | — | write a number as text: a C number string (`"1.5"`) or one in the matrix's format; anything else leaves the cell empty |
 | `setCell(row, col, value)` | — | write float to cell |
 
 ```python

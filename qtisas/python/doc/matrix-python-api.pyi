@@ -10,7 +10,7 @@
 numRows()->int  numCols()->int  setNumRows(n)  setNumCols(n)  setDimensions(rows,cols)
 cell(row,col)->float      # m.cell(2,3) → row 2, col 3  (ROW first — opposite of Table!)
 setCell(row,col,value)    # m.setCell(2,3,1.5)
-text(row,col)->str  setText(row,col,value)
+text(row,col)->str  setText(row,col,value)   # text() is displayed (numerical format, "1,5"): use cell() for numbers; setText("1.5") C or the matrix's format, else empty
 # cell()/setCell()/text()/setText() raise ValueError ("There's no row/column N in matrix X!")
 #   on an out-of-range row or col — same mechanism as Table's equivalent methods.
 setCoordinates(xStart,xEnd,yStart,yEnd)   # m.setCoordinates(-3.14,3.14,-3.14,3.14)

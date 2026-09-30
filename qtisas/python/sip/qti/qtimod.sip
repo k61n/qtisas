@@ -1028,6 +1028,7 @@ class Matrix: MdiSubWindow
 {
 %TypeHeaderCode
 #include "Matrix.h"
+#include "numericLocale.h"
 #include <cmath>
 #define CHECK_MATRIX_COL(arg)\
 	int col = arg-1;\
@@ -1077,8 +1078,15 @@ public:
 	sipIsErr = 0;
 	CHECK_MATRIX_ROW(a0);
 	CHECK_MATRIX_COL(a1);
-	if (sipIsErr == 0)
-		sipCpp->setText(row, col, *a2);
+  if (sipIsErr == 0)
+  {
+    // Python writes numbers in C ("1.5"); the matrix's own format is accepted too, anything else leaves it empty
+    double value = 0.0;
+    if (NumericLocale::toDoubleCOrLocale(*a2, sipCpp->locale(), value))
+      sipCpp->setCell(row, col, value);
+    else
+      sipCpp->setText(row, col, *a2);
+  }
 %End
   void setCell(int, int, double);
 %MethodCode

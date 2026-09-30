@@ -25,6 +25,7 @@ Description: QtiPlot's matrix model
 #include "Matrix.h"
 #include "MatrixCommand.h"
 #include "MatrixModel.h"
+#include "numericLocale.h"
 #include "muParserScript.h"
 #include "ScriptingEnv.h"
 
@@ -189,14 +190,12 @@ void MatrixModel::setText(int row, int col, const QString& text)
     if (i < 0 || i>= d_rows*d_cols)
 		return;
 
- 	if (text.isEmpty())
-		d_data[i] = GSL_NAN;
-	else {
-		if (d_matrix)
-			d_data[i] = d_matrix->locale().toDouble(text);
-		else
-			d_data[i] = d_locale.toDouble(text);
-	}
+    // Text that is not a number in the matrix's locale (including grouped input when grouping is omitted) gives an
+    // empty cell, not 0
+    double value = GSL_NAN;
+    if (!text.isEmpty())
+        NumericLocale::toDouble(text, d_matrix ? d_matrix->locale() : d_locale, value);
+    d_data[i] = value;
 }
 
 double MatrixModel::data(int row, int col) const
@@ -304,11 +303,8 @@ bool MatrixModel::setData(const QModelIndex & index, const QVariant & value, int
 		if (value.toString().isEmpty())
 			d_data[i] = GSL_NAN;
 		else {
-			double val = GSL_NAN;
-			if (d_matrix)
-				val = d_matrix->locale().toDouble(value.toString());
-			else
-				val = d_locale.toDouble(value.toString());
+            double val = GSL_NAN; // stays empty for text that is not a number, as in setText()
+            NumericLocale::toDouble(value.toString(), d_matrix ? d_matrix->locale() : d_locale, val);
 
 			if (val != valBefore)
 				d_data[i] = val;
