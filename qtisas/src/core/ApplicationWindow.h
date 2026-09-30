@@ -223,7 +223,13 @@ public:
 	void enableCompletion(bool on = true);
 	void addWindowsListToCompleter();
 
-	QLocale clipboardLocale(){return d_clipboard_locale;};
+    //! Numbers copied to and pasted from the clipboard, without group separators
+    QLocale clipboardLocale() const
+    {
+        QLocale locale = d_clipboard_locale;
+        locale.setNumberOptions(QLocale::OmitGroupSeparator);
+        return locale;
+    };
 	void setClipboardLocale(const QLocale& locale){d_clipboard_locale = locale;};
 
 	QTextEdit *resultsLog(){return results;};

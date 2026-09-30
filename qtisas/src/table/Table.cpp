@@ -1738,6 +1738,17 @@ void Table::copySelection()
 	int cols = d_table->columnCount();
 	QString eol = applicationWindow()->endOfLine();
 
+    // Numeric cells go to the clipboard in its locale (in the column's format); other columns as they are
+    const QLocale clipboardLocale = applicationWindow() ? applicationWindow()->clipboardLocale() : QLocale::c();
+    const auto cellText = [this, &clipboardLocale](int row, int col) {
+        if (col < 0 || col >= colTypes.size() || colTypes[col] != Numeric) // col is -1 without a current cell
+            return d_table->text(row, col);
+        char format;
+        int precision;
+        columnNumericFormat(col, &format, &precision);
+        return NumericLocale::convert(d_table->text(row, col), locale(), clipboardLocale, format, precision);
+    };
+
 	QVector<int> selectedCols;
 	for (int i = 0; i < cols; i++)
 		if (d_table->isColumnSelected(i, true))
@@ -1745,8 +1756,8 @@ void Table::copySelection()
 	if (selectedCols.count() > 0) {
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < selectedCols.count() - 1; j++)
-                text += d_table->text(i, selectedCols[j]) + "-\t-";
-            text += d_table->text(i, selectedCols.last()) + "@eol@" + eol;
+                text += cellText(i, selectedCols[j]) + "-\t-";
+            text += cellText(i, selectedCols.last()) + "@eol@" + eol;
         }
 	} else {
         MySelection sel;
@@ -1755,16 +1766,16 @@ void Table::copySelection()
 		int right = sel.rightColumn();
 		int bottom = sel.bottomRow();
 		if (right < 0 || bottom < 0)
-			text = d_table->text(d_table->currentRow(), d_table->currentColumn());
+            text = cellText(d_table->currentRow(), d_table->currentColumn());
 		else {
 			for (int i = sel.topRow(); i<bottom; i++){
 				for (int j = sel.leftColumn(); j<right; j++)
-					text += d_table->text(i, j) + "-\t-";
-				text += d_table->text(i, right) + "@eol@"+eol;
+                    text += cellText(i, j) + "-\t-";
+                text += cellText(i, right) + "@eol@" + eol;
 			}
 			for (int j = sel.leftColumn(); j<right; j++)
-					text += d_table->text(bottom, j) + "-\t-";
-				text += d_table->text(bottom, right);
+                text += cellText(bottom, j) + "-\t-";
+            text += cellText(bottom, right);
 		}
 	}
 	QApplication::clipboard()->setText(text.trimmed().replace("-\t-","\t").remove("@eol@"));
@@ -1792,8 +1803,9 @@ void Table::pasteSelection()
 	}
 
     QLocale l = locale();
-    // Clipboard input remains fixed to C until its separate preference is re-enabled.
-    QLocale clipboardLocale = QLocale::c();
+    // Clipboard numbers are read in the clipboard's locale (Preferences), without group separators
+    const QLocale clipboardLocale =
+        NumericLocale::strict(applicationWindow() ? applicationWindow()->clipboardLocale() : QLocale::c());
     
 	bool allNumbers = true;
 	bool pasteComments = false;

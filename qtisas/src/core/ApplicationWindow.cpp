@@ -7444,7 +7444,7 @@ void ApplicationWindow::readSettings()
     QLocale::setDefault(loc);
 
     d_decimal_digits = settings->value("/DecimalDigits", 13).toInt();
-    d_clipboard_locale = QLocale(settings->value("/ClipboardLocale", QLocale::system().name()).toString());
+    d_clipboard_locale = QLocale(settings->value("/ClipboardLocale", QLocale::c().name()).toString());
     d_muparser_c_locale = settings->value("/MuParserCLocale", true).toBool();
     d_force_muParser = settings->value("/ForceMuParser", d_force_muParser).toBool();
     d_matrix_undo_stack_size = settings->value("/MatrixUndoStackSize", 10).toInt();

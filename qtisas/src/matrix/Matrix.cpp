@@ -45,6 +45,7 @@ Description: Matrix worksheet class
 #include "Matrix.h"
 #include "MatrixCommand.h"
 #include "muParserScript.h"
+#include "numericLocale.h"
 #include "ScriptingEnv.h"
 
 
@@ -661,9 +662,15 @@ void Matrix::copySelection()
 	QItemSelectionModel *selModel = d_table_view->selectionModel();
 	QString s = "";
 	QString eol = applicationWindow()->endOfLine();
+    // Values go to the clipboard in its locale, in the matrix's format
+    const QLocale clipboardLocale = applicationWindow()->clipboardLocale();
+    const auto cellText = [this, &clipboardLocale](int row, int col) {
+        const double value = d_matrix_model->cell(row, col);
+        return gsl_isnan(value) ? QString() : clipboardLocale.toString(value, txt_format.toLatin1(), num_precision);
+    };
 	if (!selModel->hasSelection()){
 		QModelIndex index = selModel->currentIndex();
-		s = text(index.row(), index.column());
+        s = cellText(index.row(), index.column());
 	} else {
 		QItemSelection sel = selModel->selection();
 		QListIterator<QItemSelectionRange> it(sel);
@@ -677,8 +684,8 @@ void Matrix::copySelection()
 		int right = cur.right();
 		for(int i=top; i<=bottom; i++){
 			for(int j=left; j<right; j++)
-				s += d_matrix_model->text(i, j) + "\t";
-			s += d_matrix_model->text(i,right) + eol;
+                s += cellText(i, j) + "\t";
+            s += cellText(i, right) + eol;
 		}
 	}
 	// Copy text into the clipboard
@@ -734,7 +741,7 @@ void Matrix::pasteSelection()
 		return;
 	}
 
-	QLocale locale = applicationWindow()->clipboardLocale();
+    const QLocale locale = NumericLocale::strict(applicationWindow()->clipboardLocale());
 	int cell = 0;
 	for(int i = 0; i < rows; i++){
 		QStringList cells = linesList[i].split("\t");
