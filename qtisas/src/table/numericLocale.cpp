@@ -26,20 +26,6 @@ bool toDouble(const QString &text, const QLocale &locale, double &value)
     return ok;
 }
 
-bool isGroupedWhenOmitted(const QString &text, const QLocale &locale)
-{
-    if (!(locale.numberOptions() & QLocale::OmitGroupSeparator))
-        return false;
-
-    bool valid = false;
-    locale.toDouble(text, &valid);
-    if (!valid)
-        return false; // expressions such as max(1,2) are no numbers at all
-
-    double value = 0.0;
-    return !toDouble(text, locale, value);
-}
-
 QString convert(const QString &text, const QLocale &from, const QLocale &to, char format, int precision)
 {
     if (text.isEmpty() || from == to)

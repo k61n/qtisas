@@ -22,9 +22,6 @@ QLocale strict(QLocale locale);
 // Parses text with strict(locale); false (value unchanged) for text that is not a number
 bool toDouble(const QString &text, const QLocale &locale, double &value);
 
-// Text that the locale accepts as a number only because of its group separators, e.g. "1,333" in C
-bool isGroupedWhenOmitted(const QString &text, const QLocale &locale);
-
 // The number written in another locale; a leading "±" is kept, text that is not a number (---, labels) is unchanged.
 // With the default format and precision the text keeps its notation (fixed-point or scientific) and all digits.
 QString convert(const QString &text, const QLocale &from, const QLocale &to, char format = 'g',

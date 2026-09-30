@@ -24,7 +24,6 @@ Description: Table worksheet class
 #include <QProgressDialog>
 #include <QRegion>
 #include <QShortcut>
-#include <QSignalBlocker>
 #include <QTextDocumentWriter>
 #include <QTextStream>
 
@@ -400,7 +399,8 @@ void Table::print(const QString& fileName)
 
 void Table::cellEdited(QTableWidgetItem *it)
 {
-    QString text = it->text().remove(REGEXPS::whitespaces);
+    // Group separators are never needed to read a number; also the no-break spaces of e.g. French, which \s misses
+    QString text = it->text().remove(REGEXPS::whitespaces).remove(QChar(0x00A0)).remove(QChar(0x202F));
     int col = it->column();
     int row = it->row();
 	if (columnType(col) != Numeric || text.isEmpty()){
@@ -412,15 +412,10 @@ void Table::cellEdited(QTableWidgetItem *it)
 	char f;
 	int precision;
   	columnNumericFormat(col, &f, &precision);
-  	bool ok = true;
-  	double res = locale().toDouble(text, &ok);
-    if (ok && NumericLocale::isGroupedWhenOmitted(text, locale()))
-    {
-        // Do not treat a grouped numeric literal as a Python expression.
-        QSignalBlocker blocker(d_table);
-        d_table->setText(row, col, QString());
-    }
-    else if (ok)
+    // Strict: without group separators "0.002" is no German number, so Python reads it as the C number 0.002
+    double res = 0.0;
+    const bool ok = NumericLocale::toDouble(text, locale(), res);
+    if (ok)
   		d_table->setText(row, col, locale().toString(res, f, precision));
     else
     {
