@@ -57,6 +57,19 @@ public:
 // interface to parent widget
     ApplicationWindow* app();
     void toResLog( QString text );
+
+    // Numbers in the Compile interface (parameter values and ranges, x/y range) follow the application locale;
+    // .fif files, generated code and included-function headers stay C
+    QLocale uiLocale() const;
+    double uiToDouble(const QString &text, bool *ok = nullptr) const;
+    QString uiNumber(double value, char format = 'g', int precision = 6) const;
+    QString uiToC(const QString &text) const;
+    QString cToUi(const QString &text) const;
+    QString rangeUiToC(const QString &text) const;
+    QString rangeCToUi(const QString &text) const;
+    // The fit-algorithm parameters ("SD=11 REL=1e-12 DER=0.001"): only the decimal point differs
+    QString algorithmUiToC(const QString &text) const;
+    QString algorithmCToUi(const QString &text) const;
     void setPathExtern(QString path);
     
     bool boolYN{};
@@ -244,6 +257,9 @@ public slots:
 
 protected:
     QProcess *procc{};
+    // Re-formats the numbers shown in the widgets when the numerical format changes
+    void changeEvent(QEvent *event) override;
+    QLocale d_widgetLocale;
 };
 
 #endif

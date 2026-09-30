@@ -206,40 +206,40 @@ double compile18::paramInit(int i) const
 {
     if (i < 0 || i >= tableParaNames->rowCount())
         return 0.0;
-    return tableParaNames->item(i, 1)->text().toDouble();
+    return uiToDouble(tableParaNames->item(i, 1)->text());
 }
 
 void compile18::setParamInit(int i, double value)
 {
     if (i < 0 || i >= tableParaNames->rowCount())
         return;
-    tableParaNames->item(i, 1)->setText(QString::number(value));
+    tableParaNames->item(i, 1)->setText(uiNumber(value));
 }
 
 void compile18::setParamInitsAll(const QVector<double> &values)
 {
     for (int i = 0; i < qMin(values.size(), tableParaNames->rowCount()); i++)
-        tableParaNames->item(i, 1)->setText(QString::number(values[i]));
+        tableParaNames->item(i, 1)->setText(uiNumber(values[i]));
 }
 
 QString compile18::paramLimit(int i) const
 {
     if (i < 0 || i >= tableParaNames->rowCount())
         return {};
-    return tableParaNames->item(i, 2)->text();
+    return rangeUiToC(tableParaNames->item(i, 2)->text());
 }
 
 void compile18::setParamLimit(int i, const QString &limit)
 {
     if (i < 0 || i >= tableParaNames->rowCount())
         return;
-    tableParaNames->item(i, 2)->setText(limit);
+    tableParaNames->item(i, 2)->setText(rangeCToUi(limit));
 }
 
 void compile18::setParamLimitsAll(const QStringList &limits)
 {
     for (int i = 0; i < qMin(limits.size(), tableParaNames->rowCount()); i++)
-        tableParaNames->item(i, 2)->setText(limits[i]);
+        tableParaNames->item(i, 2)->setText(rangeCToUi(limits[i]));
 }
 
 bool compile18::paramVaries(int i) const
@@ -343,22 +343,22 @@ void compile18::setCustomXrange(bool on)
 
 double compile18::xMin() const
 {
-    return lineEditMin->text().toDouble();
+    return uiToDouble(lineEditMin->text());
 }
 
 void compile18::setXMin(double v)
 {
-    lineEditMin->setText(QString::number(v));
+    lineEditMin->setText(uiNumber(v));
 }
 
 double compile18::xMax() const
 {
-    return lineEditMax->text().toDouble();
+    return uiToDouble(lineEditMax->text());
 }
 
 void compile18::setXMax(double v)
 {
-    lineEditMax->setText(QString::number(v));
+    lineEditMax->setText(uiNumber(v));
 }
 
 int compile18::xPoints() const
@@ -373,12 +373,12 @@ void compile18::setXPoints(int n)
 
 double compile18::yMin() const
 {
-    return lineEditYmin->text().toDouble();
+    return uiToDouble(lineEditYmin->text());
 }
 
 void compile18::setYMin(double v)
 {
-    lineEditYmin->setText(QString::number(v));
+    lineEditYmin->setText(uiNumber(v));
 }
 
 bool compile18::logStep() const
@@ -395,11 +395,11 @@ void compile18::setXRange(bool uniform, double xMin, double xMax, int nPoints, b
 {
     checkBoxCustomXrange->setChecked(true);
     checkBoxUniformX->setChecked(uniform);
-    lineEditMin->setText(QString::number(xMin));
-    lineEditMax->setText(QString::number(xMax));
+    lineEditMin->setText(uiNumber(xMin));
+    lineEditMax->setText(uiNumber(xMax));
     lineEditPoints->setText(QString::number(nPoints));
     checkBoxLogStep->setChecked(logStep);
-    lineEditYmin->setText(QString::number(yMin));
+    lineEditYmin->setText(uiNumber(yMin));
 }
 
 // ---------- Fit.Control: fit options ----------
@@ -486,12 +486,12 @@ void compile18::setFitMethod(int idx)
 
 QString compile18::fitMethodPara() const
 {
-    return lineEditFitMethodPara->text();
+    return algorithmUiToC(lineEditFitMethodPara->text());
 }
 
 void compile18::setFitMethodPara(const QString &text)
 {
-    lineEditFitMethodPara->setText(text);
+    lineEditFitMethodPara->setText(algorithmCToUi(text));
 }
 
 void compile18::categoryChanged(const QString &category)

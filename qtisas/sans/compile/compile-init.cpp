@@ -976,14 +976,14 @@ bool compile18::saveAsIncluded(const QString &fn)
 
         for (int p = 0; p < paraNumber; p++)
         {
-            s = tableParaNames->item(p, 1)->text();
+            s = uiToC(tableParaNames->item(p, 1)->text());
             text += " " + s + (p < paraNumber - 1 ? "," : "\n");
         }
 
         text += "//[parameter_init_range]";
         for (int p = 0; p < paraNumber; p++)
         {
-            s = tableParaNames->item(p, 2)->text();
+            s = rangeUiToC(tableParaNames->item(p, 2)->text());
             text +=
                 " [" + ((s.contains("..") || s.contains("+-")) ? s : "..") + "]" + (p < paraNumber - 1 ? "," : "\n");
         }

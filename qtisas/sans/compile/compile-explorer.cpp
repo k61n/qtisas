@@ -372,9 +372,9 @@ void compile18::openFIFfile(QString fifName)
         comboBoxFitMethod->setCurrentIndex(s.left(1).toInt());
         s = s.right(s.length() - 2);
         if (s.contains("["))
-            lineEditFitMethodPara->setText(s.left(s.indexOf("[")));
+            lineEditFitMethodPara->setText(algorithmCToUi(s.left(s.indexOf("["))));
         else
-            lineEditFitMethodPara->setText(s);
+            lineEditFitMethodPara->setText(algorithmCToUi(s));
     }
     else
         comboBoxFitMethod->setCurrentIndex(1);
@@ -475,15 +475,16 @@ void compile18::openFIFfile(QString fifName)
 
         QString sCurrent = initValues[i];
         if (sCurrent.contains('['))
-            tableParaNames->item(i, 1)->setText(QString::number(sCurrent.left(sCurrent.indexOf("[")).toDouble()));
+            tableParaNames->item(i, 1)->setText(uiNumber(sCurrent.left(sCurrent.indexOf("[")).toDouble()));
         else
-            tableParaNames->item(i, 1)->setText(QString::number(sCurrent.toDouble()));
+            tableParaNames->item(i, 1)->setText(uiNumber(sCurrent.toDouble()));
 
         auto iLeft = sCurrent.indexOf('[');
         auto iRight = sCurrent.indexOf(']');
         QString inside =
             (iLeft >= 0 && iRight > iLeft) ? sCurrent.mid(iLeft + 1, iRight - iLeft - 1).trimmed() : QString();
-        tableParaNames->item(i, 2)->setText((inside.contains("..") || inside.contains("+-")) ? inside : "..");
+        tableParaNames->item(i, 2)->setText((inside.contains("..") || inside.contains("+-")) ? rangeCToUi(inside)
+                                                                                             : "..");
 
         if (adjustibilityList[i].toInt() == 1)
             tableParaNames->item(i, 2)->setCheckState(Qt::Checked);
@@ -563,10 +564,10 @@ void compile18::openFIFfile(QString fifName)
     {
         checkBoxCustomXrange->setChecked(lst[1].contains("1"));
         checkBoxUniformX->setChecked(lst[2].contains("1"));
-        lineEditMin->setText(lst[3]);
-        lineEditMax->setText(lst[4]);
+        lineEditMin->setText(cToUi(lst[3]));
+        lineEditMax->setText(cToUi(lst[4]));
         lineEditPoints->setText(lst[5]);
-        lineEditYmin->setText(lst[6]);
+        lineEditYmin->setText(cToUi(lst[6]));
         checkBoxLogStep->setChecked(lst[7].contains("1"));
     }
 
@@ -987,7 +988,7 @@ QString compile18::save(const QString &fn, bool askYN)
             text += " [Superpositional] " + QString::number(spinBoxSubFitNumber->value());
         if (checkBoxAlgorithm->isChecked())
             text += " [Algorithm] " + QString::number(comboBoxFitMethod->currentIndex()) + " " +
-                    lineEditFitMethodPara->text();
+                    algorithmUiToC(lineEditFitMethodPara->text());
 
         text += "\n";
         text += lineEditGroupName->text().trimmed();
@@ -1035,7 +1036,7 @@ QString compile18::save(const QString &fn, bool askYN)
         for (int i = 0; i < spinBoxP->value(); i++)
         {
             QString valueCurrent = tableParaNames->item(i, 1)->text().remove(' ').trimmed();
-            QString limitCurrent = tableParaNames->item(i, 2)->text().remove(' ').trimmed();
+            QString limitCurrent = rangeUiToC(tableParaNames->item(i, 2)->text().remove(' ').trimmed());
 
             if (limitCurrent == ".." || limitCurrent == "+-")
                 limitCurrent.clear();
@@ -1063,7 +1064,7 @@ QString compile18::save(const QString &fn, bool askYN)
             }
 
             // --- Append to text ---
-            text += QString::number(valueCurrent.toDouble()) + limitCurrent;
+            text += QString::number(uiToDouble(valueCurrent)) + limitCurrent;
             text += (i < spinBoxP->value() - 1) ? "," : "\n\n";
         }
 
@@ -1134,13 +1135,13 @@ QString compile18::save(const QString &fn, bool askYN)
         text += "\n";
         text += checkBoxUniformX->isChecked() ? "1" : "0";
         text += "\n";
-        text += lineEditMin->text();
+        text += uiToC(lineEditMin->text());
         text += "\n";
-        text += lineEditMax->text();
+        text += uiToC(lineEditMax->text());
         text += "\n";
         text += lineEditPoints->text();
         text += "\n";
-        text += lineEditYmin->text();
+        text += uiToC(lineEditYmin->text());
         text += "\n";
         text += checkBoxLogStep->isChecked() ? "1" : "0";
         text += "\n\n";
@@ -1396,7 +1397,7 @@ QString compile18::saveAsCPP1d(const QString &fn)
     for (int i = 0; i < spinBoxP->value(); i++)
     {
         QString valueCurrent = tableParaNames->item(i, 1)->text().trimmed();
-        QString limitCurrent = tableParaNames->item(i, 2)->text().remove(' ').trimmed();
+        QString limitCurrent = rangeUiToC(tableParaNames->item(i, 2)->text().remove(' ').trimmed());
 
         if (limitCurrent == ".." || limitCurrent == "+-")
             limitCurrent.clear();
@@ -1420,7 +1421,7 @@ QString compile18::saveAsCPP1d(const QString &fn)
                 limitCurrent.clear();
         }
 
-        text += QString::number(valueCurrent.toDouble()) + limitCurrent;
+        text += QString::number(uiToDouble(valueCurrent)) + limitCurrent;
         text += (i < spinBoxP->value() - 1) ? "," : "\";\n";
     }
 

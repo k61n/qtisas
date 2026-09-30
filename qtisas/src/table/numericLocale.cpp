@@ -46,9 +46,16 @@ QString convert(const QString &text, const QLocale &from, const QLocale &to, cha
         return text;
 
     const bool pm = text.startsWith(QChar(0x00B1));
+    const QString number = pm ? text.mid(1) : text;
     double value = 0.0;
-    if (!toDouble(pm ? text.mid(1) : text, from, value))
+    if (!toDouble(number, from, value))
         return text;
+    if (format == 'g' && precision == QLocale::FloatingPointShortest)
+    {
+        // Keep the notation of the text: "0.0001" stays fixed-point, "1.5E-04" scientific (same letter case)
+        const bool exponent = number.contains(from.exponential(), Qt::CaseInsensitive);
+        format = !exponent ? 'f' : (number.contains('E') ? 'E' : 'e');
+    }
     return (pm ? QString(QChar(0x00B1)) : QString()) + to.toString(value, format, precision);
 }
 
@@ -61,6 +68,12 @@ QString convertRange(const QString &text, const QLocale &from, const QLocale &to
             return convert(text.left(pos), from, to) + separator + convert(text.mid(pos + separator.size()), from, to);
     }
     return convert(text, from, to);
+}
+
+QString replaceDecimalPoint(const QString &text, const QLocale &from, const QLocale &to)
+{
+    const QString fromPoint = QString(from.decimalPoint()), toPoint = QString(to.decimalPoint());
+    return fromPoint == toPoint ? text : QString(text).replace(fromPoint, toPoint);
 }
 
 bool toDoubleCOrLocale(const QString &text, const QLocale &locale, double &value)

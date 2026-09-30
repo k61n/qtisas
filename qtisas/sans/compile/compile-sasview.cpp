@@ -190,13 +190,13 @@ void compile18::openSasViewPy()
     //+++[parameter names]
     //+++ "scale" parameter
     tableParaNames->item(0, 0)->setText("scale");
-    tableParaNames->item(0, 1)->setText("1.00");
+    tableParaNames->item(0, 1)->setText(cToUi("1.00"));
     tableParaNames->item(0, 2)->setCheckState(Qt::Unchecked);
     tableParaNames->item(0, 2)->setText("-inf..inf");
     tableParaNames->item(0, 3)->setText("[1]: Scaling factor - automatical");
     //+++ "background" parameter
     tableParaNames->item(1, 0)->setText("background");
-    tableParaNames->item(1, 1)->setText("0.001");
+    tableParaNames->item(1, 1)->setText(cToUi("0.001"));
     tableParaNames->item(1, 2)->setCheckState(Qt::Unchecked);
     tableParaNames->item(1, 2)->setText("0..inf");
     tableParaNames->item(1, 3)->setText("[cm^-1]: background - automatical");
@@ -205,12 +205,12 @@ void compile18::openSasViewPy()
     {
         tableParaNames->item(i + 2, 0)->setText(paraNames[i]);
 
-        tableParaNames->item(i + 2, 1)->setText(paraDefaults[i]);
+        tableParaNames->item(i + 2, 1)->setText(cToUi(paraDefaults[i]));
 
         tableParaNames->item(i + 2, 2)->setCheckState(paraType[i] != "orientation" ? Qt::Checked : Qt::Unchecked);
 
         QStringList limits = paraLimits[i].remove("(").remove(")").split(", ");
-        tableParaNames->item(i + 2, 2)->setText(limits.count() == 2 ? limits[0] + ".." + limits[1] : "..");
+        tableParaNames->item(i + 2, 2)->setText(limits.count() == 2 ? rangeCToUi(limits[0] + ".." + limits[1]) : "..");
 
         QString info = QString("[%1]: %2 - %3").arg(paraUnits[i], paraDescription[i].replace(',', ';'), paraType[i]);
         if (paraType[i] == "orientation")

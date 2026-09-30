@@ -25,12 +25,16 @@ bool toDouble(const QString &text, const QLocale &locale, double &value);
 // Text that the locale accepts as a number only because of its group separators, e.g. "1,333" in C
 bool isGroupedWhenOmitted(const QString &text, const QLocale &locale);
 
-// The number written in another locale; a leading "±" is kept, text that is not a number (---, labels) is unchanged
+// The number written in another locale; a leading "±" is kept, text that is not a number (---, labels) is unchanged.
+// With the default format and precision the text keeps its notation (fixed-point or scientific) and all digits.
 QString convert(const QString &text, const QLocale &from, const QLocale &to, char format = 'g',
                 int precision = QLocale::FloatingPointShortest);
 
 // Both ends of a "left..right" or "center+-width" range
 QString convertRange(const QString &text, const QLocale &from, const QLocale &to);
+
+// Text of several numbers mixed with other words ("SD=11 REL=1e-12 DER=0.001"): only the decimal point is replaced
+QString replaceDecimalPoint(const QString &text, const QLocale &from, const QLocale &to);
 
 // A number in a Text column or other shared text: C first, then the table's own locale
 bool toDoubleCOrLocale(const QString &text, const QLocale &locale, double &value);

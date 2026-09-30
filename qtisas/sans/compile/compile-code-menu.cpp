@@ -507,7 +507,7 @@ void compile18::bgdMenuSelected(QAction *bgdAction)
 
     spinBoxP->setValue(oldParaNumber + 2);
     tableParaNames->item(oldParaNumber, 0)->setText("scale");
-    tableParaNames->item(oldParaNumber, 1)->setText("1.0");
+    tableParaNames->item(oldParaNumber, 1)->setText(cToUi("1.0"));
     tableParaNames->item(oldParaNumber, 3)->setText("[1] scale factor | volume fraction | ...model dependent ...");
 
     tableParaNames->item(oldParaNumber + 1, 0)->setText("bgd");
@@ -617,7 +617,7 @@ void compile18::functionMenuSelected(QAction *functionAction)
 
     if (paraInitValues.count() == numPara)
         for (int i = 0; i < numPara; i++)
-            tableParaNames->item(oldParaNumber + i, 1)->setText(paraInitValues[i]);
+            tableParaNames->item(oldParaNumber + i, 1)->setText(cToUi(paraInitValues[i]));
 
     if (paraRanges.count() == numPara)
     {
@@ -625,7 +625,7 @@ void compile18::functionMenuSelected(QAction *functionAction)
         {
             QString s = paraRanges[i];
             s = (s.contains("..") || s.contains("+-")) ? s.remove('[').remove(']') : "..";
-            tableParaNames->item(oldParaNumber + i, 2)->setText(s);
+            tableParaNames->item(oldParaNumber + i, 2)->setText(rangeCToUi(s));
         }
     }
     else 
@@ -761,7 +761,7 @@ void compile18::fortranMenuSelected(QAction *fortranAction)
 
     if (paraInitValues.count() == numPara)
         for (int i = 0; i < numPara; i++)
-            tableParaNames->item(oldParaNumber + i, 1)->setText(paraInitValues[i]);
+            tableParaNames->item(oldParaNumber + i, 1)->setText(cToUi(paraInitValues[i]));
 
     if (paraRanges.count() == numPara)
     {
@@ -769,7 +769,7 @@ void compile18::fortranMenuSelected(QAction *fortranAction)
         {
             QString s = paraRanges[i];
             s = (s.contains("..") || s.contains("+-")) ? s.remove('[').remove(']') : "..";
-            tableParaNames->item(oldParaNumber + i, 2)->setText(s);
+            tableParaNames->item(oldParaNumber + i, 2)->setText(rangeCToUi(s));
         }
     }
     else 
