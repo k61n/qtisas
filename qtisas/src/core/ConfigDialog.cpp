@@ -985,11 +985,6 @@ void ConfigDialog::initAppPage()
 	boxClipboardLocale->addItem("1.000,0");
 	boxClipboardLocale->addItem("1 000,0");
 	numericFormatLayout->addWidget(boxClipboardLocale, 2, 1);
-
-    //+++
-    boxClipboardLocale->setCurrentIndex(1);
-    boxClipboardLocale->setDisabled(true);
-    //---
     
 	boxMuParserCLocale = new QCheckBox();
 	//boxMuParserCLocale->setChecked(app->d_muparser_c_locale);
@@ -2336,15 +2331,14 @@ void ConfigDialog::languageChange()
 	boxClipboardLocale->addItem("1.000,0");
 	boxClipboardLocale->addItem("1 000,0");
 
-    /*
-    if (app->clipboardLocale().name() == QLocale::c().name())
+    // Same items as for the numerical format, chosen by the clipboard locale's separators
+    const QLocale clipboard = app->clipboardLocale();
+    if (QString(clipboard.decimalPoint()) == ".")
         boxClipboardLocale->setCurrentIndex(1);
-    else if (app->clipboardLocale().name() == QLocale(QLocale::German).name())
+    else if (QString(clipboard.groupSeparator()) == ".")
         boxClipboardLocale->setCurrentIndex(2);
-    else if (app->clipboardLocale().name() == QLocale(QLocale::French).name())
+    else
         boxClipboardLocale->setCurrentIndex(3);
-     */
-    boxClipboardLocale->setCurrentIndex(1);
     
 //	texCompilerLabel->setText("<a href=\"http://www.latex-project.org/\">" + tr("LaTeX Compiler") + "</a>");
 	texCompilerLabel->setText(tr("LaTeX Compiler"));
@@ -2764,24 +2758,28 @@ void ConfigDialog::apply()
             app->fittableWindow->setLocale(locale);
 #endif
 
-		switch (boxClipboardLocale->currentIndex()){
-        	case 0:
-            	app->setClipboardLocale(QLocale::system());
-        	break;
-        	case 1:
-            	app->setClipboardLocale(QLocale::c());
-        	break;
-        	case 2:
-            	app->setClipboardLocale(QLocale(QLocale::German));
-        	break;
-        	case 3:
-            	app->setClipboardLocale(QLocale(QLocale::French));
-        	break;
-    	}
-
         app->modifiedProject();
     	QApplication::restoreOverrideCursor();
 	}
+
+    // The clipboard format is independent of the numerical format
+    switch (boxClipboardLocale->currentIndex())
+    {
+    case 0:
+        app->setClipboardLocale(QLocale::system());
+        break;
+    case 1:
+        app->setClipboardLocale(QLocale::c());
+        break;
+    case 2:
+        app->setClipboardLocale(QLocale(QLocale::German));
+        break;
+    case 3:
+        app->setClipboardLocale(QLocale(QLocale::French));
+        break;
+    default:
+        break;
+    }
 
 	// general page: file locations tab
 	if (generalDialog->currentWidget() == appTabWidget &&
