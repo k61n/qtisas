@@ -7435,10 +7435,10 @@ void ApplicationWindow::readSettings()
     d_open_last_project = settings->value("/OpenLastProject", d_open_last_project).toBool();
     defaultScriptingLang = settings->value("/ScriptingLang", "muParser").toString();
 
-    bool thousandsSep = false;  // settings->value("/ThousandsSeparator", true).toBool();
-    QLocale loc = QLocale::c(); // QLocale(settings->value("/Locale", QLocale::system().name()).toString());
-    if (!thousandsSep)
-        loc.setNumberOptions(QLocale::OmitGroupSeparator);
+    // The numerical format of Preferences; C without group separators when none is saved
+    QLocale loc(settings->value("/Locale", QLocale::c().name()).toString());
+    const bool thousandsSep = settings->value("/ThousandsSeparator", false).toBool();
+    loc.setNumberOptions(thousandsSep ? QLocale::DefaultNumberOptions : QLocale::OmitGroupSeparator);
 
     setLocale(loc);
     QLocale::setDefault(loc);

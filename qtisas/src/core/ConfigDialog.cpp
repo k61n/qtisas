@@ -964,19 +964,11 @@ void ConfigDialog::initAppPage()
 	boxDecimalSeparator->addItem("1,000.0");
 	boxDecimalSeparator->addItem("1.000,0");
 	boxDecimalSeparator->addItem("1 000,0");
-    //+++
-    boxDecimalSeparator->setCurrentIndex(1);
-    boxDecimalSeparator->setDisabled(true);
-    //---
 	numericFormatLayout->addWidget(boxDecimalSeparator, 1, 1);
 
     boxThousandsSeparator = new QCheckBox();
     boxThousandsSeparator->setChecked(app->locale().numberOptions() & QLocale::OmitGroupSeparator);
     numericFormatLayout->addWidget(boxThousandsSeparator, 1, 2);
-    //+++
-    boxThousandsSeparator->setChecked(true);
-    boxThousandsSeparator->setDisabled(true);
-    //---
 	lblClipboardSeparator = new QLabel();
     numericFormatLayout->addWidget(lblClipboardSeparator, 2, 0 );
 	boxClipboardLocale = new QComboBox();
@@ -2314,16 +2306,14 @@ void ConfigDialog::languageChange()
                                       "Unchecked: they use the numerical format, e.g. 1,5 and max(1; 2); "
                                       "formulas saved in another format no longer work."));
 
-    QLocale locale = app->locale();
-    /*
-    if (locale.name() == QLocale::c().name())
+    // Items follow the separators of the current locale: 1,000.0 / 1.000,0 / 1 000,0
+    const QLocale locale = app->locale();
+    if (QString(locale.decimalPoint()) == ".")
         boxDecimalSeparator->setCurrentIndex(1);
-    else if (locale.name() == QLocale(QLocale::German).name())
+    else if (QString(locale.groupSeparator()) == ".")
         boxDecimalSeparator->setCurrentIndex(2);
-    else if (locale.name() == QLocale(QLocale::French).name())
+    else
         boxDecimalSeparator->setCurrentIndex(3);
-     */
-    boxDecimalSeparator->setCurrentIndex(1);
     
 	lblClipboardSeparator->setText(tr("Clipboard Decimal Separators"));
 	boxClipboardLocale->clear();
@@ -2724,18 +2714,22 @@ void ConfigDialog::apply()
         case 3:
             locale = QLocale(QLocale::French);
         break;
+    default:
+        break;
     }
-    if (boxThousandsSeparator->isChecked())
-        locale.setNumberOptions(QLocale::OmitGroupSeparator);
+    // QLocale::c() omits group separators by default, so the unchecked state must clear the option explicitly
+    locale.setNumberOptions(boxThousandsSeparator->isChecked() ? QLocale::OmitGroupSeparator
+                                                               : QLocale::DefaultNumberOptions);
 
     QLocale oldLocale = app->locale();
     app->setLocale(locale);
 	QLocale::setDefault(locale);
 	app->d_muparser_c_locale = boxMuParserCLocale->isChecked();
 
-	if (generalDialog->currentWidget() == appTabWidget &&
-		appTabWidget->currentWidget() == numericFormatPage){
-    	QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+    // Converted whenever the format changes: windows inherit the new app locale even if another page is shown
+    if (locale != oldLocale)
+    {
+        QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
         QList<MdiSubWindow *> windows = app->windowsList();
         foreach(MdiSubWindow *w, windows){
             w->setLocale(locale);
@@ -2761,7 +2755,7 @@ void ConfigDialog::apply()
 
         app->modifiedProject();
     	QApplication::restoreOverrideCursor();
-	}
+    }
 
     // The clipboard format is independent of the numerical format
     switch (boxClipboardLocale->currentIndex())
@@ -2782,7 +2776,7 @@ void ConfigDialog::apply()
         break;
     }
 
-	// general page: file locations tab
+    // general page: file locations tab
 	if (generalDialog->currentWidget() == appTabWidget &&
 		appTabWidget->currentWidget() == fileLocationsPage){
 
