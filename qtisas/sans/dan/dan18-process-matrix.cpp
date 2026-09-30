@@ -41,9 +41,10 @@ void dan18::makeMatrixSymmetric(gsl_matrix *gmatrix, const QString &name, const 
     m->setCoordinates(xs, xe, ys, ye);
     m->setNumericFormat('E', 8);
 
+    // setCell() with the same 8-digit rounding as before: setText() would parse the C text in the matrix's locale
     for (int i = 0; i < MD; i++)
         for (int j = 0; j < MD; j++)
-            m->setText(i, j, QString::number(gsl_matrix_get(gmatrix, i, j), 'E', 8));
+            m->setCell(i, j, QString::number(gsl_matrix_get(gmatrix, i, j), 'E', 8).toDouble());
 
     m->setWindowLabel(label);
     app()->setListViewLabel(m->name(), label);
@@ -92,10 +93,11 @@ void dan18::makeMatrixUni(gsl_matrix *gmatrix, const QString &name, const QStrin
     m->setNumericFormat('E', 8);
     m->setCoordinates(xs, xe, ys, ye);
 
+    // setCell() with the same 8-digit rounding as before: setText() would parse the C text in the matrix's locale
     for (int i = 0; i < yDim; i++)
         for (int j = 0; j < xDim; j++)
-            m->setText(i, j, QString::number(gsl_matrix_get(gmatrix, i, j), 'E', 8));
-    
+            m->setCell(i, j, QString::number(gsl_matrix_get(gmatrix, i, j), 'E', 8).toDouble());
+
     m->setWindowLabel(label);
     app()->setListViewLabel(m->name(), label);
     app()->updateWindowLists(m);
@@ -124,7 +126,7 @@ bool dan18::make_GSL_Matrix_Symmetric(const QString &mName, gsl_matrix *&gmatrix
             {
                 for (int yy = 0; yy < MD; yy++)
                     for (int xx = 0; xx < MD; xx++)
-                        gsl_matrix_set(gmatrix, yy, xx, m->text(yy, xx).toDouble());
+                        gsl_matrix_set(gmatrix, yy, xx, m->locale().toDouble(m->text(yy, xx)));
                 return true;
             }
             else
@@ -156,7 +158,7 @@ bool dan18::make_GSL_Matrix_Uni(const QString &mName, gsl_matrix *&gmatrix, int 
 
             for (int xx = 0; xx < xDim; xx++)
                 for (int yy = 0; yy < yDim; yy++)
-                    gsl_matrix_set(gmatrix, yy, xx, m->text(yy, xx).toDouble());
+                    gsl_matrix_set(gmatrix, yy, xx, m->locale().toDouble(m->text(yy, xx)));
 
             return true;
         }

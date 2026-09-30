@@ -16,6 +16,9 @@ dan18::dan18(QWidget *parent)
 : QWidget(parent)
 {
     setupUi(this);
+    // DAN's own fields, tables and spin boxes stay C like its instrument and configuration files; only the QtiSAS
+    // tables and matrices it writes follow the application's numerical format
+    setLocale(QLocale::c());
 
 #ifdef Q_OS_MACOS
     this->setMinimumWidth(600);

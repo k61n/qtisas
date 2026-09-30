@@ -804,7 +804,7 @@ void dan18::maskSetValue()
 
             for (int xx = 0; xx < m->numCols(); xx++)
                 for (int yy = 0; yy < m->numRows(); yy++)
-                    m->setText(yy, xx, QString::number(newValue));
+                    m->setCell(yy, xx, newValue);
 
             m->notifyModifiedData();
             return;
@@ -844,7 +844,7 @@ void dan18::maskRectangular()
                     if ((xx >= xCenter - xSize / 2.0 && xx <= xCenter + xSize / 2.0 && yy >= yCenter - ySize / 2.0 &&
                          yy <= yCenter + ySize / 2.0) ^
                         !maskInside)
-                        m->setText(yy, xx, QString::number(newValue));
+                        m->setCell(yy, xx, newValue);
 
             m->notifyModifiedData();
             return;
@@ -887,7 +887,7 @@ void dan18::maskSector()
                     };
 
                     if (maskInside ? inRange(currentPhi) : !inRange(currentPhi))
-                        m->setText(yy, xx, QString::number(newValue));
+                        m->setCell(yy, xx, newValue);
             }
             m->notifyModifiedData();
             return;
@@ -919,7 +919,7 @@ void dan18::maskEllipse()
                     r = (xCenter - xx) * (xCenter - xx) * 4 / xSize / xSize;
                     r += (yCenter - yy) * (yCenter - yy) * 4 / ySize / ySize;
                     if ((maskInside && r <= 1) || (!maskInside && r > 1))
-                        m->setText(yy, xx, QString::number(newValue));
+                        m->setCell(yy, xx, newValue);
                 }
 
             m->notifyModifiedData();
@@ -957,7 +957,7 @@ void dan18::maskEllipseShell()
                     rMinus += (yCenter - yy) * (yCenter - yy) * 4 / (ySize - shell) / (ySize - shell);
 
                     if ((maskInside && rPlus <= 1 && rMinus >= 1) || (!maskInside && (rPlus > 1 || rMinus < 1)))
-                        m->setText(yy, xx, QString::number(newValue));
+                        m->setCell(yy, xx, newValue);
                 }
             m->notifyModifiedData();
             return;

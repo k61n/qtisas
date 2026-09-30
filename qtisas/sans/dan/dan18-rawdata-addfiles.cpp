@@ -220,7 +220,7 @@ void dan18::addFilesInActiveTableCols()
     {
         if (!t->text(0, nn).isEmpty())
         {
-            fileNumber = t->text(0, nn);
+            fileNumber = tableTextC(t, 0, nn);
             fileNumber = fileNumber.simplified();
             fileNumber = fileNumber.replace(" ", "-").replace("/", "-").replace(",", "-").replace(".", "-").remove("%");
 
@@ -235,7 +235,7 @@ void dan18::addFilesInActiveTableCols()
 
         for (int mm = 1; mm < M; mm++)
         {
-            file2add = t->text(mm, nn);
+            file2add = tableTextC(t, mm, nn);
             file2add = file2add.simplified();
             if (file2add == "")
                 continue;
@@ -287,7 +287,7 @@ void dan18::addFilesInActiveTableRows()
     {
         if (!t->text(rr, 0).isEmpty())
         {
-            fileNumber = t->text(rr, 0);
+            fileNumber = tableTextC(t, rr, 0);
             fileNumber = fileNumber.simplified();
             fileNumber = filesManager->newFileNameFull(fileNumber, wildCard);
 
@@ -302,7 +302,7 @@ void dan18::addFilesInActiveTableRows()
 
         for (int cc = 1; cc < C; cc++)
         {
-            file2add = t->text(rr, cc);
+            file2add = tableTextC(t, rr, cc);
             file2add = file2add.simplified();
 
             if (file2add.isEmpty())

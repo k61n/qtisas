@@ -1411,7 +1411,7 @@ void dan18::slotMakeBigMatrixFromTable()
     for (int mm = 0; mm < M; mm++)
         for (int nn = 0; nn < N; nn++)
         {
-            text = t->text(mm, nn).simplified();
+            text = tableTextC(t, mm, nn).simplified();
             qDebug() << text;
             if (text == "")
                 continue;

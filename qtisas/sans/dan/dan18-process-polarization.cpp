@@ -353,7 +353,7 @@ void dan18::danDanMultiButtonPN(const QString &button)
     QList<int> allUniqueConfigurations;
     for (int rowPol = 0; rowPol < wPol->numRows(); rowPol++)
     {
-        int currentConfiguration = wPol->text(rowPol, 1).toInt();
+        int currentConfiguration = tableTextC(wPol, rowPol, 1).toInt();
         if (currentConfiguration <= 0)
             continue;
 
@@ -386,7 +386,8 @@ void dan18::danDanMultiButtonPN(const QString &button)
 
         for (int rowPol = 0; rowPol < wPol->numRows(); rowPol++)
             if (wPol->text(rowPol, 0).simplified() == allUniqueSamples[iSample])
-                linesCurrentSampleInPolScript[allUniqueConfigurations.indexOf(wPol->text(rowPol, 1).toInt())] = rowPol;
+                linesCurrentSampleInPolScript[allUniqueConfigurations.indexOf(tableTextC(wPol, rowPol, 1).toInt())] =
+                    rowPol;
 
         linesInPolScript << linesCurrentSampleInPolScript;
 
@@ -1879,8 +1880,8 @@ void dan18::updatePolarizedScriptTable(QString tableName)
                         {
                             wPol->setText(iSample * existingNonPolConfigurations.count() + cp, 0,
                                           allUniqueSamples[iSample]);
-                            wPol->setText(iSample * existingNonPolConfigurations.count() + cp, 1,
-                                          QString::number(existingNonPolConfigurations[cp]));
+                            wPol->setCell(iSample * static_cast<int>(existingNonPolConfigurations.count()) + cp, 1,
+                                          existingNonPolConfigurations[cp]); // Numeric #-Condition
                             QString polValue = collimation->readPolarization(scriptTableManager->runSample(row));
                             wPol->setText(iSample * existingNonPolConfigurations.count() + cp,
                                           2 + polarizedAlias(polValue), scriptTableManager->runSample(row));

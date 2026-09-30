@@ -46,6 +46,13 @@ Description: SANS data analysis interface
 #include "PlotCurve.h"
 #include "Spectrogram.h"
 
+// A QtiSAS table cell as C text: DAN works in C, a Numeric column shows its numbers in the table's locale
+inline QString tableTextC(Table *t, int row, int col)
+{
+    const QString text = t->text(row, col);
+    return t->columnType(col) == Table::Numeric ? NumericLocale::convert(text, t->locale(), QLocale::c()) : text;
+}
+
 class dan18 : public QWidget, private Ui::dan
 {
     Q_OBJECT

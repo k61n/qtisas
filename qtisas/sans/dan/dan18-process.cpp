@@ -4474,7 +4474,11 @@ void dan18::updateColInScript(const QString &colName, int rowIndex, int startRow
         cond = scriptTableManager->condition(iter).toInt();
         if (cond>0)
         {
-            w->setText(iter,index, tableEC->item(rowIndex,int(fabs(double(cond)))-1)->text());
+            // tableEC is C; a Numeric script column shows the value in the table's locale (like ScriptTableManager)
+            const QString text = tableEC->item(rowIndex, int(fabs(double(cond))) - 1)->text();
+            w->setText(iter, index,
+                       w->columnType(index) == Table::Numeric ? NumericLocale::convert(text, QLocale::c(), w->locale())
+                                                              : text);
         }
     }
 }
@@ -4501,22 +4505,24 @@ bool dan18::generateMergingTable(Table *scriptTable, const QStringList &generate
 
     int numRows = 0;
     const int conditionCol = scriptTable->colIndex("#-Condition") >= 0 ? scriptTable->colIndex("#-Condition") : 2;
+    const auto condition = [scriptTable, conditionCol](int row) {
+        return tableTextC(scriptTable, row, conditionCol).toInt(); // #-Condition is a Numeric column
+    };
 
     for (int i = 0; i < (int)generatedTables.count(); i++)
     {
-        if (scriptTable->text(i + startingRaw, conditionCol).toInt() > 0 && generatedTables[i] != "-0-" &&
-            !generatedTables[i].isEmpty())
+        if (condition(i + startingRaw) > 0 && generatedTables[i] != "-0-" && !generatedTables[i].isEmpty())
         {
             currentSample = scriptTable->text(i + startingRaw, 0).simplified();
             if (usedNames.count(currentSample) > 0)
-                t->setText(static_cast<int>(usedNames.indexOf(currentSample)),
-                           scriptTable->text(i + startingRaw, conditionCol).toInt(), generatedTables[i]);
+                t->setText(static_cast<int>(usedNames.indexOf(currentSample)), condition(i + startingRaw),
+                           generatedTables[i]);
             else
             {
                 numRows++;
                 t->setNumRows(numRows);
                 t->setText(numRows - 1, 0, currentSample);
-                t->setText(numRows - 1, scriptTable->text(i + startingRaw, conditionCol).toInt(), generatedTables[i]);
+                t->setText(numRows - 1, condition(i + startingRaw), generatedTables[i]);
                 usedNames << currentSample;
             }
         }

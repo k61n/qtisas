@@ -459,13 +459,16 @@ void dan18::addToInfoExtractor(const QStringList &selectedDat, bool viaButton)
     
     tableDat->show();
 
+    // Header values are C; Numeric columns show them in the table's locale, as in the column's first fill above
+    QLocale sourceLocale = QLocale::c();
+    sourceLocale.setNumberOptions(QLocale::RejectGroupSeparator);
     for (int iter = startRaw; iter < (startRaw + filesNumber); iter++)
     {
         QString nameMatrix = selectedDat[iter - startRaw];
         nameMatrix = FilesManager::findFileNumberInFileName(wildCard, nameMatrix.remove(Dir));
         tableDat->setText(iter, 0, nameMatrix);
         for (int i = 1; i < tableDat->numCols(); i++)
-            tableDat->setText(iter, i, getHeaderInfoString(nameMatrix, tableDat->comment(i)));
+            tableDat->setCellOrText(iter, i, getHeaderInfoString(nameMatrix, tableDat->comment(i)), sourceLocale);
     }
 
     if (checkBoxSortOutputToFolders->isChecked())

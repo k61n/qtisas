@@ -2758,8 +2758,6 @@ void ConfigDialog::apply()
             app->jnseWindow->setLocale(locale);
         if (app->svdWindow)
             app->svdWindow->setLocale(locale);
-        if (app->danWindow)
-            app->danWindow->setLocale(locale);
         if (app->compileWindow)
             app->compileWindow->setLocale(locale);
         if (app->fittableWindow)

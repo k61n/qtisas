@@ -9,11 +9,12 @@ Description: DAN script table manager
 #ifndef DAN_SCRIPT_TABLE_MANAGER_H
 #define DAN_SCRIPT_TABLE_MANAGER_H
 
-#include <iostream>
+#include "Table.h"
+#include "numericLocale.h"
 #include <QComboBox>
 #include <QString>
 #include <QStringList>
-#include "Table.h"
+#include <iostream>
 
 class ScriptTableManager : public QObject
 {
@@ -61,15 +62,21 @@ class ScriptTableManager : public QObject
     int indexRemoveFirst = -1;     //+++ RemoveFirst
     int indexRemoveLast = -1;      //+++ RemoveLast
 
+    // DAN works with C numbers; a Numeric column of the script table shows them in the table's locale
     QString read(int row, int index)
     {
-        return (w && row >= 0 && row < w->numRows() && index >= 0 && index < cols) ? w->text(row, index) : "";
+        if (!(w && row >= 0 && row < w->numRows() && index >= 0 && index < cols))
+            return "";
+        const QString text = w->text(row, index);
+        return w->columnType(index) == Table::Numeric ? NumericLocale::convert(text, w->locale(), QLocale::c()) : text;
     }
     bool write(int row, int index, const QString &text)
     {
         if (!(w && row >= 0 && row < w->numRows() && index >= 0 && index < cols))
             return false;
-        w->setText(row, index, text);
+        w->setText(row, index,
+                   w->columnType(index) == Table::Numeric ? NumericLocale::convert(text, QLocale::c(), w->locale())
+                                                          : text);
         return true;
     }
     static int readColumnIndex(int &index, const QString &colName, const QStringList &scriptColList,
