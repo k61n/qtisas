@@ -987,10 +987,8 @@ void ConfigDialog::initAppPage()
 	numericFormatLayout->addWidget(boxClipboardLocale, 2, 1);
     
 	boxMuParserCLocale = new QCheckBox();
-	//boxMuParserCLocale->setChecked(app->d_muparser_c_locale);
-    boxMuParserCLocale->setChecked(false);
-    boxMuParserCLocale->setDisabled(true);
-    
+    boxMuParserCLocale->setChecked(app->d_muparser_c_locale);
+
 	numericFormatLayout->addWidget(boxMuParserCLocale, 3, 0);
 
 	numericFormatLayout->setRowStretch(4, 1);
@@ -2312,6 +2310,9 @@ void ConfigDialog::languageChange()
 	boxDecimalSeparator->addItem("1 000,0");
 	boxThousandsSeparator->setText(tr("Omit &Thousands Separator"));
 	boxMuParserCLocale->setText(tr("mu&Parser uses C locale settings"));
+    boxMuParserCLocale->setToolTip(tr("Checked: muParser formulas use 1.5 and max(1, 2), like Python.\n"
+                                      "Unchecked: they use the numerical format, e.g. 1,5 and max(1; 2); "
+                                      "formulas saved in another format no longer work."));
 
     QLocale locale = app->locale();
     /*

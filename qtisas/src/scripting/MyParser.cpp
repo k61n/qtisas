@@ -41,22 +41,16 @@ MyParser::MyParser()
 	setLocale(getLocale());
 }
 
+// C like Python, or with "muParser uses C locale settings" unchecked the application's numerical format
 QLocale MyParser::getLocale()
 {
-	bool cLocale = true;
-	foreach (QWidget *w, QApplication::allWidgets()){
-		ApplicationWindow *app = qobject_cast<ApplicationWindow *>(w);
-		if (app){
-			cLocale = app->d_muparser_c_locale;
-			break;
-		}
-	}
-
-	QLocale locale = QLocale::c();
-	if (!cLocale)
-		locale = QLocale();
-
-	return locale;
+    foreach (QWidget *w, QApplication::allWidgets())
+    {
+        auto *app = qobject_cast<ApplicationWindow *>(w);
+        if (app)
+            return app->d_muparser_c_locale ? QLocale::c() : app->locale();
+    }
+    return QLocale::c();
 }
 
 void MyParser::setLocale(const QLocale& locale)
@@ -69,10 +63,14 @@ void MyParser::setLocale(const QLocale& locale)
 	if (decPoint != '.'){
 		SetDecSep(decPoint);
 		SetArgSep(';');
+        // Group separators only when the format shows them, as for numbers typed into a table
+        if (locale.numberOptions() & QLocale::OmitGroupSeparator)
+            SetThousandsSep(0);
+        else
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-        SetThousandsSep(locale.groupSeparator().toLatin1());
+            SetThousandsSep(locale.groupSeparator().toLatin1());
 #else
-        SetThousandsSep(locale.groupSeparator()[0].toLatin1());
+            SetThousandsSep(locale.groupSeparator()[0].toLatin1());
 #endif
 	} else
 		ResetLocale();// reset C locale
