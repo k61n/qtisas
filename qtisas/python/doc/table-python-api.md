@@ -112,8 +112,9 @@ Row arguments are always 1-based.
 
 | Method | Returns | Notes |
 |--------|---------|-------|
-| `text(col, row)` | `str` | raw cell text |
+| `text(col, row)` | `str` | cell text as displayed — in a Numeric column formatted in the application's numerical format (e.g. `1,5` with German settings); read numbers with `cell()`, never `float(t.text(...))` |
 | `cell(col, row)` | `float` | numeric value; raises `ValueError` if empty |
+| `cellOrNone(col, row)` | `float` or `None` | numeric value, or `None` if the cell is empty or not a number — use it where a parse failure must be visible (unlike `cell()`, which gives `0.0`) |
 | `cellData(col, row)` | `str` or `float` | type-aware: float for numeric cols, str for text |
 | `rowData(row)` | `tuple` | all cells of a row — an empty numeric cell becomes `None`, NOT `0` |
 | `colData(col)` | `list` | all cells of a column — an empty numeric cell becomes `None`, NOT `0` |
@@ -134,8 +135,9 @@ Row arguments are always 1-based.
 > **`t.cell(col, row)` silently returns `0.0` when the text can't be parsed as a number** — it only
 > raises on a genuinely EMPTY cell; no way to tell "really 0.0" from "parsing failed." Confirmed
 > live: reading a text-label cell by mistake gave `0.0` with no error. Never use `cell()` on an
-> unconfirmed-numeric column — use `text()`/`cellData()` and parse it yourself so failures stay
-> visible.
+> unconfirmed-numeric column — use `cellOrNone()`, which returns
+> `None` for an empty or unparsable cell; do not parse `text()` with `float()` — Numeric
+> cells are formatted in the application's numerical format.
 
 ### Reading Cells — negative index example
 
@@ -156,7 +158,7 @@ last_row_tuple = t[-1]          # bracket access DOES support -1
 
 | Method | Notes |
 |--------|-------|
-| `setText(col, row, value)` | write string to cell |
+| `setText(col, row, value)` | write string to cell — in a Numeric column a C number string (`"1.5"`) is stored as that number and shown in the numerical format; other text is kept as typed |
 | `setCell(col, row, value)` | write float to cell |
 | `setCellData(col, row, value)` | type-aware write (str or float) |
 | `setRowData(row, tuple)` | overwrite entire row from a tuple — `row` is **1-based** |

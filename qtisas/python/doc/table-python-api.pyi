@@ -38,7 +38,8 @@ setColNames(["x","y","dy"])   # list length must equal numCols()
 
 # Read — col FIRST, row second — both 1-based:
 cell(col,row)->float      # t.cell(2,3) → col 2, row 3
-text(col,row)->str        # t.text(1,5) → col 1, row 5
+cellOrNone(col,row)->float|None  # None if empty or not a number — use when a parse failure must be visible
+text(col,row)->str        # displayed text; Numeric cells follow the numerical format ("1,5") — use cell() for numbers
 cellData(col,row)->str|float
 colData(col)->list        # t.colData(1) → [0.1, 0.2, ...]  all rows of col 1
 rowData(row)->tuple       # t[n]→rowData(n+1) 0-based, negative ok;  t[a:b]→list of tuples
@@ -47,13 +48,14 @@ rowData(row)->tuple       # t[n]→rowData(n+1) 0-based, negative ok;  t[a:b]→
 #   RIGHT: t.cell(1, t.numRows())   or   t[-1]  (bracket access supports -1)
 # cell() SILENTLY returns 0.0 when the cell's text can't be parsed as a number — never raises for
 #   this case (only a genuinely EMPTY cell raises), indistinguishable from a real 0.0 result. Never
-#   use cell() on a column you haven't confirmed is numeric — use text()/cellData() instead and
-#   parse the string yourself, so a parse failure is visible. (text() had a Python-3-porting
-#   TypeError bug on every non-empty cell; fixed at the source as of this build.)
+#   use cell() on a column you haven't confirmed is numeric — use cellOrNone() (None on failure);
+#   never float(t.text(...)): Numeric cells follow the numerical format.
+#   (text() had a Python-3-porting TypeError bug on every non-empty cell; fixed at the source as of
+#   this build.)
 
 # Write — col FIRST, row second — both 1-based:
 setCell(col,row,value)    # t.setCell(2,3,1.5) → col 2, row 3
-setText(col,row,value)
+setText(col,row,value)    # Numeric column: C number string "1.5" stored as number; other text kept as typed
 setCellData(col,row,value)
 setColData(col,iterable,offset=0)   # offset 0-based: t.setColData(1,[0.1,0.2,0.3])
 appendRowData(tuple)->int

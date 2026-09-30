@@ -388,6 +388,34 @@ public:
 		}
 	}
 %End
+  SIP_PYOBJECT cellOrNone(SIP_PYOBJECT, int);
+%MethodCode
+  // Like cell(), but an empty or unparsable cell gives None instead of 0.0 / ValueError
+  sipIsErr = 0;
+  CHECK_TABLE_COL(a0);
+  CHECK_TABLE_ROW(a1);
+  if (sipIsErr == 0)
+  {
+    double value = 0.0;
+    const int type = sipCpp->columnType(col);
+    bool ok = false;
+    if (type == Table::Date || type == Table::Time)
+    {
+      ok = !sipCpp->text(row, col).trimmed().isEmpty();
+      if (ok)
+        value = sipCpp->cell(row, col);
+    }
+    else
+      ok = sipCpp->tryNumericCell(row, col, value);
+    if (ok)
+      sipRes = PyFloat_FromDouble(value);
+    else
+    {
+      Py_INCREF(Py_None);
+      sipRes = Py_None;
+    }
+  }
+%End
   SIP_PYOBJECT cellData(SIP_PYOBJECT, int);
 %MethodCode
   sipIsErr = 0;
@@ -569,8 +597,19 @@ public:
   sipIsErr = 0;
   CHECK_TABLE_COL(a0);
   CHECK_TABLE_ROW(a1);
-	if (sipIsErr == 0)
-		sipCpp->setText(row, col, *a2);
+  if (sipIsErr == 0)
+  {
+    // Python writes numbers in C ("1.5"): a Numeric column stores them in its own locale, like setCellData();
+    // text that is not a C number ("---", labels) is kept as it is
+    QLocale c = QLocale::c();
+    c.setNumberOptions(QLocale::RejectGroupSeparator);
+    bool ok = false;
+    const double value = sipCpp->columnType(col) == Table::Numeric ? c.toDouble(*a2, &ok) : 0.0;
+    if (ok)
+      sipCpp->setCell(row, col, value);
+    else
+      sipCpp->setText(row, col, *a2);
+  }
 %End
   void setCell(SIP_PYOBJECT, int, double);
 %MethodCode
