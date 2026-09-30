@@ -38,6 +38,9 @@ public:
 	void addGSLConstants();
 	void setLocale(const QLocale& locale);
 	static QLocale getLocale();
+    // One value: comma-separated expressions ("1,1+2,2" gives 1, 3 and 2) are an error, not the last value.
+    // Hides Parser::Eval() for every formula QtiSAS evaluates with muParser.
+    double Eval() const;
 
 	const static QStringList functionsList();
 	const static QStringList functionNamesList();

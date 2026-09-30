@@ -53,6 +53,18 @@ QLocale MyParser::getLocale()
     return QLocale::c();
 }
 
+double MyParser::Eval() const
+{
+    const double value = Parser::Eval();
+    if (GetNumResults() > 1)
+        throw Parser::exception_type(QObject::tr("%1 gives %2 values, one is expected")
+                                         .arg(QString::fromStdString(GetExpr()).trimmed())
+                                         .arg(GetNumResults())
+                                         .toLocal8Bit()
+                                         .constData());
+    return value;
+}
+
 void MyParser::setLocale(const QLocale& locale)
 {
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
