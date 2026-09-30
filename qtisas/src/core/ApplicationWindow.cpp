@@ -11923,79 +11923,100 @@ void ApplicationWindow::pasteSelection()
 	emit modified();
 }
 
-MdiSubWindow* ApplicationWindow::clone(MdiSubWindow* w)
+MdiSubWindow *ApplicationWindow::clone(MdiSubWindow *w)
 {
-    if (!w) {
+    if (!w)
+    {
         w = activeWindow();
-		if (!w){
-			QMessageBox::critical(this,tr("QTISAS - Duplicate window error"),
-				tr("There are no windows available in this folder!"));
-			return 0;
-		}
-	}
+        if (!w)
+        {
+            QMessageBox::critical(this, tr("QTISAS - Duplicate window error"),
+                                  tr("There are no windows available in this folder!"));
+            return nullptr;
+        }
+    }
 
-	MdiSubWindow* nw = 0;
-	MdiSubWindow::Status status = w->status();
-	QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+    MdiSubWindow *nw = nullptr;
+    MdiSubWindow::Status status = w->status();
+    const QString caption = generateUniqueName(w->objectName() + "-copy");
+    QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
 
-	if (QString(w->metaObject()->className()) == "MultiLayer"){
-		MultiLayer *g = (MultiLayer *)w;
-		nw = multilayerPlot(generateUniqueName(w->objectName()+"-copy"), 0, g->getRows(), g->getCols());
-		((MultiLayer *)nw)->copy(g);
-	} else if (w->inherits("Table")){
-		Table *t = (Table *)w;
-		QString caption = generateUniqueName(w->objectName()+"-copy");
-    	nw = newTable(caption, t->numRows(), t->numCols());
-    	((Table *)nw)->copy(t);
-	} else if (QString(w->metaObject()->className()) == "Graph3D"){
-		Graph3D *g = (Graph3D *)w;
-		if (!g->hasData()){
-        	QApplication::restoreOverrideCursor();
-        	QMessageBox::warning(this, tr("QTISAS - Duplicate error"), tr("Empty 3D surface plots cannot be duplicated!"));
-        	return 0;
-    	}
-		nw = newPlot3D();
-		if (!nw)
-			return 0;
+    if (QString(w->metaObject()->className()) == "MultiLayer")
+    {
+        auto *g = (MultiLayer *)w;
+        nw = multilayerPlot(caption, 0, g->getRows(), g->getCols());
+        ((MultiLayer *)nw)->copy(g);
+    }
+    else if (w->inherits("Table"))
+    {
+        auto *t = (Table *)w;
+        nw = newTable(caption, t->numRows(), t->numCols());
+        ((Table *)nw)->copy(t);
+    }
+    else if (QString(w->metaObject()->className()) == "Graph3D")
+    {
+        auto *g = (Graph3D *)w;
+        if (!g->hasData())
+        {
+            QApplication::restoreOverrideCursor();
+            QMessageBox::warning(this, tr("QTISAS - Duplicate error"),
+                                 tr("Empty 3D surface plots cannot be duplicated!"));
+            return nullptr;
+        }
+        nw = newPlot3D(caption);
+        if (!nw)
+        {
+            QApplication::restoreOverrideCursor();
+            return nullptr;
+        }
         if (status == MdiSubWindow::Maximized)
             nw->hide();
-		((Graph3D *)nw)->copy(g);
-		customToolBars(nw);
-	} else if (QString(w->metaObject()->className()) == "Matrix"){
-		nw = newMatrix(((Matrix *)w)->numRows(), ((Matrix *)w)->numCols());
-    	((Matrix *)nw)->copy((Matrix *)w);
-	} else if (QString(w->metaObject()->className()) == "Note"){
-		nw = newNote();
-		if (nw){
-			((Note*)nw)->setText(((Note*)w)->text());
-			((Note*)nw)->showLineNumbers(((Note*)w)->hasLineNumbers());
-		}
-	}
+        ((Graph3D *)nw)->copy(g);
+        customToolBars(nw);
+    }
+    else if (QString(w->metaObject()->className()) == "Matrix")
+    {
+        auto *m = (Matrix *)w;
+        nw = newMatrix(caption, m->numRows(), m->numCols());
+        ((Matrix *)nw)->copy(m);
+    }
+    else if (QString(w->metaObject()->className()) == "Note")
+    {
+        nw = newNote(caption);
+        if (nw)
+        {
+            ((Note *)nw)->setText(((Note *)w)->text());
+            ((Note *)nw)->showLineNumbers(((Note *)w)->hasLineNumbers());
+        }
+    }
 
-	if (nw){
-		if (QString(w->metaObject()->className()) == "MultiLayer"){
-			if (status == MdiSubWindow::Maximized)
-				nw->showMaximized();
-		} else if (QString(w->metaObject()->className()) == "Graph3D"){
-            ((Graph3D*)nw)->setIgnoreFonts(true);
-			if (status != MdiSubWindow::Maximized){
-				nw->resize(w->size());
-				nw->showNormal();
-			} else
-                nw->showMaximized();
-            ((Graph3D*)nw)->setIgnoreFonts(false);
-		} else {
-			nw->resize(w->size());
-			nw->showNormal();
-		}
+    if (nw)
+    {
+        auto *g3d = qobject_cast<Graph3D *>(nw);
+        if (g3d)
+            g3d->setIgnoreFonts(true);
 
-		nw->setWindowLabel(w->windowLabel());
-		nw->setCaptionPolicy(w->captionPolicy());
-		//setListViewSize(nw->objectName(), w->sizeToString());
-	}
-	QApplication::restoreOverrideCursor();
-	customMenu(nw);
-	return nw;
+        // Only the copy stays maximized, for every window type; setMaximized() also sets the status
+        // shown in the project explorer (newTable()/newMatrix()/newNote() may have restored the source already)
+        if (status == MdiSubWindow::Maximized)
+        {
+            w->showNormal();
+            nw->setMaximized();
+        }
+        else
+        {
+            nw->resize(w->size());
+            nw->showNormal();
+        }
+
+        if (g3d)
+            g3d->setIgnoreFonts(false);
+
+        nw->setWindowLabel(w->windowLabel());
+        nw->setCaptionPolicy(w->captionPolicy());
+    }
+    QApplication::restoreOverrideCursor();
+    return nw;
 }
 
 void ApplicationWindow::undo()
