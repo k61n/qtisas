@@ -304,26 +304,30 @@ void ErrorBarsCurve::loadData()
     QVector<QPointF> P(r);
     QVector<double> err(r);
     int data_size = 0;
-    // Text error columns hold C numbers (Table::cellLocale)
-    const QLocale locale = d_table->cellLocale(errcol);
+    // Numeric error columns follow the table's locale. Text ones usually hold C numbers (Table::cellLocale), but
+    // FitTable result tables write "±error" text in the table's locale: C without group separators first, then that
+    QLocale locale = d_table->cellLocale(errcol);
+    const bool textColumn = d_table->columnType(errcol) != Table::Numeric;
+    if (textColumn)
+        locale.setNumberOptions(locale.numberOptions() | QLocale::RejectGroupSeparator);
     for (int i = d_start_row; i <= d_end_row; i++)
     {
-		QString xval = mt->text(i, xcol);
+        QString xval = mt->text(i, xcol);
 		QString yval = mt->text(i, ycol);
 		QString errval = d_table->text(i, errcol);
 		if (!xval.isEmpty() && !yval.isEmpty()){
             P[data_size] = d_master_curve->sample(data_size);
 
-			if (!errval.isEmpty())
-				err[data_size] = locale.toDouble(errval);
-			else
-				err[data_size] = 0.0;
+            bool ok = false;
+            err[data_size] = errval.isEmpty() ? 0.0 : locale.toDouble(errval, &ok);
+            if (!ok && textColumn && !errval.isEmpty())
+                err[data_size] = d_table->locale().toDouble(errval);
 
-			data_size++;
+            data_size++;
 		}
-	}
+    }
 
-	if (!data_size)
+    if (!data_size)
 		remove();
 
     P.resize(data_size);
