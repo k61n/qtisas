@@ -304,8 +304,10 @@ void ErrorBarsCurve::loadData()
     QVector<QPointF> P(r);
     QVector<double> err(r);
     int data_size = 0;
-    QLocale locale = d_table->locale();
-	for (int i = d_start_row; i <= d_end_row; i++){
+    // Text error columns hold C numbers (Table::cellLocale)
+    const QLocale locale = d_table->cellLocale(errcol);
+    for (int i = d_start_row; i <= d_end_row; i++)
+    {
 		QString xval = mt->text(i, xcol);
 		QString yval = mt->text(i, ycol);
 		QString errval = d_table->text(i, errcol);

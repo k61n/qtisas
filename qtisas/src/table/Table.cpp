@@ -2368,7 +2368,7 @@ double Table::cell(int row, int col)
 	else if (colType == Date)
 		return fromDateTime(QDateTime::fromString(d_table->text(row, col).trimmed(), col_format[col].trimmed()));
 
-	return locale().toDouble(d_table->text(row, col));
+    return cellLocale(col).toDouble(d_table->text(row, col));
 }
 
 bool Table::tryNumericCell(int row, int col, double &value) const
@@ -2379,10 +2379,16 @@ bool Table::tryNumericCell(int row, int col, double &value) const
     if (text.isEmpty())
         return false;
     bool ok = false;
-    const double parsed = locale().toDouble(text, &ok);
+    const double parsed = cellLocale(col).toDouble(text, &ok);
     if (ok)
         value = parsed;
     return ok;
+}
+
+QLocale Table::cellLocale(int col) const
+{
+    // Only Numeric columns are shown in the table's locale; numbers stored in other columns stay C
+    return (col >= 0 && col < colTypes.size() && colTypes[col] == Numeric) ? locale() : QLocale::c();
 }
 
 void Table::setCell(int row, int col, double val)
@@ -2394,7 +2400,7 @@ void Table::setCell(int row, int col, double val)
     char format;
     int prec;
     columnNumericFormat(col, &format, &prec);
-    d_table->setText(row, col, locale().toString(val, format, prec));
+    d_table->setText(row, col, cellLocale(col).toString(val, format, prec));
 }
 
 void Table::setCellOrText(int row, int col, const QString &text, const QLocale &sourceLocale)
@@ -2495,7 +2501,12 @@ void Table::setColNumericFormat(int f, int prec, int col, bool updateCells)
 	else if (prec > 14)
 		prec = 14;
 
-	if (colTypes[col] == Numeric){
+    // Text columns hold C numbers; saveToMemory() keeps no values for them
+    const bool fromText = colTypes[col] == Text;
+    const QLocale oldLocale = cellLocale(col);
+
+    if (colTypes[col] == Numeric)
+    {
 		int old_f, old_prec;
 		columnNumericFormat(col, &old_f, &old_prec);
 		if (old_f == f && old_prec == prec)
@@ -2520,11 +2531,11 @@ void Table::setColNumericFormat(int f, int prec, int col, bool updateCells)
 			else
 				format = 'g';
 
-			if (d_saved_cells)
-				setText(i, col, locale().toString(d_saved_cells[col][i], format, prec));
+            if (d_saved_cells && !fromText)
+                setText(i, col, locale().toString(d_saved_cells[col][i], format, prec));
 			else
-				setText(i, col, locale().toString(locale().toDouble(t), format, prec));
-		}
+                setText(i, col, locale().toString(oldLocale.toDouble(t), format, prec));
+        }
 	}
 }
 

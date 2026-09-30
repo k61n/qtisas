@@ -79,10 +79,12 @@ public:
     }
 	void setAutoUpdateValues(bool on = true);
 	virtual QString sizeToString();
-    //! Parse a numeric cell using this table's locale; leave value unchanged on failure.
+    //! Parse a numeric cell using cellLocale(col); leave value unchanged on failure.
     bool tryNumericCell(int row, int col, double &value) const;
+    //! Locale of numbers in a column: the table's locale for Numeric columns, C for all others.
+    QLocale cellLocale(int col) const;
 
-	double avg(int col, int startRow = 0, int endRow = -1);
+    double avg(int col, int startRow = 0, int endRow = -1);
 	double sum(int col, int startRow = 0, int endRow = -1);
 	double minColumnValue(int col, int startRow = 0, int endRow = -1);
 	double maxColumnValue(int col, int startRow = 0, int endRow = -1);
