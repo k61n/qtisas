@@ -102,7 +102,6 @@ void fittable18::makeNote(QString info, QString name, QString label)
     nn->setWindowLabel(label);
     app()->setListViewLabel(nn->name(), label);
     app()->hideWindow(nn);
-    app()->hideWindow(nn);
 
     //+++
     nn->currentEditor()->setText(info);
