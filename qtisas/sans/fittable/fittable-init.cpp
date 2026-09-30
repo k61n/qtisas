@@ -767,7 +767,9 @@ void fittable18::SDchanged(int poly)
     }
     
     bool sdNumberChanged=false;
-    
+    const QString sansValue0 = SANS_initValues.isEmpty() ? QString() : cToUi(SANS_initValues[0]);
+    const QString sansValue1 = pSANS == 2 ? cToUi(SANS_initValues[1]) : QString();
+
     if (p==pF)
     {
         tablePara->setRowCount(p);
@@ -783,10 +785,10 @@ void fittable18::SDchanged(int poly)
         
         for (mm=0; mm<M;mm++)
         {
-            tablePara->setItem(p-pSANS, 3*mm+2,new QTableWidgetItem(SANS_initValues[0]));
+            tablePara->setItem(static_cast<int>(p - pSANS), 3 * mm + 2, new QTableWidgetItem(sansValue0));
             if (pSANS==2)
-                tablePara->setItem(p-pSANS+1, 3*mm+2,new QTableWidgetItem(SANS_initValues[1]));
-            
+                tablePara->setItem(static_cast<int>(p - pSANS + 1), 3 * mm + 2, new QTableWidgetItem(sansValue1));
+
             tablePara->setItem(p-pSANS,3*mm+3,new QTableWidgetItem("---"));
             tablePara->item(p-pSANS,3*mm+3)->setFlags(tablePara->item(p-pSANS,3*mm+3)->flags() & ~Qt::ItemIsEditable);
             tablePara->item(p-pSANS,3*mm+3)->setBackground(QColor(236,236,236));
@@ -832,15 +834,15 @@ void fittable18::SDchanged(int poly)
         tableParaComments->setRowCount(pF+pSANS);
         tableParaSimulate->setRowCount(pF+pSANS);
         tableControl->setRowCount(pF+pSANS);
-        
-        tableParaSimulate->setItem(pF,0,new QTableWidgetItem(SANS_initValues[0]));
-        tableParaComments->setItem(pF,0,new QTableWidgetItem(SANS_paraListComments[0]));
+
+        tableParaSimulate->setItem(static_cast<int>(pF), 0, new QTableWidgetItem(sansValue0));
+        tableParaComments->setItem(static_cast<int>(pF), 0, new QTableWidgetItem(SANS_paraListComments[0]));
 
         if (pSANS==2)
         {
             for (mm=0; mm<M;mm++)
             {
-                tablePara->setItem(pF+pSANS-1,3*mm+2,new QTableWidgetItem(SANS_initValues[1]));
+                tablePara->setItem(static_cast<int>(pF + pSANS - 1), 3 * mm + 2, new QTableWidgetItem(sansValue1));
                 tablePara->setItem(pF+pSANS-1,3*mm+3,new QTableWidgetItem("---"));
                 tablePara->item(pF+pSANS-1,3*mm+3)->setFlags(tablePara->item(pF+pSANS-1,3*mm+3)->flags() & ~Qt::ItemIsEditable); //+++2019
                 tablePara->item(pF+pSANS-1,3*mm+3)->setBackground(QColor(236,236,236));
@@ -849,13 +851,13 @@ void fittable18::SDchanged(int poly)
                 cb->setText("..");
                 tablePara->setItem(pF+pSANS-1,3*mm+1, cb);
                 cb->setCheckState(Qt::Unchecked);
-                
-                tablePara->item(pF+pSANS-2, 3*mm+2)->setText(SANS_initValues[1]);
+
+                tablePara->item(static_cast<int>(pF + pSANS - 2), 3 * mm + 2)->setText(sansValue1);
             }
             
             tableParaComments->setItem(pF+pSANS-1,0,new QTableWidgetItem(SANS_paraListComments[1]));
-            tableParaSimulate->setItem(pF+pSANS-1,0,new QTableWidgetItem(SANS_initValues[1]));
-            
+            tableParaSimulate->setItem(static_cast<int>(pF + pSANS - 1), 0, new QTableWidgetItem(sansValue1));
+
             QTableWidgetItem *cb = new QTableWidgetItem();
             tablePara->setItem(pF+pSANS-1,0,cb);
             cb->setCheckState(Qt::Unchecked);
@@ -1238,8 +1240,8 @@ void fittable18::initLimits()
                     double leftLimit = limits[0].trimmed().toDouble();
                     double rightLimit = limits[1].trimmed().toDouble();
 
-                    tableControl->item(pp, 0)->setText(QString::number(leftLimit));
-                    tableControl->item(pp, 4)->setText(QString::number(rightLimit));
+                    tableControl->item(pp, 0)->setText(uiNumber(leftLimit));
+                    tableControl->item(pp, 4)->setText(uiNumber(rightLimit));
 
                     cR->setCurrentIndex(sep == "+-" ? 1 : 0);
                     cL->setCurrentIndex(sep == "+-" ? 1 : 0);
@@ -1270,10 +1272,10 @@ void fittable18::chekLimits()
         bool bayesianYNglobal = ((QComboBox *)tableControl->cellWidget(pp, 1))->currentIndex() == 1;
 
         txt = tableControl->item(pp, 0)->text();
-        left = (txt.contains("-inf")) ? minf : txt.toDouble();
+        left = (txt.contains("-inf")) ? minf : uiToDouble(txt);
 
         txt = tableControl->item(pp, 4)->text();
-        right = (txt.contains("inf")) ? pinf : txt.toDouble();
+        right = (txt.contains("inf")) ? pinf : uiToDouble(txt);
 
         if ((!bayesianYNglobal && right < left) || (bayesianYNglobal && (fabs(left) == pinf || right < 1e-100)))
         {
@@ -1285,8 +1287,8 @@ void fittable18::chekLimits()
         ((QComboBox *)tableControl->cellWidget(pp, 1))->setCurrentIndex(int(bayesianYNglobal));
         ((QComboBox *)tableControl->cellWidget(pp, 3))->setCurrentIndex(int(bayesianYNglobal));
 
-        tableControl->item(pp, 0)->setText(QString::number(left));
-        tableControl->item(pp, 4)->setText(QString::number(right));
+        tableControl->item(pp, 0)->setText(uiNumber(left));
+        tableControl->item(pp, 4)->setText(uiNumber(right));
     }
 }
 
@@ -1311,8 +1313,8 @@ void fittable18::chekLimitsAndFittedParameters()
     {
         bool bayesianYNglobal = ((QComboBox *)tableControl->cellWidget(pp, 1))->currentIndex() == 1;
 
-        leftGlobal = tableControl->item(pp, 0)->text().trimmed().toDouble();
-        rightGlobal = tableControl->item(pp, 4)->text().trimmed().toDouble();
+        leftGlobal = uiToDouble(tableControl->item(pp, 0)->text().trimmed());
+        rightGlobal = uiToDouble(tableControl->item(pp, 4)->text().trimmed());
 
         if (bayesianYNglobal && (rightGlobal < 1e-100 || rightGlobal == pinf || leftGlobal == minf))
         {
@@ -1334,12 +1336,12 @@ void fittable18::chekLimitsAndFittedParameters()
                 txtVary = lstTmpLimits[0];
                 if (txtVary.isEmpty())
                     bayesianYNlocal = false;
-                leftLocal = (txtVary.isEmpty() || txtVary == "-inf") ? minf : txtVary.toDouble();
+                leftLocal = (txtVary.isEmpty() || txtVary == "-inf") ? minf : uiToDouble(txtVary);
 
                 txtVary = lstTmpLimits[1];
                 if (txtVary.isEmpty())
                     bayesianYNlocal = false;
-                rightLocal = (txtVary.isEmpty() || txtVary == "inf") ? pinf : txtVary.toDouble();
+                rightLocal = (txtVary.isEmpty() || txtVary == "inf") ? pinf : uiToDouble(txtVary);
 
                 if (bayesianYNlocal && (rightLocal < 1e-100 || rightLocal == pinf) || leftLocal == minf)
                 {
@@ -1395,11 +1397,11 @@ void fittable18::chekLimitsAndFittedParameters()
                 continue;
 
             auto *itValue = (QTableWidgetItem *)tablePara->item(pp, 3 * mm + 2);
-            value = itValue->text().toDouble();
+            value = uiToDouble(itValue->text());
             if (value < left)
-                itValue->setText(QString::number(left, 'G', prec));
+                itValue->setText(uiNumber(left, 'G', prec));
             else if (value > right)
-                itValue->setText(QString::number(right, 'G', prec));
+                itValue->setText(uiNumber(right, 'G', prec));
         }
     }
 
@@ -1757,7 +1759,7 @@ void fittable18::initFitPage()
         
         for (mm=0; mm<M;mm++)
         {
-            tablePara->setItem(pp,3*mm+2,new QTableWidgetItem(QString::number(temp, 'G', digits+1)));
+            tablePara->setItem(pp, 3 * mm + 2, new QTableWidgetItem(uiNumber(temp, 'G', digits + 1)));
             tablePara->setItem(pp,3*mm+3,new QTableWidgetItem("---"));
             tablePara->item(pp,3*mm+3)->setFlags(tablePara->item(pp,3*mm+3)->flags() & ~Qt::ItemIsEditable); //+++2019
             tablePara->item(pp,3*mm+3)->setBackground(QColor(236,236,236));
@@ -2054,17 +2056,20 @@ void fittable18::lineValidator()
     QString s;
     double num;
     // AbsErr
-    num=lineEditAbsErr->text().toDouble();
-    if (num<0) 	num=0;
-    lineEditAbsErr->setText(QString::number(num));
+    num = uiToDouble(lineEditAbsErr->text());
+    if (num < 0)
+        num = 0;
+    lineEditAbsErr->setText(uiNumber(num));
     //RelErr
-    num=lineEditRelErr->text().toDouble();
-    if (num<1e-20 &&num>0 ) num=1e-20;
-    lineEditRelErr->setText(QString::number(num));
+    num = uiToDouble(lineEditRelErr->text());
+    if (num < 1e-20 && num > 0)
+        num = 1e-20;
+    lineEditRelErr->setText(uiNumber(num));
     //fit tolerance
-    num=lineEditTolerance->text().toDouble();
-    if (num<0) 	num=0;
-    lineEditTolerance->setText(QString::number(num));
+    num = uiToDouble(lineEditTolerance->text());
+    if (num < 0)
+        num = 0;
+    lineEditTolerance->setText(uiNumber(num));
 }
 
 //*******************************************
@@ -2232,11 +2237,12 @@ void fittable18::rangeFirstCheck()
     }
     else
     {
-        double min=textLabelRangeFirstLimit->text().toDouble();
-        double max=textLabelRangeLast->text().toDouble();
-        double value=textLabelRangeFirst->text().toDouble();
-        
-        if (value<min || value >max) textLabelRangeFirst->setText(QString::number(min));
+        double min = uiToDouble(textLabelRangeFirstLimit->text());
+        double max = uiToDouble(textLabelRangeLast->text());
+        double value = uiToDouble(textLabelRangeFirst->text());
+
+        if (value < min || value > max)
+            textLabelRangeFirst->setText(uiNumber(min));
     }
 }
 
@@ -2257,11 +2263,12 @@ void fittable18::rangeLastCheck()
     }
     else
     {
-        double min=textLabelRangeFirst->text().toDouble();
-        double max=textLabelRangeLastLimit->text().toDouble();
-        double value=textLabelRangeLast->text().toDouble();
-        
-        if (value<min || value >max) textLabelRangeLast->setText(QString::number(max));
+        double min = uiToDouble(textLabelRangeFirst->text());
+        double max = uiToDouble(textLabelRangeLastLimit->text());
+        double value = uiToDouble(textLabelRangeLast->text());
+
+        if (value < min || value > max)
+            textLabelRangeLast->setText(uiNumber(max));
     }
 }
 
@@ -2288,9 +2295,11 @@ bool fittable18::selectActiveCurve(int m)
         QComboBoxInTable *iQ =(QComboBoxInTable*)tableCurves->cellWidget(1, 2*m);
         iQ->setCurrentIndex(1); tableCurvechanged(1,2*m);
         QTableWidgetItem *cbImin = (QTableWidgetItem *)tableCurves->item(2,2*m);
-        cbImin->setCheckState(Qt::Checked); tableCurves->item(2,2*m+1)->setText(QString::number(min,'g',10));
+        cbImin->setCheckState(Qt::Checked);
+        tableCurves->item(2, 2 * m + 1)->setText(uiNumber(min, 'g', 10));
         QTableWidgetItem *cbImax = (QTableWidgetItem *)tableCurves->item(3,2*m);
-        cbImax->setCheckState(Qt::Checked); tableCurves->item(3,2*m+1)->setText(QString::number(max,'g',10));
+        cbImax->setCheckState(Qt::Checked);
+        tableCurves->item(3, 2 * m + 1)->setText(uiNumber(max, 'g', 10));
     }
     else
     {
@@ -2336,10 +2345,12 @@ bool fittable18::selectRange(int m, QString QN, double min, double max)
     
     
     QTableWidgetItem *cbImin = (QTableWidgetItem *)tableCurves->item(2,2*m);
-    cbImin->setCheckState(Qt::Checked); tableCurves->item(2,2*m+1)->setText(QString::number(min,'g',10));
+    cbImin->setCheckState(Qt::Checked);
+    tableCurves->item(2, 2 * m + 1)->setText(uiNumber(min, 'g', 10));
     QTableWidgetItem *cbImax = (QTableWidgetItem *)tableCurves->item(3,2*m);
-    cbImax->setCheckState(Qt::Checked); tableCurves->item(3,2*m+1)->setText(QString::number(max,'g',10));
-    
+    cbImax->setCheckState(Qt::Checked);
+    tableCurves->item(3, 2 * m + 1)->setText(uiNumber(max, 'g', 10));
+
     tableCurvechanged(2,2*m+1);
     tableCurvechanged(3,2*m+1);
     

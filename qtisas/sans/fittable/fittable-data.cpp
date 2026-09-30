@@ -496,9 +496,9 @@ bool fittable18::SetQandI(int &Ntotal, double*&Qtotal, double*&Itotal, double*&d
                 }
 
             if (!iQmin->checkState())
-                tableCurves->item(2, 2 * mm + 1)->setText(QString::number(min, 'f', spinBoxSignDigits->value() + 2));
+                tableCurves->item(2, 2 * mm + 1)->setText(uiNumber(min, 'f', spinBoxSignDigits->value() + 2));
             if (!iQmax->checkState())
-                tableCurves->item(3, 2 * mm + 1)->setText(QString::number(max, 'f', spinBoxSignDigits->value() + 2));
+                tableCurves->item(3, 2 * mm + 1)->setText(uiNumber(max, 'f', spinBoxSignDigits->value() + 2));
         }
     }
     
@@ -641,8 +641,10 @@ bool fittable18::SetQandI(int &Ntotal, double*&Qtotal, double*&Itotal, double*&d
                 else
                 {
                     double sigmaValue = 0.0;
-                    table->tryNumericCell(j, table->colIndex(colReso), sigmaValue);
-                    resoValue = resoYN ? sigmaValue : -fabs(sigmaValue);
+                    if (table->tryNumericCell(j, table->colIndex(colReso), sigmaValue))
+                        resoValue = resoYN ? sigmaValue : -fabs(sigmaValue);
+                    else
+                        resoValue = 0.0;
                 }
             }
             else
@@ -832,8 +834,10 @@ bool fittable18::datasetChangedSim( int num)
             }
             
         }
-        if (radioButtonSameQrange->isChecked()) lineEditFromQsim->setText(QString::number(min));
-        if (radioButtonSameQrange->isChecked()) lineEditToQsim->setText(QString::number(max));
+        if (radioButtonSameQrange->isChecked())
+            lineEditFromQsim->setText(uiNumber(min));
+        if (radioButtonSameQrange->isChecked())
+            lineEditToQsim->setText(uiNumber(max));
 
         QRegularExpression rxCol("^" + QRegularExpression::escape(tableName) + "_.*");
 
@@ -920,8 +924,8 @@ bool fittable18::datasetChangedSim( int num)
         }
         else
         {
-            textLabelRangeFirstLimit->setText(QString::number(GSL_MIN(min, max), 'f', spinBoxSignDigits->value() + 2));
-            textLabelRangeLastLimit->setText(QString::number(max, 'f', spinBoxSignDigits->value() + 2));
+            textLabelRangeFirstLimit->setText(uiNumber(GSL_MIN(min, max), 'f', spinBoxSignDigits->value() + 2));
+            textLabelRangeLastLimit->setText(uiNumber(max, 'f', spinBoxSignDigits->value() + 2));
         }
 
         textLabelRangeFirst->setText(tableCurves->item(2,2*num+1)->text());
@@ -1125,12 +1129,12 @@ void fittable18::horizHeaderCurves( int col )
             //+++
             QTableWidgetItem *cbImin = (QTableWidgetItem*)tableCurves->item(2,col-1);
             cbImin->setCheckState(Qt::Checked);
-            tableCurves->item(2,col)->setText(QString::number(startID,'g',10));
-            
+            tableCurves->item(2, col)->setText(uiNumber(startID, 'g', 10));
+
             //+++
             QTableWidgetItem *cbImax = (QTableWidgetItem*)tableCurves->item(3,col-1);
             cbImax->setCheckState(Qt::Checked);
-            tableCurves->item(3,col)->setText(QString::number(endID,'g',10));
+            tableCurves->item(3, col)->setText(uiNumber(endID, 'g', 10));
         }
         else
         {
@@ -1216,10 +1220,11 @@ void fittable18::checkGlobalParameters(int raw, int col)
     QString sss;
     if  (col>0 && ((  (int) ( (col-1)/3) )*3)!=(col-1) )
     {
-        sss=tablePara->item(raw,col)->text();
-        sss=sss.replace(",", ".");
-        //+++ 2016 test	tablePara->setText(raw, col, QString::number(sss.toDouble(),'E',spinBoxSignDigits->value()-1));
-        tablePara->item(raw, col)->setText(QString::number(sss.toDouble(),'G',spinBoxSignDigits->value()));
+        sss = tablePara->item(raw, col)->text();
+        // With a "." decimal point, a typed comma is still taken as the decimal separator ("1,5" -> 1.5)
+        if (QString(uiLocale().decimalPoint()) == ".")
+            sss.replace(",", ".");
+        tablePara->item(raw, col)->setText(uiNumber(uiToDouble(sss), 'G', spinBoxSignDigits->value()));
     }
     if  (    (int)((col+1)/3)*3 == col+1 && checkBoxAutoRecalculate->isChecked()) headerPressedTablePara(col);
     

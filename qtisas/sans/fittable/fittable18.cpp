@@ -20,6 +20,7 @@ fittable18::fittable18(QWidget *parent)
     setupUi(this);
     connectSlot();
     initFITTABLE();
+    d_widgetLocale = locale();
 }
 
 
@@ -47,6 +48,171 @@ ApplicationWindow *fittable18::app()
     if (this->parentWidget()->parent())
         return (ApplicationWindow *)((QDockWidget *)this->parentWidget())->parent();
     return (ApplicationWindow *)this->parent();
+}
+
+//*******************************************
+//+++ numbers in FitTable widgets
+//*******************************************
+namespace
+{
+// Grouped input such as "1,234" is rejected when the locale omits group separators, as QString::toDouble() did
+QLocale strictLocale(QLocale locale)
+{
+    if (locale.numberOptions() & QLocale::OmitGroupSeparator)
+        locale.setNumberOptions(locale.numberOptions() | QLocale::RejectGroupSeparator);
+    return locale;
+}
+
+// Converts one number, keeping a leading "±"; text that is not a number (---, inf, empty) is returned unchanged
+QString convertNumber(const QString &text, const QLocale &source, const QLocale &target)
+{
+    if (source.decimalPoint() == target.decimalPoint() && source.groupSeparator() == target.groupSeparator())
+        return text;
+
+    const bool pm = text.startsWith(QChar(0x00B1));
+    bool ok = false;
+    const double value = strictLocale(source).toDouble(pm ? text.mid(1) : text, &ok);
+    if (!ok)
+        return text;
+    return (pm ? QString(QChar(0x00B1)) : QString()) + target.toString(value, 'g', QLocale::FloatingPointShortest);
+}
+
+// Converts both ends of a "left..right" or "center+-width" range
+QString convertRange(const QString &text, const QLocale &source, const QLocale &target)
+{
+    for (const QString &separator : {QStringLiteral(".."), QStringLiteral("+-"), QStringLiteral("-+")})
+    {
+        const qsizetype pos = text.indexOf(separator);
+        if (pos >= 0)
+            return convertNumber(text.left(pos), source, target) + separator +
+                   convertNumber(text.mid(pos + separator.size()), source, target);
+    }
+    return convertNumber(text, source, target);
+}
+} // namespace
+
+QLocale fittable18::uiLocale() const
+{
+    return const_cast<fittable18 *>(this)->app()->locale();
+}
+
+double fittable18::uiToDouble(const QString &text, bool *ok) const
+{
+    return strictLocale(uiLocale()).toDouble(text, ok);
+}
+
+QString fittable18::uiNumber(double value, char format, int precision) const
+{
+    return uiLocale().toString(value, format, precision);
+}
+
+QString fittable18::uiFromLocale(const QString &text, const QLocale &source) const
+{
+    return convertNumber(text, source, uiLocale());
+}
+
+QString fittable18::uiToLocale(const QString &text, const QLocale &target) const
+{
+    return convertNumber(text, uiLocale(), target);
+}
+
+QString fittable18::uiToC(const QString &text) const
+{
+    return convertNumber(text, uiLocale(), QLocale::c());
+}
+
+QString fittable18::cToUi(const QString &text) const
+{
+    return convertNumber(text, QLocale::c(), uiLocale());
+}
+
+QString fittable18::rangeUiToC(const QString &text) const
+{
+    return convertRange(text, uiLocale(), QLocale::c());
+}
+
+QString fittable18::rangeCToUi(const QString &text) const
+{
+    return convertRange(text, QLocale::c(), uiLocale());
+}
+
+void fittable18::changeEvent(QEvent *event)
+{
+    QWidget::changeEvent(event);
+    if (event->type() != QEvent::LocaleChange || locale() == d_widgetLocale)
+        return;
+
+    convertWidgetNumbers(d_widgetLocale, locale());
+    d_widgetLocale = locale();
+}
+
+void fittable18::convertWidgetNumbers(const QLocale &from, const QLocale &to)
+{
+    const auto convertItem = [&from, &to](QTableWidgetItem *item, bool range) {
+        if (item)
+            item->setText(range ? convertRange(item->text(), from, to) : convertNumber(item->text(), from, to));
+    };
+    const bool blockPara = tablePara->blockSignals(true);
+    const bool blockSimulate = tableParaSimulate->blockSignals(true);
+    const bool blockControl = tableControl->blockSignals(true);
+    const bool blockMultiFit = tableMultiFit->blockSignals(true);
+    const bool blockCurves = tableCurves->blockSignals(true);
+
+    // Parameter table: per dataset "vary" range, value, "±error"
+    for (int row = 0; row < tablePara->rowCount(); row++)
+        for (int col = 1; col < tablePara->columnCount(); col++)
+            convertItem(tablePara->item(row, col), (col - 1) % 3 == 0);
+
+    for (int row = 0; row < tableParaSimulate->rowCount(); row++)
+        convertItem(tableParaSimulate->item(row, 0), false);
+
+    for (int row = 0; row < tableControl->rowCount(); row++)
+    {
+        convertItem(tableControl->item(row, 0), false);
+        convertItem(tableControl->item(row, 4), false);
+    }
+
+    // Batch table: parameter cells may carry a "|fixed" marker
+    for (int row = 1; row < tableMultiFit->rowCount(); row++)
+        for (int col = 0; col < tableMultiFit->columnCount(); col++)
+        {
+            QTableWidgetItem *item = tableMultiFit->item(row, col);
+            if (!item)
+                continue;
+            const QString text = item->text();
+            const qsizetype pipe = text.indexOf(QLatin1Char('|'));
+            item->setText(pipe >= 0 ? convertNumber(text.left(pipe), from, to) + text.mid(pipe)
+                                    : convertNumber(text, from, to));
+        }
+
+    textLabelChi->setText(convertNumber(textLabelChi->text(), from, to));
+    textLabelR2->setText(convertNumber(textLabelR2->text(), from, to));
+
+    // Q ranges of the datasets and of the simulation; N ranges are integers and stay unchanged
+    for (int col = 1; col < tableCurves->columnCount(); col += 2)
+    {
+        convertItem(tableCurves->item(2, col), false);
+        convertItem(tableCurves->item(3, col), false);
+    }
+    // ... and the Fit-Control fields (tolerances, derivative step, integration errors, GenMin rates)
+    for (QLineEdit *edit :
+         {textLabelRangeFirst, textLabelRangeLast, lineEditFromQsim, lineEditToQsim, lineEditImin, lineEditFromQ,
+          lineEditToQ, lineEditTolerance, lineEditToleranceAbs, lineEditSTEP, lineEditAbsErr, lineEditRelErr,
+          lineEditAbsErrPoly, lineEditRelErrPoly, lineEditSelectionRate, lineEditMutationRate})
+    {
+        const bool blocked = edit->blockSignals(true);
+        edit->setText(convertNumber(edit->text(), from, to));
+        edit->blockSignals(blocked);
+    }
+    for (QLabel *label :
+         {textLabelRangeFirstLimit, textLabelRangeLastLimit, textLabelChi2Sim, textLabelChi2dofSim, textLabelR2sim})
+        label->setText(convertNumber(label->text(), from, to));
+
+    tablePara->blockSignals(blockPara);
+    tableParaSimulate->blockSignals(blockSimulate);
+    tableControl->blockSignals(blockControl);
+    tableMultiFit->blockSignals(blockMultiFit);
+    tableCurves->blockSignals(blockCurves);
 }
 
 //*******************************************
@@ -146,7 +312,8 @@ void fittable18::multiNSEfit(QString tableName, QString fitFunction, int from,in
                 tableCurves->item (0,2*j)->setText(t->text ( from+j-1,19)+"**" );
                 tableCurvechanged ( 0,2*j );
                 tableCurves->item (0,2*j)->setText("" );
-                if (rawQ>=0) tablePara->item( rawQ,3*j+2)->setText(t->text ( from+j-1,4 ) );
+                if (rawQ >= 0)
+                    tablePara->item(rawQ, 3 * j + 2)->setText(uiFromLocale(t->text(from + j - 1, 4), t->locale()));
                 tableCurvechanged ( 0,2*j+1 );
             }
             plotSwitcher();

@@ -119,10 +119,10 @@ void fittable18::newTabRes(){
     w->setText(2,1,"->   "+QString::number(M));
     //
     w->setText(3,0,"chi^2");
-    w->setText(3,1,"->   "+textLabelChi->text());
+    w->setText(3, 1, "->   " + uiToC(textLabelChi->text()));
     //
     w->setText(4,0,"R^2");
-    w->setText(4,1,"->   "+textLabelR2->text());
+    w->setText(4, 1, "->   " + uiToC(textLabelR2->text()));
     //
     w->setText(5,0,"Time of Fit");
     w->setText(5,1,"->   "+textLabelTime->text());
@@ -133,11 +133,14 @@ void fittable18::newTabRes(){
     
     for (int mm=0;mm<M;mm++) {
         if (mm>=9) yn0=""; else yn0="0";
-        w->setColName(2*mm+3,"Value"+yn0+QString::number(mm+1));w->setTextFormat(2*mm+3);
+        // Values are Numeric (localized by the table); errors stay Text in the table's locale, as in fitCurve-*
+        w->setColName(2 * mm + 3, "Value" + yn0 + QString::number(mm + 1));
+        w->setColNumericFormat(0, spinBoxSignDigits->value() + 1, 2 * mm + 3);
         w->setColName(2*mm+4,"Error"+yn0+QString::number(mm+1));w->setTextFormat(2*mm+4);
         for (int pp=0;pp<p;pp++){
-            w->setText(pp, 3+2*mm, tablePara->item(pp, 3*mm+2)->text());
-            w->setText(pp, 4+2*mm, tablePara->item(pp, 3*mm+3)->text().remove(QChar(177)));
+            w->setCellOrText(pp, 3 + 2 * mm, tablePara->item(pp, 3 * mm + 2)->text(), uiLocale());
+            w->setText(pp, 4 + 2 * mm,
+                       uiToLocale(tablePara->item(pp, 3 * mm + 3)->text().remove(QChar(177)), w->locale()));
         }
     }
     w->adjustColumnsWidth(false);
@@ -197,10 +200,10 @@ void fittable18::newTabResCol(){
     w->setText(2,1,"->   "+QString::number(M));
     //
     w->setText(3,0,"chi^2");
-    w->setText(3,1,"->   "+textLabelChi->text());
+    w->setText(3, 1, "->   " + uiToC(textLabelChi->text()));
     //
     w->setText(4,0,"R^2");
-    w->setText(4,1,"->   "+textLabelR2->text());
+    w->setText(4, 1, "->   " + uiToC(textLabelR2->text()));
     //
     w->setText(5,0,"Time of Fit");
     w->setText(5,1,"->   "+textLabelTime->text());
@@ -209,15 +212,16 @@ void fittable18::newTabResCol(){
     for (int pp=0;pp<p;pp++){
         w->setColName(3+2*pp,F_paraList[pp]);
         w->setColPlotDesignation(3+2*pp,Table::Y);
-        w->setTextFormat(3+2*pp);
-        
+        w->setColNumericFormat(0, spinBoxSignDigits->value() + 1, 3 + 2 * pp);
+
         w->setColName(3+2*pp+1,F_paraList[pp]+"Error");
         w->setColPlotDesignation(3+2*pp+1,Table::yErr);
         w->setTextFormat(3+2*pp+1);
         
         for (int mm=0;mm<M;mm++){
-            w->setText(mm, 3+2*pp, tablePara->item(pp, 3*mm+2)->text());
-            w->setText(mm, 3+2*pp+1, tablePara->item(pp, 3*mm+3)->text().remove(QChar(177)));
+            w->setCellOrText(mm, 3 + 2 * pp, tablePara->item(pp, 3 * mm + 2)->text(), uiLocale());
+            w->setText(mm, 3 + 2 * pp + 1,
+                       uiToLocale(tablePara->item(pp, 3 * mm + 3)->text().remove(QChar(177)), w->locale()));
         }
     }
     for (int mm=0;mm<M;mm++) w->setText(mm, 2,QString::number(mm+1));
@@ -236,8 +240,7 @@ void fittable18::addFitResultToActiveGraph(){
     QString F_name=textLabelFfunc->text();
     
     QDateTime dt = QDateTime::currentDateTime ();
-    QLocale l = app()->locale();
-    QString info = "[" + l.toString(dt, QLocale::ShortFormat) + " ]\n";
+    QString info = "[" + uiLocale().toString(dt, QLocale::ShortFormat) + " ]\n";
     info = info+ "<b>Fit Method</b>" + ": " +comboBoxFitMethod->currentText() +"\n";
     info = info+ "<b>Using Function</b>" + ": " + F_name + "\n";
     
@@ -258,18 +261,19 @@ void fittable18::addFitResultToActiveGraph(){
     QString sChi2 = QString::fromUtf8("χ²");
     QString sRoot = QString::fromUtf8("√");
 
-    double chi2dof = textLabelChi->text().toDouble();
+    double chi2dof = uiToDouble(textLabelChi->text());
 
-    info += "\n<b>" + sChi2 + "/dof </b> = " + QString::number(chi2dof, 'E', 10);
+    info += "\n<b>" + sChi2 + "/dof </b> = " + uiNumber(chi2dof, 'E', 10);
     info += "\n<b>R<sup>2</sup></b> = " + textLabelR2->text();
 
-    info += "\n\n<b>Residual Sum of Squares:</b> " + sChi + " = \t" + QString::number(chi2dof * lastDoF, 'E', 10);
-    info += "\n<b>Residual Standard Deviation:</b> " + sChi + "/" + sRoot + "dof = \t" +
-            QString::number(sqrt(chi2dof), 'E', 10);
-    info += "\n<b>Degrees of Freedom:</b> dof = " + QString::number(lastDoF);
+    info += "\n\n<b>Residual Sum of Squares:</b> " + sChi + " = \t" + uiNumber(chi2dof * lastDoF, 'E', 10);
+    info +=
+        "\n<b>Residual Standard Deviation:</b> " + sChi + "/" + sRoot + "dof = \t" + uiNumber(sqrt(chi2dof), 'E', 10);
+    info += "\n<b>Degrees of Freedom:</b> dof = " + uiNumber(lastDoF);
 
-    info += "\n\n<b>Q-Factor</b> = " +
-            QString::number(gsl_sf_gamma_inc_Q(lastDoF / 2.0, chi2dof * lastDoF / 2.0), 'E', prec + 2) + "\n";
+    info +=
+        "\n\n<b>Q-Factor</b> = " + uiNumber(gsl_sf_gamma_inc_Q(lastDoF / 2.0, chi2dof * lastDoF / 2.0), 'E', prec + 2) +
+        "\n";
 
     info += "\n<b>time</b> = " + textLabelTime->text() + "\n";
 
@@ -396,8 +400,9 @@ void  fittable18::logStepChanged( bool status ){
     if (status ){
         textLabelmin->show();
         lineEditImin->show();
-        
-        if (lineEditFromQsim->text().toDouble()<=0) lineEditFromQsim->setText("0.001");
+
+        if (uiToDouble(lineEditFromQsim->text()) <= 0)
+            lineEditFromQsim->setText(uiNumber(0.001));
     } else{
         textLabelmin->hide();
         lineEditImin->hide();
@@ -541,9 +546,9 @@ void fittable18::dataLimitsSimulation(int value){
     }
     else
     {
-        textLabelRangeFirstLimit->setText(QString::number(GSL_MIN(min, max), 'f', spinBoxSignDigits->value() + 2));
-        textLabelRangeLastLimit->setText(QString::number(max, 'f', spinBoxSignDigits->value() + 2));
-        textLabelRangeFirst->setText(QString::number(GSL_MIN(min, max), 'f', spinBoxSignDigits->value() + 2));
-        textLabelRangeLast->setText(QString::number(max, 'f', spinBoxSignDigits->value() + 2));
+        textLabelRangeFirstLimit->setText(uiNumber(GSL_MIN(min, max), 'f', spinBoxSignDigits->value() + 2));
+        textLabelRangeLastLimit->setText(uiNumber(max, 'f', spinBoxSignDigits->value() + 2));
+        textLabelRangeFirst->setText(uiNumber(GSL_MIN(min, max), 'f', spinBoxSignDigits->value() + 2));
+        textLabelRangeLast->setText(uiNumber(max, 'f', spinBoxSignDigits->value() + 2));
     }
 }

@@ -65,8 +65,8 @@ void fittable18::buildFitParametersLimits(gsl_vector *limitLeft, gsl_vector *lim
         // ---- GLOBAL LIMITS ----
         bool bayesianYNglobal = ((QComboBox *)tableControl->cellWidget(pp, 1))->currentIndex() == 1;
 
-        leftGlobal = tableControl->item(pp, 0)->text().trimmed().toDouble();
-        rightGlobal = tableControl->item(pp, 4)->text().trimmed().toDouble();
+        leftGlobal = uiToDouble(tableControl->item(pp, 0)->text().trimmed());
+        rightGlobal = uiToDouble(tableControl->item(pp, 4)->text().trimmed());
 
         if (bayesianYNglobal && (rightGlobal < 1e-100 || rightGlobal == pinf || leftGlobal == minf))
         {
@@ -101,13 +101,13 @@ void fittable18::buildFitParametersLimits(gsl_vector *limitLeft, gsl_vector *lim
                 if (txtVary.isEmpty())
                     bayesianYNlocal = false;
 
-                leftLocal = (txtVary.isEmpty() || txtVary == "-inf") ? minf : txtVary.toDouble();
+                leftLocal = (txtVary.isEmpty() || txtVary == "-inf") ? minf : uiToDouble(txtVary);
 
                 txtVary = lstTmpLimits[1];
                 if (txtVary.isEmpty())
                     bayesianYNlocal = false;
 
-                rightLocal = (txtVary.isEmpty() || txtVary == "inf") ? pinf : txtVary.toDouble();
+                rightLocal = (txtVary.isEmpty() || txtVary == "inf") ? pinf : uiToDouble(txtVary);
             }
 
             if (bayesianYNlocal && ((rightLocal < 1e-100 || rightLocal == pinf) || leftLocal == minf))
@@ -210,7 +210,7 @@ size_t fittable18::initializeParameters(gsl_vector *params, gsl_vector_int *para
             gsl_vector_int_set(F_para_fit_yn, pp, 0);
         }
 
-        gsl_vector_set(params, M * pp, tablePara->item(pp, 2)->text().toDouble());
+        gsl_vector_set(params, M * pp, uiToDouble(tablePara->item(pp, 2)->text()));
 
         // Remaining parameters in the row
         for (int mm = 1; mm < M; mm++)
@@ -222,8 +222,7 @@ size_t fittable18::initializeParameters(gsl_vector *params, gsl_vector_int *para
                 itA->setCheckState(Qt::Unchecked);
                 gsl_vector_int_set(paramsControl, M * pp + mm, 2); // shared
                 tablePara->item(pp, 3 * mm + 2)
-                    ->setText(
-                        QString::number(tablePara->item(pp, 2)->text().toDouble(), 'G', spinBoxSignDigits->value()));
+                    ->setText(uiNumber(uiToDouble(tablePara->item(pp, 2)->text()), 'G', spinBoxSignDigits->value()));
             }
             else
             {
@@ -240,11 +239,11 @@ size_t fittable18::initializeParameters(gsl_vector *params, gsl_vector_int *para
                 }
             }
 
-            gsl_vector_set(params, M * pp + mm, tablePara->item(pp, 3 * mm + 2)->text().toDouble());
+            gsl_vector_set(params, M * pp + mm, uiToDouble(tablePara->item(pp, 3 * mm + 2)->text()));
         }
 
         // Store first parameter for the row
-        gsl_vector_set(F_para, pp, tablePara->item(pp, 2)->text().toDouble());
+        gsl_vector_set(F_para, pp, uiToDouble(tablePara->item(pp, 2)->text()));
     }
 
     tablePara->blockSignals(false);
@@ -393,7 +392,7 @@ bool fittable18::doFit(bool sansYN, bool justSimulateYN)
     int polyFunction = sansYN ? comboBoxPolyFunction->currentIndex() : -1;
     bool beforeFit = false, afterFit = false, beforeIter = false, afterIter = false;
 
-    double STEP = lineEditSTEP->text().toDouble();
+    double STEP = uiToDouble(lineEditSTEP->text());
     if (STEP <= 10.0 / pow(10.0, prec))
         STEP = 10.0 / pow(10.0, prec);
 
@@ -401,8 +400,8 @@ bool fittable18::doFit(bool sansYN, bool justSimulateYN)
 
     //+++11 Fit control parameters
     int d_max_iterations = spinBoxMaxIter->value();
-    double d_tolerance = lineEditTolerance->text().toDouble();
-    double absError = lineEditToleranceAbs->text().toDouble();
+    double d_tolerance = uiToDouble(lineEditTolerance->text());
+    double absError = uiToDouble(lineEditToleranceAbs->text());
     bool stopConstChi2 = checkBoxConstChi2->isChecked();
     bool stopConstChi2Simplex = checkBoxConstChi2Simplex->isChecked();
 
@@ -464,16 +463,16 @@ bool fittable18::doFit(bool sansYN, bool justSimulateYN)
 
     if (sansYN)
     {
-        absErrReso = lineEditAbsErr->text().toDouble();
-        relErrReso = lineEditRelErr->text().toDouble();
+        absErrReso = uiToDouble(lineEditAbsErr->text());
+        relErrReso = uiToDouble(lineEditRelErr->text());
         intWorkspaseReso = spinBoxIntWorkspase->value();
         numberSigmaReso = spinBoxIntLimits->value();
         func_reso = comboBoxResoFunction->currentIndex();
         if (comboBoxInstrument->currentText().contains("Back"))
             func_reso += 10;
 
-        absErrPoly = lineEditAbsErrPoly->text().toDouble();
-        relErrPoly = lineEditRelErrPoly->text().toDouble();
+        absErrPoly = uiToDouble(lineEditAbsErrPoly->text());
+        relErrPoly = uiToDouble(lineEditRelErrPoly->text());
         intWorkspasePoly = spinBoxIntWorkspasePoly->value();
         numberSigmaPoly = spinBoxIntLimitsPoly->value();
         func_poly = comboBoxPolyFunction->currentIndex();
@@ -537,8 +536,8 @@ bool fittable18::doFit(bool sansYN, bool justSimulateYN)
         genome_count = spinBoxGenomeCount->value();
         genome_size = spinBoxGenomeSize->value();
         generations = spinBoxMaxNumberGenerations->value();
-        selection_rate = lineEditSelectionRate->text().toDouble();
-        mutation_rate = lineEditMutationRate->text().toDouble();
+        selection_rate = uiToDouble(lineEditSelectionRate->text());
+        mutation_rate = uiToDouble(lineEditMutationRate->text());
         random_seed = spinBoxRandomSeed->value();
 
         levenberg_abs = absError;
@@ -952,17 +951,17 @@ bool fittable18::doFit(bool sansYN, bool justSimulateYN)
     double c = chi / sqrt(dof);
 
     lastChi2 = chi2 / dof;
-    textLabelChi->setText(QString::number(lastChi2, 'E', prec + 2));
+    textLabelChi->setText(uiNumber(lastChi2, 'E', prec + 2));
 
     QString chiTooltip = "χ2 = χ2 [total] = χ2 [data] + χ2 [Bayesian]\n\n";
-    chiTooltip += "χ2/dof [total] = " + QString::number(chi2 / dof, 'E', prec + 2) + "\n";
-    chiTooltip += "χ2/dof [data] = " + QString::number((chi2 - bayesianTermChi2) / dof, 'E', prec + 2) + "\n";
-    chiTooltip += "χ2/dof [Bayesian] = " + QString::number((bayesianTermChi2) / dof, 'E', prec + 2);
+    chiTooltip += "χ2/dof [total] = " + uiNumber(chi2 / dof, 'E', prec + 2) + "\n";
+    chiTooltip += "χ2/dof [data] = " + uiNumber((chi2 - bayesianTermChi2) / dof, 'E', prec + 2) + "\n";
+    chiTooltip += "χ2/dof [Bayesian] = " + uiNumber((bayesianTermChi2) / dof, 'E', prec + 2);
 
     textLabelChi->setToolTip(chiTooltip);
 
     double r2 = fn_r2(paraAdjust, fitParams);
-    textLabelR2->setText(QString::number(r2, 'E', prec + 2));
+    textLabelR2->setText(uiNumber(r2, 'E', prec + 2));
 
     //+++ Jacobian
     gsl_matrix *J = gsl_matrix_alloc(N, np);
@@ -991,23 +990,21 @@ bool fittable18::doFit(bool sansYN, bool justSimulateYN)
         {
             if (gsl_vector_int_get(paramsControl, M * pp + mm) == 0)
             {
-                tablePara->item(pp, 3 * mm + 2)->setText(QString::number(FIT(npnp), 'G', prec));
-                tablePara->item(pp, 3 * mm + 3)->setText(QChar(177) + QString::number(c * ERR(npnp), 'G', prec));
+                tablePara->item(pp, 3 * mm + 2)->setText(uiNumber(FIT(npnp), 'G', prec));
+                tablePara->item(pp, 3 * mm + 3)->setText(QChar(177) + uiNumber(c * ERR(npnp), 'G', prec));
                 gsl_vector_set(params, M * pp + mm, FIT(npnp));
                 npnp++;
             }
             else if (gsl_vector_int_get(paramsControl, M * pp + mm) == 1)
             {
                 if (mm == 0 && mm + 1 < M && gsl_vector_int_get(paramsControl, M * pp + mm + 1) == 2)
-                    tablePara->item(pp, 3 * mm + 2)
-                        ->setText(QString::number(gsl_vector_get(params, M * pp), 'G', prec));
+                    tablePara->item(pp, 3 * mm + 2)->setText(uiNumber(gsl_vector_get(params, M * pp), 'G', prec));
                 tablePara->item(pp, 3 * mm + 3)->setText("---");
             }
             else if (gsl_vector_int_get(paramsControl, M * pp + mm) == 2)
             {
                 if (mm > 0)
-                    tablePara->item(pp, 3 * mm + 2)
-                        ->setText(QString::number(gsl_vector_get(params, M * pp), 'G', prec));
+                    tablePara->item(pp, 3 * mm + 2)->setText(uiNumber(gsl_vector_get(params, M * pp), 'G', prec));
                 tablePara->item(pp, 3 * mm + 2)->setText(tablePara->item(pp, 2)->text());
                 tablePara->item(pp, 3 * mm + 3)->setText("---");
             }
@@ -1023,12 +1020,18 @@ bool fittable18::doFit(bool sansYN, bool justSimulateYN)
             chiWeight2 += (weight[nn] != 0.0) ? 1.0 / (weight[nn] * weight[nn]) : 1.0;
         chiWeight2 /= double(N);
 
+        // fitReport() for scripts stays C; the statistics note follows the application locale
         lastFitReport = covarMatrix(static_cast<int>(N), static_cast<int>(np), chi, sqrt(bayesianTermChi2), chiWeight2,
                                     activeParaNames, covar, paraAdjust);
 
         if (checkBoxCovar->isChecked())
         {
-            makeNote(lastFitReport, "fitCurve-" + comboBoxFunction->currentText() + "-statistics",
+            const QString note =
+                uiLocale() == QLocale::c()
+                    ? lastFitReport
+                    : covarMatrix(static_cast<int>(N), static_cast<int>(np), chi, sqrt(bayesianTermChi2), chiWeight2,
+                                  activeParaNames, covar, paraAdjust, uiLocale());
+            makeNote(note, "fitCurve-" + comboBoxFunction->currentText() + "-statistics",
                      "TableFit :: statistics info ");
             printInfoTiming(t, pre_t, "Fit|Finished|Statistics Note:", justSimulateYN);
         }
@@ -1071,7 +1074,7 @@ bool fittable18::doFit(bool sansYN, bool justSimulateYN)
     if (scriptModeYN && !justSimulateYN)
     {
         bool r2ok;
-        const double r2 = textLabelR2->text().toDouble(&r2ok);
+        const double r2 = uiToDouble(textLabelR2->text(), &r2ok);
         const double qf = (lastDoF > 0) ? gsl_sf_gamma_inc_Q(lastDoF / 2.0, lastChi2 * lastDoF / 2.0)
                                         : std::numeric_limits<double>::quiet_NaN();
 
@@ -1108,7 +1111,8 @@ QString fittable18::formatString(double num, QString prefix, int maxField, int p
 }
 //+++ covarMatrix string
 QString fittable18::covarMatrix(int N, int P, double chi, double chiBayesian, double chiNormalization,
-                                QStringList paraActive, gsl_matrix *covar, gsl_vector *paraAdjust)
+                                QStringList paraActive, gsl_matrix *covar, gsl_vector *paraAdjust,
+                                const QLocale &locale)
 {
     if (P < 1 || P != paraActive.count())
         return {};
@@ -1169,7 +1173,9 @@ QString fittable18::covarMatrix(int N, int P, double chi, double chiBayesian, do
         for (int pp = 0; pp < P; ++pp)
         {
             double val = gsl_matrix_get(covar, pp, p);
-            s += QString::asprintf("%+*.*E", fieldWidth, prec, val);
+            // Same as "%+*.*E", in the report's locale
+            const QString number = locale.toString(val, 'E', prec);
+            s += (val < 0 ? number : locale.positiveSign() + number).rightJustified(fieldWidth);
         }
         s += " \t\t| " + paraActive[p] + "\n";
     }
@@ -1190,8 +1196,8 @@ QString fittable18::covarMatrix(int N, int P, double chi, double chiBayesian, do
         double errNorm = sqrt(fabs(chi * chi / (N - P) * var));
         double errRaw = sqrt(var);
 
-        s += QString::number(val, 'E', prec - 1) + "\t\t± " + QString::number(errNorm, 'E', prec - 1) + "\t\t± " +
-             QString::number(errRaw, 'E', prec - 1) + "\t\t";
+        s += locale.toString(val, 'E', prec - 1) + "\t\t± " + locale.toString(errNorm, 'E', prec - 1) + "\t\t± " +
+             locale.toString(errRaw, 'E', prec - 1) + "\t\t";
 
         double tmp = gsl_matrix_get(covar, p, p) * gsl_matrix_get(inverse, p, p);
         tmp = fabs(tmp);
@@ -1206,46 +1212,46 @@ QString fittable18::covarMatrix(int N, int P, double chi, double chiBayesian, do
         if (tmp < 0.0 || tmp > 1.0)
             tmp = 1.0;
 
-        s += QString::number(tmp, 'E', prec - 1) + "\t\t\t| " + paraActive[p] + "\n";
+        s += locale.toString(tmp, 'E', prec - 1) + "\t\t\t| " + paraActive[p] + "\n";
     }
     s += line;
 
     //--- Chi² summary
-    s += "χ² = " + QString::number(chi * chi, 'E', prec + 2) + "\t\t";
-    s += "χ²/(N-p) = " + QString::number(chi * chi / (N - P), 'E', prec + 2) + "\t\t";
+    s += "χ² = " + locale.toString(chi * chi, 'E', prec + 2) + "\t\t";
+    s += "χ²/(N-p) = " + locale.toString(chi * chi / (N - P), 'E', prec + 2) + "\t\t";
     if (chiNormalization != 1.0)
-        s += "χ²/(N-p)/Weight = " + QString::number(chi * chi / (N - P) / chiNormalization, 'E', prec + 2);
+        s += "χ²/(N-p)/Weight = " + locale.toString(chi * chi / (N - P) / chiNormalization, 'E', prec + 2);
     s += "\n\n";
 
     if (chiNormalization == 1.0)
-        s += "χ² = ∑ |y[i] - f(x[i])|²:\t" + QString::number(chi * chi, 'E', prec + 2) + "\n";
+        s += "χ² = ∑ |y[i] - f(x[i])|²:\t" + locale.toString(chi * chi, 'E', prec + 2) + "\n";
     else
     {
-        s += "χ² = ∑ w[i] (y[i] - f(x[i]))² :\t" + QString::number(chi * chi, 'E', prec + 2) + "\n";
-        s += "Weight = ∑ w[i] / N:\t\t" + QString::number(chiNormalization, 'E', prec + 2) + "\n";
+        s += "χ² = ∑ w[i] (y[i] - f(x[i]))² :\t" + locale.toString(chi * chi, 'E', prec + 2) + "\n";
+        s += "Weight = ∑ w[i] / N:\t\t" + locale.toString(chiNormalization, 'E', prec + 2) + "\n";
 
         if (comboBoxWeightingMethod->currentIndex() == 0)
             s += "\nQ-factor = " +
-                 QString::number(gsl_sf_gamma_inc_Q(double(N - P) / 2.0, chi * chi / 2.0), 'E', prec + 2) + "\n";
+                 locale.toString(gsl_sf_gamma_inc_Q(double(N - P) / 2.0, chi * chi / 2.0), 'E', prec + 2) + "\n";
     }
 
     //--- Summary
     s += "\nNumber of Points, N:\t\t\t" + QString::number(N) + "\n";
     s += "Degrees of Freedom, N-p:\t\t" + QString::number(N - P) + "\n";
-    s += "Residual Sum of Squares:\t\t" + QString::number(chi * chi / chiNormalization, 'E', prec + 2) +
+    s += "Residual Sum of Squares:\t\t" + locale.toString(chi * chi / chiNormalization, 'E', prec + 2) +
          (chiNormalization == 1.0 ? "\t-> χ²\n" : "\t-> χ²/Weight\n");
     s += "Residual Standard Deviation:\t" +
-         QString::number(sqrt(chi * chi / (N - P) / chiNormalization), 'E', prec + 2) +
+         locale.toString(sqrt(chi * chi / (N - P) / chiNormalization), 'E', prec + 2) +
          (chiNormalization == 1.0 ? "\t-> √[χ²/(N-p)]\n" : "\t-> √[χ²/(N-p)/Weight]\n");
 
     if (chiBayesian > 0.0)
     {
         s += "\n\nBayesian Fit:\n\n";
         s += "χ² = χ²[total] = χ²[data] + χ²[Bayesian]\n\n";
-        s += "χ²/(N-p) [total]:\t\t\t\t" + QString::number(chi * chi / (N - P), 'E', prec + 2) + "\n";
+        s += "χ²/(N-p) [total]:\t\t\t\t" + locale.toString(chi * chi / (N - P), 'E', prec + 2) + "\n";
         s += "χ²/(N-p) [data]:\t\t\t\t" +
-             QString::number((chi * chi - chiBayesian * chiBayesian) / (N - P), 'E', prec + 2) + "\n";
-        s += "χ²/(N-p) [Bayesian]:\t\t\t" + QString::number(chiBayesian * chiBayesian / (N - P), 'E', prec + 2) + "\n";
+             locale.toString((chi * chi - chiBayesian * chiBayesian) / (N - P), 'E', prec + 2) + "\n";
+        s += "χ²/(N-p) [Bayesian]:\t\t\t" + locale.toString(chiBayesian * chiBayesian / (N - P), 'E', prec + 2) + "\n";
     }
 
     gsl_matrix_free(inverse);
@@ -1455,7 +1461,8 @@ void fittable18::initParametersBeforeFit()
             if (itS->checkState())
             {
                 itA->setCheckState(Qt::Unchecked);
-                tablePara->item(pp,3*mm+2)->setText(QString::number(tablePara->item(pp,2)->text().toDouble(),'G',spinBoxSignDigits->value()));
+                tablePara->item(pp, 3 * mm + 2)
+                    ->setText(uiNumber(uiToDouble(tablePara->item(pp, 2)->text()), 'G', spinBoxSignDigits->value()));
                 gsl_vector_int_set(F_para_fit_yn, pp, 0);
             }
             else
@@ -1474,10 +1481,12 @@ void fittable18::initParametersBeforeFit()
         for (int pp=0; pp<p;pp++)
         {
             if(tableControl->item(pp,0)->text().contains("-inf")) left=-1.0e308;
-            else left=tableControl->item(pp,0)->text().toDouble();
+            else
+                left = uiToDouble(tableControl->item(pp, 0)->text());
             if(tableControl->item(pp,4)->text().contains("inf")) right=1.0e308;
-            else right=tableControl->item(pp,4)->text().toDouble();
-            
+            else
+                right = uiToDouble(tableControl->item(pp, 4)->text());
+
             QTableWidgetItem *itA0 = (QTableWidgetItem *)tablePara->item(pp,3*mm+1); // Vary?
             txtVary=itA0->text().remove(" ");
             
@@ -1487,11 +1496,13 @@ void fittable18::initParametersBeforeFit()
                 if(lstTmpLimits.count()==2)
                 {
                     double leftNew;
-                    if (lstTmpLimits[0]!="") leftNew=lstTmpLimits[0].toDouble();
+                    if (lstTmpLimits[0] != "")
+                        leftNew = uiToDouble(lstTmpLimits[0]);
                     else leftNew=left;
                     
                     double rightNew;
-                    if (lstTmpLimits[1]!="") rightNew=lstTmpLimits[1].toDouble();
+                    if (lstTmpLimits[1] != "")
+                        rightNew = uiToDouble(lstTmpLimits[1]);
                     else rightNew=right;
                     
                     if (rightNew>leftNew)
@@ -1516,8 +1527,9 @@ void fittable18::initParametersBeforeFit()
         gsl_matrix * mTable=0;
         //+++ 2019-09: new superpositional function number
         int currentFunction=spinBoxCurrentFunction->value();
-        
-        for (int pp=0;pp<p;pp++) gsl_vector_set(F_para,pp,tablePara->item(pp,3*mm+2)->text().toDouble());
+
+        for (int pp = 0; pp < p; pp++)
+            gsl_vector_set(F_para, pp, uiToDouble(tablePara->item(pp, 3 * mm + 2)->text()));
         if (mm>0) currentFirstPoint=numberM[mm-1];
 
         currentLastPoint=numberM[mm]-1;
@@ -1544,7 +1556,7 @@ void fittable18::initParametersBeforeFit()
         for (int pp=0;pp<p;pp++)
         {
             //+++ parameters check
-            tablePara->item(pp, 3*mm+2)->setText(QString::number(gsl_vector_get(F_para,pp),'G',prec));
+            tablePara->item(pp, 3 * mm + 2)->setText(uiNumber(gsl_vector_get(F_para, pp), 'G', prec));
             //+++ is Fittable
             QTableWidgetItem *itA = (QTableWidgetItem *)tablePara->item(pp,3*mm+1);
             if (gsl_vector_int_get(F_para_fit_yn, pp)==1) itA->setCheckState(Qt::Checked);
@@ -1686,7 +1698,8 @@ void fittable18::initParametersAfterFit()
             if (itS->checkState())
             {
                 itA->setCheckState(Qt::Unchecked);
-                tablePara->item(pp,3*mm+2)->setText(QString::number(tablePara->item(pp,2)->text().toDouble(),'G',spinBoxSignDigits->value()));
+                tablePara->item(pp, 3 * mm + 2)
+                    ->setText(uiNumber(uiToDouble(tablePara->item(pp, 2)->text()), 'G', spinBoxSignDigits->value()));
                 gsl_vector_int_set(F_para_fit_yn, pp, 0);
             }
             else
@@ -1705,9 +1718,11 @@ void fittable18::initParametersAfterFit()
         for (int pp=0; pp<p;pp++)
         {
             if(tableControl->item(pp,0)->text().contains("-inf")) left=-1.0e308;
-            else left=tableControl->item(pp,0)->text().toDouble();
+            else
+                left = uiToDouble(tableControl->item(pp, 0)->text());
             if(tableControl->item(pp,4)->text().contains("inf")) right=1.0e308;
-            else right=tableControl->item(pp,4)->text().toDouble();
+            else
+                right = uiToDouble(tableControl->item(pp, 4)->text());
             QTableWidgetItem *itA0 = (QTableWidgetItem *)tablePara->item(pp,3*mm+1); // Vary?
             txtVary=itA0->text().remove(" ");
             
@@ -1717,11 +1732,13 @@ void fittable18::initParametersAfterFit()
                 if(lstTmpLimits.count()==2)
                 {
                     double leftNew;
-                    if (lstTmpLimits[0]!="") leftNew=lstTmpLimits[0].toDouble();
+                    if (lstTmpLimits[0] != "")
+                        leftNew = uiToDouble(lstTmpLimits[0]);
                     else leftNew=left;
                     
                     double rightNew;
-                    if (lstTmpLimits[1]!="") rightNew=lstTmpLimits[1].toDouble();
+                    if (lstTmpLimits[1] != "")
+                        rightNew = uiToDouble(lstTmpLimits[1]);
                     else rightNew=right;
                     
                     if (rightNew>leftNew)
@@ -1747,9 +1764,10 @@ void fittable18::initParametersAfterFit()
         gsl_matrix * mTable=0;
         //+++ 2019-09: new superpositional function number
         int currentFunction=spinBoxCurrentFunction->value();
-        
-        for (int pp=0;pp<p;pp++) gsl_vector_set(F_para,pp,tablePara->item(pp, 3*mm+2)->text().toDouble());
-        
+
+        for (int pp = 0; pp < p; pp++)
+            gsl_vector_set(F_para, pp, uiToDouble(tablePara->item(pp, 3 * mm + 2)->text()));
+
         if (mm==0)
         {
             iMstart=0;
@@ -1780,7 +1798,7 @@ void fittable18::initParametersAfterFit()
         for (int pp=0;pp<p;pp++)
         {
             //+++ parameters check
-            tablePara->item(pp, 3*mm+2)->setText(QString::number(gsl_vector_get(F_para,pp),'G',prec));
+            tablePara->item(pp, 3 * mm + 2)->setText(uiNumber(gsl_vector_get(F_para, pp), 'G', prec));
             //+++ is Fittable
             QTableWidgetItem *itA = (QTableWidgetItem *)tablePara->item(pp,3*mm+1);
             if (gsl_vector_int_get(F_para_fit_yn, pp)==1) itA->setCheckState(Qt::Checked);
@@ -1876,18 +1894,14 @@ void fittable18::makeTableFromMatrix(const char *name, char **tableColNames, int
     t->setHeaderColType();
     
     int digits=spinBoxSignDigits->value()-1;
-    
-    //+++ transfet data to table
+
+    //+++ transfer numeric matrix data using the table's locale and column format
     t->blockSignals(true);
-    const QLocale tableLocale = t->locale();
+    for (int cc = 0; cc < mCols; cc++)
+        t->setColNumericFormat(Table::Scientific, digits, cc, false);
     for (int rr = 0; rr < mRows; rr++)
         for (int cc = 0; cc < mCols; cc++)
-        {
-            const double value = gsl_matrix_get(m, rr, cc);
-            t->setText(rr, cc,
-                       tableLocale == QLocale::c() ? QString::number(value, 'E', digits)
-                                                   : tableLocale.toString(value, 'E', digits));
-        }
+            t->setCell(rr, cc, gsl_matrix_get(m, rr, cc));
     t->blockSignals(false);
 
     //+++ table actions

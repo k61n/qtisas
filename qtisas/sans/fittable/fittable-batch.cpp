@@ -390,9 +390,9 @@ void fittable18::readBatchTable(const QString &tableName)
         }
 
         for (int j = 0; j < p; j++)
-            tableMultiFit->setItem(activeDatasets + 1, 3 + j + resoShift,
-                new QTableWidgetItem(Table::convertNumericText(batchTable->text(i, 7 + 2 * j), batchTable->locale(),
-                                                               QLocale::c(), 'G', QLocale::FloatingPointShortest)));
+            tableMultiFit->setItem(
+                activeDatasets + 1, 3 + j + resoShift,
+                new QTableWidgetItem(uiFromLocale(batchTable->text(i, 7 + 2 * j), batchTable->locale())));
 
         activeDatasets++;
     }
@@ -502,8 +502,6 @@ bool fittable18::saveBatchTable(Table *&t, QString tableName)
     }
 
     t->blockSignals(true);
-    const QLocale resultLocale = t->locale();
-
     t->setColName(0, "Parameter");
     t->setColPlotDesignation(0, Table::None);
     t->setColumnType(0, Table::Text);
@@ -519,8 +517,10 @@ bool fittable18::saveBatchTable(Table *&t, QString tableName)
     t->setColumnType(3, Table::Text);
 
     t->setColName(4, "Chi2");
+    t->setColNumericFormat(Table::Scientific, prec + 2, 4, false);
 
     t->setColName(5, "R2");
+    t->setColNumericFormat(Table::Scientific, prec + 2, 5, false);
 
     t->setColName(6, "Fit-Time");
     t->setColumnType(6, Table::Text);
@@ -583,11 +583,11 @@ bool fittable18::saveBatchTable(Table *&t, QString tableName)
     currentChar++;
     //+++ Fitting Range: From x[min]
     t->setText(currentChar, 0, "Fitting Range: From x[min]");
-    t->setText(currentChar, 1, "-> " + lineEditFromQ->text());
+    t->setText(currentChar, 1, "-> " + uiToC(lineEditFromQ->text()));
     currentChar++;
     //+++ Fitting Range: To x[max]
     t->setText(currentChar, 0, "Fitting Range: To x[max]");
-    t->setText(currentChar, 1, "-> " + lineEditToQ->text());
+    t->setText(currentChar, 1, "-> " + uiToC(lineEditToQ->text()));
     currentChar++;
     //+++ Simulation Range: x-Range Source
     t->setText(currentChar, 0, "Simulation Range: x-Range Source");
@@ -598,11 +598,11 @@ bool fittable18::saveBatchTable(Table *&t, QString tableName)
     currentChar++;
     //+++ Simulation Range: x-min
     t->setText(currentChar, 0, "Simulation Range: x-min");
-    t->setText(currentChar, 1, "-> " + lineEditFromQsim->text());
+    t->setText(currentChar, 1, "-> " + uiToC(lineEditFromQsim->text()));
     currentChar++;
     //+++ Simulation Range: x-max
     t->setText(currentChar, 0, "Simulation Range: x-max");
-    t->setText(currentChar, 1, "-> " + lineEditToQsim->text());
+    t->setText(currentChar, 1, "-> " + uiToC(lineEditToQsim->text()));
     currentChar++;
     //+++ Simulation Range: Number Points
     t->setText(currentChar, 0, "Simulation Range: Number Points");
@@ -618,7 +618,7 @@ bool fittable18::saveBatchTable(Table *&t, QString tableName)
     //+++ Simulation Range: Logarithmic Step
     t->setText(currentChar, 0, "Simulation Range: y-min");
     if (checkBoxLogStep->isChecked())
-        t->setText(currentChar, 1, "-> " + lineEditImin->text());
+        t->setText(currentChar, 1, "-> " + uiToC(lineEditImin->text()));
     else
         t->setText(currentChar, 1, "-> 0");
     currentChar++;
@@ -626,7 +626,7 @@ bool fittable18::saveBatchTable(Table *&t, QString tableName)
     QString line;
     line = QString::number(comboBoxFitMethod->currentIndex()) + " , ";
     line += spinBoxMaxIter->text() + " , ";
-    line += lineEditTolerance->text() + " , ";
+    line += uiToC(lineEditTolerance->text()) + " , ";
     line += QString::number(comboBoxColor->currentIndex()) + " , ";
     line += spinBoxSignDigits->text() + " , ";
     line += QString::number(comboBoxWeightingMethod->currentIndex()) + " , ";
@@ -636,8 +636,8 @@ bool fittable18::saveBatchTable(Table *&t, QString tableName)
     currentChar++;
     //+++ Resolution Integral
     t->setText(currentChar, 0, "Resolution Integral");
-    line = "-> " + lineEditAbsErr->text();
-    line += " , " + lineEditRelErr->text();
+    line = "-> " + uiToC(lineEditAbsErr->text());
+    line += " , " + uiToC(lineEditRelErr->text());
     line += " , " + spinBoxIntWorkspase->text();
     line += " , " + spinBoxIntLimits->text();
     line += " , " + comboBoxResoFunction->currentText();
@@ -645,8 +645,8 @@ bool fittable18::saveBatchTable(Table *&t, QString tableName)
     currentChar++;
     //+++ Polydispersity Integral
     t->setText(currentChar, 0, "Polydispersity Integral");
-    line = "-> " + lineEditAbsErrPoly->text();
-    line += " , " + lineEditRelErrPoly->text();
+    line = "-> " + uiToC(lineEditAbsErrPoly->text());
+    line += " , " + uiToC(lineEditRelErrPoly->text());
     line += " , " + spinBoxIntWorkspasePoly->text();
     line += " , " + spinBoxIntLimitsPoly->text();
     line += " , " + comboBoxPolyFunction->currentText();
@@ -702,9 +702,13 @@ bool fittable18::saveBatchTable(Table *&t, QString tableName)
 
         for (int j = 0; j < p; j++)
         {
-            t->setText(i, 7 + 2 * j,
-                       Table::convertNumericText(batchParamValueText(tableMultiFit->item(i + 1, j + start)->text()),
-                                                 QLocale::c(), resultLocale, 'G', QLocale::FloatingPointShortest));
+            const QString text = batchParamValueText(tableMultiFit->item(i + 1, j + start)->text());
+            bool ok = false;
+            const double value = uiToDouble(text, &ok);
+            if (ok)
+                t->setCell(i, 7 + 2 * j, value);
+            else
+                t->clearCell(i, 7 + 2 * j);
             t->setText(i, 7 + 2 * j + 1, "");
         }
     }
@@ -732,7 +736,15 @@ void fittable18::setBySetFitOrSim(bool fitYN)
         QMessageBox::warning(this, "QtiSAS", "Cannot save/create Batch-Fitting Table! ");
         return;
     }
-    const QLocale resultLocale = t->locale();
+    // Parameter, chi2 and R2 texts are in the widget's locale; invalid ones leave the result cell empty
+    const auto setCellFromUi = [this, t](int row, int col, const QString &text) {
+        bool ok = false;
+        const double value = uiToDouble(text, &ok);
+        if (ok)
+            t->setCell(row, col, value);
+        else
+            t->clearCell(row, col);
+    };
 
     Graph *g;
     bool currentGraphAutoscaled = false;
@@ -961,20 +973,16 @@ void fittable18::setBySetFitOrSim(bool fitYN)
         //+++ TRANSFER OF OBTEINED PARAMETERS TO SET-BY-SET TABLE AND TO RESULT TABLE
         for (int j = 0; j < p; j++)
         {
-            const QString parameterText = QString::number(tablePara->item(j, 2)->text().toDouble(), 'G', prec);
-            t->setText(Nselected, 2 * j + 7,
-                       Table::convertNumericText(parameterText, QLocale::c(), resultLocale, 'G', prec));
-            t->setText(
-                Nselected, 2 * j + 8,
-                QString::number(tablePara->item(j, 3)->text().remove(QString(QChar(0x00B1))).toDouble(), 'G', prec));
+            setCellFromUi(Nselected, 2 * j + 7, tablePara->item(j, 2)->text());
+            // The error column is Text, so its numbers stay C
+            t->setText(Nselected, 2 * j + 8,
+                       QString::number(uiToDouble(tablePara->item(j, 3)->text().remove(QChar(0x00B1))), 'G', prec));
 
             auto *cell = tableMultiFit->item(i + 1, j + start);
             cell->setText(withBatchParamValue(cell->text(), tablePara->item(j, 2)->text()));
         }
-        t->setText(Nselected, 4,
-                   Table::convertNumericText(textLabelChi->text(), QLocale::c(), resultLocale, 'E', prec + 2));
-        t->setText(Nselected, 5,
-                   Table::convertNumericText(textLabelR2->text(), QLocale::c(), resultLocale, 'E', prec + 2));
+        setCellFromUi(Nselected, 4, textLabelChi->text());
+        setCellFromUi(Nselected, 5, textLabelR2->text());
         t->setText(Nselected, 6, textLabelTime->text());
         Nselected++;
 

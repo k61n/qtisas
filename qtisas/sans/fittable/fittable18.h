@@ -83,7 +83,19 @@ public:
     void setPathExtern(QString path);
     void removeTables(const QString &pattern);
 
-// init
+    // Numbers in FitTable's own widgets (parameter, limit and batch tables, chi2/R2 labels) follow the application
+    // locale; session settings and function files stay C
+    QLocale uiLocale() const;
+    double uiToDouble(const QString &text, bool *ok = nullptr) const;
+    QString uiNumber(double value, char format = 'g', int precision = 6) const;
+    QString uiFromLocale(const QString &text, const QLocale &source) const;
+    QString uiToLocale(const QString &text, const QLocale &target) const;
+    QString uiToC(const QString &text) const;
+    QString cToUi(const QString &text) const;
+    QString rangeUiToC(const QString &text) const;
+    QString rangeCToUi(const QString &text) const;
+
+    // init
     void changeFixedSizeH(QWidget *obj, int H);
     void changeFixedSizeHW(QWidget *obj, int H, int W);
     void initScreenResolusionDependentParameters(int hResolusion, double sasResoScale);
@@ -103,8 +115,9 @@ public:
 
     bool doFit(bool sansYN, bool justSimulateYN);
 
+    // Fit statistics text; numbers are written in the given locale (C for fitReport(), app locale for the note)
     QString covarMatrix(int N, int P, double chi, double chiBayesian, double chiNormalization, QStringList paraActive,
-                        gsl_matrix *covar, gsl_vector *paraAdjust);
+                        gsl_matrix *covar, gsl_vector *paraAdjust, const QLocale &locale = QLocale::c());
     void makeNote( QString info, QString name, QString label );
     bool readDataForFitAllM(size_t &Ntotal, int *&numberM, int *&numberSigma, double *&QQ, double *&II, double *&dII,
                             double *&sigmaReso, double *&WEIGHT, double *&sigmaF);
@@ -429,6 +442,10 @@ public slots:
     void autoSimulateCurveInSimulations(int,int);
 
 protected:
+    void changeEvent(QEvent *event) override;
+    void convertWidgetNumbers(const QLocale &from, const QLocale &to);
+    QLocale d_widgetLocale;
+
     int setToSetNumber;
     QString libName;
     QString libTempName;

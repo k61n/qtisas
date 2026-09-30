@@ -49,7 +49,7 @@ double fittable18::parameterValue(const QString &name, int dataset) const
     if (pp < 0)
         return qQNaN();
     auto *item = tablePara->item(pp, 3 * (dataset - 1) + 2);
-    return item ? item->text().toDouble() : qQNaN();
+    return item ? uiToDouble(item->text()) : qQNaN();
 }
 
 bool fittable18::setParameterValue(const QString &name, double value, int dataset)
@@ -57,7 +57,7 @@ bool fittable18::setParameterValue(const QString &name, double value, int datase
     int pp = paraIndex(tablePara, name);
     if (pp < 0)
         return false;
-    const QString text = QString::number(value, 'G', spinBoxSignDigits->value());
+    const QString text = uiNumber(value, 'G', spinBoxSignDigits->value());
     const int first = (dataset == -1) ? 1 : dataset;
     const int last = (dataset == -1) ? datasetCount() : dataset;
     for (int d = first; d <= last; ++d)
@@ -142,7 +142,7 @@ double fittable18::parameterError(const QString &name, int dataset) const
     text = text.trimmed();
     if (text == "---" || text.isEmpty())
         return qQNaN();
-    return text.toDouble();
+    return uiToDouble(text);
 }
 
 bool fittable18::parameterShared(const QString &name) const
@@ -203,7 +203,7 @@ double fittable18::parameterLimitLeft(const QString &name, int dataset) const
             return qQNaN();
         double l, r;
         bool b;
-        parseLocalLimits(item->text(), l, r, b);
+        parseLocalLimits(rangeUiToC(item->text()), l, r, b);
         return l;
     }
     auto *item = tableControl->item(pp, 0);
@@ -212,7 +212,7 @@ double fittable18::parameterLimitLeft(const QString &name, int dataset) const
     QString text = item->text().trimmed();
     if (text == "-inf")
         return -std::numeric_limits<double>::infinity();
-    return text.toDouble();
+    return uiToDouble(text);
 }
 
 double fittable18::parameterLimitRight(const QString &name, int dataset) const
@@ -227,7 +227,7 @@ double fittable18::parameterLimitRight(const QString &name, int dataset) const
             return qQNaN();
         double l, r;
         bool b;
-        parseLocalLimits(item->text(), l, r, b);
+        parseLocalLimits(rangeUiToC(item->text()), l, r, b);
         return r;
     }
     auto *item = tableControl->item(pp, 4);
@@ -236,7 +236,7 @@ double fittable18::parameterLimitRight(const QString &name, int dataset) const
     QString text = item->text().trimmed();
     if (text == "inf")
         return std::numeric_limits<double>::infinity();
-    return text.toDouble();
+    return uiToDouble(text);
 }
 
 bool fittable18::parameterBayesian(const QString &name, int dataset) const
@@ -251,7 +251,7 @@ bool fittable18::parameterBayesian(const QString &name, int dataset) const
             return false;
         double l, r;
         bool b;
-        parseLocalLimits(item->text(), l, r, b);
+        parseLocalLimits(rangeUiToC(item->text()), l, r, b);
         return b;
     }
     auto *cb = qobject_cast<QComboBox *>(tableControl->cellWidget(pp, 1));
@@ -270,16 +270,16 @@ void fittable18::setParameterLimits(const QString &name, double left, double rig
         if (!item)
             return;
         QString sep = bayesianYN ? "+-" : "..";
-        item->setText(formatLimit(left, true, prec) + sep + formatLimit(right, false, prec));
+        item->setText(rangeCToUi(formatLimit(left, true, prec) + sep + formatLimit(right, false, prec)));
     }
     else
     {
         auto *itemL = tableControl->item(pp, 0);
         auto *itemR = tableControl->item(pp, 4);
         if (itemL)
-            itemL->setText(formatLimit(left, true, prec));
+            itemL->setText(cToUi(formatLimit(left, true, prec)));
         if (itemR)
-            itemR->setText(formatLimit(right, false, prec));
+            itemR->setText(cToUi(formatLimit(right, false, prec)));
         auto *cb = qobject_cast<QComboBox *>(tableControl->cellWidget(pp, 1));
         if (cb)
             cb->setCurrentIndex(bayesianYN ? 1 : 0);
@@ -352,29 +352,29 @@ void fittable18::setMaxIterations(int n)
 
 double fittable18::tolerance() const
 {
-    return lineEditTolerance->text().toDouble();
+    return uiToDouble(lineEditTolerance->text());
 }
 void fittable18::setTolerance(double v)
 {
-    lineEditTolerance->setText(QString::number(v));
+    lineEditTolerance->setText(uiNumber(v));
 }
 
 double fittable18::toleranceAbs() const
 {
-    return lineEditToleranceAbs->text().toDouble();
+    return uiToDouble(lineEditToleranceAbs->text());
 }
 void fittable18::setToleranceAbs(double v)
 {
-    lineEditToleranceAbs->setText(QString::number(v));
+    lineEditToleranceAbs->setText(uiNumber(v));
 }
 
 double fittable18::derivStep() const
 {
-    return lineEditSTEP->text().toDouble();
+    return uiToDouble(lineEditSTEP->text());
 }
 void fittable18::setDerivStep(double v)
 {
-    lineEditSTEP->setText(QString::number(v));
+    lineEditSTEP->setText(uiNumber(v));
 }
 
 // Levenberg-Marquardt
@@ -517,20 +517,20 @@ void fittable18::setGenMinGenerations(int n)
 
 double fittable18::genMinSelectionRate() const
 {
-    return lineEditSelectionRate->text().toDouble();
+    return uiToDouble(lineEditSelectionRate->text());
 }
 void fittable18::setGenMinSelectionRate(double v)
 {
-    lineEditSelectionRate->setText(QString::number(v));
+    lineEditSelectionRate->setText(uiNumber(v));
 }
 
 double fittable18::genMinMutationRate() const
 {
-    return lineEditMutationRate->text().toDouble();
+    return uiToDouble(lineEditMutationRate->text());
 }
 void fittable18::setGenMinMutationRate(double v)
 {
-    lineEditMutationRate->setText(QString::number(v));
+    lineEditMutationRate->setText(uiNumber(v));
 }
 
 int fittable18::genMinRandomSeed() const
@@ -1124,22 +1124,22 @@ void fittable18::setSimUniformX(bool uniform)
 
 double fittable18::simFromX() const
 {
-    return lineEditFromQsim->text().toDouble();
+    return uiToDouble(lineEditFromQsim->text());
 }
 
 void fittable18::setSimFromX(double v)
 {
-    lineEditFromQsim->setText(QString::number(v, 'g', 6));
+    lineEditFromQsim->setText(uiNumber(v, 'g', 6));
 }
 
 double fittable18::simToX() const
 {
-    return lineEditToQsim->text().toDouble();
+    return uiToDouble(lineEditToQsim->text());
 }
 
 void fittable18::setSimToX(double v)
 {
-    lineEditToQsim->setText(QString::number(v, 'g', 6));
+    lineEditToQsim->setText(uiNumber(v, 'g', 6));
 }
 
 int fittable18::simNumPoints() const
@@ -1311,7 +1311,7 @@ double fittable18::simulate()
 double fittable18::r2Factor() const
 {
     bool ok;
-    double r2 = textLabelR2->text().toDouble(&ok);
+    double r2 = uiToDouble(textLabelR2->text(), &ok);
     return ok ? r2 : std::numeric_limits<double>::quiet_NaN();
 }
 
@@ -1332,7 +1332,7 @@ double fittable18::simulateCurve()
     if (radioButtonUniform_Q->isChecked())
         return std::numeric_limits<double>::quiet_NaN();
     bool ok;
-    double chi2 = textLabelChi2dofSim->text().toDouble(&ok);
+    double chi2 = uiToDouble(textLabelChi2dofSim->text(), &ok);
     return ok ? chi2 : std::numeric_limits<double>::quiet_NaN();
 }
 

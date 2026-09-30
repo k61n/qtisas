@@ -266,10 +266,10 @@ bool fittable18::generateSimulatedTable(bool createTable, int source, int m, boo
             R2 = 1.0 - chi2 / TSS;
 
         textLabelDofSim->setText(QString::number(N));
-        textLabelChi2Sim->setText(QString::number(chi2, 'E', prec + 2));
-        textLabelChi2dofSim->setText(QString::number(chi2 / (N - np), 'E', prec + 2));
+        textLabelChi2Sim->setText(uiNumber(chi2, 'E', prec + 2));
+        textLabelChi2dofSim->setText(uiNumber(chi2 / (N - np), 'E', prec + 2));
         textLabelnpSIM->setText(QString::number(np));
-        textLabelR2sim->setText(QString::number(R2, 'E', prec + 2));
+        textLabelR2sim->setText(uiNumber(R2, 'E', prec + 2));
 
         int maxInfoCount = 11;
         if (checkBoxSANSsupport->isChecked())
@@ -338,9 +338,9 @@ void fittable18::checkConstrains(int m){
     tablePara->blockSignals(true);
     for (int pp=0; pp<P; pp++){
         if (m>-1)
-            tablePara->item(pp,3*m+2)->setText(QString::number(gsl_vector_get(F_para,pp),'G',prec));
+            tablePara->item(pp, 3 * m + 2)->setText(uiNumber(gsl_vector_get(F_para, pp), 'G', prec));
         else
-            tableParaSimulate->item(pp,0)->setText(QString::number(gsl_vector_get(F_para,pp),'G',prec));
+            tableParaSimulate->item(pp, 0)->setText(uiNumber(gsl_vector_get(F_para, pp), 'G', prec));
     }
     tablePara->blockSignals(false);
 }
@@ -521,7 +521,7 @@ void fittable18::saveFittingSessionSimulation(int m, const QString &table)
     currentRow++;
     //+++ Session::Data::From::Number
     w->setNumRows(currentRow+1);
-    s=tableCurves->item(2,2*m+1)->text()+" ";
+    s = uiToC(tableCurves->item(2, 2 * m + 1)->text()) + " ";
     w->setText(currentRow,0,"Session::Data::From::Number");
     w->setText(currentRow,1,s+"<");
     currentRow++;
@@ -534,7 +534,7 @@ void fittable18::saveFittingSessionSimulation(int m, const QString &table)
     currentRow++;
     //+++ Session::Data::To::Number
     w->setNumRows(currentRow+1);
-    s=tableCurves->item(3,2*m+1)->text()+" ";
+    s = uiToC(tableCurves->item(3, 2 * m + 1)->text()) + " ";
     w->setText(currentRow,0,"Session::Data::To::Number");
     w->setText(currentRow,1,s+"<");
     currentRow++;
@@ -555,7 +555,7 @@ void fittable18::saveFittingSessionSimulation(int m, const QString &table)
     w->setNumRows(currentRow+1);
     s="";
     for (int pp=0; pp<p;pp++)
-        s+=tableControl->item(pp,0)->text()+" ";
+        s += uiToC(tableControl->item(pp, 0)->text()) + " ";
     w->setText(currentRow,0,"Session::Limits::Left");
     w->setText(currentRow,1,s+"<");
     currentRow++;
@@ -563,7 +563,7 @@ void fittable18::saveFittingSessionSimulation(int m, const QString &table)
     w->setNumRows(currentRow+1);
     s="";
     for (int pp=0; pp<p;pp++)
-        s+=tableControl->item(pp,4)->text()+" ";
+        s += uiToC(tableControl->item(pp, 4)->text()) + " ";
     w->setText(currentRow,0,"Session::Limits::Right");
     w->setText(currentRow,1,s+"<");
     currentRow++;
@@ -598,8 +598,8 @@ void fittable18::saveFittingSessionSimulation(int m, const QString &table)
         w->setNumRows(currentRow+1);
         s=QString::number(comboBoxResoFunction->currentIndex())+" ";
         s+=QString::number(comboBoxSpeedControlReso->currentIndex())+" ";
-        s+=lineEditAbsErr->text()+" ";
-        s+=lineEditRelErr->text()+" ";
+        s += uiToC(lineEditAbsErr->text()) + " ";
+        s += uiToC(lineEditRelErr->text()) + " ";
         s+=QString::number(spinBoxIntWorkspase->value())+" ";
         s+=QString::number(spinBoxIntLimits->value());
         w->setText(currentRow,0,"Session::Options::Reso");
@@ -609,8 +609,8 @@ void fittable18::saveFittingSessionSimulation(int m, const QString &table)
         w->setNumRows(currentRow+1);
         s=QString::number(comboBoxPolyFunction->currentIndex())+" ";
         s+=QString::number(comboBoxSpeedControlPoly->currentIndex())+" ";
-        s+=lineEditAbsErrPoly->text()+" ";
-        s+=lineEditRelErrPoly->text()+" ";
+        s += uiToC(lineEditAbsErrPoly->text()) + " ";
+        s += uiToC(lineEditRelErrPoly->text()) + " ";
         s+=QString::number(spinBoxIntWorkspasePoly->value())+" ";
         s+=QString::number(spinBoxIntLimitsPoly->value());
         w->setText(currentRow,0,"Session::Options::Poly");
@@ -623,8 +623,8 @@ void fittable18::saveFittingSessionSimulation(int m, const QString &table)
     s+=QString::number(comboBoxSimplex->currentIndex())+" ";
     s+=QString::number(comboBoxLevenberg->currentIndex())+" ";
     s+=QString::number(spinBoxMaxIter->value())+" ";
-    s+=lineEditTolerance->text()+" ";
-    s+=lineEditToleranceAbs->text()+" ";
+    s += uiToC(lineEditTolerance->text()) + " ";
+    s += uiToC(lineEditToleranceAbs->text()) + " ";
     s+=QString::number(spinBoxSignDigits->value())+" ";
     s+=QString::number(comboBoxWeightingMethod->currentIndex())+" ";
     if (checkBoxCovar->isChecked()) s+="1 "; else s+="0 ";
@@ -635,8 +635,8 @@ void fittable18::saveFittingSessionSimulation(int m, const QString &table)
     s+=QString::number(spinBoxGenomeCount->value())+" ";
     s+=QString::number(spinBoxGenomeSize->value())+" ";
     s+=QString::number(spinBoxMaxNumberGenerations->value())+" ";
-    s+=lineEditSelectionRate->text()+" ";
-    s+=lineEditMutationRate->text()+" ";
+    s += uiToC(lineEditSelectionRate->text()) + " ";
+    s += uiToC(lineEditMutationRate->text()) + " ";
     s+=QString::number(spinBoxRandomSeed->value())+" ";
     w->setText(currentRow,0,"Session::Options::Fit::Control");
     w->setText(currentRow,1,s+"<");
@@ -645,8 +645,8 @@ void fittable18::saveFittingSessionSimulation(int m, const QString &table)
     w->setNumRows(currentRow+1);
     s=QString::number(comboBoxResoFunction->currentIndex())+" ";
     s+=QString::number(comboBoxSpeedControlReso->currentIndex())+" ";
-    s+=lineEditAbsErr->text()+" ";
-    s+=lineEditRelErr->text()+" ";
+    s += uiToC(lineEditAbsErr->text()) + " ";
+    s += uiToC(lineEditRelErr->text()) + " ";
     s+=QString::number(spinBoxIntWorkspase->value())+" ";
     s+=QString::number(spinBoxIntLimits->value())+" ";
     w->setText(currentRow,0,"Session::Options::Instrument::Reso");
@@ -656,8 +656,8 @@ void fittable18::saveFittingSessionSimulation(int m, const QString &table)
     w->setNumRows(currentRow+1);
     s=QString::number(comboBoxPolyFunction->currentIndex())+" ";
     s+=QString::number(comboBoxSpeedControlPoly->currentIndex())+" ";
-    s+=lineEditAbsErrPoly->text()+" ";
-    s+=lineEditRelErrPoly->text()+" ";
+    s += uiToC(lineEditAbsErrPoly->text()) + " ";
+    s += uiToC(lineEditRelErrPoly->text()) + " ";
     s+=QString::number(spinBoxIntWorkspasePoly->value())+" ";
     s+=QString::number(spinBoxIntLimitsPoly->value())+" ";
     w->setText(currentRow,0,"Session::Options::Instrument::Poly");
@@ -676,7 +676,7 @@ void fittable18::saveFittingSessionSimulation(int m, const QString &table)
         QString cellName="Session::Parameters::Values::"+QString::number(pp+1);
         //+++Session::Parameters::Values::pp+1
         w->setNumRows(currentRow+1);
-        s=tableParaSimulate->item(pp,0)->text()+" ";
+        s = uiToC(tableParaSimulate->item(pp, 0)->text()) + " ";
         w->setText(currentRow,0,cellName);
         w->setText(currentRow,1,s+"<");
         currentRow++;
@@ -685,7 +685,7 @@ void fittable18::saveFittingSessionSimulation(int m, const QString &table)
         w->setNumRows(currentRow+1);
         s="";
         QTableWidgetItem *range = (QTableWidgetItem *)tablePara->item(pp,3*m+1);
-        s=range->text()+" ";
+        s = rangeUiToC(range->text()) + " ";
         w->setText(currentRow,0,rangeName);
         w->setText(currentRow,1,s+"<");
         currentRow++;
@@ -694,7 +694,8 @@ void fittable18::saveFittingSessionSimulation(int m, const QString &table)
     w->setNumRows(currentRow+1);
     w->setText(currentRow, 0, "Session::Parameters::Errors");
     s="";
-    for (int pp=0;pp<p;pp++) s+=tablePara->item(pp,3*m+3)->text()+" ";
+    for (int pp = 0; pp < p; pp++)
+        s += uiToC(tablePara->item(pp, 3 * m + 3)->text()) + " ";
     w->setText(currentRow,1,s+" <");
     currentRow++;
     //+++ Session::Fit::SaveSession
@@ -707,13 +708,13 @@ void fittable18::saveFittingSessionSimulation(int m, const QString &table)
     currentRow++;
     //----- Session::Chi2
     w->setNumRows(currentRow+1);
-    s=textLabelChi2dofSim->text()+" <";
+    s = uiToC(textLabelChi2dofSim->text()) + " <";
     w->setText(currentRow, 0, "Session::Chi2");
     w->setText(currentRow, 1, s);
     currentRow++;
     //----- Session::R2
     w->setNumRows(currentRow+1);
-    s=textLabelR2sim->text()+" <";
+    s = uiToC(textLabelR2sim->text()) + " <";
     w->setText(currentRow, 0, "Session::R2");
     w->setText(currentRow, 1, s);
     currentRow++;
@@ -779,12 +780,12 @@ void fittable18::saveFittingSessionSimulation(int m, const QString &table)
     w->setNumRows(currentRow+1);
     w->setText(currentRow,0,"Simulate::Uniform::Parameters");
     s="";
-    s+=lineEditFromQsim->text()+" ";
-    s+=lineEditToQsim->text()+" ";
+    s += uiToC(lineEditFromQsim->text()) + " ";
+    s += uiToC(lineEditToQsim->text()) + " ";
     s+=lineEditNumPointsSim->text()+" ";    
     if (checkBoxLogStep->isChecked()){
         s+="1 ";
-        s+=lineEditImin->text()+" ";
+        s += uiToC(lineEditImin->text()) + " ";
     } else 
         s+="0 0 ";
     w->setText(currentRow,1,s+"<");
@@ -811,9 +812,9 @@ bool fittable18::SetQandIuniform(int &N, double* &QQ, double* &sigmaQ, int m){
                                1,
                                static_cast<size_t>(p),
                                static_cast<size_t>(p)};
-    
-    double Qmin=lineEditFromQsim->text ().toDouble();
-    double Qmax=lineEditToQsim->text ().toDouble();
+
+    double Qmin = uiToDouble(lineEditFromQsim->text());
+    double Qmax = uiToDouble(lineEditToQsim->text());
     //+++
     double *Q=new double[N];
     double *sigma=new double[N];
@@ -1060,8 +1061,8 @@ bool fittable18::SetQandIgivenM(int &Ntotal, double*&Qtotal, double*&Itotal, dou
     if (((QComboBoxInTable*)tableCurves->cellWidget(1, 2*m))->currentText()!="N") NnotQ=false;
     
     //+++ Min Max
-    min=tableCurves->item(2,2*m+1)->text().toDouble();
-    max=tableCurves->item(3,2*m+1)->text().toDouble();
+    min = uiToDouble(tableCurves->item(2, 2 * m + 1)->text());
+    max = uiToDouble(tableCurves->item(3, 2 * m + 1)->text());
     minN=tableCurves->item(2,2*m+1)->text().toInt();
     maxN=tableCurves->item(3,2*m+1)->text().toInt();
     
@@ -1071,8 +1072,8 @@ bool fittable18::SetQandIgivenM(int &Ntotal, double*&Qtotal, double*&Itotal, dou
         if (comboBoxSimQN->currentText()!="N") NnotQ=false;
         
         //+++ Min Max
-        min=textLabelRangeFirst->text().toDouble();
-        max=textLabelRangeLast->text().toDouble();
+        min = uiToDouble(textLabelRangeFirst->text());
+        max = uiToDouble(textLabelRangeLast->text());
         minN=textLabelRangeFirst->text().toInt();
         maxN=textLabelRangeLast->text().toInt();
     }
@@ -1328,7 +1329,7 @@ bool fittable18::simulateData(int &N, double *Q, double *&I, double *&dI, double
     for (int pp = 0; pp < p; ++pp)
     {
         QTableWidgetItem *item = tableParaSimulate->item(pp, 0);
-        double value = item->text().toDouble();
+        double value = uiToDouble(item->text());
 
         const double left = gsl_vector_get(F_para_limit_left, pp);
         const double right = gsl_vector_get(F_para_limit_right, pp);
@@ -1336,7 +1337,7 @@ bool fittable18::simulateData(int &N, double *Q, double *&I, double *&dI, double
         const double clamped = std::clamp(value, left, right);
 
         if (clamped != value)
-            item->setText(QString::number(clamped, 'G', prec));
+            item->setText(uiNumber(clamped, 'G', prec));
     }
 
     //+++ Fit YN: F_para_fit_yn
@@ -1348,7 +1349,7 @@ bool fittable18::simulateData(int &N, double *Q, double *&I, double *&dI, double
 
     //+++ Parameters: F_para
     for (int pp = 0; pp < p; pp++)
-        gsl_vector_set(F_para, pp, tableParaSimulate->item(pp, 0)->text().toDouble());
+        gsl_vector_set(F_para, pp, uiToDouble(tableParaSimulate->item(pp, 0)->text()));
 
     //+++ init parameters of function
     bool polyYN = checkBoxPolySim->isChecked();
@@ -1446,8 +1447,8 @@ bool fittable18::simulateData(int &N, double *Q, double *&I, double *&dI, double
         bool bsMode = currentInstrument.contains("Back");
 
         //+++ resolution parameters
-        double absErrReso = lineEditAbsErr->text().toDouble();
-        double relErrReso = lineEditRelErr->text().toDouble();
+        double absErrReso = uiToDouble(lineEditAbsErr->text());
+        double relErrReso = uiToDouble(lineEditRelErr->text());
         int intWorkspaseReso = spinBoxIntWorkspase->value();
         int numberSigmaReso = spinBoxIntLimits->value();
         int func_reso = comboBoxResoFunction->currentIndex();
@@ -1463,8 +1464,8 @@ bool fittable18::simulateData(int &N, double *Q, double *&I, double *&dI, double
         if (!bsMode)
             sigmaPoly = gsl_vector_get(F_para, p - 1);
 
-        double absErrPoly = lineEditAbsErrPoly->text().toDouble();
-        double relErrPoly = lineEditRelErrPoly->text().toDouble();
+        double absErrPoly = uiToDouble(lineEditAbsErrPoly->text());
+        double relErrPoly = uiToDouble(lineEditRelErrPoly->text());
         int intWorkspasePoly = spinBoxIntWorkspasePoly->value();
         int numberSigmaPoly = spinBoxIntLimitsPoly->value();
         int func_poly = comboBoxPolyFunction->currentIndex();
@@ -1610,29 +1611,29 @@ bool fittable18::simulateDataTable(int source, int number, QString &simulatedTab
 
     t->setColName(0, "x");
     t->setColPlotDesignation(0, Table::X);
-    t->setColNumericFormat(2, prec + 1, 0);
+    t->setColNumericFormat(Table::Scientific, prec, 0, false);
 
     t->setColName(1, "y");
     t->setColPlotDesignation(1, Table::Y);
-    t->setColNumericFormat(2, prec + 1, 1);
+    t->setColNumericFormat(Table::Scientific, prec, 1, false);
 
     t->setColName(2, "weight");
     t->setColPlotDesignation(2, Table::yErr);
     if (uniform)
         t->setTextFormat(2);
     else
-        t->setColNumericFormat(2, prec + 1, 2);
+        t->setColNumericFormat(Table::Scientific, prec, 2, false);
 
     t->setColName(3, "sigma");
     t->setColPlotDesignation(3, Table::xErr);
-    t->setColNumericFormat(2, prec + 1, 3);
+    t->setColNumericFormat(Table::Scientific, prec, 3, false);
 
     t->setColName(4, "residues");
     t->setColPlotDesignation(4, Table::Y);
     if (uniform)
         t->setTextFormat(4);
     else
-        t->setColNumericFormat(2, prec + 1, 4);
+        t->setColNumericFormat(Table::Scientific, prec, 4, false);
 
     t->setColName(5, "Characteristics");
     t->setColPlotDesignation(5, Table::None);
@@ -1663,32 +1664,25 @@ bool fittable18::simulateDataTable(int source, int number, QString &simulatedTab
     if (t->numRows() < p)
         t->setNumRows(p);
 
-    double yMin = lineEditImin->text().toDouble();
+    double yMin = uiToDouble(lineEditImin->text());
     bool xLogScale = checkBoxLogStep->isChecked();
-
-    const QLocale resultLocale = t->locale();
-    const auto numericText = [&resultLocale, prec](double value) {
-        // Keep the current ungrouped C output byte-for-byte; otherwise follow the result table.
-        return resultLocale == QLocale::c() ? QString::number(value, 'E', prec)
-                                            : resultLocale.toString(value, 'E', prec);
-    };
 
     for (int i = 0; i < N; i++)
     {
-        t->setText(i, 0, numericText(Q[i]));
+        t->setCell(i, 0, Q[i]);
         if (uniform && xLogScale && Isim[i] < yMin)
-            t->setText(i, 1, "");
+            t->clearCell(i, 1);
         else
-            t->setText(i, 1, numericText(Isim[i]));
+            t->setCell(i, 1, Isim[i]);
         if (uniform)
             t->setText(i, 2, "---");
         else
-            t->setText(i, 2, numericText(Weight[i]));
-        t->setText(i, 3, numericText(sigma[i]));
+            t->setCell(i, 2, Weight[i]);
+        t->setCell(i, 3, sigma[i]);
         if (uniform)
             t->setText(i, 4, "---");
         else
-            t->setText(i, 4, numericText(Idata[i] - Isim[i]));
+            t->setCell(i, 4, Idata[i] - Isim[i]);
     }
        
     int currentLine = 0;
@@ -1713,11 +1707,11 @@ bool fittable18::simulateDataTable(int source, int number, QString &simulatedTab
     currentLine++;
 
     t->setText(currentLine, 5, "x-min");
-    t->setText(currentLine, 6, "->   " + lineEditFromQsim->text());
+    t->setText(currentLine, 6, "->   " + uiToC(lineEditFromQsim->text()));
     currentLine++;
 
     t->setText(currentLine, 5, "x-max");
-    t->setText(currentLine, 6, "->   " + lineEditToQsim->text());
+    t->setText(currentLine, 6, "->   " + uiToC(lineEditToQsim->text()));
     currentLine++;
 
     t->setText(currentLine, 5, "Number Points");
@@ -1735,7 +1729,7 @@ bool fittable18::simulateDataTable(int source, int number, QString &simulatedTab
     if (!checkBoxLogStep->isChecked())
         t->setText(currentLine, 6, "->   0");
     else
-        t->setText(currentLine, 6, "->   " + lineEditImin->text());
+        t->setText(currentLine, 6, "->   " + uiToC(lineEditImin->text()));
     currentLine++;
 
     t->setText(currentLine, 5, "Dataset");
@@ -1763,8 +1757,8 @@ bool fittable18::simulateDataTable(int source, int number, QString &simulatedTab
         currentLine++;
 
         t->setText(currentLine, 5, "Resolution Integral");
-        QString line = "->   a " + lineEditAbsErr->text();
-        line += " r " + lineEditRelErr->text();
+        QString line = "->   a " + uiToC(lineEditAbsErr->text());
+        line += " r " + uiToC(lineEditRelErr->text());
         line += " m " + spinBoxIntWorkspase->text();
         line += " n " + spinBoxIntLimits->text();
         line += " f " + comboBoxResoFunction->currentText();
@@ -1783,8 +1777,8 @@ bool fittable18::simulateDataTable(int source, int number, QString &simulatedTab
         currentLine++;
 
         t->setText(currentLine, 5, "Polydispersity Integral");
-        line = "->   a " + lineEditAbsErrPoly->text();
-        line += " r " + lineEditRelErrPoly->text();
+        line = "->   a " + uiToC(lineEditAbsErrPoly->text());
+        line += " r " + uiToC(lineEditRelErrPoly->text());
         line += " m " + spinBoxIntWorkspasePoly->text();
         line += " n " + spinBoxIntLimitsPoly->text();
         line += " f " + comboBoxPolyFunction->currentText();
@@ -1796,13 +1790,12 @@ bool fittable18::simulateDataTable(int source, int number, QString &simulatedTab
     {
         t->setText(pp, 7, F_paraList[pp]);
         const QString valueText = tableParaSimulate->item(pp, 0)->text();
-        t->setText(
-            pp, 8,
-            Table::convertNumericText(valueText, QLocale::c(), resultLocale, 'G', QLocale::FloatingPointShortest));
+        t->setCellOrText(pp, 8, valueText, uiLocale());
+        // "±error" is display text: it keeps the table's locale, unlike numbers in Text columns
         if (source == 1)
-            t->setText(pp, 9, tablePara->item(pp, 3 * number + 3)->text());
+            t->setText(pp, 9, uiToLocale(tablePara->item(pp, 3 * number + 3)->text(), t->locale()));
         else if (source == 2)
-            t->setText(pp, 9, tablePara->item(pp, 3)->text());
+            t->setText(pp, 9, uiToLocale(tablePara->item(pp, 3)->text(), t->locale()));
         else
             t->setText(pp, 9, "");
     }

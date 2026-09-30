@@ -503,8 +503,8 @@ void fittable18::readFIFheader(QString fifName)
             int length=s.length();
             if (finish<start) finish=length;
             QString ss=s.mid( start, finish-start);
-            
-            lineEditTolerance->setText(ss);
+
+            lineEditTolerance->setText(cToUi(ss));
         }
         
         if ( pos==1 && s.contains("ABS=") )
@@ -514,8 +514,8 @@ void fittable18::readFIFheader(QString fifName)
             int length=s.length();
             if (finish<start) finish=length;
             QString ss=s.mid( start, finish-start);
-            
-            lineEditToleranceAbs->setText(ss);
+
+            lineEditToleranceAbs->setText(cToUi(ss));
         }
         
         if  (s.contains("MODE=") )
@@ -555,8 +555,8 @@ void fittable18::readFIFheader(QString fifName)
             int length=s.length();
             if (finish<start) finish=length;
             QString ss=s.mid( start, finish-start);
-            
-            lineEditSTEP->setText(ss);
+
+            lineEditSTEP->setText(cToUi(ss));
         }
 
         if  (pos==1 && s.contains("DSSV=") )
@@ -598,8 +598,8 @@ void fittable18::readFIFheader(QString fifName)
             int length=s.length();
             if (finish<start) finish=length;
             QString ss=s.mid( start, finish-start);
-            
-            lineEditSelectionRate->setText(ss);
+
+            lineEditSelectionRate->setText(cToUi(ss));
         }
 
         if  (pos==2 && s.contains("MUTRATE=") )
@@ -609,8 +609,8 @@ void fittable18::readFIFheader(QString fifName)
             int length=s.length();
             if (finish<start) finish=length;
             QString ss=s.mid( start, finish-start);
-            
-            lineEditMutationRate->setText(ss);
+
+            lineEditMutationRate->setText(cToUi(ss));
         }
         
         if  (pos==2 && s.contains("SEED=") )
@@ -1052,7 +1052,7 @@ void fittable18::saveFittingSession(QString table)
     w->setNumRows(currentRow+1);
     s="";
     for (int i=0; i<M;i++)
-        s+=tableCurves->item(2,2*i+1)->text()+" ";
+        s += uiToC(tableCurves->item(2, 2 * i + 1)->text()) + " ";
     w->setText(currentRow,0,"Session::Data::From::Number");
     w->setText(currentRow,1,s+"<");
     currentRow++;
@@ -1075,7 +1075,7 @@ void fittable18::saveFittingSession(QString table)
     w->setNumRows(currentRow+1);
     s="";
     for (int i=0; i<M;i++)
-        s+=tableCurves->item(3,2*i+1)->text()+" ";
+        s += uiToC(tableCurves->item(3, 2 * i + 1)->text()) + " ";
     w->setText(currentRow,0,"Session::Data::To::Number");
     w->setText(currentRow,1,s+"<");
     currentRow++;
@@ -1107,7 +1107,7 @@ void fittable18::saveFittingSession(QString table)
     w->setNumRows(currentRow+1);
     s="";
     for (int pp=0; pp<p;pp++)
-        s+=tableControl->item(pp,0)->text()+" ";
+        s += uiToC(tableControl->item(pp, 0)->text()) + " ";
     w->setText(currentRow,0,"Session::Limits::Left");
     w->setText(currentRow,1,s+"<");
     currentRow++;
@@ -1116,7 +1116,7 @@ void fittable18::saveFittingSession(QString table)
     w->setNumRows(currentRow+1);
     s="";
     for (int pp=0; pp<p;pp++)
-        s+=tableControl->item(pp,4)->text()+" ";
+        s += uiToC(tableControl->item(pp, 4)->text()) + " ";
     w->setText(currentRow,0,"Session::Limits::Right");
     w->setText(currentRow,1,s+"<");
     currentRow++;
@@ -1176,8 +1176,8 @@ void fittable18::saveFittingSession(QString table)
         w->setNumRows(currentRow+1);
         s=QString::number(comboBoxResoFunction->currentIndex())+" ";
         s+=QString::number(comboBoxSpeedControlReso->currentIndex())+" ";
-        s+=lineEditAbsErr->text()+" ";
-        s+=lineEditRelErr->text()+" ";
+        s += uiToC(lineEditAbsErr->text()) + " ";
+        s += uiToC(lineEditRelErr->text()) + " ";
         s+=QString::number(spinBoxIntWorkspase->value())+" ";
         s+=QString::number(spinBoxIntLimits->value());
         w->setText(currentRow,0,"Session::Options::Reso");
@@ -1188,8 +1188,8 @@ void fittable18::saveFittingSession(QString table)
         w->setNumRows(currentRow+1);
         s=QString::number(comboBoxPolyFunction->currentIndex())+" ";
         s+=QString::number(comboBoxSpeedControlPoly->currentIndex())+" ";
-        s+=lineEditAbsErrPoly->text()+" ";
-        s+=lineEditRelErrPoly->text()+" ";
+        s += uiToC(lineEditAbsErrPoly->text()) + " ";
+        s += uiToC(lineEditRelErrPoly->text()) + " ";
         s+=QString::number(spinBoxIntWorkspasePoly->value())+" ";
         s+=QString::number(spinBoxIntLimitsPoly->value());
         w->setText(currentRow,0,"Session::Options::Poly");
@@ -1203,8 +1203,8 @@ void fittable18::saveFittingSession(QString table)
     s+=QString::number(comboBoxSimplex->currentIndex())+" ";
     s+=QString::number(comboBoxLevenberg->currentIndex())+" ";
     s+=QString::number(spinBoxMaxIter->value())+" ";
-    s+=lineEditTolerance->text()+" ";
-    s+=lineEditToleranceAbs->text()+" ";
+    s += uiToC(lineEditTolerance->text()) + " ";
+    s += uiToC(lineEditToleranceAbs->text()) + " ";
     s+=QString::number(spinBoxSignDigits->value())+" ";
     s+=QString::number(comboBoxWeightingMethod->currentIndex())+" ";
     if (checkBoxCovar->isChecked()) s+="1 "; else s+="0 ";
@@ -1217,8 +1217,8 @@ void fittable18::saveFittingSession(QString table)
     s+=QString::number(spinBoxGenomeCount->value())+" ";
     s+=QString::number(spinBoxGenomeSize->value())+" ";
     s+=QString::number(spinBoxMaxNumberGenerations->value())+" ";
-    s+=lineEditSelectionRate->text()+" ";
-    s+=lineEditMutationRate->text()+" ";
+    s += uiToC(lineEditSelectionRate->text()) + " ";
+    s += uiToC(lineEditMutationRate->text()) + " ";
     s+=QString::number(spinBoxRandomSeed->value())+" ";
     
     w->setText(currentRow,0,"Session::Options::Fit::Control");
@@ -1229,8 +1229,8 @@ void fittable18::saveFittingSession(QString table)
     w->setNumRows(currentRow+1);
     s=QString::number(comboBoxResoFunction->currentIndex())+" ";
     s+=QString::number(comboBoxSpeedControlReso->currentIndex())+" ";
-    s+=lineEditAbsErr->text()+" ";
-    s+=lineEditRelErr->text()+" ";
+    s += uiToC(lineEditAbsErr->text()) + " ";
+    s += uiToC(lineEditRelErr->text()) + " ";
     s+=QString::number(spinBoxIntWorkspase->value())+" ";
     s+=QString::number(spinBoxIntLimits->value())+" ";
     w->setText(currentRow,0,"Session::Options::Instrument::Reso");
@@ -1241,8 +1241,8 @@ void fittable18::saveFittingSession(QString table)
     w->setNumRows(currentRow+1);
     s=QString::number(comboBoxPolyFunction->currentIndex())+" ";
     s+=QString::number(comboBoxSpeedControlPoly->currentIndex())+" ";
-    s+=lineEditAbsErrPoly->text()+" ";
-    s+=lineEditRelErrPoly->text()+" ";
+    s += uiToC(lineEditAbsErrPoly->text()) + " ";
+    s += uiToC(lineEditRelErrPoly->text()) + " ";
     s+=QString::number(spinBoxIntWorkspasePoly->value())+" ";
     s+=QString::number(spinBoxIntLimitsPoly->value())+" ";
     w->setText(currentRow,0,"Session::Options::Instrument::Poly");
@@ -1291,7 +1291,8 @@ void fittable18::saveFittingSession(QString table)
         //+++Session::Parameters::Values::pp+1
         w->setNumRows(currentRow+1);
         s="";
-        for (int i=0; i<M;i++) s+=tablePara->item(pp,3*i+2)->text()+" ";
+        for (int i = 0; i < M; i++)
+            s += uiToC(tablePara->item(pp, 3 * i + 2)->text()) + " ";
         w->setText(currentRow,0,cellName);
         w->setText(currentRow,1,s+"<");
         currentRow++;
@@ -1304,7 +1305,7 @@ void fittable18::saveFittingSession(QString table)
         for (int i=0; i<M;i++)
         {
             QTableWidgetItem *range = (QTableWidgetItem *)tablePara->item(pp,3*i+1);
-            s+=range->text()+" ";
+            s += rangeUiToC(range->text()) + " ";
         }
         w->setText(currentRow,0,rangeName);
         w->setText(currentRow,1,s+"<");
@@ -1315,7 +1316,9 @@ void fittable18::saveFittingSession(QString table)
     w->setNumRows(currentRow+1);
     w->setText(currentRow, 0, "Session::Parameters::Errors");
     s="";
-    for (int i=0; i<M;i++) for (int pp=0;pp<p;pp++) s+=tablePara->item(pp,3*i+3)->text()+" ";
+    for (int i = 0; i < M; i++)
+        for (int pp = 0; pp < p; pp++)
+            s += uiToC(tablePara->item(pp, 3 * i + 3)->text()) + " ";
     w->setText(currentRow,1,s+" <");
     currentRow++;
 
@@ -1331,14 +1334,14 @@ void fittable18::saveFittingSession(QString table)
     
     //----- Session::Chi2
     w->setNumRows(currentRow+1);
-    s=textLabelChi->text()+" <";
+    s = uiToC(textLabelChi->text()) + " <";
     w->setText(currentRow, 0, "Session::Chi2");
     w->setText(currentRow, 1, s);
     currentRow++;
     
     //----- Session::R2
     w->setNumRows(currentRow+1);
-    s=textLabelR2->text()+" <";
+    s = uiToC(textLabelR2->text()) + " <";
     w->setText(currentRow, 0, "Session::R2");
     w->setText(currentRow, 1, s);
     currentRow++;
@@ -1413,14 +1416,14 @@ void fittable18::saveFittingSession(QString table)
     w->setNumRows(currentRow+1);
     w->setText(currentRow,0,"Simulate::Uniform::Parameters");
     s="";
-    s+=lineEditFromQsim->text()+" ";
-    s+=lineEditToQsim->text()+" ";
+    s += uiToC(lineEditFromQsim->text()) + " ";
+    s += uiToC(lineEditToQsim->text()) + " ";
     s+=lineEditNumPointsSim->text()+" ";
     
     if (checkBoxLogStep->isChecked())
     {
         s+="1 ";
-        s+=lineEditImin->text()+" ";
+        s += uiToC(lineEditImin->text()) + " ";
     }
     else s+="0 0 ";
     
@@ -1651,7 +1654,7 @@ void fittable18::readSettingsTable()
         
         for (int mm=0;mm<M;mm++)
         {
-            tableCurves->item(2, 2*mm+1)->setText(lst[mm]);
+            tableCurves->item(2, 2 * mm + 1)->setText(cToUi(lst[mm]));
             tableCurvechanged(2, 2*mm+1);
         }
     }
@@ -1682,7 +1685,7 @@ void fittable18::readSettingsTable()
         
         for (int mm=0;mm<M;mm++)
         {
-            tableCurves->item(3, 2*mm+1)->setText(lst[mm]);
+            tableCurves->item(3, 2 * mm + 1)->setText(cToUi(lst[mm]));
             tableCurvechanged(3, 2*mm+1);
         }
     }
@@ -1733,7 +1736,7 @@ void fittable18::readSettingsTable()
         
         for (int pp=0; pp<gsl_min(p,lst.count());pp++)
         {
-            tableControl->item(pp,0)->setText(lst[pp]);
+            tableControl->item(pp, 0)->setText(cToUi(lst[pp]));
         }
     }
     
@@ -1746,7 +1749,7 @@ void fittable18::readSettingsTable()
         
         for (int pp=0; pp<gsl_min(p,lst.count());pp++)
         {
-            tableControl->item(pp,4)->setText(lst[pp]);
+            tableControl->item(pp, 4)->setText(cToUi(lst[pp]));
         }
     }
     
@@ -1834,9 +1837,9 @@ void fittable18::readSettingsTable()
             //+++
             comboBoxSpeedControlReso->setCurrentIndex(lst[1].toInt());
             //+++
-            lineEditAbsErr->setText(lst[2]);
+            lineEditAbsErr->setText(cToUi(lst[2]));
             //+++
-            lineEditRelErr->setText(lst[3]);
+            lineEditRelErr->setText(cToUi(lst[3]));
             //+++
             spinBoxIntWorkspase->setValue(lst[4].toInt());
             //+++
@@ -1855,9 +1858,9 @@ void fittable18::readSettingsTable()
             //+++
             comboBoxSpeedControlPoly->setCurrentIndex(lst[1].toInt());
             //+++
-            lineEditAbsErrPoly->setText(lst[2]);
+            lineEditAbsErrPoly->setText(cToUi(lst[2]));
             //+++
-            lineEditRelErrPoly->setText(lst[3]);
+            lineEditRelErrPoly->setText(cToUi(lst[3]));
             //+++
             spinBoxIntWorkspasePoly->setValue(lst[4].toInt());
             //+++
@@ -1879,9 +1882,11 @@ void fittable18::readSettingsTable()
         //+++
         spinBoxMaxIter->setValue(lst[currentItem].toInt());currentItem++;
         //+++
-        lineEditTolerance->setText(lst[currentItem]);currentItem++;
+        lineEditTolerance->setText(cToUi(lst[currentItem]));
+        currentItem++;
         //+++
-        lineEditToleranceAbs->setText(lst[currentItem]);currentItem++;
+        lineEditToleranceAbs->setText(cToUi(lst[currentItem]));
+        currentItem++;
         //+++
         spinBoxSignDigits->setValue(lst[currentItem].toInt());currentItem++;
         //+++
@@ -1908,9 +1913,11 @@ void fittable18::readSettingsTable()
         //
         spinBoxMaxNumberGenerations->setValue(lst[currentItem].toInt());currentItem++;
         //
-        lineEditSelectionRate->setText(lst[currentItem]);currentItem++;
+        lineEditSelectionRate->setText(cToUi(lst[currentItem]));
+        currentItem++;
         //
-        lineEditMutationRate->setText(lst[currentItem]);currentItem++;
+        lineEditMutationRate->setText(cToUi(lst[currentItem]));
+        currentItem++;
         //
         spinBoxRandomSeed->setValue(lst[currentItem].toInt());currentItem++;
     }
@@ -1932,9 +1939,9 @@ void fittable18::readSettingsTable()
             value=lst[1].toInt();
             if (value >-1 && value<=8) comboBoxSpeedControlReso->setCurrentIndex(value);
             //+++
-            lineEditAbsErr->setText(lst[2]);
+            lineEditAbsErr->setText(cToUi(lst[2]));
             //+++
-            lineEditRelErr->setText(lst[3]);
+            lineEditRelErr->setText(cToUi(lst[3]));
             //+++
             spinBoxIntWorkspase->setValue(lst[4].toInt());
             //+++
@@ -1962,9 +1969,9 @@ void fittable18::readSettingsTable()
             value=lst[1].toInt();
             if (value >-1 && value<=8) comboBoxSpeedControlPoly->setCurrentIndex(value);
             //+++
-            lineEditAbsErrPoly->setText(lst[2]);
+            lineEditAbsErrPoly->setText(cToUi(lst[2]));
             //+++
-            lineEditRelErrPoly->setText(lst[3]);
+            lineEditRelErrPoly->setText(cToUi(lst[3]));
             //+++
             spinBoxIntWorkspasePoly->setValue(lst[4].toInt());
             //+++
@@ -2023,7 +2030,7 @@ void fittable18::readSettingsTable()
             
             for (int mm=0; mm<M;mm++)
             {
-                tablePara->item(pp,3*mm+2)->setText(QString::number(lst[mm].toDouble(),'G',spinBoxSignDigits->value()));
+                tablePara->item(pp, 3 * mm + 2)->setText(uiNumber(lst[mm].toDouble(), 'G', spinBoxSignDigits->value()));
             }
         }
 
@@ -2040,7 +2047,8 @@ void fittable18::readSettingsTable()
             {
                 //std::cout<<lst[mm].latin1()<<"\n"<<flush;
                 QTableWidgetItem *range = (QTableWidgetItem *)tablePara->item(pp,3*mm+1);
-                if (lst[mm].contains("..") || lst[mm].contains("-+")) range->setText(lst[mm].remove(" "));
+                if (lst[mm].contains("..") || lst[mm].contains("-+"))
+                    range->setText(rangeCToUi(lst[mm].remove(" ")));
             }
         }
     }
@@ -2055,7 +2063,7 @@ void fittable18::readSettingsTable()
         int iii=0;
         for (int i=0; i<M;i++) for (int pp=0;pp<p;pp++)
         {
-            tablePara->item(pp,3*i+3)->setText(lst[iii]);
+                tablePara->item(static_cast<int>(pp), 3 * i + 3)->setText(cToUi(lst[iii]));
             iii++;
         }
     }
@@ -2078,13 +2086,13 @@ void fittable18::readSettingsTable()
     if (parameters.indexOf("Session::Chi2")>=0)
     {
         s=w->text(parameters.indexOf("Session::Chi2"),1).remove(" <").trimmed();
-        textLabelChi->setText(s);
+        textLabelChi->setText(cToUi(s));
     }
     //+++ Session::R2
     if (parameters.indexOf("Session::R2")>=0)
     {
         s=w->text(parameters.indexOf("Session::R2"),1).remove(" <").trimmed();
-        textLabelR2->setText(s);
+        textLabelR2->setText(cToUi(s));
     }
     //+++ Session::Time
     if (parameters.indexOf("Session::Time")>=0)
@@ -2185,17 +2193,18 @@ void fittable18::readSettingsTable()
             s=w->text(parameters.indexOf("Simulate::Uniform::Parameters"),1).remove(" <").trimmed();
             lst.clear();
             lst = s.split(" ", Qt::SkipEmptyParts);
-            
-            lineEditFromQsim->setText(lst[0]);
+
+            lineEditFromQsim->setText(cToUi(lst[0]));
             //+++
-            lineEditToQsim->setText(lst[1]);
+            lineEditToQsim->setText(cToUi(lst[1]));
             //+++
             lineEditNumPointsSim->setText(lst[2]);
             //+++
             if (lst[3]=="1")
             {
                 checkBoxLogStep->setChecked(true);
-                if (lst.count()>4) lineEditImin->setText(lst[4]);
+                if (lst.count() > 4)
+                    lineEditImin->setText(cToUi(lst[4]));
             }
             else
             {
@@ -2315,13 +2324,13 @@ void fittable18::openFIFfile(const QString &sharedFileName)
             double max = lst[4].toDouble();
             if (min < max && (!logStep || min > 0))
             {
-                lineEditFromQsim->setText(QString::number(min));
-                lineEditToQsim->setText(QString::number(max));
+                lineEditFromQsim->setText(uiNumber(min));
+                lineEditToQsim->setText(uiNumber(max));
             }
         }
 
         if (!lst[6].isEmpty() && lst[6].toDouble() >= 0.0)
-            lineEditImin->setText(lst[6]);
+            lineEditImin->setText(cToUi(lst[6]));
 
         if (!lst[5].isEmpty() && lst[5].toInt() > 0)
             lineEditNumPointsSim->setText(QString::number(lst[5].toInt()));
