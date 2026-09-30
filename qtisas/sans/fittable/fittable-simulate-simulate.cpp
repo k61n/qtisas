@@ -443,7 +443,6 @@ void fittable18::saveFittingSessionSimulation(int m, const QString &table)
         //+++ new
         w->setWindowLabel("FIT1D::Settings::Table");
         app()->setListViewLabel(w->name(), "FIT1D::Settings::Table");
-        app()->updateWindowLists(w);
     }
 
     w->blockSignals(true);
@@ -1598,9 +1597,6 @@ bool fittable18::simulateDataTable(int source, int number, QString &simulatedTab
     else
     {
         t = app()->newHiddenTable(simulatedTable, simulatedLabel, N, 10);
-        t->setWindowLabel("Simulated Curve");
-        app()->setListViewLabel(t->name(), "Simulated Curve");
-        app()->updateWindowLists(t);
 
         t->blockSignals(true);
     }
@@ -1813,6 +1809,7 @@ bool fittable18::simulateDataTable(int source, int number, QString &simulatedTab
 
     t->adjustColumnsWidth(false);
 
+    t->setWindowLabel(simulatedLabel);
     app()->setListViewLabel(t->name(), simulatedLabel);
 
     t->blockSignals(false);

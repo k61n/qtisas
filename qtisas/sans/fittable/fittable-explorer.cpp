@@ -949,7 +949,6 @@ void fittable18::saveFittingSession(QString table)
         //+++ new
         w->setWindowLabel("FIT1D::Settings::Table");
         app()->setListViewLabel(w->name(), "FIT1D::Settings::Table");
-        app()->updateWindowLists(w);
     }
     w->blockSignals(true);
     // Col-Names
