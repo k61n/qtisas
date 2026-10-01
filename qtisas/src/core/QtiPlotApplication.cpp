@@ -17,14 +17,41 @@ Description: QtiSAS application
 #include "ApplicationWindow.h"
 #include "QtiPlotApplication.h"
 
-QtiPlotApplication::QtiPlotApplication( int & argc, char ** argv) : QApplication( argc, argv)
+namespace
 {
-    // Redirect missing font families used in .ui rich-text to the system default.
+QtMessageHandler previousMessageHandler = nullptr;
+
+// Notes of the offscreen platform (tests, headless scripts): every window call it cannot do and its missing OpenGL
+bool isOffscreenNote(const QString &message)
+{
+    return message.startsWith("This plugin does not support") ||
+           message == "QOpenGLWidget is not supported on this platform." ||
+           message == "QOpenGLWidget: Failed to create context";
+}
+
+void offscreenMessageHandler(QtMsgType type, const QMessageLogContext &context, const QString &message)
+{
+    if (!isOffscreenNote(message) && previousMessageHandler)
+        previousMessageHandler(type, context, message);
+}
+
+// Qt warnings that are no problem of QtiSAS
+void silenceHarmlessQtWarnings()
+{
+    // Missing font families used in .ui rich text: the system default instead. Qt still warns while scanning
+    // the aliases, before it applies the substitution.
     QFont::insertSubstitution("Ubuntu", QFont().family());
     QFont::insertSubstitution("Sans-serif", QFont().family());
-    // Suppress the platform-level alias-scan warning that fires even when the
-    // font is substituted (Qt scans before applying substitutions).
     QLoggingCategory::setFilterRules("qt.qpa.fonts=false");
+
+    if (QGuiApplication::platformName() == "offscreen")
+        previousMessageHandler = qInstallMessageHandler(offscreenMessageHandler);
+}
+} // namespace
+
+QtiPlotApplication::QtiPlotApplication(int &argc, char **argv) : QApplication(argc, argv)
+{
+    silenceHarmlessQtWarnings();
 
 	QStringList args = arguments();
 	args.removeFirst(); // remove application name
