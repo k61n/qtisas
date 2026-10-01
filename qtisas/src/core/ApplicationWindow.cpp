@@ -19074,7 +19074,9 @@ void ApplicationWindow::parseCommandLineArguments(const QStringList &args)
         }
 
         workingDir = QFileInfo(file_name).absolutePath();
-        saveSettings(); // the recent projects must be saved
+        // Batch runs (-X, -x --quit) leave the user's settings alone
+        if (!noGui && !quitAfter)
+            saveSettings(); // the recent projects must be saved
 
         if (console)
         {
