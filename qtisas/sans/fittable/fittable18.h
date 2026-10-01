@@ -142,6 +142,17 @@ public:
     {
         return listViewGroup->currentIndex().data().toString();
     };
+    // Selects a group of the explorer, which lists its functions (also in JNSE)
+    void selectFolder(const QString &folder)
+    {
+        if (QAbstractItemModel *model = listViewGroup->model())
+        {
+            const QModelIndexList found =
+                model->match(model->index(0, 0), Qt::DisplayRole, folder, 1, Qt::MatchExactly);
+            if (!found.isEmpty())
+                listViewGroup->setCurrentIndex(found.first());
+        }
+    }
     QStringList groupFunctions(const QString &groupName, bool onlyEFIT) const;
     QStringList scanGroup(bool checkEfit) const;
     QStringList scanGroupEfit() const;

@@ -34,6 +34,7 @@ class jnse18 : public QWidget, private Ui::jnse
     void startNseFit();
     void headerTableSeleted();
     void filterFitFunctions(const QStringList &lst = {}, bool local = true);
+    void applyFunctionsFilter();
 
   signals:
     void signalJnseFit(const QString &tableName, const QString &function, int from, int to);
