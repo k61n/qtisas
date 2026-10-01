@@ -10,10 +10,12 @@ import os
 import sys
 
 try:
-    from PyQt6.QtCore import Q_ARG, QMetaObject
+    from PyQt6.QtCore import Q_ARG, QMetaObject, Qt
+    from PyQt6.QtTest import QTest
     from PyQt6.QtWidgets import QApplication, QLineEdit, QSpinBox, QTableWidget, QTableWidgetItem
 except ImportError:
-    from PyQt5.QtCore import Q_ARG, QMetaObject
+    from PyQt5.QtCore import Q_ARG, QMetaObject, Qt
+    from PyQt5.QtTest import QTest
     from PyQt5.QtWidgets import QApplication, QLineEdit, QSpinBox, QTableWidget, QTableWidgetItem
 
 sys.dont_write_bytecode = True  # no __pycache__ in the source tree
@@ -90,6 +92,28 @@ names = svd_de.colNames()
 for name, expected in (("S11", math.exp(-q[4])), ("S12", math.exp(-2 * q[4])), ("S22", 1.0)):
     got = svd_de.cellOrNone(names.index(name) + 1, 5)
     assert got is not None and abs(got - expected) < 1e-6 * abs(expected), (name, got, expected)
+
+# typing a solvent SLD (German): numbers only, the decimal point corrected; on Enter 'e' with 5 digits, or the
+# default when empty
+for keys, expected in (("2.5e10", "2,50000e+10"), ("abc", "-5,60000e+09"), ("", "-5,60000e+09")):
+    rhoH.clear()
+    QTest.keyClicks(rhoH, keys)
+    QTest.keyClick(rhoH, getattr(Qt, "Key", Qt).Key_Return)
+    assert rhoH.text() == expected, (keys, rhoH.text(), expected)
+
+# data-table names: green when the table exists, red when not - also for names not typed but read (as from the
+# settings), once the interface is shown
+tableM.blockSignals(True)
+tableM.item(0, 2).setText("SVDdataMissing")
+tableM.blockSignals(False)
+dock = w.parentWidget()  # the SVD dock, opened again
+dock.hide()
+dock.show()
+QApplication.processEvents()
+colours = [tableM.item(row, 2).background().color().name() for row in range(3)]
+assert colours == ["#ff0000", "#00ff00", "#00ff00"], colours
+tableM.item(0, 2).setText("SVDdata1")  # typed: coloured at once
+assert tableM.item(0, 2).background().color().name() == "#00ff00", tableM.item(0, 2).background().color().name()
 
 # the SVD table back into the German interface
 rhoH.setText("")

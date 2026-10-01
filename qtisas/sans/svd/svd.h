@@ -48,6 +48,7 @@ public slots:
 
   protected:
     void changeEvent(QEvent *event) override;
+    void showEvent(QShowEvent *event) override;
 
   private:
     double uiToDouble(const QString &text) const;
@@ -56,6 +57,7 @@ public slots:
     QString cToUi(const QString &text) const;
     // A number of a table cell, in the interface's format
     QString tableToUi(Table *t, int row, int col) const;
+    void updateTableNameColors();
     QLocale d_widgetLocale;
 };
 

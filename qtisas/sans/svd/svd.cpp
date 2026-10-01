@@ -10,8 +10,10 @@ Description: Singular value decomposition interface (SANS)
 
 #include <QDockWidget>
 #include <QSettings>
+#include <QShowEvent>
 #include <QString>
 
+#include "number-validator.h"
 #include "numericLocale.h"
 #include "settings.h"
 #include "svd.h"
@@ -20,6 +22,10 @@ Description: Singular value decomposition interface (SANS)
 svd::svd(QWidget *parent) : QWidget(parent)
 {
     setupUi(this);
+
+    // the solvent SLDs: numbers only, in the numerical format (empty: the defaults of readSettings())
+    new NumberValidator(lineEditRhoH, -0.56e10);
+    new NumberValidator(lineEditRhoD, 6.34e10);
 
     // read settings
     readSettings();
@@ -258,8 +264,7 @@ void svd::changeEvent(QEvent *event)
 
     const QLocale from = d_widgetLocale, to = locale();
     const auto convert = [&from, &to](const QString &text) { return NumericLocale::convert(text, from, to, 'e', 5); };
-    for (QLineEdit *edit : {lineEditRhoH, lineEditRhoD})
-        edit->setText(convert(edit->text()));
+    slotCheckRhoHD(); // the solvent SLDs, converted by their NumberValidator, back to 'e' with 5 digits
     for (QTableWidget *table : {tableMsvd, tableNsvd})
     {
         const bool blocked = table->blockSignals(true);
@@ -766,16 +771,23 @@ void svd::slotTableMsvdChanged(int raw, int col)
         _item1->setText(uiNumber(textD));
     }
     else if (col == 2)
-    {
-        auto *_item1 = tableMsvd->item(raw, 2);
-        text = "";
-        if (_item1)
-            text = _item1->text();
-        if (!app(this)->checkTableExistence(text))
-            _item1->setBackground(QBrush(Qt::red));
-        else
-            _item1->setBackground(QBrush(Qt::green));
-    }
+        updateTableNameColors();
+}
+//+++ the data table names of tableMsvd: green when the table exists, red when not
+void svd::updateTableNameColors()
+{
+    const bool blocked = tableMsvd->blockSignals(true); // a new background is a change of the item
+    for (int row = 0; row < tableMsvd->rowCount(); row++)
+        if (QTableWidgetItem *item = tableMsvd->item(row, 2))
+            item->setBackground(QBrush(app(this)->checkTableExistence(item->text()) ? Qt::green : Qt::red));
+    tableMsvd->blockSignals(blocked);
+}
+
+// the colours follow the project: tables may have been created or removed while the interface was hidden
+void svd::showEvent(QShowEvent *event)
+{
+    QWidget::showEvent(event);
+    updateTableNameColors();
 }
 //+++ Check rhoHD
 void svd::slotSVD1dataTransfer()
@@ -904,4 +916,6 @@ void svd::findSvdTables()
     comboBoxSVDtables->addItems(list);
     if (list.contains(activeSVDTable))
         comboBoxSVDtables->setCurrentIndex(comboBoxSVDtables->findText(activeSVDTable));
+
+    updateTableNameColors();
 }
