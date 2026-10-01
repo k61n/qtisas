@@ -7,8 +7,10 @@ import os
 import sys
 
 try:
+    from PyQt6.QtTest import QTest
     from PyQt6.QtWidgets import QLineEdit, QTableWidget
 except ImportError:
+    from PyQt5.QtTest import QTest
     from PyQt5.QtWidgets import QLineEdit, QTableWidget
 
 sys.dont_write_bytecode = True  # no __pycache__ in the source tree
@@ -41,4 +43,14 @@ assert shown == ("0,00025", "1,5..700,25"), shown
 assert (edit("lineEditMin"), edit("lineEditMax")) == ("0,0025", "0,525"), (edit("lineEditMin"), edit("lineEditMax"))
 assert c.paramInit(1) == 0.00025 and c.paramLimit(0) == "1.5..700.25", (c.paramInit(1), c.paramLimit(0))
 assert (c.xMin(), c.xMax()) == (0.0025, 0.525), (c.xMin(), c.xMax())
+# the custom x-range: typing corrects the decimal point, a format change converts it (NumberValidator)
+x_min = c.findChild(QLineEdit, "lineEditMin")
+x_min.clear()
+QTest.keyClicks(x_min, "0.005")
+assert x_min.text() == "0,005", x_min.text()
+set_app_locale(locale_c())
+shown = (edit("lineEditMin"), edit("lineEditMax"))
+assert shown == ("0.005", "0.525"), shown
+set_app_locale(locale_german())
+
 report("Compile locale: widgets converted and localized, Python API in C", first=True)

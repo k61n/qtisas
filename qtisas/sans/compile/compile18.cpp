@@ -11,6 +11,7 @@ Description: Compile interface
 #include <QUrl>
 
 #include "compile18.h"
+#include "number-validator.h"
 #include "numericLocale.h"
 
 //*******************************************
@@ -21,6 +22,9 @@ compile18::compile18(QWidget *parent) : QWidget(parent)
     setupUi(this);
     initCompile();
     connectSlot();
+    // the custom x-range: numbers only, in the numerical format, converted when it changes (may stay empty)
+    for (QLineEdit *edit : {lineEditMin, lineEditMax, lineEditYmin})
+        new NumberValidator(edit);
     d_widgetLocale = locale();
 }
 //*******************************************
@@ -114,8 +118,6 @@ void compile18::changeEvent(QEvent *event)
             range->setText(NumericLocale::convertRange(range->text(), from, to));
     }
     tableParaNames->blockSignals(blocked);
-    for (QLineEdit *edit : {lineEditMin, lineEditMax, lineEditYmin})
-        edit->setText(NumericLocale::convert(edit->text(), from, to));
     lineEditFitMethodPara->setText(NumericLocale::replaceDecimalPoint(lineEditFitMethodPara->text(), from, to));
     d_widgetLocale = to;
 }
