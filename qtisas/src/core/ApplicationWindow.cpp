@@ -12094,17 +12094,30 @@ void ApplicationWindow::hideWindow(MdiSubWindow *w)
 {
     bool maximized = w->isMaximized();
 
+    // The window activated before this one: the most recent shown window of the same folder
+    MdiSubWindow *previous = nullptr;
+    const QList<QMdiSubWindow *> history = d_workspace->subWindowList(QMdiArea::ActivationHistoryOrder);
+    for (auto it = history.crbegin(); it != history.crend() && !previous; ++it)
+    {
+        auto *sw = qobject_cast<MdiSubWindow *>(*it);
+        if (sw && sw != w && sw->folder() == w->folder() && !hiddenWindows->contains(sw) && sw->isVisible())
+            previous = sw;
+    }
+
     hiddenWindows->append(w);
     w->setHidden();
     emit modified();
 
-    if (maximized)
-    {
-        d_workspace->activateNextSubWindow();
-        auto sw = activeWindow();
-        if (sw && sw != w)
-            maximizeWindow(sw);
-    }
+    // a maximized window hands the maximized state back to that window
+    if (maximized && previous)
+        maximizeWindow(previous);
+
+    // A hidden window is not the active one: the folder's active window decides whether the next new window
+    // opens maximized, so it must be a shown window, not this one
+    if (Folder *f = w->folder(); f && f->activeWindow() == w)
+        f->setActiveWindow(previous);
+    if (d_active_window == w)
+        d_active_window = previous;
 }
 
 void ApplicationWindow::hideWindow()
