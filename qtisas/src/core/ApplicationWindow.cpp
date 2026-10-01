@@ -1920,7 +1920,12 @@ void ApplicationWindow::insertTranslatedStrings()
 	newMenu->setTitle(tr("&New"));
 	exportPlotMenu->setTitle(tr("&Export Graph"));
 	importMenu->setTitle(tr("&Import"));
-	edit->setTitle(tr("&Edit"));
+#ifdef Q_OS_MACOS
+    // An invisible character: macOS does not take the menu for the Edit menu and adds no AutoFill, Dictation, Emoji
+    edit->setTitle(tr("&Edit") + QChar(0x200B));
+#else
+    edit->setTitle(tr("&Edit"));
+#endif
 	view->setTitle(tr("&View"));
 	graphMenu->setTitle(tr("&Graph"));
 	plot3DMenu->setTitle(tr("3D &Plot"));
