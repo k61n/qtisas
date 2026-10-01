@@ -235,9 +235,13 @@ QVariant PythonScript::eval()
 
     if (!pyret)
     {
-        if (!Context->inherits("Table"))
+        const bool table = Context->inherits("Table");
+        if (!table || !tableErrorReported)
+        {
+            tableErrorReported = table;
             emit_error(env()->errorMsg(code(), name()), 0);
-        PyErr_Clear(); // silently ignore errors
+        }
+        PyErr_Clear(); // reported above (for a table formula: its first error only)
         PyGILState_Release(state);
         return {};
     }

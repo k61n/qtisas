@@ -11,6 +11,8 @@ Copyright (C) by the authors:
 Description: Table worksheet class
  ******************************************************************************/
 
+#include <memory>
+
 #include <QApplication>
 #include <QClipboard>
 #include <QDateTime>
@@ -638,17 +640,29 @@ bool Table::calculate()
     MySelection sel = getSelection();
     bool success = true;
     for (int col = sel.leftColumn(); col <= sel.rightColumn(); col++)
-        if (!calculate(col, sel.topRow(), sel.bottomRow(), applicationWindow()->d_force_muParser))
+        if (!calculate(col, sel.topRow(), sel.bottomRow())) // the global scripting language
             success = false;
     return success;
 }
 
-bool Table::muParserCalculate(int col, int startRow, int endRow, int step, bool notifyChanges, bool interactive)
+void Table::keepFormulaError(Script *script)
 {
-	if (startRow < 0)
-		startRow = 0;
-	if (endRow >= numRows())
-		resizeRows(endRow + 1);
+    connect(script, &Script::error, this, [this](const QString &message, const QString &, int) {
+        if (d_formula_error.isEmpty())
+            d_formula_error = message.trimmed();
+    });
+}
+
+bool Table::muParserCalculate(int col, int startRow, int endRow, int step, bool notifyChanges, bool interactive,
+                              bool *compiled)
+{
+    if (compiled)
+        *compiled = true;
+    d_formula_error.clear();
+    if (startRow < 0)
+        startRow = 0;
+    if (endRow >= numRows())
+        resizeRows(endRow + 1);
 
     if (step < 1 || step > endRow - startRow)
         step = 1;
@@ -676,101 +690,70 @@ bool Table::muParserCalculate(int col, int startRow, int endRow, int step, bool 
 
 	QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
 
-    muParserScript *mup = new muParserScript(scriptEnv, cmd, this,
-                                             QString("<%1>").arg(colName(col)));
+    std::unique_ptr<muParserScript> mup(new muParserScript(scriptEnv, cmd, this, QString("<%1>").arg(colName(col))));
+    keepFormulaError(mup.get());
     double *r = mup->defineVariable("i");
     mup->defineVariable("j", col + 1.0);
     mup->defineVariable("sr", startRow + 1.0);
     mup->defineVariable("er", endRow + 1.0);
 
-	if (!mup->compile()){
-		QApplication::restoreOverrideCursor();
-		return false;
-	}
+    // a syntax error: the column stays as it is
+    if (!mup->compile())
+    {
+        if (compiled)
+            *compiled = false;
+        QApplication::restoreOverrideCursor();
+        return false;
+    }
     bool updateValues = applicationWindow()->autoUpdateTableValues();
     setAutoUpdateValues(false);
     d_table->blockSignals(true);
-    if (mup->codeLines() == 1){
-		if (colType == Date || colType == Time){
-			QString fmt = col_format[col];
-            for (int i = startRow; i <= endRow; i += step)
-            {
-				*r = i + 1.0;
-				double val = mup->evalSingleLine();
-				if (gsl_finite(val))
-					d_table->setText(i, col, dateTime(val).toString(fmt));
-			}
-		} else if (colType == Numeric){
-            QLocale loc = locale();
-			int prec;
-			char f;
-			columnNumericFormat(col, &f, &prec);
-            for (int i = startRow; i <= endRow; i += step)
-            {
-				*r = i + 1.0;
-				d_table->setText(i, col, mup->evalSingleLineToString(loc, f, prec));
-			}
-		}
-	} else {
-		if (colType == Date || colType == Time){
-			QString fmt = col_format[col];
-            for (int i = startRow; i <= endRow; i += step)
-            {
-				*r = i + 1.0;
-				QVariant ret = mup->eval();
-                if (ret.userType() == QMetaType::Double)
-                {
-					double val = ret.toDouble();
-					if (gsl_finite(val))
-						d_table->setText(i, col, dateTime(val).toString(fmt));
-				} else {
-					QApplication::restoreOverrideCursor();
-                    d_table->blockSignals(false);
-                    setAutoUpdateValues(updateValues);
-					return false;
-				}
-			}
-        }
-        else if (colType == Numeric)
-        {
-            QLocale loc = locale();
-			int prec;
-			char f;
-			columnNumericFormat(col, &f, &prec);
 
-            for (int i = startRow; i <= endRow; i += step)
+    // a row without a finite result is left empty, as for a Python formula that fails in that row
+    const bool singleLine = mup->codeLines() == 1;
+    const bool dateTimeColumn = colType == Date || colType == Time;
+    const QString fmt = col_format[col];
+    const QLocale loc = locale();
+    int prec;
+    char f;
+    columnNumericFormat(col, &f, &prec);
+    bool ok = true;
+    if (dateTimeColumn || colType == Numeric)
+        for (int i = startRow; i <= endRow; i += step)
+        {
+            *r = i + 1.0;
+            double val = GSL_NAN;
+            if (singleLine)
+                val = mup->evalSingleLine();
+            else if (const QVariant ret = mup->eval(); ret.userType() == QMetaType::Double)
+                val = ret.toDouble();
+            if (!gsl_finite(val))
             {
-				*r = i + 1.0;
-				QVariant ret = mup->eval();
-                if (ret.userType() == QMetaType::Double)
-					d_table->setText(i, col, loc.toString(ret.toDouble(), f, prec));
-                else if (ret.canConvert<QString>())
-					    d_table->setText(i, col, ret.toString());
-                    else {
-                        QApplication::restoreOverrideCursor();
-                    d_table->blockSignals(false);
-                    setAutoUpdateValues(updateValues);
-                        return false;
-                    }
-			}
-		}
-	}
+                d_table->setText(i, col, QString());
+                ok = false;
+            }
+            else
+                d_table->setText(i, col, dateTimeColumn ? dateTime(val).toString(fmt) : loc.toString(val, f, prec));
+        }
     d_table->blockSignals(false);
     setAutoUpdateValues(updateValues);
 
-	if (notifyChanges)
+    if (notifyChanges)
         emit modifiedData(this, colName(col));
-	emit modifiedWindow(this);
+    emit modifiedWindow(this);
 
-	QApplication::restoreOverrideCursor();
-	return true;
+    QApplication::restoreOverrideCursor();
+    return ok;
 }
 
 bool Table::calculate(int col, int startRow, int endRow, int step, bool forceMuParser, bool notifyChanges,
-                      bool interactive)
+                      bool interactive, bool *compiled)
 {
-	if (col < 0 || col >= d_table->columnCount())
-		return false;
+    if (compiled)
+        *compiled = true;
+    d_formula_error.clear();
+    if (col < 0 || col >= d_table->columnCount())
+        return false;
 
     if (d_table->isColumnReadOnly(col)){
         if (interactive)
@@ -779,12 +762,12 @@ bool Table::calculate(int col, int startRow, int endRow, int step, bool forceMuP
     }
 
 	if (QString(scriptEnv->objectName()) == "muParser" || forceMuParser)
-        return muParserCalculate(col, startRow, endRow, step, notifyChanges, interactive);
+        return muParserCalculate(col, startRow, endRow, step, notifyChanges, interactive, compiled);
 
-	if (startRow < 0)
-		startRow = 0;
-	if (endRow >= numRows())
-		resizeRows(endRow + 1);
+    if (startRow < 0)
+        startRow = 0;
+    if (endRow >= numRows())
+        resizeRows(endRow + 1);
 
     if (step < 1 || step > endRow - startRow)
         step = 1;
@@ -806,14 +789,19 @@ bool Table::calculate(int col, int startRow, int endRow, int step, bool forceMuP
 
 	QApplication::setOverrideCursor(Qt::WaitCursor);
 
-	Script *colscript = scriptEnv->newScript(cmd, this,  QString("<%1>").arg(colName(col)));
-	connect(colscript, SIGNAL(error(const QString&,const QString&,int)), scriptEnv, SIGNAL(error(const QString&,const QString&,int)));
-	connect(colscript, SIGNAL(print(const QString&)), scriptEnv, SIGNAL(print(const QString&)));
+    std::unique_ptr<Script> colscript(scriptEnv->newScript(cmd, this, QString("<%1>").arg(colName(col))));
+    connect(colscript.get(), SIGNAL(error(const QString &, const QString &, int)), scriptEnv,
+            SIGNAL(error(const QString &, const QString &, int)));
+    connect(colscript.get(), SIGNAL(print(const QString &)), scriptEnv, SIGNAL(print(const QString &)));
+    keepFormulaError(colscript.get());
 
-	if (!colscript->compile()){
-		QApplication::restoreOverrideCursor();
-		return false;
-	}
+    if (!colscript->compile())
+    {
+        if (compiled)
+            *compiled = false;
+        QApplication::restoreOverrideCursor();
+        return false;
+    }
     bool updateValues = applicationWindow()->autoUpdateTableValues();
 	setAutoUpdateValues(false);
 
@@ -821,6 +809,7 @@ bool Table::calculate(int col, int startRow, int endRow, int step, bool forceMuP
     colscript->setInt(startRow + 1, "sr");
     colscript->setInt(endRow + 1, "er");
 
+    // a row without a finite result is left empty, as in muParser
     bool ok = true;
 	int colType = colTypes[col];
 	if (colType == Date || colType == Time){
@@ -829,13 +818,9 @@ bool Table::calculate(int col, int startRow, int endRow, int step, bool forceMuP
         {
             colscript->setInt(i + 1, "i");
 			QVariant ret = colscript->eval();
-            if (ret.userType() == QMetaType::Double)
-            {
-				double val = ret.toDouble();
-				if (gsl_finite(val))
-					d_table->setText(i, col, dateTime(val).toString(fmt));
-			}
-            else if (ret.canConvert<QString>())
+            if (ret.userType() == QMetaType::Double && gsl_finite(ret.toDouble()))
+                d_table->setText(i, col, dateTime(ret.toDouble()).toString(fmt));
+            else if (ret.userType() != QMetaType::Double && ret.canConvert<QString>())
                 d_table->setText(i, col, ret.toString());
             else
             {
@@ -858,9 +843,9 @@ bool Table::calculate(int col, int startRow, int endRow, int step, bool forceMuP
 
             QVariant ret = colscript->eval();
 
-            if (ret.userType() == QMetaType::Double)
+            if (ret.userType() == QMetaType::Double && gsl_finite(ret.toDouble()))
                 d_table->setText(i, col, loc.toString(ret.toDouble(), f, prec));
-            else if (ret.canConvert<QString>())
+            else if (ret.userType() != QMetaType::Double && ret.canConvert<QString>())
                 d_table->setText(i, col, ret.toString());
             else
             {
@@ -962,7 +947,6 @@ void Table::updateValues(Table *t, const QString &columnName)
     int cols = numCols();
     int endRow = numRows() - 1;
 
-    bool forceMuParser = applicationWindow()->d_force_muParser;
     for (int i = 0; i < cols; i++)
     {
         if (i >= col_label.size() || i >= commands.size() || i >= colTypes.size())
@@ -974,7 +958,7 @@ void Table::updateValues(Table *t, const QString &columnName)
             (cmdi.contains("\"" + colLabel + "\"") && cmd.contains("\"" + col_label[i] + "\"")))
             continue;
 
-        calculate(i, 0, endRow, forceMuParser, true);
+        calculate(i, 0, endRow); // the global scripting language
     }
 }
 

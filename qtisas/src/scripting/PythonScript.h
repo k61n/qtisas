@@ -48,6 +48,7 @@ class PythonScript : public Script
 
     PyObject *PyCode, *modLocalDict, *modGlobalDict, *stdoutSave, *stderrSave, *stdinSave;
 		bool isFunction, hasOldGlobals;
+    bool tableErrorReported = false; // a table formula fails row by row: only its first error is reported
 };
 
 #endif

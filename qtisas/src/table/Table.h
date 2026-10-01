@@ -217,25 +217,26 @@ public slots:
 	void setCommands(const QString& com);
 	//! Set formula for column col.
 	void setCommand(int col, const QString& com);
-	//! Compute specified cells from column formula.
+    //! Compute specified cells from column formula.
     //! interactive=false suppresses the read-only-column QMessageBox — used by the Python
     //! binding, where a blocking modal would hang an automated script instead of letting the
     //! false return value / raised exception propagate.
+    //! compiled (if given): false when the formula did not compile and the column was left as it was.
     bool calculate(int col, int startRow, int endRow, int step = 1, bool forceMuParser = false,
-                   bool notifyChanges = true, bool interactive = true);
-	//! Compute specified cells from column formula (optimized for muParser).
+                   bool notifyChanges = true, bool interactive = true, bool *compiled = nullptr);
+    //! Compute specified cells from column formula (optimized for muParser).
     //! interactive=false also skips the "multiline expressions are slow, continue anyway?"
     //! confirmation and proceeds automatically (it is a performance warning, not a failure).
     bool muParserCalculate(int col, int startRow, int endRow, int step = 1, bool notifyChanges = true,
-                           bool interactive = true);
-	//! Compute selected cells from column formulae; use current cell if there's no selection.
-	bool calculate();
-	//! Recalculates values in all columns with formulas containing \param columnName
-	void updateValues(Table*, const QString& columnName);
+                           bool interactive = true, bool *compiled = nullptr);
+    //! Compute selected cells from column formulae; use current cell if there's no selection.
+    bool calculate();
+    //! Recalculates values in all columns with formulas containing \param columnName
+    void updateValues(Table *, const QString &columnName);
 
-	//! \name Row Operations
-	//@{
-	void deleteSelectedRows();
+    //! \name Row Operations
+    //@{
+    void deleteSelectedRows();
     //! interactive=false suppresses the read-only-columns QMessageBox — used by the Python
     //! binding, where a blocking modal would hang an automated script instead of letting the
     //! false return value / raised exception propagate.
@@ -297,6 +298,11 @@ public slots:
 	void freeMemory();
 
     bool isReadOnlyColumn(int col);
+    //! The first error message of the last calculate() / muParserCalculate(), empty if there was none.
+    QString formulaError() const
+    {
+        return d_formula_error;
+    }
     void setReadOnlyColumn(int col, bool on = true);
 
 	QString columnFormat(int col){return col_format[col];};
@@ -385,9 +391,13 @@ private:
 	int selectedCol;
 	int d_numeric_precision;
 	double **d_saved_cells;
+    QString d_formula_error; // see formulaError()
 
-	//! Internal function to change the column header
-	void setColumnHeader(int index, const QString& label);
+    //! Keeps the first error message of the column formula's script in d_formula_error.
+    void keepFormulaError(Script *script);
+
+    //! Internal function to change the column header
+    void setColumnHeader(int index, const QString &label);
 };
 
 #endif

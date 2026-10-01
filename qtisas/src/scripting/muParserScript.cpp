@@ -459,11 +459,18 @@ QVariant muParserScript::eval()
 		}
 	} catch (EmptySourceError *e) {
 		return QVariant("");
-	} catch (ParserError &e) {
-		emit_error(e.GetMsg().c_str(), 0);
-		return QVariant();
-	}
-	return QVariant(val);
+    }
+    catch (ParserError &e)
+    {
+        const bool table = Context->inherits("Table");
+        if (!table || !tableErrorReported)
+        {
+            tableErrorReported = table;
+            emit_error(e.GetMsg().c_str(), 0);
+        }
+        return {};
+    }
+    return {val};
 }
 
 bool muParserScript::exec()

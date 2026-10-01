@@ -786,12 +786,15 @@ if (sipIsErr == 0)
   if (sipIsErr == 0) {
     // interactive=false: a blocking QMessageBox (read-only column, or the multiline-expression
     // confirmation) would hang an automated script — raise ValueError instead on real failure.
-    sipRes = sipCpp->calculate(col, a1 - 1, a2 - 1, a3, a4, true, false); // row index starts at 0; interactive=false
+    // row index starts at 0; step 1; interactive=false
+    sipRes = sipCpp->calculate(col, a1 - 1, a2 - 1, 1, a3, a4, false);
     if (!sipRes) {
       sipIsErr = 1;
-      PyErr_SetString(PyExc_ValueError,
-          QString("recalculate: column %1 is read-only or its formula failed to evaluate.")
-              .arg(col + 1).toLocal8Bit().constData());
+      // the formula's first error, if any (e.g. "name 'x' is not defined"), after the general text
+      QString message = QString("recalculate: column %1 is read-only or its formula failed to evaluate.").arg(col + 1);
+      if (!sipCpp->formulaError().isEmpty())
+        message += "\n" + sipCpp->formulaError();
+      PyErr_SetString(PyExc_ValueError, message.toUtf8().constData());
     }
   }
 %End

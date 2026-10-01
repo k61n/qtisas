@@ -11,13 +11,14 @@ Description: Set column values dialog
  ******************************************************************************/
 
 #include <QCheckBox>
-#include <QCloseEvent>
 #include <QComboBox>
 #include <QCompleter>
+#include <QErrorMessage>
 #include <QGroupBox>
 #include <QLabel>
 #include <QLayout>
 #include <QList>
+#include <QMessageBox>
 #include <QPushButton>
 #include <QSpinBox>
 #include <QTextCursor>
@@ -102,51 +103,51 @@ SetColValuesDialog::SetColValuesDialog( ScriptingEnv *env, QWidget* parent, Qt::
     commands->setFont(((ApplicationWindow *)parent)->d_notes_font);
 
 	QVBoxLayout *vbox2 = new QVBoxLayout();
-	btnApply = new QPushButton(tr( "&Apply" ));
-	vbox2->addWidget(btnApply);
-	buttonClearFormulas = new QPushButton(tr("Clear &Formulas" ));
-	vbox2->addWidget(buttonClearFormulas);
-	btnCancel = new QPushButton(tr( "&Close" ));
-	vbox2->addWidget(btnCancel);
-	vbox2->addStretch();
+    // Apply in the global language (hidden when that is muParser) or in muParser
+    globalMuParser = env->objectName() == QString(muParserScripting::langName);
+    btnApply = new QPushButton(tr("Apply &%1").arg(env->objectName()));
+    btnApply->setVisible(!globalMuParser);
+    vbox2->addWidget(btnApply);
+    btnApplyMuParser = new QPushButton(tr("Apply &muParser"));
+    vbox2->addWidget(btnApplyMuParser);
+    buttonClearFormulas = new QPushButton(tr("Clear &Formulas"));
+    vbox2->addWidget(buttonClearFormulas);
+    btnCancel = new QPushButton(tr("&Close"));
+    vbox2->addWidget(btnCancel);
+    vbox2->addStretch();
 
-	QHBoxLayout *hbox4 = new QHBoxLayout();
-	hbox4->addWidget(commands);
-	hbox4->addLayout(vbox2);
+    auto *hbox4 = new QHBoxLayout();
+    hbox4->addWidget(commands);
+    hbox4->addLayout(vbox2);
 
-	QVBoxLayout* vbox3 = new QVBoxLayout();
-	vbox3->addLayout(hbox2);
-#ifdef SCRIPTING_PYTHON
-	boxMuParser = nullptr;
-	if (env->objectName() != QString("muParser")){
-		boxMuParser = new QCheckBox(tr("Use built-in muParser (much faster)"));
-		boxMuParser->setChecked(((ApplicationWindow *)parent)->d_force_muParser);
-		connect(boxMuParser, SIGNAL(toggled(bool)), this, SLOT(updateFunctionsList(bool)));
-		updateFunctionsList(boxMuParser->isChecked());
-		vbox3->addWidget(boxMuParser);
-	}
-#endif
+    auto *vbox3 = new QVBoxLayout();
+    vbox3->addLayout(hbox2);
+    // the functions listed and the default button (Enter): of the engine last applied
+    useMuParser = globalMuParser || dynamic_cast<ApplicationWindow *>(parent)->d_force_muParser;
+    updateFunctionsList(useMuParser);
+    (useMuParser ? btnApplyMuParser : btnApply)->setDefault(true);
 
-	colNameLabel = new QLabel();
-	vbox3->addWidget(colNameLabel);
-	vbox3->addLayout(hbox4);
+    colNameLabel = new QLabel();
+    vbox3->addWidget(colNameLabel);
+    vbox3->addLayout(hbox4);
 
-	setLayout(vbox3);
-	setFocusProxy (commands);
-	commands->setFocus();
+    setLayout(vbox3);
+    setFocusProxy(commands);
+    commands->setFocus();
 
-	if (functions->count() > 0)
-		insertExplain(0);
+    if (functions->count() > 0)
+        insertExplain(0);
 
-	connect(btnAddFunction, SIGNAL(clicked()),this, SLOT(insertFunction()));
-	connect(btnAddCol, SIGNAL(clicked()),this, SLOT(insertCol()));
-	connect(addCellButton, SIGNAL(clicked()),this, SLOT(insertCell()));
-	connect(btnApply, SIGNAL(clicked()),this, SLOT(apply()));
-	connect(btnCancel, SIGNAL(clicked()),this, SLOT(close()));
-	connect(functions, SIGNAL(activated(int)),this, SLOT(insertExplain(int)));
-	connect(buttonPrev, SIGNAL(clicked()), this, SLOT(prevColumn()));
-	connect(buttonNext, SIGNAL(clicked()), this, SLOT(nextColumn()));
-	connect(buttonClearFormulas, SIGNAL(clicked()), this, SLOT(clearFormulas()));
+    connect(btnAddFunction, SIGNAL(clicked()), this, SLOT(insertFunction()));
+    connect(btnAddCol, SIGNAL(clicked()), this, SLOT(insertCol()));
+    connect(addCellButton, SIGNAL(clicked()), this, SLOT(insertCell()));
+    connect(btnApply, &QPushButton::clicked, this, [this]() { apply(false); });
+    connect(btnApplyMuParser, &QPushButton::clicked, this, [this]() { apply(true); });
+    connect(btnCancel, SIGNAL(clicked()), this, SLOT(close()));
+    connect(functions, SIGNAL(activated(int)), this, SLOT(insertExplain(int)));
+    connect(buttonPrev, SIGNAL(clicked()), this, SLOT(prevColumn()));
+    connect(buttonNext, SIGNAL(clicked()), this, SLOT(nextColumn()));
+    connect(buttonClearFormulas, SIGNAL(clicked()), this, SLOT(clearFormulas()));
 }
 
 void SetColValuesDialog::prevColumn()
@@ -198,38 +199,89 @@ void SetColValuesDialog::customEvent(QEvent *e)
 		scriptingChangeEvent((ScriptingChangeEvent*)e);
 }
 
-bool SetColValuesDialog::apply()
+bool SetColValuesDialog::apply(bool muParser)
 {
 	int col = table->selectedColumn();
     if (col < 0 || col > table->numCols() - 1)
         return false;
 
-	QString formula = commands->toPlainText();
-	QString oldFormula = table->getCommands()[col];
+    // all messages of Apply come from here: the table is asked with interactive=false
+    if (table->isReadOnlyColumn(col))
+    {
+        showError(tr("Column \"%1\" is read-only.").arg(table->colLabel(col)).toHtmlEscaped());
+        return false;
+    }
+    const QString formula = commands->toPlainText().trimmed();
+    if (muParser && formula.contains("\n") &&
+        QMessageBox::warning(this, tr("QtiSAS") + " - " + tr("Warning"),
+                             tr("Multiline expressions take much more time to evaluate! Do you want to continue "
+                                "anyways?"),
+                             QMessageBox::Yes, QMessageBox::Cancel) != QMessageBox::Yes)
+        return false;
 
-	table->setCommand(col,formula);
-	bool useMuParser = true;
-#ifdef SCRIPTING_PYTHON
-	if(boxMuParser)
-		useMuParser = boxMuParser->isChecked();
-#endif
-    if (table->calculate(col, start->value() - 1, end->value() - 1, step->value(), useMuParser))
+    QString oldFormula = table->getCommands()[col];
+    table->setCommand(col, formula);
+    if (muParser != useMuParser)
+        updateFunctionsList(muParser);
+    (muParser ? btnApplyMuParser : btnApply)->setDefault(true);
+    auto *app = dynamic_cast<ApplicationWindow *>(parent());
+    if (app && !globalMuParser)
+        app->d_force_muParser = muParser; // the button pressed last: default when the dialog opens again
+
+    // the formula's error is shown here, in a message, not in the console
+    // (connected by signature, so disconnected by signature)
+    ScriptingEnv *env = table->scriptingEnv();
+    const bool toConsole = app && disconnect(env, SIGNAL(error(const QString &, const QString &, int)), app,
+                                             SLOT(scriptError(const QString &, const QString &, int)));
+    bool compiled = true;
+    const bool calculated =
+        table->calculate(col, start->value() - 1, end->value() - 1, step->value(), muParser, true, false, &compiled);
+    const QString error = table->formulaError();
+    if (toConsole)
+    {
+        connect(env, SIGNAL(error(const QString &, const QString &, int)), app,
+                SLOT(scriptError(const QString &, const QString &, int)));
+        if (calculated && !error.isEmpty()) // no message: an error reported anyway goes to the console, as before
+            app->scriptError(error, QString(), 0);
+    }
+    if (calculated)
         return true;
 
-	table->setCommand(col, oldFormula);
-	return false;
+    // a syntax error: the column and its formula stay as they were; rows without a result: the new formula stays
+    if (!compiled)
+        table->setCommand(col, oldFormula);
+    QString text =
+        (compiled ? tr("Column \"%1\": the formula gave no result for some or all rows; they are left empty.")
+                  : tr("Column \"%1\": the formula could not be calculated; the column is unchanged."))
+            .arg(table->colLabel(col))
+            .toHtmlEscaped();
+    if (!error.isEmpty())
+        text += "<br><br>" + error.toHtmlEscaped().replace("\n", "<br>");
+    if (muParser && formula.contains("**"))
+        text += "<br><br>" + tr("muParser writes powers as ^, e.g. i^2.");
+    showError(text);
+    return false;
+}
+
+void SetColValuesDialog::showError(const QString &html)
+{
+    // one per dialog: while it is open, it queues the next messages itself
+    if (!errorMessage)
+    {
+        errorMessage = new QErrorMessage(this);
+        errorMessage->setWindowTitle(tr("QtiSAS") + " - " + tr("Set column values"));
+        if (auto *again = errorMessage->findChild<QCheckBox *>()) // "Show this message again": always shown
+            again->hide();
+    }
+    errorMessage->showMessage(html);
 }
 
 void SetColValuesDialog::insertExplain(int index)
 {
-#ifdef SCRIPTING_PYTHON
-	if (boxMuParser && boxMuParser->isChecked())
-		explain->setText(muParserScripting::explainFunction(functions->itemText(index)));
-	else
-		explain->setText(scriptEnv->mathFunctionDoc(functions->itemText(index)));
-#else
-	explain->setText(scriptEnv->mathFunctionDoc(functions->itemText(index)));
-#endif
+    if (useMuParser)
+        explain->setText(muParserScripting::explainFunction(functions->itemText(index)));
+    else
+        explain->setText(scriptEnv->mathFunctionDoc(functions->itemText(index)));
 }
 
 void SetColValuesDialog::insertFunction()
@@ -288,28 +340,15 @@ void SetColValuesDialog::clearFormulas()
 	commands->clear();
 }
 
-void SetColValuesDialog::closeEvent(QCloseEvent* e)
-{
-#ifdef SCRIPTING_PYTHON
-	if (boxMuParser){
-		ApplicationWindow *app = (ApplicationWindow *)this->parent();
-		if (app)
-			app->d_force_muParser = boxMuParser->isChecked();
-	}
-#endif
-	e->accept();
-}
-
-#ifdef SCRIPTING_PYTHON
 void SetColValuesDialog::updateFunctionsList(bool muParser)
 {
-	functions->clear();
-	if (muParser)
-		functions->addItems(muParserScripting::functionsList(true));
-	else
-		functions->addItems(scriptingEnv()->mathFunctions());
+    useMuParser = muParser;
+    functions->clear();
+    if (muParser)
+        functions->addItems(muParserScripting::functionsList(true));
+    else
+        functions->addItems(scriptingEnv()->mathFunctions());
 
-	if (functions->count() > 0)
-		insertExplain(0);
+    if (functions->count() > 0)
+        insertExplain(0);
 }
-#endif

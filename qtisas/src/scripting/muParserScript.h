@@ -70,6 +70,7 @@ class muParserScript: public Script
     MyParser parser, rparser;
     QMap<QString, QSharedPointer<double>> variables, rvariables;
     QStringList muCode;
+    bool tableErrorReported = false; // a table formula fails row by row: only its first error is reported
 
   public:
     static muParserScript *current;

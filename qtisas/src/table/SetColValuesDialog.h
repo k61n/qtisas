@@ -13,7 +13,6 @@ Description: Set column values dialog
 #ifndef SETCOLVALUESDIALOG_H
 #define SETCOLVALUESDIALOG_H
 
-#include <QCheckBox>
 #include <QComboBox>
 #include <QCompleter>
 #include <QDialog>
@@ -28,6 +27,8 @@ Description: Set column values dialog
 #include "ScriptingEnv.h"
 #include "Table.h"
 
+class QErrorMessage;
+
 //! Set column values dialog
 class SetColValuesDialog : public QDialog, public scripted
 {
@@ -38,26 +39,25 @@ public:
 	void setTable(Table* w);
 	void setCompleter(QCompleter *);
 
-private slots:
-	bool apply();
-	void prevColumn();
-	void nextColumn();
-	void insertFunction();
-	void insertCol();
-	void insertCell();
-	void insertExplain(int index);
-	void updateColumn(int sc);
-	void clearFormulas();
-#ifdef SCRIPTING_PYTHON
-	void updateFunctionsList(bool);
-#endif
+  private slots:
+    bool apply(bool muParser);
+    void prevColumn();
+    void nextColumn();
+    void insertFunction();
+    void insertCol();
+    void insertCell();
+    void insertExplain(int index);
+    void updateColumn(int sc);
+    void clearFormulas();
+    void updateFunctionsList(bool muParser);
 
-private:
-	Table* table;
+  private:
+    Table *table;
 
-	QSize sizeHint() const ;
-	void customEvent( QEvent *e );
-	void closeEvent(QCloseEvent*);
+    QSize sizeHint() const override;
+    void customEvent(QEvent *e) override;
+    //! A QErrorMessage (rich text) shown above the dialog; it closes with it.
+    void showError(const QString &html);
 
     QComboBox* functions;
     QComboBox* boxColumn;
@@ -68,15 +68,16 @@ private:
     QPushButton *buttonNext;
     QPushButton *addCellButton;
     QPushButton *btnApply;
-	QPushButton* buttonClearFormulas;
+    QPushButton *btnApplyMuParser;
+    QPushButton *buttonClearFormulas;
     ScriptEdit* commands;
     QTextEdit* explain;
     QSpinBox *start, *end, *step;
 	QLabel *colNameLabel;
 
-#ifdef SCRIPTING_PYTHON
-	QCheckBox *boxMuParser;
-#endif
+    bool globalMuParser = true;            // the global scripting language is muParser
+    bool useMuParser = true;               // the functions listed are muParser's
+    QErrorMessage *errorMessage = nullptr; // a child: kept and reused, deleted with the dialog
 };
 
 #endif

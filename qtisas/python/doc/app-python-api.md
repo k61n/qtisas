@@ -79,7 +79,7 @@ a ^ b          # result is 7 but immediately discarded — a is still 3
 p = a ** b     # p = 81  (3 to the power 4)
 ```
 
-> **muParser note:** in muParser (table formulas, formula bar), `^` is the power operator as usual. The Python-vs-muParser difference only matters inside Python scripts and Notes running in Python mode.
+> **muParser note:** in muParser (formula bar, matrices, and table formulas run with `forceMuParser=True` or "Apply muParser"), `^` is the power operator. Table formulas otherwise run in the global language — with Python, use `**` or `pow()`.
 
 ---
 

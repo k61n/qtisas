@@ -82,10 +82,10 @@ comment(col)->str  setComment(col,text)  showComments(on=True)
 
 # Formula:
 setCommand(col,expr)      # t.setCommand("y2","pow(col(\"y\"),2)")
-recalculate(col,startRow=1,endRow=-1)->bool
-# raises ValueError if the column is read-only or the formula fails to evaluate
-# expr is MuParser, not Python -- bare names like "x" fail silently until recalculate();
-# always col("x") or col(idx), never bare
+recalculate(col,startRow=1,endRow=-1,forceMuParser=False,notifyChanges=True)->bool
+# raises ValueError if the column is read-only or the formula fails; 2nd line: the formula's first error
+# expr runs in the global language (Python by default); forceMuParser=True -> muParser
+# powers: pow(a,b) in both; ^ only muParser, ** only Python. Bare names fail -- always col("x") or col(idx)
 
 # Sort:
 sort(type=0,order=0,leadCol="")   # type:0=single 1=grouped; order:0=asc 1=desc
