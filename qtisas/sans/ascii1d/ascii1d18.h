@@ -95,7 +95,6 @@ public:
     
     //+++ reso
     void checkBoxLensesChanged();
-    void detColDistanceValidator();
     void checkBoxResoSlot();
     
     //+++ session
@@ -120,10 +119,11 @@ public:
     //+++ tools
     void filterChangedFastPlotting();
     void fastPlot();
-    
-    
-private:
-    
+
+  private:
+    double uiToDouble(const QString &text) const;
+    QString uiToC(const QString &text) const;
+    QString cToUi(const QString &text) const;
 };
 
 #endif

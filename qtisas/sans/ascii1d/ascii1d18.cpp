@@ -11,11 +11,15 @@ Description: SAS data (radially averaged) Import/Export interface
 #include <QDockWidget>
 #include <QRegularExpression>
 
-#include "ascii1d18.h"
 #include "Folder.h"
-#include "globals.h"
 #include "PlotCurve.h"
+#include "ascii1d18.h"
+#include "globals.h"
+#include "number-validator.h"
+#include "numericLocale.h"
 #include "settings.h"
+
+constexpr double InvalidCellValue = -99.99;
 
 ascii1d18::ascii1d18(QWidget *parent)
 : QWidget(parent)
@@ -24,6 +28,9 @@ ascii1d18::ascii1d18(QWidget *parent)
     
     //+++ connections
     connectSlot();
+
+    // the focus field only with lenses: the slot reacts to a change of the checkbox, which the start does not make
+    checkBoxLensesChanged();
 
     //+++
     sourceSelected();
@@ -38,6 +45,47 @@ ascii1d18::ascii1d18(QWidget *parent)
     //buttonGroupResoSAXS->hide();
     //radioButtonSAXS->hide();
     filterChangedFastPlotting();
+
+    // Number fields: numbers only, corrected while typing in the numerical format and converted when it changes.
+    // The math factors are scale factors (empty: 1); the resolution parameters keep to their range (empty: the
+    // default of defaultASCII1D()).
+    new NumberValidator(lineEditMath, 1.0);
+    new NumberValidator(lineEditMath2, 1.0);
+    const struct
+    {
+        QLineEdit *edit;
+        double bottom, top, fallback;
+    } resolution[] = {{lineEditResoCol, 1, 10000, 2000},     {lineEditResoDet, 1, 10000, 2000},
+                      {lineEditResoFocus, 1, 10000, 1000},   {lineEditResoPixelSize, 0.0001, 5, 0.836},
+                      {lineEditResoSamAper, 0.01, 100, 10},  {lineEditResoSamAper2, 0.01, 100, 10},
+                      {lineEditResoColAper, 0.01, 100, 50},  {lineEditResoColAper2, 0.01, 100, 50},
+                      {lineEditResoLambda, 0.01, 1000, 4.5}, {lineEditResoDeltaLambda, 0.00001, 1.0, 0.1}};
+    for (const auto &field : resolution)
+    {
+        auto *validator = new NumberValidator(field.edit, field.fallback);
+        validator->setBottom(field.bottom);
+        validator->setTop(field.top);
+    }
+}
+
+//*******************************************
+//+++ numbers in the interface (resolution, math factors): the numerical format; ASCII1D format files: C
+//*******************************************
+double ascii1d18::uiToDouble(const QString &text) const
+{
+    double value = 0.0;
+    NumericLocale::toDouble(text, locale(), value);
+    return value;
+}
+
+QString ascii1d18::uiToC(const QString &text) const
+{
+    return NumericLocale::convert(text, locale(), QLocale::c());
+}
+
+QString ascii1d18::cToUi(const QString &text) const
+{
+    return NumericLocale::convert(text, QLocale::c(), locale());
 }
 
 // *******************************************
@@ -63,16 +111,6 @@ void ascii1d18::connectSlot()
     
     //+++ reso
     connect( checkBoxLenses, SIGNAL( stateChanged(int) ), this, SLOT( checkBoxLensesChanged() ) );
-    connect( lineEditResoSamAper, SIGNAL( editingFinished() ), this, SLOT( detColDistanceValidator() ) );
-    connect( lineEditResoSamAper2, SIGNAL( editingFinished() ), this, SLOT( detColDistanceValidator() ) );
-    connect( lineEditResoPixelSize, SIGNAL( editingFinished() ), this, SLOT( detColDistanceValidator() ) );
-    connect( lineEditResoLambda, SIGNAL( editingFinished() ), this, SLOT( detColDistanceValidator() ) );
-    connect( lineEditResoFocus, SIGNAL( editingFinished() ), this, SLOT( detColDistanceValidator() ) );
-    connect( lineEditResoDet, SIGNAL( editingFinished() ), this, SLOT( detColDistanceValidator() ) );
-    connect( lineEditResoDeltaLambda, SIGNAL( editingFinished() ), this, SLOT( detColDistanceValidator() ) );
-    connect( lineEditResoColAper, SIGNAL( editingFinished() ), this, SLOT( detColDistanceValidator() ) );
-    connect( lineEditResoColAper2, SIGNAL( editingFinished() ), this, SLOT( detColDistanceValidator() ) );
-    connect( lineEditResoCol, SIGNAL( editingFinished() ), this, SLOT( detColDistanceValidator() ) );
     connect( checkBoxReso, SIGNAL( stateChanged(int) ), this, SLOT( checkBoxResoSlot() ) );
     
     //+++ modify
@@ -352,8 +390,8 @@ void ascii1d18::removeRangeControl()
     {
         lineEditRemoveFrom->setEnabled(false);
         lineEditRemoveTo->setEnabled(false);
-        lineEditRemoveFrom->setText("0");
-        lineEditRemoveTo->setText("0");
+        lineEditRemoveFrom->setValue(0);
+        lineEditRemoveTo->setValue(0);
     }
 }
 
@@ -370,7 +408,7 @@ void ascii1d18::removeLastControl()
     else
     {
         lineEditRemoveLast->setEnabled(false);
-        lineEditRemoveLast->setText("0");
+        lineEditRemoveLast->setValue(0);
     }
 }
 
@@ -386,7 +424,7 @@ void ascii1d18::removeFirstControl()
     else
     {
         lineEditRemoveFirst->setEnabled(false);
-        lineEditRemoveFirst->setText("0");
+        lineEditRemoveFirst->setValue(0);
     }
 }
 
@@ -439,12 +477,13 @@ void ascii1d18::defaultASCII1D()
     
     lineEditResoCol->setText("2000");
     lineEditResoDet->setText("2000");
-    lineEditResoPixelSize->setText("0.525");
+    lineEditResoPixelSize->setText(cToUi("0.836"));
     lineEditResoSamAper->setText("10");
     lineEditResoSamAper2->setText("10");
-    lineEditResoColAper->setText("30");
-    lineEditResoColAper2->setText("30");
-    lineEditResoDeltaLambda->setText("0.2");
+    lineEditResoColAper->setText("50");
+    lineEditResoColAper2->setText("50");
+    lineEditResoDeltaLambda->setText(cToUi("0.1"));
+    lineEditResoLambda->setText(cToUi("4.5"));
     lineEditResoFocus->setText("1000");
     checkBoxLenses->setChecked(false);
     
@@ -454,12 +493,12 @@ void ascii1d18::defaultASCII1D()
     comboBoxSelectPresentationTo->setCurrentIndex(0);
     // tab bad points
     checkBoxRemoveRange->setChecked(false);
-    lineEditRemoveFrom->setText("0");
-    lineEditRemoveTo->setText("0");
+    lineEditRemoveFrom->setValue(0);
+    lineEditRemoveTo->setValue(0);
     checkBoxRemoveFirst->setChecked(false);
-    lineEditRemoveFirst->setText("0");
+    lineEditRemoveFirst->setValue(0);
     checkBoxRemoveLast->setChecked(false);
-    lineEditRemoveLast->setText("0");
+    lineEditRemoveLast->setValue(0);
     checkBoxNoNegative->setChecked(false);
     // tab math
     checkBoxMath->setChecked(false);
@@ -611,15 +650,26 @@ void ascii1d18::readCurrentASCII1D()
                 radioButtonSAXS->setChecked(true);
             }
         }
-        if (s.contains("{Reso-Colimation} ")) lineEditResoCol->setText(s.remove("{Reso-Colimation} "));
-        if (s.contains("{Reso-SDD} ")) lineEditResoDet->setText(s.remove("{Reso-SDD} "));
-        if (s.contains("{Reso-PixelSize} ")) lineEditResoPixelSize->setText(s.remove("{Reso-PixelSize} "));
-        if (s.contains("{Reso-Sample-Aperture-W} ")) lineEditResoSamAper->setText(s.remove("{Reso-Sample-Aperture-W} "));
-        if (s.contains("{Reso-Sample-Aperture-H} ")) lineEditResoSamAper2->setText(s.remove("{Reso-Sample-Aperture-H} "));
-        if (s.contains("{Reso-Sample-Source-W} ")) lineEditResoColAper->setText(s.remove("{Reso-Sample-Source-W} "));
-        if (s.contains("{Reso-Sample-Source-H} ")) lineEditResoColAper2->setText(s.remove("{Reso-Sample-Source-H} "));
-        if (s.contains("{Reso-Delta-Lambda} ")) lineEditResoDeltaLambda->setText(s.remove("{Reso-Delta-Lambda} "));
-        if (s.contains("{Reso-Focus} ")) lineEditResoFocus->setText(s.remove("{Reso-Focus} "));
+        if (s.contains("{Reso-Colimation} "))
+            lineEditResoCol->setText(cToUi(s.remove("{Reso-Colimation} ")));
+        if (s.contains("{Reso-SDD} "))
+            lineEditResoDet->setText(cToUi(s.remove("{Reso-SDD} ")));
+        if (s.contains("{Reso-PixelSize} "))
+            lineEditResoPixelSize->setText(cToUi(s.remove("{Reso-PixelSize} ")));
+        if (s.contains("{Reso-Sample-Aperture-W} "))
+            lineEditResoSamAper->setText(cToUi(s.remove("{Reso-Sample-Aperture-W} ")));
+        if (s.contains("{Reso-Sample-Aperture-H} "))
+            lineEditResoSamAper2->setText(cToUi(s.remove("{Reso-Sample-Aperture-H} ")));
+        if (s.contains("{Reso-Sample-Source-W} "))
+            lineEditResoColAper->setText(cToUi(s.remove("{Reso-Sample-Source-W} ")));
+        if (s.contains("{Reso-Sample-Source-H} "))
+            lineEditResoColAper2->setText(cToUi(s.remove("{Reso-Sample-Source-H} ")));
+        if (s.contains("{Reso-Delta-Lambda} "))
+            lineEditResoDeltaLambda->setText(cToUi(s.remove("{Reso-Delta-Lambda} ")));
+        if (s.contains("{Reso-Focus} "))
+            lineEditResoFocus->setText(cToUi(s.remove("{Reso-Focus} ")));
+        if (s.contains("{Reso-Lambda} "))
+            lineEditResoLambda->setText(cToUi(s.remove("{Reso-Lambda} ")));
         if (s.contains("{Reso-Lens-Yes-No} Yes"))
             checkBoxLenses->setChecked(true);
         if (s.contains("{Reso-Lens-Yes-No} No"))
@@ -636,18 +686,22 @@ void ascii1d18::readCurrentASCII1D()
             checkBoxRemoveRange->setChecked(true);
         if (s.contains("{Remove-Range-Yes-No} No"))
             checkBoxRemoveRange->setChecked(false);
-        if (s.contains("{Remove-Range-From} ")) lineEditRemoveFrom->setText(s.remove("{Remove-Range-From} "));
-        if (s.contains("{Remove-Range-To} "))   lineEditRemoveTo->setText(s.remove("{Remove-Range-To} "));
+        if (s.contains("{Remove-Range-From} "))
+            lineEditRemoveFrom->setValue(s.remove("{Remove-Range-From} ").trimmed().toInt());
+        if (s.contains("{Remove-Range-To} "))
+            lineEditRemoveTo->setValue(s.remove("{Remove-Range-To} ").trimmed().toInt());
         if (s.contains("{Remove-First-Yes-No} Yes"))
             checkBoxRemoveFirst->setChecked(true);
         if (s.contains("{Remove-First-Yes-No} No"))
             checkBoxRemoveFirst->setChecked(false);
-        if (s.contains("{Remove-First} ")) lineEditRemoveFirst->setText(s.remove("{Remove-First} "));
+        if (s.contains("{Remove-First} "))
+            lineEditRemoveFirst->setValue(s.remove("{Remove-First} ").trimmed().toInt());
         if (s.contains("{Remove-Last-Yes-No} Yes"))
             checkBoxRemoveLast->setChecked(true);
         if (s.contains("{Remove-Last-Yes-No} No"))
             checkBoxRemoveLast->setChecked(false);
-        if (s.contains("{Remove-Last} ")) lineEditRemoveLast->setText(s.remove("{Remove-Last} "));
+        if (s.contains("{Remove-Last} "))
+            lineEditRemoveLast->setValue(s.remove("{Remove-Last} ").trimmed().toInt());
         if (s.contains("{Remove-Negative-Yes-No} Yes"))
             checkBoxNoNegative->setChecked(true);
         if (s.contains("{Remove-Negative-Yes-No} No"))
@@ -658,13 +712,15 @@ void ascii1d18::readCurrentASCII1D()
         if (s.contains("{Math1-Yes-No} No"))
             checkBoxMath->setChecked(false);
         if (s.contains("{Math1-Action} ")) comboBoxMath->setCurrentIndex(s.remove("{Math1-Action} ").trimmed().toInt());
-        if (s.contains("{Math1-Factor} ")) lineEditMath->setText(s.remove("{Math1-Factor} "));
+        if (s.contains("{Math1-Factor} "))
+            lineEditMath->setText(cToUi(s.remove("{Math1-Factor} ")));
         if (s.contains("{Math2-Yes-No} Yes"))
             checkBoxMath2->setChecked(true);
         if (s.contains("{Math2-Yes-No} No"))
             checkBoxMath2->setChecked(false);
         if (s.contains("{Math2-Action} ")) comboBoxMath2->setCurrentIndex(s.remove("{Math2-Action} ").trimmed().toInt());
-        if (s.contains("{Math2-Factor} ")) lineEditMath2->setText(s.remove("{Math2-Factor} "));
+        if (s.contains("{Math2-Factor} "))
+            lineEditMath2->setText(cToUi(s.remove("{Math2-Factor} ")));
         // Q-Binning
         if (s.contains("{Binning-Linear-Yes-No} Yes"))
             checkBoxBinningLinear->setChecked(true);
@@ -810,16 +866,17 @@ void ascii1d18::saveCurrentASCII1D(QString fileName)
         stream<<"{Reso-SANS-Yes-No} Yes\n";
     else
         stream<<"{Reso-SANS-Yes-No} No\n";
-    
-    stream<<"{Reso-Colimation} "            <<lineEditResoCol->text()           <<"\n";
-    stream<<"{Reso-SDD} "                   <<lineEditResoDet->text()           <<"\n";
-    stream<<"{Reso-PixelSize} "             <<lineEditResoPixelSize->text()     <<"\n";
-    stream<<"{Reso-Sample-Aperture-W} "     <<lineEditResoSamAper->text()       <<"\n";
-    stream<<"{Reso-Sample-Aperture-H} "     <<lineEditResoSamAper2->text()      <<"\n";
-    stream<<"{Reso-Sample-Source-W} "       <<lineEditResoColAper->text()       <<"\n";
-    stream<<"{Reso-Sample-Source-H} "       <<lineEditResoColAper2->text()      <<"\n";
-    stream<<"{Reso-Delta-Lambda} "          <<lineEditResoDeltaLambda->text()   <<"\n";
-    stream<<"{Reso-Focus} "                 <<lineEditResoFocus->text()         <<"\n";
+
+    stream << "{Reso-Colimation} " << uiToC(lineEditResoCol->text()) << "\n";
+    stream << "{Reso-SDD} " << uiToC(lineEditResoDet->text()) << "\n";
+    stream << "{Reso-PixelSize} " << uiToC(lineEditResoPixelSize->text()) << "\n";
+    stream << "{Reso-Sample-Aperture-W} " << uiToC(lineEditResoSamAper->text()) << "\n";
+    stream << "{Reso-Sample-Aperture-H} " << uiToC(lineEditResoSamAper2->text()) << "\n";
+    stream << "{Reso-Sample-Source-W} " << uiToC(lineEditResoColAper->text()) << "\n";
+    stream << "{Reso-Sample-Source-H} " << uiToC(lineEditResoColAper2->text()) << "\n";
+    stream << "{Reso-Delta-Lambda} " << uiToC(lineEditResoDeltaLambda->text()) << "\n";
+    stream << "{Reso-Focus} " << uiToC(lineEditResoFocus->text()) << "\n";
+    stream << "{Reso-Lambda} " << uiToC(lineEditResoLambda->text()) << "\n";
     if (checkBoxLenses->isChecked())
         stream<<"{Reso-Lens-Yes-No} Yes\n";
     else
@@ -836,18 +893,18 @@ void ascii1d18::saveCurrentASCII1D(QString fileName)
         stream<<"{Remove-Range-Yes-No} Yes\n";
     else
         stream<<"{Remove-Range-Yes-No} No\n";
-    stream<<"{Remove-Range-From} "     <<lineEditRemoveFrom->text()         <<"\n";
-    stream<<"{Remove-Range-To} "       <<lineEditRemoveTo->text()         <<"\n";
+    stream << "{Remove-Range-From} " << QString::number(lineEditRemoveFrom->value()) << "\n";
+    stream << "{Remove-Range-To} " << QString::number(lineEditRemoveTo->value()) << "\n";
     if (checkBoxRemoveFirst->isChecked())
         stream<<"{Remove-First-Yes-No} Yes\n";
     else
         stream<<"{Remove-First-Yes-No} No\n";
-    stream<<"{Remove-First} "     <<lineEditRemoveFirst->text()         <<"\n";
+    stream << "{Remove-First} " << QString::number(lineEditRemoveFirst->value()) << "\n";
     if (checkBoxRemoveLast->isChecked())
         stream<<"{Remove-Last-Yes-No} Yes\n";
     else
         stream<<"{Remove-Last-Yes-No} No\n";
-    stream<<"{Remove-Last} "     <<lineEditRemoveLast->text()         <<"\n";
+    stream << "{Remove-Last} " << QString::number(lineEditRemoveLast->value()) << "\n";
     if (checkBoxNoNegative->isChecked())
         stream<<"{Remove-Negative-Yes-No} Yes\n";
     else
@@ -858,13 +915,13 @@ void ascii1d18::saveCurrentASCII1D(QString fileName)
     else
         stream<<"{Math1-Yes-No} No\n";
     stream<<"{Math1-Action} "  <<comboBoxMath->currentIndex()  <<"\n";
-    stream<<"{Math1-Factor} "  <<lineEditMath->text()         <<"\n";
+    stream << "{Math1-Factor} " << uiToC(lineEditMath->text()) << "\n";
     if (checkBoxMath2->isChecked())
         stream<<"{Math2-Yes-No} Yes\n";
     else
         stream<<"{Math2-Yes-No} No\n";
     stream<<"{Math2-Action} "  <<comboBoxMath2->currentIndex()  <<"\n";
-    stream<<"{Math2-Factor} "  <<lineEditMath2->text()         <<"\n";
+    stream << "{Math2-Factor} " << uiToC(lineEditMath2->text()) << "\n";
     // Q-Binning
     if (checkBoxBinningLinear->isChecked())
         stream<<"{Binning-Linear-Yes-No} Yes\n";
@@ -875,9 +932,8 @@ void ascii1d18::saveCurrentASCII1D(QString fileName)
         stream<<"{Binning-Progressive-Yes-No} Yes\n";
     else
         stream<<"{Binning-Progressive-Yes-No} No\n";
-    stream<<"{Binning-Progressive-Value} "     <<lineEditBinningProgressive->text()       <<"\n";
-    
-    
+    stream << "{Binning-Progressive-Value} " << QString::number(lineEditBinningProgressive->value()) << "\n";
+
     if (checkBoxFastPlot->isChecked())
         stream<<"{FastPlot-TableActive-Yes-No} Yes\n";
     else
@@ -1092,10 +1148,10 @@ void ascii1d18::loadASCIIfromFiles(QStringList fileNames, bool fastPlotYN)
                 sigmaCalculation(data, N);
                 // math 1....
                 if (checkBoxMath->isChecked() && checkBoxActions->isChecked())
-                    applyMath(data, comboBoxMath->currentText(), lineEditMath->text().toDouble(), N);
+                    applyMath(data, comboBoxMath->currentText(), uiToDouble(lineEditMath->text()), N);
                 // math 2....
                 if (checkBoxMath2->isChecked() && checkBoxActions->isChecked())
-                    applyMath(data, comboBoxMath2->currentText(), lineEditMath2->text().toDouble(),N);
+                    applyMath(data, comboBoxMath2->currentText(), uiToDouble(lineEditMath2->text()), N);
                 // convert to
                 convertToQI(data, N, Nfinal);
                 // column calculation
@@ -1225,10 +1281,10 @@ void ascii1d18::loadASCIIfromTables(QStringList tableNames, bool fastPlotYN)
                 sigmaCalculation(data, N);
                 // math 1....
                 if (checkBoxMath->isChecked())
-                    applyMath(data, comboBoxMath->currentText(), lineEditMath->text().toDouble(), N);
+                    applyMath(data, comboBoxMath->currentText(), uiToDouble(lineEditMath->text()), N);
                 // math 2....
                 if (checkBoxMath2->isChecked())
-                    applyMath(data, comboBoxMath2->currentText(), lineEditMath2->text().toDouble(),N);
+                    applyMath(data, comboBoxMath2->currentText(), uiToDouble(lineEditMath2->text()), N);
                 // convert to
                 convertToQI(data, N, Nfinal);
                 // column calculation
@@ -1354,8 +1410,8 @@ bool ascii1d18::loadASCIIfromFile(const QString fn, gsl_matrix* &data, int &N, b
         {
             Q=0;
             I=0;
-            dI=-99.99;
-            sigma=-99.99;
+            dI = InvalidCellValue;
+            sigma = InvalidCellValue;
             n=0;
             while (!t.atEnd() && (!s.contains("</Idata>") || n==0) )
             {
@@ -1401,11 +1457,11 @@ bool ascii1d18::loadASCIIfromFile(const QString fn, gsl_matrix* &data, int &N, b
     }
     else while (!t.atEnd() && N<maxN)
     {
-        Q=0;
-        I=0;
-        dI=-99.99;
-        sigma=-99.99;
-        
+            Q = 0.0;
+            I = 0.0;
+            dI = InvalidCellValue;
+            sigma = InvalidCellValue;
+
         s=t.readLine().trimmed();
         
         s.replace(",",".");
@@ -1461,45 +1517,64 @@ bool ascii1d18::loadASCIIfromFile(const QString fn, gsl_matrix* &data, int &N, b
 //*******************************************
 int ascii1d18::removePoints(gsl_matrix* &data, int N)
 {
-    int i;
-    if (checkBoxRemoveRange->isChecked() && checkBoxActions->isChecked())
+    if (!checkBoxActions->isChecked())
+        return N;
+
+    if (checkBoxRemoveRange->isChecked())
     {
-        //
-        int from=lineEditRemoveFrom->text().toInt()-1;
-        int to=lineEditRemoveTo->text().toInt()-1;
-        
-        if (from<0) from=0;
-        if (to<0) to=0;
-        
-        if (to >= N) to=N-1;
-        if (to<from) {to=0; from=0;};
-        if (to!=from) for(i=from;i<=to;i++) gsl_matrix_set(data, i,0, -99.99);
+        int from = lineEditRemoveFrom->value() - 1;
+        int to = lineEditRemoveTo->value() - 1;
+
+        if (to < from)
+            std::swap(from, to);
+
+        if (from >= N && to >= N)
+            to = from = -1;
+        else if (to >= N)
+            to = N - 1;
+
+        if (from >= 0 && to >= 0)
+            for (int i = from; i <= to; i++)
+                gsl_matrix_set(data, i, 0, InvalidCellValue);
     }
-    //
-    if (checkBoxRemoveFirst->isChecked() && checkBoxActions->isChecked())
+
+    if (checkBoxRemoveFirst->isChecked())
     {
-        int first=lineEditRemoveFirst->text().toInt();
-        if (first>=N) return 0;
-        for(i=0;i<first; i++) gsl_matrix_set(data, i,0, -99.99);
+        int first = lineEditRemoveFirst->value();
+        if (first >= N)
+            first = N;
+        for (int i = 0; i < first; i++)
+            gsl_matrix_set(data, i, 0, InvalidCellValue);
+
+        if (first == N)
+            return 0;
     }
-    //
-    if (checkBoxRemoveLast->isChecked() && checkBoxActions->isChecked())
+
+    if (checkBoxRemoveLast->isChecked())
     {
-        int last=lineEditRemoveLast->text().toInt();
-        if (last>=N) return 0;
-        for(i=(N-last);i<N; i++) gsl_matrix_set(data, i,0, -99.99);
+        int last = lineEditRemoveLast->value();
+        if (last >= N)
+            last = N;
+
+        for (int i = N - last; i < N; i++)
+            gsl_matrix_set(data, i, 0, InvalidCellValue);
+
+        if (last == N)
+            return 0;
     }
-    //
+
     if (checkBoxNoNegative->isChecked())
     {
-        for(i=0;i<N; i++) if ( gsl_matrix_get(data, i,1) <=0 ) gsl_matrix_set(data, i,0, -99.99);
+        for (int i = 0; i < N; i++)
+            if (gsl_matrix_get(data, i, 1) <= 0)
+                gsl_matrix_set(data, i, 0, InvalidCellValue);
     }
-    
-    //
-    int Nfinal=0;
-    for(i=0;i<N; i++) if (gsl_matrix_get(data, i,0)!=-99.99) Nfinal++;
-    
-    //
+
+    int Nfinal = 0;
+    for (int i = 0; i < N; i++)
+        if (gsl_matrix_get(data, i, 0) != InvalidCellValue)
+            Nfinal++;
+
     return Nfinal;
 }
 
@@ -1516,172 +1591,261 @@ void ascii1d18::convertFromQI(gsl_matrix* &data, int N, int &Nfinal)
     // * ****** Change of Presentation  *****************************
     double QQ, II, dII;
     double Q, I, dI;
-    for (int i=0; i<N; i++) if (gsl_matrix_get(data, i,0) != -99.99)
-    {
-        QQ=gsl_matrix_get(data, i,0);
-        II=gsl_matrix_get(data, i,1);
-        dII=gsl_matrix_get(data, i,2);
-        
-        if (oldPresentation=="Guinier")
+    for (int i = 0; i < N; i++)
+        if (gsl_matrix_get(data, i, 0) != InvalidCellValue)
         {
-            if (QQ<0) {Q=-99.99;Nfinal--;}
-            else
+            QQ = gsl_matrix_get(data, i, 0);
+            II = gsl_matrix_get(data, i, 1);
+            dII = gsl_matrix_get(data, i, 2);
+
+            if (oldPresentation == "Guinier")
             {
-                Q=sqrt(QQ);
-                I=exp(II);
-                if (dII>0) dI=I*dII;
-            }
-        }
-        else if (oldPresentation=="Zimm")
-        {
-            if (QQ<0) {Q=-99.99;Nfinal--;}
-            else
-            {
-                Q=sqrt(QQ);
-                if (II<=0) {Q=-99.99;Nfinal--;}
+                if (QQ < 0)
+                {
+                    Q = InvalidCellValue;
+                    Nfinal--;
+                }
                 else
                 {
-                    I=1/II;
-                    if (dII>0) dI=dII/II/II;
+                    Q = sqrt(QQ);
+                    I = exp(II);
+                    if (dII > 0)
+                        dI = I * dII;
                 }
             }
-        }
-        else if (oldPresentation=="Porod")
-        {
-            Q=pow(10,QQ);
-            I=pow(10,II);
-            
-            if (dII>0) dI=dII*I*log(10.0);
-        }
-        else if (oldPresentation=="Porod2")
-        {
-            if (QQ<=0) {Q=-99.99;Nfinal--;}
-            else
+            else if (oldPresentation == "Zimm")
             {
-                Q=sqrt(QQ);
-                if (II<0) {Q=-99.99;Nfinal--;}
+                if (QQ < 0)
+                {
+                    Q = InvalidCellValue;
+                    Nfinal--;
+                }
                 else
                 {
-                    I=II/pow(Q,4);
-                    if (dII>0) dI=dII/pow(Q,4);
+                    Q = sqrt(QQ);
+                    if (II <= 0)
+                    {
+                        Q = InvalidCellValue;
+                        Nfinal--;
+                    }
+                    else
+                    {
+                        I = 1 / II;
+                        if (dII > 0)
+                            dI = dII / II / II;
+                    }
                 }
             }
-        }
-        else if (oldPresentation=="logQ")
-        {
-            if (QQ<0) {Q=-99.99;Nfinal--;}
-            else
+            else if (oldPresentation == "Porod")
             {
-                Q=pow(10,QQ);
-                if (II<0) {Q=-99.99;Nfinal--;}
+                Q = pow(10, QQ);
+                I = pow(10, II);
+
+                if (dII > 0)
+                    dI = dII * I * log(10.0);
+            }
+            else if (oldPresentation == "Porod2")
+            {
+                if (QQ <= 0)
+                {
+                    Q = InvalidCellValue;
+                    Nfinal--;
+                }
                 else
                 {
-                    I=II;
-                    if (dII>0) dI=dII;
+                    Q = sqrt(QQ);
+                    if (II < 0)
+                    {
+                        Q = InvalidCellValue;
+                        Nfinal--;
+                    }
+                    else
+                    {
+                        I = II / pow(Q, 4);
+                        if (dII > 0)
+                            dI = dII / pow(Q, 4);
+                    }
                 }
             }
-        }
-        else if (oldPresentation=="logI")
-        {
-            Q=QQ;
-            I=pow(10,II);
-            if (dII>0) dI=dII*I*log(10.0);
-        }
-        else if (oldPresentation=="Debye")
-        {
-            if (QQ<0) {Q=-99.99;Nfinal--;}
-            else
+            else if (oldPresentation == "logQ")
             {
-                Q=sqrt(QQ);
-                if (II<=0) {Q=-99.99;Nfinal--;}
+                if (QQ < 0)
+                {
+                    Q = InvalidCellValue;
+                    Nfinal--;
+                }
                 else
                 {
-                    I=1/II/II;
-                    if (dII>0) dI=2*dII/II/II/II;
+                    Q = pow(10, QQ);
+                    if (II < 0)
+                    {
+                        Q = InvalidCellValue;
+                        Nfinal--;
+                    }
+                    else
+                    {
+                        I = II;
+                        if (dII > 0)
+                            dI = dII;
+                    }
                 }
             }
-        }
-        else if (oldPresentation=="1Moment")
-        {
-            if (QQ<=0) {Q=-99.99;Nfinal--;}
-            else
+            else if (oldPresentation == "logI")
             {
-                Q=QQ;
-                if (II<0) {Q=-99.99;Nfinal--;}
+                Q = QQ;
+                I = pow(10, II);
+                if (dII > 0)
+                    dI = dII * I * log(10.0);
+            }
+            else if (oldPresentation == "Debye")
+            {
+                if (QQ < 0)
+                {
+                    Q = InvalidCellValue;
+                    Nfinal--;
+                }
                 else
                 {
-                    I=II/Q;
-                    dI=dII/Q;
+                    Q = sqrt(QQ);
+                    if (II <= 0)
+                    {
+                        Q = InvalidCellValue;
+                        Nfinal--;
+                    }
+                    else
+                    {
+                        I = 1 / II / II;
+                        if (dII > 0)
+                            dI = 2 * dII / II / II / II;
+                    }
                 }
             }
-        }
-        else if (oldPresentation=="2Moment")
-        {
-            if (QQ<=0) {Q=-99.99;Nfinal--;}
-            else
+            else if (oldPresentation == "1Moment")
             {
-                Q=QQ;
-                if (II<0) {Q=-99.99;Nfinal--;}
+                if (QQ <= 0)
+                {
+                    Q = InvalidCellValue;
+                    Nfinal--;
+                }
                 else
                 {
-                    I=II/Q/Q;
-                    if (dII>0) dI=dII/Q/Q;
+                    Q = QQ;
+                    if (II < 0)
+                    {
+                        Q = InvalidCellValue;
+                        Nfinal--;
+                    }
+                    else
+                    {
+                        I = II / Q;
+                        dI = dII / Q;
+                    }
                 }
             }
-        }
-        else if (oldPresentation=="Kratky")
-        {
-            if (QQ<=0) {Q=-99.99;Nfinal--;}
-            else
+            else if (oldPresentation == "2Moment")
             {
-                Q=QQ;
-                if (II<0) {Q=-99.99;Nfinal--;}
+                if (QQ <= 0)
+                {
+                    Q = InvalidCellValue;
+                    Nfinal--;
+                }
                 else
                 {
-                    I=II/Q/Q;
-                    if (dII>0) dI=dII/Q/Q;
+                    Q = QQ;
+                    if (II < 0)
+                    {
+                        Q = InvalidCellValue;
+                        Nfinal--;
+                    }
+                    else
+                    {
+                        I = II / Q / Q;
+                        if (dII > 0)
+                            dI = dII / Q / Q;
+                    }
                 }
             }
-        }
-        else if (oldPresentation=="GuinierRod")
-        {
-            if (QQ<=0) {Q=-99.99;Nfinal--;}
-            else
+            else if (oldPresentation == "Kratky")
             {
-                Q=sqrt(QQ);
-                I=exp(II)/Q;
-                if (dII>0) dI=I*dII/Q;
-            }
-        }
-        else if (oldPresentation=="GuinierPlate")
-        {
-            if (QQ<=0) {Q=-99.99;Nfinal--;}
-            else
-            {
-                Q=sqrt(QQ);
-                I=exp(II)/Q/Q;
-                if (dII>0) dI=I*dII/Q/Q;
-            }
-        }
-        else
-        {
-            if (QQ<=0) {Q=-99.99;Nfinal--;}
-            else
-            {
-                Q=QQ;
-                if (II<0) {Q=-99.99;Nfinal--;}
+                if (QQ <= 0)
+                {
+                    Q = InvalidCellValue;
+                    Nfinal--;
+                }
                 else
                 {
-                    I=II;
-                    if (dII>0)   dI=dII;
+                    Q = QQ;
+                    if (II < 0)
+                    {
+                        Q = InvalidCellValue;
+                        Nfinal--;
+                    }
+                    else
+                    {
+                        I = II / Q / Q;
+                        if (dII > 0)
+                            dI = dII / Q / Q;
+                    }
                 }
             }
+            else if (oldPresentation == "GuinierRod")
+            {
+                if (QQ <= 0)
+                {
+                    Q = InvalidCellValue;
+                    Nfinal--;
+                }
+                else
+                {
+                    Q = sqrt(QQ);
+                    I = exp(II) / Q;
+                    if (dII > 0)
+                        dI = I * dII / Q;
+                }
+            }
+            else if (oldPresentation == "GuinierPlate")
+            {
+                if (QQ <= 0)
+                {
+                    Q = InvalidCellValue;
+                    Nfinal--;
+                }
+                else
+                {
+                    Q = sqrt(QQ);
+                    I = exp(II) / Q / Q;
+                    if (dII > 0)
+                        dI = I * dII / Q / Q;
+                }
+            }
+            else
+            {
+                if (QQ <= 0)
+                {
+                    Q = InvalidCellValue;
+                    Nfinal--;
+                }
+                else
+                {
+                    Q = QQ;
+                    if (II < 0)
+                    {
+                        Q = InvalidCellValue;
+                        Nfinal--;
+                    }
+                    else
+                    {
+                        I = II;
+                        if (dII > 0)
+                            dI = dII;
+                    }
+                }
+            }
+
+            gsl_matrix_set(data, i, 0, Q);
+            gsl_matrix_set(data, i, 1, I);
+            gsl_matrix_set(data, i, 2, dI);
         }
-        
-        gsl_matrix_set(data, i,0, Q);
-        gsl_matrix_set(data, i,1, I);
-        gsl_matrix_set(data, i,2, dI);
-    }
 }
 
 //*******************************************
@@ -1697,33 +1861,32 @@ double ascii1d18::sigma( double Q)
     
     const double PI =M_PI;
     double temp;
-    
-    double C          =lineEditResoCol->text().toDouble();                          //[cm]
-    double D          =lineEditResoDet->text().toDouble();                          //[cm]
-    double Rdet       =lineEditResoPixelSize->text().toDouble()/sqrt(PI);           //[cm]
-    
-    temp=lineEditResoSamAper->text().toDouble();
-    temp*=lineEditResoSamAper2->text().toDouble();
-    
+
+    double C = uiToDouble(lineEditResoCol->text());                     //[cm]
+    double D = uiToDouble(lineEditResoDet->text());                     //[cm]
+    double Rdet = uiToDouble(lineEditResoPixelSize->text()) / sqrt(PI); //[cm]
+
+    temp = uiToDouble(lineEditResoSamAper->text());
+    temp *= uiToDouble(lineEditResoSamAper2->text());
+
     double r2         =0.1*sqrt(temp/PI);                                           //[cm]
-    
-    temp=lineEditResoColAper->text().toDouble();
-    temp*=lineEditResoColAper2->text().toDouble();
-    
+
+    temp = uiToDouble(lineEditResoColAper->text());
+    temp *= uiToDouble(lineEditResoColAper2->text());
+
     double r1         =0.1*sqrt(temp/PI);                                           //[cm]
-    
-    double Lambda     =lineEditResoLambda->text().toDouble();                       //[A]
-    
+
+    double Lambda = uiToDouble(lineEditResoLambda->text()); //[A]
+
     if (qUnitsAng!=lambdaUnitsAng)
     {
         if (qUnitsAng) Lambda*=10.0;
         else Lambda/=10.0;
     }
-    
-    double SigmaLambda=lineEditResoDeltaLambda->text().toDouble();                  //[1]
-    double f            =lineEditResoFocus->text().toDouble();                      //[cm]
-    
-    
+
+    double SigmaLambda = uiToDouble(lineEditResoDeltaLambda->text()); //[1]
+    double f = uiToDouble(lineEditResoFocus->text());                 //[cm]
+
     double SigQ2,SigQ;
     double Theta0,cos2Theta02, a1, a2, beta1;
     
@@ -1781,10 +1944,11 @@ void ascii1d18::sigmaCalculation(gsl_matrix* &data, int N)
 {
     if (checkBoxReso->isChecked() ) //+++  2021-07 && checkBoxActions->isChecked())
     {
-        for (int i=0; i<N;i++)  if (gsl_matrix_get(data, i,0) != -99.99)
-        {
-            gsl_matrix_set(data,i,3,sigma(fabs(gsl_matrix_get(data,i,0))));
-        }
+        for (int i = 0; i < N; i++)
+            if (gsl_matrix_get(data, i, 0) != InvalidCellValue)
+            {
+                gsl_matrix_set(data, i, 3, sigma(fabs(gsl_matrix_get(data, i, 0))));
+            }
     }
 }
 
@@ -1795,36 +1959,39 @@ void ascii1d18::sigmaCalculation(gsl_matrix* &data, int N)
 void ascii1d18::applyMath(gsl_matrix* &data, QString MathChar, double MathFactor, int N)
 {
     double Q,I,dI;
-    for (int i=0; i<N;i++)  if (gsl_matrix_get(data, i,0) != -99.99)
-    {
-        Q=gsl_matrix_get(data,i,0);
-        I=gsl_matrix_get(data,i,1);
-        dI=gsl_matrix_get(data,i,2);
-        if (MathChar=="+")
+    for (int i = 0; i < N; i++)
+        if (gsl_matrix_get(data, i, 0) != InvalidCellValue)
         {
-            I+=MathFactor;
-        }
-        else if (MathChar=="*")
-        {
-            I*=MathFactor;
-            if (dI>0) dI*=MathFactor;
-        }
-        else if (MathChar=="/")
-        {
-            if (MathFactor!=0)
+            Q = gsl_matrix_get(data, i, 0);
+            I = gsl_matrix_get(data, i, 1);
+            dI = gsl_matrix_get(data, i, 2);
+            if (MathChar == "+")
             {
-                I/=MathFactor;
-                if (dI>0) dI/=MathFactor;
+                I += MathFactor;
             }
+            else if (MathChar == "*")
+            {
+                I *= MathFactor;
+                if (dI > 0)
+                    dI *= MathFactor;
+            }
+            else if (MathChar == "/")
+            {
+                if (MathFactor != 0)
+                {
+                    I /= MathFactor;
+                    if (dI > 0)
+                        dI /= MathFactor;
+                }
+            }
+            else if (MathChar == "-")
+            {
+                I -= MathFactor;
+            }
+            gsl_matrix_set(data, i, 0, Q);
+            gsl_matrix_set(data, i, 1, I);
+            gsl_matrix_set(data, i, 2, dI);
         }
-        else if (MathChar=="-")
-        {
-            I-=MathFactor;
-        }
-        gsl_matrix_set(data,i,0,Q);
-        gsl_matrix_set(data,i,1,I);
-        gsl_matrix_set(data,i,2,dI);
-    }
 }
 
 //*******************************************
@@ -1840,158 +2007,232 @@ void ascii1d18::convertToQI(gsl_matrix* &data, int N, int &Nfinal)
     // * ****** Change of Presentation  *****************************
     double QQ, II, dII;
     double Q, I, dI;
-    
-    for (int i=0; i<N; i++) if (gsl_matrix_get(data, i,0) != -99.99)
-    {
-        Q=gsl_matrix_get(data, i,0);
-        I=gsl_matrix_get(data, i,1);
-        dI=gsl_matrix_get(data, i,2);
-        
-        if (newPresentation=="Guinier")
+
+    for (int i = 0; i < N; i++)
+        if (gsl_matrix_get(data, i, 0) != InvalidCellValue)
         {
-            QQ=Q*Q;
-            if (I<=0) {QQ =-99.99;Nfinal--;}
-            else
+            Q = gsl_matrix_get(data, i, 0);
+            I = gsl_matrix_get(data, i, 1);
+            dI = gsl_matrix_get(data, i, 2);
+
+            if (newPresentation == "Guinier")
             {
-                II=log(I);
-                if (dI>0) dII=dI/I;
-            }
-        }
-        else if (newPresentation=="Zimm")
-        {
-            QQ=Q*Q;
-            
-            if (I==0) {QQ=-99.99;Nfinal--;}
-            else
-            {
-                II=1/I;
-                if (dI>0) dII=dI/I/I;
-            }
-        }
-        else if (newPresentation=="Porod")
-        {
-            if (Q<=0) {QQ=-99.99;Nfinal--;}
-            else
-            {
-                QQ=log10(Q);
-                if (I<=0) {QQ=-99.99;Nfinal--;}
+                QQ = Q * Q;
+                if (I <= 0)
+                {
+                    QQ = InvalidCellValue;
+                    Nfinal--;
+                }
                 else
                 {
-                    II=log10(I);
-                    if (dI>0) dII=dI/I/log(10.0);
+                    II = log(I);
+                    if (dI > 0)
+                        dII = dI / I;
                 }
             }
-        }
-        else if (newPresentation=="Porod2")
-        {
-            QQ=Q*Q;
-            if (I<0) {QQ=-99.99;Nfinal--;}
-            else
+            else if (newPresentation == "Zimm")
             {
-                II=I*pow(Q,4);
-                if (dI>0) dII=dI*pow(Q,4);
-            }
-        }
-        else if (newPresentation=="logQ")
-        {
-            if (Q<=0) {QQ=-99.99;Nfinal--;}
-            else
-            {
-                QQ=log10(Q);
-                
-                II=I;
-                if (dI>0) dII=dI;
-            }
-        }
-        else if (newPresentation=="logI")
-        {
-            QQ=Q;
-            if (I<=0) {QQ=-99.99;Nfinal--;}
-            else
-            {
-                II=log10(I);
-                if (dI>0) dII=dI/I/log(10.0);
-            }
-        }
-        else if (newPresentation=="Debye")
-        {
-            QQ=Q*Q;
-            if (I<=0) {QQ=-99.99;Nfinal--;}
-            else
-            {
-                II=1/sqrt(I);
-                if (dI>0) dII=dI/pow(I,1.5);
-            }
-        }
-        else if (newPresentation=="1Moment")
-        {
-            QQ=Q;
-            if (I<0) {QQ=-99.99;Nfinal--;}
-            else
-            {
-                II=Q*I;
-                if (dI>0) dII=Q*dI;
-            }
-        }
-        else if (newPresentation=="2Moment")
-        {
-            QQ=Q;
-            if (I<0) {QQ=-99.99;Nfinal--;}
-            else
-            {
-                II=Q*Q*I;
-                if (dI>0) dII=Q*Q*dI;
-            }
-        }
-        else if (newPresentation=="Kratky")
-        {
-            QQ=Q;
-            if (I<0) {QQ=-99.99;Nfinal--;}
-            else
-            {
-                II=Q*Q*I;
-                if (dI>0) dII=Q*Q*dI;
-            }
-        }
-        else if (newPresentation=="GuinierRod")
-        {
-            QQ=Q*Q;
-            if (I<=0 || Q<=0 ) {QQ=-99.99;Nfinal--;}
-            else
-            {
-                II=log(I*Q);
-                if (dI>0) dII=Q*(dI/I);
-            }
-        }
-        else if (newPresentation=="GuinierPlate")
-        {
-            if (Q<0) {QQ=-99.99;Nfinal--;}
-            else
-            {
-                QQ=Q*Q;
-                if (I<=0) {QQ=-99.99;Nfinal--;}
+                QQ = Q * Q;
+
+                if (I == 0)
+                {
+                    QQ = InvalidCellValue;
+                    Nfinal--;
+                }
                 else
                 {
-                    II=log(I*Q*Q);
-                    if (dI>0) dII=Q*Q*(dI/I);
+                    II = 1 / I;
+                    if (dI > 0)
+                        dII = dI / I / I;
                 }
             }
-        }
-        else
-        {
-            QQ=Q;
-            if (I<0) {QQ=-99.99;Nfinal--;}
+            else if (newPresentation == "Porod")
+            {
+                if (Q <= 0)
+                {
+                    QQ = InvalidCellValue;
+                    Nfinal--;
+                }
+                else
+                {
+                    QQ = log10(Q);
+                    if (I <= 0)
+                    {
+                        QQ = InvalidCellValue;
+                        Nfinal--;
+                    }
+                    else
+                    {
+                        II = log10(I);
+                        if (dI > 0)
+                            dII = dI / I / log(10.0);
+                    }
+                }
+            }
+            else if (newPresentation == "Porod2")
+            {
+                QQ = Q * Q;
+                if (I < 0)
+                {
+                    QQ = InvalidCellValue;
+                    Nfinal--;
+                }
+                else
+                {
+                    II = I * pow(Q, 4);
+                    if (dI > 0)
+                        dII = dI * pow(Q, 4);
+                }
+            }
+            else if (newPresentation == "logQ")
+            {
+                if (Q <= 0)
+                {
+                    QQ = InvalidCellValue;
+                    Nfinal--;
+                }
+                else
+                {
+                    QQ = log10(Q);
+
+                    II = I;
+                    if (dI > 0)
+                        dII = dI;
+                }
+            }
+            else if (newPresentation == "logI")
+            {
+                QQ = Q;
+                if (I <= 0)
+                {
+                    QQ = InvalidCellValue;
+                    Nfinal--;
+                }
+                else
+                {
+                    II = log10(I);
+                    if (dI > 0)
+                        dII = dI / I / log(10.0);
+                }
+            }
+            else if (newPresentation == "Debye")
+            {
+                QQ = Q * Q;
+                if (I <= 0)
+                {
+                    QQ = InvalidCellValue;
+                    Nfinal--;
+                }
+                else
+                {
+                    II = 1 / sqrt(I);
+                    if (dI > 0)
+                        dII = dI / pow(I, 1.5);
+                }
+            }
+            else if (newPresentation == "1Moment")
+            {
+                QQ = Q;
+                if (I < 0)
+                {
+                    QQ = InvalidCellValue;
+                    Nfinal--;
+                }
+                else
+                {
+                    II = Q * I;
+                    if (dI > 0)
+                        dII = Q * dI;
+                }
+            }
+            else if (newPresentation == "2Moment")
+            {
+                QQ = Q;
+                if (I < 0)
+                {
+                    QQ = InvalidCellValue;
+                    Nfinal--;
+                }
+                else
+                {
+                    II = Q * Q * I;
+                    if (dI > 0)
+                        dII = Q * Q * dI;
+                }
+            }
+            else if (newPresentation == "Kratky")
+            {
+                QQ = Q;
+                if (I < 0)
+                {
+                    QQ = InvalidCellValue;
+                    Nfinal--;
+                }
+                else
+                {
+                    II = Q * Q * I;
+                    if (dI > 0)
+                        dII = Q * Q * dI;
+                }
+            }
+            else if (newPresentation == "GuinierRod")
+            {
+                QQ = Q * Q;
+                if (I <= 0 || Q <= 0)
+                {
+                    QQ = InvalidCellValue;
+                    Nfinal--;
+                }
+                else
+                {
+                    II = log(I * Q);
+                    if (dI > 0)
+                        dII = Q * (dI / I);
+                }
+            }
+            else if (newPresentation == "GuinierPlate")
+            {
+                if (Q < 0)
+                {
+                    QQ = InvalidCellValue;
+                    Nfinal--;
+                }
+                else
+                {
+                    QQ = Q * Q;
+                    if (I <= 0)
+                    {
+                        QQ = InvalidCellValue;
+                        Nfinal--;
+                    }
+                    else
+                    {
+                        II = log(I * Q * Q);
+                        if (dI > 0)
+                            dII = Q * Q * (dI / I);
+                    }
+                }
+            }
             else
             {
-                II=I;
-                if (dI>0) dII=dI;
+                QQ = Q;
+                if (I < 0)
+                {
+                    QQ = InvalidCellValue;
+                    Nfinal--;
+                }
+                else
+                {
+                    II = I;
+                    if (dI > 0)
+                        dII = dI;
+                }
             }
+
+            gsl_matrix_set(data, i, 0, QQ);
+            gsl_matrix_set(data, i, 1, II);
+            gsl_matrix_set(data, i, 2, dII);
         }
-        
-        gsl_matrix_set(data, i,0, QQ);
-        gsl_matrix_set(data, i,1, II);
-        gsl_matrix_set(data, i,2, dII);
-    }
 }
 
 //*******************************************
@@ -2013,29 +2254,31 @@ void ascii1d18::columnCalculation(gsl_matrix *&data, int N, int Nfinal, const QS
         
         double n1, n2;
         int j=0;
-        for (int i=0; i<N; i++) if (gsl_matrix_get(data, i,0) != -99.99)
-        {
-            n1=gsl_matrix_get(data,i,1);
-            n2=w->text(j,colIndex).toDouble();
-            if (action=="+")
+        for (int i = 0; i < N; i++)
+            if (gsl_matrix_get(data, i, 0) != InvalidCellValue)
             {
-                n1+=n2;
+                n1 = gsl_matrix_get(data, i, 1);
+                n2 = w->cell(j, colIndex); // in the table's format
+                if (action == "+")
+                {
+                    n1 += n2;
+                }
+                else if (action == "-")
+                {
+                    n1 -= n2;
+                }
+                else if (action == "/")
+                {
+                    if (n2 != 0.0)
+                        n1 /= n2;
+                }
+                else if (action == "*")
+                {
+                    n1 *= n2;
+                }
+                gsl_matrix_set(data, i, 1, n1);
+                j++;
             }
-            else if (action=="-")
-            {
-                n1-=n2;
-            }
-            else if (action=="/")
-            {
-                if ( n2!=0.0 ) n1/=n2;
-            }
-            else if (action=="*")
-            {
-                n1*=n2;
-            }
-            gsl_matrix_set(data,i,1,n1);
-            j++;
-        }
         
     }
 }
@@ -2080,7 +2323,7 @@ bool ascii1d18::linearBinning(gsl_matrix* &data, int N, int &Nfinal)
         {
             q = gsl_matrix_get(data, nn, 0);
 
-            if (q == -99.99)
+            if (q == InvalidCellValue)
             {
                 b--;
                 nn++;
@@ -2102,9 +2345,10 @@ bool ascii1d18::linearBinning(gsl_matrix* &data, int N, int &Nfinal)
         gsl_matrix_set(data,n,2,sqrt(fabs(di))/localBinning);
         gsl_matrix_set(data,n,3,fabs(qMax-qMin)/2+sigma/localBinning);
     }
-    
-    for(int n=Nnew; n<N; n++) gsl_matrix_set(data,n,0,-99.99);
-    
+
+    for (int n = Nnew; n < N; n++)
+        gsl_matrix_set(data, n, 0, InvalidCellValue);
+
     Nfinal=Nnew;
     return true;
 }
@@ -2149,8 +2393,8 @@ bool ascii1d18::logBinning(gsl_matrix* &data, int N, int &Nfinal)
                 n++;
                 break;
             }
-            
-            if (gsl_matrix_get(data, n,0) == -99.99)
+
+            if (gsl_matrix_get(data, n, 0) == InvalidCellValue)
             {
                 n++;
                 b--;
@@ -2180,9 +2424,10 @@ bool ascii1d18::logBinning(gsl_matrix* &data, int N, int &Nfinal)
         
         Nnew++;
     }
-    
-    for(int n=Nnew; n<N; n++) gsl_matrix_set(data,n,0,-99.99);
-    
+
+    for (int n = Nnew; n < N; n++)
+        gsl_matrix_set(data, n, 0, InvalidCellValue);
+
     Nfinal=Nnew;
     return true;
 }
@@ -2251,26 +2496,22 @@ void ascii1d18::dataMatrixSave(QString &fn, gsl_matrix* data, int N, int Nfinal,
         
         int currentRow=0;
         w->blockSignals(true);
-        for (i=0; i<N;i++)  if (gsl_matrix_get(data, i,0) != -99.99)
-        {
-            w->setNumRows(currentRow+1);
-            //
-            w->setText(currentRow,0, QString::number(gsl_matrix_get(data,i,0),'E'));
-            //
-            w->setText(currentRow,1, QString::number(gsl_matrix_get(data,i,1),'E'));
-            //
-                if (gsl_matrix_get(data, i, 2) == -99.99)
-                    w->setText(currentRow, 2, "");
-            else w->setText(currentRow,2, QString::number(gsl_matrix_get(data,i,2),'E'));
-            //
-            if (calculateReso || loadedReso)
+        for (i = 0; i < N; i++)
+            if (gsl_matrix_get(data, i, 0) != InvalidCellValue)
             {
-                    if (gsl_matrix_get(data, i, 3) == -99.99)
-                        w->setText(currentRow, 3, "");
-                else w->setText(currentRow,3, QString::number(gsl_matrix_get(data,i,3),'E'));
+                w->setNumRows(currentRow + 1);
+                //
+                // numbers in the table's format; InvalidCellValue marks a missing value
+                for (int col = 0; col < ((calculateReso || loadedReso) ? 4 : 3); col++)
+                {
+                    const double value = gsl_matrix_get(data, i, col);
+                    if (col >= 2 && value == InvalidCellValue)
+                        w->setText(currentRow, col, "");
+                    else
+                        w->setCell(currentRow, col, value);
+                }
+                currentRow++;
             }
-            currentRow++;
-        }
 
         if (w->numCols()>spinBoxForceNumCols->value() && !checkBoxReso->isChecked()) w->setNumCols(spinBoxForceNumCols->value());
         
@@ -2299,33 +2540,36 @@ void ascii1d18::dataMatrixSave(QString &fn, gsl_matrix* data, int N, int Nfinal,
         }
         QTextStream stream( &f );
         int currentRow=0;
-        
-        for (i=0; i<N;i++)  if (gsl_matrix_get(data, i,0) != -99.99)
-        {
-            stream<<QString::number(gsl_matrix_get(data,i,0),'E');
-            //
-            stream<<"   "+QString::number(gsl_matrix_get(data,i,1),'E');
-            //
-            if (spinBoxForceNumCols->value()>2)
+
+        for (i = 0; i < N; i++)
+            if (gsl_matrix_get(data, i, 0) != InvalidCellValue)
             {
-                if (gsl_matrix_get(data, i,2) == -99.99) stream<<"   ---";
-                else stream<<"   "+QString::number(gsl_matrix_get(data,i,2),'E');
-            }
-            //
-            if (spinBoxForceNumCols->value()>3)
-            {
-                if (calculateReso)
+                stream << QString::number(gsl_matrix_get(data, i, 0), 'E');
+                //
+                stream << "   " + QString::number(gsl_matrix_get(data, i, 1), 'E');
+                //
+                if (spinBoxForceNumCols->value() > 2)
                 {
-                    stream<<"   "+QString::number(sigma(gsl_matrix_get(data,i,0)),'E');
+                    if (gsl_matrix_get(data, i, 2) == InvalidCellValue)
+                        stream << "   ---";
+                    else
+                        stream << "   " + QString::number(gsl_matrix_get(data, i, 2), 'E');
                 }
-                else if (loadedReso)
+                //
+                if (spinBoxForceNumCols->value() > 3)
                 {
-                    stream<<"   "+QString::number(gsl_matrix_get(data,i,3),'E');
+                    if (calculateReso)
+                    {
+                        stream << "   " + QString::number(sigma(gsl_matrix_get(data, i, 0)), 'E');
+                    }
+                    else if (loadedReso)
+                    {
+                        stream << "   " + QString::number(gsl_matrix_get(data, i, 3), 'E');
+                    }
                 }
+                currentRow++;
+                stream << "\n";
             }
-            currentRow++;
-            stream<<"\n";
-        }
         f.close();
         
     }
@@ -2528,29 +2772,26 @@ bool ascii1d18::loadASCIIfromTable(const QString table, gsl_matrix* &data, int &
     
     // to change to
     sigmaExist=false;
-    
+
+    // A number of a cell: in the table's format, or else the first C number in the text; InvalidCellValue for none
+    const auto number = [w](int row, int col) {
+        double value = InvalidCellValue;
+        if (col >= w->numCols() || w->tryNumericCell(row, col, value))
+            return value;
+        const QRegularExpressionMatch match = rx.match(w->text(row, col));
+        return match.hasMatch() ? match.captured(1).toDouble() : InvalidCellValue;
+    };
+
     for (int i=0;i<w->numRows();i++)
     {
-        if (rx.match(w->text(i, 0)).hasMatch())
-            Q = rx.match(w->text(i, 0)).captured(1).toDouble();
-        else
-            Q = -99.99;
-        if (rx.match(w->text(i, 1)).hasMatch())
-            I = rx.match(w->text(i, 1)).captured(1).toDouble();
-        else
-            I = -99.99;
-        if (w->numCols() > 2 && rx.match(w->text(i, 2)).hasMatch())
-            dI = rx.match(w->text(i, 2)).captured(1).toDouble();
-        else
-            dI = -99.99;
-        if (w->numCols() > 3 && rx.match(w->text(i, 3)).hasMatch())
-        {
-            sigma = rx.match(w->text(i, 3)).captured(1).toDouble();
+        Q = number(i, 0);
+        I = number(i, 1);
+        dI = number(i, 2);
+        sigma = number(i, 3);
+        if (sigma != InvalidCellValue)
             sigmaExist = true;
-        }
-        else sigma=-99.99;
-        
-        if (Q!=-99.99 && I!=-99.99)
+
+        if (Q != InvalidCellValue && I != InvalidCellValue)
         {
             gsl_matrix_set(data,N,0,Q);
             gsl_matrix_set(data,N,1,I);
@@ -2611,103 +2852,6 @@ void ascii1d18::presentationToChanged()
 }
 
 //*******************************************
-//+++  Reso Validator
-//*******************************************
-void ascii1d18::detColDistanceValidator()
-{
-    double change;
-    
-    // Check Collimation Distance
-    change = lineEditResoDet->text().toDouble();
-    if (change<10.0)
-        lineEditResoDet->setText(QString::number( 10.0, 'f', 2 ) );
-    else if (change>10000.0)
-        lineEditResoDet->setText( QString::number( 10000.0, 'f', 2 ) );
-    else
-        lineEditResoDet->setText( QString::number( change, 'f', 2 ) );
-    
-    // Check Detector Distance
-    change = lineEditResoCol->text().toDouble();
-    if (change<10.0)
-        lineEditResoCol->setText( QString::number( 10.0, 'f', 2 ) );
-    else if (change>10000.0)
-        lineEditResoCol->setText( QString::number( 10000.0, 'f', 2 ) );
-    else
-        lineEditResoCol->setText( QString::number( change, 'f', 2 ) );
-    
-    // Check Focus Distance
-    change = lineEditResoFocus->text().toDouble();
-    if (change<10.0)
-        lineEditResoFocus->setText( QString::number( 10.0, 'f', 2 ) );
-    else if (change>10000.0)
-        lineEditResoFocus->setText( QString::number( 10000.0, 'f', 2 ) );
-    else
-        lineEditResoFocus->setText( QString::number( change, 'f', 2 ) );
-    // Check Detector Pixel Size
-    change = lineEditResoPixelSize->text().toDouble();
-    if (change<0.0001)
-        lineEditResoPixelSize->setText( QString::number( 0.0001, 'f', 4 ) );
-    else if (change>5.0)
-        lineEditResoPixelSize->setText( QString::number( 5.0, 'f', 4 ) );
-    else
-        lineEditResoPixelSize->setText( QString::number( change, 'f', 4 ) );
-    
-    // Check Sample Aperture Size
-    change = lineEditResoSamAper->text().toDouble();
-    if (change<0.01)
-        lineEditResoSamAper->setText( QString::number( 0.01, 'f', 2 ) );
-    else if (change>100.0)
-        lineEditResoSamAper->setText( QString::number( 100.0, 'f', 2 ) );
-    else
-        lineEditResoSamAper->setText( QString::number( change, 'f', 2 ) );
-    
-    // Check Sample Aperture Size
-    change = lineEditResoSamAper2->text().toDouble();
-    if (change<0.01)
-        lineEditResoSamAper2->setText( QString::number( 0.01, 'f', 2 ) );
-    else if (change>100.0)
-        lineEditResoSamAper2->setText( QString::number( 100.0, 'f', 2 ) );
-    else
-        lineEditResoSamAper2->setText( QString::number( change, 'f', 2 ) );
-    
-    // Check Collimation Aperture Size
-    change = lineEditResoColAper->text().toDouble();
-    if (change<0.01)
-        lineEditResoColAper->setText( QString::number( 0.01, 'f', 2 ) );
-    else if (change>100.0)
-        lineEditResoColAper->setText( QString::number( 100.0, 'f', 2 ) );
-    else
-        lineEditResoColAper->setText( QString::number( change, 'f', 2 ) );
-    
-    // Check Collimation Aperture Size
-    change = lineEditResoColAper2->text().toDouble();
-    if (change<0.01)
-        lineEditResoColAper2->setText( QString::number( 0.01, 'f', 2 ) );
-    else if (change>100.0)
-        lineEditResoColAper2->setText( QString::number( 100.0, 'f', 2 ) );
-    else
-        lineEditResoColAper2->setText( QString::number( change, 'f', 2 ) );
-    
-    // Check Wave Length [A]
-    change = lineEditResoLambda->text().toDouble();
-    if (change<0.1)
-        lineEditResoLambda->setText( QString::number( 0.1, 'f', 3 ) );
-    else if (change>50.0)
-        lineEditResoLambda->setText( QString::number( 50.0, 'f', 3 ) );
-    else
-        lineEditResoLambda->setText( QString::number( change, 'f', 3 ) );
-    
-    // Check delta lambda [1]
-    change = lineEditResoDeltaLambda->text().toDouble();
-    if (change<0.0001)
-        lineEditResoDeltaLambda->setText( QString::number( 0.0001, 'f', 4 ) );
-    else if (change>0.8)
-        lineEditResoDeltaLambda->setText( QString::number( 0.8, 'f', 4 ) );
-    else
-        lineEditResoDeltaLambda->setText( QString::number( change, 'f', 4 ) );
-}
-
-//*******************************************
 //+++   checkBoxResoSlot
 //*******************************************
 void ascii1d18::checkBoxResoSlot()
@@ -2723,7 +2867,7 @@ void ascii1d18::checkBoxResoSlot()
 //*******************************************
 void ascii1d18::slotMathYN()
 {
-    double mathFactor=lineEditMath->text().toDouble();
+    double mathFactor = uiToDouble(lineEditMath->text());
     QString mathChar=comboBoxMath->currentText();
     if (mathChar=="/" && mathFactor==0)
     {
