@@ -5,7 +5,7 @@ Copyright (C) by the authors:
     2026 Vitaliy Pipich <v.pipich@gmail.com>
 Description: Declares a handful of AiAssistant.cpp's internal free functions
              with external linkage, for exactly one reason: so
-             src/ai/tests/ai_content_tests.cpp can link against and unit-test
+             tests/src/ai/ai_content_tests.cpp can link against and unit-test
              them directly. Not part of the public AiAssistant/
              AiContentProvider surface — nothing outside AiAssistant.cpp and
              the test binary should include this header.

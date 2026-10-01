@@ -6713,11 +6713,11 @@ bool ApplicationWindow::handleAiTextCommand(const QString &trimmed)
 
 void ApplicationWindow::askAi(const QString &text, bool autoRun, bool forceConsole)
 {
+    // Creates m_ai on first use (no-op if it already exists)
     ensureAiAssistant();
 
-    // Answers the pending "new task or continuation?" question (see
-    // awaitingContinuationClarification) — not itself a new request, so intercept before any
-    // normal dispatch. Reuses handleContinuationCheckResponse()'s own dispatch logic.
+    // Answers the pending "new task or continuation?" question
+    // Reuses handleContinuationCheckResponse()'s own dispatch logic.
     if (m_ai->awaitingContinuationClarification)
     {
         m_ai->awaitingContinuationClarification = false;
@@ -6725,11 +6725,8 @@ void ApplicationWindow::askAi(const QString &text, bool autoRun, bool forceConso
         return;
     }
 
-    // Guards all three "run it"/"run it again"/"run Q4" fast paths against firing while another request is in flight —
-    // none otherwise check this (unlike normal dispatch, which beginRequest() now rejects up front). Confirmed live:
-    // without this, a fast path during an in-flight error-retry ran concurrently with it, producing garbled,
-    // interleaved output. Same rejection message as beginRequest()'s busy check, just reached earlier — non-matching
-    // text skips this and still reaches beginRequest()'s check further down, unchanged.
+    // Guards the run-it/run-it-again/run-history fast paths against firing while busy — confirmed live without
+    // this, one ran concurrently with an in-flight error-retry and interleaved garbled output.
     if (m_ai->isBusy() && (AiAssistant::looksLikeRunItRequest(text) || AiAssistant::looksLikeRunItAgainRequest(text) ||
                            AiAssistant::looksLikeRunHistoryIndexRequest(text, nullptr)))
     {
@@ -6738,36 +6735,28 @@ void ApplicationWindow::askAi(const QString &text, bool autoRun, bool forceConso
         return;
     }
 
-    // "run it"/"execute that" referring to the just-shown, not-yet-run script — literal, unambiguous, so handled
-    // directly instead of going back through the model to reinterpret it. Confirmed live: re-asking the model for this
-    // exact case produced a hallucinated, unrelated answer instead of recognizing its own just-shown script. Must run
-    // BEFORE anything else touches m_history this turn — runLastScript() reads m_history.last(), only still the
-    // previous turn's entry as long as nothing from THIS turn has been appended yet.
+    // "run it" for the just-shown script — handled directly (confirmed live: re-asking the model hallucinated an
+    // unrelated answer). Must run before anything else appends to m_history this turn.
     if (m_ai->hasUnrunLastScript() && AiAssistant::looksLikeRunItRequest(text))
     {
-        // echoAiRequest() would otherwise only run later, in normal-dispatch tail — every fast path needs its own call,
-        // or the request never appears in the log, looking unprompted. Confirmed live: exactly that, right before this
-        // fix. The "running ... directly" confirmation is printed by runLastScript(), not here — only known true/false
-        // once the mechanical detectKnownMistakes() check inside it has run; printing it here unconditionally was
-        // confirmed wrong when a correction cycle fired right after "no re-generation needed" was already shown.
+        // echoAiRequest() needed here or the request never appears in the log (confirmed live). The confirmation
+        // message prints inside runLastScript() instead, since it depends on the mistake-check running first.
         echoAiRequest(text);
         m_ai->runLastScript("▸▸▸ AI: running the previously shown script directly (no re-generation needed).");
         return;
     }
-    // "run it again" — distinct from the check above: "again" is an explicit signal the user
-    // wants a repeat regardless of whether the last script already ran (autoRun on, or just
-    // consumed by the fast path above on an earlier turn), so this only needs a last script to
-    // exist at all, not hasUnrunLastScript() specifically.
+
+    // "run it again" wants a repeat regardless of whether the last script already ran,
+    // so it only needs a last script to exist, not hasUnrunLastScript() specifically.
     if (m_ai->historySize() > 0 && AiAssistant::looksLikeRunItAgainRequest(text))
     {
         echoAiRequest(text);
         m_ai->runLastScript("▸▸▸ AI: running the previous script again directly (no re-generation needed).");
         return;
     }
-    // "run Q4"/"run A4" — an explicit index into "history"'s own Q/A numbering, not just "the
-    // last turn". Valid even for a turn before the current context boundary — history/execution
-    // by reference is unaffected by what's excluded from the MODEL's context (see
-    // m_contextHistoryStart's doc comment).
+
+    // "run Q4"/"run A4" — an explicit history index, valid even before the context boundary
+    // (see m_contextHistoryStart's doc comment).
     int historyIndex = 0;
     if (AiAssistant::looksLikeRunHistoryIndexRequest(text, &historyIndex))
     {
@@ -6790,10 +6779,8 @@ void ApplicationWindow::askAi(const QString &text, bool autoRun, bool forceConso
 
     m_aiForceConsole = forceConsole;
 
-    // LIST mode — see AiAssistant::parseListRequest()'s doc comment. Checked before the normal
-    // "SPLIT:"/"NOSPLIT:" single-request marker below: LIST is a completely different dispatch
-    // path (N independent full requests run in sequence, not one request that may itself split),
-    // so a match here must never fall through to parseSplitMarker()/beginRequest() at all.
+    // LIST mode (see parseListRequest()) is a separate dispatch path — checked first so a match never falls
+    // through to parseSplitMarker()/beginRequest() below.
     const AiAssistant::ParsedListRequest parsedList = AiAssistant::parseListRequest(text);
     if (parsedList.isList)
     {
@@ -6820,6 +6807,7 @@ void ApplicationWindow::askAi(const QString &text, bool autoRun, bool forceConso
         // (losing split decomposition here), no print since this is now normal behavior, not worth announcing.
         wantsSplit = false;
     }
+
     // Chained onto effectiveText (already stripped of SPLIT/NOSPLIT), so REVIEW/NOREVIEW work
     // together with either marker in any order/position.
     m_ai->setSelfReviewEnabled(
