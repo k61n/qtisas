@@ -8,6 +8,9 @@ endif ()
 
 project(qtisas VERSION 0.17.1 LANGUAGES C CXX)
 
+option(BUILD_TESTING "Build QtiSAS tests" OFF)
+include(CTest)
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
@@ -149,6 +152,10 @@ if (WIN32)
     elseif (CMAKE_CXX_COMPILER_ID MATCHES "MSVC|Clang")
         target_link_options(qtisas PRIVATE /SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup)
     endif()
+endif ()
+
+if (BUILD_TESTING)
+    add_subdirectory(qtisas/tests)
 endif ()
 
 ########################################################################################################################

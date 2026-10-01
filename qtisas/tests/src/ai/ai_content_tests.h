@@ -1,0 +1,469 @@
+/******************************************************************************
+Project: QtiSAS
+License: GNU GPL Version 3 (see LICENSE)
+Copyright (C) by the authors:
+    2026 Vitaliy Pipich <v.pipich@gmail.com>
+Description: test functions of ai_content_tests.cpp (a header, so that AUTOMOC needs no .moc include)
+ ******************************************************************************/
+
+#ifndef AI_CONTENT_TESTS_H
+#define AI_CONTENT_TESTS_H
+
+#include <QObject>
+
+class AiContentTests : public QObject
+{
+    Q_OBJECT
+
+  private slots:
+    // ---- Direction 1: graph overreach ----
+    static void scriptPrintMultiArg_namesEveryOffendingCall();
+    static void selfShadowBug_namesEverySelfShadowedVariable();
+    static void scopeViolation_reportsEveryDirectionAtOnce();
+    static void direction1_blocksUnrelatedNewGraph();
+    static void direction1_allowsWhenDescriptionMentionsPlotting();
+    static void direction1_catchesNewPlot3DOverreach();
+    static void direction1_allowsSurfaceDescriptionWithoutPlotWord();
+
+    // ---- Live project-state facts (replaces the generate-only existence round-trip) ----
+    static void liveFacts_reportsMissingNameAsUnknownNotAbsent();
+    static void liveFacts_reportsExistingKind();
+    static void liveFacts_translatesInternalKindLabels();
+    static void liveFacts_mixesUnknownAndExistingIndependently();
+    static void liveFacts_emptyWhenNothingToReport();
+    static void maximizeWindow_unconditionalInsideElseIsNotFlagged();
+    static void maximizeWindow_trulyGatedIsStillFlagged();
+    static void deliverables_plotResultsCountsAsTheFitCurve();
+    static void knownMistakes_fitBeforeConfigureIsCaught();
+    static void knownMistakes_scanGroupsAfterSetFunctionNameIsCaught();
+    static void direction3_quotedTableAndGraphNamesDoNotCountAsFunctionNames();
+    static void direction3_quotedFunctionNameStillEnforced();
+    static void windowName_camelCaseTracesBackToTheDescription();
+    static void windowName_unrelatedNameStillRejected();
+    static void deliverables_flagsMissingResidualsAndFitCurve();
+    static void deliverables_guardClauseDoesNotTrip();
+    static void deliverables_silentWhenEverythingDelivered();
+    static void deliverables_ignoresFitMentionedOnlyToExcludeIt();
+    static void deliverables_separatesAddingATabFromActivatingOne();
+    static void deliverables_creatingANoteWithAScriptTabNeedsNoAddTab();
+    static void extraction_enumerationCommaDoesNotHideCreationVerb();
+    static void extraction_commaThenStillStartsANewClause();
+
+    // ---- Direction 2: fit underreach ----
+    static void direction2_blocksMissingFitCall();
+    static void direction2_allowsRealFit();
+    static void direction2_catchesRefitPrefix();
+
+    // ---- Direction 3: compile overreach ----
+    static void direction3_allowsBareNameMatchingAiPrefixed();
+    static void direction3_blocksUnrelatedFunctionName();
+    static void direction3_allowsInventedNameWhenDescriptionNamesNoFunction();
+    static void direction3_blocksSecondCompileCallEvenWhenDescriptionNamesNoFunction();
+
+    // ---- Direction 4: compile underreach ----
+    static void direction4_blocksMissingCompileCall();
+    static void direction4_catchesRecompilePrefix();
+
+    // ---- Direction 5: wrong target window ----
+    static void direction5_blocksMismatchedWindowName();
+    static void direction5_allowsMatchingWindowName();
+    static void direction5_blocksMismatchedNewPlot3DName();
+    static void direction5_allowsSanitizedFormulaNameMatch();
+    static void direction5_suggestsPlainWordFallbackOnDeadlock();
+    static void direction5_allowsReorderedWordTokenMatch();
+
+    // ---- Direction 6: cross-part function mismatch ----
+    static void direction6_blocksBareNameMatchingEarlierCompile();
+    static void direction6_allowsAlreadyQualifiedName();
+
+    // ---- Direction 7: hallucinated fitCurve name ----
+    static void direction7_blocksNameNotActuallyCompiled();
+    static void direction7_allowsNameThatWasCompiled();
+
+    // ---- Direction 8: unnamed 3D surface ----
+    static void direction8_blocksPlot3DCreateWithoutSetWindowName();
+    static void direction8_allowsPlot3DCreateWithSetWindowName();
+    static void direction8_allowsPlot3DLookupForm();
+
+    // ---- Direction 9: cross-type name confusion ----
+    static void direction9_blocksMatrixLookupOnTableName();
+    static void direction9_blocksExistTableOnMatrixName();
+    static void direction9_allowsConsistentTableUsage();
+    static void direction9_allowsConsistentMatrixUsage();
+    static void direction10_blocksReusingSourceNameForNewWindow();
+    static void direction10_allowsDistinctNewWindowName();
+    static void direction10_allowsNoExistingLookupAtAll();
+    static void direction11_blocksGraphWindowLookupOnGraph3DName();
+    static void direction11_blocksGraphWindowLookupOnNewPlot3DName();
+    static void direction11_allowsPlot3DLookupOnGraph3DName();
+    static void direction11_allowsGraphWindowLookupOnUnrelatedName();
+    static void direction12_blocksMissingPlotCall();
+    static void direction12_allowsRealPlot();
+    static void direction12_allowsStylingOnlyDescriptionWithoutDataWord();
+    static void direction12_allowsWhenDescriptionHasNoPlotVerb();
+    static void direction14_blocksMissingSimulateCall();
+    static void direction14_allowsRealSimulateCall();
+    static void direction14_allowsPastTenseAdjectiveDescriptionWithoutSimulateVerb();
+    static void direction15_blocksCrossPartVariableLeakage();
+    static void direction15_allowsWhenNameIsReassignedLocally();
+    static void direction15_allowsCommonShortAliasesAcrossParts();
+
+    // ---- Self-review fabrication backstops ----
+    static void giveUpFallback_detectsSingleLinePrint();
+    static void giveUpFallback_rejectsMultiLineScript();
+    static void unverifiedMissingClaim_flagsBareAssertion();
+    static void unverifiedMissingClaim_allowsRealVerificationCall();
+    static void unverifiedMissingClaim_flagsNonexistentExistGraphCall();
+    static void unverifiedMissingClaim_allowsRealMatrixVerificationCall();
+    static void functionNameSubstitution_blocksUngroundedRename();
+    static void functionNameSubstitution_allowsUnchangedName();
+    static void functionNameSubstitution_ignoresCompilerSetFunctionName();
+    static void creationNameSubstitution_blocksDroppedUnderscore();
+    static void creationNameSubstitution_allowsUnchangedName();
+    static void creationNameSubstitution_ignoresDifferentObjectKinds();
+    static void exploreGroupsIgnoredMistake_blocksUnmatchedGroup();
+    static void exploreGroupsIgnoredMistake_allowsReusedGroup();
+    static void exploreGroupsIgnoredMistake_allowsNoSetGroupCall();
+    static void exploreGroupsIgnoredMistake_allowsExploreOutputWithNoGroupsListing();
+    static void falseIncompletenessClaim_blocksGiveUpAfterRealTableCreation();
+    static void falseIncompletenessClaim_allowsGenuineGiveUpWithNoRealWork();
+    static void falseIncompletenessClaim_allowsNonGiveUpScript();
+
+    // ---- Compile-defect / fitCurve-name mechanical checks ----
+    static void selfShadowBug_detectsSelfReferentialDeclaration();
+    static void selfShadowBug_allowsNormalAliasing();
+    static void explorePrefix_truncatesIndentedWriteCall();
+    static void explorePrefix_ignoresWriteCallNameInsideString();
+    static void direction15_allowsParamNameMatchingEarlierPartVariable();
+    static void yNameRepair_fixesEverySetCodeNotJustTheFirst();
+    static void yNameNeverAssigned_flagsSecondBodyWhenFirstIsFine();
+    static void yNameRepair_dropsTypeKeywordOnYNameDeclaration();
+    static void yNameRepair_retargetsRenamedDeclaration();
+    static void yNameRepair_refusesWithSeveralDeclarations();
+    static void yNameRepair_leavesCorrectBodyAlone();
+    static void paramCountRepair_correctsCountToAgreedListLength();
+    static void paramCountRepair_leavesConsistentCountAlone();
+    static void paramCountRepair_refusesWhenListsDisagree();
+    static void paramCountRepair_ignoresScriptWithoutParamCount();
+    static void discoveredName_detectsWildcardSearchInsteadOfRequestedName();
+    static void discoveredName_allowsRequestedNameUsedVerbatim();
+    static void discoveredName_allowsExactCheckWithWildcardFallback();
+    static void discoveredName_allowsWildcardSearchWithoutConfigure();
+    static void discoveredName_ignoresRequestNamingNoModel();
+    static void yNameNeverAssigned_detectsRenamedVariable();
+    static void yNameNeverAssigned_allowsPlainAssignment();
+    static void yNameNeverAssigned_allowsCompoundAssignment();
+    static void yNameNeverAssigned_ignoresWhenYNameNotStated();
+    static void redeclaredReservedName_ignoresYNameOnlyClash();
+    static void redeclaredReservedName_detectsSilentParameterShadowing();
+    static void redeclaredReservedName_allowsOwnIntermediateLocals();
+    static void fitCurveMismatch_detectsBareReconstructionAfterQualifiedCheck();
+    static void fitCurveMismatch_allowsConsistentQualifiedUsage();
+    static void autoexecImmediateRun_blocksUnrequestedExecute();
+    static void autoexecImmediateRun_allowsWhenRequestAsksToRunNow();
+    static void autoexecImmediateRun_allowsAutoexecWithoutExecute();
+    static void zeroBasedIndex_blocksZeroColumnInSetColumnRole();
+    static void zeroBasedIndex_blocksZeroColumnInSetCell();
+    static void zeroBasedIndex_blocksZeroRowInSetCell();
+    static void zeroBasedIndex_allowsCorrectOneBasedIndices();
+    static void zeroBasedIndex_allowsMatrixOneBasedIndices();
+    static void scriptPrintMultiArg_blocksLeadingStringLiteralThenComma();
+    static void scriptPrintMultiArg_blocksWithSingleQuotedLabel();
+    static void scriptPrintMultiArg_allowsSingleStringArgument();
+    static void scriptPrintMultiArg_allowsConcatenatedString();
+    static void changeFolderNoOp_blocksBareActiveFolderRoundTrip();
+    static void changeFolderNoOp_allowsForceTrueSecondArgument();
+    static void changeFolderNoOp_allowsChangeFolderToADifferentFolder();
+    static void tableCellSwap_blocksLoopVarFirstLiteralSecond();
+    static void tableCellSwap_blocksWithNewTableAssignment();
+    static void tableCellSwap_allowsCorrectColFirstOrder();
+    static void tableCellSwap_allowsNonTableReceiver();
+    static void setCodeNestedFunction_blocksInlineDefinition();
+    static void setCodeNestedFunction_blocksViaVariableIndirection();
+    static void setCodeNestedFunction_allowsDirectAssignment();
+    static void compilerFittableOnlyMethod_blocksSetParamLimitsOnCompiler();
+    static void compilerFittableOnlyMethod_blocksSetParamSharedOnCompiler();
+    static void compilerFittableOnlyMethod_allowsOnFittableReceiver();
+    static void setParamNamesMissingAll_blocksBareCall();
+    static void setParamNamesMissingAll_allowsRealAllVariant();
+    static void compilerNonexistentMethod_blocksSetFunctionCode();
+    static void compilerNonexistentMethod_blocksCompileWithNameArgument();
+    static void compilerNonexistentMethod_allowsPlainCompileCall();
+    static void compilerSetCodeCppSyntax_blocksDoubleStarInVariableIndirection();
+    static void compilerSetCodeCppSyntax_blocksParaMIndexing();
+    static void compilerSetCodeCppSyntax_allowsPowAndNamedParameters();
+    static void compilerMissingAiNamespace_blocksBareNameWithCompile();
+    static void compilerMissingAiNamespace_allowsAiPrefixedName();
+    static void compilerMissingAiNamespace_allowsWithoutCompileCall();
+    static void plotDesignationCase_blocksLowercaseX();
+    static void plotDesignationCase_allowsRealMembers();
+    static void staleFitStatistic_blocksHardcodedChi2WithNoFitOrFitCurve();
+    static void staleFitStatistic_allowsFreshFitCall();
+    static void staleFitStatistic_allowsFitCurveTableRead();
+    static void staleFitStatistic_blocksHardcodedWinnerVarDespiteUnrelatedFitCall();
+    static void staleFitStatistic_allowsHardcodedPlaceholderLaterReassignedLive();
+    static void missingLegendCreation_blocksStyleOnlyIfNotNone();
+    static void missingLegendCreation_allowsNewLegendFallback();
+    static void missingLegendCreation_allowsPureReadNoStyling();
+    static void modelNameSubstitution_blocksUnannouncedSwap();
+    static void modelNameSubstitution_allowsExactRequestedName();
+    static void modelNameSubstitution_allowsAnnouncedSwap();
+    static void modelNameSubstitution_allowsNoQuotedModelInRequest();
+    static void reuseInsteadOfCompile_blocksConfigureWithNoCompileCall();
+    static void reuseInsteadOfCompile_allowsRealCompileCall();
+    static void reuseInsteadOfCompile_allowsFitOnlyRequestWithNoCompileWord();
+    static void reuseInsteadOfCompile_allowsSplitModePartReusingEarlierPartsCompile();
+    static void requestedCreation_blocksTableNeverCreated();
+    static void requestedCreation_allowsRealNewTableCall();
+    static void requestedCreation_allowsRequestWithNoCreateWord();
+    static void requestedCreation_allowsSplitModePartReusingEarlierPartsCreation();
+    static void requestedCreation_allowsSplitModePartDeferringToLaterPartsCreation();
+    static void requestedCreation_blocksMatrixNeverCreated();
+    static void hardcodedWinner_blocksHardcodedWinnerWithNoLiveComparison();
+    static void hardcodedWinner_allowsNonSplitModeWithEmptyEarlierPartsCode();
+    static void hardcodedWinner_allowsRequestWithNoComparisonLanguage();
+    static void hardcodedWinner_allowsScriptWithOwnLiveComparison();
+    static void hardcodedWinner_allowsWhenOnlyOneCandidateWasFitEarlier();
+    static void legendMethod_blocksSetPen();
+    static void legendMethod_allowsRealMethods();
+    static void windowLayerMethod_blocksReplotOnWindow();
+    static void windowLayerMethod_blocksSetXTitleOnWindow();
+    static void windowLayerMethod_allowsMethodOnActiveLayer();
+    static void windowLayerMethod_allowsReassignedToLayer();
+    static void conditionalMaximize_blocksGatedBehindReuseCheck();
+    static void conditionalMaximize_allowsUnconditionalCall();
+    static void conditionalMaximize_allowsNoStackedPanelRecipe();
+    static void conditionalMaximize_allowsFreshGraphAlways();
+    static void curveExistenceGuard_blocksBareLiteralComparison();
+    static void curveExistenceGuard_blocksBareIdentifierComparison();
+    static void curveExistenceGuard_allowsDynamicReconstruction();
+    static void curveExistenceGuard_allowsWhenNoInsertCurveFollows();
+    static void curveExistenceGuard_allowsVariableAssignedViaReconstruction();
+    static void curveExistenceGuard_blocksVariableAssignedViaHardcodedLiteral();
+    static void windowNameMethod_blocksMethodCallForm();
+    static void windowNameMethod_allowsFreeFunctionForm();
+    static void windowNameMethod_allowsNoSetWindowNameAtAll();
+    static void existMatrix_blocksNonexistentCall();
+    static void existMatrix_allowsRealExistenceCheck();
+    static void fittableSelectStageBeforeFunction_blocksSimulateBeforeConfigure();
+    static void fittableSelectStageBeforeFunction_allowsConfigureFirst();
+    static void fittableSelectStageBeforeFunction_allowsSelectStageInitAlone();
+    static void fittableSelectStageBeforeFunction_allowsSetFunctionFirst();
+    static void creationChain_blocksChainedSetterCall();
+    static void creationChain_allowsSingleChainedCall();
+    static void creationChain_allowsSeparateStatements();
+    static void splitPlanFinal_extractsSectionAfterMarker();
+    static void splitPlanFinal_returnsWholeTextWhenNoMarker();
+    static void splitPlanFinal_ignoresCheckSectionBeforeFinal();
+    static void splitPlanFinal_toleratesDashCountVariation();
+    static void splitPlanFinal_handlesBracketedDoubleMarker();
+    static void splitPlanFinal_fallsBackToDraftWhenMarkerTrailsEmpty();
+    static void unwrapScriptPrint_rewritesOneCallPerLine();
+    static void unwrapScriptPrint_rewritesSingleCallWithEscapedNewlines();
+    static void unwrapScriptPrint_leavesPlainPartLinesUnchanged();
+    static void unwrapScriptPrint_thenFinalSection_extractsRealPlanFromWrappedResponse();
+    static void lookupRegression_blocksMatrixLookupReplacedByCreation();
+    static void lookupRegression_allowsConsistentLookupInBoth();
+    static void lookupRegression_allowsGenuineCreationInBoth();
+    static void lookupRegression_allowsLookupOrCreateIdiomUnchangedByReview();
+    static void qti3DImport_blocksPyQt6ModulePath();
+    static void qti3DImport_blocksQtiModulePath();
+    static void qti3DImport_blocksBareImport();
+    static void qti3DImport_blocksSubmoduleForm();
+    static void qti3DImport_allowsRealQtiModuleImport();
+    static void qti3DImport_allowsGlobalUsageWithNoImport();
+    static void setAutoexec_blocksOnCurrentEditor();
+    static void setAutoexec_blocksOnTabCall();
+    static void setAutoexec_allowsOnNoteObject();
+    static void plotStyleString_blocksSetPlotStyle();
+    static void plotStyleString_blocksCustomPlotStyle();
+    static void plotStyleString_allowsQti3DConstant();
+    static void missingPyQtImport_blocksUnimportedQColor();
+    static void missingPyQtImport_blocksUnimportedQtNamespace();
+    static void missingPyQtImport_allowsWithImport();
+    static void missingPyQtImport_allowsQualifiedReference();
+    static void missingPyQtImport_allowsBareHexColor();
+    static void missingRandomImport_blocksUnimportedUsage();
+    static void missingRandomImport_allowsWithImport();
+    static void missingRandomImport_allowsNumpyRandomReference();
+    static void missingRandomImport_allowsVariableNamedRandomPrefix();
+    static void bareColumnNameInColumnsList_blocksBareLiteral();
+    static void bareColumnNameInColumnsList_allowsQualifiedName();
+    static void bareColumnNameInColumnsList_allowsUnrelatedColumnsListUse();
+    static void enumRegression_blocksQti3DConstantReplacedByString();
+    static void enumRegression_allowsConstantUnchanged();
+    static void enumRegression_allowsUnrelatedEditWithCallRemoved();
+    static void compileSequenceRegression_blocksDroppedSetupCalls();
+    static void compileSequenceRegression_allowsCompleteSequenceUnchanged();
+    static void compileSequenceRegression_allowsWhenNeitherCompiles();
+    static void pyQtVersionSubstitution_blocksPyQt6ChangedToPyQt5();
+    static void pyQtVersionSubstitution_blocksPyQt5ChangedToPyQt6();
+    static void pyQtVersionSubstitution_allowsSameVersionUnchanged();
+    static void pyQtVersionSubstitution_allowsWhenNeitherImportsQt();
+    static void fabricatedSetCode_blocksAddedSetCodeForReusedFunction();
+    static void fabricatedSetCode_allowsWhenDraftAlreadyHasSetCode();
+    static void fabricatedSetCode_allowsWhenNeitherAddsSetCode();
+    static void guessedNameList_blocksFirstMatchViaIndexZero();
+    static void guessedNameList_blocksColumnNameMembershipGuessing();
+    static void guessedNameList_allowsProcessingAllMatches();
+    static void guessedNameList_allowsSingleNameLoop();
+    static void fragmentedPrint_blocksLongRunOfStaticLines();
+    static void fragmentedPrint_allowsShortRun();
+    static void fragmentedPrint_allowsComputedValuesInLoop();
+    static void doubleEscapedRawRegex_blocksDoubledBackslashWordBoundary();
+    static void doubleEscapedRawRegex_allowsSingleBackslash();
+    static void doubleEscapedRawRegex_allowsWhenNoReCallPresent();
+    static void doubleEscapedRawRegex_allowsWhenNoDoubledEscapePresent();
+    static void singletonConstructor_blocksCompilerCalledAsConstructor();
+    static void singletonConstructor_blocksFittableCalledAsConstructor();
+    static void singletonConstructor_allowsBareSingletonUsage();
+    static void frameStyleCombo_blocksQFrameShapeShadowCombo();
+    static void frameStyleCombo_blocksFullyQualifiedForm();
+    static void frameStyleCombo_allowsNativeFrameStyleValue();
+    static void frameStyleCombo_allowsWhenNoSetFrameStyleCall();
+    static void explorePrefix_truncatesAtTopLevelWriteCall();
+    static void explorePrefix_allowsPureReadOnlyScript();
+    static void explorePrefix_ignoresWriteCallInsideIndentedBlock();
+    static void explorePrefix_truncatesAtCompilerAuthoringCall();
+    static void explorePrefix_truncatesAtFittableConfigureCall();
+
+    // ---- detectKnownMistakes() dispatch (public consolidation of the 25 checks above,
+    // collecting ALL matches rather than stopping at the first) ----
+    static void detectKnownMistakes_emptyWhenNothingMatches();
+    static void detectKnownMistakes_reportsHeaderAndExplanationOnMatch();
+    static void detectKnownMistakes_collectsAllMatchesInPriorityOrder();
+    static void detectKnownMistakes_exploreScriptSkipsActionNeverHappenedChecks();
+    static void detectKnownMistakes_exploreScriptStillReportsRealDefects();
+    static void detectKnownMistakes_passesOriginalRequestTextThrough();
+    static void detectKnownMistakes_passesEarlierPartsCodeThrough();
+
+    // ---- retryHintForError() ----
+    static void retryHint_constructorMistake();
+    static void retryHint_fittableMethodGuessing();
+    static void retryHint_compilerFitFunctionsCrossSingleton();
+    static void retryHint_fitCurveHardcodedRow();
+    static void retryHint_missingQtImport();
+    static void retryHint_setWindowNameCollisionSuggestsNewPlot3D();
+    static void retryHint_emptyForUnrelatedError();
+
+    // ---- AiAssistant.cpp internal free functions ----
+    static void filterDocs_selectsNamedTopicOnly();
+    static void filterDocs_emptyTopicsReturnsEverything();
+    static void splitPartTopics_fittableSynonymOverridesNone();
+    static void splitPartTopics_graph3dSynonymOverridesNone();
+    static void splitPartTopics_fittableSynonymCatchesSimulate();
+    static void splitPartsMissingCreationName_catchesPlotWithoutName();
+    static void splitPartsMissingCreationName_acceptsQuotedTableName();
+    static void splitPartsMissingCreationName_catchesSurfaceWithoutName();
+    static void splitPartsMissingCreationName_acceptsQuotedSurfaceName();
+    static void splitPlanCoverage_blocksMissingFitCompareplot();
+    static void splitPlanCoverage_allowsFullyCoveredPlan();
+    static void splitPlanCoverage_allowsWhenRequestNeverMentionsTheAction();
+    static void splitPlanCoverage_allowsExplicitlyNegatedFit();
+    static void splitPlanCoverage_ignoresModelSubstringInsideSasviewmodels();
+    static void splitPlanCoverage_catchesDroppedSimulatePart();
+    static void splitPlanOverreach_blocksInventedAnalysisPipelineForPlainTableRequest();
+    static void splitPlanOverreach_allowsPlanFullyWithinRequestedScope();
+    static void splitPlanOverreach_catchesUnrequestedSimulate();
+    static void splitPlanOverreach_allowsWhenNeitherPlanNorRequestMentionTheAction();
+    static void splitPlanFragments_blocksOriginalConfirmedFillIncident();
+    static void splitPlanFragments_chainsThroughWholeStylingChainAfterPlotCreation();
+    static void splitPlanFragments_allowsGenuineDistinctActionAfterCreation();
+    static void splitPlanFragments_chainsThroughNamedPlotSuffixVariant();
+    static void splitPlanFragments_catchesPlotAsDirectObjectOfLeadingVerb();
+    static void reconcileCompiledName_rewritesBareReferencesToMatchCanonical();
+    static void reconcileCompiledName_leavesConsistentPlanUnchanged();
+    static void reconcileCompiledName_ignoresUnrelatedQuotedNames();
+    static void splitPartsMissingCreationName_catchesPlotCurveWithoutName();
+    static void isEmptyActionScript_detectsCommentsOnlyScript();
+    static void isEmptyActionScript_detectsBlankScript();
+    static void isEmptyActionScript_allowsRealCode();
+    static void isEmptyActionScript_allowsCodeWithComments();
+    static void inventedMergePartNumbers_detectsPartsBeyondPlanSize();
+    static void inventedMergePartNumbers_allowsExactPartCount();
+    static void inventedMergePartNumbers_allowsScriptWithNoMarkers();
+    static void inventedMergeImports_detectsImportNeverUsedInParts();
+    static void inventedMergeImports_allowsImportsPresentInParts();
+    static void extractExistingEntityNames_findsExistingBeforeQuote();
+    static void extractExistingEntityNames_findsExistingTablePhrasing();
+    static void extractExistingEntityNames_emptyWithoutExistingKeyword();
+    static void extractExistingEntityNames_dedupesRepeatedName();
+    static void missingEntityNames_findsMissingMarker();
+    static void missingEntityNames_emptyWhenAllExist();
+    static void missingEntityNames_labeledPerCheckMissingDoesNotOverrideVerdict();
+    static void missingEntityNames_selfContradictingVerdictFailsOpen();
+    static void missingEntityNames_knownKindTrustsOnlyItsOwnLabel();
+    static void splitPlanCreationNames_collectsCompileAndTableNames();
+    static void splitPlanCreationNames_mergedCompileAndSimulateKeepsCompileLabels();
+    static void splitPlanCreationNames_mergedCreateTableAndPlotKeepsTableLabel();
+    static void splitPlanCreationNames_ignoresReferenceOnlyParts();
+    static void splitPlanCreationNames_checksNoteCreationToo();
+    static void splitPlanCreationNames_skipsExistingReferenceFindsQualifiedCreation();
+    static void dedupeSplitPlanExactDuplicateParts_removesNonAdjacentDuplicates();
+    static void dedupeSplitPlanExactDuplicateParts_leavesDistinctPartsAlone();
+    static void mechanicalAlternateSplitPlanName_picksUnusedSuffix();
+    static void mechanicalAlternateSplitPlanName_skipsSuffixAlreadyInPlan();
+    static void mechanicallyRenameSplitPlanCollisions_updatesEveryPart();
+    static void splitPlanCreationCollisions_ignoresUnrelatedKindForSameName();
+    static void splitPlanCreationCollisions_findsMatchingLabeledLine();
+    static void splitPlanCreationCollisions_flagsCollisionEvenWithContradictingMissingLine();
+    static void splitPlanCollisionsAfterSandboxExemption_exemptsAiPrefixedCompileCollision();
+    static void splitPlanCollisionsAfterSandboxExemption_leavesNonAiCollisionBlocking();
+    static void splitPlanCollisionsAfterSandboxExemption_leavesAiTableCollisionBlocking();
+    static void splitPlanCreationNames_ignoresIncidentalQuotedParameter();
+    static void splitPlanCreationNames_scriptTabNameIsNotAWindow();
+    static void splitPlanCreationNamesNeedingCheck_skipsSandboxExemptEntry();
+    static void existingEntityVerificationPrompt_mentionsAllNames();
+    static void existingEntityVerificationPrompt_windowOnlyOmitsFunctionChecks();
+    static void existingEntityVerificationPrompt_functionOnlyOmitsWindowCheck();
+    static void existingEntityVerificationPrompt_unknownKindAsksAllThree();
+    static void existingEntityVerificationPrompt_windowOnlyOmitsFunctionRegistryMechanics();
+    static void existingEntityVerificationPrompt_dataProbeAsksForRowCount();
+    static void existingEntityVerificationPrompt_dataProbeOmittedForFunctionOnlyNames();
+    static void extractExistingEntityNames_findsBareTableNounAnywhere();
+    static void extractExistingEntityNames_skipsCreationTargets();
+    static void extractExistingEntityNames_plotIntoGraphIsCreation();
+    static void assignSplitPlanCreationNames_namesTheItem6Deadlock();
+    static void assignSplitPlanCreationNames_leavesAlreadyNamedPartsAlone();
+    static void mergeSplitPlanUnnecessaryFragments_collapsesTheItem6Plan();
+    static void mergeSplitPlanUnnecessaryFragments_collapsesAChain();
+
+    // ---- AiAssistant public statics ----
+    static void extractAvailableBlock_findsListedAlternatives();
+    static void normalizeErrorForDedup_stripsLineNumbers();
+    static void normalizeErrorForDedup_stripsFitTimingNoise();
+    static void normalizeErrorForDedup_stripsQuotedSourceLineDifferences();
+    static void normalizeErrorForDedup_stillDistinguishesRealDifferences();
+    static void functionNotFoundNameFromError_extractsName();
+    static void functionNotFoundNameFromError_emptyForUnrelatedError();
+    static void compiledFunctionNamesFromHistory_findsNamesAcrossTurns();
+    static void compiledFunctionNamesFromHistory_dedupesRepeatedName();
+    static void compiledFunctionNamesFromHistory_emptyWhenHistoryHasNone();
+    static void parseSplitMarker_stripsExplicitMarker();
+    static void parseExploreMarker_noExploreWinsOverSubstring();
+    static void parseExploreMarker_explicitExploreOverridesDefaultOff();
+    static void parseExploreMarker_untouchedTextKeepsDefault();
+    static void parseExploreMarker_combinesWithSplitAndReviewMarkers();
+    static void parseListRequest_stripsExploreMarkersFromRegion();
+    static void parseListRequest_markersOnlyRegionLeavesNoInstructionBlock();
+    static void looksLikeNewTaskReply_detectsNewKeyword();
+    static void looksLikeNewTaskReply_detectsUnrelatedKeyword();
+    static void looksLikeNewTaskReply_defaultsToContinueForContinuePhrasing();
+    static void looksLikeNewTaskReply_defaultsToContinueForAmbiguousReply();
+
+    // ---- Repetition-loop truncation ----
+    static void truncateRepetitiveGarbage_leavesHealthyCodeAlone();
+    static void truncateRepetitiveGarbage_allowsLegitimateDoubledLine();
+    static void truncateRepetitiveGarbage_keepsExactlyOnePassOfCyclingBlock();
+    static void truncateRepetitiveGarbage_cutsCycleAtItsOwnOpeningLines();
+    static void truncateRepetitiveGarbage_keepsLooseCutForStagedProtocol();
+    static void truncateRepetitiveGarbage_neverEndsOnADanglingBlockHeader();
+    static void truncateRepetitiveGarbage_leavesResponseAloneWhenNothingSalvageable();
+
+    // ---- Real-request regression fixture (ai-test-requests.md) ----
+    static void realRequests_data();
+    static void realRequests();
+    static void realRequestsFixture_collectsAllEntriesCleanly();
+};
+
+#endif
