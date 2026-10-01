@@ -10,9 +10,10 @@ Description: Table(s) fitting interface
 #include <QDockWidget>
 #include <QUrl>
 
-#include "fittable18.h"
 #include "Folder.h"
+#include "fittable18.h"
 #include "globals.h"
+#include "number-validator.h"
 #include "numericLocale.h"
 
 fittable18::fittable18(QWidget *parent)
@@ -21,6 +22,14 @@ fittable18::fittable18(QWidget *parent)
     setupUi(this);
     connectSlot();
     initFITTABLE();
+
+    // Number fields of the ranges and of Fit-Control: numbers only, in the numerical format, converted when it
+    // changes; tolerances, steps, integration errors, rates and the minimal intensity are not negative
+    for (QLineEdit *edit : {lineEditFromQsim, lineEditToQsim, lineEditFromQ, lineEditToQ, lineEditTolerance})
+        new NumberValidator(edit);
+    for (QLineEdit *edit : {lineEditImin, lineEditAbsErr, lineEditRelErr, lineEditAbsErrPoly, lineEditRelErrPoly,
+                            lineEditSelectionRate, lineEditMutationRate, lineEditSTEP, lineEditToleranceAbs})
+        (new NumberValidator(edit))->setBottom(0);
     d_widgetLocale = locale();
 }
 
@@ -162,11 +171,8 @@ void fittable18::convertWidgetNumbers(const QLocale &from, const QLocale &to)
         convertItem(tableCurves->item(2, col), false);
         convertItem(tableCurves->item(3, col), false);
     }
-    // ... and the Fit-Control fields (tolerances, derivative step, integration errors, GenMin rates)
-    for (QLineEdit *edit :
-         {textLabelRangeFirst, textLabelRangeLast, lineEditFromQsim, lineEditToQsim, lineEditImin, lineEditFromQ,
-          lineEditToQ, lineEditTolerance, lineEditToleranceAbs, lineEditSTEP, lineEditAbsErr, lineEditRelErr,
-          lineEditAbsErrPoly, lineEditRelErrPoly, lineEditSelectionRate, lineEditMutationRate})
+    // ... and the simulation's data range (the other number fields are converted by their NumberValidator)
+    for (QLineEdit *edit : {textLabelRangeFirst, textLabelRangeLast})
     {
         const bool blocked = edit->blockSignals(true);
         edit->setText(NumericLocale::convert(edit->text(), from, to));

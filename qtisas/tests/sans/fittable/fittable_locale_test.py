@@ -10,10 +10,12 @@ import sys
 try:
     from PyQt6.QtCore import QMetaObject
     from PyQt6.QtGui import QColor
+    from PyQt6.QtTest import QTest
     from PyQt6.QtWidgets import QApplication, QCheckBox, QLineEdit, QTableWidget
 except ImportError:
     from PyQt5.QtCore import QMetaObject
     from PyQt5.QtGui import QColor
+    from PyQt5.QtTest import QTest
     from PyQt5.QtWidgets import QApplication, QCheckBox, QLineEdit, QTableWidget
 
 sys.dont_write_bytecode = True  # no __pycache__ in the source tree
@@ -73,6 +75,22 @@ assert tableCurves.item(2, 1).text() == "0,0055", tableCurves.item(2, 1).text()
 assert edit("lineEditTolerance") == "0,00025", edit("lineEditTolerance")
 assert edit("lineEditSTEP") == "0,0125", edit("lineEditSTEP")
 assert f.tolerance() == 0.00025 and f.lmDerivStep() == 0.0125, (f.tolerance(), f.lmDerivStep())
+
+
+# typing (NumberValidator): the decimal point corrected; no "-" where the value is not negative
+def typed(name, keys):
+    field = fw.findChild(QLineEdit, name)
+    old = field.text()
+    field.clear()
+    QTest.keyClicks(field, keys)
+    text = field.text()
+    field.setText(old)
+    return text
+
+
+for name, keys, expected in (("lineEditSTEP", "1.5e-3", "1,5e-3"), ("lineEditSTEP", "-2", "2"),
+                             ("lineEditFromQ", "-0.5", "-0,5"), ("lineEditAbsErr", "abc", "")):
+    assert typed(name, keys) == expected, (name, keys, typed(name, keys), expected)
 limits = (f.paramLimitLeft("Rg"), f.paramLimitRight("Rg"))
 assert limits == (1.5, 500.25), limits
 limits = (f.paramLimitLeft("I0", 1), f.paramLimitRight("I0", 1))
