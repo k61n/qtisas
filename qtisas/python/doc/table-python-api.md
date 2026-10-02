@@ -253,7 +253,7 @@ t.setColumnRole("dy", Table.PlotDesignation.yErr)
 | `setColumnWidth(col, px)` | set column width in pixels |
 | `hideColumn(col, on=True)` | hide or show column — keyword is `on`, not `hide`; `hideColumn(1, hide=True)` raises `TypeError` |
 | `showAllColumns()` | un-hide all columns |
-| `setDecimalSeparators(locale)` | 0=system, 1=English (dot), 2=German (comma) |
+| `setDecimalSeparators(format, omitGroupSeparator=True)` | 0=system, 1=English (dot), 2=German (comma), 3=French; the table takes the format and its cells are converted |
 
 ---
 

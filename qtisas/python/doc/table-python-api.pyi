@@ -72,7 +72,7 @@ setColDateFormat(col,fmt,updateCells=True)   # fmt e.g. "yyyy-MM-dd"
 setColTimeFormat(col,fmt,updateCells=True)   # fmt e.g. "hh:mm:ss"
 setColMonthFormat(col,fmt,updateCells=True)  setColDayFormat(col,fmt,updateCells=True)
 setColumnWidth(col,px)  hideColumn(col,on=True)  showAllColumns()
-setDecimalSeparators(format,omitGroupSeparator=True)   # 0=system 1=English(.) 2=German(,)
+setDecimalSeparators(format,omitGroupSeparator=True)   # 0=system 1=English(.) 2=German(,) 3=French(,)
 setReadOnlyColumn(col,on=True)
 isRowSelected(row,full=False)->bool  isColSelected(col,full=False)->bool
 firstSelectedColumn()->int  numSelectedRows()->int  selectedColumn()->int  setSelectedCol(col)

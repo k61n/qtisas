@@ -151,7 +151,7 @@ m.calculate()
 | `transpose()` | transpose rows ↔ columns |
 | `invert()` | matrix inversion (square matrix) — raises `ValueError` if the matrix is not square |
 | `determinant()` | → `float` — raises `ValueError` if the matrix is not square |
-| `integrate()` | → `float` — numerical integration |
+| `integrate()` | → `float` — integral over the x/y coordinates (trapezoidal rule, times `dx()*dy()`) — **not** the sum of the cells; for that: `sum(m.cell(r, c) for r in range(1, m.numRows()+1) for c in range(1, m.numCols()+1))` |
 | `flipVertically()` | flip upside down |
 | `flipHorizontally()` | flip left–right |
 | `rotate90(clockwise=True)` | rotate 90°; `False` = counter-clockwise |

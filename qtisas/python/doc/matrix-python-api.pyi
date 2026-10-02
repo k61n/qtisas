@@ -25,6 +25,8 @@ calculate(startRow=0,endRow=-1,startCol=0,endCol=-1,forceMuParser=False)->bool  
 setNumericPrecision(prec)
 
 transpose()  invert()->bool  determinant()->float  integrate()->float
+# integrate() is the integral over the matrix's x/y coordinates (trapezoidal rule, times dx*dy), NOT the sum of the
+#   cells — the plain sum: sum(m.cell(r, c) for r in range(1, m.numRows()+1) for c in range(1, m.numCols()+1))
 # invert()/determinant() raise ValueError if the matrix is not square
 flipVertically()  flipHorizontally()  rotate90(clockwise=True)  smooth()
 resample(rows,cols,Matrix.ResamplingMethod.Bilinear)
