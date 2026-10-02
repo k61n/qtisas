@@ -3808,6 +3808,20 @@ void AiContentTests::extractExistingEntityNames_dedupesRepeatedName()
     QCOMPARE(names.size(), 1);
 }
 
+void AiContentTests::extractExistingEntityNames_skipsConditionalCreation()
+{
+    // Confirmed live (LIST 3's instruction): the name was refused as missing although the request
+    // itself says to create it when it is missing.
+    QVERIFY(
+        extractExistingEntityNames(
+            R"(Also write that line into table "Results": create it if it does not exist (12 rows), then put it there.)")
+            .isEmpty());
+    QVERIFY(extractExistingEntityNames(R"(Append the value to table "Log", creating it if missing.)").isEmpty());
+    // Without the condition it stays an input; a condition in a LATER clause does not count.
+    QCOMPARE(extractExistingEntityNames(R"(Write the value into table "Results" and print it.)").size(), 1);
+    QCOMPARE(extractExistingEntityNames(R"(Read table "Raw". Create table "Out" if it does not exist.)").size(), 1);
+}
+
 void AiContentTests::missingEntityNames_findsMissingMarker()
 {
     const QString output = "VERDICT: EXISTS SAXS_data\nVERDICT: MISSING Sphere\n";
@@ -4584,6 +4598,23 @@ void AiContentTests::parseListRequest_markersOnlyRegionLeavesNoInstructionBlock(
         AiAssistant::parseListRequest("LIST NOEXPLORE use log axes\n1. plot A\n2. plot B");
     QVERIFY(mixed.forceNoExplore);
     QCOMPARE(mixed.instructionBlock, QString("use log axes"));
+}
+
+void AiContentTests::itemsWithInstruction_appendsInstructionToEveryItem()
+{
+    // The fallback when the transformation call's answer can't be parsed: confirmed live, the
+    // instruction ("print one line R<n>: ...") was dropped and no item followed it.
+    const AiAssistant::ParsedListRequest parsed =
+        AiAssistant::parseListRequest("LIST NOEXPLORE\nprint one line per item\n1. plot A\n2. plot B");
+    QCOMPARE(parsed.instructionBlock, QString("print one line per item"));
+    const QStringList items = AiAssistant::itemsWithInstruction(parsed.items, parsed.instructionBlock);
+    QCOMPARE(items.size(), 2);
+    for (int i = 0; i < items.size(); ++i)
+    {
+        QVERIFY(items[i].startsWith(parsed.items[i]));
+        QVERIFY(items[i].endsWith("print one line per item"));
+    }
+    QCOMPARE(AiAssistant::itemsWithInstruction(parsed.items, "  "), parsed.items);
 }
 
 void AiContentTests::looksLikeNewTaskReply_detectsNewKeyword()

@@ -559,6 +559,10 @@ QList<QPair<QString, QString>> extractExistingEntityNames(const QString &request
     // while a wrong claim feeds a false fact and, in auto-run mode, refuses the item outright.
     static const QRegularExpression clauseBoundaryRe(R"([.;\n]|,\s*(?:then|next|afterwards?|finally|after that)\b)",
                                                      QRegularExpression::CaseInsensitiveOption);
+    // "if it does not exist", "if missing", "if needed": the creation is meant only when the name is absent
+    static const QRegularExpression conditionalRe(
+        R"(\bif\b(?:\s+\S+){0,4}?\s+(?:not\s+exist\w*|n't\s+exist\w*|missing|absent|needed|necessary)\b)",
+        QRegularExpression::CaseInsensitiveOption);
     QRegularExpressionMatchIterator kindIt = kindNounRe.globalMatch(requestText);
     while (kindIt.hasNext())
     {
@@ -573,6 +577,15 @@ QList<QPair<QString, QString>> extractExistingEntityNames(const QString &request
             boundaryEnd = static_cast<int>(boundaryIt.next().capturedEnd(0));
         const QString lookback = before.mid(boundaryEnd); // whole clause when there is no boundary
         if (creationVerbRe.match(lookback).hasMatch())
+            continue;
+        // A conditional creation AFTER the name, in the same clause, makes it no input either.
+        // Confirmed live: `write that line into table "Results": create it if it does not exist`
+        // claimed Results as existing, it came back MISSING, and the item was refused outright —
+        // although the request said in so many words what to do when it is missing.
+        const QString after = requestText.mid(m.capturedEnd(0));
+        const QRegularExpressionMatch nextBoundary = clauseBoundaryRe.match(after);
+        const QString lookahead = nextBoundary.hasMatch() ? after.left(nextBoundary.capturedStart(0)) : after;
+        if (creationVerbRe.match(lookahead).hasMatch() && conditionalRe.match(lookahead).hasMatch())
             continue;
         const QString name = m.captured(2);
         bool merged = false;
@@ -3002,7 +3015,7 @@ void AiAssistant::beginListRequest(const ParsedListRequest &parsed, bool splitBy
         // Remembered across this call's async gap — handleListTransformResponse() needs all of
         // this once the response arrives, but its own signature (matching every other response
         // handler in this class) only receives the response text.
-        pendingListRawItems = parsed.items;
+        pendingListRawItems = itemsWithInstruction(parsed.items, parsed.instructionBlock);
         pendingListForceSplit = parsed.forceSplit;
         pendingListForceNoSplit = parsed.forceNoSplit;
         pendingListForceReview = parsed.forceReview;
@@ -3052,6 +3065,16 @@ void AiAssistant::printParsedListItems(const QStringList &items, bool wasTransfo
     m_host->print("▸▸▸ AI: list " + header + " item(s):\n\n" + summary.join("\n"));
 }
 
+QStringList AiAssistant::itemsWithInstruction(const QStringList &items, const QString &instruction)
+{
+    if (instruction.trimmed().isEmpty())
+        return items;
+    QStringList result;
+    for (const QString &item : items)
+        result << item + "\n\nInstruction for every item of this list: " + instruction.trimmed();
+    return result;
+}
+
 void AiAssistant::handleListTransformResponse(const QString &code)
 {
     awaitingListTransform = false;
@@ -3059,11 +3082,11 @@ void AiAssistant::handleListTransformResponse(const QString &code)
     if (items.size() < 2)
     {
         // Fail open — same philosophy as every other verify-and-retry in this class: couldn't
-        // parse the transform response as a list, so fall back to running the ORIGINAL,
-        // untransformed items rather than getting permanently stuck.
+        // parse the transform response as a list, so fall back to the ORIGINAL items with the
+        // instruction appended to each, rather than getting permanently stuck or dropping it.
         if (m_host)
             m_host->print("▸▸  AI LIST: transform response wasn't a parseable numbered list — "
-                          "running the original, untransformed items instead.");
+                          "running the original items with the instruction appended instead.");
         items = pendingListRawItems;
     }
     else

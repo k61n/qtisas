@@ -388,6 +388,7 @@ class AiContentTests : public QObject
     static void extractExistingEntityNames_findsExistingTablePhrasing();
     static void extractExistingEntityNames_emptyWithoutExistingKeyword();
     static void extractExistingEntityNames_dedupesRepeatedName();
+    static void extractExistingEntityNames_skipsConditionalCreation();
     static void missingEntityNames_findsMissingMarker();
     static void missingEntityNames_emptyWhenAllExist();
     static void missingEntityNames_labeledPerCheckMissingDoesNotOverrideVerdict();
@@ -446,6 +447,7 @@ class AiContentTests : public QObject
     static void parseExploreMarker_combinesWithSplitAndReviewMarkers();
     static void parseListRequest_stripsExploreMarkersFromRegion();
     static void parseListRequest_markersOnlyRegionLeavesNoInstructionBlock();
+    static void itemsWithInstruction_appendsInstructionToEveryItem();
     static void looksLikeNewTaskReply_detectsNewKeyword();
     static void looksLikeNewTaskReply_detectsUnrelatedKeyword();
     static void looksLikeNewTaskReply_defaultsToContinueForContinuePhrasing();

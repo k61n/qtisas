@@ -266,6 +266,10 @@ class AiAssistant : public QObject
     // handleListTransformResponse() to re-parse the model's transformed list.
     static QStringList parseNumberedListItems(const QString &text);
 
+    // The fallback when the instruction_block transformation can't be parsed: every item with the
+    // instruction appended, so the instruction still reaches every item instead of being dropped.
+    static QStringList itemsWithInstruction(const QStringList &items, const QString &instruction);
+
     // Dispatches the split-plan decomposition preflight for `aiText` directly — no continuation-
     // check gating here (see dispatchAfterExistenceCheck()'s doc comment; that gate now lives one
     // level up and applies to both split and non-split requests). Sets awaitingSplitPlan=true.
@@ -981,7 +985,8 @@ class AiAssistant : public QObject
     bool awaitingListTransform = false;
     // Remembered across the transform call's async gap, since beginListRequest()'s own
     // parameters aren't available again once handleListTransformResponse() fires.
-    QStringList pendingListRawItems; // fail-open fallback if the transform response can't be parsed
+    QStringList
+        pendingListRawItems; // fail-open fallback if the transform response can't be parsed (instruction appended)
     bool pendingListForceSplit = false;
     bool pendingListForceNoSplit = false;
     bool pendingListForceReview = false;

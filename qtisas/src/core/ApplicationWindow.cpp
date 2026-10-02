@@ -6034,11 +6034,11 @@ void ApplicationWindow::scriptError(const QString &message, const QString &scrip
     Q_UNUSED(scriptName);
     Q_UNUSED(lineNumber);
 
+    // During an AI run this comes from a script the AI script ran (a column or matrix formula): the AI script's own
+    // errors use runScript()'s connection. Information for the model, not a failure of its script — a formula
+    // failure that matters reaches the AI script as its own exception (e.g. recalculate()'s ValueError).
     if (m_aiCapturing && !message.trimmed().isEmpty())
-    {
         m_aiCaptureBuffer += message + "\n";
-        m_aiErrorBuffer += message + "\n";
-    }
 
 #ifdef SCRIPTING_CONSOLE
     auto appendAndScrollToHeader = [](QTextEdit *w, const QString &text) {
