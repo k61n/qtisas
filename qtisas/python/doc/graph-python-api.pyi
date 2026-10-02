@@ -124,6 +124,8 @@
 # TUPLE of Y columns:                  g.addCurves(t, ("y1","y2"), Graph.CurveType.Scatter)
 # addCurve(t,col,style=0,lineWidth=1,pointSize=3,startRow=0,endRow=-1)->bool
 # addCurves(t,cols_tuple,style=0,lineWidth=1,pointSize=3,startRow=0,endRow=-1)->bool
+# addCurve/addCurves/insertCurve raise ValueError for a column the table does not have (the message lists its
+#   columns) — never a silently missing curve
 # insertCurve(t,col,style,startRow=0,endRow=-1)->DataCurve
 # insertCurve(t,xcol,ycol,style,startRow=0,endRow=-1)->DataCurve
 #   validates t like addCurve does -> ValueError: Invalid table in insertCurve() if invalid/None

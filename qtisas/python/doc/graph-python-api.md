@@ -305,6 +305,8 @@ ColorMap=16  GrayScale=17  Contour=18  ImagePlot=20  Function=19
 | `removeCurve(curve)` | — | remove a `QwtPlotCurve` object |
 | `deleteFitCurves()` | — | remove all fit result curves |
 
+> In `addCurve`, `addCurves` and both `insertCurve` forms, a column the table does not have raises `ValueError` — `addCurve(): no column 'I' in table 'DecayData'; columns: x, y, dy` — instead of silently adding no curve. Take the names from `t.colNames()`, never from another table (e.g. the data table's names on a `fitCurve-<model>` table, whose columns are always x, y, weight, sigma, residues, …).
+
 ### Curves — access
 
 | Method | Returns | Notes |

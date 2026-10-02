@@ -1998,7 +1998,20 @@ public:
       break;
     }
   }
-  sipRes = sipCpp->addCurves(a0, l, a2, a3, a4, a5, a6);
+  // as addCurve() below: a column that does not exist is an error, not a silently missing curve
+  if (sipIsErr == 0 && a0 == 0) {
+    sipIsErr = 1;
+    PyErr_Format(PyExc_ValueError, "Invalid table in addCurves().");
+  }
+  for (int i = 0; sipIsErr == 0 && i < l.size(); i++)
+    if (a0->colIndex(l[i]) < 0) {
+      sipIsErr = 1;
+      PyErr_Format(PyExc_ValueError, "addCurves(): no column '%s' in table '%s'; columns: %s",
+                   l[i].toUtf8().constData(), a0->objectName().toUtf8().constData(),
+                   a0->colNames().join(", ").toUtf8().constData());
+    }
+  if (sipIsErr == 0)
+    sipRes = sipCpp->addCurves(a0, l, a2, a3, a4, a5, a6);
 %End
 
   bool addCurve(Table* table, const QString& col, int style=0, double lineWidth=1, int pointSize=3, int startRow=0, int endRow=-1);
@@ -2006,6 +2019,12 @@ public:
 	if (a0 == 0) {
 	   sipIsErr = 1;
 	   PyErr_Format(PyExc_ValueError, "Invalid table in addCurve().");
+	} else if (a0->colIndex(*a1) < 0) {
+	  // Confirmed live: addCurve(t, "I", ...) on a table with columns x, y, dy added no curve and raised nothing
+	  sipIsErr = 1;
+	  PyErr_Format(PyExc_ValueError, "addCurve(): no column '%s' in table '%s'; columns: %s",
+	               a1->toUtf8().constData(), a0->objectName().toUtf8().constData(),
+	               a0->colNames().join(", ").toUtf8().constData());
 	} else {
 	  QStringList l;
 	  l << *a1;
