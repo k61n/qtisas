@@ -41,6 +41,7 @@ class AiContentTests : public QObject
     static void windowName_camelCaseTracesBackToTheDescription();
     static void windowName_unrelatedNameStillRejected();
     static void deliverables_flagsMissingResidualsAndFitCurve();
+    static void deliverables_flagsDeletionThatNeverHappens();
     static void deliverables_guardClauseDoesNotTrip();
     static void deliverables_silentWhenEverythingDelivered();
     static void deliverables_ignoresFitMentionedOnlyToExcludeIt();

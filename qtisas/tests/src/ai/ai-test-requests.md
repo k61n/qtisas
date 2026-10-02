@@ -102,6 +102,16 @@ appear verbatim) alongside a plain "table" keyword hit for the input data refere
 No table/compile/fit anywhere — pure post-hoc styling of an already-built graph, checking the
 backstop doesn't force in unrelated topics just because "FitResults" sounds fit-related.
 
+## Delete fit functions from the library
+
+**Request:**
+> Delete the fit functions "ai/RefLine" and "ai/RefDecay" from the library, then print which of the two still exist.
+
+**Expected topics:** compile
+
+Benchmark LIST 3's item 12, which matched no topic at all ("AI doc topics: all") before "fit function(s)" was
+added to the compile synonyms — deleting, opening and listing library functions is the Compiler's job.
+
 ## Note script reading a table on autoexec
 
 **Request:**

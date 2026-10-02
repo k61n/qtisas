@@ -232,6 +232,19 @@ void AiContentTests::knownMistakes_fitBeforeConfigureIsCaught()
             .isEmpty());
 }
 
+void AiContentTests::deliverables_flagsDeletionThatNeverHappens()
+{
+    // Confirmed live: asked to delete, the script only listed functions, and the item counted as done.
+    QtiSasAiContent content;
+    const QString request = R"(Delete the fit functions "ai/RefLine" and "ai/RefDecay" from the library.)";
+    const QString listing = "c = Compiler\nscriptPrint(str(c.functionNames(\"ALL\")))\n";
+    QVERIFY(content.missingRequestedDeliverables(listing, request).contains("deletion"));
+    QVERIFY(content.missingRequestedDeliverables("c = Compiler\nc.delete(\"ai/RefLine\")\n", request).isEmpty());
+    QVERIFY(content.missingRequestedDeliverables("closeWindow(table(\"T\"))\n", "Remove the table \"T\".").isEmpty());
+    // no object noun after it: nothing to call
+    QVERIFY(content.missingRequestedDeliverables("y = smooth(x)\n", "Remove the noise from column y.").isEmpty());
+}
+
 void AiContentTests::deliverables_flagsMissingResidualsAndFitCurve()
 {
     // The incident this check exists for: asked for data + fit curve + residuals, the script
@@ -4834,7 +4847,7 @@ void AiContentTests::realRequestsFixture_collectsAllEntriesCleanly()
     // malformed entry (e.g. a typo'd "**Expected topics:**" line) would otherwise just vanish from
     // the data table with every remaining row still reporting a clean "all passed".
     const QList<AiTestRequestEntry> entries = parseAiTestRequestsFixture();
-    QCOMPARE(entries.size(), 9);
+    QCOMPARE(entries.size(), 10);
 
     QStringList seenHeadings, seenRequests;
     for (const AiTestRequestEntry &e : entries)

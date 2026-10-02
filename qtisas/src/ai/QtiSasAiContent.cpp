@@ -983,6 +983,14 @@ const RequestedDeliverable kRequestedDeliverables[] = {
     {R"(\bstacked panels?\b|\btwo panels?\b)", R"(\blayer\(2\)|\bnewGraph\([^)]*,\s*2)",
      "the second stacked panel (only one layer is ever created or used)"},
     {R"(\brow count\b)", R"(\bnumRows\b)", "the row count (numRows() is never read)"},
+    // Confirmed live (benchmark LIST 3, item 12): asked to delete two fit functions, the script only listed the
+    // library's functions and Compiler's methods, deleted nothing, and the item counted as done. Only "delete/remove"
+    // whose OBJECT is such a thing (articles, a count or a quoted name in between), so "remove the noise from column
+    // y" or "remove outliers" never asks for a call.
+    {R"(\b(?:delete|remove)\s+(?:(?:the|these|those|this|that|all|both|two|three|\d+)\s+)*(?:"[^"]*"\s+)?(?:fit\s+)?)"
+     R"((?:functions?|tables?|matri(?:x|ces)|notes?|graphs?|windows?|columns?|rows?|curves?|tabs?|folders?)\b)",
+     R"(\.delete\(|\bdeleteFolder\b|\bcloseWindow\b|\.close\(\)|\bremove\w*\(|\bdelete\w*\()",
+     "the deletion (no delete()/closeWindow()/remove...() call — listing what exists is not deleting it)"},
 };
 } // namespace
 

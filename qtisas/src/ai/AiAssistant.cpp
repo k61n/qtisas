@@ -335,7 +335,11 @@ static const QHash<QString, QRegularExpression> topicSynonymRe = {
     {"graph", QRegularExpression(R"(\bplot(?:s|ted|ting)?\b|\bgraphs?\b|\bcharts?\b|\blegend\b)",
                                  QRegularExpression::CaseInsensitiveOption)},
     {"note", QRegularExpression(R"(\bnotes?\b)", QRegularExpression::CaseInsensitiveOption)},
-    {"compile", QRegularExpression(R"(\bcompil(?:e|ed|ing|er)\b)", QRegularExpression::CaseInsensitiveOption)},
+    // "fit function(s)" added — confirmed live (benchmark LIST 3, item 12): "Delete the fit functions ... from the
+    // library" matched no topic at all; managing the library (delete, open, list) is the Compiler's, and fittable's
+    // own regex deliberately excludes "fit function" (see above).
+    {"compile", QRegularExpression(R"(\bcompil(?:e|ed|ing|er)\b|\bfit\s+functions?\b)",
+                                   QRegularExpression::CaseInsensitiveOption)},
 };
 
 // Topic matching must inspect the user's request only; requestSuffix() is transport guidance.
