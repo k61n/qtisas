@@ -175,6 +175,13 @@ if (APPLE)
             ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtisas.app/Contents/Resources/python/qtisasrc.py COPYONLY)
         configure_file("${CMAKE_CURRENT_SOURCE_DIR}/qtisas/python/qti_wordlist.txt"
             ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtisas.app/Contents/Resources/python/qti_wordlist.txt COPYONLY)
+        # the script server (-s/-S): a subfolder, so it is loaded from here, never copied into the user's folder
+        file(GLOB SERVER_SCRIPTS "${CMAKE_CURRENT_SOURCE_DIR}/qtisas/python/server/*.py")
+        foreach (script ${SERVER_SCRIPTS})
+            get_filename_component(name ${script} NAME)
+            configure_file(${script} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtisas.app/Contents/Resources/python/server/${name}
+                COPYONLY)
+        endforeach ()
         file(MAKE_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtisas.app/Contents/Resources/python-scripts)
         file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/qtisas/python/doc"
             DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtisas.app/Contents/Resources/python/)
@@ -199,6 +206,8 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/qtisas/python)
     install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/python/doc
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/qtisas/python)
+    install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/python/server
+        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/qtisas/python FILES_MATCHING PATTERN "*.py")
     install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/icons/qtisas_logo.png DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/qtisas)
     install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/install/linux/qtisas.desktop DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/applications)
 endif ()

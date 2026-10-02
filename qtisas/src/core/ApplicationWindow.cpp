@@ -901,25 +901,24 @@ void ApplicationWindow::initWindow()
 	savedProject();
 }
 
-void ApplicationWindow::copyPythonConfigurationFiles(bool forceInit) const
+QString ApplicationWindow::bundledPythonFolder()
 {
     const QString aux = qApp->applicationDirPath();
-    QDir pythonDir;
-
 #ifdef Q_OS_MACOS
-    pythonDir.setPath(aux + "/../Resources/python");
+    return aux + "/../Resources/python";
 #elif defined(Q_OS_WIN)
-    pythonDir.setPath(aux + "/python");
+    return aux + "/python";
 #elif defined(Q_OS_LINUX)
     for (const QString &candidate : {aux + "/../qtisas/python", QString("/usr/share/qtisas/python")})
-    {
         if (QDir(candidate).exists())
-        {
-            pythonDir.setPath(candidate);
-            break;
-        }
-    }
+            return candidate;
 #endif
+    return {};
+}
+
+void ApplicationWindow::copyPythonConfigurationFiles(bool forceInit) const
+{
+    QDir pythonDir(bundledPythonFolder());
 
     QDir().mkpath(d_startup_scripts_folder);
 
@@ -18952,8 +18951,17 @@ void ApplicationWindow::parseCommandLineArguments(const QStringList &args)
     bool exec = false;
     bool noGui = false;
     bool quitAfter = false;
-    // -X has no visible window: its startup errors go to stderr instead of a dialog nobody can close.
-    const bool noGuiRequested = args.contains("-X");
+    // -X and -S have no visible window: their startup errors go to stderr instead of a dialog nobody can close.
+    const auto isServerOption = [](const QString &arg, bool offscreen) {
+        const QString shortName = offscreen ? "-S" : "-s";
+        const QString longName = offscreen ? "--server-offscreen" : "--server";
+        return arg == shortName || arg.startsWith(shortName + "=") || arg == longName || arg.startsWith(longName + "=");
+    };
+    const bool noGuiRequested = args.contains("-X") || std::any_of(args.begin(), args.end(), [&](const QString &arg) {
+                                    return isServerOption(arg, true);
+                                });
+    QString serverInstance;
+    bool serverOffscreen = false;
     bool default_settings = false;
     bool console = false;
     foreach (str, args)
@@ -18997,6 +19005,11 @@ void ApplicationWindow::parseCommandLineArguments(const QStringList &args)
             s += "-v " + tr("or") + " --version: " + tr("print QTISAS version") + "\n";
             s += "-x " + tr("or") + " --execute: " + tr("execute the script file given as argument") + "\n";
             s += "--quit: " + tr("with -x, quit after the script (exit code 1 if it failed)") + "\n";
+            s += "-s[=NAME] " + tr("or") + " --server[=NAME]: " +
+                 tr("start the script server as instance NAME (default: main); send it code with qtisas_send.py") +
+                 "\n";
+            s += "-S[=NAME] " + tr("or") + " --server-offscreen[=NAME]: " +
+                 tr("the same without any window; dialogs are closed automatically, errors go to stderr") + "\n";
             s += "-X: " +
                  tr("execute the script file given as argument without displying the user interface. Warning: 2D plots "
                     "are not correctly handled in this functioning mode!") +
@@ -19025,6 +19038,11 @@ void ApplicationWindow::parseCommandLineArguments(const QStringList &args)
             noGui = true;
         else if (str == "--quit")
             quitAfter = true;
+        else if (isServerOption(str, false) || isServerOption(str, true))
+        {
+            serverOffscreen = isServerOption(str, true);
+            serverInstance = str.contains('=') ? str.mid(str.indexOf('=') + 1) : QString("main");
+        }
         else if (str.startsWith("-") && noGuiRequested)
             std::cerr << "QtiSAS: unknown command line option " << str.toStdString() << std::endl;
         else if (str.startsWith("-") || str.startsWith("--"))
@@ -19034,6 +19052,11 @@ void ApplicationWindow::parseCommandLineArguments(const QStringList &args)
                                       tr("Type %1 to see the list of the valid options.").arg("'qtisas[-py] -h'"));
         }
     }
+
+#ifdef SCRIPTING_PYTHON
+    if (!serverInstance.isEmpty())
+        startScriptServer(serverInstance, serverOffscreen);
+#endif
 
     const QString &file_name = args[num_args - 1]; // last argument
     if (file_name.startsWith("-"))
@@ -19103,6 +19126,45 @@ void ApplicationWindow::parseCommandLineArguments(const QStringList &args)
         }
     }
 }
+
+#ifdef SCRIPTING_PYTHON
+bool ApplicationWindow::startScriptServer(const QString &instance, bool offscreen)
+{
+    // Without a window nobody could close a dialog: -S reports to stderr and exits
+    const auto fail = [this, offscreen](const QString &message) {
+        if (offscreen)
+        {
+            std::cerr << "QtiSAS: " << message.toStdString() << std::endl;
+            exit(1);
+        }
+        QMessageBox::critical(this, tr("QtiSAS") + " - " + tr("Script server"), message);
+        return false;
+    };
+    static const QRegularExpression nameRe("^[A-Za-z0-9_-]+$");
+    if (!nameRe.match(instance).hasMatch())
+        return fail(tr("script server: the instance name may use letters, digits, '-' and '_' only: %1").arg(instance));
+    if (QString(scriptEnv->objectName()) != "Python")
+        return fail(tr("script server: needs Python as the scripting language"));
+
+    // Loaded from the folder shipped with QtiSAS, never from a copy in the user's python folder that may be stale
+    const QString folder = bundledPythonFolder() + "/server";
+    if (!QFileInfo::exists(folder + "/qtisas_server.py"))
+        return fail(tr("script server: %1 not found").arg(folder + "/qtisas_server.py"));
+    const auto quoted = [](QString text) { return "'" + text.replace("\\", "\\\\").replace("'", "\\'") + "'"; };
+    const QString code = QString("import sys\nsys.path.insert(0, %1)\nimport qtisas_server\n"
+                                 "qtisas_server.start(%2, dialogs=%3)\n")
+                             .arg(quoted(QDir(folder).absolutePath()), quoted(instance),
+                                  offscreen ? QString("'auto'") : QString("'leave'"));
+    QString error;
+    Script *script = scriptEnv->newScript(code, this, "<qtisas-server>");
+    connect(script, &Script::error, this, [&error](const QString &message) { error = message; });
+    script->exec();
+    delete script;
+    if (!error.isEmpty()) // the exception's own line: "RuntimeError: ... already used by QtiSAS pid ..."
+        return fail(error.trimmed().section('\n', 0, 0));
+    return true;
+}
+#endif
 
 void ApplicationWindow::switchToLanguage(int param)
 {

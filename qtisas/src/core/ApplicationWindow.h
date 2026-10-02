@@ -168,14 +168,18 @@ public:
 #endif
 
     void copyPythonConfigurationFiles(bool forceInit = false) const;
-    
-	QString generateUniqueName(const QString& name, bool increment = true);
-	void saveFitFunctions(const QStringList& lst);
+    //! The python folder shipped with QtiSAS (qtisasrc.py, ..., server/); empty if it is not found.
+    static QString bundledPythonFolder();
+    //! Starts the script server (python/server/qtisas_server.py) as `instance`: -s/--server, -S/--server-offscreen.
+    bool startScriptServer(const QString &instance, bool offscreen);
 
-	//! \name User custom actions
-	//@{
-	void loadCustomActions();
-	void reloadCustomActions();
+    QString generateUniqueName(const QString &name, bool increment = true);
+    void saveFitFunctions(const QStringList &lst);
+
+    //! \name User custom actions
+    //@{
+    void loadCustomActions();
+    void reloadCustomActions();
     void removeAllCustomActions();
     void removeCustomAction(QAction *);
 	void addCustomAction(QAction *, const QString& parentName, int index = -1);
