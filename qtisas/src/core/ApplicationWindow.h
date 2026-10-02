@@ -314,23 +314,28 @@ public slots:
 	void open();
 	ApplicationWindow* open(const QString& fn, bool factorySettings = false, bool newProject = true);
 	ApplicationWindow* openProject(const QString& fn, bool factorySettings = false, bool newProject = true);
-    void closeProject();
+    //! savePolicy: -1 asks to save unsaved changes (Cancel keeps the project), 0 discards them, 1 saves first.
+    //! Returns false when the project stays open.
+    bool closeProject(int savePolicy = -1);
+    //! Opens a project file into this window, never a new one as open() may: a running script (the Python API, the
+    //! script server) keeps its application. The current project should be closed first.
+    bool openProjectInPlace(const QString &fn);
 
-	/**
-	 * \brief Create a new project from a data file.
-	 *
-	 * \param fn is read as a data file with the default column separator (as set by the user)
-	 * and inserted as a table into a new, empty project.
-	 * This table is then plotted with the Graph::LineSymbols style.
-	 */
-	ApplicationWindow * plotFile(const QString& fn);
+    /**
+     * \brief Create a new project from a data file.
+     *
+     * \param fn is read as a data file with the default column separator (as set by the user)
+     * and inserted as a table into a new, empty project.
+     * This table is then plotted with the Graph::LineSymbols style.
+     */
+    ApplicationWindow *plotFile(const QString &fn);
 
-	/**
-	 * \brief Create a new project from a script file.
-	 *
-	 * \param fn is read as a Python script file and loaded in the command script window.
-	 * \param execute specifies if the script should be executed after opening.
-	 */
+    /**
+     * \brief Create a new project from a script file.
+     *
+     * \param fn is read as a Python script file and loaded in the command script window.
+     * \param execute specifies if the script should be executed after opening.
+     */
     ApplicationWindow *loadScript(const QString &fn, bool execute = false, bool noGui = false, bool quitAfter = false);
 
 	QList<MdiSubWindow *> windowsList();

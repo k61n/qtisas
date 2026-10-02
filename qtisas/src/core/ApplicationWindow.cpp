@@ -13197,42 +13197,55 @@ QMessageBox::StandardButton ApplicationWindow::showSaveProjectMessage()
 	return QMessageBox::No;
 }
 
-void ApplicationWindow::closeProject()
+bool ApplicationWindow::closeProject(int savePolicy)
 {
-	if (showSaveProjectMessage() == QMessageBox::Cancel)
-		return;
+    if (savePolicy == 0)
+        savedProject(); // discard the changes
+    else if ((savePolicy == 1 && !saved && !saveProject()) ||
+             (savePolicy < 0 && showSaveProjectMessage() == QMessageBox::Cancel))
+        return false;
 
-	blockSignals(true);
+    blockSignals(true);
 
-	Folder *f = projectFolder();
-	f->folderListItem()->setText(0, tr("UNTITLED"));
-	current_folder = f;
-	projectname = "untitled";
+    Folder *f = projectFolder();
+    f->folderListItem()->setText(0, tr("UNTITLED"));
+    current_folder = f;
+    projectname = "untitled";
 
-	foreach(MdiSubWindow *w, f->windowsList()){
-		w->askOnCloseEvent(false);
-		closeWindow(w);
-	}
+    foreach (MdiSubWindow *w, f->windowsList())
+    {
+        w->askOnCloseEvent(false);
+        closeWindow(w);
+    }
 
-	if (!(f->children()).isEmpty()){
-		Folder *subFolder = f->folderBelow();
-		int initial_depth = f->depth();
-		while (subFolder && subFolder->depth() > initial_depth){
-			foreach(MdiSubWindow *w, subFolder->windowsList()){
-				removeWindowFromLists(w);
-				subFolder->removeWindow(w);
-				delete w;
-			}
-			delete subFolder->folderListItem();
-			delete subFolder;
+    if (!(f->children()).isEmpty())
+    {
+        Folder *subFolder = f->folderBelow();
+        int initial_depth = f->depth();
+        while (subFolder && subFolder->depth() > initial_depth)
+        {
+            foreach (MdiSubWindow *w, subFolder->windowsList())
+            {
+                removeWindowFromLists(w);
+                subFolder->removeWindow(w);
+                delete w;
+            }
+            delete subFolder->folderListItem();
+            delete subFolder;
 
-			subFolder = f->folderBelow();
-		}
-	}
+            subFolder = f->folderBelow();
+        }
+    }
 
-	blockSignals(false);
-	savedProject();
-	setWindowTitle("QTISAS - untitled");
+    blockSignals(false);
+    savedProject();
+    setWindowTitle("QTISAS - untitled");
+    return true;
+}
+
+bool ApplicationWindow::openProjectInPlace(const QString &fn)
+{
+    return open(fn, false, false) == this;
 }
 
 void ApplicationWindow::customEvent(QEvent *e)

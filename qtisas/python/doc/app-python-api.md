@@ -320,10 +320,14 @@ saveFolder(results, "/data/results.qti")
 
 | Call | Returns | Notes |
 |------|---------|-------|
-| `newProject()` | — | close current project and start a blank one (prompts to save if unsaved, same as `closeProject()`) |
-| `closeProject()` | — | close the current project (prompts to save if unsaved) |
+| `newProject(save=None)` | `bool` | empty project in this window; `save` as for `closeProject()` |
+| `closeProject(save=None)` | `bool` | close the project: `None` asks if unsaved (Cancel → `False`), `False` discards, `True` saves first (`ValueError` if it has no file yet) |
+| `openProject("path", save=None)` | `bool` | close the current project (`save` as above), then open a `.qti`/`.qti.gz`/`.qti.svg` file in this window; `ValueError` if missing or not a project |
 | `saveProject(compress=False)` | `bool` | save to the current file path; returns `True` on success |
 | `saveProjectAs("path", compress=False)` | — | save to an explicit path (forced to end in `.qti`); `compress=True` additionally gzips it to `<path>.qti.gz` — NOT `.qtz` |
+
+> All three keep the current main window, so a running script (and the script server) keeps working. In a
+> script, prefer `save=False` or `save=True`: `save=None` opens a dialog, which blocks an unattended run.
 
 ---
 
@@ -391,9 +395,10 @@ saveFolder(results, "/data/results.qti")
 
 ```python
 # save, close, reopen
-saveProject()
-closeProject()
-newProject()
+saveProjectAs("/data/results/run1.qti")
+closeProject(save=False)              # discard anything changed since
+openProject("/data/results/run1.qti")
+newProject(save=False)
 
 # existTable/existNote are type-specific — safe to call table()/note() after
 if existTable("RawData"):

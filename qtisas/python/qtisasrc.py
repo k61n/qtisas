@@ -67,6 +67,7 @@ if __name__ == '__main__':
         'graphWindow', 'graphs', 'hideWindow', 'importWaveFile', 'infoLineEdit',
         'addRule', 'matrices', 'matrix', 'matrixNames', 'matrixToTable', 'maximizeWindow',
         'newGraph', 'newMatrix', 'newNote', 'newPlot3D', 'newProject', 'newTable',
+        'openProject',
         'note', 'notes', 'openTemplate', 'plot', 'plot3D', 'plotImageProfiles',
         'removeCustomAction', 'removeRule', 'removeAllRules', 'resultsLog', 'rootFolder', 'runCustomAction',
         'updateCustomActionName', 'updateCustomActionScript',

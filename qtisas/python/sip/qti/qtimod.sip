@@ -3968,8 +3968,53 @@ public:
   void maximizeWindow(const QString &);
 
   // project lifecycle
-  void newProject();
-  void closeProject();
+  // save: None asks to save unsaved changes (Cancel keeps the project), False discards them, True saves first.
+  // Both keep this window, unlike the menu's "New Project": a running script keeps its application.
+  bool closeProject(SIP_PYOBJECT save = Py_None);
+%MethodCode
+  int policy = sipqti_savePolicy(a0);
+  if (policy == 1 && !sipCpp->saved && sipCpp->projectname == "untitled") {
+    sipIsErr = 1;
+    PyErr_SetString(PyExc_ValueError, "closeProject: the project has no file yet: saveProjectAs(path) first, "
+                                      "or save=False to discard it");
+  } else
+    sipRes = sipCpp->closeProject(policy);
+%End
+  bool newProject(SIP_PYOBJECT save = Py_None);
+%MethodCode
+  int policy = sipqti_savePolicy(a0);
+  if (policy == 1 && !sipCpp->saved && sipCpp->projectname == "untitled") {
+    sipIsErr = 1;
+    PyErr_SetString(PyExc_ValueError, "newProject: the project has no file yet: saveProjectAs(path) first, "
+                                      "or save=False to discard it");
+  } else
+    sipRes = sipCpp->closeProject(policy);
+%End
+  // Closes the current project (save as for closeProject), then opens fileName (.qti, .qti.gz, .qti.svg) here.
+  bool openProject(const QString &fileName, SIP_PYOBJECT save = Py_None);
+%MethodCode
+  int policy = sipqti_savePolicy(a1);
+  const QFileInfo fi(*a0);
+  const QString lower = a0->toLower();
+  if (!fi.isFile() || !fi.isReadable()) {
+    sipIsErr = 1;
+    PyErr_SetString(PyExc_ValueError, QString("openProject: no readable file %1").arg(*a0).toUtf8().constData());
+  } else if (!lower.endsWith(".qti") && !lower.endsWith(".qti.gz") && !lower.endsWith(".qti.svg")) {
+    sipIsErr = 1;
+    PyErr_SetString(PyExc_ValueError,
+                    QString("openProject: not a project file (.qti, .qti.gz, .qti.svg): %1").arg(*a0).toUtf8().constData());
+  } else if (policy == 1 && !sipCpp->saved && sipCpp->projectname == "untitled") {
+    sipIsErr = 1;
+    PyErr_SetString(PyExc_ValueError, "openProject: the current project has no file yet: saveProjectAs(path) first, "
+                                      "or save=False to discard it");
+  } else if (!sipCpp->closeProject(policy))
+    sipRes = false; // the user kept the current project
+  else if (!sipCpp->openProjectInPlace(fi.absoluteFilePath())) {
+    sipIsErr = 1;
+    PyErr_SetString(PyExc_ValueError, QString("openProject: %1 could not be opened").arg(*a0).toUtf8().constData());
+  } else
+    sipRes = true;
+%End
   bool saveProject(bool compress = false);
   void saveGraphAsProject(MultiLayer *graph, const QString &path, const QString &name, bool compress = false, const QString &format = QString(), int resolution = -1);
 
@@ -4226,6 +4271,13 @@ if(sipRes)
 };
 
 %ModuleCode
+// save=None / False / True of closeProject(), newProject(), openProject(): -1 ask, 0 discard, 1 save first
+int sipqti_savePolicy(PyObject *save)
+{
+  if (!save || save == Py_None)
+    return -1;
+  return PyObject_IsTrue(save) ? 1 : 0;
+}
 ApplicationWindow *sipqti_app()
 {
   int iserr = 0;
@@ -4287,6 +4339,7 @@ else { sipCpp = nullptr; }
 #include <QSet>
 bool sipqti_isCppReservedWord(const QString &name);
 QString sipqti_caseInsensitiveCollision(compile18 *c, const QString &stem);
+int sipqti_savePolicy(PyObject *save);
 %End
 
 %PostInitialisationCode

@@ -81,7 +81,14 @@ changeFolder(folder,force=False)->bool  copyFolder(src,dest)->bool
 saveFolder(folder,"path",compress=False)  appendProject("path",parent=None)->Folder
 
 # Project / window lifecycle:
-newProject()  closeProject()  saveProject(compress=False)->bool  saveProjectAs("path",compress=False)
+newProject(save=None)->bool  closeProject(save=None)->bool  openProject("path",save=None)->bool
+saveProject(compress=False)->bool  saveProjectAs("path",compress=False)
+# save: None asks to save unsaved changes (a dialog; Cancel keeps the project and returns False), False discards
+#   them, True saves first (ValueError if the project has no file yet: saveProjectAs(path) first).
+# All three stay in this window: a running script keeps its application. newProject = an empty project here.
+# openProject: closes the current project, then opens a .qti/.qti.gz/.qti.svg file; ValueError if it is missing or
+#   not a project. appendProject() instead ADDS a file's windows to the current project as a sub-folder.
+# NameError for openProject: an older qtisasrc.py in the python config folder — use qti.app.openProject(...)
 existWindow("name")->bool  existTable("name")->bool  existNote("name")->bool
 closeWindow(window)  activateWindow(window)  activateWindow("name")->bool
 # closeWindow deletes outright, no "hide or delete?" dialog (unlike the UI close button)
