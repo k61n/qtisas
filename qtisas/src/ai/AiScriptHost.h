@@ -73,6 +73,14 @@ class AiScriptHost
     // anything violates what the user asked for. A host that cannot answer may return an empty
     // list per name; callers treat that as "unknown", never as "does not exist".
     virtual QList<QStringList> entityKinds(const QStringList &names) = 0;
+
+    // What the host holds right now, as "kind:name" ("table:Squares", "note:Report", "function:ai/RefLine").
+    // Compared before and after a script, so a retry can be told what a failed attempt already created and left
+    // behind. Empty when the host cannot tell.
+    virtual QStringList liveObjects()
+    {
+        return {};
+    }
 };
 
 #endif

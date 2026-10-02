@@ -4578,8 +4578,8 @@ void AiContentTests::parseListRequest_stripsExploreMarkersFromRegion()
     QVERIFY(parsed.forceNoExplore);
     QVERIFY(!parsed.forceExplore);
     // The real point of stripping: an unrecognized marker survives as leftover text, which makes
-    // the region look like a genuine instruction_block — and "Instruction: NOEXPLORE" would then be
-    // applied to every item of the list by the one-shot transformation call.
+    // the region look like a genuine instruction_block — and "NOEXPLORE" would then be appended to
+    // every item of the list as an instruction.
     QCOMPARE(parsed.instructionBlock, QString());
     QCOMPARE(parsed.items.size(), 2);
 }
@@ -4602,8 +4602,8 @@ void AiContentTests::parseListRequest_markersOnlyRegionLeavesNoInstructionBlock(
 
 void AiContentTests::itemsWithInstruction_appendsInstructionToEveryItem()
 {
-    // The fallback when the transformation call's answer can't be parsed: confirmed live, the
-    // instruction ("print one line R<n>: ...") was dropped and no item followed it.
+    // How every LIST instruction reaches its items now, with no model call. Confirmed live: dropped, the
+    // instruction ("print one line R<n>: ...") reached no item; rewritten by a model, it became invented API calls.
     const AiAssistant::ParsedListRequest parsed =
         AiAssistant::parseListRequest("LIST NOEXPLORE\nprint one line per item\n1. plot A\n2. plot B");
     QCOMPARE(parsed.instructionBlock, QString("print one line per item"));

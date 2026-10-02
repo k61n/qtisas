@@ -657,7 +657,17 @@ void AiAssistant::resetPendingRoundTrips()
     awaitingSplitPlan = false;
     awaitingSplitMerge = false;
     awaitingSplitMergeRetry = false;
-    awaitingListTransform = false;
+}
+
+QString AiAssistant::failedRunObjectsNote() const
+{
+    if (m_failedRunObjects.isEmpty())
+        return {};
+    QStringList named;
+    for (const QString &object : m_failedRunObjects)
+        named << object.section(':', 0, 0) + " \"" + object.section(':', 1) + "\"";
+    return "The failed attempt(s) already created these, and they still exist: " + named.join(", ") +
+           ". Look each up by name and reuse it; create it only if it is missing. ";
 }
 
 void AiAssistant::beginRequest(const QString &aiText, bool autoRunValue, bool wantsSplit)
@@ -680,6 +690,7 @@ void AiAssistant::beginRequest(const QString &aiText, bool autoRunValue, bool wa
     // reaching into AiAssistant's internal fields directly (see this method's header doc comment).
     autoRun = autoRunValue;
     autoContinueCount = 0;
+    m_failedRunObjects.clear();
     consecutiveExploreCount = 0;
     lastExploreOutput.clear();
     lastExploreCode.clear();
@@ -1086,7 +1097,6 @@ QString AiAssistant::splitModeGiveUpNote()
             listModeActive = false;
             listItems.clear();
             listItemIndex = -1;
-            awaitingListTransform = false;
         }
     }
     return note;
@@ -3010,45 +3020,12 @@ void AiAssistant::advanceSplitPart(const QString &code)
 void AiAssistant::beginListRequest(const ParsedListRequest &parsed, bool splitByDefault, bool reviewByDefault,
                                    bool exploreByDefault, bool autoRunValue)
 {
-    if (!parsed.instructionBlock.isEmpty())
-    {
-        // Remembered across this call's async gap — handleListTransformResponse() needs all of
-        // this once the response arrives, but its own signature (matching every other response
-        // handler in this class) only receives the response text.
-        pendingListRawItems = itemsWithInstruction(parsed.items, parsed.instructionBlock);
-        pendingListForceSplit = parsed.forceSplit;
-        pendingListForceNoSplit = parsed.forceNoSplit;
-        pendingListForceReview = parsed.forceReview;
-        pendingListForceNoReview = parsed.forceNoReview;
-        pendingListForceExplore = parsed.forceExplore;
-        pendingListForceNoExplore = parsed.forceNoExplore;
-        pendingListSplitByDefault = splitByDefault;
-        pendingListReviewByDefault = reviewByDefault;
-        pendingListExploreByDefault = exploreByDefault;
-        pendingListAutoRun = autoRunValue;
-        awaitingListTransform = true;
-        QStringList numbered;
-        for (int i = 0; i < parsed.items.size(); ++i)
-            numbered << QString("%1. %2").arg(i + 1).arg(parsed.items[i]);
-        const QString transformPrompt =
-            "Apply the following instruction to EVERY item in the numbered list below, then "
-            "return ONLY the modified numbered list, same format (\"N. <item text>\"), one item "
-            "per line, nothing else — no markdown fences, no explanation, no extra commentary "
-            "before or after the list.\n\nInstruction: " +
-            parsed.instructionBlock + "\n\nList:\n" + numbered.join("\n");
-        // includeDocs=false: pure textual transformation, no QtiSAS API knowledge needed — same
-        // reasoning as self-review's own internal-plumbing calls. expectsCode=false: the answer
-        // is a numbered list, never Python. addToHistory=false/includeHistory=false: self-
-        // contained scaffolding that shouldn't leak into history as its own turn — each list item
-        // gets its own proper history entry once it actually runs, via the normal pipeline.
-        // noDocsHintLine() too, not just includeDocs=false: without it Integrated mode sent no
-        // TOPICS: line at all, so the server's unscoped fallback attached ai+app whole plus 8 MMR
-        // sections — measured live at 46,332 tokens and ~2min of prefill for a text rewrite.
-        ask(transformPrompt + noDocsHintLine(), false, QString(), QStringList(), false, false, false);
-        return;
-    }
-    printParsedListItems(parsed.items, false);
-    startListItems(parsed.items, parsed.forceSplit, parsed.forceNoSplit, parsed.forceReview, parsed.forceNoReview,
+    // The instruction is appended to every item as it is, no model call. A rewrite call used to merge it into each
+    // item without the API docs, and confirmed live it turned "write that line into table Results" into invented
+    // calls (table("Results").setItem(...)) that every item then copied, each costing a retry; it also cost 20-30 s.
+    const QStringList items = itemsWithInstruction(parsed.items, parsed.instructionBlock);
+    printParsedListItems(items, !parsed.instructionBlock.trimmed().isEmpty());
+    startListItems(items, parsed.forceSplit, parsed.forceNoSplit, parsed.forceReview, parsed.forceNoReview,
                    parsed.forceExplore, parsed.forceNoExplore, splitByDefault, reviewByDefault, exploreByDefault,
                    autoRunValue);
 }
@@ -3073,30 +3050,6 @@ QStringList AiAssistant::itemsWithInstruction(const QStringList &items, const QS
     for (const QString &item : items)
         result << item + "\n\nInstruction for every item of this list: " + instruction.trimmed();
     return result;
-}
-
-void AiAssistant::handleListTransformResponse(const QString &code)
-{
-    awaitingListTransform = false;
-    QStringList items = parseNumberedListItems(code);
-    if (items.size() < 2)
-    {
-        // Fail open — same philosophy as every other verify-and-retry in this class: couldn't
-        // parse the transform response as a list, so fall back to the ORIGINAL items with the
-        // instruction appended to each, rather than getting permanently stuck or dropping it.
-        if (m_host)
-            m_host->print("▸▸  AI LIST: transform response wasn't a parseable numbered list — "
-                          "running the original items with the instruction appended instead.");
-        items = pendingListRawItems;
-    }
-    else
-    {
-        printParsedListItems(items, true);
-    }
-    startListItems(items, pendingListForceSplit, pendingListForceNoSplit, pendingListForceReview,
-                   pendingListForceNoReview, pendingListForceExplore, pendingListForceNoExplore,
-                   pendingListSplitByDefault, pendingListReviewByDefault, pendingListExploreByDefault,
-                   pendingListAutoRun);
 }
 
 void AiAssistant::startListItems(const QStringList &items, bool forceSplit, bool forceNoSplit, bool forceReview,
@@ -4673,6 +4626,12 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
                          "script:\n\n" +
                          numbered.join("\n\n");
         }
+        // Confirmed live: after a run that did everything but failed in its last line, the retry sent only the
+        // fixed last lines, was blocked here for the missing compile()/newTable(), and the item was given up.
+        if (!missingDeliverables.isEmpty() && !m_failedRunObjects.isEmpty())
+            errContext += "\n\nSend the WHOLE script again, not only the part after the earlier error: every script "
+                          "is checked and run as a whole. " +
+                          failedRunObjectsNote();
     }
     else if (emptyScript)
     {
@@ -4708,6 +4667,7 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
         // happened live during runScript() itself — do NOT print result.output here too, see
         // that method's doc comment on why that would double every scriptPrint() line (confirmed
         // live: exactly this happened).
+        const QStringList objectsBefore = m_host->liveObjects();
         const AiScriptResult result = m_host->runScript(code, "<ai>");
         // result.error alone is still the GATE for "did this run actually fail" — deliberately
         // not result.output, since normal fit/print output (e.g. fit progress, Chi2/DoF) also
@@ -4719,6 +4679,7 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
             // consecutiveDocRetryCount's doc comment in AiAssistant.h for why this resets ONLY on
             // success, not on every attempt like consecutiveExploreCount does.
             consecutiveDocRetryCount = 0;
+            m_failedRunObjects.clear();
             if (splitModeActive)
                 advanceSplitPart(code);
             else if (listModeActive)
@@ -4729,6 +4690,9 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
         // used below instead of the bare exception for retry context and repeat-detection, since
         // the useful diagnostic detail is often in a PRECEDING print, not the exception text itself.
         errContext = result.output.isEmpty() ? result.error : result.output;
+        for (const QString &object : m_host->liveObjects())
+            if (!objectsBefore.contains(object) && !m_failedRunObjects.contains(object))
+                m_failedRunObjects << object;
     }
     // Broader, complementary check to the one below: if errContext is byte-for-byte identical to
     // the previous retry's, the SAME diagnosis was handed back twice and wasn't acted on either
@@ -4863,15 +4827,15 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
         "almost always to use that exact value. Do not guess a "
         "different name, vary unrelated call syntax instead, or "
         "repeat the same failing line unchanged. IMPORTANT: if the output above shows this "
-        "script already executed some lines successfully before the error, do not blindly "
-        "rewrite the WHOLE script from scratch — an earlier successful side-effecting call "
-        "(" +
-        creationCallExamples +
-        ", ...) already took effect live "
-        "and does not need to run again; check whether its target already exists (e.g. " +
+        "script already executed some lines successfully before the error, send the WHOLE "
+        "script again (every script is checked and run as a whole), but make it safe to run "
+        "a second time — an earlier successful side-effecting call (" +
+        creationCallExamples + ", ...) already took effect live; check whether its target already exists (e.g. " +
         lookupExample +
-        " is not None) before repeating it, or restructure so the fix comes "
-        "after what already succeeded instead of duplicating it. IMPORTANT: change only what "
+        " is not None) and reuse it instead of creating it again or adding to it a second "
+        "time (tabs, rows, curves). " +
+        failedRunObjectsNote() +
+        "IMPORTANT: change only what "
         "this error actually implicates — confirmed live, a retry that correctly fixed one line "
         "also silently dropped an unrelated, still-needed import several lines earlier that had "
         "nothing to do with the error, breaking a part of the script that was already correct. "
@@ -5372,12 +5336,11 @@ AiAssistant::ParsedListRequest AiAssistant::parseListRequest(const QString &text
     QString region = afterMarker.left(firstItemMatch.capturedStart());
 
     // SPLIT/NOSPLIT/REVIEW/NOREVIEW/EXPLORE/NOEXPLORE are checked and stripped from this region
-    // FIRST — whatever text remains afterward becomes the real instruction_block, sent to the model
-    // verbatim. Markers alone (nothing left after stripping) never trigger that transformation call
-    // at all, since a bare set of flags needs no model involvement. A marker NOT stripped here
-    // doesn't just fail to take effect, it actively misfires: it survives as leftover text, making
-    // the region look like a real instruction_block, and "Instruction: NOEXPLORE" then gets applied
-    // to every item of the list by the transformation call.
+    // FIRST — whatever text remains afterward becomes the real instruction_block, appended to every
+    // item verbatim. Markers alone (nothing left after stripping) never become one. A marker NOT
+    // stripped here doesn't just fail to take effect, it actively misfires: it survives as leftover
+    // text, making the region look like a real instruction_block, and "NOEXPLORE" then gets
+    // appended to every item of the list as an instruction.
     result.forceNoSplit = findAndStripCapitalMarker(region, "NO\\s*SPLIT", &region);
     if (!result.forceNoSplit)
         result.forceSplit = findAndStripCapitalMarker(region, "SPLIT", &region);
@@ -5396,8 +5359,7 @@ QStringList AiAssistant::parseNumberedListItems(const QString &text)
 {
     // "N. text"/"N) text" pattern, one match per line — 2+ required by parseListRequest() (a
     // single numbered mention isn't a list), but this function itself just returns whatever it
-    // finds, empty or not, since handleListTransformResponse() needs to distinguish "found 0/1"
-    // (fall back to the original items) from "found 2+" itself.
+    // finds, empty or not.
     static const QRegularExpression itemRe(R"(^\s*\d+[.)]\s+(.+)$)", QRegularExpression::MultilineOption);
     QStringList items;
     QRegularExpressionMatchIterator it = itemRe.globalMatch(text);

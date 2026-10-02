@@ -125,7 +125,7 @@ class AiAssistant : public QObject
     // order, are found and
     // stripped from the region between "LIST" and the first numbered item — only genuinely
     // leftover text there becomes instruction_block, so a region that's markers-only never
-    // triggers the one-shot LLM transformation call instructionBlock otherwise causes. Returns
+    // becomes an instruction appended to every item. Returns
     // isList=false (all other fields empty/default) when no marker or fewer than 2 numbered items
     // are found — deliberately fails open to a normal request rather than misfiring on a request
     // that merely happens to contain a number. Purely generic text parsing with no host-specific
@@ -255,19 +255,16 @@ class AiAssistant : public QObject
 
     // Entry point for LIST mode — `parsed` is parseListRequest()'s own output. `splitByDefault`/
     // `reviewByDefault` are the host's persisted settings, used only when neither of a pair's
-    // force flags is set. Non-empty parsed.instructionBlock first sends a one-shot NOSPLIT
-    // transformation call (see listModeActive's own doc comment); handleListTransformResponse()
-    // proceeds from there.
+    // force flags is set. A non-empty parsed.instructionBlock is appended to every item as it is
+    // (itemsWithInstruction()), with no model call.
     void beginListRequest(const ParsedListRequest &parsed, bool splitByDefault, bool reviewByDefault,
                           bool exploreByDefault, bool autoRunValue);
 
-    // Extracts just the numbered items (no marker line) from arbitrary text — the response-side
-    // counterpart to parseListRequest()'s own item-extraction, reused by
-    // handleListTransformResponse() to re-parse the model's transformed list.
+    // Extracts just the numbered items (no marker line) from arbitrary text — parseListRequest()'s
+    // own item-extraction.
     static QStringList parseNumberedListItems(const QString &text);
 
-    // The fallback when the instruction_block transformation can't be parsed: every item with the
-    // instruction appended, so the instruction still reaches every item instead of being dropped.
+    // Every item with the LIST's instruction_block appended, so the instruction reaches each item as written.
     static QStringList itemsWithInstruction(const QStringList &items, const QString &instruction);
 
     // Dispatches the split-plan decomposition preflight for `aiText` directly — no continuation-
@@ -453,7 +450,7 @@ class AiAssistant : public QObject
     // PythonSyntaxHighlighter's matching "▸▸▸ AI: list " check).
     void printParsedListItems(const QStringList &items, bool wasTransformed);
 
-    // Shared tail end of beginListRequest()/handleListTransformResponse() — builds listItems
+    // Tail end of beginListRequest() — builds listItems
     // (mechanical per-item doc-topic keyword matching, see topicSynonymRe) from `items` and
     // starts the list running via startNextListItem().
     void startListItems(const QStringList &items, bool forceSplit, bool forceNoSplit, bool forceReview,
@@ -465,13 +462,6 @@ class AiAssistant : public QObject
     // own merge completes, not after each internal part). Increments listItemIndex and calls
     // startNextListItem() for the next item, or ends the list if that was the last one.
     void advanceListItem();
-
-    // Response handler for the one-shot instruction_block transformation call (see
-    // beginListRequest()) — re-parses `code` as a numbered list via parseNumberedListItems(),
-    // falls back to pendingListRawItems (fail-open, same philosophy as every other verify-and-
-    // retry in this class) if that yields fewer than 2 items, then proceeds exactly as the
-    // empty-instructionBlock path would have.
-    void handleListTransformResponse(const QString &code);
 
     // One-shot, terminal call: asks the model to collapse all of splitPartScripts into ONE
     // standalone script reproducing the same end result from a fresh session. Sets
@@ -649,6 +639,13 @@ class AiAssistant : public QObject
     // the first couple of corrections, where the confirmed hallucinations actually happened)
     // without letting a long chain compound indefinitely.
     int consecutiveDocRetryCount = 0;
+    // Objects ("kind:name", see AiScriptHost::liveObjects()) that this request's failed scripts created and left
+    // behind — a retry runs the whole script again and must reuse them instead of creating or extending them twice.
+    // Confirmed live: each retry of a note task ran addTab() again (2, 3, then 4 tabs). Cleared on success and for
+    // every new request.
+    QStringList m_failedRunObjects;
+    // The retry prompts' sentence naming m_failedRunObjects; empty when there are none.
+    QString failedRunObjectsNote() const;
     // Clears every "a network reply for THIS is still coming" flag at once. Must be called by any
     // path that abandons or supersedes an in-flight request, because the flags are what route an
     // arriving reply to its handler — a stale one sends the NEXT reply into a handler whose state
@@ -984,25 +981,6 @@ class AiAssistant : public QObject
     // gets SENT for a request while this LIST is in progress; the full transcript (every item,
     // and anything before the LIST started) stays intact for "show history" regardless.
     qsizetype m_listHistoryStart = 0;
-    // True only while the one-shot instruction_block transformation call (see beginListRequest())
-    // is in flight. handleListTransformResponse() resets it and, on a successful re-parse, is
-    // what actually populates listItems/calls startNextListItem() — beginListRequest() itself
-    // only gets that far directly when instructionBlock was empty to begin with.
-    bool awaitingListTransform = false;
-    // Remembered across the transform call's async gap, since beginListRequest()'s own
-    // parameters aren't available again once handleListTransformResponse() fires.
-    QStringList
-        pendingListRawItems; // fail-open fallback if the transform response can't be parsed (instruction appended)
-    bool pendingListForceSplit = false;
-    bool pendingListForceNoSplit = false;
-    bool pendingListForceReview = false;
-    bool pendingListForceNoReview = false;
-    bool pendingListForceExplore = false;
-    bool pendingListForceNoExplore = false;
-    bool pendingListSplitByDefault = false;
-    bool pendingListReviewByDefault = false;
-    bool pendingListExploreByDefault = true;
-    bool pendingListAutoRun = false;
 
   signals:
     void responseReady(const QString &text);

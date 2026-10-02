@@ -6326,6 +6326,34 @@ QList<QStringList> ApplicationWindow::entityKinds(const QStringList &names)
     return result;
 }
 
+// Windows by kind, and the fit functions of the "ai/" folder (a directory listing: cheap enough to run before and after
+// every AI script, unlike groupFunctions(), which re-reads every .fif file).
+QStringList ApplicationWindow::liveObjects()
+{
+    QStringList objects;
+    for (MdiSubWindow *w : windowsList())
+    {
+        if (!w)
+            continue;
+        QString kind = "window";
+        if (w->inherits("Table"))
+            kind = "table";
+        else if (w->inherits("Matrix"))
+            kind = "matrix";
+        else if (w->inherits("Note"))
+            kind = "note";
+        else if (w->inherits("MultiLayer"))
+            kind = "graph";
+        else if (w->inherits("Graph3D"))
+            kind = "3D plot";
+        objects << kind + ":" + w->objectName();
+    }
+    if (compileWidget)
+        for (const QFileInfo &fif : QDir(compileWidget->pathFIF + "/ai").entryInfoList({"*.fif"}, QDir::Files))
+            objects << "function:ai/" + fif.completeBaseName();
+    return objects;
+}
+
 // Checks syntax only — WITHOUT running `code` — so the caller can decide "not runnable" (plain
 // English instead of code) vs. "worth running/self-reviewing" before ever touching scriptEnv. A
 // separate AiScriptHost method specifically so the orchestration logic that decides what to do
@@ -6510,16 +6538,6 @@ void ApplicationWindow::connectAiSignalsOnce()
         if (m_ai->awaitingSplitPlanCreationCheckScript)
         {
             m_ai->handleSplitPlanCreationCheckScriptResponse(code);
-            return;
-        }
-        // LIST mode's instruction_block transformation round-trip — see
-        // AiAssistant::beginListRequest()'s doc comment. Checked immediately after the
-        // existence-check above, before anything else: this is a self-contained, one-shot call
-        // that must never be misinterpreted as a continuation-check/doc-selection/split-plan
-        // response.
-        if (m_ai->awaitingListTransform)
-        {
-            m_ai->handleListTransformResponse(code);
             return;
         }
         // New-task-vs-continuation round-trip — see AiAssistant::handleContinuationCheckResponse()'s
