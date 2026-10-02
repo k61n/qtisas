@@ -697,7 +697,10 @@ public:
  	if (a1==true)
 		locale.setNumberOptions(QLocale::OmitGroupSeparator);
 
-    sipCpp->updateDecimalSeparators(locale);
+    // as the Preferences do: the table gets the new format, its cells are converted from the old one
+    const QLocale oldLocale = sipCpp->locale();
+    sipCpp->setLocale(locale);
+    sipCpp->updateDecimalSeparators(oldLocale);
 %End
 
   void normalizeCol(SIP_PYOBJECT) /PyName=normalize/;
