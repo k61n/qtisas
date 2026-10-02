@@ -20808,6 +20808,8 @@ ApplicationWindow *ApplicationWindow::loadScript(const QString &fn, bool execute
         }
 
 		se->executeAll();
+        // a window the script closed is deleted later: before exit(), which would otherwise crash on it
+        QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
 
         // Exit status and error text for batch use: nothing else reports a failure without a GUI.
         if (se->lastRunFailed())
@@ -20836,6 +20838,8 @@ ApplicationWindow *ApplicationWindow::loadScript(const QString &fn, bool execute
             // hasn't started yet, and a normal close could stop at a "save project?" dialog).
             if (quitAfter)
             {
+                // a window the script closed is deleted later: before exit(), which would otherwise crash on it
+                QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
                 if (failed)
                     std::cerr << scriptWindow->editor()->errorMessage().toStdString() << std::endl;
                 exit(failed ? 1 : 0);
