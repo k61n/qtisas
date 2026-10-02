@@ -16,17 +16,19 @@
 
 QtiSAS builds every path from the home folder (~/.config/qtisas/...: settings, FitFunctions, python, ai), so the
 instance runs with HOME set to the test home, started with -S=<instance> (offscreen script server; -s with --visible).
-Its settings start as defaults; dialogs are closed automatically.
+Its settings start as defaults except the AI's (presets and options copied); dialogs are closed automatically.
 """
 
 import argparse
 import os
 import shutil
+import signal
 import subprocess
 import sys
 import time
 
-import qtisas_send
+sys.dont_write_bytecode = True  # no __pycache__ next to the scripts
+import qtisas_send  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.abspath(os.path.join(HERE, "..", "..", ".."))
@@ -35,7 +37,7 @@ DEFAULT_HOME = os.path.join(os.path.expanduser("~"), ".qtisas-test", "home")
 DEFAULT_APP = os.path.join(REPO, "bin", "qtisas.app", "Contents", "MacOS", "qtisas")
 if os.path.basename(REPO) == "Contents":
     DEFAULT_APP = os.path.join(REPO, "MacOS", "qtisas")
-COPIED = ["FitFunctions", "SANSinstruments", "ascii1dFormats", "templates", "calibrationStandards"]
+COPIED = ["FitFunctions", "SANSinstruments", "ascii1dFormats", "templates", "calibrationStandards", "ai"]
 
 
 def config(home):
@@ -49,6 +51,19 @@ def copy_tree(source, target):
         shutil.copytree(source, target)
 
 
+def ai_settings(ini):
+    """The [AI] group of a QtiSAS settings file, as its lines (empty if there is none)."""
+    if not os.path.isfile(ini):
+        return []
+    lines, inside = [], False
+    for line in open(ini, encoding="utf-8"):
+        if line.startswith("["):
+            inside = line.strip() == "[AI]"
+        if inside:
+            lines.append(line)
+    return lines
+
+
 def reset(args):
     user = config(os.path.expanduser("~"))
     test = config(args.home)
@@ -58,8 +73,17 @@ def reset(args):
     for name in COPIED:
         if os.path.isdir(os.path.join(user, name)):
             copy_tree(os.path.join(user, name), os.path.join(test, name))
+    # settings: the defaults, except the AI's (selected preset, options), so the internal AI runs as for the user
+    ai = ai_settings(os.path.join(user, "qtisas.ini"))
+    if ai:
+        with open(os.path.join(test, "qtisas.ini"), "w", encoding="utf-8") as f:
+            f.write("".join(ai))
     print("test home ready: %s" % args.home)
     return 0
+
+
+def pid_file(args):
+    return os.path.join(args.home, "qtisas.pid")
 
 
 def status(args, quiet=False):
@@ -70,7 +94,11 @@ def status(args, quiet=False):
             print("not running")
         return 1
     if not quiet:
-        print("running: instance %s, pid %s, home %s" % (result.get("instance"), result.get("pid"), result.get("home")))
+        if result.get("event") == "busy":
+            print("running, busy with a request")
+        else:
+            print("running: instance %s, pid %s, home %s"
+                  % (result.get("instance"), result.get("pid"), result.get("home")))
     return 0
 
 
@@ -86,6 +114,8 @@ def start(args):
     log = open(os.path.join(args.home, "qtisas.log"), "w")
     process = subprocess.Popen([args.app, option], env=env, stdout=log, stderr=subprocess.STDOUT,
                                stdin=subprocess.DEVNULL, start_new_session=True)
+    with open(pid_file(args), "w") as f:  # for stop, when the server cannot answer (busy with a long AI run)
+        f.write(str(process.pid))
     deadline = time.monotonic() + args.wait
     while time.monotonic() < deadline:
         if status(args, quiet=True) == 0:
@@ -101,10 +131,24 @@ def start(args):
 
 def stop(args):
     try:
-        qtisas_send.request({"id": 1, "mode": "quit"}, args.socket, timeout=10)
+        answer = qtisas_send.request({"id": 1, "mode": "quit"}, args.socket, timeout=10)
     except (OSError, ValueError):
-        print("not running")
-        return 1
+        answer = None
+    if answer is None or answer.get("event") == "busy":  # not answering, or busy: end the process itself
+        try:
+            os.kill(int(open(pid_file(args)).read()), signal.SIGTERM)
+        except (OSError, ValueError):
+            if answer is None:
+                print("not running")
+                return 1
+    deadline = time.monotonic() + 10  # it exits shortly after answering
+    while status(args, quiet=True) == 0 and time.monotonic() < deadline:
+        time.sleep(0.2)
+    if status(args, quiet=True) == 0:
+        print("still running")
+        return 2
+    if os.path.exists(pid_file(args)):
+        os.remove(pid_file(args))
     print("stopped")
     return 0
 

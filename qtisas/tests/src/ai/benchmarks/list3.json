@@ -1,0 +1,68 @@
+{
+  "name": "LIST 3",
+  "description": "Mode comparison benchmark: 12 tasks with one checkable R<n>: line each (see ai-test-requests.md).",
+  "instruction": "Use exactly the object names given. End the item by printing exactly ONE line: \"R\", the item number, a colon, then only the values asked for, in the order asked, separated by spaces (e.g. \"R1: 385\").",
+  "setup": "for name in ('ai/RefLine', 'ai/RefDecay'):\n    Compiler.delete(name)\nCompiler.scanGroups()\n",
+  "items": [
+    {
+      "text": "Create a table \"Squares\" with 10 rows and 4 columns; fill column 1 with 1, 2, ..., 10. Give column 2 a column formula that squares column 1 and recalculate it in the default scripting language. Print the sum of column 2.",
+      "expected": "385",
+      "hint": "^ used in Python (XOR: error, empty column)"
+    },
+    {
+      "text": "In \"Squares\", give column 3 a formula for the cube of column 1 written in muParser syntax with ^, and recalculate it with muParser explicitly. Print the sum of column 3.",
+      "expected": "3025",
+      "hint": "muParser not forced, so ^ ran in Python"
+    },
+    {
+      "text": "In \"Squares\", give column 4 the formula 1/(column 1 - 5) and recalculate it. Print the number of empty cells in column 4 and the name of the Python error the failure reported.",
+      "expected": "1 ZeroDivisionError",
+      "hint": "error not caught, or the reason read from somewhere else than the ValueError's second line"
+    },
+    {
+      "text": "Make column 2 of \"Squares\" read-only, set its formula to 10 times column 1 and try to recalculate it. Print whether the recalculation raised an error and the sum of column 2 afterwards. Make the column writable again.",
+      "expected": "True 385",
+      "hint": "read-only ignored, or the formula's result printed instead of the unchanged sum"
+    },
+    {
+      "text": "Create a table \"Format\" with 3 rows and 1 column holding 1234.5, 0.25 and -3. Switch its decimal separators to German (comma), without group separators. Print the three cells as displayed text. Then write the text \"2,5\" into row 2 and print the number that cell now holds.",
+      "expected": "1234,5 0,25 -3 2.5",
+      "hint": "number format not applied, or text() mistaken for the number"
+    },
+    {
+      "text": "Create a 4x4 matrix \"Prod\" and fill it with the formula i*j. Print the sum of all cells, the value in row 2, column 3, and the determinant rounded to 6 decimals.",
+      "expected": "100 6 0",
+      "hint": "integrate() taken for the sum of the cells (56.25), (col, row) order, or 0-based i/j"
+    },
+    {
+      "text": "Compile a new fit function \"ai/RefLine\" for y = a*x + b with both parameters adjustable. Create a table \"LineData\" with 20 rows: x = 1..20, y = 2x + 1, dy = 0.1 (roles X, Y, yErr). Fit \"ai/RefLine\" to it with Levenberg-Marquardt, weighted by dy. Print a and b with 4 decimals.",
+      "expected": "2.0000 1.0000",
+      "hint": "not compiled (only saved), no group, or parameters left fixed"
+    },
+    {
+      "text": "Compile a new fit function \"ai/RefDecay\" for y = A*exp(-k*x) + c with all three parameters adjustable. Create a table \"DecayData\" with 101 rows: x = 0, 0.1, ..., 10, y = 3*exp(-0.5*x) + 0.2, dy = 0.01 (roles X, Y, yErr). Fit it starting from A = 1, k = 1, c = 0. Print A, k and c with 4 decimals.",
+      "expected": "3.0000 0.5000 0.2000",
+      "hint": "initial guesses printed instead of results(), or parameters fixed"
+    },
+    {
+      "text": "Create a graph \"DecayPlot\" with two stacked layers: the top one with the \"DecayData\" points and the fitted curve from table \"fitCurve-ai/RefDecay\", the bottom one with that table's residuals. Print the number of layers, the number of curves in the top and in the bottom layer, and whether the largest absolute residual is below 1e-4.",
+      "expected": "2 2 1 True",
+      "hint": "GraphWindow used where a layer is needed, residuals not from fitCurve-ai/RefDecay col 5, or another model fitted"
+    },
+    {
+      "text": "Create a note \"Report\" whose first tab contains print('A') and a second tab named \"Calc\" containing print(6*7). Do not run them. Print the number of tabs and the text of the \"Calc\" tab.",
+      "expected": "2 print(6*7)",
+      "hint": "renameTab() given a 1-based index, a retry adding tabs again, or the tabs executed"
+    },
+    {
+      "text": "In \"Squares\", change the formula of column 2 to 2 to the power of column 1 and recalculate it in the default scripting language. Print the sum of column 2.",
+      "expected": "2046",
+      "hint": "^ in Python again (the item depends on remembering item 1's rule)"
+    },
+    {
+      "text": "Delete the fit functions \"ai/RefLine\" and \"ai/RefDecay\" from the library. Then print which of these two names still exist (a list, [] if none).",
+      "expected": "[]",
+      "hint": "delete() silently no-ops on a misspelled name, or all ai/ functions listed"
+    }
+  ]
+}

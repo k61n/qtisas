@@ -516,6 +516,12 @@ class AiAssistant : public QObject
     {
         return m_busy;
     }
+    //! No reply awaited and no LIST running. Between two steps of one request (a script runs, the next call is
+    //! scheduled) it can be idle for an instant: whoever waits for the end should see it idle for a while.
+    bool isIdle() const
+    {
+        return !m_busy && !listModeActive;
+    }
     void setMaxUserRules(int n)
     {
         m_maxUserRules = n;

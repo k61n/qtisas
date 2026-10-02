@@ -6123,6 +6123,7 @@ static bool isAiListMessage(const QString &message)
 // auto-display themselves (see runScript()'s doc comment).
 void ApplicationWindow::print(const QString &message)
 {
+    m_aiTranscript << message;
     // Invalidated on every print() call — see printHttpRetryStatus()'s doc comment.
     // Anything printed between retries means the last line isn't ours, so the next one starts fresh, never overwrites.
     m_retryStatusPos = -1;
@@ -6373,6 +6374,54 @@ bool ApplicationWindow::canCompile(const QString &code, QString *errorOut) const
 // Lazy-constructs m_ai (with the last-selected preset's API key/base URL/model/max tokens/docs
 // mode loaded, if any) — a no-op if askAiConfigure() already pre-created it, or if this isn't the
 // first askAi() call in the session.
+QStringList ApplicationWindow::aiAgents() const
+{
+    QStringList names;
+    for (const QFileInfo &fi : QDir(sasPath + "ai/").entryInfoList({"*.ai"}, QDir::Files, QDir::Name))
+        names << fi.completeBaseName();
+    return names;
+}
+
+QString ApplicationWindow::aiAgent()
+{
+    QSettings *s = Settings::DefaultSettings();
+    const QString name = s->value("/AI/SelectedPreset").toString();
+    delete s;
+    return name;
+}
+
+bool ApplicationWindow::setAiAgent(const QString &name)
+{
+    if (!aiAgents().contains(name))
+        return false;
+    // as AiConfig::apply(): the preset's fields into the live assistant, its name remembered for the next start
+    QSettings sf(sasPath + "ai/" + name + ".ai", QSettings::IniFormat);
+    askAiConfigure(sf.value("AI/ApiKey").toString(), sf.value("AI/BaseUrl").toString(),
+                   sf.value("AI/Model", "claude-opus-4-8").toString(), sf.value("AI/MaxTokens", 4096).toInt(),
+                   AiAssistant::docsModeFromSettings(sf));
+    QSettings *s = Settings::DefaultSettings();
+    s->setValue("/AI/SelectedPreset", name);
+    delete s;
+    return true;
+}
+
+void ApplicationWindow::aiClearHistory()
+{
+    if (m_ai)
+        m_ai->clearHistory();
+}
+
+bool ApplicationWindow::aiIdle() const
+{
+    return !m_ai || m_ai->isIdle();
+}
+
+void ApplicationWindow::aiStop()
+{
+    if (m_ai)
+        m_ai->stop();
+}
+
 void ApplicationWindow::ensureAiAssistant()
 {
     if (m_ai)
@@ -6845,7 +6894,10 @@ void ApplicationWindow::askAi(const QString &text, bool autoRun, bool forceConso
 void ApplicationWindow::scriptPrint(const QString &text)
 {
     if (m_aiCapturing && !text.trimmed().isEmpty())
+    {
         m_aiCaptureBuffer += text + "\n";
+        m_aiTranscript << text;
+    }
 
 #ifdef SCRIPTING_CONSOLE
     // Duplicates print()'s Script Output Panel check since AI scripts call scriptPrint() directly,
@@ -6931,7 +6983,10 @@ void ApplicationWindow::scriptPrintReplace(const QString &text)
 void ApplicationWindow::scriptPrintHighlighted(const QString &text)
 {
     if (m_aiCapturing && !text.trimmed().isEmpty())
+    {
         m_aiCaptureBuffer += text + "\n";
+        m_aiTranscript << text;
+    }
 
 #ifdef SCRIPTING_CONSOLE
     // Mirrors scriptPrint() above line-for-line (including its own comment on why this routing

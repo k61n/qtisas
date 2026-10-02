@@ -8,16 +8,21 @@
 """Script server: runs Python sent over a local socket in the running QtiSAS.
 
 Started by QtiSAS's -s[=NAME] / -S[=NAME] options (--server, --server-offscreen), or by start() when the
-environment variable QTISAS_SERVER names the instance (e.g. "test"); without either nothing listens. The socket is a Unix socket only the user can open (QLocalServer.UserAccessOption), by default
-/tmp/qtisas-<uid>/<instance>.sock, or QTISAS_SERVER_SOCKET. A name another QtiSAS still answers on is refused
-(RuntimeError), so a request always reaches the QtiSAS that started it; only a leftover socket file is replaced.
+environment variable QTISAS_SERVER names the instance (e.g. "test"); without either nothing listens. The socket is
+a Unix socket only the user can open (QLocalServer.UserAccessOption), by default /tmp/qtisas-<uid>/<instance>.sock,
+or QTISAS_SERVER_SOCKET; a socket folder other users own or can use is refused. A name another QtiSAS still answers
+on is refused (RuntimeError), so a request always reaches the QtiSAS that started it; only a leftover socket file is
+replaced.
 
 Protocol: one JSON object per line, both ways. A request
     {"id": 1, "mode": "python", "code": "...", "keep": false, "dialogs": "auto", "filename": "script.py"}
 is answered by zero or more events {"id": 1, "event": "line", "text": "..."} and one final
     {"id": 1, "event": "result", "ok": true, "output": "...", "error": "", "seconds": 0.12,
      "created": ["table:T"], "removed": [], "dialogs": [], "status": "done"}
-or {"id": 1, "event": "busy"} while another request runs. Modes: "python", "status", "quit".
+or {"id": 1, "event": "busy"} while another request runs. Modes: "python", "status", "quit", and the internal AI:
+"ai" (generates only, nothing runs) and "ai-run" (the full pipeline with execution), with "text" instead of "code";
+their lines are streamed as "line" events, and the result adds "transcript", "items" (one per LIST item), "r_lines",
+"scripts", "tokens".
 """
 
 import builtins
@@ -26,22 +31,25 @@ import io
 import json
 import linecache
 import os
+import re
 import socket
 import time
 import traceback
 
 try:
-    from PyQt6.QtCore import QMetaObject, Qt, QTimer
+    from PyQt6.QtCore import QEventLoop, QMetaObject, Qt, QTimer
     from PyQt6.QtNetwork import QLocalServer
     from PyQt6.QtWidgets import QApplication, QMessageBox
 except ImportError:
-    from PyQt5.QtCore import QMetaObject, Qt, QTimer
+    from PyQt5.QtCore import QEventLoop, QMetaObject, Qt, QTimer
     from PyQt5.QtNetwork import QLocalServer
     from PyQt5.QtWidgets import QApplication, QMessageBox
 
 import qti
+import qtisas_send  # the same folder: the socket path and its privacy check, shared with the client
 
 PROTOCOL = 1
+AI_IDLE_SECONDS = 1.5  # see AiAssistant::isIdle(): between two steps of one request it is idle for an instant
 DIRECT = getattr(Qt, "ConnectionType", Qt).DirectConnection
 USER_ACCESS = getattr(QLocalServer, "SocketOption", QLocalServer).UserAccessOption
 
@@ -49,7 +57,7 @@ _server = None  # the running server, kept alive here
 
 
 def default_socket_path(instance):
-    return os.path.join("/tmp", "qtisas-%d" % os.getuid(), instance + ".sock")
+    return qtisas_send.default_socket_path(instance)
 
 
 def start(instance=None, path=None, dialogs=None):
@@ -104,6 +112,53 @@ def _live_server(path):
         return ""
 
 
+_LIST_ITEM_RE = re.compile(r"AI LIST: item (\d+)/(\d+)")
+_TOOK_RE = re.compile(r"\(took (?:(\d+)min )?([\d.]+)sec")
+_ALL_DONE_RE = re.compile(r"AI LIST: all (\d+) item\(s\) completed \(took (?:(\d+)min )?([\d.]+)sec")
+_TOKENS_RE = re.compile(r"~(\d+)K tokens estimated")
+_R_LINE_RE = re.compile(r"^R\d+:.*$", re.MULTILINE)
+
+
+def _seconds(match, first_group):
+    minutes = match.group(first_group)
+    return (int(minutes) * 60 if minutes else 0) + float(match.group(first_group + 1))
+
+
+def summarize_ai(lines):
+    """The structured part of an AI run, read from what it printed: status, R<n>: lines, scripts run, tokens sent,
+    and one entry per LIST item (its text, scripts, R lines, seconds, failed)."""
+    transcript = "\n".join(lines)
+    # R<n>: lines come from the scripts' output, never from the AI's own messages ("▸▸▸ AI code ..." shows the code)
+    output = "\n".join(line for line in lines if not line.startswith("▸"))
+    items = []
+    for line in lines:
+        m = _LIST_ITEM_RE.search(line)
+        if m and "failed" not in line:  # "LIST item n/N failed" belongs to the item before
+            took = _TOOK_RE.search(line)
+            if took and items:  # "item n/N (took ...)" is the time of the PREVIOUS item
+                items[-1]["seconds"] = _seconds(took, 1)
+            items.append({"item": int(m.group(1)), "of": int(m.group(2)), "text": line.split(" — ", 1)[-1].strip(),
+                          "scripts": 0, "r_lines": [], "seconds": None, "failed": False})
+            continue
+        done = _ALL_DONE_RE.search(line)
+        if done and items:
+            items[-1]["seconds"] = _seconds(_TOOK_RE.search(line), 1)
+        if items:
+            if "AI code (running)" in line:
+                items[-1]["scripts"] += 1
+            if re.search(r"LIST item %d/\d+ failed" % items[-1]["item"], line):
+                items[-1]["failed"] = True
+            if not line.startswith("▸"):
+                items[-1]["r_lines"] += _R_LINE_RE.findall(line)
+    stopped = any(line.startswith("▸▸▸ AI: stopping") for line in lines) and not items
+    failed_items = [i["item"] for i in items if i["failed"]]
+    status = "stopped" if stopped else ("items-failed" if failed_items else "done")
+    return {"ok": status == "done", "status": status, "transcript": transcript,
+            "r_lines": _R_LINE_RE.findall(output), "items": items, "failed_items": failed_items,
+            "scripts": transcript.count("AI code (running)"),
+            "tokens": 1000 * sum(int(t) for t in _TOKENS_RE.findall(transcript))}
+
+
 def _window_kind(w):
     for kind in ("Table", "Matrix", "Note", "MultiLayer", "Graph3D"):
         if w.inherits(kind):
@@ -146,7 +201,13 @@ class ScriptServer:
         self.busy = False
         self.session = None  # the namespace kept between requests with "keep"
         self._buffers = {}
-        os.makedirs(os.path.dirname(path), mode=0o700, exist_ok=True)
+        folder = os.path.dirname(path) or "."
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+            os.chmod(folder, 0o700)  # makedirs' mode is reduced by the umask, never widened: set it explicitly
+        problem = qtisas_send.private_folder_problem(folder)
+        if problem:  # in shared /tmp: another user's folder could hold their socket instead of ours
+            raise RuntimeError("qtisas_server: refusing %s: %s" % (path, problem))
         owner = _live_server(path)
         if owner is not None:  # never take the name over from a QtiSAS that still answers on it
             raise RuntimeError("qtisas_server: instance %r is already used by %s (%s)"
@@ -199,7 +260,7 @@ class ScriptServer:
             return
         self.busy = True
         try:
-            result = self.run(request)
+            result = self.run(request, lambda text: self._send(socket, {"id": rid, "event": "line", "text": text}))
         except Exception:  # a failure of the server itself: still answered, never a client left waiting
             result = {"ok": False, "status": "failed", "error": "qtisas_server: " + traceback.format_exc().rstrip()}
         finally:
@@ -213,7 +274,7 @@ class ScriptServer:
         self.server.close()  # removes the socket file
         os._exit(0)  # no "save changes?" question, no settings written
 
-    def run(self, request):
+    def run(self, request, emit=None):
         mode = request.get("mode", "python")
         if mode == "status":
             return {"ok": True, "status": "done", "protocol": PROTOCOL, "instance": self.instance,
@@ -222,7 +283,63 @@ class ScriptServer:
             return {"ok": True, "status": "done"}
         if mode == "python":
             return self.run_python(request)
+        if mode in ("ai", "ai-run"):
+            return self.run_ai(request, emit)
         return {"ok": False, "status": "failed", "error": "unknown mode %r" % mode}
+
+    def run_ai(self, request, emit=None):
+        """Asks the internal AI (generate only, or with execution) and waits until it is idle; see summarize_ai()."""
+        app = qti.app
+        text = request.get("text") or request.get("code") or ""
+        if not text.strip():
+            return {"ok": False, "status": "failed", "error": "no request text"}
+        if not app._aiIdle():
+            return {"ok": False, "status": "failed", "error": "the AI is busy with another request"}
+        timeout = float(request.get("timeout") or 3600)
+        first = app._aiTranscriptSize()
+        lines = []
+        state = {"idle_since": None, "timeout": False}
+        start = time.monotonic()
+        loop = QEventLoop()
+
+        def collect():
+            for line in app._aiTranscript(first + len(lines)):
+                lines.append(line)
+                if emit:
+                    emit(line)
+
+        def poll():
+            collect()
+            now = time.monotonic()
+            if not app._aiIdle():
+                state["idle_since"] = None
+            elif state["idle_since"] is None:
+                state["idle_since"] = now
+            elif now - state["idle_since"] >= AI_IDLE_SECONDS:
+                loop.quit()
+            if now - start > timeout:
+                state["timeout"] = True
+                app._aiStop()
+                loop.quit()
+
+        before = snapshot()
+        answerer = _DialogAnswerer()
+        timer = QTimer()
+        timer.timeout.connect(poll)
+        with answerer if request.get("dialogs", self.dialogs) == "auto" else contextlib.nullcontext():
+            app._askAi(text, request.get("mode") == "ai-run")
+            timer.start(100)
+            loop.exec()
+            timer.stop()
+        timer.timeout.disconnect(poll)
+        collect()
+        result = summarize_ai(lines)
+        if state["timeout"]:
+            result.update({"ok": False, "status": "timeout"})
+        after = snapshot()
+        result.update({"seconds": round(time.monotonic() - start, 3), "created": sorted(after - before),
+                       "removed": sorted(before - after), "dialogs": answerer.dialogs})
+        return result
 
     def namespace(self, keep):
         if keep:

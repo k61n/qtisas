@@ -1202,6 +1202,22 @@ public slots:
     void askAiConfigure(const QString &apiKey, const QString &baseUrl, const QString &model, int maxTokens,
                         AiAssistant::DocsMode docsMode = AiAssistant::DocsMode::Compact);
 
+    //! AI agents: the presets of the "ai" folder (Preferences > Ask AI > Preset), for scripts
+    QStringList aiAgents() const;
+    static QString aiAgent();
+    //! Selects and configures the preset `name` as the Preferences' Apply does; false if there is no such preset.
+    bool setAiAgent(const QString &name);
+    void aiClearHistory();
+
+    //! For the script server's AI modes: idle = no reply awaited and no LIST running
+    bool aiIdle() const;
+    void aiStop();
+    //! Everything the AI printed (its own lines, and its scripts' scriptPrint() output), one entry per print
+    const QStringList &aiTranscript() const
+    {
+        return m_aiTranscript;
+    }
+
     bool addRule(const QString &text, QString *errorOut = nullptr) const;
     static bool removeRule(int index, QString *errorOut = nullptr);
     static bool removeAllRules();
@@ -1649,6 +1665,7 @@ private:
     bool m_aiCapturing = false;
     QString m_aiCaptureBuffer;
     QString m_aiErrorBuffer;
+    QStringList m_aiTranscript; // see aiTranscript()
     // See printHttpRetryStatus() — tracks where the CURRENT retry status line starts, so the next attempt replaces it
     // in place instead of appending. -1/nullptr means "nothing to overwrite" — print() invalidates this on every OTHER
     // call, so anything printed in between forces the next retry status back to a fresh line.

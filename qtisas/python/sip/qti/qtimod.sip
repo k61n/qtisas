@@ -4050,6 +4050,104 @@ public:
     sipCpp->scriptPrintReplaceHighlighted(*a0);
 %End
 
+  // AI agents (the presets of Preferences > Ask AI) and the settings of that page
+  QStringList aiAgents() const;
+  static QString aiAgent();
+  bool setAiAgent(const QString &name);
+%MethodCode
+  if (!sipCpp->setAiAgent(*a0)) {
+    sipIsErr = 1;
+    PyErr_SetString(PyExc_ValueError, QString("setAiAgent: no AI agent %1; agents: %2")
+                                          .arg(*a0, sipCpp->aiAgents().join(", ")).toUtf8().constData());
+  } else
+    sipRes = true;
+%End
+  void aiClearHistory();
+  SIP_PYOBJECT aiConfig();
+%MethodCode
+  // the "Ask AI" page: the agent's fields (read only here; setAiAgent() changes them) and the global settings
+  const AiSettings &st = sipCpp->aiSettings;
+  AiAssistant *ai = sipCpp->aiAssistant();
+  sipRes = PyDict_New();
+  auto put = [&](const char *key, PyObject *value) { PyDict_SetItemString(sipRes, key, value); Py_DECREF(value); };
+  const QString agent = sipCpp->aiAgent();
+  QSettings preset(sipCpp->sasPath + "ai/" + agent + ".ai", QSettings::IniFormat);
+  const QString baseUrl = ai ? ai->baseUrl() : preset.value("AI/BaseUrl").toString();
+  const QString model = ai ? ai->model() : preset.value("AI/Model").toString();
+  const int maxTokens = ai ? ai->maxTokens() : preset.value("AI/MaxTokens", 4096).toInt();
+  const int docsMode = static_cast<int>(ai ? ai->docsMode() : AiAssistant::docsModeFromSettings(preset));
+  static const char *docsModes[] = {"compact", "full", "integrated"};
+  put("agent", PyUnicode_FromString(agent.toUtf8().constData()));
+  put("baseUrl", PyUnicode_FromString(baseUrl.toUtf8().constData()));
+  put("model", PyUnicode_FromString(model.toUtf8().constData()));
+  put("maxTokens", PyLong_FromLong(maxTokens));
+  put("docsMode", PyUnicode_FromString(docsModes[qBound(0, docsMode, 2)]));
+  put("maxUserRules", PyLong_FromLong(st.maxUserRules));
+  put("maxAutoContinue", PyLong_FromLong(st.maxAutoContinue));
+  put("splitByDefault", PyBool_FromLong(st.splitByDefault));
+  put("maxSplitParts", PyLong_FromLong(st.maxSplitParts));
+  put("splitRequestMerge", PyBool_FromLong(st.splitRequestMerge));
+  put("selfReviewEnabled", PyBool_FromLong(st.selfReviewEnabled));
+  put("exploreEnabled", PyBool_FromLong(st.exploreEnabled));
+  put("localTimeoutSec", PyLong_FromLong(st.localTimeoutSec));
+%End
+  void setAiConfig(const QString &key, SIP_PYOBJECT value);
+%MethodCode
+  // the global settings of the "Ask AI" page, with the page's own ranges; the agent's fields via setAiAgent()
+  AiSettings &st = sipCpp->aiSettings;
+  struct IntField { const char *key; int *field; int min, max; };
+  struct BoolField { const char *key; bool *field; };
+  const IntField ints[] = {{"maxUserRules", &st.maxUserRules, 1, 200}, {"maxAutoContinue", &st.maxAutoContinue, 1, 50},
+                           {"maxSplitParts", &st.maxSplitParts, 2, 30}, {"localTimeoutSec", &st.localTimeoutSec, 30, 3600}};
+  const BoolField bools[] = {{"splitByDefault", &st.splitByDefault}, {"splitRequestMerge", &st.splitRequestMerge},
+                             {"selfReviewEnabled", &st.selfReviewEnabled}, {"exploreEnabled", &st.exploreEnabled}};
+  QString error;
+  bool done = false;
+  for (const IntField &f : ints)
+    if (*a0 == f.key) {
+      done = true;
+      const long v = PyLong_Check(a1) && !PyBool_Check(a1) ? PyLong_AsLong(a1) : LONG_MIN;
+      if (v < f.min || v > f.max)
+        error = QString("setAiConfig: %1 must be an integer %2..%3").arg(f.key).arg(f.min).arg(f.max);
+      else
+        *f.field = static_cast<int>(v);
+    }
+  for (const BoolField &f : bools)
+    if (*a0 == f.key) {
+      done = true;
+      if (!PyBool_Check(a1))
+        error = QString("setAiConfig: %1 must be True or False").arg(f.key);
+      else
+        *f.field = a1 == Py_True;
+    }
+  if (!done) {
+    const QStringList agentKeys = {"agent", "baseUrl", "model", "maxTokens", "docsMode"};
+    error = agentKeys.contains(*a0) ? QString("setAiConfig: %1 belongs to the agent: use setAiAgent(name)").arg(*a0)
+                                    : QString("setAiConfig: no setting %1").arg(*a0);
+  }
+  if (!error.isEmpty()) {
+    sipIsErr = 1;
+    PyErr_SetString(PyExc_ValueError, error.toUtf8().constData());
+  }
+%End
+
+  // For the script server's AI modes (qtisas/python/server) — internal, deliberately not in the API docs: an AI
+  // script must never ask the AI itself.
+  void askAi(const QString &text, bool autoRun = false) /PyName=_askAi/;
+%MethodCode
+    sipCpp->askAi(*a0, a1, false);
+%End
+  bool aiIdle() const /PyName=_aiIdle/;
+  void aiStop() /PyName=_aiStop/;
+  int _aiTranscriptSize() const;
+%MethodCode
+    sipRes = static_cast<int>(sipCpp->aiTranscript().size());
+%End
+  QStringList _aiTranscript(int from = 0) const;
+%MethodCode
+    sipRes = new QStringList(sipCpp->aiTranscript().mid(a0));
+%End
+
   // AI system-prompt rules — manually curated, capped, shown in Help > Python API > Ai
   bool addRule(const QString &text) /PyName=addRule/;
 %MethodCode
