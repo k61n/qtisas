@@ -17,6 +17,7 @@
 QtiSAS builds every path from the home folder (~/.config/qtisas/...: settings, FitFunctions, python, ai), so the
 instance runs with HOME set to the test home, started with -S=<instance> (offscreen script server; -s with --visible).
 Its settings start as defaults except the AI's (presets and options copied); dialogs are closed automatically.
+Packages installed with "qtisas pip ..." are read from the user's site-packages (or copied: --copy-site-packages).
 """
 
 import argparse
@@ -35,8 +36,20 @@ REPO = os.path.abspath(os.path.join(HERE, "..", "..", ".."))
 DEFAULT_HOME = os.path.join(os.path.expanduser("~"), ".qtisas-test", "home")
 # next to a build in the source tree (bin/qtisas.app), or inside an app bundle (Contents/Resources/python/server)
 DEFAULT_APP = os.path.join(REPO, "bin", "qtisas.app", "Contents", "MacOS", "qtisas")
-if os.path.basename(REPO) == "Contents":
-    DEFAULT_APP = os.path.join(REPO, "MacOS", "qtisas")
+if os.path.basename(REPO) == "Contents":  # a release starts through its launcher (its own Python, PYTHONPATH)
+    DEFAULT_APP = os.path.join(REPO, "MacOS", "launcher")
+    if not os.path.isfile(DEFAULT_APP):
+        DEFAULT_APP = os.path.join(REPO, "MacOS", "qtisas")
+# QtiSAS runs every *.py of python-scripts at startup. Appended last: the test home's own packages win
+SITE_PACKAGES_STARTER = """\
+# written by qtisas_test_instance.py reset: the user's packages, readable here, never written to
+import os
+import sys
+
+_user_packages = %r
+if os.path.isdir(_user_packages) and _user_packages not in sys.path:
+    sys.path.append(_user_packages)
+"""
 COPIED = ["FitFunctions", "SANSinstruments", "ascii1dFormats", "templates", "calibrationStandards", "ai"]
 
 
@@ -73,6 +86,17 @@ def reset(args):
     for name in COPIED:
         if os.path.isdir(os.path.join(user, name)):
             copy_tree(os.path.join(user, name), os.path.join(test, name))
+    # packages installed with "qtisas pip ...": the launcher's PYTHONPATH is ~/.config/qtisas/python/site-packages, i.e.
+    # the test home's own (where a pip install in the test instance goes); the user's are read from, never written to
+    user_packages = os.path.join(user, "python", "site-packages")
+    if args.copy_site_packages:
+        if os.path.isdir(user_packages):
+            os.makedirs(os.path.join(test, "python"), exist_ok=True)
+            copy_tree(user_packages, os.path.join(test, "python", "site-packages"))
+    else:
+        os.makedirs(os.path.join(test, "python-scripts"))
+        with open(os.path.join(test, "python-scripts", "user_site_packages.py"), "w", encoding="utf-8") as f:
+            f.write(SITE_PACKAGES_STARTER % user_packages)
     # settings: the defaults, except the AI's (selected preset, options), so the internal AI runs as for the user
     ai = ai_settings(os.path.join(user, "qtisas.ini"))
     if ai:
@@ -162,6 +186,8 @@ def main(argv=None):
     p.add_argument("--socket", help="socket path (default /tmp/qtisas-<uid>/<instance>.sock)")
     p.add_argument("--wait", type=float, default=60, help="seconds start waits for the server")
     p.add_argument("--visible", action="store_true", help="start with its window shown (default: offscreen)")
+    p.add_argument("--copy-site-packages", action="store_true",
+                   help="reset: copy the user's site-packages (a fixed state) instead of reading them where they are")
     args = p.parse_args(argv)
     args.socket = args.socket or qtisas_send.default_socket_path(args.instance)
     return {"reset": reset, "start": start, "status": status, "stop": stop}[args.command](args)

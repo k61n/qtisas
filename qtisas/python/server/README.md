@@ -71,7 +71,10 @@ qtisas_test_instance.py stop      # also ends it while it's busy with a long req
 ```
 
 QtiSAS builds every path from the home folder, so the instance never touches your own settings or fit
-library. Its settings start as defaults, except the AI's.
+library. Its settings start as defaults, except the AI's. Packages installed with `qtisas pip …` are read from your
+`~/.config/qtisas/python/site-packages` (added last to Python's search path; a `pip install` in the test
+instance goes to its own folder), or copied with `reset --copy-site-packages` for a fixed state. Run from an
+installed QtiSAS (`…/qtisas.app/Contents/Resources/python/server/`), the instance starts through its launcher.
 
 ## AI agents and settings from Python
 
