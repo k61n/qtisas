@@ -64,6 +64,7 @@ setNumCols
 deleteRows
 text
 cellData
+cellOrNone
 rowData
 colData
 setRowData
@@ -458,6 +459,13 @@ saveProjectAs
 saveProject
 newProject
 closeProject
+openProject
+aiAgents
+aiAgent
+setAiAgent
+aiClearHistory
+aiConfig
+setAiConfig
 clone
 closeWindow
 activateWindow
