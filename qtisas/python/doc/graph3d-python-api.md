@@ -102,12 +102,14 @@ Formula strings (used in `plot3D("f(x,y)", …)` and `plot3D("X","Y","Z", …)`)
 | Rule | Correct | Wrong |
 |------|---------|-------|
 | Power | `x^2` | `x**2` |
-| Conditional | `a ? b : c` (works — see note) or `sign(threshold - v)` | `if(cond, a, b)` — not available |
+| Conditional | `a ? b : c` (works — see note) | `if(cond, a, b)` — not available |
 
 **Ternary `a ? b : c` DOES work** — confirmed in source, a core muParser feature never disabled
-by QtiSAS. `sign(threshold - v)` is still preferred for piecewise switching on chained/composite
-shapes (smooth multiplier, not a hard branch), not because ternary is unavailable. `if(cond, a,
-b)` genuinely doesn't work: registered with no 3-arg handler, silently never callable.
+by QtiSAS. Use it to SELECT one shape's formula piecewise: it picks exactly one branch everywhere,
+including exactly at the threshold. `sign(threshold - v)` is 0 exactly at the threshold, so weights
+built from it blend two shapes there — confirmed live: a disk appeared between two connected spheres,
+where a mesh point landed exactly on their contact point. Keep `sign()` for a wanted blend. `if(cond,
+a, b)` genuinely doesn't work: registered with no 3-arg handler, silently never callable.
 
 **Available functions** (verified against registration, not exhaustive — stats/special functions
 also exist): `sin` `cos` `tan` `asin` `acos` `atan` `sinh` `cosh` `tanh` `asinh` `acosh` `atanh`
@@ -117,11 +119,11 @@ also exist): `sin` `cos` `tan` `asin` `acos` `atan` `sinh` `cosh` `tanh` `asinh`
 **`atan2` and `round` do NOT exist** (verified against registration) — use `rint` for
 round-to-nearest; there is no 2-argument arctangent at all.
 
-**Piecewise switching** — `sign(threshold − v)` returns −1, 0, or +1:
+**Piecewise switching** — the ternary selects one value per side of a threshold:
 
 ```python
 z_int  = 0.35                         # computed in Python
-r_expr = f"({Ra:.4f}+{Rh:.4f}*sign({z_int:.6f}-v))"
+r_expr = f"(v<{z_int:.6f} ? {R1} : {R2})"
 ```
 
 **Shared sub-expression pattern** — when X and Y share a term (e.g. radius `r(v)`), define it once as a Python string and interpolate into both formulas. Don't inline it twice with different trig factors — the copies diverge when you edit one:
@@ -330,7 +332,7 @@ All color arguments accept `QColor` — use the `QColor("name")` string form for
 | `setAntialiasing(on=True)` | smooth edges |
 | `setLabelsDistance(d)` | distance between axis ticks and labels |
 | `animate(on=True)` | enable auto-rotate animation |
-| `findBestLayout()` | auto-fit the viewport to the data |
+| `findBestLayout()` | auto-fit the viewport to the data — scales each axis to the same length (a cube), right for data with different units. For a geometric shape with the same units on all axes, call `setScale(1/L, 1/L, 1/L)` after it, `L` = the longest extent, in a square window (see the sphere examples) |
 | `setWindowTitle(title)` | title bar only — does not update project tree (inherited from `QMdiSubWindow`) |
 | `resize(w, h)` | resize the window in pixels (inherited from `QMdiSubWindow`) |
 | `setWindowName(g3, name)` | full rename: project tree + `plot3D("name")` lookup — call as `setWindowName(g3, "name")` |
@@ -461,7 +463,7 @@ c.setDataColors(QColor("red"), QColor("yellow"))
 ```python
 # --- parametric surface: two connected spheres (surface of revolution) ---
 # Graph3D holds ONE surface — one plot3D() call covers the whole shape.
-# sign(z_int - v) switches between the two sphere radii as v crosses z_int.
+# The ternary switches the sphere radius and center as v crosses z_int — exactly one sphere everywhere.
 # r is built as a Python string so X and Y share exactly the same sub-expression.
 # sep MUST equal R1+R2 (tangent spacing) — see Rule 4 below for why a smaller value distorts
 # both spheres' sizes, sometimes severely.
@@ -471,12 +473,9 @@ cz1, cz2 = -sep / 2, sep / 2
 z_int    = (R1**2 - R2**2 - cz1**2 + cz2**2) / (2 * (cz2 - cz1))
 zl, zr   = cz1 - R1, cz2 + R2
 
-Ra = (R1 + R2) / 2;  Rh = (R1 - R2) / 2
-ca = (cz1 + cz2) / 2;  ch = (cz1 - cz2) / 2
-s  = f"sign({z_int:.6f}-v)"
-Re = f"({Ra:.4f}+{Rh:.4f}*{s})"
-ce = f"({ca:.4f}+{ch:.4f}*{s})"
-r  = f"sqrt(({Re})^2-(v-({ce}))^2)"
+Re = f"(v<{z_int:.6f} ? {R1} : {R2})"
+ce = f"(v<{z_int:.6f} ? {cz1} : {cz2})"
+r  = f"sqrt(max(0, ({Re})^2-(v-({ce}))^2))"   # r is the PROFILE (distance from the axis), not a sphere radius
 
 g3 = plot3D(f"({r})*cos(u)", f"({r})*sin(u)", "v",
             0, 2*pi, zl, zr, 60, 80, False, True)
@@ -484,6 +483,38 @@ setWindowName(g3, "ConnectedSpheres")
 g3.setScales(-(R1 + 0.2), R1 + 0.2, -(R1 + 0.2), R1 + 0.2, zl - 0.1, zr + 0.1)
 g3.setPlotStyle(Qti3D.FILLEDMESH)
 g3.findBestLayout()
+L = max(2*R1, zr - zl)               # the longest extent
+g3.setScale(1/L, 1/L, 1/L)           # same units on all axes: true proportions (after findBestLayout)
+g3.resize(600, 600)                  # the view stretches with the window's shape: keep it square
+g3.update()
+```
+
+```python
+# --- parametric surface: three connected spheres, radius ratio 5:1:3 ---
+# Same surface of revolution, 3+ shapes: a nested ternary selects BOTH the radius R and the center
+# c of the sphere v is in, and the profile is r = sqrt(R^2 - (v-c)^2). Using R itself as r draws a
+# stepped cylinder (confirmed live, two models). Tangent spacing; switch points at c[i] + R[i].
+R1, R2, R3 = 5.0, 1.0, 3.0
+c1 = 0.0
+c2 = c1 + R1 + R2
+c3 = c2 + R2 + R3
+t1, t2 = c1 + R1, c2 + R2            # tangent points: where sphere 1 ends, where sphere 2 ends
+
+# Not sign()-built 0/1 weights: sign() is 0 exactly at t1/t2, the weights become 1/2 + 1/2 there and
+# blend two spheres — confirmed live, a disk of radius 1.73 at v = 7, where a mesh point hit t2.
+R = f"(v<{t1} ? {R1} : (v<{t2} ? {R2} : {R3}))"
+c = f"(v<{t1} ? {c1} : (v<{t2} ? {c2} : {c3}))"
+r = f"sqrt(max(0, {R}^2-(v-{c})^2))"  # max(0, ...): no NaN at the poles and contact points
+
+zl, zr = c1 - R1, c3 + R3
+g3 = newPlot3D("ThreeSpheres", f"({r})*cos(u)", f"({r})*sin(u)", "v",
+               0, 2*pi, zl, zr, 60, 121, True, False)
+g3.setScales(-R1, R1, -R1, R1, zl, zr)
+g3.setPlotStyle(Qti3D.FILLEDMESH)
+g3.findBestLayout()                  # scales EACH axis to the same length: a cube, spheres squashed
+L = max(2*R1, zr - zl)               # the longest extent
+g3.setScale(1/L, 1/L, 1/L)           # same units on all axes: true proportions (after findBestLayout)
+g3.resize(600, 600)                  # the view stretches with the window's shape: keep it square
 g3.update()
 ```
 
@@ -563,11 +594,12 @@ windows — valid Python, not what was asked.
 `setParametricSurface()`/`setFunction()` again on the same object replaces rather than adds,
 leaving only the last shape.
 
-**Shapes meant to connect/merge into one solid**: combine into ONE surface via a single radius
-formula switching between each shape's formula with `sign()`. The 2-term form (`Ra+Rh*sign(...)`)
-doesn't extend past 2 shapes — for 3+, give each shape a 0/1 indicator weight from `sign()`
-comparisons against its neighbors so exactly one formula is active at each point (weights summing
-to 1).
+**Shapes meant to connect/merge into one solid**: combine into ONE surface of revolution,
+`X = r*cos(u)`, `Y = r*sin(u)`, `Z = v`, whose profile `r = sqrt(R^2 - (v-c)^2)` switches each shape's
+radius `R` and center `c` with a (nested) ternary `v<t1 ? ... : ...`. `r` is the distance from the axis,
+**not** the sphere radius: `r = R` draws a stepped cylinder (confirmed live, two models). Not `sign()`
+weights: `sign()` is 0 exactly at a threshold and blends two shapes there, a disk wherever a mesh point
+lands on a contact point (see the three-spheres example).
 
 **RULE — center overlap silently changes each shape's rendered size, with no error.** Tangent
 spacing (center distance = sum of radii) puts the crossing point (where sizes are equal) exactly

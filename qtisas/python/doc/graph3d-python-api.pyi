@@ -53,14 +53,18 @@
 # Separate/non-touching shapes -> one plot3D() call per shape (N shapes = N windows); do NOT
 # call setParametricSurface()/setFunction() again on the same object expecting it to add a
 # shape — it silently REPLACES, leaving only the last one.
-# Shapes meant to connect into ONE surface -> single radius formula switching via sign() (see
-# example below); for 3+ shapes use a 0/1 indicator weight per shape (sign() vs each neighbor,
-# weights sum to 1) instead of the 2-term Ra+Rh*sign() form, which only has 2 slots.
+# Shapes meant to connect into ONE surface -> ONE surface of revolution: X = r*cos(u), Y = r*sin(u), Z = v,
+#   where r is the PROFILE sqrt(R^2 - (v-c)^2) — NOT the sphere radius R itself: r = R draws a stepped CYLINDER
+#   (confirmed live, two models). R and c both switch per shape, with a (nested) ternary:
+#     t1 = c1+R1, t2 = c2+R2   (tangent points)
+#     R = (v<t1 ? R1 : (v<t2 ? R2 : R3));  c = (v<t1 ? c1 : (v<t2 ? c2 : c3));  r = sqrt(max(0, R^2-(v-c)^2))
+#   max(0, ...) keeps the poles and contact points from becoming NaN. NOT sign()-built weights: sign() is 0 exactly
+#   at a threshold, blending two shapes there — a disk wherever a mesh point lands on a contact point (confirmed).
 # Spacing between chained shapes changes their RENDERED SIZE, silently, no error: tangent
 # spacing (center distance = sum of radii) preserves true size; overlapping spacing shrinks
 # both neighbors (mild if similar size, can shrink a much-smaller neighbor to invisible — seen
 # at radius ratio 5:1:2). Default to tangent (sep = R1+R2) unless merging/blending was asked for.
-# CRITICAL — the sign() switch THRESHOLD between neighbor i and i+1 is the tangent coordinate
+# CRITICAL — the switch THRESHOLD between neighbor i and i+1 is the tangent coordinate
 # c[i]+R[i] (== c[i+1]-R[i+1]) — NOT the separation R[i]+R[i+1], and NOT c[i+1] itself. sep is
 # correct for PLACING c[i+1] (c[i+1]=c[i]+sep) but WRONG if reused as the switch point, because
 # c[i]+sep IS c[i+1] (the next shape's own CENTER, not its edge). Confirmed failure: threshold
@@ -70,9 +74,8 @@
 #
 # FORMULA STRING SYNTAX (muParser — NOT Python):
 #   Power: x^2  NOT x**2
-#   Ternary ?: DOES work (verified in source — a core muParser feature) — prefer sign(threshold-v)
-#   for piecewise switching (+1/-1) anyway for chained/composite shapes (see above), since it stays
-#   a smooth multiplier rather than a hard branch, not because ternary is unavailable.
+#   Ternary ?: DOES work (verified in source — a core muParser feature) — use it to SELECT a shape's formula
+#   piecewise (see above); sign(threshold-v) is 0 at the threshold and blends there, so keep it for a wanted blend.
 #   No if() — it's registered with no actual 3-arg handler (broken, not by design) and silently
 #   never becomes callable. Use ternary or sign() instead.
 #   Functions (verified against the actual registration, not exhaustive — stats/special functions
@@ -168,6 +171,8 @@
 # setTitle(text)  setTitle(text,QColor,QFont)
 # setAntialiasing(on=True)  setLabelsDistance(d)
 # animate(on=True)  findBestLayout()
+# findBestLayout() scales each axis to the same length (a cube) — right for data with different units. A geometric
+#   shape with the same units on all axes: after it setScale(1/L, 1/L, 1/L), L = the longest extent, square window.
 # setWindowTitle(title)   — title bar only (inherited from QMdiSubWindow)
 # resize(w, h)            — window size in pixels (inherited from QMdiSubWindow)
 # setWindowName(g3, name) — full rename: project tree + plot3D("name") lookup (app-level call)
