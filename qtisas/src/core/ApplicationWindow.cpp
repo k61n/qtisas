@@ -6377,8 +6377,10 @@ bool ApplicationWindow::canCompile(const QString &code, QString *errorOut) const
 QStringList ApplicationWindow::aiAgents() const
 {
     QStringList names;
-    for (const QFileInfo &fi : QDir(sasPath + "ai/").entryInfoList({"*.ai"}, QDir::Files, QDir::Name))
+    for (const QFileInfo &fi : QDir(sasPath + "ai/").entryInfoList({"*.ai"}, QDir::Files))
         names << fi.completeBaseName();
+    // by the names, not the file names: "X-pyi.ai" sorts before "X.ai" ('-' < '.')
+    names.sort();
     return names;
 }
 
