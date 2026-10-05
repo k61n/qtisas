@@ -367,11 +367,13 @@ public slots:
 	double zoom(){return sp->zoom();};
 	void setZoom(double val);
 
-	Qwt3D::PLOTSTYLE plotStyle();
-	Qwt3D::FLOORSTYLE floorStyle();
-	Qwt3D::COORDSTYLE coordStyle();
+    void findBestLayoutKeepingExplicitView();
 
-	void print();
+    Qwt3D::PLOTSTYLE plotStyle();
+    Qwt3D::FLOORSTYLE floorStyle();
+    Qwt3D::COORDSTYLE coordStyle();
+
+    void print() override;
 	void print(QPrinter *printer);
 	void copyImage();
 	void exportImage(QTextDocument *document, int quality, bool transparent,
@@ -557,10 +559,11 @@ private:
     QtiSASPlot3D *sp;
 	UserFunction *d_func;
 	UserParametricSurface *d_surface;
-	Qwt3D::PLOTSTYLE style_;
-	PlotType d_table_plot_type;
-	Curve * d_active_curve;
-	ConstFunction *d_const_func;
+    bool d_scale_set = false, d_zoom_set = false, d_shift_set = false;
+    Qwt3D::PLOTSTYLE style_;
+    PlotType d_table_plot_type;
+    Curve *d_active_curve;
+    ConstFunction *d_const_func;
 	Curve * d_const_curve;
 };
 
@@ -580,16 +583,28 @@ public:
 
     double operator()(double x, double y);
 	QString function(){return formula;};
+    // The formula's first parser error, empty if it evaluated; see operator().
+    QString formulaError() const
+    {
+        return d_error;
+    }
 
-	unsigned int rows(){return d_rows;};
-	unsigned int columns(){return d_columns;};
-	void setMesh (unsigned int columns, unsigned int rows);
+    unsigned int rows() const
+    {
+        return d_rows;
+    };
+    unsigned int columns() const
+    {
+        return d_columns;
+    };
+    void setMesh(unsigned int columns, unsigned int rows);
 
     bool d_zLog;
 
 private:
 	  QString formula;
 	  unsigned int d_rows, d_columns;
+    QString d_error;
 };
 
 //! Class for user defined parametric surfaces
@@ -617,6 +632,11 @@ public:
 	QString xFormula(){return d_x_formula;};
 	QString yFormula(){return d_y_formula;};
 	QString zFormula(){return d_z_formula;};
+    // The formulas' first parser error, empty if they evaluated; see operator().
+    QString formulaError() const
+    {
+        return d_error;
+    }
 
     bool d_zLog;
 
@@ -625,6 +645,7 @@ private:
 	unsigned int d_rows, d_columns;
 	bool d_u_periodic, d_v_periodic;
 	double d_ul, d_ur, d_vl, d_vr;
+    QString d_error;
 };
 
 #endif

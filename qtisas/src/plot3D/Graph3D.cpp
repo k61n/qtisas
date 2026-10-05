@@ -58,19 +58,24 @@ UserFunction::UserFunction(const QString& s, Qwt3D::Curve *pw)
 
 double UserFunction::operator()(double x, double y)
 {
-	if (formula.isEmpty())
-		return 0.0;
+    if (formula.isEmpty() || !d_error.isEmpty())
+        return 0.0;
 
-	MyParser parser;
-	double result = 0.0;
-	try {
-		parser.DefineVar("x", &x);
-		parser.DefineVar("y", &y);
+    MyParser parser;
+    double result = 0.0;
+    try
+    {
+        parser.DefineVar("x", &x);
+        parser.DefineVar("y", &y);
         parser.SetExpr((const std::string)formula.toLocal8Bit().constData());
 		result = parser.Eval();
-	} catch(mu::ParserError &e){
-		QMessageBox::critical(0, "QtiSAS - Input function error", QString::fromStdString(e.GetMsg()));
-	}
+    }
+    catch (mu::ParserError &e)
+    {
+        // Once per surface, as in UserParametricSurface::operator()
+        d_error = QString::fromStdString(e.GetMsg());
+        QMessageBox::critical(nullptr, "QtiSAS - Input function error", d_error);
+    }
     if (d_zLog && result > 0)
         return log10(result);
 	return result;
@@ -113,14 +118,15 @@ void UserParametricSurface::setPeriodic (bool u, bool v)
 
 Triple UserParametricSurface::operator()(double u, double v)
 {
-	if (d_x_formula.isEmpty() || d_y_formula.isEmpty() || d_z_formula.isEmpty())
-		return Triple(0.0, 0.0, 0.0);
+    if (d_x_formula.isEmpty() || d_y_formula.isEmpty() || d_z_formula.isEmpty() || !d_error.isEmpty())
+        return Triple(0.0, 0.0, 0.0);
 
-	double x = 0.0, y = 0.0, z = 0.0;
-	MyParser parser;
-	try{
-		parser.DefineVar("u", &u);
-		parser.DefineVar("v", &v);
+    double x = 0.0, y = 0.0, z = 0.0;
+    MyParser parser;
+    try
+    {
+        parser.DefineVar("u", &u);
+        parser.DefineVar("v", &v);
 
         parser.SetExpr((const std::string)d_x_formula.toLocal8Bit().constData());
 		x = parser.Eval();
@@ -128,10 +134,13 @@ Triple UserParametricSurface::operator()(double u, double v)
 		y = parser.Eval();
         parser.SetExpr((const std::string)d_z_formula.toLocal8Bit().constData());
 		z = parser.Eval();
-	}
-	catch(mu::ParserError &e){
-		QMessageBox::critical(0, "QtiSAS - Input function error", QString::fromStdString(e.GetMsg()));
-	}
+    }
+    catch (mu::ParserError &e)
+    {
+        // Once per surface, as in UserFunction::operator().
+        d_error = QString::fromStdString(e.GetMsg());
+        QMessageBox::critical(nullptr, "QtiSAS - Input function error", d_error);
+    }
     if (d_zLog && z > 0)
         z = log10(z);
 	return Triple(x, y, z);
@@ -2855,6 +2864,7 @@ void Graph3D::setRotation(double xVal, double yVal, double zVal)
 
 void Graph3D::setZoom(double val)
 {
+    d_zoom_set = true;
     if (sp->zoom() == val)
         return;
 
@@ -2863,6 +2873,7 @@ void Graph3D::setZoom(double val)
 
 void Graph3D::setScale(double  xVal, double  yVal, double  zVal)
 {
+    d_scale_set = true;
     if (sp->xScale() == xVal && sp->yScale() == yVal && sp->zScale() == zVal)
         return;
 
@@ -2871,7 +2882,8 @@ void Graph3D::setScale(double  xVal, double  yVal, double  zVal)
 
 void Graph3D::setShift(double  xVal,double  yVal,double  zVal)
 {
-	sp->setShift(xVal, yVal, zVal);
+    d_shift_set = true;
+    sp->setShift(xVal, yVal, zVal);
 }
 
 Qwt3D::PLOTSTYLE Graph3D::plotStyle()
@@ -3414,6 +3426,21 @@ while ( file ) {
           }
       }
 return true;
+}
+
+void Graph3D::findBestLayoutKeepingExplicitView()
+{
+    // Confirmed live: a script's setScale(1/L, 1/L, 1/L) for true proportions was undone by the delayed layout of
+    // its new window; skipping that layout instead left the surface undrawn.
+    const double xs = sp->xScale(), ys = sp->yScale(), zs = sp->zScale(), zoom = sp->zoom();
+    const double xsh = sp->xShift(), ysh = sp->yShift(), zsh = sp->zShift();
+    findBestLayout();
+    if (d_scale_set)
+        sp->setScale(xs, ys, zs);
+    if (d_zoom_set)
+        sp->setZoom(zoom);
+    if (d_shift_set)
+        sp->setShift(xsh, ysh, zsh);
 }
 
 void Graph3D::findBestLayout()

@@ -3437,14 +3437,14 @@ void ApplicationWindow::initPlot3D(Graph3D *plot)
 
 	plot->setWindowIcon(QIcon(":/trajectory.png"));
 	plot->show();
-    // delays this command because something is not ready to call it right now
-    QTimer::singleShot(30, plot, [plot] { plot->findBestLayout(); });
-	addListViewItem(plot);
+    // delays this command because something is not ready to call it right now; keeps a view a script set meanwhile
+    QTimer::singleShot(30, plot, [plot] { plot->findBestLayoutKeepingExplicitView(); });
+    addListViewItem(plot);
 
-	if (!plot3DTools->isVisible())
-		plot3DTools->show();
+    if (!plot3DTools->isVisible())
+        plot3DTools->show();
 
-	if (!plot3DTools->isEnabled())
+    if (!plot3DTools->isEnabled())
 		plot3DTools->setEnabled(true);
 
 	windowActivated(plot);
