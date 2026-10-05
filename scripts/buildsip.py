@@ -69,10 +69,10 @@ def get_pyqt_versions(pipexe, qtv):
     return pyqtv, pyqtqtv
 
 
-def get_sip_version(filename):
+def read_property(filename, property):
     with open(filename, 'rb') as f:
         cfg = tomllib.load(f)
-    return cfg['sip-version']
+    return cfg[property]
 
 
 def sip_build():
@@ -104,8 +104,10 @@ def sip_build():
             f'{pipexe} install pyqt{version(qtv)[0]}=={pyqt} PyQt{version(qtv)[0]}-Qt{version(qtv)[0]}=={pyqtqt} pyqt-builder setuptools',
             shell=True
         )
-        sip = get_sip_version(find_resource('QtCore.toml', [venv_root]))
-        subprocess.run(f'{pipexe} install sip=={sip}', shell=True)
+        sip = read_property(find_resource('QtCore.toml', [venv_root]), 'sip-version')
+        sip_abi = read_property(find_resource('QtCore.toml', [venv_root]), 'sip-abi-version')
+        subprocess.run(f'{pipexe} install --force-reinstall sip=={sip}', shell=True)
+        subprocess.run(f'{pipexe} install --force-reinstall PyQt{version(qtv)[0]}-sip=={sip_abi}', shell=True)
         sipexe = find_resource('sip-build' + ext, [venv_root])
         sip_includes = find_resource('QtCoremod.sip', [venv_root])
         sip_includes = os.path.dirname(os.path.dirname(sip_includes))
@@ -133,6 +135,7 @@ name = "qti"
 project-factory = "pyqtbuild:PyQtProject"
 
 [tool.sip.project]
+{f'abi-version = "{sip_abi}"' if platform.system() != 'Linux' else ''}
 sip-include-dirs = ["{sip_includes}"]
 '''
 
