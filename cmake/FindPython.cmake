@@ -22,7 +22,11 @@ include_directories(${Python3_INCLUDE_DIRS}/)
 execute_process(
     COMMAND ${Python3_EXECUTABLE}
             ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildsip.py
-            ${CMAKE_CURRENT_BINARY_DIR} ${QMAKE} "${Qt${V}Core_VERSION}")
+            ${CMAKE_CURRENT_BINARY_DIR} ${QMAKE} "${Qt${V}Core_VERSION}"
+    RESULT_VARIABLE BUILDSIP_RESULT)
+if (NOT BUILDSIP_RESULT EQUAL 0)
+    message(FATAL_ERROR "scripts/buildsip.py failed")
+endif ()
 include_directories(
     ${CMAKE_CURRENT_BINARY_DIR}/sip
     ${CMAKE_CURRENT_BINARY_DIR}/sip/qti)
