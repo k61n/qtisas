@@ -1181,7 +1181,7 @@ static bool plot3DCallHasMultipleArgs(const QString &code)
 }
 
 QString QtiSasAiContent::splitPartScopeViolation(const QString &code, const QString &partDescription,
-                                                 const QString &earlierPartsCode) const
+                                                 const QString &earlierPartsCode, bool wholeRequest) const
 {
     // Every direction reports, instead of the first one returning immediately: they are
     // independent scope rules and a script can trip several at once, which previously cost
@@ -1392,7 +1392,14 @@ QString QtiSasAiContent::splitPartScopeViolation(const QString &code, const QStr
     // string ("sin(x)*cos(y)") — including it would misread a formula as an invented window name.
     static const QRegularExpression windowCreateRe(
         R"(\b(?:plotResults|newGraph|newPlot3D|setWindowName)\s*\([^)]*?["']([^"']+)["'])");
-    QRegularExpressionMatchIterator windowIt = windowCreateRe.globalMatch(code);
+    // A whole request that quotes no name leaves the name to the script: the rule enforces a name "already decided
+    // for it", and no later part refers to it. Confirmed live: "make a 3D plot with 3 spheres ..." (no name, not
+    // split) blocked a correct plot named "ThreeSpheres" ("three" is not "3"), and the retries drifted into a broken
+    // one. A split part still needs its name: later parts plot into it.
+    static const QRegularExpression quotedNameRe(R"(["'][^"'\n]{1,80}["'])");
+    QRegularExpressionMatchIterator windowIt = (wholeRequest && !quotedNameRe.match(partDescription).hasMatch())
+                                                   ? QRegularExpressionMatchIterator()
+                                                   : windowCreateRe.globalMatch(code);
     while (windowIt.hasNext())
     {
         const QString name = windowIt.next().captured(1);
@@ -4412,6 +4419,101 @@ QString QtiSasAiContent::fittableFitBeforeConfigureMistake(const QString &code)
            "actually in, which state()[\"stage\"] reports as \"init\"/\"ready\"/\"fitted\".";
 }
 
+QString QtiSasAiContent::scriptEditPrintDialogMistake(const QString &code)
+{
+    // Confirmed live (benchmark LIST 4, three runs in a row): to read a note tab's text, a retry called
+    // n.tab("C").print() — ScriptEdit::print() opens the system's PRINT dialog (a native one on macOS, which nothing
+    // can close from a script), so the run hung until it was killed. A note tab is reached by tab(...), editorAt(...)
+    // or currentEditor(); a bare print(...) is Python's own and never matches.
+    static const QRegularExpression printRe(R"(\b(?:tab|editorAt|currentEditor)\s*\([^()]*\)\s*\.\s*print\s*\()");
+    if (!printRe.match(code).hasMatch())
+        return {};
+    return "This script calls print() on a note tab (a ScriptEdit). That does not return or show the tab's text: it "
+           "opens the system's printer dialog, which blocks the run. To read a tab's text use toPlainText(), e.g. "
+           "n.tab(\"C\").toPlainText(); to write it, setText(...).";
+}
+
+QString QtiSasAiContent::duplicateWindowNameMistake(const QString &code)
+{
+    // Confirmed live ("make a 3D plot with 3 spheres"): three top-level newPlot3D("Spheres", ...) calls — three
+    // windows, the second and third renamed by QtiSAS, instead of the one plot asked for. Only unindented calls: the
+    // same name in an if/else pair is fine.
+    static const QRegularExpression createRe(
+        R"(^(?:\w+\s*=\s*)?(newGraph|newPlot3D|newTable|newMatrix|newNote)\s*\(\s*["']([^"']+)["'])",
+        QRegularExpression::MultilineOption);
+    QHash<QString, int> count;
+    QRegularExpressionMatchIterator it = createRe.globalMatch(code);
+    while (it.hasNext())
+    {
+        const QRegularExpressionMatch m = it.next();
+        const QString name = m.captured(2);
+        if (++count[name] == 2)
+            return "This script calls " + m.captured(1) + "(\"" + name +
+                   "\", ...) more than once. Each call creates a NEW window — QtiSAS renames the later ones — so "
+                   "this makes several windows where one was asked for. Create the window once and add the rest to "
+                   "it; if that is not possible for this window type, say so instead of creating copies.";
+    }
+    return {};
+}
+
+QString QtiSasAiContent::textIntoNumericColumnMistake(const QString &code)
+{
+    // Confirmed live (benchmark LIST 4 item 5): t = newTable(...) then t.setText(2, 1, "alpha") without
+    // setColTextFormat(2) — a new table's columns are Numeric, Table::cellEdited() evaluates "alpha" as an expression
+    // and leaves the cell empty, so text(2, 2) read back "". Only tables this script creates: their columns are known
+    // to be Numeric until a setCol...Format() call says otherwise.
+    static const QRegularExpression newTableRe(R"(\b(\w+)\s*=\s*newTable\s*\()");
+    QRegularExpressionMatchIterator tables = newTableRe.globalMatch(code);
+    while (tables.hasNext())
+    {
+        const QRegularExpressionMatch table = tables.next();
+        const QString var = QRegularExpression::escape(table.captured(1));
+        const QRegularExpression setTextRe("\\b" + var +
+                                           R"(\s*\.\s*setText\s*\(\s*(\d+)\s*,[^,()]*,\s*(["'])(.*?)\2\s*\))");
+        QRegularExpressionMatchIterator it = setTextRe.globalMatch(code, table.capturedEnd());
+        while (it.hasNext())
+        {
+            const QRegularExpressionMatch m = it.next();
+            // Anything with a digit may be a number in the table's own locale ("2,5" after German separators,
+            // confirmed live as a false alarm when only C numbers were accepted) or an expression ("2*pi"): left alone.
+            const QString text = m.captured(3).trimmed();
+            static const QRegularExpression digitRe(R"(\d)");
+            if (text.isEmpty() || digitRe.match(text).hasMatch())
+                continue;
+            const QRegularExpression formatRe("\\b" + var + R"(\s*\.\s*setCol\w*Format\s*\(\s*)" + m.captured(1) +
+                                              R"(\s*[,)])");
+            const QRegularExpressionMatch format = formatRe.match(code, table.capturedEnd());
+            if (format.hasMatch() && format.capturedStart() < m.capturedStart())
+                continue;
+            return "This script writes the text \"" + text + "\" with setText() into column " + m.captured(1) +
+                   " of a table it created with newTable(), whose columns are Numeric. In a Numeric column, text that "
+                   "is no number is evaluated as an expression, and \"" +
+                   text + "\" is none, so the cell stays EMPTY. Call " + table.captured(1) + ".setColTextFormat(" +
+                   m.captured(1) + ") before writing text into that column.";
+        }
+    }
+    return {};
+}
+
+QString QtiSasAiContent::matrixIntegrateAsSumMistake(const QString &code, const QString &originalRequestText)
+{
+    // Confirmed live (benchmark LIST 3 item 6, local model, every run): "print the sum of all cells" answered with
+    // m.integrate() — 56.25 instead of 100 for a 4x4 i*j matrix — although matrix-python-api.md says integrate() is
+    // not the sum and the line was in the model's context. Only when the request asks for a sum of a matrix and
+    // never for an integral.
+    static const QRegularExpression sumRe(R"(\bsum\b)", QRegularExpression::CaseInsensitiveOption);
+    static const QRegularExpression matrixRe(R"(\bmatri(?:x|ces)\b)", QRegularExpression::CaseInsensitiveOption);
+    static const QRegularExpression integralRe(R"(\bintegra)", QRegularExpression::CaseInsensitiveOption);
+    static const QRegularExpression integrateRe(R"(\.\s*integrate\s*\()");
+    if (!integrateRe.match(code).hasMatch() || !sumRe.match(originalRequestText).hasMatch() ||
+        !matrixRe.match(originalRequestText).hasMatch() || integralRe.match(originalRequestText).hasMatch())
+        return {};
+    return "This script uses Matrix.integrate() for the requested sum. integrate() is NOT the sum of the cells: it is "
+           "the 2D trapezoidal integral over the matrix's x/y coordinates (edge cells weighted 1/2, corners 1/4, "
+           "times dx*dy). Add the cells instead: sum(m.cell(r, c) for r in range(1, m.numRows() + 1) "
+           "for c in range(1, m.numCols() + 1)).";
+}
+
 QString QtiSasAiContent::fittableSelectStageBeforeFunctionMistake(const QString &code)
 {
     // fittable-python-api.md: selectStage(s) with s != "init" raises RuntimeError while Fittable
@@ -4609,6 +4711,18 @@ QList<AiKnownMistakeMatch> QtiSasAiContent::detectKnownMistakes(const QString &c
     explanation = compilerScanGroupsAfterNameMistake(code);
     if (!explanation.isEmpty())
         matches << AiKnownMistakeMatch{"scanGroups() clears the function name set before it", explanation};
+    explanation = duplicateWindowNameMistake(code);
+    if (!explanation.isEmpty())
+        matches << AiKnownMistakeMatch{"the same window created more than once", explanation};
+    explanation = textIntoNumericColumnMistake(code);
+    if (!explanation.isEmpty())
+        matches << AiKnownMistakeMatch{"text written into a Numeric column", explanation};
+    explanation = matrixIntegrateAsSumMistake(code, originalRequestText);
+    if (!explanation.isEmpty())
+        matches << AiKnownMistakeMatch{"Matrix.integrate() used for a sum of cells", explanation};
+    explanation = scriptEditPrintDialogMistake(code);
+    if (!explanation.isEmpty())
+        matches << AiKnownMistakeMatch{"print() on a note tab opens the printer dialog", explanation};
     return matches;
 }
 

@@ -342,12 +342,21 @@ static const QHash<QString, QRegularExpression> topicSynonymRe = {
                                    QRegularExpression::CaseInsensitiveOption)},
 };
 
-// Topic matching must inspect the user's request only; requestSuffix() is transport guidance.
+// The user's request without requestSuffix()'s transport guidance (either mode's), for everything that inspects what
+// the user asked: topic matching, the scope checks, the input names. Confirmed live: the run-mode suffix quotes
+// scriptPrint("..."), and the window-name rule took that "..." for a name the request had decided.
+QString withoutRequestSuffix(const QString &text)
+{
+    for (const QString &marker : {QStringLiteral("\n\n(Answer in plain text if this is a question."),
+                                  QStringLiteral("\n\n(Return ONLY executable Python code")})
+        if (const qsizetype pos = text.indexOf(marker); pos >= 0)
+            return text.left(pos);
+    return text;
+}
+
 static QString topicAnalysisText(const QString &text)
 {
-    static const QString suffixMarker = QStringLiteral("\n\n(Answer in plain text if this is a question.");
-    const qsizetype suffixPos = text.indexOf(suffixMarker);
-    return suffixPos >= 0 ? text.left(suffixPos) : text;
+    return withoutRequestSuffix(text);
 }
 
 // True if topic's own keyword regex matches text — shared by splitPartTopicsFromAnswer() (widens
@@ -431,6 +440,83 @@ void AiAssistant::startRequestWithSelectedTopics(const QStringList &selected, co
     // empty list means "send everything", and prepending here would wrongly narrow it.
     startRequest(selected.isEmpty() ? selected
                                     : ((m_content ? m_content->baselineDocTopics() : QStringList()) + selected));
+}
+
+// True if the name spanning [nameStart, nameEnd) in `text` is something the request CREATES, not an input: a creation
+// verb earlier in its own clause, or a conditional creation ("create it if it does not exist") later in it. Shared by
+// extractExistingEntityNames() and inputNamesInRequest().
+static bool inCreationClause(const QString &text, qsizetype nameStart, qsizetype nameEnd)
+{
+    // "plot\w*" belongs here: plot()/plotResults() CREATE a window (app-python-api.md says so
+    // outright), and splitPlanCreationNames() already counts "plot" as a creation verb for the
+    // collision check. Confirmed live, and this pattern's own regression: "Plot the fit results
+    // from the previous step into graph \"FitResults\"" had FitResults extracted as an EXISTING
+    // name, came back MISSING, and the whole item was refused with "reply with the correct name" —
+    // for a graph the request was plainly asking to CREATE.
+    static const QRegularExpression creationVerbRe(
+        R"(\b(?:creat\w*|mak\w*|build\w*|generat\w*|synthesi\w*|plot\w*|draw\w*|add|adds|adding|new)\b)",
+        QRegularExpression::CaseInsensitiveOption);
+    // Clause-scoped lookback, NOT a fixed character window. A fixed 40 chars was wrong in both
+    // directions: too short to see the "Plot" 48 characters before `graph "FitResults"`, and
+    // widening it would have reached into an earlier, unrelated clause and disqualified a genuine
+    // input ("Create a table \"Out\" ..., then fit table \"RawScan\"" must still check RawScan).
+    // Scoping to the current clause — back to the nearest clause boundary — gets both right,
+    // because a creation verb governs the clause it appears in, not the whole request.
+    //
+    // A BARE comma is deliberately NOT a boundary. It was, and an enumeration inside the very
+    // clause that holds the creation verb then cut the verb off: confirmed live, "Plot the winning
+    // model's data, fit curve, and residuals into graph \"GaussPeakFit\"" left a lookback of only
+    // "and residuals into ", so a graph the request was plainly creating was reported as an
+    // existing name — and it really did match a stale GaussPeakFit.fif left by an earlier run, so
+    // the fact fed back was true, irrelevant, and about the wrong kind of object entirely. Only a
+    // comma that actually introduces a new predicate (", then fit ...") still counts, which is the
+    // one case the comma was added for. Widening this errs toward skipping a check rather than
+    // claiming a creation target, which is the safe direction: a skipped check costs nothing here,
+    // while a wrong claim feeds a false fact and, in auto-run mode, refuses the item outright.
+    static const QRegularExpression clauseBoundaryRe(R"([.;\n]|,\s*(?:then|next|afterwards?|finally|after that)\b)",
+                                                     QRegularExpression::CaseInsensitiveOption);
+    // "if it does not exist", "if missing", "if needed": the creation is meant only when the name is absent
+    static const QRegularExpression conditionalRe(
+        R"(\bif\b(?:\s+\S+){0,4}?\s+(?:not\s+exist\w*|n't\s+exist\w*|missing|absent|needed|necessary)\b)",
+        QRegularExpression::CaseInsensitiveOption);
+    const QString before = text.left(nameStart);
+    // Last boundary's END, not its start: a ", then" boundary is several characters long, and
+    // keeping its own text in the lookback would leave nothing wrong but reads as sloppy.
+    qsizetype boundaryEnd = 0;
+    QRegularExpressionMatchIterator boundaryIt = clauseBoundaryRe.globalMatch(before);
+    while (boundaryIt.hasNext())
+        boundaryEnd = boundaryIt.next().capturedEnd(0);
+    const QString lookback = before.mid(boundaryEnd); // whole clause when there is no boundary
+    if (creationVerbRe.match(lookback).hasMatch())
+        return true;
+    // A conditional creation AFTER the name, in the same clause, makes it no input either.
+    // Confirmed live: `write that line into table "Results": create it if it does not exist`
+    // claimed Results as existing, it came back MISSING, and the item was refused outright —
+    // although the request said in so many words what to do when it is missing.
+    const QString after = text.mid(nameEnd);
+    const QRegularExpressionMatch nextBoundary = clauseBoundaryRe.match(after);
+    const QString lookahead = nextBoundary.hasMatch() ? after.left(nextBoundary.capturedStart(0)) : after;
+    return creationVerbRe.match(lookahead).hasMatch() && conditionalRe.match(lookahead).hasMatch();
+}
+
+QStringList inputNamesInRequest(const QString &requestText)
+{
+    // Every quoted name the request does not create — whatever its wording ("In \"Squares\", ..."
+    // names no kind and says nothing like "existing", so extractExistingEntityNames() never sees it).
+    // Answered by the host's own state (see AiAssistant::existingInputNamesNote()), never by a script.
+    static const QRegularExpression quotedRe(R"re("([^"\n]{1,80})")re");
+    QStringList names;
+    QRegularExpressionMatchIterator it = quotedRe.globalMatch(requestText);
+    while (it.hasNext())
+    {
+        const QRegularExpressionMatch m = it.next();
+        const QString name = m.captured(1).trimmed();
+        if (name.isEmpty() || names.contains(name) ||
+            inCreationClause(requestText, m.capturedStart(0), m.capturedEnd(0)))
+            continue;
+        names << name;
+    }
+    return names;
 }
 
 // Extracts every quoted name in `requestText` implied to already exist, paired with the KNOWN
@@ -535,61 +621,11 @@ QList<QPair<QString, QString>> extractExistingEntityNames(const QString &request
     // splitPlanCreationNames()); this one must only ever claim names the request treats as INPUT.
     static const QRegularExpression kindNounRe(R"re(\b(table|matrix|note|graph)\s*"([^"]+)")re",
                                                QRegularExpression::CaseInsensitiveOption);
-    // "plot\w*" belongs here: plot()/plotResults() CREATE a window (app-python-api.md says so
-    // outright), and splitPlanCreationNames() already counts "plot" as a creation verb for the
-    // collision check. Confirmed live, and this pattern's own regression: "Plot the fit results
-    // from the previous step into graph \"FitResults\"" had FitResults extracted as an EXISTING
-    // name, came back MISSING, and the whole item was refused with "reply with the correct name" —
-    // for a graph the request was plainly asking to CREATE.
-    static const QRegularExpression creationVerbRe(
-        R"(\b(?:creat\w*|mak\w*|build\w*|generat\w*|synthesi\w*|plot\w*|draw\w*|add|adds|adding|new)\b)",
-        QRegularExpression::CaseInsensitiveOption);
-    // Clause-scoped lookback, NOT a fixed character window. A fixed 40 chars was wrong in both
-    // directions: too short to see the "Plot" 48 characters before `graph "FitResults"`, and
-    // widening it would have reached into an earlier, unrelated clause and disqualified a genuine
-    // input ("Create a table \"Out\" ..., then fit table \"RawScan\"" must still check RawScan).
-    // Scoping to the current clause — back to the nearest clause boundary — gets both right,
-    // because a creation verb governs the clause it appears in, not the whole request.
-    //
-    // A BARE comma is deliberately NOT a boundary. It was, and an enumeration inside the very
-    // clause that holds the creation verb then cut the verb off: confirmed live, "Plot the winning
-    // model's data, fit curve, and residuals into graph \"GaussPeakFit\"" left a lookback of only
-    // "and residuals into ", so a graph the request was plainly creating was reported as an
-    // existing name — and it really did match a stale GaussPeakFit.fif left by an earlier run, so
-    // the fact fed back was true, irrelevant, and about the wrong kind of object entirely. Only a
-    // comma that actually introduces a new predicate (", then fit ...") still counts, which is the
-    // one case the comma was added for. Widening this errs toward skipping a check rather than
-    // claiming a creation target, which is the safe direction: a skipped check costs nothing here,
-    // while a wrong claim feeds a false fact and, in auto-run mode, refuses the item outright.
-    static const QRegularExpression clauseBoundaryRe(R"([.;\n]|,\s*(?:then|next|afterwards?|finally|after that)\b)",
-                                                     QRegularExpression::CaseInsensitiveOption);
-    // "if it does not exist", "if missing", "if needed": the creation is meant only when the name is absent
-    static const QRegularExpression conditionalRe(
-        R"(\bif\b(?:\s+\S+){0,4}?\s+(?:not\s+exist\w*|n't\s+exist\w*|missing|absent|needed|necessary)\b)",
-        QRegularExpression::CaseInsensitiveOption);
     QRegularExpressionMatchIterator kindIt = kindNounRe.globalMatch(requestText);
     while (kindIt.hasNext())
     {
         const QRegularExpressionMatch m = kindIt.next();
-        const int matchStart = static_cast<int>(m.capturedStart(0));
-        const QString before = requestText.left(matchStart);
-        // Last boundary's END, not its start: a ", then" boundary is several characters long, and
-        // keeping its own text in the lookback would leave nothing wrong but reads as sloppy.
-        int boundaryEnd = 0;
-        QRegularExpressionMatchIterator boundaryIt = clauseBoundaryRe.globalMatch(before);
-        while (boundaryIt.hasNext())
-            boundaryEnd = static_cast<int>(boundaryIt.next().capturedEnd(0));
-        const QString lookback = before.mid(boundaryEnd); // whole clause when there is no boundary
-        if (creationVerbRe.match(lookback).hasMatch())
-            continue;
-        // A conditional creation AFTER the name, in the same clause, makes it no input either.
-        // Confirmed live: `write that line into table "Results": create it if it does not exist`
-        // claimed Results as existing, it came back MISSING, and the item was refused outright —
-        // although the request said in so many words what to do when it is missing.
-        const QString after = requestText.mid(m.capturedEnd(0));
-        const QRegularExpressionMatch nextBoundary = clauseBoundaryRe.match(after);
-        const QString lookahead = nextBoundary.hasMatch() ? after.left(nextBoundary.capturedStart(0)) : after;
-        if (creationVerbRe.match(lookahead).hasMatch() && conditionalRe.match(lookahead).hasMatch())
+        if (inCreationClause(requestText, m.capturedStart(0), m.capturedEnd(0)))
             continue;
         const QString name = m.captured(2);
         bool merged = false;
@@ -736,6 +772,20 @@ void AiAssistant::beginRequest(const QString &aiText, bool autoRunValue, bool wa
     if (originalRequestText.isEmpty() || m_history.isEmpty())
         originalRequestText = aiText;
 
+    // When scripts run: what the request's input names really are now — see existingInputNamesNote(). (Generate-only
+    // mode gets the fuller liveEntityFactsFor() note below instead.)
+    m_existingInputTables.clear();
+    m_unprintedOutputRetried = false;
+    m_singlePartDescription.clear();
+    if (autoRun)
+    {
+        QString factsSummary;
+        pendingLiveFactsNote =
+            existingInputNamesNote(withoutRequestSuffix(aiText), &m_existingInputTables, &factsSummary);
+        if (!factsSummary.isEmpty() && m_host)
+            m_host->print("▸▸▸ AI: " + factsSummary);
+    }
+
     // Generate-only mode (autoRun == false) skips existence verification altogether.
     //
     // Nothing this session generated has been executed, so a name the request treats as existing is
@@ -835,7 +885,10 @@ void AiAssistant::handleExistenceCheckScriptResponse(const QString &code)
         m_host->print("▸▸▸ AI: stopping — this request refers to " + quoted.join(", ") + " as already existing, but " +
                       (missing.size() == 1 ? "no match was found for it" : "no match was found for them") +
                       ". Nothing was created or run. Reply with the correct name, or say \"create a new "
-                      "one\"/\"pick any\" to explicitly authorize that instead.");
+                      "one\"/\"pick any\" to explicitly authorize that instead." +
+                      // in a LIST: skip this item and go on — confirmed live, without it the list stalled for
+                      // good (a missing name that an earlier, failed item should have created)
+                      splitModeGiveUpNote());
         return;
     }
     dispatchAfterExistenceCheck(aiText);
@@ -895,6 +948,14 @@ void AiAssistant::dispatchAfterExistenceCheck(const QString &aiText)
 
 void AiAssistant::dispatchByMode(const QString &aiText)
 {
+    // Confirmed live: "there are spheres?" went to the split planner, whose answer was a script, not a plan — a
+    // wasted call, then all docs attached. A question has nothing to decompose.
+    if (splitModeActive && isShortQuestion(withoutRequestSuffix(aiText)))
+    {
+        if (m_host)
+            m_host->print("▸▸▸ AI: a question — answering it directly, without a split plan.");
+        splitModeActive = false;
+    }
     if (splitModeActive)
         beginSplitPlanDecomposition(aiText);
     else
@@ -994,6 +1055,7 @@ void AiAssistant::startRequest(const QStringList &docTopics, const QString &reso
 {
     selectedDocTopics = docTopics;
     QString requestForModel;
+    m_singlePartDescription = resolvedTaskDescription;
     if (!resolvedTaskDescription.isEmpty())
     {
         // Called from handleSplitPlanResponse()'s single-part shortcut: a plan that settled on
@@ -2836,13 +2898,14 @@ void AiAssistant::handleSplitPlanCreationCheckScriptResponse(const QString &code
         QStringList quoted;
         for (const QString &n : collisions)
             quoted << "\"" + n + "\"";
+        splitModeActive = false; // before the note below: no part ran, so only a LIST's skip note applies
         m_host->print("▸▸▸ AI: stopping — " + quoted.join(", ") +
                       (collisions.size() == 1 ? " already exists" : " already exist") +
                       ", and compiling/creating over " + (collisions.size() == 1 ? "it" : "them") +
                       " silently overwrites the existing one, with no backup and no confirmation. "
                       "Nothing was created or run. Reply with a different name, or say \"overwrite "
-                      "it\"/\"reuse it\" to explicitly authorize that instead.");
-        splitModeActive = false;
+                      "it\"/\"reuse it\" to explicitly authorize that instead." +
+                      splitModeGiveUpNote());
         splitPlan.clear();
         splitPartScripts.clear();
         splitPartIndex = -1;
@@ -4134,8 +4197,38 @@ bool AiAssistant::maybeDispatchSelfReview(QString &code, bool &compilable, QStri
             compilable = m_host->canCompile(code, &syntaxError);
         }
     }
+    // A weak model's "expected output" written after the code (confirmed live: "R1: 2 print(6*7)" as the last line)
+    // makes the whole script not compile, and every retry repeated it. Dropped when the rest compiles — and said.
+    m_removedTrailingOutput.clear();
+    if (!compilable && m_host)
+    {
+        for (const QString &trimmed : withoutTrailingOutputLines(code))
+            if (m_host->canCompile(trimmed))
+            {
+                m_host->print("▸▸▸ AI: removed text after the script's last line (not Python, e.g. an expected "
+                              "output) — running the rest. Removed:\n" +
+                              code.mid(trimmed.size()).trimmed());
+                m_removedTrailingOutput = code.mid(trimmed.size()).trimmed();
+                code = trimmed;
+                compilable = true;
+                syntaxError.clear();
+                break;
+            }
+    }
     const bool isSelfReviewResult = awaitingSelfReview;
     awaitingSelfReview = false;
+    // Confirmed live: self-review answered "The script is already compliant with all checklist items." — prose, no
+    // script — which then counted as a script that does not compile, and the retry lost the reviewed (runnable)
+    // draft altogether. A review with nothing runnable in it changes nothing: the draft it reviewed stays.
+    if (isSelfReviewResult && !compilable && m_host && !m_selfReviewDraftCode.isEmpty())
+    {
+        m_host->print("▸▸▸ AI: self-review returned no runnable script — keeping the reviewed one.");
+        code = m_selfReviewDraftCode;
+        compilable = true;
+        syntaxError.clear();
+    }
+    if (isSelfReviewResult)
+        m_selfReviewDraftCode.clear();
 
     // The draft this reviews was appended to m_history the instant its HTTP response arrived,
     // before self-review ever ran. If self-review changes the script, that correction must be
@@ -4441,7 +4534,10 @@ bool AiAssistant::maybeDispatchSelfReview(QString &code, bool &compilable, QStri
     // isSelfReviewResult == true — reachable only once a review round was actually dispatched — so
     // this is the one place a bypass is needed; nothing above becomes reachable-but-wrong when
     // self-review is disabled, it simply never gets a chance to run.
-    if (!compilable || isSelfReviewResult || !m_selfReviewEnabled)
+    // A text answer has no code to check, and self-review (no history) can only lose what it says: confirmed live,
+    // Codex's right "No. That script creates connected cylindrical/conical surfaces, not three spheres." became
+    // "Unable to determine whether spheres exist from the provided script."
+    if (!compilable || isSelfReviewResult || !m_selfReviewEnabled || isPureTextAnswer(code))
         return false;
 
     // Mandatory pre-execution self-review: send the candidate script back to the
@@ -4452,6 +4548,7 @@ bool AiAssistant::maybeDispatchSelfReview(QString &code, bool &compilable, QStri
     if (m_host)
         m_host->print("▸▸▸ AI code (self-review pending):\n\n" + code);
     awaitingSelfReview = true;
+    m_selfReviewDraftCode = code;
     const QString scopeCheckPrompt = buildScopeCheckPrompt(isErrorRetryCorrection);
     isErrorRetryCorrection = false;
     const QString splitScopePrompt = buildSplitScopePrompt(splitModeActive, splitPartIndex, splitPlan);
@@ -4478,9 +4575,9 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
     if (!m_host)
         return;
 
+    QString code = rawCode;
     // Repaired, not reported: see AiContentProvider::compilerParamCountRepair()'s doc comment for
     // the confirmed-live retry loop that made asking pointless. Printed so the edit is never silent.
-    QString code = rawCode;
     if (compilable && m_content)
     {
         const QString countRepaired = m_content->compilerParamCountRepair(code);
@@ -4506,13 +4603,18 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
     // on splitModeActive, so anything "running directly without split-mode overhead" got no scope
     // guard at all — confirmed live in one LIST run: "create a table with 50 rows" also plotted it,
     // renamed and maximized the window; two other items added unrequested styling.
-    const QString scopeDescription = splitModeActive && splitPartIndex < splitPlan.size()
-                                         ? splitPlan[splitPartIndex].description
-                                         : originalRequestText;
-    const QString scopeViolation =
-        (compilable && m_content && !scopeDescription.isEmpty())
-            ? m_content->splitPartScopeViolation(code, scopeDescription, splitPartScripts.join("\n\n"))
-            : QString();
+    // A one-part plan's description joins the request: confirmed live, the plan named the unnamed 3D plot "Surface",
+    // the script used that name, and was blocked because the bare request never mentions it.
+    const QString scopeDescription =
+        splitModeActive && splitPartIndex < splitPlan.size()
+            ? splitPlan[splitPartIndex].description
+            : (m_singlePartDescription.isEmpty()
+                   ? withoutRequestSuffix(originalRequestText)
+                   : withoutRequestSuffix(originalRequestText) + "\n" + m_singlePartDescription);
+    const QString scopeViolation = (compilable && m_content && !scopeDescription.isEmpty())
+                                       ? m_content->splitPartScopeViolation(
+                                             code, scopeDescription, splitPartScripts.join("\n\n"), !splitModeActive)
+                                       : QString();
     // The under-delivery counterpart, checked against the same scopeDescription and reported in the
     // same round as the overreach one — see missingRequestedDeliverables()'s doc comment.
     const QString missingDeliverables = (compilable && m_content && !scopeDescription.isEmpty())
@@ -4527,11 +4629,29 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
     // reasoning as splitPartScopeViolation's own earlierPartsCode argument above. Collects ALL
     // matching patterns, not just the first — see that doc comment's "collect all, don't stop at
     // first" rationale.
-    const QList<AiKnownMistakeMatch> knownMistakes =
+    QList<AiKnownMistakeMatch> knownMistakes =
         (compilable && m_content)
             ? m_content->detectKnownMistakes(code, originalRequestText, splitPartScripts.join("\n\n"),
                                              laterSplitPartDescriptions())
             : QList<AiKnownMistakeMatch>();
+    if (compilable)
+        if (const QString recreated = existingTableRecreatedMistake(code); !recreated.isEmpty())
+            knownMistakes << AiKnownMistakeMatch{"newTable() would wipe an existing table", recreated};
+    if (compilable && !m_removedTrailingOutput.isEmpty())
+        if (const QString labeled = labeledLastPrintRepair(code, m_removedTrailingOutput); !labeled.isEmpty())
+        {
+            m_host->print("▸▸▸ AI: the script's result line was written as text after it — its last print now "
+                          "carries that label.");
+            code = labeled;
+        }
+    // Once per request: confirmed live (LIST 3 item 12, LIST 4 item 5) the right values printed without the requested
+    // "R5:" line, which the model had written as text after the code. A second time the script just runs.
+    if (compilable && !m_unprintedOutputRetried && !m_removedTrailingOutput.isEmpty())
+        if (const QString unprinted = unprintedOutputLineMistake(code, m_removedTrailingOutput); !unprinted.isEmpty())
+        {
+            knownMistakes << AiKnownMistakeMatch{"output line written as text, not printed", unprinted};
+            m_unprintedOutputRetried = true;
+        }
     // Unconditional and host-independent — see isEmptyActionScript()'s doc comment. Confirmed
     // live: self-review's "ONLY executable code" instruction broke down entirely, returning a
     // checklist-reasoning dump formatted as comments instead of any actual script.
@@ -4612,6 +4732,15 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
             explanations << m.explanation;
         }
         m_host->print("▸▸▸ AI code (blocked — " + headers.join("; ") + "):\n\n" + code);
+        // The reason, not only its header: confirmed live, a user saw "out of scope for this part" with no way to
+        // tell which rule fired or why. The first sentence of each explanation is enough to recognize it.
+        QStringList reasons;
+        for (const QString &explanation : explanations)
+        {
+            const qsizetype end = explanation.indexOf(". ");
+            reasons << "  • " + (end > 0 && end < 300 ? explanation.left(end + 1) : explanation.left(300));
+        }
+        m_host->print("▸▸▸ AI: why it was blocked:\n" + reasons.join("\n"));
         // Blocked never ran, so it must not stay in history as this part's answer — same patch
         // (and same guaranteed-last-entry invariant) as the self-review/invalid-response ones above.
         if (!m_history.isEmpty())
@@ -5471,6 +5600,174 @@ QString AiAssistant::liveEntityFactsFor(const QString &requestText, QString *con
     return m_content->liveEntityFactsNote(facts);
 }
 
+QString AiAssistant::existingInputNamesNote(const QString &requestText, QStringList *existingTables,
+                                            QString *consoleLine) const
+{
+    if (!m_content || !m_host)
+        return {};
+    const QStringList names = inputNamesInRequest(requestText);
+    if (names.isEmpty())
+        return {};
+    const QList<QStringList> kinds = m_host->entityKinds(names);
+    if (kinds.size() != names.size())
+        return {};
+    // Only what exists: when scripts run, "not found" is no fact worth stating (an earlier item may create it
+    // first), while "exists NOW, as a table" is exactly what a weak model needs to use table() instead of newTable().
+    QList<QPair<QString, QStringList>> facts;
+    QStringList summary;
+    for (int i = 0; i < names.size(); ++i)
+    {
+        if (kinds[i].isEmpty())
+            continue;
+        facts << qMakePair(names[i], kinds[i]);
+        summary << "\"" + names[i] + "\": " + kinds[i].join("+");
+        if (existingTables && kinds[i].contains("table"))
+            *existingTables << names[i];
+    }
+    if (facts.isEmpty())
+        return {};
+    if (consoleLine)
+        *consoleLine = "project state — " + summary.join("; ");
+    return m_content->liveEntityFactsNote(facts);
+}
+
+QString AiAssistant::existingTableRecreatedMistake(const QString &code) const
+{
+    static const QRegularExpression newTableRe(R"re(\bnewTable\s*\(\s*["']([^"']+)["'])re");
+    QRegularExpressionMatchIterator it = newTableRe.globalMatch(code);
+    while (it.hasNext())
+    {
+        const QString name = it.next().captured(1);
+        if (m_existingInputTables.contains(name))
+            return "This script calls newTable(\"" + name + "\"), but table \"" + name +
+                   "\" already exists and this request only uses it. newTable() on an existing name WIPES it "
+                   "(resized, all data cleared) — use t = table(\"" +
+                   name + "\") and work on the table as it is.";
+    }
+    return {};
+}
+
+QStringList AiAssistant::withoutTrailingOutputLines(const QString &code)
+{
+    // Up to 3 lines, each unindented, with balanced brackets and quotes, not a Python statement start and not a line
+    // that continues: e.g. "R1: 2 print(6*7)" after the code. Real code passes these tests too, so the caller takes
+    // the SMALLEST cut that compiles (returned first). A truncated statement is never taken for output.
+    static const QRegularExpression keywordRe(
+        R"(^(?:def|class|if|elif|else|for|while|try|except|finally|with|return|import|from|raise|del|pass|lambda|)"
+        R"(global|assert|yield|async|await)\b)");
+    QStringList lines = code.split('\n');
+    auto dropBlankTail = [&lines]() {
+        while (!lines.isEmpty() && lines.last().trimmed().isEmpty())
+            lines.removeLast();
+    };
+    dropBlankTail();
+    QStringList candidates;
+    while (!lines.isEmpty() && candidates.size() < 3)
+    {
+        const QString line = lines.last();
+        const QString t = line.trimmed();
+        if (line.startsWith(' ') || line.startsWith('\t') || keywordRe.match(t).hasMatch() || t.endsWith(':') ||
+            t.endsWith(',') || t.endsWith('\\') || t.count('(') != t.count(')') || t.count('[') != t.count(']') ||
+            t.count('{') != t.count('}') || t.count('"') % 2 || t.count('\'') % 2)
+            break;
+        lines.removeLast();
+        dropBlankTail();
+        if (lines.isEmpty())
+            break;
+        candidates << lines.join('\n');
+    }
+    return candidates;
+}
+
+bool AiAssistant::isPureTextAnswer(const QString &code)
+{
+    // Plain literals only: an f-string or a concatenation reads values, and those are worth reviewing.
+    static const QRegularExpression literalPrintRe(
+        R"re(^(?:scriptPrint|print)\(\s*[rR]?("|')(?:(?!\1)[^\\]|\\.)*\1\s*\)$)re");
+    bool any = false;
+    for (const QString &line : code.split('\n'))
+    {
+        const QString t = line.trimmed();
+        if (t.isEmpty() || t.startsWith('#'))
+            continue;
+        if (!literalPrintRe.match(t).hasMatch())
+            return false;
+        any = true;
+    }
+    return any;
+}
+
+bool AiAssistant::isShortQuestion(const QString &requestText)
+{
+    static const QRegularExpression actionVerbRe(
+        R"(\b(?:create|make|plot|draw|build|generate|fit|compile|add|delete|remove|rename|set|change|calculate|)"
+        R"(compute|load|save|export|import|open|close|fix|run|fill|sort|copy|move|replace|convert|write)\b)",
+        QRegularExpression::CaseInsensitiveOption);
+    const QString t = requestText.trimmed();
+    return t.endsWith('?') && t.size() <= 300 && !actionVerbRe.match(t).hasMatch();
+}
+
+QString AiAssistant::labeledLastPrintRepair(const QString &code, const QString &removedText)
+{
+    // Repaired, not asked for: confirmed live, a retry asked to only add "R12: " in front of a print that was right
+    // (str([...]) -> "[]") rewrote it as " ".join(...) -> "" instead, in run after run.
+    if (unprintedOutputLineMistake(code, removedText).isEmpty())
+        return {};
+    static const QRegularExpression labelLineRe(R"(^\s*([A-Za-z][\w ]{0,30}?)\s*:\s*\S)");
+    QString label;
+    for (const QString &line : removedText.split('\n'))
+        if (const QRegularExpressionMatch m = labelLineRe.match(line); m.hasMatch())
+        {
+            label = m.captured(1);
+            break;
+        }
+    QStringList lines = code.split('\n');
+    while (!lines.isEmpty() && lines.last().trimmed().isEmpty())
+        lines.removeLast();
+    if (label.isEmpty() || lines.isEmpty())
+        return {};
+    static const QRegularExpression printRe(R"(^(scriptPrint|print)\((.*)\)\s*$)");
+    const QRegularExpressionMatch m = printRe.match(lines.last());
+    // A print with a label of its own ("Text of Calc tab: " + ...) is one of several described lines, not the bare
+    // values: confirmed live, labeling it gave "R1: Text of Calc tab: print('A')". Left to the retry.
+    static const QRegularExpression ownLabelRe(R"(^\s*[fFrR]?["'][^"']*:\s*["'{])");
+    if (!m.hasMatch() || m.captured(2).trimmed().isEmpty() || ownLabelRe.match(m.captured(2)).hasMatch())
+        return {};
+    lines.last() = m.captured(1) == "print" ? "print(\"" + label + ":\", " + m.captured(2) + ")"
+                                            : "scriptPrint(\"" + label + ": \" + str(" + m.captured(2) + "))";
+    return lines.join('\n') + '\n';
+}
+
+QString AiAssistant::unprintedOutputLineMistake(const QString &code, const QString &removedText)
+{
+    // "R5: beta 3" or "Number of tabs: 2": a short label, a colon, a value. The label counts as printed when any
+    // string literal in the script starts with it followed by a colon (print("R5:", x), f"R5: {x}") — its trailing
+    // digits may differ: confirmed live, "R1: 2 print(6*7)" written after a script for item 10.
+    static const QRegularExpression labelLineRe(R"(^\s*([A-Za-z][\w ]{0,30}?)\s*:\s*\S)");
+    for (const QString &line : removedText.split('\n'))
+    {
+        const QRegularExpressionMatch m = labelLineRe.match(line);
+        if (!m.hasMatch())
+            continue;
+        const QString label = m.captured(1);
+        QString stem = label;
+        while (!stem.isEmpty() && stem.back().isDigit())
+            stem.chop(1);
+        const QRegularExpression printedRe(R"([fFrR]?["'])" + QRegularExpression::escape(stem) + R"(\d*\s*:)");
+        if (printedRe.match(code).hasMatch())
+            continue;
+        return "Your answer ended with this text after the script: \"" + line.trimmed() +
+               "\". It is not Python, so it was removed — and the script itself never prints a \"" + label +
+               ":\" line, so that requested output is missing. If the script already prints those values, keep that "
+               "print "
+               "exactly as it is and only put \"" +
+               label + ": \" in front of it, e.g. scriptPrint(\"" + label +
+               ": \" + str(...)). Otherwise print the line FROM the script, with the values the script computes in "
+               "the form the request asks for — never write the values into the string yourself.";
+    }
+    return {};
+}
+
 QString AiAssistant::laterSplitPartDescriptions() const
 {
     if (!splitModeActive)
@@ -5488,9 +5785,12 @@ QString AiAssistant::generatedScriptWarning(const QString &code) const
     // Same scope description runActionScript() uses: this part's own job in split mode, otherwise
     // this turn's request. pendingRequestText, not originalRequestText — a LIST item sets the
     // former per item, while the latter stays anchored to the first request of the conversation.
-    const QString scopeDescription = (splitModeActive && splitPartIndex >= 0 && splitPartIndex < splitPlan.size())
-                                         ? splitPlan[splitPartIndex].description
-                                         : pendingRequestText;
+    const QString scopeDescription =
+        (splitModeActive && splitPartIndex >= 0 && splitPartIndex < splitPlan.size())
+            ? splitPlan[splitPartIndex].description
+            : (m_singlePartDescription.isEmpty()
+                   ? withoutRequestSuffix(pendingRequestText)
+                   : withoutRequestSuffix(pendingRequestText) + "\n" + m_singlePartDescription);
     if (scopeDescription.isEmpty())
         return {};
 
@@ -5520,7 +5820,7 @@ QString AiAssistant::generatedScriptWarning(const QString &code) const
         explanations << missingDeliverables;
     }
     const QString scopeViolation =
-        m_content->splitPartScopeViolation(code, scopeDescription, splitPartScripts.join("\n\n"));
+        m_content->splitPartScopeViolation(code, scopeDescription, splitPartScripts.join("\n\n"), !splitModeActive);
     if (!scopeViolation.isEmpty())
     {
         headers << "out of scope";
@@ -5890,6 +6190,11 @@ void AiAssistant::ask(const QString &userText, bool includeDocs, const QString &
     m_httpRetryCount = 0;
     m_requestTimer.start();
     m_currentReply = m_nam->post(req, payload);
+}
+
+bool AiAssistant::isIdle() const
+{
+    return !m_busy && !listModeActive && !(m_retryTimer && m_retryTimer->isActive());
 }
 
 void AiAssistant::stop()

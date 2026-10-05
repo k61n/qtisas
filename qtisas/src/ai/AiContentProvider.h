@@ -216,9 +216,10 @@ class AiContentProvider
     // call in THIS part's code against a function an EARLIER part already compiled (see Direction
     // 6 in QtiSasAiContent's implementation). Returns a human-readable explanation of the violation
     // to feed back to the model for a corrected retry, or an empty string if no violation is
-    // detected.
+    // detected. `wholeRequest`: `partDescription` is a whole request, not one part of a split plan — a name it
+    // leaves open is then the script's to choose, since no later part refers to it.
     virtual QString splitPartScopeViolation(const QString &code, const QString &partDescription,
-                                            const QString &earlierPartsCode) const = 0;
+                                            const QString &earlierPartsCode, bool wholeRequest = false) const = 0;
 
     // Names every DELIVERABLE `requestText` asks for that leaves a mechanical fingerprint in code,
     // and whose fingerprint appears nowhere in `code` — "you were asked for residuals and there is

@@ -232,6 +232,143 @@ void AiContentTests::knownMistakes_fitBeforeConfigureIsCaught()
             .isEmpty());
 }
 
+void AiContentTests::knownMistakes_noteTabPrintIsCaught()
+{
+    // Confirmed live: n.tab("C").print() opened the native print dialog and hung the run.
+    QVERIFY(!QtiSasAiContent::scriptEditPrintDialogMistake("s = n.tab(\"C\").print()\n").isEmpty());
+    QVERIFY(!QtiSasAiContent::scriptEditPrintDialogMistake("n.editorAt(0).print()\n").isEmpty());
+    QVERIFY(!QtiSasAiContent::scriptEditPrintDialogMistake("n.currentEditor() . print ()\n").isEmpty());
+    QVERIFY(QtiSasAiContent::scriptEditPrintDialogMistake("print(n.tab(\"C\").toPlainText())\n").isEmpty());
+}
+
+void AiContentTests::knownMistakes_matrixIntegrateForSumIsCaught()
+{
+    // Confirmed live: "the sum of all cells" printed as m.integrate() (56.25 instead of 100).
+    const QString request = R"(Create a 4x4 matrix "Prod" with i*j. Print the sum of all cells.)";
+    QVERIFY(!QtiSasAiContent::matrixIntegrateAsSumMistake("print(m.integrate())\n", request).isEmpty());
+    QVERIFY(QtiSasAiContent::matrixIntegrateAsSumMistake("print(sum(m.cell(1, c) for c in r))\n", request).isEmpty());
+    // an integral asked for, or no matrix at all: integrate() is right
+    QVERIFY(QtiSasAiContent::matrixIntegrateAsSumMistake("print(m.integrate())\n",
+                                                         "Print the sum and the integral of matrix \"M\".")
+                .isEmpty());
+    QVERIFY(
+        QtiSasAiContent::matrixIntegrateAsSumMistake("print(m.integrate())\n", "Print the sum of column y.").isEmpty());
+}
+
+void AiContentTests::knownMistakes_duplicateWindowNameIsCaught()
+{
+    // Confirmed live: three newPlot3D("Spheres", ...) calls for "a 3D plot with 3 spheres".
+    const QString call = "newPlot3D(\"Spheres\", \"x\", \"y\", \"z\", 0, 1, 0, 1, 10, 10, False, True)\n";
+    QVERIFY(!QtiSasAiContent::duplicateWindowNameMistake(call + "g = " + call).isEmpty());
+    QVERIFY(QtiSasAiContent::duplicateWindowNameMistake(call).isEmpty());
+    // different names, or the same name in two branches
+    QVERIFY(QtiSasAiContent::duplicateWindowNameMistake("newTable(\"A\")\nnewTable(\"B\")\n").isEmpty());
+    QVERIFY(QtiSasAiContent::duplicateWindowNameMistake(
+                "if c:\n    t = newTable(\"A\")\nelse:\n    t = newTable(\"A\", 5)\n")
+                .isEmpty());
+}
+
+void AiContentTests::knownMistakes_textIntoNumericColumnIsCaught()
+{
+    // Confirmed live: "alpha" written into column 2 of a new table read back as an empty cell.
+    const QString created = "t = newTable(\"Names\", 3, 2)\n";
+    QVERIFY(!QtiSasAiContent::textIntoNumericColumnMistake(created + "t.setText(2, 1, \"alpha\")\n").isEmpty());
+    QVERIFY(QtiSasAiContent::textIntoNumericColumnMistake(created + "t.setColTextFormat(2)\nt.setText(2, 1, 'alpha')\n")
+                .isEmpty());
+    // the format set after the write is too late
+    QVERIFY(
+        !QtiSasAiContent::textIntoNumericColumnMistake(created + "t.setText(2, 1, 'alpha')\nt.setColTextFormat(2)\n")
+             .isEmpty());
+    // a number, another column formatted, or a table the script did not create
+    QVERIFY(QtiSasAiContent::textIntoNumericColumnMistake(created + "t.setText(1, 1, \"1.5\")\n").isEmpty());
+    // confirmed live false alarm: a German number after setDecimalSeparators(2)
+    QVERIFY(QtiSasAiContent::textIntoNumericColumnMistake(created + "t.setText(1, 2, \"2,5\")\n").isEmpty());
+    QVERIFY(!QtiSasAiContent::textIntoNumericColumnMistake(created + "t.setText(1, 2, \"---\")\n").isEmpty());
+    QVERIFY(!QtiSasAiContent::textIntoNumericColumnMistake(created + "t.setColTextFormat(1)\nt.setText(2, 1, 'a')\n")
+                 .isEmpty());
+    QVERIFY(
+        QtiSasAiContent::textIntoNumericColumnMistake("t = table(\"Names\")\nt.setText(2, 1, \"alpha\")\n").isEmpty());
+}
+
+void AiContentTests::unprintedOutputLine_flaggedOnlyWhenNotPrinted()
+{
+    // Confirmed live: the right values printed, but "R5: beta 3" was written as text after the code.
+    const QString code = "t = table(\"Names\")\nscriptPrint(t.text(2, 2) + \" \" + str(t.cell(1, 3)))\n";
+    QVERIFY(AiAssistant::unprintedOutputLineMistake(code, "R5: beta 3").contains("R5:"));
+    QVERIFY(AiAssistant::unprintedOutputLineMistake(code + "scriptPrint(f\"R5: {x}\")\n", "R5: beta 3").isEmpty());
+    QVERIFY(AiAssistant::unprintedOutputLineMistake(code + "print('R5:', x)\n", "R5: beta 3").isEmpty());
+    QVERIFY(
+        AiAssistant::unprintedOutputLineMistake("print(\"Number of tabs: \" + n)\n", "Number of tabs: 2").isEmpty());
+    // the model's own label with the wrong number: the script's "R10:" line is what counts
+    QVERIFY(AiAssistant::unprintedOutputLineMistake("print(f\"R10: {n}\")\n", "R1: 2 print(6*7)").isEmpty());
+    // no label line: nothing to ask for
+    QVERIFY(AiAssistant::unprintedOutputLineMistake(code, "beta 3").isEmpty());
+}
+
+void AiContentTests::labeledLastPrint_repairsOnlyALastTopLevelPrint()
+{
+    // Confirmed live: str([...]) printed "[]" right, the retry's rewrite printed "" instead.
+    QCOMPARE(AiAssistant::labeledLastPrintRepair("x = []\nscriptPrint(str(x))\n", "R12: a b"),
+             QString("x = []\nscriptPrint(\"R12: \" + str(str(x)))\n"));
+    QCOMPARE(AiAssistant::labeledLastPrintRepair("print(a, b)", "R5: beta 3"), QString("print(\"R5:\", a, b)\n"));
+    // already labeled, indented, or not a print: left to the retry
+    QVERIFY(AiAssistant::labeledLastPrintRepair("print(f\"R5: {a}\")\n", "R5: beta 3").isEmpty());
+    QVERIFY(AiAssistant::labeledLastPrintRepair("if a:\n    print(a)\n", "R5: beta 3").isEmpty());
+    QVERIFY(AiAssistant::labeledLastPrintRepair("x = 1\n", "R5: beta 3").isEmpty());
+    // a print with a label of its own: confirmed live, "R1: Text of Calc tab: print('A')"
+    QVERIFY(AiAssistant::labeledLastPrintRepair("scriptPrint(\"Text of Calc tab: \" + t)\n", "R1: 2 x").isEmpty());
+    QVERIFY(AiAssistant::labeledLastPrintRepair("print(f\"Tabs: {n}\")\n", "R1: 2 x").isEmpty());
+}
+
+void AiContentTests::requestSuffix_strippedInBothModes()
+{
+    // Confirmed live: the run-mode suffix's scriptPrint("...") counted as a quoted window name.
+    QtiSasAiContent content;
+    const QString request = "make a 3D plot with 3 spheres";
+    QCOMPARE(withoutRequestSuffix(request + content.requestSuffix(true)), request);
+    QCOMPARE(withoutRequestSuffix(request + content.requestSuffix(false)), request);
+    QCOMPARE(withoutRequestSuffix(request), request);
+}
+
+void AiContentTests::pureTextAnswer_onlyLiteralPrints()
+{
+    // Confirmed live: self-review turned a right text answer into "Unable to determine ...".
+    QVERIFY(AiAssistant::isPureTextAnswer("scriptPrint(\"No. That script creates cylinders.\")\n"));
+    QVERIFY(AiAssistant::isPureTextAnswer("# answer\nprint('a')\nscriptPrint(\"b \\\"c\\\"\")\n"));
+    QVERIFY(!AiAssistant::isPureTextAnswer("scriptPrint(f\"R = {r}\")\n"));
+    QVERIFY(!AiAssistant::isPureTextAnswer("scriptPrint(\"n: \" + str(n))\n"));
+    QVERIFY(!AiAssistant::isPureTextAnswer("x = 1\nscriptPrint(\"done\")\n"));
+    QVERIFY(!AiAssistant::isPureTextAnswer(""));
+}
+
+void AiContentTests::shortQuestion_withoutActionVerb()
+{
+    // Confirmed live: "there are spheres?" went to the split planner.
+    QVERIFY(AiAssistant::isShortQuestion("there are spheres?"));
+    QVERIFY(AiAssistant::isShortQuestion("Why does it look like a cylinder? "));
+    QVERIFY(!AiAssistant::isShortQuestion("can you plot the spheres again?"));
+    QVERIFY(!AiAssistant::isShortQuestion("make a 3D plot with 3 spheres"));
+}
+
+void AiContentTests::inputNamesInRequest_skipsNamesBeingCreated()
+{
+    const QString request = R"(Square the column "x" of table "Data" into a new table "Squares", then plot it.)";
+    QCOMPARE(inputNamesInRequest(request), QStringList({"x", "Data"}));
+    QVERIFY(inputNamesInRequest("Create a table \"T\" with 3 rows.").isEmpty());
+}
+
+void AiContentTests::trailingOutputLines_strippedButCodeKept()
+{
+    // Confirmed live: the model wrote the expected output after the script, which then did not compile.
+    QCOMPARE(AiAssistant::withoutTrailingOutputLines("n = 2\nprint(\"R10:\", n)\nR10: 2 print(6*7)\n\n"),
+             QStringList({"n = 2\nprint(\"R10:\", n)", "n = 2"}));
+    // the last line belongs to the code: indented, a statement, or a continued/unbalanced line
+    QVERIFY(AiAssistant::withoutTrailingOutputLines("for i in r:\n    print(i)\n").isEmpty());
+    QVERIFY(AiAssistant::withoutTrailingOutputLines("x = 1\nreturn x\n").isEmpty());
+    QVERIFY(AiAssistant::withoutTrailingOutputLines("x = f(1,\n  2)\ny = g(\n").isEmpty());
+    QVERIFY(AiAssistant::withoutTrailingOutputLines("one line only").isEmpty());
+}
+
 void AiContentTests::deliverables_flagsDeletionThatNeverHappens()
 {
     // Confirmed live: asked to delete, the script only listed functions, and the item counted as done.
@@ -535,6 +672,20 @@ void AiContentTests::direction4_catchesRecompilePrefix()
 // ---------------------------------------------------------------------------
 // Direction 5 — wrong target window
 // ---------------------------------------------------------------------------
+
+void AiContentTests::direction5_wholeRequestWithoutNameLeavesItToTheScript()
+{
+    // Confirmed live: a request naming no window blocked the plot "ThreeSpheres" ("three" is not "3").
+    QtiSasAiContent content;
+    const QString request = "make a 3D plot with 3 spheres connected along one line: radius ratio 5:1:3";
+    const QString code = "g3 = plot3D(\"x\", \"y\", \"z\", 0, 1, 0, 1, 10, 10, False, True)\n"
+                         "setWindowName(g3, \"ThreeSpheres\")\n";
+    QVERIFY(!content.splitPartScopeViolation(code, request, QString(), true).contains("never mentions the window"));
+    // a split part without a name, or a whole request that names a different window: still checked
+    QVERIFY(content.splitPartScopeViolation(code, request, QString(), false).contains("never mentions the window"));
+    QVERIFY(content.splitPartScopeViolation(code, request + " named \"Beads\"", QString(), true)
+                .contains("never mentions the window"));
+}
 
 void AiContentTests::direction5_blocksMismatchedWindowName()
 {

@@ -361,6 +361,27 @@ class AiAssistant : public QObject
     // path replaces a check whose output the user USED to see scroll past, and silently deciding a
     // name is missing would otherwise be invisible right up until the script creates something.
     QString liveEntityFactsFor(const QString &requestText, QString *consoleLine = nullptr) const;
+    // When scripts run: the request's input names (inputNamesInRequest()) that exist NOW, as a PROJECT STATE note
+    // for the model, read from the host without a script. Confirmed live (local model): "In \"Squares\", give
+    // column 3 ..." got newTable("Squares", ...), wiping the table an earlier item had filled, in every run.
+    // existingTables receives the names that exist as tables (see existingTableRecreatedMistake()).
+    QString existingInputNamesNote(const QString &requestText, QStringList *existingTables,
+                                   QString *consoleLine = nullptr) const;
+    // newTable(name) for a table this request only uses: newTable on an existing name wipes it.
+    QString existingTableRecreatedMistake(const QString &code) const;
+    // The script without 1, 2 or 3 trailing lines that may be no Python (a weak model's "expected output" after its
+    // code), smallest cut first; empty if no line qualifies. The caller takes the first one that compiles.
+    static QStringList withoutTrailingOutputLines(const QString &code);
+    // The removed trailing text has a "label: values" line whose label no string in the script prints: the model
+    // wrote its result line as text instead of printing it. Empty if not.
+    static QString unprintedOutputLineMistake(const QString &code, const QString &removedText);
+    // The script with that missing label put in front of its LAST line, when that line is a top-level print() or
+    // scriptPrint() of the values; empty if it is not.
+    static QString labeledLastPrintRepair(const QString &code, const QString &removedText);
+    // A script that only prints string literals — a text answer, nothing for self-review to check.
+    static bool isPureTextAnswer(const QString &code);
+    // A short question with no action verb ("there are spheres?"): answered directly, never split into a plan.
+    static bool isShortQuestion(const QString &requestText);
     // Charges one round against the shared EXPLORE/error-retry budget; true once it is spent (the
     // give-up has then already been reported and recorded).
     bool exploreRoundBudgetExhausted(bool refusing);
@@ -506,12 +527,10 @@ class AiAssistant : public QObject
     {
         return m_busy;
     }
-    //! No reply awaited and no LIST running. Between two steps of one request (a script runs, the next call is
-    //! scheduled) it can be idle for an instant: whoever waits for the end should see it idle for a while.
-    bool isIdle() const
-    {
-        return !m_busy && !listModeActive;
-    }
+    //! No reply awaited, no HTTP retry scheduled and no LIST running. Between two steps of one request (a script
+    //! runs, the next call is scheduled) it can be idle for an instant: whoever waits should see it idle for a while.
+    //! The retry timer counts: m_busy is already false during a retry's backoff (onReplyFinished() resets it).
+    bool isIdle() const;
     void setMaxUserRules(int n)
     {
         m_maxUserRules = n;
@@ -824,6 +843,16 @@ class AiAssistant : public QObject
     // pendingRequestText because that string is also what gets stored as this turn's history text —
     // see startRequest()'s textForHistory comment for the two confirmed-live leaks that caused.
     QString pendingLiveFactsNote;
+    QStringList m_existingInputTables; // see existingInputNamesNote()
+    // Set by maybeDispatchSelfReview() when it removed trailing output lines; the flag allows one retry per request
+    // for an output line written as text instead of printed (see unprintedOutputLineMistake()).
+    QString m_removedTrailingOutput;
+    // The description of a plan that settled on one part (startRequest()'s resolvedTaskDescription): it can name what
+    // the request left unnamed ("Surface"), so the scope checks read it along with the request. Empty otherwise.
+    QString m_singlePartDescription;
+    // The compiled script sent to self-review: kept if the review answers with no runnable script at all.
+    QString m_selfReviewDraftCode;
+    bool m_unprintedOutputRetried = false;
     // True only while a finalized split plan's creation-name collision-check script (see
     // handleSplitPlanResponse()'s doc comment) is in flight — checked whether the plan's own
     // to-be-created names (splitPlanCreationNames()) already exist, so a silent recompile-over-an-

@@ -40,7 +40,7 @@ class QtiSasAiContent : public AiContentProvider
     QString creationCallExamples() const override;
     QString lookupByNameExamples() const override;
     QString splitPartScopeViolation(const QString &code, const QString &partDescription,
-                                    const QString &earlierPartsCode) const override;
+                                    const QString &earlierPartsCode, bool wholeRequest = false) const override;
     bool isGiveUpFallbackScript(const QString &script) const override;
     QString retryHintForError(const QString &errContext) const override;
     bool isUnverifiedMissingClaim(const QString &script) const override;
@@ -138,6 +138,10 @@ class QtiSasAiContent : public AiContentProvider
     static QString redundantFittableReconfigureMistake(const QString &code, const QString &earlierPartsCode);
     static QString compilerScanGroupsAfterNameMistake(const QString &code);
     static QString fittableFitBeforeConfigureMistake(const QString &code);
+    static QString scriptEditPrintDialogMistake(const QString &code);
+    static QString duplicateWindowNameMistake(const QString &code);
+    static QString textIntoNumericColumnMistake(const QString &code);
+    static QString matrixIntegrateAsSumMistake(const QString &code, const QString &originalRequestText);
     static QString fittableSelectStageBeforeFunctionMistake(const QString &code);
     static QHash<QString, bool> openSessionsHaveSetCode(const QString &code);
 };

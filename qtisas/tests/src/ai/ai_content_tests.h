@@ -35,6 +35,17 @@ class AiContentTests : public QObject
     static void maximizeWindow_trulyGatedIsStillFlagged();
     static void deliverables_plotResultsCountsAsTheFitCurve();
     static void knownMistakes_fitBeforeConfigureIsCaught();
+    static void knownMistakes_noteTabPrintIsCaught();
+    static void knownMistakes_matrixIntegrateForSumIsCaught();
+    static void knownMistakes_duplicateWindowNameIsCaught();
+    static void knownMistakes_textIntoNumericColumnIsCaught();
+    static void unprintedOutputLine_flaggedOnlyWhenNotPrinted();
+    static void labeledLastPrint_repairsOnlyALastTopLevelPrint();
+    static void requestSuffix_strippedInBothModes();
+    static void pureTextAnswer_onlyLiteralPrints();
+    static void shortQuestion_withoutActionVerb();
+    static void inputNamesInRequest_skipsNamesBeingCreated();
+    static void trailingOutputLines_strippedButCodeKept();
     static void knownMistakes_scanGroupsAfterSetFunctionNameIsCaught();
     static void direction3_quotedTableAndGraphNamesDoNotCountAsFunctionNames();
     static void direction3_quotedFunctionNameStillEnforced();
@@ -66,6 +77,7 @@ class AiContentTests : public QObject
     static void direction4_catchesRecompilePrefix();
 
     // ---- Direction 5: wrong target window ----
+    static void direction5_wholeRequestWithoutNameLeavesItToTheScript();
     static void direction5_blocksMismatchedWindowName();
     static void direction5_allowsMatchingWindowName();
     static void direction5_blocksMismatchedNewPlot3DName();

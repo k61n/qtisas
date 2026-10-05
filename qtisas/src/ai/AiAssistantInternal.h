@@ -122,6 +122,10 @@ QStringList inventedMergeImports(const QString &code, const QString &partScripts
 // with the KNOWN kind (table/matrix/note/graph) when the surrounding text names one, or an empty
 // string when genuinely unknown. See AiAssistant.cpp for the full rationale.
 QList<QPair<QString, QString>> extractExistingEntityNames(const QString &requestText);
+// Every quoted name the request does not CREATE (a creation verb in its clause, or "create it if missing") — the
+// names it treats as inputs, whatever its wording. See AiAssistant::existingInputNamesNote().
+QStringList inputNamesInRequest(const QString &requestText);
+QString withoutRequestSuffix(const QString &text);
 
 // Returns the subset of `checkedNames` (name, knownKind-or-empty pairs) found missing — trusting
 // only the relevant labeled line when the kind is known, falling back to the VERDICT+safety-net
