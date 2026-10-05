@@ -160,7 +160,7 @@ n.tab("Fit").execute()      # execute tab named "Fit"
 | `setText(s)` | — | set tab content (inherited from QTextEdit) |
 | `toPlainText()` | `str` | get tab content as plain text (inherited from QTextEdit) |
 | `execute()` | — | execute all code in this editor tab |
-| `print()` | — | print editor content to the results log |
+| `print()` | — | opens the system print dialog to print the tab on paper — never in a script; the tab's text is `toPlainText()` |
 | `insertFunction(name)` | — | insert a function name at the current cursor position |
 | `save()` | `str` | save to the previously used file; returns file path — **if this tab has never been saved** (no known file path, e.g. a fresh `newNote()`/`addTab()`), this opens a BLOCKING file-choice dialog instead. Use `saveAs(file)` with an explicit path in automated scripts. |
 | `saveAs(file="")` | `str` | save to `file`; opens dialog if empty; returns file path |

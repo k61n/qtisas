@@ -55,7 +55,7 @@ rowData(row)->tuple       # t[n]→rowData(n+1) 0-based, negative ok;  t[a:b]→
 
 # Write — col FIRST, row second — both 1-based:
 setCell(col,row,value)    # t.setCell(2,3,1.5) → col 2, row 3
-setText(col,row,value)    # Numeric column: C number string "1.5" stored as number; other text kept as typed
+setText(col,row,value)    # Numeric column: a C number "1.5" is stored as that number; ANY other text is evaluated as an expression ("2*pi") and leaves the cell EMPTY if it is none — setColTextFormat(col) first for labels
 setCellData(col,row,value)
 setColData(col,iterable,offset=0)   # offset 0-based: t.setColData(1,[0.1,0.2,0.3])
 appendRowData(tuple)->int

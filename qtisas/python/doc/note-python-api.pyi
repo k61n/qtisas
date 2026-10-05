@@ -42,6 +42,7 @@ indexOf(editor)->int
 
 # ScriptEdit methods (call on currentEditor() or tab()):
 #   execute()  print()  save()->str  saveAs(file="")->str
+#   toPlainText()->str  setText(text)   # the tab's text — print() is NOT that: it opens the printer dialog
 #   importASCII(file="")->str  exportPDF(fileName)  insertFunction(name)
 # execute() runs the ENTIRE tab's text (bound to C++ executeAll() internally), NOT just the
 #   selection or the line at the cursor — there's a same-named C++ method with that narrower

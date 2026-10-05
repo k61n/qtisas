@@ -601,7 +601,8 @@ public:
   if (sipIsErr == 0)
   {
     // Python writes numbers in C ("1.5"): a Numeric column stores them in its own locale, like setCellData();
-    // text that is not a C number ("---", labels) is kept as it is
+    // other text goes to Table::cellEdited(), which evaluates it as an expression ("2*pi") and empties the cell if
+    // it is none ("beta") — a Text column keeps it as it is
     double value = 0.0;
     if (sipCpp->columnType(col) == Table::Numeric && NumericLocale::toDouble(*a2, QLocale::c(), value))
       sipCpp->setCell(row, col, value);

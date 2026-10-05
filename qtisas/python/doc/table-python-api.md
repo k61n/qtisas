@@ -158,7 +158,7 @@ last_row_tuple = t[-1]          # bracket access DOES support -1
 
 | Method | Notes |
 |--------|-------|
-| `setText(col, row, value)` | write string to cell — in a Numeric column a C number string (`"1.5"`) is stored as that number and shown in the numerical format; other text is kept as typed |
+| `setText(col, row, value)` | write string to cell — in a Numeric column a C number string (`"1.5"`) is stored as that number and shown in the numerical format; any other text is evaluated as an expression (`"2*pi"`), and text that is none (a label like `"beta"`) leaves the cell **empty**. Call `setColTextFormat(col)` first for text |
 | `setCell(col, row, value)` | write float to cell |
 | `setCellData(col, row, value)` | type-aware write (str or float) |
 | `setRowData(row, tuple)` | overwrite entire row from a tuple — `row` is **1-based** |
