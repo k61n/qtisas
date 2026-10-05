@@ -78,7 +78,9 @@ class Table: MdiSubWindow
       col = (int)PyLong_AsLong(arg) - 1;\
 		if (col < 0 || col >= sipCpp->numCols()) {\
 			sipIsErr = 1;\
-            PyErr_Format(PyExc_ValueError, "There's no column %d in table %s!", col+1, sipCpp->objectName().toLocal8Bit().constData());\
+            PyErr_Format(PyExc_ValueError, "There's no column %d in table %s! It has %d columns: %s.", col+1,\
+                         sipCpp->objectName().toLocal8Bit().constData(), sipCpp->numCols(),\
+                         sipCpp->colNames().join(", ").toLocal8Bit().constData());\
 		}\
 	 } else {\
       PyObject *tmp = PyObject_Str(arg);\
@@ -89,8 +91,9 @@ class Table: MdiSubWindow
 			col = sipCpp->colIndex(PyUnicode_AsUTF8(tmp));\
 			if (col < 0) {\
 				sipIsErr = 1;\
-				PyErr_Format(PyExc_ValueError, "There's no column named %s in table %s!", PyUnicode_AsUTF8(tmp),\
-                        sipCpp->objectName().toLocal8Bit().constData());\
+				PyErr_Format(PyExc_ValueError, "There's no column named %s in table %s! Its columns: %s.",\
+                        PyUnicode_AsUTF8(tmp), sipCpp->objectName().toLocal8Bit().constData(),\
+                        sipCpp->colNames().join(", ").toLocal8Bit().constData());\
 				Py_DECREF(tmp);\
 			}\
 		}\
@@ -100,7 +103,8 @@ class Table: MdiSubWindow
    int row = arg-1;\
 	if (row < 0 || row >= sipCpp->numRows()) {\
 		sipIsErr = 1;\
-        PyErr_Format(PyExc_ValueError, "There's no row %d in table %s!", row+1, sipCpp->objectName().toLocal8Bit().constData());\
+        PyErr_Format(PyExc_ValueError, "There's no row %d in table %s! It has %d rows.", row+1,\
+                     sipCpp->objectName().toLocal8Bit().constData(), sipCpp->numRows());\
 	}
 
 static int setCellDataHelper(Table* table, int row, int col, PyObject* item) {
@@ -1041,13 +1045,19 @@ class Matrix: MdiSubWindow
 	int col = arg-1;\
    if (col < 0 || col >= sipCpp->numCols()) {\
 		sipIsErr = 1;\
-        PyErr_Format(PyExc_ValueError, "There's no column %d in matrix %s!", col+1, sipCpp->objectName().toLocal8Bit().constData());\
+        PyErr_Format(PyExc_ValueError,\
+                     "There's no column %d in matrix %s! It has %d rows and %d columns; "\
+                     "cell(row, col) takes the row first.",\
+                     col+1, sipCpp->objectName().toLocal8Bit().constData(), sipCpp->numRows(), sipCpp->numCols());\
 	}
 #define CHECK_MATRIX_ROW(arg)\
    int row = arg-1;\
 	if (row < 0 || row >= sipCpp->numRows()) {\
 		sipIsErr = 1;\
-        PyErr_Format(PyExc_ValueError, "There's no row %d in matrix %s!", row+1, sipCpp->objectName().toLocal8Bit().constData());\
+        PyErr_Format(PyExc_ValueError,\
+                     "There's no row %d in matrix %s! It has %d rows and %d columns; "\
+                     "cell(row, col) takes the row first.",\
+                     row+1, sipCpp->objectName().toLocal8Bit().constData(), sipCpp->numRows(), sipCpp->numCols());\
 	}
 %End
 public:
@@ -2983,6 +2993,24 @@ public:
             if (!missing.isEmpty())
                 detail = QString(" Dataset(s) not found: %1. Available: %2.")
                              .arg(missing.join(", "), avail.join(", "));
+            // A dataset is "<table>_<column name>". Confirmed live: a table created with the default column names
+            // 1, 2 was asked for as "Peak_y" three times in a row — the list above alone did not make the reason
+            // visible.
+            for (const QString &d : missing)
+            {
+                const qsizetype cut = d.lastIndexOf('_');
+                if (cut <= 0)
+                    continue;
+                const QString tablePrefix = d.left(cut + 1);
+                QStringList columns;
+                for (const QString &a : avail)
+                    if (a.startsWith(tablePrefix))
+                        columns << a.mid(tablePrefix.size());
+                if (!columns.isEmpty())
+                    detail += QString(" Table \"%1\" has no Y column named \"%2\" — its Y columns are named %3 (name "
+                                      "them with setColNames(), or use \"%4\").")
+                                  .arg(d.left(cut), d.mid(cut + 1), columns.join(", "), tablePrefix + columns.last());
+            }
         }
         PyErr_SetString(PyExc_ValueError,
             QString("configure: '%1' failed.%2").arg(*a0, detail).toLocal8Bit().constData());
