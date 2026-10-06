@@ -138,7 +138,7 @@ def summarize_ai(lines):
             if took and items:  # "item n/N (took ...)" is the time of the PREVIOUS item
                 items[-1]["seconds"] = _seconds(took, 1)
             items.append({"item": int(m.group(1)), "of": int(m.group(2)), "text": line.split(" — ", 1)[-1].strip(),
-                          "scripts": 0, "r_lines": [], "seconds": None, "failed": False})
+                          "scripts": 0, "r_lines": [], "seconds": None, "failed": False, "backend_error": False})
             continue
         done = _ALL_DONE_RE.search(line)
         if done and items:
@@ -146,16 +146,19 @@ def summarize_ai(lines):
         if items:
             if "AI code (running)" in line:
                 items[-1]["scripts"] += 1
+            if line.startswith("▸▸▸ AI: connection error"):  # the model's backend, not the model's answer
+                items[-1]["backend_error"] = True
             if re.search(r"LIST item %d/\d+ failed" % items[-1]["item"], line):
                 items[-1]["failed"] = True
             if not line.startswith("▸"):
                 items[-1]["r_lines"] += _R_LINE_RE.findall(line)
     stopped = any(line.startswith("▸▸▸ AI: stopping") for line in lines) and not items
+    backend_errors = sum(line.startswith("▸▸▸ AI: connection error") for line in lines)
     failed_items = [i["item"] for i in items if i["failed"]]
     status = "stopped" if stopped else ("items-failed" if failed_items else "done")
     return {"ok": status == "done", "status": status, "transcript": transcript,
             "r_lines": _R_LINE_RE.findall(output), "items": items, "failed_items": failed_items,
-            "scripts": transcript.count("AI code (running)"),
+            "scripts": transcript.count("AI code (running)"), "backend_errors": backend_errors,
             "tokens": 1000 * sum(int(t) for t in _TOKENS_RE.findall(transcript))}
 
 

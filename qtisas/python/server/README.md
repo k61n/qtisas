@@ -8,8 +8,9 @@ internal AI, whose API docs live in `qtisas/python/doc/`.
 |------|------------|
 | `qtisas_server.py` | the server, running inside QtiSAS |
 | `qtisas_send.py` | the client: plain Python 3, no PyQt needed |
-| `qtisas_test_instance.py` | a separate QtiSAS for scripted tests (own settings and fit library) |
-| `qtisas_benchmark.py` | runs an AI benchmark list in the test instance and scores it |
+
+The test instance and the AI benchmarks, which use the client, are in `qtisas/tests/src/server/` and
+`qtisas/tests/src/ai/benchmarks/` (see its `README.md`).
 
 macOS and Linux only for now (Unix sockets); Windows (named pipes) is not done yet.
 
@@ -61,21 +62,6 @@ The default instance is `test` (or `$QTISAS_SERVER`); use `--instance main` for 
 - Exit code: 0 ok, 1 the script or the AI run failed, 2 no server, busy, refused or timed out.
 - `--mode quit` ends QtiSAS at once **without saving** — meant for the test instance.
 
-## The test instance
-
-```bash
-qtisas_test_instance.py reset     # (re)create ~/.qtisas-test/home: your fit library, AI presets and AI options
-qtisas_test_instance.py start     # QtiSAS -S=test with HOME set there (add --visible to see its window)
-qtisas_test_instance.py status
-qtisas_test_instance.py stop      # also ends it while it's busy with a long request
-```
-
-QtiSAS builds every path from the home folder, so the instance never touches your own settings or fit
-library. Its settings start as defaults, except the AI's. Packages installed with `qtisas pip …` are read from your
-`~/.config/qtisas/python/site-packages` (added last to Python's search path; a `pip install` in the test
-instance goes to its own folder), or copied with `reset --copy-site-packages` for a fixed state. Run from an
-installed QtiSAS (`…/qtisas.app/Contents/Resources/python/server/`), the instance starts through its launcher.
-
 ## AI agents and settings from Python
 
 Available as `qti.app.…` only — not as short names and not in the API docs, so that an AI script cannot
@@ -93,17 +79,3 @@ qti.app.setAiConfig("exploreEnabled", False)   # the page's settings, with its r
 ```
 
 The API key is never returned. The agent's own fields change only through `setAiAgent()`.
-
-## Benchmarks
-
-```bash
-qtisas_benchmark.py ../../tests/src/ai/benchmarks/list3.json --markers "NOSPLIT NOREVIEW NOEXPLORE" \
-    --agent BlaBlaDor-Huge --set maxAutoContinue=6 --label "what changed"
-qtisas_benchmark.py ../../tests/src/ai/benchmarks/list3.json --print     # the LIST text, to paste by hand
-```
-
-Each run starts a fresh test instance, runs the list in mode `ai-run` and compares every item's
-`R<n>:` line with the expected value. Results go to `~/.qtisas-test/reports`: the log, a JSON report and
-one line per run in `history.csv`. A single run varies by one or two items, so compare several runs before
-drawing conclusions. The benchmark format and LIST 3 are described in
-`qtisas/tests/src/ai/ai-test-requests.md`.
