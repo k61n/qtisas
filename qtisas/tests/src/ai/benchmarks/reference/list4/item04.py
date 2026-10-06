@@ -1,0 +1,6 @@
+t = table("Peak")
+t.addColumn()
+t.setColName(t.numCols(), "y2")
+t.setCommand("y2", 'col("y")*2')
+t.recalculate("y2")
+scriptPrint("R4: %.4f" % sum(t.colData("y2")))

@@ -1,0 +1,11 @@
+data = table("Calib")
+fit = table("fitCurve-ai/Quad")
+g = newGraph("Report5", 2, 2, 1)
+top, bottom = g.layer(1), g.layer(2)
+top.addCurve(data, "y", Graph.CurveType.Scatter)
+top.insertCurve(fit, "x", "y", Graph.CurveType.Line)
+bottom.insertCurve(fit, "x", "residues", Graph.CurveType.Scatter)
+top.setYTitle("y")
+bottom.setXTitle("x")
+largest = max(abs(v) for v in fit.colData(5) if v is not None)  # column 5: the residues
+scriptPrint("R3: %d %d %d %.4f" % (g.numLayers(), top.numCurves(), bottom.numCurves(), largest))

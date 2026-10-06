@@ -1,7 +1,7 @@
 {
   "name": "LIST 3",
-  "description": "Mode comparison benchmark: 12 tasks with one checkable R<n>: line each (see ai-test-requests.md).",
-  "instruction": "Use exactly the object names given. End the item by printing exactly ONE line: \"R\", the item number, a colon, then only the values asked for, in the order asked, separated by spaces (e.g. \"R1: 385\").",
+  "description": "Mode comparison benchmark: 12 tasks with one checkable R<n>: line each (see README.md).",
+  "instruction": "Use exactly the object names given. End the item by printing exactly ONE line: the result label the item gives, then only the values asked for, in the order asked, separated by spaces.",
   "setup": "for name in ('ai/RefLine', 'ai/RefDecay'):\n    Compiler.delete(name)\nCompiler.scanGroups()\n",
   "items": [
     {
@@ -15,7 +15,7 @@
       "hint": "muParser not forced, so ^ ran in Python"
     },
     {
-      "text": "In \"Squares\", give column 4 the formula 1/(column 1 - 5) and recalculate it. Print the number of empty cells in column 4 and the name of the Python error the failure reported.",
+      "text": "In \"Squares\", give column 4 the formula 1/(column 1 - 5) and recalculate it. Print the number of empty cells in column 4 and the name of the Python error the formula caused.",
       "expected": "1 ZeroDivisionError",
       "hint": "error not caught, or the reason read from somewhere else than the ValueError's second line"
     },
@@ -25,7 +25,7 @@
       "hint": "read-only ignored, or the formula's result printed instead of the unchanged sum"
     },
     {
-      "text": "Create a table \"Format\" with 3 rows and 1 column holding 1234.5, 0.25 and -3. Switch its decimal separators to German (comma), without group separators. Print the three cells as displayed text. Then write the text \"2,5\" into row 2 and print the number that cell now holds.",
+      "text": "Create a table \"Format\" with 3 rows and 1 column holding 1234.5, 0.25 and -3. Switch its decimal separators to German (comma), without group separators, and read the three cells as displayed text. Then write the text \"2,5\" into row 2 and read the number that cell now holds. Print the three texts read first, then that number.",
       "expected": "1234,5 0,25 -3 2.5",
       "hint": "number format not applied, or text() mistaken for the number"
     },

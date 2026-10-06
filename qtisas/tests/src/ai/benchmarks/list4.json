@@ -1,0 +1,38 @@
+{
+  "name": "LIST 4",
+  "description": "Retry-prone tasks: each first attempt has a trap that fails late, after earlier side effects (see README.md).",
+  "instruction": "Use exactly the object names given. End the item by printing exactly ONE line: the result label the item gives, then only the values asked for, in the order asked, separated by spaces.",
+  "setup": "Compiler.delete('ai/RefGauss')\nCompiler.scanGroups()\n",
+  "items": [
+    {
+      "text": "Create a note \"Steps\" with three tabs named \"A\", \"B\" and \"C\" (the first tab renamed too); each tab contains print() of its own name, e.g. print('A'). Do not run them. Print the number of tabs, the text of tab \"C\" and the text of tab \"A\".",
+      "expected": "3 print('C') print('A')",
+      "hint": "renameTab() is 0-based; a retry that runs addTab() again gives more tabs"
+    },
+    {
+      "text": "Compile a new fit function \"ai/RefGauss\" for y = A*exp(-(x-x0)^2/(2*s^2)) + c with all four parameters adjustable. Create a table \"Peak\" with 41 rows: x = -2, -1.9, ..., 2 and y = 5*exp(-x^2/0.18) + 1 (roles X, Y). Fit it starting from A = 1, x0 = 0.5, s = 1, c = 0. Print A, x0, s as a positive number, and c, each with 4 decimals.",
+      "expected": "5.0000 0.0000 0.3000 1.0000",
+      "hint": "^ or ** in the C++ code (pow() or a product needed), parameters fixed, or the initial guesses printed"
+    },
+    {
+      "text": "Create a matrix \"Grid\" with 3 rows and 4 columns and fill it with the formula i+10*j. Print the value in row 3, column 4, and the sum of row 3.",
+      "expected": "43 112",
+      "hint": "(col, row) order used for the matrix, or 0-based i/j"
+    },
+    {
+      "text": "In table \"Peak\", add a column named \"y2\" with a column formula that is 2 times the y column, recalculate it, and print the sum of \"y2\" with 4 decimals.",
+      "expected": "157.1988",
+      "hint": "the formula written for muParser in a Python table formula, or the column referred to by a wrong name"
+    },
+    {
+      "text": "Create a table \"Names\" with 3 rows and 2 columns: column 1 holds 1, 2, 3 and column 2, in text format, holds \"alpha\", \"beta\", \"gamma\". Print the text in row 2 of column 2 and the number in row 3 of column 1.",
+      "expected": "beta 3",
+      "hint": "text written into a numeric column (empty cell), or (row, col) order used for the table"
+    },
+    {
+      "text": "Close and delete the table \"Names\" and the matrix \"Grid\". Print whether each still exists afterwards, table first.",
+      "expected": "False False",
+      "hint": "hidden instead of deleted, or existence checked with the wrong lookup"
+    }
+  ]
+}

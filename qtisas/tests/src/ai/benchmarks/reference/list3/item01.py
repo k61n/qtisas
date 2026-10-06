@@ -1,0 +1,5 @@
+t = newTable("Squares", 10, 4)
+t.setColData(1, range(1, 11))
+t.setCommand(2, "col(1)**2")
+t.recalculate(2)
+scriptPrint("R1: %g" % sum(t.colData(2)))
