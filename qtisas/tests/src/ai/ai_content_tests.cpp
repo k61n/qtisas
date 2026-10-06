@@ -350,6 +350,17 @@ void AiContentTests::shortQuestion_withoutActionVerb()
     QVERIFY(!AiAssistant::isShortQuestion("make a 3D plot with 3 spheres"));
 }
 
+void AiContentTests::trailingAnnotationOutput_strippedButRealAnnotationsKept()
+{
+    // Confirmed live: "R1: 385" after the script compiled (an annotated name) and the result line was never printed.
+    QCOMPARE(AiAssistant::withoutTrailingAnnotationOutput("s = 385\nscriptPrint(str(s))\nR1: 385\n"),
+             QString("s = 385\nscriptPrint(str(s))"));
+    QCOMPARE(AiAssistant::withoutTrailingAnnotationOutput("x = []\nR12: []\n\n"), QString("x = []"));
+    QVERIFY(AiAssistant::withoutTrailingAnnotationOutput("x: int = 5\n").isEmpty());
+    QVERIFY(AiAssistant::withoutTrailingAnnotationOutput("d = {\n    \"a\": 1,\n}\n").isEmpty());
+    QVERIFY(AiAssistant::withoutTrailingAnnotationOutput("R1: 385\n").isEmpty()); // nothing would be left
+}
+
 void AiContentTests::inputNamesInRequest_skipsNamesBeingCreated()
 {
     const QString request = R"(Square the column "x" of table "Data" into a new table "Squares", then plot it.)";

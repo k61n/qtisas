@@ -44,6 +44,7 @@ class AiContentTests : public QObject
     static void requestSuffix_strippedInBothModes();
     static void pureTextAnswer_onlyLiteralPrints();
     static void shortQuestion_withoutActionVerb();
+    static void trailingAnnotationOutput_strippedButRealAnnotationsKept();
     static void inputNamesInRequest_skipsNamesBeingCreated();
     static void trailingOutputLines_strippedButCodeKept();
     static void knownMistakes_scanGroupsAfterSetFunctionNameIsCaught();
