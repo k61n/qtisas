@@ -6199,6 +6199,7 @@ void ApplicationWindow::printHttpRetryStatus(const QString &message, bool isFirs
         print(full);
         return;
     }
+    m_aiTranscript << full; // see aiTranscript(): a retry is part of the run's story (print() above records its own)
     if (!isFirstAttempt && target == m_retryStatusWidget && m_retryStatusPos >= 0)
     {
         QTextCursor c(target->document());
