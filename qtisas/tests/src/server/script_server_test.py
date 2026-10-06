@@ -117,6 +117,10 @@ assert (r["status"], r["failed_items"], r["scripts"], r["tokens"]) == ("items-fa
 assert r["r_lines"] == ["R1: 385.0", "R3: []"], r["r_lines"]
 got = [(i["item"], i["scripts"], i["r_lines"], i["seconds"], i["failed"]) for i in r["items"]]
 assert got == [(1, 1, ["R1: 385.0"], 27.5, False), (2, 2, [], 64.5, True), (3, 0, ["R3: []"], 8.9, False)], got
+r = qtisas_server.summarize_ai(["▸▸  AI LIST: item 1/2 — a", "R1: 1",
+                                "▸▸  AI LIST: item 2/2 (took 1.0sec, 1.0sec total) — b",
+                                "▸▸▸ AI: connection error (ConnectionRefusedError): Connection refused"])
+assert [i["backend_error"] for i in r["items"]] == [False, True] and r["backend_errors"] == 1, r["items"]
 r = qtisas_server.summarize_ai(["▸▸▸ AI code (not run):\n\nx = 1", "▸▸▸ AI: stopping — this request refers to ..."])
 assert (r["status"], r["ok"], r["items"]) == ("stopped", False, []), r
 
