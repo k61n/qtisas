@@ -1,21 +1,38 @@
 # AI Assistant — Real Test Requests
 
-This file is a fixture for `ai_content_tests` (see the `realRequests`/`realRequests_data` test) and
-a human-readable reference of realistic requests used to exercise the AI assistant's behavior
-throughout this project's development.
+Realistic requests for testing the AI assistant, from single requests to whole conversations.
 
-**Not loaded by the AI at runtime.** `AiContentProvider::loadDocs()` (`QtiSasAiContent.cpp`) only
-ever globs `*-python-api.{md,pyi}` inside `qtisas/python/doc/` — this file lives in
-`qtisas/tests/src/ai/` and matches neither that location nor that naming pattern, so it is invisible
-to the model by construction, regardless of its content. It is also never touched by the
-`file(COPY "python/doc" ...)` resource-copy step, so it is never shipped in the built app either.
+| Part | What | How it runs |
+|------|------|-------------|
+| [1. Topic detection](#part-1--topic-detection) | one request per entry, with the doc topics it must select | automatically, by `ai_content_tests` |
+| [2. LIST requests](#part-2--list-requests) | whole lists of tasks; LIST 3 and LIST 4 are also the [benchmarks](benchmarks/README.md) | by hand, pasted into the app |
+| [3. Conversations](#part-3--conversations) | several turns, typed one at a time | by hand |
+| [4. Commands, markers, settings, rules](#part-4--commands-markers-settings-rules) | what QtiSAS handles itself, and what switches an AI stage on or off | by hand |
 
-Each entry states the request as a blockquote (so it's actually readable in a rendered preview, not
-hidden), followed by **Expected topics:** — the minimum set of doc topics
-`splitPartTopicsFromAnswer()`'s keyword/synonym backstop must detect from that text alone (the same
-mechanism that rescues a split-mode part whose model-provided `DOCS:` field came back incomplete or
-`"none"`). Both lines are parsed by the test via a plain regex; a prose note under each entry
-explains why it's here.
+## Before a manual test
+
+- **Sending:** type into the status bar input line (bottom of the main window), then
+  - **Ctrl+Shift+Enter** — ask **and run** (every test below, unless it says otherwise);
+  - **Ctrl+Enter** (Cmd+Enter on macOS) — ask only: the script is shown, nothing runs ("generate-only").
+
+  The Ask AI button of a Script or Note window does the same: click = ask only, Ctrl+Shift+click = ask and run.
+- **Clean start:** a new project, and `clear history` in the input line.
+- **Console lines:** the AI's own messages start with `▸▸▸ AI`. The expected messages below are quoted without
+  that prefix.
+
+This file is not sent to the AI and not shipped: the AI only reads `qtisas/python/doc/*-python-api.{md,pyi}`.
+
+# Part 1 — Topic detection
+
+Before writing a script, the AI picks which API docs to send (table, matrix, graph, graph3d, note, compile,
+fittable). Each entry below is one request and the topics that must be picked from its text alone. The C++ test
+`realRequests` reads them from this file.
+
+**Format — the test parses it, keep it exact:**
+- a `##` heading (the test row's name);
+- `**Request:**`, then the request on ONE line starting with `>`;
+- `**Expected topics:**` with a comma-separated list;
+- a `**Why:**` note. No other part of the file may have a line starting with `**Expected topics:**`.
 
 ## Compound multi-topic fit-and-plot request
 
@@ -24,9 +41,8 @@ explains why it's here.
 
 **Expected topics:** table, compile, fittable, graph
 
-The standing regression request used throughout this project's live-transcript testing — it touches
-table/compile/fittable/graph creation in one request and has surfaced the majority of the
-Directions and self-review backstops documented in `QtiSasAiContent.cpp`.
+**Why:** the standard regression request — table, compile, fit and graph in one. It has found most of the
+backstops in `QtiSasAiContent.cpp`.
 
 ## Plain table creation
 
@@ -35,8 +51,7 @@ Directions and self-review backstops documented in `QtiSasAiContent.cpp`.
 
 **Expected topics:** table
 
-A single-topic request with no fitting or plotting — checks the backstop doesn't over-fire on
-unrelated topics for a plain data-generation request.
+**Why:** a single topic with no fit or plot — no unrelated topic may be added.
 
 ## Matrix formula fill
 
@@ -45,8 +60,7 @@ unrelated topics for a plain data-generation request.
 
 **Expected topics:** matrix
 
-Matrix has no dedicated checklist function (confirmed during the docs/checklist correlation audit)
-— this keyword backstop is effectively its only mechanical safety net today.
+**Why:** matrices have no checklist of their own, so this keyword match is their only mechanical safety net.
 
 ## 3D surface plot
 
@@ -55,10 +69,8 @@ Matrix has no dedicated checklist function (confirmed during the docs/checklist 
 
 **Expected topics:** graph3d
 
-Deliberately natural phrasing — no literal "graph3d"/"matrix"/"graph" substring anywhere. This
-entry originally detected ZERO topics: `topicSynonymRe` (`AiAssistant.cpp`) had a dedicated entry
-for "fittable" but none for "graph3d". Fixed by adding a `graph3d` synonym regex matching "3D",
-"surface plot", "plot3d" — this entry is now the regression test for that fix.
+**Why:** natural wording without "graph3d", "matrix" or "graph". It once found no topic at all; "3D",
+"surface plot" and "plot3d" now select graph3d.
 
 ## Auto-executing note
 
@@ -67,8 +79,7 @@ for "fittable" but none for "graph3d". Fixed by adding a `graph3d` synonym regex
 
 **Expected topics:** note
 
-Ties to the note autoexec multi-tab documentation fixed during the docs/checklist correlation pass
-— "keep it as the active tab" reflects that exact real constraint.
+**Why:** autoexec runs only the active tab — "keep it as the active tab" is that real constraint.
 
 ## Custom function compile + simulate (no real data)
 
@@ -77,9 +88,7 @@ Ties to the note autoexec multi-tab documentation fixed during the docs/checklis
 
 **Expected topics:** compile, fittable
 
-Compile and Fittable are two separate topics/checklist functions even though compiling almost
-always precedes fitting — checks both are detected from one request that only compiles+simulates,
-never calls fit().
+**Why:** compile and fittable are separate topics; both are needed even though nothing is fitted.
 
 ## Fit an existing library model against real data
 
@@ -88,9 +97,7 @@ never calls fit().
 
 **Expected topics:** fittable, table
 
-No compile() call at all — an existing library model fit against a named, pre-existing table.
-Checks "fittable" is detected via the synonym regex (the word "fittable" itself never has to
-appear verbatim) alongside a plain "table" keyword hit for the input data reference.
+**Why:** no compile at all, and the word "fittable" never appears — it must come from the synonyms.
 
 ## Restyle an existing graph
 
@@ -99,8 +106,7 @@ appear verbatim) alongside a plain "table" keyword hit for the input data refere
 
 **Expected topics:** graph
 
-No table/compile/fit anywhere — pure post-hoc styling of an already-built graph, checking the
-backstop doesn't force in unrelated topics just because "FitResults" sounds fit-related.
+**Why:** styling only; the name "FitResults" must not pull in the fit topics.
 
 ## Delete fit functions from the library
 
@@ -109,8 +115,8 @@ backstop doesn't force in unrelated topics just because "FitResults" sounds fit-
 
 **Expected topics:** compile
 
-Benchmark LIST 3's item 12, which matched no topic at all ("AI doc topics: all") before "fit function(s)" was
-added to the compile synonyms — deleting, opening and listing library functions is the Compiler's job.
+**Why:** LIST 3 item 12. It matched no topic until "fit function(s)" became a compile synonym — deleting,
+opening and listing library functions is the Compiler's job.
 
 ## Note script reading a table on autoexec
 
@@ -119,27 +125,24 @@ added to the compile synonyms — deleting, opening and listing library function
 
 **Expected topics:** note, table
 
-A composite note+table request — checks both topics are detected together, not just whichever one
-happens to be checked first in `knownDocTopics()`'s iteration order.
+**Why:** two topics in one request — both must be found, not just the first one checked.
 
-## LIST request — full AI integration test
+# Part 2 — LIST requests
 
-Not a `realRequests_data()` fixture row like the entries above — deliberately a fenced code block,
-not a `>` blockquote, so `parseAiTestRequestsFixture()`'s regex parser (`ai_content_tests.cpp`,
-which overwrites its `request` capture on every `>` line and would otherwise silently collapse a
-multi-line blockquote down to just its last line) skips it entirely. This is a manual, paste-into-
-the-live-app scenario exercising the whole `AiAssistant::parseListRequest()`/`beginListRequest()`
-pipeline end to end — LIST parsing, per-item mechanical doc-topic matching, existence-checks, and
-both non-split and split-mode generation — not a per-request topic-detection unit test.
+A LIST runs its numbered items one after the other, each as its own request. Paste a whole block into the app.
 
-Every entry above, combined into one `LIST`, ordered simplest to most complex rather than in the
-file's own order — each item builds on more moving parts than the last, so an early failure points
-at the simplest thing that could be wrong instead of surfacing deep inside a compound request.
-Dependency order is kept regardless: an object referenced as already existing is always created by
-an earlier item first. Three items (1, 2, 10) don't correspond to any entry above — "Restyle...
-`FitResults`" and "...note `Batch`...table `RawScan`..." reference names no other entry ever
-creates, so these three add the missing prerequisites rather than leaving those two entries
-unrunnable as part of a real end-to-end LIST.
+- Markers go on the `LIST` line, e.g. `LIST NOSPLIT NOREVIEW NOEXPLORE` (see Part 4).
+- A line between `LIST` and item 1 is an instruction: it is appended, as written, to every item.
+- The blocks are fenced code, not `>` quotes, so the Part 1 test skips them.
+
+## LIST 1 — full AI integration test
+
+**Tests:** the whole LIST path — parsing, doc topics per item, the existence check, and both single-script and
+split generation.
+
+**Content:** every Part 1 request, ordered from simplest to most complex, so an early failure points at the
+simplest cause. Items 1, 2 and 10 are extra: they create "Batch", "RawScan" and "FitResults", which later items
+use.
 
 ```
 LIST
@@ -151,30 +154,47 @@ LIST
 6. Plot a 3D surface of sin(x)*cos(y) over x and y in the range -pi to pi, using a filled mesh style, then add a legend and axis labels.
 7. Create a table "SAXS_data" with 3 columns Q, I, dI and fill it with synthetic small-angle-scattering intensities for a sphere form factor plus 3% Gaussian noise.
 8. Compile a custom Porod power-law fit function with an adjustable exponent parameter, then simulate a curve from it without fitting any real data.
-9. Fit the existing "sasviewmodels/sphere" form-factor model (scale, backgroubd, Rg are fitable) from the Fittable library against table "SAXS_data" columns I and dI, using weighted Levenberg-Marquardt, and report chi2/dof.
+9. Fit the existing "sasviewmodels/sphere" form-factor model (scale, background and radius adjustable) from the Fittable library against table "SAXS_data" columns I and dI, using weighted Levenberg-Marquardt, and report chi2/dof.
 10. Plot the fit results from the previous step into graph "FitResults", including the data, fit curve, and residuals.
 11. Restyle the existing graph "FitResults" — set the legend font to bold 12pt, change the first curve's line color to red, and add minor tick marks on both axes.
 12. Create a table "GaussPeak" with 200 rows of synthetic Gaussian-peak data (x, y, dy columns) with 5% noise. Compile a custom Gaussian peak fit function and a Lorentzian fit function. Fit both models with weighted errors. Compare chi2/dof and report which model fits better. Plot the winning model's data, fit curve, and residuals into graph "GaussPeakFit" with two stacked panels, a styled legend, and axis titles.
 ```
 
-## LIST 2 request — extended AI mechanics test
+**Pass when:**
 
-The LIST above deliberately covers all seven `knownDocTopics()` entries at least once, but every one of
-its items collapses to "single part — running directly" except item 12 — so mechanisms that only show
-up when a request is NOT a fresh, single-topic creation are still untested: the EXISTS branch of the
-existence-check preflight (every LIST-1 item only ever hits MISSING, since each creates its own
-brand-new object), explicit read-before-write EXPLORE sequencing, intentional same-name recompilation,
-and anaphora ("it", "the model", "the data") resolved against what an earlier item in the SAME list just
-created. Self-contained like LIST 1 — creates its own prerequisites rather than depending on LIST 1
-having already run.
+| Item | Pass when |
+|------|-----------|
+| all | `AI LIST: item n/12` for every item, then `all 12 item(s) completed`; each item's doc topics include its Part 1 entry's expected topics; no item reported as done without its object |
+| 1–2 | note "Batch" (empty), table "RawScan" with 50 rows and columns x, y |
+| 3 | a new tab in "Batch", set to autoexec, whose script prints `table("RawScan")`'s row count; "Batch" and "RawScan" are not created again |
+| 4 | note "Setup": its active tab is autoexec and switches automatic recalculation off |
+| 5 | matrix "SphereMap", 50×50, filled from `sin(x)*cos(y)` (not all zeros) |
+| 6 | a 3D surface plot, filled mesh, with legend and axis labels |
+| 7 | table "SAXS_data": Q, I, dI (roles X, Y, yErr), sphere-like intensities with noise |
+| 8 | a new `ai/` power-law function with an adjustable exponent, compiled; a simulated curve; no fit run |
+| 9 | `sasviewmodels/sphere` fitted to "SAXS_data" with weights dI, scale/background/radius varied, chi²/dof printed from the fit result |
+| 10 | graph "FitResults" with the data, the fit curve and the residuals |
+| 11 | the same "FitResults" (no new graph): legend bold 12 pt, first curve red, minor ticks on both axes |
+| 12 | runs as split parts (`AI split-mode: part i/N`); "GaussPeak" with 200 rows, two compiled functions, two fits, the better chi²/dof named, graph "GaussPeakFit" with two stacked layers, legend and axis titles |
 
-Also worth running this same block with `LIST NOSPLIT NOREVIEW NOEXPLORE` appended, to confirm each
-item still behaves reasonably with the split-plan/self-review/EXPLORE stages forced off — none of the
-existing fixtures exercise that combination even though it is real, user-facing syntax (see
-`AiAssistant::parseListRequest()`).
+## LIST 2 — extended AI mechanics test
+
+**Tests:** what LIST 1 cannot reach, because each of its items creates something new:
+
+| Item | Tests |
+|------|-------|
+| line 1 | the instruction line reaches every item, not only the first |
+| 2 | the existence check finding an object that exists; Z role (not Y), so "Baseline" keeps one Y column |
+| 3 | EXPLORE first (list the compiled functions), then act |
+| 4 | compiling the same `ai/` name twice on purpose: the second overwrites the first |
+| 5 | an underspecified request ("the model", "the data"): no invented model name |
+| 6–7 | "it" referring to what the previous item created; item 6 gives "Metrics" a real z with role Z |
+
+**Run it twice:** as written (stages as set in Preferences — item 3 needs EXPLORE), then with
+`LIST NOSPLIT NOREVIEW NOEXPLORE`.
 
 ```
-LIST NOSPLIT NOREVIEW NOEXPLORE
+LIST
 For every item, use the exact object names given and verify the underlying logic (formulas, fit setup, column roles) before considering it done.
 1. Create a table "Baseline" with 30 rows of x, y sample data.
 2. Add a column "z" to the existing table "Baseline" computed as x*y, using the Z column role — reuse the table you just created, don't make a new one.
@@ -185,125 +205,203 @@ For every item, use the exact object names given and verify the underlying logic
 7. Plot it as a 3D surface instead, using a filled mesh style.
 ```
 
-Item 2 is the deliberate EXISTS counterpart to every LIST-1 existence-check, which only ever sees
-MISSING; its Z role (not Y — matches the earlier real run's own "expected exactly one Y column;
-found ['y', 'z']" failure) keeps "Baseline" down to one unambiguous Y column, so item 5's own
-ambiguity stays confined to WHICH model rather than also being about which column. Item 3 forces
-an EXPLORE-then-act two-step (mirrors the real transcript where a mixed explore+action script got
-truncated to its read-only prefix — see `AiAssistant.cpp`'s EXPLORE write-detection). Item 4 is the
-"ai/" namespace intentional-overwrite path (compile-python-api.md Rule 6) made explicit rather than
-incidental. Item 5 is deliberately underspecified — no model name — checking the assistant falls
-back to whatever `Fittable.currentFunction()` already implies, per its own "never stop merely
-because a name is missing" rule, rather than inventing an unrelated name. Items 6-7 test anaphora
-("it") resolved against the compound object item 6 just created, one LIST item later; item 6 now
-gives "Metrics" a real z dimension WITH the Z role pinned explicitly, so item 7's 3D surface has
-actual, correctly-roled data to plot — confirmed live: leaving the role unspecified repeatedly got
-"z" assigned the Y role instead, and one real run's item 7 correctly detected the mismatch via
-qualified names but then gave up instead of fixing it, silently completing with no 3D plot created.
+**Pass when:**
 
-The line between `LIST` and item 1 is `parseListRequest()`'s `instructionBlock` — free text there gets
-sent, together with the whole numbered list, to a one-shot LLM call that rewrites EVERY item to
-incorporate it before any item runs (see `beginListRequest()`'s doc comment). Untested by LIST 1, whose
-`LIST` line goes straight into item 1. Exercises whether that rewrite reaches all 7 items, not just the
-first, and leaves each item's own quoted object names intact.
+| Item | Pass when |
+|------|-----------|
+| all | every item follows the instruction line (exact names, logic checked) |
+| 1 | table "Baseline", 30 rows, x and y |
+| 2 | the existence check finds "Baseline" (no "stopping — … refers to"); column "z" = x*y with role Z in the SAME table, no new table |
+| 3 | an `AI code (exploring)` round lists the compiled `sasviewmodels` functions before the action; one of them simulated, no fit (with `NOEXPLORE`: one script does both, or the list is printed and the item says what it chose) |
+| 4 | one function "ai/ExpDecay" with scale, rate and offset; the second compile overwrites the first without an error |
+| 5 | "ai/ExpDecay" fitted to "Baseline" (or the item says which data it chose); no invented model name |
+| 6 | note "Log"; table "Metrics", 20 rows, z from x and y with role Z; a graph of it with a legend |
+| 7 | a 3D surface of "Metrics" with a filled mesh — not of another table, and not skipped |
 
-## Interactive follow-up sequence — short-confirmation continuation
+**Seen in earlier runs:** with Y instead of Z, item 5 failed on "expected exactly one Y column; found ['y',
+'z']". Without the role in item 6, "z" got role Y, and item 7 noticed it but gave up silently, without a 3D
+plot.
 
-Not a `LIST` — LIST items are independent, non-conversational requests run in sequence, so this
-scenario can only be reproduced as real, separate chat turns typed one at a time (paste each line
-below as its own message, waiting for the previous one to finish):
+## LIST 3 and LIST 4 — the benchmark lists
 
-> make a 3D plot with 3 spheres connected along one line: radius ratio 5:1:3
+**Tests:** every item prints one checkable `R<n>: …` line. The expected values are in
+[benchmarks/list3.json](benchmarks/list3.json) and [benchmarks/list4.json](benchmarks/list4.json);
+`benchmarks/qtisas_benchmark.py` runs and scores the same lists automatically.
 
-> it looks like pressed along the aligned line. Could be scaling of all 3 axes the same?
+**Before pasting**, delete the functions the list creates (Python console):
 
-> go
-
-Confirmed live: the third turn — a bare one-word confirmation of a fix the assistant itself had just
-proposed — resolved to doc topics `[]` (no keyword in "go" matches anything), which self-review's own
-scope check then read as "this part's docs are baseline-only, so any graph3d-specific code is out of
-scope." The actually-correct fix script was rejected, degraded through a second rejected stub, and
-finally landed on `scriptPrint("Ready.")` — reported as a normal successful run, with no visible sign
-that the requested fix was never applied. This sequence is the regression test for that failure mode:
-a short confirmatory reply must inherit the ongoing task's topic scope from conversation history
-instead of being reclassified from scratch with no context.
-
-## LIST 3 request — mode comparison benchmark with checkable results
-
-Not a `realRequests_data()` fixture row — a fenced block like LIST 1/2, and no line starts with `>`,
-so `parseAiTestRequestsFixture()` skips it. Purpose: ONE fixed task list to run unchanged under every
-AI mode and compare the modes by their results, not by impressions. Every item asks for exactly one
-printed line `R<n>: …` whose correct content is known in advance (`benchmarks/list3.json`), so a run is
-scored by reading those lines — no judgement needed. Data is noise-free and every name is
-given, so the correct answer does not depend on the model, the run or the machine.
-
-The expected values were produced by a hand-written reference script run with `qtisas -x --quit`
-(same mechanism as the CTest Python tests). The items deliberately hit traps found while writing
-those tests:
-- column formulas run in the GLOBAL scripting language (Python by default): `^` is XOR there, powers
-  need `**` or `pow()`; muParser only on request (`recalculate(col, 1, -1, True)`);
-- rows without a finite result are left empty and `recalculate()` raises `ValueError`, with the
-  formula's first error on its second line;
-- a read-only column raises instead of changing;
-- `text()` shows the table's number format, `setText()` accepts it, `cell()` is the number;
-- Matrix indices are (row, col), Table's are (col, row); matrix formula variables i, j are 1-based;
-- a new fit function needs a group, explicit x/y names, varying parameters, and `compile()`, not `save()`;
-- `fit()` already returns chi²/dof; fitted values come from `results()`, never from the initial guesses.
-
-**Source:** [benchmarks/list3.json](benchmarks/list3.json): the instruction, the 12 items, their expected
-`R<n>:` values and a hint per item on what a wrong answer usually means. Edit the list there, not here.
-
-**Run and score it** (the test instance and the script server, `qtisas/python/server`):
-
-```
-python3 qtisas/python/server/qtisas_benchmark.py qtisas/tests/src/ai/benchmarks/list3.json --markers "NOSPLIT NOREVIEW NOEXPLORE"
+```python
+Compiler.delete("ai/RefLine"); Compiler.delete("ai/RefDecay"); Compiler.scanGroups()   # LIST 3
+Compiler.delete("ai/RefGauss"); Compiler.scanGroups()                                   # LIST 4
 ```
 
-Each run starts a fresh test instance (a new project, no AI history, the user's AI preset), runs the list
-in mode `ai-run` and compares every item's `R<n>:` line with the expected value — number formatting
-ignored (385.0 is 385, -0.0 is 0). Verdicts: `ok`; `wrong` or `missing`, each `(reported)` when the
-assistant itself said the item failed, `(silent)` when it reported success. Per run, in
-`~/.qtisas-test/reports`: the full log, a JSON report (per item: expected, got, verdict, scripts,
-seconds) and one line in `history.csv` (markers, preset, model, score, silent, reported, seconds,
-scripts, tokens, `--label`). The harness reads the `R<n>:` lines itself, so the items do not write a
-results table (an earlier "Results" table instruction added an error-prone task to every item and was
-the main source of retries in one run).
+**After editing a JSON file**, regenerate its text here: `qtisas_benchmark.py <list>.json --print`, without
+the "Item n:" prefixes.
 
-**By hand:** `qtisas_benchmark.py … --print --markers "…"` prints the LIST text to paste into QtiSAS.
+**LIST 3:**
 
-| Mode | `--markers` |
-|------|-------------|
-| default | `""` |
-| no split plan | `"NOSPLIT"` |
-| no self-review | `"NOREVIEW"` |
-| no EXPLORE | `"NOEXPLORE"` |
-| all stages off | `"NOSPLIT NOREVIEW NOEXPLORE"` |
+```
+LIST
+Use exactly the object names given. End the item by printing exactly ONE line: "R", the item number, a colon, then only the values asked for, in the order asked, separated by spaces (e.g. "R1: 385").
+1. Create a table "Squares" with 10 rows and 4 columns; fill column 1 with 1, 2, ..., 10. Give column 2 a column formula that squares column 1 and recalculate it in the default scripting language. Print the sum of column 2.
+2. In "Squares", give column 3 a formula for the cube of column 1 written in muParser syntax with ^, and recalculate it with muParser explicitly. Print the sum of column 3.
+3. In "Squares", give column 4 the formula 1/(column 1 - 5) and recalculate it. Print the number of empty cells in column 4 and the name of the Python error the failure reported.
+4. Make column 2 of "Squares" read-only, set its formula to 10 times column 1 and try to recalculate it. Print whether the recalculation raised an error and the sum of column 2 afterwards. Make the column writable again.
+5. Create a table "Format" with 3 rows and 1 column holding 1234.5, 0.25 and -3. Switch its decimal separators to German (comma), without group separators, and read the three cells as displayed text. Then write the text "2,5" into row 2 and read the number that cell now holds. Print the three texts read first, then that number.
+6. Create a 4x4 matrix "Prod" and fill it with the formula i*j. Print the sum of all cells, the value in row 2, column 3, and the determinant rounded to 6 decimals.
+7. Compile a new fit function "ai/RefLine" for y = a*x + b with both parameters adjustable. Create a table "LineData" with 20 rows: x = 1..20, y = 2x + 1, dy = 0.1 (roles X, Y, yErr). Fit "ai/RefLine" to it with Levenberg-Marquardt, weighted by dy. Print a and b with 4 decimals.
+8. Compile a new fit function "ai/RefDecay" for y = A*exp(-k*x) + c with all three parameters adjustable. Create a table "DecayData" with 101 rows: x = 0, 0.1, ..., 10, y = 3*exp(-0.5*x) + 0.2, dy = 0.01 (roles X, Y, yErr). Fit it starting from A = 1, k = 1, c = 0. Print A, k and c with 4 decimals.
+9. Create a graph "DecayPlot" with two stacked layers: the top one with the "DecayData" points and the fitted curve from table "fitCurve-ai/RefDecay", the bottom one with that table's residuals. Print the number of layers, the number of curves in the top and in the bottom layer, and whether the largest absolute residual is below 1e-4.
+10. Create a note "Report" whose first tab contains print('A') and a second tab named "Calc" containing print(6*7). Do not run them. Print the number of tabs and the text of the "Calc" tab.
+11. In "Squares", change the formula of column 2 to 2 to the power of column 1 and recalculate it in the default scripting language. Print the sum of column 2.
+12. Delete the fit functions "ai/RefLine" and "ai/RefDecay" from the library. Then print which of these two names still exist (a list, [] if none).
+```
 
-The same item failing in all modes points at the docs; failing in only one mode points at that stage.
+**LIST 4:**
 
-**Runs before the harness** (pasted by hand, `LIST NOSPLIT NOREVIEW NOEXPLORE`, 2026-10-02):
-- Reference script (`-x`): every value. It found a bug, fixed since: `setDecimalSeparators()` passed the
-  new locale where the old one was expected (item 5 printed `1234.5 0.25 -3` and an empty cell).
-- First run: 9 of 12 values. Item 3 stopped: the formula error the script had caught still counted as the
-  script's failure (fixed since). Item 6 printed `integrate()` as the sum; item 9 read "item 8" as the
-  8th fit function (wording fixed since). No `R<n>:` lines: the instruction was dropped when the list
-  rewrite could not be parsed (fixed since: then appended to every item).
-- Second run: about 6 of 12. The list rewrite turned the instruction into invented code
-  (`table("Results").setItem(...)`), which every item copied; retries re-ran whole scripts and repeated
-  their side effects (item 10: 4 tabs); items 7 and 8 were skipped although their fits were right, because
-  the retries contained only the failing tail. Item 12: the two functions were not deleted, and all `ai/`
-  functions were listed (wording fixed since).
+```
+LIST
+Use exactly the object names given. End the item by printing exactly ONE line: "R", the item number, a colon, then only the values asked for, in the order asked, separated by spaces (e.g. "R1: 385").
+1. Create a note "Steps" with three tabs named "A", "B" and "C" (the first tab renamed too); each tab contains print() of its own name, e.g. print('A'). Do not run them. Print the number of tabs, the text of tab "C" and the text of tab "A".
+2. Compile a new fit function "ai/RefGauss" for y = A*exp(-(x-x0)^2/(2*s^2)) + c with all four parameters adjustable. Create a table "Peak" with 41 rows: x = -2, -1.9, ..., 2 and y = 5*exp(-x^2/0.18) + 1 (roles X, Y). Fit it starting from A = 1, x0 = 0.5, s = 1, c = 0. Print A, x0, s as a positive number, and c, each with 4 decimals.
+3. Create a matrix "Grid" with 3 rows and 4 columns and fill it with the formula i+10*j. Print the value in row 3, column 4, and the sum of row 3.
+4. In table "Peak", add a column named "y2" with a column formula that is 2 times the y column, recalculate it, and print the sum of "y2" with 4 decimals.
+5. Create a table "Names" with 3 rows and 2 columns: column 1 holds 1, 2, 3 and column 2, in text format, holds "alpha", "beta", "gamma". Print the text in row 2 of column 2 and the number in row 3 of column 1.
+6. Close and delete the table "Names" and the matrix "Grid". Print whether each still exists afterwards, table first.
+```
 
-**Harness runs** (2026-10-02, `NOSPLIT NOREVIEW NOEXPLORE`, preset BlaBlaDor-Huge; one run each, so differences
-of one or two items are within the run-to-run variation):
+# Part 3 — Conversations
 
-| Code | Score | Silent | Reported | Seconds | Scripts | Tokens |
-|------|-------|--------|----------|---------|---------|--------|
-| before X1–X4 | 8/12 | 3 | 1 | 165 | 14 | ~1200K |
-| X1 (instruction appended, no rewrite call) | 10/12 | 2 | 0 | 115 | 12 | ~1080K |
-| X1–X4 | 8/12 | 4 | 0 | 149 | 12 | ~1030K |
+Each test is a sequence of turns. Type one, wait until it has finished, then type the next.
 
-The wrong answers left are the model's own (item 3 reads the exception's type instead of its second line,
-item 6 takes `integrate()` for the sum, item 12 lists names without deleting); the last two runs needed no
-retry at all, so X2/X3 (what a failed attempt left behind) did not come into play.
+## Short confirmation continues the task
 
+| # | Type | Expected |
+|---|------|----------|
+| 1 | `make a 3D plot with 3 spheres connected along one line: radius ratio 5:1:3` | a 3D plot |
+| 2 | `it looks like pressed along the aligned line. Could be scaling of all 3 axes the same?` | the AI proposes a fix |
+| 3 | `go` | the proposed fix is applied to the same plot |
+
+**Never:** turn 3 ending as `scriptPrint("Ready.")` or another stub reported as success.
+
+**Why:** "go" contains no topic word. It once lost the 3D docs, self-review rejected the correct fix as out of
+scope, and the run ended as a stub with no sign that nothing was fixed. A short reply must keep the topics of
+the task it continues.
+
+## Questions are answered directly
+
+**Setup:** "Split large requests into parts by default" ON (Preferences → Ask AI); table "Squares" with 10 rows
+(LIST 3 item 1 creates it).
+
+| # | Type | Expected |
+|---|------|----------|
+| 1 | `How many rows does table "Squares" have?` | `a question — answering it directly, without a split plan.`; a script reads the table and prints 10 |
+| 2 | `What is the difference between setFormula() and setCommand()?` | the same line; a text-only answer, with no `AI code (self-review pending)` round |
+| 3 | `Can you plot table "Squares" as a scatter graph?` | NOT treated as a question ("plot" is an action): a split plan, then the graph |
+
+**Rule:** a question ends in "?", is at most 300 characters and has no action verb (create, plot, fit, …).
+
+## New task or continuation
+
+| # | Type | Expected |
+|---|------|----------|
+| 1 | `Create a table "T1" with 5 rows of x, y sample data.` | table "T1" |
+| 2 | `Create a 10x10 matrix "M1" filled with i*j.` | `this looks like a new, unrelated task — earlier conversation won't be resent as context`; matrix "M1" |
+| 3 | `and the same for the other one` | either `not sure whether this continues the current task or starts a new one — please clarify`, or a script that clearly continues "M1" |
+| 4 | (only after the clarification) `new task` or `continue` | handled as answered |
+
+**Never:** table "T1" created again. `history` still lists every turn.
+
+**Rule:** at the clarification, a reply containing new, different, unrelated or separate means a new task;
+anything else means continue.
+
+## Generate-only, then run it
+
+| # | Type | Expected |
+|---|------|----------|
+| 1 | `Create a table "Gen" with 3 rows of x, y sample data.` with **Ctrl+Enter** | the script is shown, nothing runs: no "Gen"; an EXPLORE script is shown as `EXPLORE not run — generate-only mode` |
+| 2 | `run it` | `running the previously shown script directly (no re-generation needed)`; "Gen" created, no call to the model |
+| 3 | `run it again` | `running the previous script again directly`, no call to the model |
+| 4 | `history` | the numbered turns |
+| 5 | `run Q1` | `running turn #1's script directly` |
+| 6 | `run Q99` | `no turn #99 in history (N turn(s) recorded).` |
+| 7 | `run it and then plot column y of table "Gen"` | a normal request (only a bare "run it" is the shortcut): the model is asked, the graph is made |
+
+## Giving up honestly
+
+| # | Type | Expected |
+|---|------|----------|
+| 1 | `Plot the existing table "NoSuchTable" as a scatter graph.` | `stopping — this request refers to "NoSuchTable" as already existing, but no match was found for it. Nothing was created or run.` — no window |
+| 2 | `create a new one` | goes ahead and creates it |
+| 3 | `Fit the existing "nosuchgroup/NoSuchModel" model to table "Squares" and print chi2/dof.` | stops and names the missing function, or lists the available ones and stops (`the same list of available alternatives was offered …` or `stopped after N automatic EXPLORE/retry rounds`) |
+
+**Never:** another model fitted in its place, or a chi²/dof printed in turn 3.
+
+## Busy, then stop
+
+**Setup:** paste LIST 4 (Part 2); type the turns while its first item is still running.
+
+| # | Type | Expected |
+|---|------|----------|
+| 1 | `Create a table "Late" with 2 rows.` | `previous request still in progress.`; nothing changes |
+| 2 | `run it again` | the same |
+| 3 | `stop` | `request cancelled.`; no further LIST item starts; a late reply of the stopped call is ignored (no crash) |
+| 4 | `Create a table "After" with 2 rows.` | a normal request — not taken for the next LIST item; "After" created |
+
+# Part 4 — Commands, markers, settings, rules
+
+## Commands answered by QtiSAS itself
+
+None of these may call the model (no "sending" line, no tokens).
+
+| Type | Expected |
+|------|----------|
+| `status` (or `ai status`) | Model, URL, Docs (compact/full/integrated), History (turns), Max resp |
+| `model`, `url` | the preset's model and base URL, `(not set)` if empty |
+| `history` (also `show history`, `request history`) | the numbered turns, including those before a "new task" boundary |
+| `clear history` (also `reset history`) | `conversation history cleared.`; `history` is then empty |
+| `stop` / `cancel` while idle | `request cancelled.`, nothing else changes |
+| `STOP` | the same as `stop` (commands ignore case) |
+| `history please`, `stop the fit` | not a command: sent to the model as a request |
+
+## Markers in a single request
+
+A marker is a CAPITAL word anywhere in the request: `SPLIT`, `REVIEW`, `EXPLORE`, or the same with `NO`
+(`NOSPLIT`, also `NO SPLIT`). The `NO` form wins. Request: the Part 1 "Compound multi-topic" one.
+
+| Setting | Request | Expected |
+|---------|---------|----------|
+| split by default OFF | request + `SPLIT` | `AI split-plan (…)` with parts, then `part i/N done` |
+| split by default ON | request + `NOSPLIT` | no split plan, one script |
+| any | request + `split` (lower case) | no effect: the word stays in the request |
+| self-review OFF | request + `REVIEW` | `AI code (self-review pending)` before the run |
+| self-review ON | request + `NOREVIEW` | no self-review round |
+| EXPLORE OFF | `Fit table "Squares" with one of the compiled sasviewmodels functions EXPLORE` | an `AI code (exploring)` round first |
+| EXPLORE ON | the same with `NOEXPLORE` | no exploring round; an EXPLORE script sent anyway is shown as `EXPLORE disabled — not run` |
+
+Settings (Preferences → Ask AI): "Split large requests into parts by default", "Mandatory pre-execution
+self-review", "Allow EXPLORE probe rounds".
+
+## Settings (Preferences → Ask AI)
+
+| Setting | Test | Expected |
+|---------|------|----------|
+| Max split parts = 2 | the compound request + `SPLIT` | `AI split-plan: N parts requested — capping at 2`, or 2 parts or fewer |
+| "Request a merged reference script after split parts complete" ON | the same | `requesting merged script`, then `AI split-mode merged script (… NOT executed, verify before reuse)`; nothing runs again |
+| the same OFF | the same | `merge step skipped (disabled)`; inside a LIST always `(LIST mode)` |
+| Auto-continue limit = 1 | Part 3 "Giving up honestly", turn 3 | stops after 1 round, saying why |
+| API docs sent: Compact / Full / Integrated | `status`, then any request | `Docs:` follows the setting; the loaded-docs line names `.pyi` files, `.md` files, or none |
+
+## User rules (Python console)
+
+| # | Do | Expected |
+|---|----|----------|
+| 1 | `removeAllRules()`, then `addRule('Name every new table you create with the prefix "T_" unless the request gives a name.')` | — |
+| 2 | `showRules()` | `1. Name every new table …` |
+| 3 | ask `Create a table with 3 rows of sample data.` | the new table's name starts with "T_" |
+| 4 | `removeRule(1)`, then the same request | no prefix |
+| 5 | `removeRule(99)` | `ValueError: removeRule: no rule at index 99 (have 0).` |
+| 6 | "User Rules limit" = 1, then `addRule("a")`, `addRule("b")` | the second raises `ValueError: addRule: rule limit reached (1/1)…` |
+| 7 | clean up: `removeAllRules()`, limit back to 20 | — |
+
+The AI itself never calls `addRule()`.
