@@ -105,6 +105,4 @@ Copyright (C) by the authors:
 if __name__ == '__main__':
     if len(sys.argv) > 1:
         print(sys.argv[1])
-    fn = '/Users/kk/work/qtisas/qtisas_kholostov/qtisas/sans/ascii1d/ascii1d18.cpp'
-
-    print(generate_header(fn))
+        print(generate_header(sys.argv[1]))
