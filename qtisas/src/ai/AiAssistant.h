@@ -372,6 +372,9 @@ class AiAssistant : public QObject
     // The script without 1, 2 or 3 trailing lines that may be no Python (a weak model's "expected output" after its
     // code), smallest cut first; empty if no line qualifies. The caller takes the first one that compiles.
     static QStringList withoutTrailingOutputLines(const QString &code);
+    // The script without its last top-level lines of the form "R1: 385" / "R12: []" — valid Python (an annotated
+    // name), so withoutTrailingOutputLines() never sees them; empty if there are none.
+    static QString withoutTrailingAnnotationOutput(const QString &code);
     // The removed trailing text has a "label: values" line whose label no string in the script prints: the model
     // wrote its result line as text instead of printing it. Empty if not.
     static QString unprintedOutputLineMistake(const QString &code, const QString &removedText);

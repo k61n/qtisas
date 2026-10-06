@@ -4215,6 +4215,18 @@ bool AiAssistant::maybeDispatchSelfReview(QString &code, bool &compilable, QStri
                 break;
             }
     }
+    // Confirmed live: "R1: 385" written after the script is valid Python (an annotated name), so the script compiled
+    // with it, printed only "385", and nothing above ever looked at it.
+    if (compilable && m_host)
+        if (const QString trimmed = withoutTrailingAnnotationOutput(code);
+            !trimmed.isEmpty() && m_host->canCompile(trimmed))
+        {
+            m_removedTrailingOutput = code.mid(trimmed.size()).trimmed();
+            m_host->print("▸▸▸ AI: removed text after the script's last line (not Python, e.g. an expected "
+                          "output) — running the rest. Removed:\n" +
+                          m_removedTrailingOutput);
+            code = trimmed;
+        }
     const bool isSelfReviewResult = awaitingSelfReview;
     awaitingSelfReview = false;
     // Confirmed live: self-review answered "The script is already compliant with all checklist items." — prose, no
@@ -5736,6 +5748,26 @@ QString AiAssistant::labeledLastPrintRepair(const QString &code, const QString &
     lines.last() = m.captured(1) == "print" ? "print(\"" + label + ":\", " + m.captured(2) + ")"
                                             : "scriptPrint(\"" + label + ": \" + str(" + m.captured(2) + "))";
     return lines.join('\n') + '\n';
+}
+
+QString AiAssistant::withoutTrailingAnnotationOutput(const QString &code)
+{
+    // "name: <number|quote|bracket>" at the top level: an annotation that is never a type, i.e. an output line.
+    static const QRegularExpression outputLineRe(R"(^[A-Za-z_]\w*\s*:\s*(?:[-+]?\d|["'\[(]))");
+    QStringList lines = code.split('\n');
+    auto dropBlankTail = [&lines]() {
+        while (!lines.isEmpty() && lines.last().trimmed().isEmpty())
+            lines.removeLast();
+    };
+    dropBlankTail();
+    int removed = 0;
+    while (!lines.isEmpty() && removed < 3 && outputLineRe.match(lines.last()).hasMatch())
+    {
+        lines.removeLast();
+        dropBlankTail();
+        ++removed;
+    }
+    return removed > 0 && !lines.isEmpty() ? lines.join('\n') : QString();
 }
 
 QString AiAssistant::unprintedOutputLineMistake(const QString &code, const QString &removedText)
