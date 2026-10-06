@@ -28,18 +28,15 @@ import subprocess
 import sys
 import time
 
+HERE = os.path.dirname(os.path.abspath(__file__))
+REPO = os.path.abspath(os.path.join(HERE, "..", "..", "..", ".."))
 sys.dont_write_bytecode = True  # no __pycache__ next to the scripts
+sys.path.insert(0, os.path.join(REPO, "qtisas", "python", "server"))
 import qtisas_send  # noqa: E402
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-REPO = os.path.abspath(os.path.join(HERE, "..", "..", ".."))
 DEFAULT_HOME = os.path.join(os.path.expanduser("~"), ".qtisas-test", "home")
-# next to a build in the source tree (bin/qtisas.app), or inside an app bundle (Contents/Resources/python/server)
+# the build in the source tree; --app for another one, e.g. a release's Contents/MacOS/launcher (its own Python)
 DEFAULT_APP = os.path.join(REPO, "bin", "qtisas.app", "Contents", "MacOS", "qtisas")
-if os.path.basename(REPO) == "Contents":  # a release starts through its launcher (its own Python, PYTHONPATH)
-    DEFAULT_APP = os.path.join(REPO, "MacOS", "launcher")
-    if not os.path.isfile(DEFAULT_APP):
-        DEFAULT_APP = os.path.join(REPO, "MacOS", "qtisas")
 # QtiSAS runs every *.py of python-scripts at startup. Appended last: the test home's own packages win
 SITE_PACKAGES_STARTER = """\
 # written by qtisas_test_instance.py reset: the user's packages, readable here, never written to
