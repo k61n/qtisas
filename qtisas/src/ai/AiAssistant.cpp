@@ -1068,10 +1068,14 @@ void AiAssistant::startRequest(const QStringList &docTopics, const QString &reso
         // generation call, given only the bare ambiguous original text with no name at all,
         // asked the user to specify a name the plan had already settled on one paragraph earlier.
         // Using the part's resolved description keeps what's shown and what's actually generated
-        // consistent.
+        // consistent. The request itself goes along too: the description is the planner's paraphrase, and whatever it
+        // left out was lost — confirmed live, a LIST item's "print exactly ONE line: the label, then only the values"
+        // came out as "R6: sum=100.000000, m[2,3]=6.000000, ...", and a requested tab count was dropped
         requestForModel =
             (pendingRequestText == originalRequestText)
-                ? ("Generate a script for exactly this task: " + resolvedTaskDescription)
+                ? ("Request:\n" + originalRequestText +
+                   "\n\nGenerate a script for exactly this task — the request above as planned: " +
+                   resolvedTaskDescription)
                 : ("Original request for this conversation — the actual goal; do not drift "
                    "from its explicitly named resources just because this message is short:\n" +
                    originalRequestText + "\n\nGenerate a script for exactly this task: " + resolvedTaskDescription);
