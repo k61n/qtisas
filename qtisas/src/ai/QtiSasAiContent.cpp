@@ -1938,7 +1938,7 @@ bool QtiSasAiContent::isUnverifiedMissingClaim(const QString &script) const
     // call in the API, but covers the common ones across every topic (table/matrix/note/graph
     // existence, compiled-function/dataset lookup, column presence).
     static const QRegularExpression verificationCallRe(
-        R"(\b(existTable|existNote|existMatrix|existGraph|existWindow|graphWindow|matrix|fitFunctions|colNames|"
+        R"(\b(existTable|existNote|existMatrix|existGraph|existWindow|graphWindow|matrix|fitFunctions|colNames|)"
         R"(datasets)\s*\()");
     return !verificationCallRe.match(script).hasMatch();
 }
