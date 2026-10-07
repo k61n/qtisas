@@ -1789,7 +1789,10 @@ QStringList splitPlanMissingRequestedActions(const QString &originalRequestText,
         // fitting" and add a fitting part, so this false positive burned the entire fixup-round
         // budget every single time this phrasing occurred, every round ending in "still has
         // unresolved issue(s) — proceeding anyway" rather than ever converging.
-        {"fit", QRegularExpression(R"((?<!\b(?:without|never|not)\s)\bfit(?:ting)?\b(?!\s+function))",
+        // "fit function X TO table Y" still fits — confirmed live (benchmark LIST 5, item 1), a part "Fit function
+        // \"ai/Quad\" to table \"Calib\" ..." was reported as never covering the requested fit
+        {"fit", QRegularExpression(R"((?<!\b(?:without|never|not)\s)\bfit(?:ting)?\b)"
+                                   R"((?!\s+functions?\b(?![^.\n]{0,80}?\bto\b)))",
                                    QRegularExpression::CaseInsensitiveOption)},
         // Confirmed live: no trailing \b + \w* let this match "model" mid-word inside
         // "sasviewmodels" — requiring "model(s)" as its own word fixes that false positive.
@@ -1881,7 +1884,10 @@ QList<int> splitPlanUnrequestedActions(const QString &originalRequestText, const
     };
     static const QList<ActionGroup> groups = {
         {"compile", QRegularExpression(R"(\bcompile\b)", QRegularExpression::CaseInsensitiveOption)},
-        {"fit", QRegularExpression(R"((?<!\b(?:without|never|not)\s)\bfit(?:ting)?\b(?!\s+function))",
+        // "fit function X TO table Y" still fits — confirmed live (benchmark LIST 5, item 1), a part "Fit function
+        // \"ai/Quad\" to table \"Calib\" ..." was reported as never covering the requested fit
+        {"fit", QRegularExpression(R"((?<!\b(?:without|never|not)\s)\bfit(?:ting)?\b)"
+                                   R"((?!\s+functions?\b(?![^.\n]{0,80}?\bto\b)))",
                                    QRegularExpression::CaseInsensitiveOption)},
         // "the function with the smaller chi2/dof" compares too — confirmed live (benchmark LIST 5, item 2), a part
         // "fit both ..., compare chi2/dof" was flagged as never requested, for a request that chose by the smaller one
