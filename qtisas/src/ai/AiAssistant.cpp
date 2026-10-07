@@ -499,20 +499,38 @@ static bool inCreationClause(const QString &text, qsizetype nameStart, qsizetype
     return creationVerbRe.match(lookahead).hasMatch() && conditionalRe.match(lookahead).hasMatch();
 }
 
+// Every quoted name the request creates somewhere — in any of its clauses. Such a name is never an input, wherever
+// else it appears: confirmed live (benchmark LIST 5, item 5), "the \"make\" tab holds a script that creates a table
+// \"Auto\" ... Print ... whether table \"Auto\" exists" stopped the item as referring to a missing "Auto".
+static QStringList namesCreatedInRequest(const QString &requestText)
+{
+    static const QRegularExpression quotedRe(R"re("([^"\n]{1,80})")re");
+    QStringList created;
+    QRegularExpressionMatchIterator it = quotedRe.globalMatch(requestText);
+    while (it.hasNext())
+    {
+        const QRegularExpressionMatch m = it.next();
+        const QString name = m.captured(1).trimmed();
+        if (!created.contains(name) && inCreationClause(requestText, m.capturedStart(0), m.capturedEnd(0)))
+            created << name;
+    }
+    return created;
+}
+
 QStringList inputNamesInRequest(const QString &requestText)
 {
     // Every quoted name the request does not create — whatever its wording ("In \"Squares\", ..."
     // names no kind and says nothing like "existing", so extractExistingEntityNames() never sees it).
     // Answered by the host's own state (see AiAssistant::existingInputNamesNote()), never by a script.
     static const QRegularExpression quotedRe(R"re("([^"\n]{1,80})")re");
+    const QStringList created = namesCreatedInRequest(requestText);
     QStringList names;
     QRegularExpressionMatchIterator it = quotedRe.globalMatch(requestText);
     while (it.hasNext())
     {
         const QRegularExpressionMatch m = it.next();
         const QString name = m.captured(1).trimmed();
-        if (name.isEmpty() || names.contains(name) ||
-            inCreationClause(requestText, m.capturedStart(0), m.capturedEnd(0)))
+        if (name.isEmpty() || names.contains(name) || created.contains(name))
             continue;
         names << name;
     }
@@ -547,6 +565,7 @@ QStringList inputNamesInRequest(const QString &requestText)
 QList<QPair<QString, QString>> extractExistingEntityNames(const QString &requestText)
 {
     QList<QPair<QString, QString>> names;
+    const QStringList created = namesCreatedInRequest(requestText); // see namesCreatedInRequest()
     static const QRegularExpression existingRe(R"re(\bexisting\b(?:\s+\S+){0,3}?\s*"([^"]+)")re",
                                                QRegularExpression::CaseInsensitiveOption);
     static const QRegularExpression verbImpliedRe(
@@ -574,6 +593,8 @@ QList<QPair<QString, QString>> extractExistingEntityNames(const QString &request
             if (between.contains("new", Qt::CaseInsensitive))
                 continue;
             const QString name = m.captured(1);
+            if (created.contains(name.trimmed()))
+                continue;
             // `between` always ends with the pattern's own literal opening quote character (both
             // patterns end with \s*"(...)"), which would otherwise defeat trailingNounRe's \s*$
             // anchor — strip it before checking what word precedes the quote.
@@ -625,9 +646,9 @@ QList<QPair<QString, QString>> extractExistingEntityNames(const QString &request
     while (kindIt.hasNext())
     {
         const QRegularExpressionMatch m = kindIt.next();
-        if (inCreationClause(requestText, m.capturedStart(0), m.capturedEnd(0)))
-            continue;
         const QString name = m.captured(2);
+        if (created.contains(name.trimmed()) || inCreationClause(requestText, m.capturedStart(0), m.capturedEnd(0)))
+            continue;
         bool merged = false;
         for (QPair<QString, QString> &entry : names)
         {
