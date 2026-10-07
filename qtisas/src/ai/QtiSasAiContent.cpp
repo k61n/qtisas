@@ -979,7 +979,13 @@ const RequestedDeliverable kRequestedDeliverables[] = {
      "auto-execution on project load (no setAutoexec() call)"},
     {R"(\bsimulate\b)", R"(\bsimulateCurve\b)", "the simulated curve (no simulateCurve() call)"},
     {R"(\bcompile\b)", R"(\.compile\()", "the compile step (no compile() call)"},
-    {R"(\bchi2\b|chi²)", R"(chi2|chi²)", "the chi2/dof report (chi2 is never printed)"},
+    // Not as a criterion: "the function with the smaller chi2/dof" or "compare chi2/dof" asks to CHOOSE by it, not to
+    // print it — confirmed live (benchmark LIST 5, item 2), a correct "R2: <name> <A> <w>" was blocked twice and the
+    // item given up
+    {R"((?<!smaller )(?<!larger )(?<!lower )(?<!higher )(?<!smallest )(?<!largest )(?<!lowest )(?<!highest )(?<!best ))"
+     R"((?<!better )(?<!compare )(?<!comparing )(?<!compare the )(?<!compare their )(?<!comparing the ))"
+     R"((?<!comparing their )(?:\bchi2\b|chi²))",
+     R"(chi2|chi²)", "the chi2/dof report (chi2 is never printed)"},
     {R"(\bstacked panels?\b|\btwo panels?\b)", R"(\blayer\(2\)|\bnewGraph\([^)]*,\s*2)",
      "the second stacked panel (only one layer is ever created or used)"},
     {R"(\brow count\b)", R"(\bnumRows\b)", "the row count (numRows() is never read)"},

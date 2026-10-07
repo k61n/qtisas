@@ -1793,8 +1793,12 @@ QStringList splitPlanMissingRequestedActions(const QString &originalRequestText,
                                    QRegularExpression::CaseInsensitiveOption)},
         // Confirmed live: no trailing \b + \w* let this match "model" mid-word inside
         // "sasviewmodels" — requiring "model(s)" as its own word fixes that false positive.
+        // "the function with the smaller chi2/dof" compares too — confirmed live (benchmark LIST 5, item 2), a part
+        // "fit both ..., compare chi2/dof" was flagged as never requested, for a request that chose by the smaller one
         {"compare models / report a winner",
-         QRegularExpression(R"(\bcompar(?:e|ison|ing)\b|\bwhich\s+models?\b|\bfits?\s+better\b|\bwinner\b)",
+         QRegularExpression(R"(\bcompar(?:e|ison|ing)\b|\bwhich\s+models?\b|\bfits?\s+better\b|\bwinner\b|)"
+                            R"(\b(?:smaller|larger|lower|higher|smallest|largest|lowest|highest|best|better)\s+)"
+                            R"((?:chi2|chi²|chi-?squared?|r2|r²)\b)",
                             QRegularExpression::CaseInsensitiveOption)},
         // "plot3D"/"graph3D" (no space) confirmed live to NOT match \bplot\b/\bgraph\b — "t"/"h"
         // immediately followed by a digit is not a \b transition (digits count as \w too), so a
@@ -1879,8 +1883,12 @@ QList<int> splitPlanUnrequestedActions(const QString &originalRequestText, const
         {"compile", QRegularExpression(R"(\bcompile\b)", QRegularExpression::CaseInsensitiveOption)},
         {"fit", QRegularExpression(R"((?<!\b(?:without|never|not)\s)\bfit(?:ting)?\b(?!\s+function))",
                                    QRegularExpression::CaseInsensitiveOption)},
+        // "the function with the smaller chi2/dof" compares too — confirmed live (benchmark LIST 5, item 2), a part
+        // "fit both ..., compare chi2/dof" was flagged as never requested, for a request that chose by the smaller one
         {"compare models / report a winner",
-         QRegularExpression(R"(\bcompar(?:e|ison|ing)\b|\bwhich\s+models?\b|\bfits?\s+better\b|\bwinner\b)",
+         QRegularExpression(R"(\bcompar(?:e|ison|ing)\b|\bwhich\s+models?\b|\bfits?\s+better\b|\bwinner\b|)"
+                            R"(\b(?:smaller|larger|lower|higher|smallest|largest|lowest|highest|best|better)\s+)"
+                            R"((?:chi2|chi²|chi-?squared?|r2|r²)\b)",
                             QRegularExpression::CaseInsensitiveOption)},
         // "plot3D"/"graph3D" (no space) confirmed live to NOT match \bplot\b/\bgraph\b — "t"/"h"
         // immediately followed by a digit is not a \b transition (digits count as \w too), so a
