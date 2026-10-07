@@ -2707,9 +2707,15 @@ public:
         if (!sipRes)
         {
             sipIsErr = 1;
-            const QString errText = sipCpp->lastCompileErrors.trimmed().isEmpty()
+            QString errText = sipCpp->lastCompileErrors.trimmed().isEmpty()
                                          ? QString("no compiler output captured — see qti.app.resultsLog().")
                                          : sipCpp->lastCompileErrors.trimmed();
+            // Confirmed live: code assigning "I = ..." (the SANS habit) to a function whose y is named "f" — clang's
+            // "undeclared identifier 'I'" alone was repeated until the request gave up; name the real variables
+            if (errText.contains("undeclared identifier"))
+                errText += QString("\nThis function's variables are named x = '%1' and y = '%2' "
+                                   "(setXName()/setYName()); the parameters by their names from setParamNamesAll().")
+                               .arg(sipCpp->xName(), sipCpp->yName());
             PyErr_SetString(PyExc_RuntimeError,
                 QString("compile: compilation of '%1' failed:\n%2")
                     .arg(sipCpp->functionName(), errText).toLocal8Bit().constData());
