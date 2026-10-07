@@ -8,7 +8,7 @@ Copyright (C) by the authors:
     2010 cnicolai <cnicolai@5a6a7de5-fb12-0410-b871-c33778c25c60>
     2022 Konstantin Kholostov <k.kholostov@fz-juelich.de>
     2022 Vitaliy Pipich <v.pipich@gmail.com>
-Description: Execute Python code from within QtiPlot
+Description: Execute Python code from within QtiSAS
  ******************************************************************************/
 
 #ifndef PYTHONSCRIPT_H

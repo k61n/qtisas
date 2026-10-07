@@ -143,6 +143,7 @@ Description: QtiSAS's main window
 #undef slots
 #include <Python.h>
 #pragma pop_macro("slots")
+#include "PythonScripting.h"
 #endif
 #include "QtiPlotApplication.h"
 #include "QwtHistogram.h"
@@ -6268,7 +6269,18 @@ AiScriptResult ApplicationWindow::runScript(const QString &code, const QString &
         m_aiCaptureBuffer += msg + "\n";
         print(msg);
     });
-    s->exec();
+    {
+#ifdef SCRIPTING_PYTHON
+        // AI scripts run in the main thread with no limit of their own: confirmed live, "while n.tabs() > 0:
+        // n.removeTab(0)" kept QtiSAS at 100% CPU for an hour. A real fit or compile finishes far below this
+        std::unique_ptr<PythonTimeLimit> limit;
+        if (qobject_cast<PythonScripting *>(scriptEnv))
+            limit = std::make_unique<PythonTimeLimit>(
+                300, "the script ran longer than 300 s and was stopped — an endless loop? Check every while loop: "
+                     "does its condition ever change (e.g. removeTab() keeps a note's last tab)?");
+#endif
+        s->exec();
+    }
     delete s;
     m_aiCapturing = false;
     result.output = m_aiCaptureBuffer.trimmed();

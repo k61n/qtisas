@@ -19,6 +19,8 @@ Description: Execute Python code from within QtiSAS
 #include <traceback.h>
 
 #include <algorithm>
+#include <atomic>
+#include <chrono>
 
 #include "ApplicationWindow.h"
 #include "PythonScript.h"
@@ -425,6 +427,45 @@ bool PythonScripting::initialize()
                           "Try to set the correct Python config path in Preferences.");
 
     return false;
+}
+
+static std::atomic<long> s_activeTimeLimit{0};
+static QByteArray s_timeLimitMessage;
+
+static int raiseTimeLimit(void *id)
+{
+    // the limit that queued this call may have ended (its script finished) before the call ran
+    if (reinterpret_cast<intptr_t>(id) != s_activeTimeLimit.load())
+        return 0;
+    PyErr_SetString(PyExc_KeyboardInterrupt, s_timeLimitMessage.constData());
+    return -1;
+}
+
+PythonTimeLimit::PythonTimeLimit(int seconds, const QString &message)
+{
+    static std::atomic<long> lastId{0};
+    const long id = ++lastId;
+    s_timeLimitMessage = message.toUtf8();
+    s_activeTimeLimit = id;
+    d_thread = std::thread([this, seconds, id]() {
+        std::unique_lock<std::mutex> lock(d_mutex);
+        if (d_wake.wait_for(lock, std::chrono::seconds(seconds), [this]() { return d_done; }))
+            return;
+        do
+            Py_AddPendingCall(raiseTimeLimit, reinterpret_cast<void *>(static_cast<intptr_t>(id)));
+        while (!d_wake.wait_for(lock, std::chrono::seconds(5), [this]() { return d_done; }));
+    });
+}
+
+PythonTimeLimit::~PythonTimeLimit()
+{
+    s_activeTimeLimit = 0;
+    {
+        std::lock_guard<std::mutex> lock(d_mutex);
+        d_done = true;
+    }
+    d_wake.notify_all();
+    d_thread.join();
 }
 
 PythonScripting::~PythonScripting()

@@ -4,19 +4,38 @@ License: GNU GPL Version 3 (see LICENSE)
 Copyright (C) by the authors:
     2006 Knut Franke <knut.franke@gmx.de>
     2006 Tilman Hoener zu Siederdissen <thzs@gmx.net>
-    2007 Ion Vasilief <ion_vasilief@yahoo.fr>
     2022 Konstantin Kholostov <k.kholostov@fz-juelich.de>
     2022 Vitaliy Pipich <v.pipich@gmail.com>
-Description: Execute Python code from within QtiPlot
+Description: Execute Python code from within QtiSAS
  ******************************************************************************/
 
 #ifndef PYTHONSCRIPTING_H
 #define PYTHONSCRIPTING_H
 
+#include <condition_variable>
+#include <mutex>
+#include <thread>
+
 #include "PythonScript.h"
 #include "ScriptingEnv.h"
 
 typedef struct _object PyObject;
+
+//! Stops runaway Python code: after `seconds`, KeyboardInterrupt(message) is raised in the code running in the main
+//! thread (a pending call, checked between bytecodes) and again every 5 s, until this object is destroyed.
+//! KeyboardInterrupt, not an Exception: a script's own "except Exception" must not swallow it
+class PythonTimeLimit
+{
+  public:
+    PythonTimeLimit(int seconds, const QString &message);
+    ~PythonTimeLimit();
+
+  private:
+    std::mutex d_mutex;
+    std::condition_variable d_wake;
+    bool d_done = false;
+    std::thread d_thread;
+};
 
 class PythonScripting: public ScriptingEnv
 {
