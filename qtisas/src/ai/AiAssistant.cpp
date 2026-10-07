@@ -4746,11 +4746,24 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
         m_host->print("▸▸▸ AI code (blocked — " + headers.join("; ") + "):\n\n" + code);
         // The reason, not only its header: confirmed live, a user saw "out of scope for this part" with no way to
         // tell which rule fired or why. The first sentence of each explanation is enough to recognize it.
+        // The first sentence ends at the first ". " that is not a list marker: confirmed live, a cut at "1. " showed
+        // only "...asked for:\n1." and hid what was missing
         QStringList reasons;
         for (const QString &explanation : explanations)
         {
-            const qsizetype end = explanation.indexOf(". ");
-            reasons << "  • " + (end > 0 && end < 300 ? explanation.left(end + 1) : explanation.left(300));
+            qsizetype end = explanation.indexOf(". ");
+            while (end > 0)
+            {
+                const qsizetype lineStart = explanation.lastIndexOf('\n', end - 1) + 1;
+                bool listMarker = end > lineStart;
+                for (qsizetype k = lineStart; k < end && listMarker; ++k)
+                    listMarker = explanation.at(k).isDigit();
+                if (!listMarker)
+                    break;
+                end = explanation.indexOf(". ", end + 1);
+            }
+            const QString first = end > 0 && end < 300 ? explanation.left(end + 1) : explanation.left(300);
+            reasons << "  • " + first.simplified();
         }
         m_host->print("▸▸▸ AI: why it was blocked:\n" + reasons.join("\n"));
         // Blocked never ran, so it must not stay in history as this part's answer — same patch
