@@ -241,7 +241,8 @@ there; it's only wrong in the Python code around it.
 
 ### setCode() — dependent variable (yName) naming and redeclaration rules
 
-**The dependent variable name is whatever `yName()` returns** — it is NOT always `I`. Always call
+**The dependent variable name is whatever `yName()` returns** — it is NOT always `I`. After `c.new()` the
+variables are `x` and **`f`** (not `y`): without `setYName()`, the code assigns `f = ...;`. Always call
 `c.yName()` (or check `setYName()`) to find the correct name. If `setYName("y")` was called, write
 `y = ...;`, not `I = ...;`. Confirmed live 3+ times: `setYName("I")` was called, but `[code]`
 assigned to `y` instead (a plausible-looking but wrong default) — only caught after a failed

@@ -86,6 +86,9 @@ Row arguments are always 1-based.
 | `setColName(col, label, updateTableDesignations=False)` | `bool` | rename one column — raises `ValueError` if `label` is empty or already taken in this table |
 | `setColNames(["x","y",...])` | — | set all column labels at once |
 
+`newTable()` labels its columns `1`, `2`, …: a column the request calls `x` or `y` exists only after
+`setColNames([...])` — until then `col("y")`, `colData("y")` and the Fittable dataset `Peak_y` are not found.
+
 > **`colNames()`/`colName(col)` return the BARE label, never `"tablename_colname"`** (Fittable's
 > dataset-naming convention: `configure()`, `f.datasets()`, `setWeightingDataset()`, ...) — both
 > call `Table::colLabel()`, not the prefixing `Table::colName(int)` C++ method Python never invokes.
@@ -272,7 +275,7 @@ t.setColumnRole("dy", Table.PlotDesignation.yErr)
 | Method | Notes |
 |--------|-------|
 | `setCommand(col, expr)` | assign a formula expression to a column |
-| `recalculate(col, startRow=1, endRow=-1, forceMuParser=False, notifyChanges=True)` | evaluate formula in the global scripting language (Python by default); `forceMuParser=True` → muParser; returns `True` on success — raises `ValueError` if the column is read-only or the formula fails (a syntax error leaves the column unchanged; rows without a finite result are left empty); the message's second line is the formula's first error, e.g. `name 'x' is not defined` |
+| `recalculate(col, startRow=1, endRow=-1, forceMuParser=False, notifyChanges=True)` | evaluate formula in the global scripting language (Python by default); `forceMuParser=True` → muParser; returns `True` on success — raises `ValueError` if the column is read-only or the formula fails (a syntax error leaves the column unchanged; rows without a finite result are left empty); the message's second line is the formula's first error, e.g. `name 'x' is not defined`; its name: `str(e).splitlines()[1].split(":")[0]` (e.g. `ZeroDivisionError`) |
 
 > **The formula runs in the global scripting language (Python by default), or in muParser with `forceMuParser=True`. Reference another column via `col("name")` or `col(index)`, never by bare name. Powers: `pow(a, b)` works in both; `^` is power only in muParser (in Python it is XOR and fails), `**` only in Python.** A bare identifier like `x` is neither a muParser variable nor a Python name. `setCommand()` accepts the string unvalidated; the failure only surfaces on `recalculate()`. Confirmed live (in muParser): `t.setCommand("y", "exp(-pow(x-100, 2)/100)")` raised `Unexpected token "x" found at position 9`, immediately followed by `ValueError: recalculate: column 2 is read-only or its formula failed to evaluate` — and the mistake repeated across several retries (including swapping `pow(...)` for `**`) with the bare `x` never fixed. In Python, the same mistake gives `NameError: name 'x' is not defined` on the `ValueError`'s second line.
 >

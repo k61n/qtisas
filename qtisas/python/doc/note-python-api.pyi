@@ -23,6 +23,8 @@ text()->str  setText(s)  autoexec()->bool  setAutoexec(on=True)
 #   actually renamed, so a later tab("Configuration") lookup silently returned None. Use
 #   renameTab(n.tabs() - 1, name) instead.
 tabs()->int  addTab()  removeTab(index=-1)  renameTab(index,name)
+# A new note has ONE tab, named "Tab 1"; addTab() adds "Tab 2", ... — there is no tab "Main".
+#   First tab + a second named tab: n.tab(1).setText(...); n.addTab(); n.renameTab(1, "Calc")
 # removeTab's default -1 means "the CURRENTLY ACTIVE tab" (Qt convention) — NOT "the last tab"
 #   (Python-style negative indexing, which nothing else here uses either). A no-op if only one
 #   tab remains (refuses to remove the last one).

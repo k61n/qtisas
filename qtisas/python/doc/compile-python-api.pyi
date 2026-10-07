@@ -122,6 +122,7 @@
 # RULE 7 — X/YNAME: whatever setXName()/setYName() are set to are ALREADY-DECLARED C++ locals
 #   supplied by the boilerplate BEFORE [code] runs — [code] must use those EXACT names directly,
 #   never a generic default ("x"/"q"/"y"/"I") and never re-declare them with "double <name> = ...".
+#   After c.new() they are x = "x" and y = "f" (NOT "y"): without setYName(), assign "f = ...;".
 #   setXName("q") → the C++ local IS named "q"; do NOT write "double q = x;".
 #     WRONG: setXName("q") + code "double q = x;"   → error: 'x' undeclared
 #   SAME for setYName: the dependent-variable name in [code] is whatever setYName()/yName() says,

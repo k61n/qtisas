@@ -35,6 +35,9 @@ colNames()->tuple         # t.colNames() → ("x","y")  BARE labels only — NEV
 setColName(col,name,updateTableDesignations=False)
 # raises ValueError if name is empty or already used by another column in this table
 setColNames(["x","y","dy"])   # list length must equal numCols()
+# newTable() labels its columns "1","2",... — a column the request calls "x"/"y" exists only after
+#   t.setColNames([...]); until then col("y"), colData("y") and Fittable's "Peak_y" are not found.
+#   Confirmed live: "y (roles X, Y)" without setColNames() → configure(): "Dataset(s) not found: Peak_y".
 
 # Read — col FIRST, row second — both 1-based:
 cell(col,row)->float      # t.cell(2,3) → col 2, row 3
@@ -84,6 +87,7 @@ comment(col)->str  setComment(col,text)  showComments(on=True)
 setCommand(col,expr)      # t.setCommand("y2","pow(col(\"y\"),2)")
 recalculate(col,startRow=1,endRow=-1,forceMuParser=False,notifyChanges=True)->bool
 # raises ValueError if the column is read-only or the formula fails; 2nd line: the formula's first error
+#   its name: str(e).splitlines()[1].split(":")[0]   → e.g. "ZeroDivisionError" (e is that ValueError)
 # expr runs in the global language (Python by default); forceMuParser=True -> muParser
 # powers: pow(a,b) in both; ^ only muParser, ** only Python. Bare names fail -- always col("x") or col(idx)
 

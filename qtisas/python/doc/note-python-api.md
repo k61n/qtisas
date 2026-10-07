@@ -108,6 +108,9 @@ n.removeTab(2)           # remove last tab
 
 ### Tabs — renameTab() is 0-based, tab() is 1-based
 
+A new note has one tab, named **`Tab 1`**; `addTab()` adds `Tab 2`, `Tab 3`, … — there is no tab called `Main`.
+A first tab plus a second named tab: `n.tab(1).setText(...)`, `n.addTab()`, `n.renameTab(1, "Calc")`.
+
 > **`renameTab()` is 0-based; `tab()` is 1-based — do not mix them up.** Confirmed live: a script
 > called `n.renameTab(n.tabs(), "Configuration")` right after `addTab()`, treating the tab COUNT as
 > if it were a valid 1-based "next index" — but `renameTab()` needs the 0-based index instead
