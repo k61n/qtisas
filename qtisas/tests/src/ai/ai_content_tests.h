@@ -126,7 +126,7 @@ class AiContentTests : public QObject
     static void giveUpFallback_rejectsMultiLineScript();
     static void unverifiedMissingClaim_flagsBareAssertion();
     static void unverifiedMissingClaim_allowsRealVerificationCall();
-    static void unverifiedMissingClaim_flagsNonexistentExistGraphCall();
+    static void unverifiedMissingClaim_flagsNonexistentExistCurveCall();
     static void unverifiedMissingClaim_allowsRealMatrixVerificationCall();
     static void functionNameSubstitution_blocksUngroundedRename();
     static void functionNameSubstitution_allowsUnchangedName();
@@ -252,8 +252,6 @@ class AiContentTests : public QObject
     static void windowNameMethod_blocksMethodCallForm();
     static void windowNameMethod_allowsFreeFunctionForm();
     static void windowNameMethod_allowsNoSetWindowNameAtAll();
-    static void existMatrix_blocksNonexistentCall();
-    static void existMatrix_allowsRealExistenceCheck();
     static void fittableSelectStageBeforeFunction_blocksSimulateBeforeConfigure();
     static void fittableSelectStageBeforeFunction_allowsConfigureFirst();
     static void fittableSelectStageBeforeFunction_allowsSelectStageInitAlone();

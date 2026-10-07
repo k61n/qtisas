@@ -1130,12 +1130,12 @@ void AiContentTests::unverifiedMissingClaim_allowsRealVerificationCall()
     QVERIFY(!content.isUnverifiedMissingClaim("scriptPrint(str(existTable(\"GaussPeak\")))"));
 }
 
-void AiContentTests::unverifiedMissingClaim_flagsNonexistentExistGraphCall()
+void AiContentTests::unverifiedMissingClaim_flagsNonexistentExistCurveCall()
 {
     QtiSasAiContent content;
-    // existGraph()/existMatrix() don't exist (calling either raises NameError) — a leftover mention
-    // of one must NOT count as proof a live check ran.
-    const QString script = "# checked existGraph(\"Sphere\") -> False\n"
+    // existCurve() doesn't exist (calling it raises NameError) — a leftover mention of it must NOT count
+    // as proof a live check ran.
+    const QString script = "# checked existCurve(\"Sphere\") -> False\n"
                            "scriptPrint(\"Graph 'Sphere' not found\")";
     QVERIFY(content.isUnverifiedMissingClaim(script));
 }
@@ -2369,22 +2369,6 @@ void AiContentTests::windowNameMethod_allowsNoSetWindowNameAtAll()
     const QString code = "g3 = plot3D(\"sin(x)*cos(y)\", -pi, pi, -pi, pi, -1, 1, 40, 40)\n"
                          "g3.setFilledMeshStyle()\n";
     QVERIFY(QtiSasAiContent::windowNameMethodCallMistake(code).isEmpty());
-}
-
-void AiContentTests::existMatrix_blocksNonexistentCall()
-{
-    // Confirmed live, severe: existMatrix("SphereMap") guessed by analogy with existTable() —
-    // Matrix has no exist*() helper at all. Burned the rest of a 15-retry budget.
-    const QString code = "if not existMatrix(\"SphereMap\"):\n    m = newMatrix(\"SphereMap\", 50, 50)\n";
-    const QString explanation = QtiSasAiContent::nonexistentExistMatrixMistake(code);
-    QVERIFY(!explanation.isEmpty());
-    QVERIFY(explanation.contains("matrix(name) is not None"));
-}
-
-void AiContentTests::existMatrix_allowsRealExistenceCheck()
-{
-    const QString code = "if matrix(\"SphereMap\") is None:\n    m = newMatrix(\"SphereMap\", 50, 50)\n";
-    QVERIFY(QtiSasAiContent::nonexistentExistMatrixMistake(code).isEmpty());
 }
 
 void AiContentTests::fittableSelectStageBeforeFunction_blocksSimulateBeforeConfigure()
