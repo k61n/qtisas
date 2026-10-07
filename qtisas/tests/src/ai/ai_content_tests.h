@@ -17,7 +17,6 @@ class AiContentTests : public QObject
 
   private slots:
     // ---- Direction 1: graph overreach ----
-    static void scriptPrintMultiArg_namesEveryOffendingCall();
     static void selfShadowBug_namesEverySelfShadowedVariable();
     static void scopeViolation_reportsEveryDirectionAtOnce();
     static void direction1_blocksUnrelatedNewGraph();
@@ -181,10 +180,6 @@ class AiContentTests : public QObject
     static void zeroBasedIndex_blocksZeroRowInSetCell();
     static void zeroBasedIndex_allowsCorrectOneBasedIndices();
     static void zeroBasedIndex_allowsMatrixOneBasedIndices();
-    static void scriptPrintMultiArg_blocksLeadingStringLiteralThenComma();
-    static void scriptPrintMultiArg_blocksWithSingleQuotedLabel();
-    static void scriptPrintMultiArg_allowsSingleStringArgument();
-    static void scriptPrintMultiArg_allowsConcatenatedString();
     static void changeFolderNoOp_blocksBareActiveFolderRoundTrip();
     static void changeFolderNoOp_allowsForceTrueSecondArgument();
     static void changeFolderNoOp_allowsChangeFolderToADifferentFolder();

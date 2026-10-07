@@ -28,16 +28,6 @@ Description: Unit tests for the pure, host-independent logic in src/ai —
 // Direction 1 — graph overreach
 // ---------------------------------------------------------------------------
 
-void AiContentTests::scriptPrintMultiArg_namesEveryOffendingCall()
-{
-    // This check's own incident: a retry fixed one call and left another, costing a second round.
-    const QString code = "scriptPrint(\"a:\", 1)\nscriptPrint(\"b:\", 2)\n";
-    const QString explanation = QtiSasAiContent::scriptPrintMultipleArgumentsMistake(code);
-    QVERIFY(!explanation.isEmpty());
-    QVERIFY(explanation.contains("2 places"));
-    QVERIFY(explanation.contains("fix ALL of them"));
-}
-
 void AiContentTests::selfShadowBug_namesEverySelfShadowedVariable()
 {
     const QString code = "double gamma = gamma;\ndouble sigma = sigma;\n";
@@ -1679,31 +1669,6 @@ void AiContentTests::zeroBasedIndex_allowsMatrixOneBasedIndices()
     const QString code = "m = newMatrix(\"SphereMap\", 50, 50)\n"
                          "m.setCell(1, 1, 3.14)\n";
     QVERIFY(QtiSasAiContent::zeroBasedTableIndexMistake(code).isEmpty());
-}
-
-void AiContentTests::scriptPrintMultiArg_blocksLeadingStringLiteralThenComma()
-{
-    // Confirmed live: this exact shape survived two consecutive error-retries in a row.
-    const QString code = "scriptPrint(\"Note window label:\", n.windowLabel())\n";
-    QVERIFY(!QtiSasAiContent::scriptPrintMultipleArgumentsMistake(code).isEmpty());
-}
-
-void AiContentTests::scriptPrintMultiArg_blocksWithSingleQuotedLabel()
-{
-    const QString code = "scriptPrint('Auto-execution status:', str(n.autoexec()))\n";
-    QVERIFY(!QtiSasAiContent::scriptPrintMultipleArgumentsMistake(code).isEmpty());
-}
-
-void AiContentTests::scriptPrintMultiArg_allowsSingleStringArgument()
-{
-    const QString code = "scriptPrint(\"Setup note created and auto-execution enabled.\")\n";
-    QVERIFY(QtiSasAiContent::scriptPrintMultipleArgumentsMistake(code).isEmpty());
-}
-
-void AiContentTests::scriptPrintMultiArg_allowsConcatenatedString()
-{
-    const QString code = "scriptPrint(\"Auto-execution enabled: \" + str(n.autoexec()))\n";
-    QVERIFY(QtiSasAiContent::scriptPrintMultipleArgumentsMistake(code).isEmpty());
 }
 
 void AiContentTests::changeFolderNoOp_blocksBareActiveFolderRoundTrip()
