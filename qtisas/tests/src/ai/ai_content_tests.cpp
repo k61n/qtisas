@@ -3260,10 +3260,10 @@ void AiContentTests::detectKnownMistakes_exploreScriptSkipsActionNeverHappenedCh
 
 void AiContentTests::detectKnownMistakes_exploreScriptStillReportsRealDefects()
 {
-    // Only the "never happened" family is skipped — a genuine defect in an EXPLORE script (here
-    // scriptPrint()'s multi-argument form) must still be caught.
+    // Only the "never happened" family is skipped — a genuine defect in an EXPLORE script (here a
+    // 0-based table index) must still be caught.
     QtiSasAiContent content;
-    const QString exploreCode = "scriptPrint(\"rows:\", 200)\n";
+    const QString exploreCode = "t = table(\"T\")\nscriptPrint(str(t.cell(0, 1)))\n";
     const QList<AiKnownMistakeMatch> matches =
         content.detectKnownMistakes(exploreCode, QString("Create a table \"T\"."), QString(), QString(),
                                     /*exploreScript=*/true);
