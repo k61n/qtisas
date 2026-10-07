@@ -92,7 +92,7 @@ A note can have multiple editor tabs. Tab indices are **0-based**.
 |--------|---------|-------|
 | `tabs()` | `int` | number of tabs |
 | `addTab()` | — | add a new empty tab |
-| `removeTab(index=-1)` | — | remove tab at `index`; default (`-1`) removes the **currently active** tab (Qt convention), NOT the last tab. No-op if only one tab remains, even if explicitly targeted. |
+| `removeTab(index=-1)` | — | remove tab at `index`; default (`-1`) removes the **currently active** tab (Qt convention), NOT the last tab. A note always keeps one tab: removing the last one raises `ValueError` — clear tabs with `while n.tabs() > 1`. |
 | `renameTab(index, name)` | — | rename tab at `index` — **0-based** (confirmed against source: passes `index` straight to Qt's `QTabWidget::setTabText(index, ...)`), unlike `tab(index)` below, which is 1-based. |
 
 ```python

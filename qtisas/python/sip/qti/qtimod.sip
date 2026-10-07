@@ -2357,6 +2357,19 @@ public:
   int tabs();
   void addTab();
   void removeTab(int index = -1);
+%MethodCode
+  // The UI keeps a note's last tab without a word (Note::removeTab()); a script must hear it — confirmed live, an AI
+  // script's "while n.tabs() > 0: n.removeTab(0)" never ended
+  if (sipCpp->tabs() <= 1)
+  {
+    sipIsErr = 1;
+    PyErr_SetString(PyExc_ValueError,
+                    "removeTab: a note always keeps one tab — its last tab can't be removed; "
+                    "setText() or renameTab() it");
+  }
+  else
+    sipCpp->removeTab(a0);
+%End
   void renameTab(int, const QString&);
 
   int indexOf(ScriptEdit*);

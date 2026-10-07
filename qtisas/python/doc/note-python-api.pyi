@@ -26,8 +26,8 @@ tabs()->int  addTab()  removeTab(index=-1)  renameTab(index,name)
 # A new note has ONE tab, named "Tab 1"; addTab() adds "Tab 2", ... — there is no tab "Main".
 #   First tab + a second named tab: n.tab(1).setText(...); n.addTab(); n.renameTab(1, "Calc")
 # removeTab's default -1 means "the CURRENTLY ACTIVE tab" (Qt convention) — NOT "the last tab"
-#   (Python-style negative indexing, which nothing else here uses either). A no-op if only one
-#   tab remains (refuses to remove the last one).
+#   (Python-style negative indexing, which nothing else here uses either). A note always keeps one
+#   tab: removeTab() on the last one raises ValueError — clear tabs with "while n.tabs() > 1".
 # addTab() ALREADY makes the new tab active/current (confirmed against source: it calls Qt's
 #   setCurrentIndex() on the tab it just created) — no separate step needed. There is NO
 #   Python-exposed way to reactivate a DIFFERENT, already-existing tab: setCurrentIndex()/
