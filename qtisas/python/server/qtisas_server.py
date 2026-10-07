@@ -367,7 +367,10 @@ class ScriptServer:
         lines = code.splitlines(True)
         linecache.cache[filename] = (len(code), None, lines, filename)  # tracebacks show the sent code's lines
         output = io.StringIO()
-        ns["scriptPrint"] = lambda text="": output.write(str(text) + "\n")  # captured, not sent to the console
+        def script_print(*args, sep=" "):  # captured, not sent to the console; like qtisasrc.py's scriptPrint()
+            output.write(sep.join(str(a) for a in args if not (len(args) == 1 and a is None)) + "\n")
+
+        ns["scriptPrint"] = script_print
         before = snapshot()
         error = ""
         start = time.monotonic()

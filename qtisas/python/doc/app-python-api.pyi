@@ -111,7 +111,7 @@ matrixToTable(matrix,mode=Direct)->Table
 # ApplicationWindow.MatrixToTableConversion: Direct XYZ YXZ
 
 # Output / display:
-scriptPrint("text")  scriptPrintReplace("text")
+scriptPrint(*values,sep=" ")  scriptPrintReplace("text")   # scriptPrint like print(): values joined by spaces
 displayInfo("text")  resultsLog()->QTextEdit  infoLineEdit()->QLineEdit
 # NOTE: resultsLog() is an ApplicationWindow method — call as qti.app.resultsLog() or just resultsLog() (global).
 #   Do NOT call it as c.resultsLog() on a Compiler object — Compiler has no resultsLog().

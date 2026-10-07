@@ -9,10 +9,8 @@
 # These symbols are NEVER in the default namespace. Omitting the import → NameError at runtime.
 # NEVER import QApplication — crashes the app.
 
-# scriptPrint() REQUIRES a str (or None) argument — NOT float/int/list/tuple directly.
-#   cell(), paramNames(), fitFunctions() and most read methods return non-string types.
-#   WRONG: scriptPrint(t.cell(2, 3))        → TypeError: argument 1 has unexpected type 'float'
-#   RIGHT: scriptPrint(str(t.cell(2, 3)))
+# scriptPrint() works like print(): any values, converted with str() and joined by spaces —
+#   scriptPrint("R1:", t.cell(2, 3)) → "R1: 1.5". sep="..." sets the separator.
 
 # MATH FUNCTIONS ARE GLOBAL — sin cos exp log sqrt pi e floor ceil abs are in the global namespace.
 #   Do NOT write "import math" — use bare names directly. No import needed.

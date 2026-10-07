@@ -94,7 +94,6 @@ class QtiSasAiContent : public AiContentProvider
     static QString fitCurveNameReconstructionMismatch(const QString &code);
     static QString unrequestedAutoexecImmediateRun(const QString &code, const QString &originalRequestText);
     static QString zeroBasedTableIndexMistake(const QString &code);
-    static QString scriptPrintMultipleArgumentsMistake(const QString &code);
     static QString changeFolderNoOpMistake(const QString &code);
     static QString tableCellRowColSwapMistake(const QString &code);
     static QString compilerSetCodeNestedFunctionMistake(const QString &code);

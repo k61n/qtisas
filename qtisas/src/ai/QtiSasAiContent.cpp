@@ -2506,43 +2506,6 @@ QString QtiSasAiContent::zeroBasedTableIndexMistake(const QString &code)
     return {};
 }
 
-QString QtiSasAiContent::scriptPrintMultipleArgumentsMistake(const QString &code)
-{
-    // scriptPrint() takes exactly ONE argument (a str, or None) — unlike Python's built-in
-    // print(), it does not accept multiple comma-separated positional arguments. Confirmed live:
-    // a "label:", value style call survived TWO consecutive error-retries in a row — one retry
-    // dropped the specific occurrence named in the error but left a second, identically-shaped
-    // call untouched elsewhere in the same script, which then failed the same way on the very
-    // next run. A leading quoted string literal immediately followed by a comma, inside
-    // scriptPrint(...)'s parentheses, is the confirmed-live shape of this mistake — a real
-    // single-string argument never has a comma right after its own closing quote.
-    static const QRegularExpression multiArgRe(R"(\bscriptPrint\s*\(\s*(?:"[^"]*"|'[^']*')\s*,)");
-    // EVERY offending call, not just the first: this check's own incident above is precisely a
-    // partial fix — "the first retry dropped one multi-argument call but left another one
-    // untouched, and only the second retry, hitting the identical error again, finally
-    // concatenated". Naming them all lets one round fix all of them.
-    QStringList offenders;
-    QRegularExpressionMatchIterator it = multiArgRe.globalMatch(code);
-    while (it.hasNext())
-    {
-        const QString call = it.next().captured(0);
-        if (!offenders.contains(call))
-            offenders << call;
-    }
-    if (offenders.isEmpty())
-        return {};
-    const QString which = offenders.size() == 1
-                              ? "with more than one argument (" + offenders.first() + "...)"
-                              : QString("with more than one argument in %1 places (%2...) — fix ALL of them")
-                                    .arg(offenders.size())
-                                    .arg(offenders.join("..., "));
-    return "This script calls scriptPrint(...) " + which +
-           " — scriptPrint() takes exactly ONE str (or None) argument, unlike Python's "
-           "built-in print(). This raises TypeError: \"scriptPrint(self, a0: str|None): too "
-           "many arguments\". Concatenate into a single string instead, e.g. "
-           "scriptPrint(\"label: \" + str(value)) — never scriptPrint(\"label:\", value).";
-}
-
 QString QtiSasAiContent::changeFolderNoOpMistake(const QString &code)
 {
     // changeFolder(folder, force=False) bails out immediately when folder is already the active
@@ -4601,9 +4564,6 @@ QList<AiKnownMistakeMatch> QtiSasAiContent::detectKnownMistakes(const QString &c
     explanation = zeroBasedTableIndexMistake(code);
     if (!explanation.isEmpty())
         matches << AiKnownMistakeMatch{"0-based table/matrix index detected", explanation};
-    explanation = scriptPrintMultipleArgumentsMistake(code);
-    if (!explanation.isEmpty())
-        matches << AiKnownMistakeMatch{"scriptPrint() called with multiple arguments", explanation};
     explanation = hallucinatedPlotDesignationCaseMistake(code);
     if (!explanation.isEmpty())
         matches << AiKnownMistakeMatch{"nonexistent Table.PlotDesignation member detected", explanation};

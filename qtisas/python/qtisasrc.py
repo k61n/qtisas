@@ -81,6 +81,15 @@ if __name__ == '__main__':
     for name in appImports:
         builtins.__dict__[name] = getattr(qti.app, name)
 
+    # scriptPrint() like print(): any values, converted with str() and joined by sep; scriptPrint(None) stays an
+    # empty line. The ApplicationWindow slot itself takes one str only
+    def scriptPrint(*args, sep=" "):
+        if len(args) == 1 and args[0] is None:
+            args = ()
+        qti.app.scriptPrint(sep.join(str(a) for a in args))
+
+    builtins.scriptPrint = scriptPrint
+
     # import utility module
     import_to_global('python-qtiUtil', math=True)
 

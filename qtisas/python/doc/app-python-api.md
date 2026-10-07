@@ -434,7 +434,7 @@ t = matrixToTable(m, ApplicationWindow.MatrixToTableConversion.XYZ)
 
 | Call | Returns | Notes |
 |------|---------|-------|
-| `scriptPrint("text")` | — | append a line to the scripting console (use inside scripts and Notes) |
+| `scriptPrint(*values, sep=" ")` | — | append a line to the scripting console (use inside scripts and Notes); like `print()`: values converted with `str()`, joined by spaces |
 | `scriptPrintReplace("text")` | — | replace the last console line (useful for progress updates in loops) |
 | `displayInfo("text")` | — | append a line to the status bar info log |
 | `resultsLog()` | `QTextEdit` | the Results Log text widget (append text with `.append()`) — an `ApplicationWindow` method; call as `resultsLog()` (global) or `qti.app.resultsLog()`. Not `c.resultsLog()` on a `Compiler` object — `Compiler` has no `resultsLog()`. |
