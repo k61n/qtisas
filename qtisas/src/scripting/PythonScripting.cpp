@@ -18,6 +18,8 @@ Description: Execute Python code from within QtiSAS
 #include <frameobject.h>
 #include <traceback.h>
 
+#include <algorithm>
+
 #include "ApplicationWindow.h"
 #include "PythonScript.h"
 #include "PythonScripting.h"
@@ -87,6 +89,94 @@ bool PythonScripting::exec (const QString &code, PyObject *argDict, const char *
 	return (bool) tmp;
 }
 
+// For a NameError on a bare method call ("setDecimalSeparators(2)" meant as "t.setDecimalSeparators(2)"): the
+// script objects that have a method of that name. Confirmed live, a weak model repeated the bare call until it gave up;
+// the plain "name '...' is not defined" never told it the name was right and only the object missing
+static QString methodOwnerHint(PyObject *value)
+{
+    PyObject *nameObj = PyObject_GetAttrString(value, "name");
+    const QString name = nameObj && PyUnicode_Check(nameObj) ? QString::fromUtf8(PyUnicode_AsUTF8(nameObj)) : QString();
+    Py_XDECREF(nameObj);
+    PyErr_Clear();
+    if (name.isEmpty() || name.startsWith("_"))
+        return {};
+    struct Owner
+    {
+        const char *module;
+        const char *object;
+        const char *call;
+    };
+    static const Owner owners[] = {{"qti", "Table", "t"},
+                                   {"qti", "Matrix", "m"},
+                                   {"qti", "Note", "n"},
+                                   {"qti", "GraphWindow", "g"},
+                                   {"qti", "Graph", "layer"},
+                                   {"qti", "Graph3D", "g3"},
+                                   {"builtins", "Compiler", "Compiler"},
+                                   {"builtins", "Fittable", "Fittable"},
+                                   {"builtins", "Dan", "Dan"}};
+    QStringList types;
+    QString example;
+    for (const Owner &o : owners)
+    {
+        PyObject *module = PyImport_ImportModule(o.module);
+        PyObject *object = module ? PyObject_GetAttrString(module, o.object) : nullptr;
+        if (object && PyObject_HasAttrString(object, name.toUtf8().constData()))
+        {
+            types << o.object;
+            if (example.isEmpty())
+                example = QString("%1.%2(...)").arg(o.call, name);
+        }
+        Py_XDECREF(object);
+        Py_XDECREF(module);
+        PyErr_Clear();
+    }
+    if (types.isEmpty())
+        return {};
+    return QString("'%1' is not a global function but a method of %2 — call it on that object, e.g. %3\n")
+        .arg(name, types.join(", "), example);
+}
+
+// For an AttributeError: the object's methods whose names contain the missing one ("text" → toPlainText, setText),
+// or, on None, that the lookup before it found nothing. Confirmed live: n.tab("C").text() was retried as is, and
+// n.tab("Main").setText() on a tab that never existed sent the retries hunting setText(). Python's own "Did you
+// mean" only reaches the traceback display, never str(e), which is what the AI and the console get
+static QString attributeHint(PyObject *value)
+{
+    PyObject *obj = PyObject_GetAttrString(value, "obj");
+    PyObject *nameObj = PyObject_GetAttrString(value, "name");
+    PyErr_Clear();
+    const QString name = nameObj && PyUnicode_Check(nameObj) ? QString::fromUtf8(PyUnicode_AsUTF8(nameObj)) : QString();
+    Py_XDECREF(nameObj);
+    QString hint;
+    if (obj == Py_None)
+        hint = "The object is None: the call that should have returned it found nothing — e.g. table(\"…\"), "
+               "matrix(\"…\") or n.tab(\"…\") for a name that does not exist.\n";
+    else if (obj && name.length() >= 3)
+    {
+        // the missing name as a word of a camelCase name: "text" matches setText/toPlainText, not contextMenuEvent
+        QStringList similar;
+        PyObject *names = PyObject_Dir(obj);
+        for (Py_ssize_t i = 0; names && i < PyList_Size(names); i++)
+        {
+            PyObject *item = PyList_GetItem(names, i);
+            const QString candidate = PyUnicode_Check(item) ? QString::fromUtf8(PyUnicode_AsUTF8(item)) : QString();
+            const qsizetype at = candidate.indexOf(name, 0, Qt::CaseInsensitive);
+            if (at >= 0 && candidate != name && !candidate.startsWith("_") && (at == 0 || candidate.at(at).isUpper()))
+                similar << candidate;
+        }
+        Py_XDECREF(names);
+        PyErr_Clear();
+        std::stable_sort(similar.begin(), similar.end(),
+                         [](const QString &a, const QString &b) { return a.length() < b.length(); });
+        if (!similar.isEmpty())
+            hint = QString("'%1' has no '%2'; its methods with a similar name: %3()\n")
+                       .arg(QString::fromUtf8(Py_TYPE(obj)->tp_name), name, similar.mid(0, 6).join("(), "));
+    }
+    Py_XDECREF(obj);
+    return hint;
+}
+
 QString PythonScripting::errorMsg(const QString &sourceCode, const QString &sourceName)
 {
     PyGILState_STATE state = PyGILState_Ensure();
@@ -121,6 +211,12 @@ QString PythonScripting::errorMsg(const QString &sourceCode, const QString &sour
     }
     else
     {
+        // before toString(value, true) below releases value
+        QString hint;
+        if (PyErr_GivenExceptionMatches(exception, PyExc_NameError))
+            hint = methodOwnerHint(value);
+        else if (PyErr_GivenExceptionMatches(exception, PyExc_AttributeError))
+            hint = attributeHint(value);
         PyObject *nameAttr = PyObject_GetAttrString(exception, "__name__");
         if (nameAttr)
         {
@@ -132,7 +228,7 @@ QString PythonScripting::errorMsg(const QString &sourceCode, const QString &sour
             PyErr_Clear();
             msg.append(toString(exception, true)).remove("exceptions.");
         }
-        msg.append(": ").append(toString(value, true)).append("\n");
+        msg.append(": ").append(toString(value, true)).append("\n").append(hint);
     }
 
     if (traceback)
