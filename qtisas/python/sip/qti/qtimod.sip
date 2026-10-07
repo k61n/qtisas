@@ -4137,7 +4137,7 @@ public:
   put("splitRequestMerge", PyBool_FromLong(st.splitRequestMerge));
   put("selfReviewEnabled", PyBool_FromLong(st.selfReviewEnabled));
   put("exploreEnabled", PyBool_FromLong(st.exploreEnabled));
-  put("localTimeoutSec", PyLong_FromLong(st.localTimeoutSec));
+  put("requestTimeoutSec", PyLong_FromLong(st.requestTimeoutSec));
 %End
   void setAiConfig(const QString &key, SIP_PYOBJECT value);
 %MethodCode
@@ -4146,7 +4146,8 @@ public:
   struct IntField { const char *key; int *field; int min, max; };
   struct BoolField { const char *key; bool *field; };
   const IntField ints[] = {{"maxUserRules", &st.maxUserRules, 1, 200}, {"maxAutoContinue", &st.maxAutoContinue, 1, 50},
-                           {"maxSplitParts", &st.maxSplitParts, 2, 30}, {"localTimeoutSec", &st.localTimeoutSec, 30, 3600}};
+                           {"maxSplitParts", &st.maxSplitParts, 2, 30},
+                           {"requestTimeoutSec", &st.requestTimeoutSec, 0, 3600}};
   const BoolField bools[] = {{"splitByDefault", &st.splitByDefault}, {"splitRequestMerge", &st.splitRequestMerge},
                              {"selfReviewEnabled", &st.selfReviewEnabled}, {"exploreEnabled", &st.exploreEnabled}};
   QString error;

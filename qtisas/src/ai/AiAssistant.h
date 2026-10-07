@@ -550,15 +550,14 @@ class AiAssistant : public QObject
     {
         return m_maxAutoContinue;
     }
-    // HTTP transfer timeout for loopback backends only — see ask()'s setTransferTimeout() call
-    // for why this is separate from the cloud-API timeout branches.
-    void setLocalTimeoutSec(int n)
+    // HTTP transfer timeout of one call, every backend; 0 = automatic — see ask()'s setTransferTimeout() call
+    void setRequestTimeoutSec(int n)
     {
-        m_localTimeoutSec = n;
+        m_requestTimeoutSec = n;
     }
-    int localTimeoutSec() const
+    int requestTimeoutSec() const
     {
-        return m_localTimeoutSec;
+        return m_requestTimeoutSec;
     }
     // Caps how many parts a single split-mode decomposition is allowed to produce — see
     // handleSplitPlanResponse()'s use of this for the rationale (bounds sequential HTTP
@@ -1147,7 +1146,7 @@ class AiAssistant : public QObject
     bool m_splitMergeEnabled = true;
     bool m_selfReviewEnabled = true;
     bool m_exploreEnabled = true;
-    int m_localTimeoutSec = 600;
+    int m_requestTimeoutSec = 0;
     QList<QPair<QString, QString>> m_history; // (user, assistant) pairs — the FULL transcript,
     // permanent; only an explicit user "clear history" command (ApplicationWindow.cpp) ever
     // shrinks it. historyText() ("show history") always reads all of it from index 0.

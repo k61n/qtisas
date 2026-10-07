@@ -194,21 +194,21 @@ AiConfig::AiConfig(ApplicationWindow *app, QWidget *parent) : QWidget(parent), m
     lay->addWidget(m_exploreEnabled, 14, 0, 1, 2);
     connect(m_exploreEnabled, &QCheckBox::toggled, app, [app](bool on) { app->aiSettings.exploreEnabled = on; });
 
-    // Loopback backends are latency-bound by local generation, not payload size (see ask()'s timeout note).
-    // Confirmed live: a large local context window can exceed a fixed timeout, so this must be tunable, not constant.
-    auto *localTimeoutLabel = new QLabel(tr("Local backend timeout:"));
-    localTimeoutLabel->setToolTip(
-        tr("HTTP timeout for a loopback base URL (127.0.0.1/localhost) only — cloud backends use "
-           "their own fixed budgets.\nRaise this if a local model's own context window/prompt "
-           "size makes a single call take longer than the current value."));
-    lay->addWidget(localTimeoutLabel, 15, 0);
-    m_localTimeoutSec = new QSpinBox();
-    m_localTimeoutSec->setRange(30, 3600);
-    m_localTimeoutSec->setSuffix(tr(" s"));
-    m_localTimeoutSec->setValue(app->aiSettings.localTimeoutSec);
-    lay->addWidget(m_localTimeoutSec, 15, 1);
-    connect(m_localTimeoutSec, QOverload<int>::of(&QSpinBox::valueChanged), app,
-            [app](int v) { app->aiSettings.localTimeoutSec = v; });
+    // Both local and cloud calls can outgrow a fixed timeout (see AiSettings::requestTimeoutSec), so it is tunable.
+    auto *requestTimeoutLabel = new QLabel(tr("Request timeout:"));
+    requestTimeoutLabel->setToolTip(
+        tr("HTTP timeout of one AI call, for every backend.\nAutomatic: 600 s for a local base URL "
+           "(127.0.0.1/localhost), 120 s for a cloud one.\nRaise it if a model regularly needs longer "
+           "for a request with the full docs, e.g. a large local context or a slow cloud model."));
+    lay->addWidget(requestTimeoutLabel, 15, 0);
+    m_requestTimeoutSec = new QSpinBox();
+    m_requestTimeoutSec->setRange(0, 3600);
+    m_requestTimeoutSec->setSpecialValueText(tr("Automatic"));
+    m_requestTimeoutSec->setSuffix(tr(" s"));
+    m_requestTimeoutSec->setValue(app->aiSettings.requestTimeoutSec);
+    lay->addWidget(m_requestTimeoutSec, 15, 1);
+    connect(m_requestTimeoutSec, QOverload<int>::of(&QSpinBox::valueChanged), app,
+            [app](int v) { app->aiSettings.requestTimeoutSec = v; });
 
     // Fill fields when preset changes — loads from .ai file
     auto fillPreset = [=, this](int idx) mutable {

@@ -49,7 +49,7 @@ class AiConfig : public QWidget
     QCheckBox *m_splitRequestMerge;
     QCheckBox *m_selfReviewEnabled;
     QCheckBox *m_exploreEnabled;
-    QSpinBox *m_localTimeoutSec;
+    QSpinBox *m_requestTimeoutSec;
 
 };
 

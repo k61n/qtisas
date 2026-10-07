@@ -6192,8 +6192,10 @@ void AiAssistant::ask(const QString &userText, bool includeDocs, const QString &
     // call under larger num_ctx hit "Operation canceled" (Qt's transfer-timeout error) at 300s, then again at 600s —
     // generation need trades directly against num_ctx/prompt size, so this can't be one fixed constant.
     const bool isLocalBackend = m_baseUrl.contains("127.0.0.1") || m_baseUrl.contains("localhost");
-    // First request carries the full API docs in the system prompt — allow extra time
-    req.setTransferTimeout(isLocalBackend ? m_localTimeoutSec * 1000 : (m_cachedDocs.isEmpty() ? 60000 : 120000));
+    // First request carries the full API docs in the system prompt — allow extra time. A set request timeout wins for
+    // every backend: confirmed live, slower cloud models need more than 120 s for a full-docs prompt as well
+    const int automaticMs = isLocalBackend ? 600000 : (m_cachedDocs.isEmpty() ? 60000 : 120000);
+    req.setTransferTimeout(m_requestTimeoutSec > 0 ? m_requestTimeoutSec * 1000 : automaticMs);
     req.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     // Force HTTP/1.1 — seen live: Qt's HTTP/2 client mid-stream reset with a bare "HTTP/2
     // protocol error" on these long, single-request-at-a-time AI calls, aborting the whole

@@ -58,9 +58,10 @@ struct AiSettings
     // not model-initiated exploration, and disabling them would silently remove collision guards.
     bool exploreEnabled = true;
 
-    // Loopback backends are latency-bound by local generation, not payload size (see ask()'s timeout note).
-    // Raised 600s from 300s after a real "Operation canceled" at larger num_ctx — tunable since usage tracks it.
-    int localTimeoutSec = 600;
+    // HTTP timeout of one AI call, for every backend; 0 = automatic: 600 s for a loopback base URL, 120 s for a cloud
+    // one (60 s before the docs are cached). Confirmed live: slower BlaBlaDor models (Kimi, GLM, DeepSeek on JUWELS)
+    // need more than 120 s for a ~55K-token docs prompt and failed every item with "Operation timed out".
+    int requestTimeoutSec = 0;
 };
 
 // Keeps the "/AI" group name and its key strings colocated with the struct they belong to,
@@ -77,7 +78,9 @@ inline void AiReadSettings(QSettings *settings, AiSettings &s)
     s.splitRequestMerge = settings->value("/SplitRequestMerge", s.splitRequestMerge).toBool();
     s.selfReviewEnabled = settings->value("/SelfReviewEnabled", s.selfReviewEnabled).toBool();
     s.exploreEnabled = settings->value("/ExploreEnabled", s.exploreEnabled).toBool();
-    s.localTimeoutSec = settings->value("/LocalTimeoutSec", s.localTimeoutSec).toInt();
+    // the former loopback-only "/LocalTimeoutSec": its old default 600 means automatic, any other value is kept
+    const int localTimeoutSec = settings->value("/LocalTimeoutSec", 600).toInt();
+    s.requestTimeoutSec = settings->value("/RequestTimeoutSec", localTimeoutSec == 600 ? 0 : localTimeoutSec).toInt();
     settings->endGroup();
 }
 
@@ -91,7 +94,8 @@ inline void AiWriteSettings(QSettings *settings, const AiSettings &s)
     settings->setValue("/SplitRequestMerge", s.splitRequestMerge);
     settings->setValue("/SelfReviewEnabled", s.selfReviewEnabled);
     settings->setValue("/ExploreEnabled", s.exploreEnabled);
-    settings->setValue("/LocalTimeoutSec", s.localTimeoutSec);
+    settings->setValue("/RequestTimeoutSec", s.requestTimeoutSec);
+    settings->remove("/LocalTimeoutSec");
     settings->endGroup();
 }
 

@@ -74,7 +74,7 @@ qti.app.setAiAgent("Anthropic-Claude-API")  # select and configure it, as Apply 
 qti.app.aiClearHistory()
 qti.app.aiConfig()                          # dict: agent, baseUrl, model, maxTokens, docsMode, and the page's
                                             # maxUserRules, maxAutoContinue, splitByDefault, maxSplitParts,
-                                            # splitRequestMerge, selfReviewEnabled, exploreEnabled, localTimeoutSec
+                                            # splitRequestMerge, selfReviewEnabled, exploreEnabled, requestTimeoutSec
 qti.app.setAiConfig("exploreEnabled", False)   # the page's settings, with its ranges (saved when QtiSAS quits)
 ```
 
