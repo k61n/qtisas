@@ -4070,6 +4070,8 @@ public:
   bool existWindow(const QString &);
   bool checkTableExistence(const QString &tableName) /PyName=existTable/;
   bool checkNoteExistence(const QString &noteName) /PyName=existNote/;
+  bool checkMatrixExistence(const QString &matrixName) /PyName=existMatrix/;
+  bool checkGraphExistence(const QString &graphName) /PyName=existGraph/;
 
   // custom actions
   bool addCustomAction(const QString &name, const QString &scriptName,

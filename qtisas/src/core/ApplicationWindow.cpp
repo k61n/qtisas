@@ -23300,6 +23300,24 @@ bool ApplicationWindow::checkNoteExistence(const QString &noteName)
     return false;
 }
 
+// existMatrix()/existGraph() in Python, next to existTable()/existNote(): confirmed live, AI scripts reach for them by
+// analogy, and the blocked or failing call cost the request its correct first answer
+bool ApplicationWindow::checkMatrixExistence(const QString &matrixName)
+{
+    foreach (MdiSubWindow *w, windowsList())
+        if (QString(w->metaObject()->className()) == "Matrix" && w->name() == matrixName)
+            return true;
+    return false;
+}
+
+bool ApplicationWindow::checkGraphExistence(const QString &graphName)
+{
+    foreach (MdiSubWindow *w, windowsList())
+        if (QString(w->metaObject()->className()) == "MultiLayer" && w->name() == graphName)
+            return true;
+    return false;
+}
+
 bool ApplicationWindow::existWindow(const QString &name)
 {
     foreach (MdiSubWindow *w, windowsList())

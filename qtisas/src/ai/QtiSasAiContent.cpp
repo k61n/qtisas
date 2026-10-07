@@ -1596,7 +1596,7 @@ QString QtiSasAiContent::splitPartScopeViolation(const QString &code, const QStr
     // is later looked up as a Matrix via matrix(name), or a name created as a Matrix via
     // newMatrix(name,...) is later checked/looked up as a Table via existTable(name)/table(name).
     // QtiSAS's exist*()/lookup functions are strictly type-specific (existTable() only ever
-    // confirms a Table — there is no existMatrix()) — confirmed live, twice, complementary shapes:
+    // confirms a Table, existMatrix() a Matrix) — confirmed live, twice, complementary shapes:
     // (1) a name created via newTable(...) was looked up via matrix(name), which always returns
     // None for a non-Matrix name, so plot3D(None, ...) produced an unusable window whose
     // setWindowName() then rejected every name tried as "invalid characters" — a misleading error
@@ -1639,9 +1639,9 @@ QString QtiSasAiContent::splitPartScopeViolation(const QString &code, const QStr
                 violations << "This part calls existTable(\"" + name + "\")/table(\"" + name + "\"), but \"" + name +
                        "\" was created via newMatrix(...) — a Matrix, not a Table. "
                        "existTable() is strictly type-specific and always returns False for a Matrix "
-                       "name (there is no existMatrix()) — any logic gated behind this check silently "
-                       "never runs, with no error. Use matrix(\"" +
-                       name + "\") is not None to check a Matrix's existence instead.";
+                                  "name — any logic gated behind this check silently never runs, with no error. "
+                                  "Use existMatrix(\"" +
+                                  name + "\") to check a Matrix's existence instead.";
         }
     }
 
@@ -1938,7 +1938,8 @@ bool QtiSasAiContent::isUnverifiedMissingClaim(const QString &script) const
     // call in the API, but covers the common ones across every topic (table/matrix/note/graph
     // existence, compiled-function/dataset lookup, column presence).
     static const QRegularExpression verificationCallRe(
-        R"(\b(existTable|existNote|graphWindow|matrix|fitFunctions|colNames|datasets)\s*\()");
+        R"(\b(existTable|existNote|existMatrix|existGraph|existWindow|graphWindow|matrix|fitFunctions|colNames|"
+        R"(datasets)\s*\()");
     return !verificationCallRe.match(script).hasMatch();
 }
 
@@ -3573,19 +3574,6 @@ QString QtiSasAiContent::windowNameMethodCallMistake(const QString &code)
            varName + ", " + nameArg + ") instead — same two arguments, called as a plain function, not a method.";
 }
 
-QString QtiSasAiContent::nonexistentExistMatrixMistake(const QString &code)
-{
-    // Confirmed live, severe: a part guessed existMatrix("SphereMap") by analogy with
-    // existTable() — Matrix has no exist*() helper at all. Raised NameError, exhausting the rest
-    // of a 15-retry budget before the whole request gave up.
-    static const QRegularExpression existMatrixRe(R"(\bexistMatrix\s*\()");
-    if (!existMatrixRe.match(code).hasMatch())
-        return {};
-    return "This script calls existMatrix(...) — this function does NOT exist. Matrix has no "
-           "exist*() helper at all, unlike Table's existTable(). Use matrix(name) is not None to "
-           "check a Matrix's existence instead.";
-}
-
 QString QtiSasAiContent::creationChainedMethodCallMistake(const QString &code)
 {
     // Confirmed live: newMatrix("SphereMap", 50, 50).setFormula("sin(x)*cos(y)").calculate() —
@@ -4611,9 +4599,6 @@ QList<AiKnownMistakeMatch> QtiSasAiContent::detectKnownMistakes(const QString &c
     explanation = windowNameMethodCallMistake(code);
     if (!explanation.isEmpty())
         matches << AiKnownMistakeMatch{"setWindowName() called as a method", explanation};
-    explanation = nonexistentExistMatrixMistake(code);
-    if (!explanation.isEmpty())
-        matches << AiKnownMistakeMatch{"nonexistent existMatrix() detected", explanation};
     explanation = creationChainedMethodCallMistake(code);
     if (!explanation.isEmpty())
         matches << AiKnownMistakeMatch{"method call chained onto a constructor's setter result", explanation};

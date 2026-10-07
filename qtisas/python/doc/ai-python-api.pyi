@@ -333,9 +333,8 @@
 # ValueError. One line handles it gracefully: t=table("X"); scriptPrint("not found" if t is
 # None else str(t.cell(2,3))) — no separate EXPLORE round-trip needed for a single lookup.
 # For tasks needing MORE than one value (structure/columns) before a follow-up action
-# script, run EXPLORE first to gather that: existTable("X") for tables; NO existMatrix()/
-# existGraph() exist (confirmed live NameError) — use matrix("X") is not None /
-# graphWindow("X") is not None instead; existNote("X") does exist for notes.
+# script, run EXPLORE first to gather that: existTable("X"), existMatrix("X"), existGraph("X"),
+# existNote("X") — each is type-specific (a matrix is never a table).
 #
 # THIS EXISTENCE CHECK DOES NOT APPLY WHEN THE TASK ASKS YOU TO CREATE/SET UP THE OBJECT
 # YOURSELF (e.g. "create a table with sphere form factor data", "create a note with an

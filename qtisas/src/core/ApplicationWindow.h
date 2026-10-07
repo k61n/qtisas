@@ -293,6 +293,8 @@ public:
     bool checkTableExistence(const QString &tableName, Table *&w);
     bool checkTableExistence(const QString &tableName);
     bool checkNoteExistence(const QString &noteName);
+    bool checkMatrixExistence(const QString &matrixName);
+    bool checkGraphExistence(const QString &graphName);
     bool existWindow(const QString &name);
 
     QLabel *d_status_info;

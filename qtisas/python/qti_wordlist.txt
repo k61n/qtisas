@@ -474,6 +474,8 @@ maximizeWindow
 existWindow
 existTable
 existNote
+existMatrix
+existGraph
 addCustomAction
 removeCustomAction
 runCustomAction

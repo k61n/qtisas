@@ -90,6 +90,7 @@ saveProject(compress=False)->bool  saveProjectAs("path",compress=False)
 #   not a project. appendProject() instead ADDS a file's windows to the current project as a sub-folder.
 # NameError for openProject: an older qtisasrc.py in the python config folder — use qti.app.openProject(...)
 existWindow("name")->bool  existTable("name")->bool  existNote("name")->bool
+existMatrix("name")->bool  existGraph("name")->bool   # each type-specific: a matrix is never a table
 closeWindow(window)  activateWindow(window)  activateWindow("name")->bool
 # closeWindow deletes outright, no "hide or delete?" dialog (unlike the UI close button)
 hideWindow(window)  maximizeWindow(window)  # call activateWindow(window) before maximizeWindow

@@ -338,6 +338,8 @@ saveFolder(results, "/data/results.qti")
 | `existWindow("name")` | `bool` | `True` if any window with that object name exists anywhere in the project |
 | `existTable("name")` | `bool` | `True` only if a `Table` with that name exists |
 | `existNote("name")` | `bool` | `True` only if a `Note` with that name exists |
+| `existMatrix("name")` | `bool` | `True` only if a `Matrix` with that name exists |
+| `existGraph("name")` | `bool` | `True` only if a 2D graph window (`GraphWindow`) with that name exists |
 | `closeWindow(window)` | — | close and delete a window outright — no "hide or delete?" prompt |
 | `activateWindow(window)` | — | bring a window to the front (accepts `MdiSubWindow` or name string) |
 | `activateWindow("name")` | `bool` | activate by name; returns `True` if found |

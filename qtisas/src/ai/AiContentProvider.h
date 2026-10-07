@@ -278,7 +278,7 @@ class AiContentProvider
     // ALL matches — one dispatch point replacing what used to be 25 separate single-purpose pure
     // virtual methods here (compiled-function self-shadow bugs, fitCurve name-reconstruction
     // mismatches, 0-based Table/Matrix indexing, hallucinated Legend/GraphWindow methods,
-    // nonexistent existMatrix()/Qti3D-import forms, guessed candidate-name lists, ...). Each
+    // nonexistent Qti3D-import forms, guessed candidate-name lists, ...). Each
     // individual pattern is still implemented as its own private helper in QtiSasAiContent.cpp, with
     // its own "confirmed live" incident writeup right next to its regex — only the PUBLIC interface
     // (and AiAssistant.cpp's call site) is consolidated. Deliberately excludes the self-review

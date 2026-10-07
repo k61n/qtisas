@@ -118,7 +118,6 @@ class QtiSasAiContent : public AiContentProvider
     static QString conditionalMaximizeWindowMistake(const QString &code);
     static QString curveExistenceGuardTitleMismatch(const QString &code);
     static QString windowNameMethodCallMistake(const QString &code);
-    static QString nonexistentExistMatrixMistake(const QString &code);
     static QString creationChainedMethodCallMistake(const QString &code);
     static QString qti3DImportMistake(const QString &code);
     static QString setAutoexecOnScriptEditMistake(const QString &code);
