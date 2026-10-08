@@ -45,6 +45,10 @@ class AiContentTests : public QObject
     static void shortQuestion_withoutActionVerb();
     static void trailingAnnotationOutput_strippedButRealAnnotationsKept();
     static void inputNamesInRequest_skipsNamesBeingCreated();
+    static void existingEntityNames_skipNameTheRequestCreatesElsewhere();
+    static void deliverables_chi2AsCriterionIsNoReport();
+    static void splitPlanUnrequestedActions_smallerChi2IsAComparison();
+    static void splitPlanMissingActions_fitFunctionToTableIsAFit();
     static void trailingOutputLines_strippedButCodeKept();
     static void knownMistakes_scanGroupsAfterSetFunctionNameIsCaught();
     static void direction3_quotedTableAndGraphNamesDoNotCountAsFunctionNames();

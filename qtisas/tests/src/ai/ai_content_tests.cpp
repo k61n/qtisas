@@ -358,6 +358,20 @@ void AiContentTests::inputNamesInRequest_skipsNamesBeingCreated()
     QVERIFY(inputNamesInRequest("Create a table \"T\" with 3 rows.").isEmpty());
 }
 
+void AiContentTests::existingEntityNames_skipNameTheRequestCreatesElsewhere()
+{
+    // Confirmed live (benchmark LIST 5, item 5): "Auto" is created by the tab's script, then asked about — the item
+    // was stopped as referring to a missing "Auto"
+    const QString request = R"(Create a note "Pipeline" with two tabs named "make" and "check" (the first tab renamed )"
+                            R"(too). The "make" tab holds a script that creates a table "Auto" with 5 rows. Run only )"
+                            R"(the "make" tab. Print the number of tabs and whether table "Auto" exists.)";
+    for (const QPair<QString, QString> &entry : extractExistingEntityNames(request))
+        QVERIFY2(entry.first != "Auto", "a name the request creates is no existing input");
+    QVERIFY(!inputNamesInRequest(request).contains("Auto"));
+    // a name only read stays an input
+    QCOMPARE(inputNamesInRequest(R"(Print whether table "Auto" exists.)"), QStringList({"Auto"}));
+}
+
 void AiContentTests::trailingOutputLines_strippedButCodeKept()
 {
     // Confirmed live: the model wrote the expected output after the script, which then did not compile.
@@ -381,6 +395,49 @@ void AiContentTests::deliverables_flagsDeletionThatNeverHappens()
     QVERIFY(content.missingRequestedDeliverables("closeWindow(table(\"T\"))\n", "Remove the table \"T\".").isEmpty());
     // no object noun after it: nothing to call
     QVERIFY(content.missingRequestedDeliverables("y = smooth(x)\n", "Remove the noise from column y.").isEmpty());
+}
+
+void AiContentTests::deliverables_chi2AsCriterionIsNoReport()
+{
+    // Confirmed live (benchmark LIST 5, item 2): "the function with the smaller chi2/dof" chooses by it; the correct
+    // script was blocked twice for "never printing chi2"
+    QtiSasAiContent content;
+    const QString code = "best = min(results, key=lambda n: results[n][0])\nscriptPrint(\"R2:\", best, a, w)\n";
+    QVERIFY(content
+                .missingRequestedDeliverables(
+                    code, "Fit both. Print the name of the function with the smaller chi2/dof, then its A and w.")
+                .isEmpty());
+    QVERIFY(content.missingRequestedDeliverables(code, "Fit it and report chi2/dof.").contains("chi2"));
+    // a split part's own wording of the same task
+    QVERIFY(content
+                .missingRequestedDeliverables(
+                    code, "Fit both to \"Peak5\"; compare chi2/dof, then print the name of the function with the "
+                          "smaller chi2/dof.")
+                .isEmpty());
+}
+
+void AiContentTests::splitPlanUnrequestedActions_smallerChi2IsAComparison()
+{
+    // Confirmed live (benchmark LIST 5, item 2): a part comparing chi2/dof was flagged as never requested
+    const QString request = "Fit both to \"Peak5\". Print the name of the function with the smaller chi2/dof.";
+    QList<AiAssistant::SplitPart> plan;
+    plan << AiAssistant::SplitPart{"fit both functions to table 'Peak5', compare chi2/dof and print the winner", {}};
+    QVERIFY(splitPlanUnrequestedActions(request, plan).isEmpty());
+    // a comparison the request never asked for is still flagged
+    QCOMPARE(splitPlanUnrequestedActions("Fit \"ai/G\" to table \"Peak5\".", plan), QList<int>({0}));
+}
+
+void AiContentTests::splitPlanMissingActions_fitFunctionToTableIsAFit()
+{
+    // Confirmed live (benchmark LIST 5, item 1): "Fit function \"ai/Quad\" to table ..." was reported as no fit
+    const QString request = R"(Compile a new fit function "ai/Quad" and fit it to "Calib".)";
+    QList<AiAssistant::SplitPart> plan;
+    plan << AiAssistant::SplitPart{"Compile new fit function \"ai/Quad\" for y = a*x^2 + b*x + c", {}};
+    plan << AiAssistant::SplitPart{R"(Fit function "ai/Quad" to table "Calib" weighted by dy)", {}};
+    QVERIFY(!splitPlanMissingRequestedActions(request, plan).contains("fit"));
+    // compiling a fit function alone is still no fit
+    plan.removeLast();
+    QVERIFY(splitPlanMissingRequestedActions(request, plan).contains("fit"));
 }
 
 void AiContentTests::deliverables_flagsMissingResidualsAndFitCurve()
