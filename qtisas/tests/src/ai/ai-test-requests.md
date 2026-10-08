@@ -242,32 +242,32 @@ the "Item n:" prefixes.
 
 ```
 LIST
-Use exactly the object names given. End the item by printing exactly ONE line: "R", the item number, a colon, then only the values asked for, in the order asked, separated by spaces (e.g. "R1: 385").
-1. Create a table "Squares" with 10 rows and 4 columns; fill column 1 with 1, 2, ..., 10. Give column 2 a column formula that squares column 1 and recalculate it in the default scripting language. Print the sum of column 2.
-2. In "Squares", give column 3 a formula for the cube of column 1 written in muParser syntax with ^, and recalculate it with muParser explicitly. Print the sum of column 3.
-3. In "Squares", give column 4 the formula 1/(column 1 - 5) and recalculate it. Print the number of empty cells in column 4 and the name of the Python error the failure reported.
-4. Make column 2 of "Squares" read-only, set its formula to 10 times column 1 and try to recalculate it. Print whether the recalculation raised an error and the sum of column 2 afterwards. Make the column writable again.
-5. Create a table "Format" with 3 rows and 1 column holding 1234.5, 0.25 and -3. Switch its decimal separators to German (comma), without group separators, and read the three cells as displayed text. Then write the text "2,5" into row 2 and read the number that cell now holds. Print the three texts read first, then that number.
-6. Create a 4x4 matrix "Prod" and fill it with the formula i*j. Print the sum of all cells, the value in row 2, column 3, and the determinant rounded to 6 decimals.
-7. Compile a new fit function "ai/RefLine" for y = a*x + b with both parameters adjustable. Create a table "LineData" with 20 rows: x = 1..20, y = 2x + 1, dy = 0.1 (roles X, Y, yErr). Fit "ai/RefLine" to it with Levenberg-Marquardt, weighted by dy. Print a and b with 4 decimals.
-8. Compile a new fit function "ai/RefDecay" for y = A*exp(-k*x) + c with all three parameters adjustable. Create a table "DecayData" with 101 rows: x = 0, 0.1, ..., 10, y = 3*exp(-0.5*x) + 0.2, dy = 0.01 (roles X, Y, yErr). Fit it starting from A = 1, k = 1, c = 0. Print A, k and c with 4 decimals.
-9. Create a graph "DecayPlot" with two stacked layers: the top one with the "DecayData" points and the fitted curve from table "fitCurve-ai/RefDecay", the bottom one with that table's residuals. Print the number of layers, the number of curves in the top and in the bottom layer, and whether the largest absolute residual is below 1e-4.
-10. Create a note "Report" whose first tab contains print('A') and a second tab named "Calc" containing print(6*7). Do not run them. Print the number of tabs and the text of the "Calc" tab.
-11. In "Squares", change the formula of column 2 to 2 to the power of column 1 and recalculate it in the default scripting language. Print the sum of column 2.
-12. Delete the fit functions "ai/RefLine" and "ai/RefDecay" from the library. Then print which of these two names still exist (a list, [] if none).
+Use exactly the object names given. End the item by printing exactly ONE line: the result label the item gives, then only the values asked for, in the order asked, separated by spaces.
+1. Create a table "Squares" with 10 rows and 4 columns; fill column 1 with 1, 2, ..., 10. Give column 2 a column formula that squares column 1 and recalculate it in the default scripting language. Print the sum of column 2. The result label is "R1:".
+2. In "Squares", give column 3 a formula for the cube of column 1 written in muParser syntax with ^, and recalculate it with muParser explicitly. Print the sum of column 3. The result label is "R2:".
+3. In "Squares", give column 4 the formula 1/(column 1 - 5) and recalculate it. Print the number of empty cells in column 4 and the name of the Python error the formula caused. The result label is "R3:".
+4. Make column 2 of "Squares" read-only, set its formula to 10 times column 1 and try to recalculate it. Print whether the recalculation raised an error and the sum of column 2 afterwards. Make the column writable again. The result label is "R4:".
+5. Create a table "Format" with 3 rows and 1 column holding 1234.5, 0.25 and -3. Switch its decimal separators to German (comma), without group separators, and read the three cells as displayed text. Then write the text "2,5" into row 2 and read the number that cell now holds. Print the three texts read first, then that number. The result label is "R5:".
+6. Create a 4x4 matrix "Prod" and fill it with the formula i*j. Print the sum of all cells, the value in row 2, column 3, and the determinant rounded to 6 decimals. The result label is "R6:".
+7. Compile a new fit function "ai/RefLine" for y = a*x + b with both parameters adjustable. Create a table "LineData" with 20 rows: x = 1..20, y = 2x + 1, dy = 0.1 (roles X, Y, yErr). Fit "ai/RefLine" to it with Levenberg-Marquardt, weighted by dy. Print a and b with 4 decimals. The result label is "R7:".
+8. Compile a new fit function "ai/RefDecay" for y = A*exp(-k*x) + c with all three parameters adjustable. Create a table "DecayData" with 101 rows: x = 0, 0.1, ..., 10, y = 3*exp(-0.5*x) + 0.2, dy = 0.01 (roles X, Y, yErr). Fit it starting from A = 1, k = 1, c = 0. Print A, k and c with 4 decimals. The result label is "R8:".
+9. Create a graph "DecayPlot" with two stacked layers: the top one with the "DecayData" points and the fitted curve from table "fitCurve-ai/RefDecay", the bottom one with that table's residuals. Print the number of layers, the number of curves in the top and in the bottom layer, and whether the largest absolute residual is below 1e-4. The result label is "R9:".
+10. Create a note "Report" whose first tab contains print('A') and a second tab named "Calc" containing print(6*7). Do not run them. Print the number of tabs and the text of the "Calc" tab. The result label is "R10:".
+11. In "Squares", change the formula of column 2 to 2 to the power of column 1 and recalculate it in the default scripting language. Print the sum of column 2. The result label is "R11:".
+12. Delete the fit functions "ai/RefLine" and "ai/RefDecay" from the library. Then print which of these two names still exist (a list, [] if none). The result label is "R12:".
 ```
 
 **LIST 4:**
 
 ```
 LIST
-Use exactly the object names given. End the item by printing exactly ONE line: "R", the item number, a colon, then only the values asked for, in the order asked, separated by spaces (e.g. "R1: 385").
-1. Create a note "Steps" with three tabs named "A", "B" and "C" (the first tab renamed too); each tab contains print() of its own name, e.g. print('A'). Do not run them. Print the number of tabs, the text of tab "C" and the text of tab "A".
-2. Compile a new fit function "ai/RefGauss" for y = A*exp(-(x-x0)^2/(2*s^2)) + c with all four parameters adjustable. Create a table "Peak" with 41 rows: x = -2, -1.9, ..., 2 and y = 5*exp(-x^2/0.18) + 1 (roles X, Y). Fit it starting from A = 1, x0 = 0.5, s = 1, c = 0. Print A, x0, s as a positive number, and c, each with 4 decimals.
-3. Create a matrix "Grid" with 3 rows and 4 columns and fill it with the formula i+10*j. Print the value in row 3, column 4, and the sum of row 3.
-4. In table "Peak", add a column named "y2" with a column formula that is 2 times the y column, recalculate it, and print the sum of "y2" with 4 decimals.
-5. Create a table "Names" with 3 rows and 2 columns: column 1 holds 1, 2, 3 and column 2, in text format, holds "alpha", "beta", "gamma". Print the text in row 2 of column 2 and the number in row 3 of column 1.
-6. Close and delete the table "Names" and the matrix "Grid". Print whether each still exists afterwards, table first.
+Use exactly the object names given. End the item by printing exactly ONE line: the result label the item gives, then only the values asked for, in the order asked, separated by spaces.
+1. Create a note "Steps" with three tabs named "A", "B" and "C" (the first tab renamed too); each tab contains print() of its own name, e.g. print('A'). Do not run them. Print the number of tabs, the text of tab "C" and the text of tab "A". The result label is "R1:".
+2. Compile a new fit function "ai/RefGauss" for y = A*exp(-(x-x0)^2/(2*s^2)) + c with all four parameters adjustable. Create a table "Peak" with 41 rows: x = -2, -1.9, ..., 2 and y = 5*exp(-x^2/0.18) + 1 (roles X, Y). Fit it starting from A = 1, x0 = 0.5, s = 1, c = 0. Print A, x0, s as a positive number, and c, each with 4 decimals. The result label is "R2:".
+3. Create a matrix "Grid" with 3 rows and 4 columns and fill it with the formula i+10*j. Print the value in row 3, column 4, and the sum of row 3. The result label is "R3:".
+4. In table "Peak", add a column named "y2" with a column formula that is 2 times the y column, recalculate it, and print the sum of "y2" with 4 decimals. The result label is "R4:".
+5. Create a table "Names" with 3 rows and 2 columns: column 1 holds 1, 2, 3 and column 2, in text format, holds "alpha", "beta", "gamma". Print the text in row 2 of column 2 and the number in row 3 of column 1. The result label is "R5:".
+6. Close and delete the table "Names" and the matrix "Grid". Print whether each still exists afterwards, table first. The result label is "R6:".
 ```
 
 # Part 3 — Conversations
