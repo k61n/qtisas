@@ -112,6 +112,7 @@ class AiContentTests : public QObject
     static void direction10_allowsNoExistingLookupAtAll();
     static void direction11_blocksGraphWindowLookupOnGraph3DName();
     static void direction11_blocksGraphWindowLookupOnNewPlot3DName();
+    static void direction11_blocksExistGraphOnNewPlot3DName();
     static void direction11_allowsPlot3DLookupOnGraph3DName();
     static void direction11_allowsGraphWindowLookupOnUnrelatedName();
     static void direction12_blocksMissingPlotCall();
@@ -158,6 +159,7 @@ class AiContentTests : public QObject
     static void yNameRepair_retargetsRenamedDeclaration();
     static void yNameRepair_refusesWithSeveralDeclarations();
     static void yNameRepair_leavesCorrectBodyAlone();
+    static void yNameRepair_renamesMisnamedAssignment();
     static void paramCountRepair_correctsCountToAgreedListLength();
     static void paramCountRepair_leavesConsistentCountAlone();
     static void paramCountRepair_refusesWhenListsDisagree();
@@ -234,6 +236,19 @@ class AiContentTests : public QObject
     static void selfShadowRepair_removesSelfReferentialDeclarations();
     static void hardcodedResultLine_blocksFixedText();
     static void repeatedResultLabel_blocksSeveralTopLevelPrints();
+    static void resultLineDuty_extractsPrintThroughLabel();
+    static void nonFinalResultLine_removesFixedTextOnly();
+    static void redundantReconfigure_allowsFullReSetup();
+    static void noteTabIndex_repairsTabZero();
+    static void scriptPrintKeyword_blocksEndAndSep();
+    static void currentEditorAfterAddTab_blocksRunningNewTab();
+    static void rootFolderDeletion_blocksDeletingTheProject();
+    static void labeledResultLine_blocksLabelsBetweenValues();
+    static void inventedDeletionCall_hintsTheRealCall();
+    static void matrixIndexFormula_blocksIndicesForXyFormula();
+    static void newNoteExtraTab_blocksOneTabTooMany();
+    static void earlierPartVariable_blocksUnassignedName();
+    static void mergeSplitPlanPartsBackward_mergesGivenParts();
     static void userCorrection_parsesUrgentPrefix();
     static void userCorrection_blockListsEveryCorrection();
     static void requestedCreation_blocksTableNeverCreated();

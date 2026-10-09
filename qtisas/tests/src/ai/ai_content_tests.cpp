@@ -994,6 +994,17 @@ void AiContentTests::direction11_blocksGraphWindowLookupOnNewPlot3DName()
     QVERIFY(!violation.isEmpty());
 }
 
+void AiContentTests::direction11_blocksExistGraphOnNewPlot3DName()
+{
+    // benchmark LIST 5, item 4 (twice): existGraph("Saddle3D") right after newPlot3D("Saddle3D", m) printed False
+    QtiSasAiContent content;
+    const QString code =
+        "g3 = newPlot3D(\"Saddle3D\", m, Qti3D.FILLEDMESH)\nscriptPrint(\"R4:\", existGraph(\"Saddle3D\"))\n";
+    const QString violation =
+        content.splitPartScopeViolation(code, "plot 'Saddle' as a 3D surface 'Saddle3D'", QString());
+    QVERIFY(violation.contains("existPlot3D(\"Saddle3D\")"));
+}
+
 void AiContentTests::direction11_allowsPlot3DLookupOnGraph3DName()
 {
     QtiSasAiContent content;
@@ -1479,6 +1490,26 @@ void AiContentTests::yNameRepair_leavesCorrectBodyAlone()
     const QString code = "c.setYName(\"I\")\n"
                          "c.setCode(\"\"\"\n  double V = 2.0;\n  I = scale * V;\n\"\"\")\n";
     QVERIFY(content.compilerYNameAssignmentRepair(code).isEmpty());
+}
+
+void AiContentTests::yNameRepair_renamesMisnamedAssignment()
+{
+    // LIST 5, items 1 and 2: setYName("y") with "I = ...;" (I is the default yName) — blocked, a round each time.
+    QtiSasAiContent content;
+    const QString head = "c.setYName(\"y\")\nc.setXName(\"x\")\nc.setParamNamesAll([\"A\", \"k\", \"c\"])\n";
+    QString repaired = content.compilerYNameAssignmentRepair(head + "c.setCode(\"I = A*x*x + k*x + c;\")\n");
+    QVERIFY(repaired.contains("setCode(\"y = A*x*x + k*x + c;\")"));
+    QVERIFY(QtiSasAiContent::compilerYNameNeverAssignedMistake(repaired).isEmpty());
+    // with a helper local read twice: the declaration repair refuses, the rename does it
+    repaired = content.compilerYNameAssignmentRepair(
+        head + "c.setCode(\"\"\"\n  double e = exp(-k * x);\n  I = A * e + c * e;\n\"\"\")\n");
+    QVERIFY(repaired.contains("  y = A * e + c * e;"));
+    QVERIFY(repaired.contains("double e = exp(-k * x);"));
+    // a parameter assigned is no misnamed result, and two candidates are a guess
+    QVERIFY(content.compilerYNameAssignmentRepair(head + "c.setCode(\"A = 2.0;\")\n").isEmpty());
+    QVERIFY(content.compilerYNameAssignmentRepair(head + "c.setCode(\"I = A; J = k;\")\n").isEmpty());
+    // a name also read later is more than a misnamed result
+    QVERIFY(content.compilerYNameAssignmentRepair(head + "c.setCode(\"t = A*x; t2 = t;\")\n").isEmpty());
 }
 
 void AiContentTests::paramCountRepair_correctsCountToAgreedListLength()
@@ -2084,20 +2115,6 @@ void AiContentTests::reuseInsteadOfCompile_allowsFitOnlyRequestWithNoCompileWord
     QVERIFY(QtiSasAiContent::reuseInsteadOfCompileMistake(code, request, QString()).isEmpty());
 }
 
-void AiContentTests::reuseInsteadOfCompile_allowsSplitModePartReusingEarlierPartsCompile()
-{
-    // Split-mode: an EARLIER part already compiled the function; THIS part correctly just fits it.
-    // originalRequestText is the WHOLE multi-part request and still says "compile" regardless of
-    // which part does it — must not block a later part for correctly not repeating that work.
-    const QString request = "Compile a custom Gaussian peak fit function and fit it with weighted errors.";
-    const QString code = "f = Fittable\n"
-                         "f.configure(\"ai/GaussPeak\", [\"GaussPeak_y\"])\n"
-                         "chi2 = f.fit()\n";
-    const QString earlierPartsCode = "c = Compiler\nc.new()\nc.setFunctionName(\"ai/GaussPeak\")\n"
-                                     "c.setGroup(\"custom:peak\")\nc.setCode(\"...\")\nok = c.compile()\n";
-    QVERIFY(QtiSasAiContent::reuseInsteadOfCompileMistake(code, request, earlierPartsCode).isEmpty());
-}
-
 void AiContentTests::aiSandboxReopen_blocksReopeningLeftoverForCompileRequest()
 {
     // Benchmark LIST 3, item 8: the leftover ai/RefDecay was reopened and recompiled instead of defined as asked.
@@ -2199,6 +2216,202 @@ void AiContentTests::repeatedResultLabel_blocksSeveralTopLevelPrints()
                 .isEmpty());
 }
 
+void AiContentTests::resultLineDuty_extractsPrintThroughLabel()
+{
+    QtiSasAiContent content;
+    const QString item =
+        "Item 4: Create a 21x21 matrix \"Saddle\" spanning x and y from -1 to 1 and fill it with x*x - y*y. Plot it as "
+        "a 3D surface in a window named \"Saddle3D\". Print the value at the centre of the matrix (row 11, column 11), "
+        "the smallest and the largest value of all cells, and whether a 3D window \"Saddle3D\" exists. The result "
+        "label is \"R4:\".\n\nInstruction for every item of this list: Use exactly the object names given.";
+    const QString duty = content.resultLineDuty(item);
+    QVERIFY(duty.startsWith("Print the value at the centre of the matrix (row 11, column 11)"));
+    QVERIFY(duty.endsWith("The result label is \"R4:\"."));
+    QCOMPARE(content.resultLabel(duty), QString("R4:"));
+    // several "Print" sentences: the last one before the label
+    QVERIFY(content.resultLineDuty("Print a. Then fit. Print b and c. The result label is \"R1:\".")
+                .startsWith("Print b and c."));
+    QVERIFY(content.resultLineDuty("Print a and b.").isEmpty());
+    QVERIFY(content.resultLineDuty("Show a. The result label is \"R1:\".").isEmpty());
+}
+
+void AiContentTests::nonFinalResultLine_removesFixedTextOnly()
+{
+    // LIST 5, item 4: part 1 of 2 printed "R4: done". Item 3: a block of an earlier part's computed line was sent back
+    // unchanged twice and the item given up — so the fixed-text line is removed, a computed one stays.
+    QtiSasAiContent content;
+    const QString request = "Make a matrix and plot it. Print its centre. The result label is \"R4:\".";
+    const QString code = "m = newMatrix(\"Saddle\", 21, 21)\nif m:\n    scriptPrint(\"R4: done\")\n";
+    QCOMPARE(content.nonFinalResultLineRepair(code, request, false),
+             QString("m = newMatrix(\"Saddle\", 21, 21)\nif m:\n    pass\n"));
+    QVERIFY(content.nonFinalResultLineRepair("scriptPrint(\"R4:\", m.cell(11, 11))\n", request, false).isEmpty());
+    QVERIFY(content.nonFinalResultLineRepair("scriptPrint(f\"R4: {v}\")\n", request, false).isEmpty());
+    QVERIFY(content.nonFinalResultLineRepair("scriptPrint(\"R4: done\")\n", "Print it.", false).isEmpty());
+    // a self-review's computed line in an earlier part goes too (LIST 5, item 6), the rest of its script stays
+    QCOMPARE(content.nonFinalResultLineRepair("closeWindow(t)\nscriptPrint(f\"R4: {a} {b}\")\n", request, true),
+             QString("closeWindow(t)\npass\n"));
+    // in the last part (no later parts) the fixed-text check still blocks
+    QStringList headers;
+    for (const AiKnownMistakeMatch &m : content.detectKnownMistakes("scriptPrint(\"R4: done\")\n", request, QString()))
+        headers << m.header;
+    QVERIFY(headers.contains("the result line is fixed text, not computed"));
+    headers.clear();
+    for (const AiKnownMistakeMatch &m :
+         content.detectKnownMistakes("scriptPrint(\"R4: done\")\n", request, QString(), "plot it as 3D"))
+        headers << m.header;
+    QVERIFY(!headers.contains("the result line is fixed text, not computed"));
+}
+
+void AiContentTests::redundantReconfigure_allowsFullReSetup()
+{
+    // LIST 5, item 1: part 4 re-did configure, start values, weighting and fit — blocked twice, item given up.
+    const QString earlier = "f = Fittable\nf.configure(\"ai/Quad\", [\"Calib_y\"])\nf.setParamValue(\"a\", 1)\n"
+                            "f.setWeightingEnabled(1, True)\nf.setWeightingDataset(1, \"Calib_dy\")\nf.fit()\n";
+    const QString full = "f.configure(\"ai/Quad\", [\"Calib_y\"])\nf.setParamValue(\"a\", 1)\n"
+                         "f.setWeightingEnabled(1, True)\nf.setWeightingDataset(1, \"Calib_dy\")\nf.fit()\n";
+    QVERIFY(QtiSasAiContent::redundantFittableReconfigureMistake(full, earlier).isEmpty());
+    // the weighting dropped: still blocked
+    QVERIFY(!QtiSasAiContent::redundantFittableReconfigureMistake(
+                 "f.configure(\"ai/Quad\", [\"Calib_y\"])\nf.setParamValue(\"a\", 1)\nf.fit()\n", earlier)
+                 .isEmpty());
+}
+
+void AiContentTests::noteTabIndex_repairsTabZero()
+{
+    // LIST 5, item 5: n.tab(0).execute() twice — tab() is 1-based, tab(0) is None.
+    QtiSasAiContent content;
+    QCOMPARE(content.noteTabIndexRepair("n.tab(0).execute()\nm.tab( 0 ).setText(s)\n"),
+             QString("n.tab(1).execute()\nm.tab( 1 ).setText(s)\n"));
+    QVERIFY(content.noteTabIndexRepair("n.tab(1).execute()\nn.editorAt(0).execute()\nn.tab(10)\n").isEmpty());
+}
+
+void AiContentTests::scriptPrintKeyword_blocksEndAndSep()
+{
+    // LIST 5, item 5: scriptPrint("R5:", n.tabs(), existTable("Auto"), end=" ") — TypeError.
+    const QString split = "scriptPrint(\"R5:\", n.tabs(), existTable(\"Auto\"), end=\" \")\n";
+    QVERIFY(!QtiSasAiContent::scriptPrintKeywordMistake(split).isEmpty());
+    QVERIFY(!QtiSasAiContent::scriptPrintKeywordMistake("scriptPrint(a, b, sep=\",\")\n").isEmpty());
+    QVERIFY(QtiSasAiContent::scriptPrintKeywordMistake("scriptPrint(\"R5:\", n.tabs(), ok, total)\n").isEmpty());
+    QVERIFY(QtiSasAiContent::scriptPrintKeywordMistake("print(a, end=\" \")\nscriptPrint(b)\n").isEmpty());
+}
+
+void AiContentTests::currentEditorAfterAddTab_blocksRunningNewTab()
+{
+    // LIST 5, item 5: "Run only the make tab" — addTab() then currentEditor().execute() ran the "check" tab.
+    const QString code = "n = newNote(\"Pipeline\")\nn.renameTab(0, \"make\")\nn.addTab()\nn.renameTab(1, \"check\")\n"
+                         "n.currentEditor().execute()\n";
+    QVERIFY(!QtiSasAiContent::currentEditorAfterAddTabMistake(code).isEmpty());
+    QVERIFY(QtiSasAiContent::currentEditorAfterAddTabMistake("n.addTab()\nn.tab(\"make\").execute()\n").isEmpty());
+    QVERIFY(QtiSasAiContent::currentEditorAfterAddTabMistake("n.currentEditor().execute()\nn.addTab()\n").isEmpty());
+}
+
+void AiContentTests::matrixIndexFormula_blocksIndicesForXyFormula()
+{
+    // benchmark LIST 5, item 4: setFormula("i*i-j*j") for "fill it with x*x - y*y" — values -440 to 440
+    const QString request =
+        "Create a 21x21 matrix \"Saddle\" spanning x and y from -1 to 1 and fill it with x*x - y*y.";
+    const QString code =
+        "m = newMatrix(\"Saddle\", 21, 21)\nm.setCoordinates(-1, 1, -1, 1)\nm.setFormula(\"i*i-j*j\")\n";
+    QVERIFY(!QtiSasAiContent::matrixIndexFormulaMistake(code, request).isEmpty());
+    QString right = code;
+    right.replace("i*i-j*j", "x*x - y*y");
+    QVERIFY(QtiSasAiContent::matrixIndexFormulaMistake(right, request).isEmpty());
+    // a request in indices is fine with indices
+    QVERIFY(QtiSasAiContent::matrixIndexFormulaMistake(code, "Fill matrix M with the formula i+10*j.").isEmpty());
+}
+
+void AiContentTests::newNoteExtraTab_blocksOneTabTooMany()
+{
+    // benchmark LIST 5, item 5: "two tabs" got newNote() and addTab() twice — 3 tabs
+    const QString request = R"(Create a note "Pipeline" with two tabs named "make" and "check".)";
+    const QString twice = "n = newNote(\"Pipeline\")\nn.addTab()\nn.renameTab(0, \"make\")\nn.addTab()\n"
+                          "n.renameTab(1, \"check\")\n";
+    QVERIFY(QtiSasAiContent::newNoteExtraTabMistake(twice, request).contains("ends with 3"));
+    const QString once = "n = newNote(\"Pipeline\")\nn.renameTab(0, \"make\")\nn.addTab()\nn.renameTab(1, \"check\")\n";
+    QVERIFY(QtiSasAiContent::newNoteExtraTabMistake(once, request).isEmpty());
+    // an existing note: its tab count is unknown here
+    QVERIFY(
+        QtiSasAiContent::newNoteExtraTabMistake("n = note(\"Pipeline\")\nn.addTab()\nn.addTab()\n", request).isEmpty());
+}
+
+void AiContentTests::labeledResultLine_blocksLabelsBetweenValues()
+{
+    // benchmark LIST 5, item 6: "R6: [] Peak5:missing Pipeline:missing" and "R6: [] Table 'Peak5' exists: False ..."
+    const QString request = "Print which names still exist, then whether \"Peak5\" exists. The result label is "
+                            "\"R6:\".";
+    QVERIFY(!QtiSasAiContent::labeledResultLineMistake("scriptPrint(f\"R6: {left} Peak5:{p} Pipeline:{q}\")\n", request)
+                 .isEmpty());
+    QVERIFY(
+        QtiSasAiContent::labeledResultLineMistake("scriptPrint(f\"R6: {left} Table 'Peak5' exists: {p}\")\n", request)
+            .contains("exists:"));
+    QVERIFY(
+        !QtiSasAiContent::labeledResultLineMistake("scriptPrint(\"R6:\", left, \"Peak5=\", p)\n", request).isEmpty());
+    // values only: fine, also with format specs and a literal value
+    QVERIFY(QtiSasAiContent::labeledResultLineMistake("scriptPrint(f\"R6: {left} {p:.4f} {q}\")\n", request).isEmpty());
+    QVERIFY(QtiSasAiContent::labeledResultLineMistake("scriptPrint(\"R6:\", left, p, q)\n", request).isEmpty());
+    QVERIFY(QtiSasAiContent::labeledResultLineMistake("scriptPrint(\"R6:\", \"ai/Lor5\", a)\n", request).isEmpty());
+    // other prints are not the result line
+    QVERIFY(QtiSasAiContent::labeledResultLineMistake("scriptPrint(f\"Peak5 exists: {p}\")\n", request).isEmpty());
+}
+
+void AiContentTests::inventedDeletionCall_hintsTheRealCall()
+{
+    // benchmark LIST 5, item 6: deleteTable, deleteWindow, closeTable, deleteFunction, removeFitFunction
+    QVERIFY(QtiSasAiContent::inventedDeletionCallHint("NameError: name 'deleteTable' is not defined")
+                .contains("closeWindow(w)"));
+    QVERIFY(QtiSasAiContent::inventedDeletionCallHint("NameError: name 'closeTable' is not defined")
+                .contains("closeWindow(w)"));
+    QVERIFY(QtiSasAiContent::inventedDeletionCallHint("NameError: name 'deleteFunction' is not defined")
+                .contains("Compiler.delete("));
+    QVERIFY(QtiSasAiContent::inventedDeletionCallHint(
+                "AttributeError: 'fittable18' object has no attribute 'removeFitFunction'")
+                .contains("Compiler.delete("));
+    QVERIFY(QtiSasAiContent::inventedDeletionCallHint("NameError: name 'fitFunctions' is not defined").isEmpty());
+    QtiSasAiContent content;
+    QVERIFY(content.retryHintForError("NameError: name 'deleteWindow' is not defined").contains("closeWindow"));
+}
+
+void AiContentTests::rootFolderDeletion_blocksDeletingTheProject()
+{
+    // LIST 5, item 6, twice: closeWindow() then deleteFolder(rootFolder()) to "delete" the windows.
+    QVERIFY(!QtiSasAiContent::rootFolderDeletionMistake("closeWindow(t)\ndeleteFolder(rootFolder())\n").isEmpty());
+    QVERIFY(!QtiSasAiContent::rootFolderDeletionMistake("app.deleteFolder( app.projectFolder() )\n").isEmpty());
+    QVERIFY(QtiSasAiContent::rootFolderDeletionMistake("deleteFolder(f)\n").isEmpty());
+}
+
+void AiContentTests::earlierPartVariable_blocksUnassignedName()
+{
+    // LIST 5, item 4: part 2 used part 1's "m" — NameError.
+    const QString earlier = "m = newMatrix(\"Saddle\", 21, 21)\nm.calculate()\nc = Compiler\n";
+    const QString used = "scriptPrint(\"R4:\", m.cell(11, 11), m.min(), m.max())\n";
+    const QString explanation = QtiSasAiContent::earlierPartVariableMistake(used, earlier);
+    QVERIFY(explanation.contains("m = matrix(\"Saddle\")"));
+    QVERIFY(QtiSasAiContent::earlierPartVariableMistake("m = matrix(\"Saddle\")\n" + used, earlier).isEmpty());
+    QVERIFY(QtiSasAiContent::earlierPartVariableMistake("for m in ms:\n    m.calculate()\n", earlier).isEmpty());
+    QVERIFY(QtiSasAiContent::earlierPartVariableMistake(used, QString()).isEmpty());
+    // a plain alias is repeated as it was
+    QVERIFY(QtiSasAiContent::earlierPartVariableMistake("c.delete(\"ai/Quad\")\n", earlier).contains("c = Compiler"));
+    // only an attribute use counts; a name inside a string does not
+    QVERIFY(QtiSasAiContent::earlierPartVariableMistake("scriptPrint(\"m.cell is fine\")\n", earlier).isEmpty());
+}
+
+void AiContentTests::mergeSplitPlanPartsBackward_mergesGivenParts()
+{
+    // LIST 5, item 4: "Part 2 needs no DOCS topic beyond Part 1 — merge them", unchanged for 2 rounds.
+    AiAssistant::SplitPart make, print;
+    make.description = "create a 21x21 matrix 'Saddle' and plot it as a 3D surface in window 'Saddle3D'";
+    make.docTopics = {"matrix", "graph3d"};
+    print.description = "Print center value, min and max, and whether 'Saddle3D' exists";
+    print.docTopics = {"graph3d"};
+    QList<AiAssistant::SplitPart> plan{make, print};
+    QCOMPARE(splitPlanAdjacentSameDocs(plan), QList<int>{1});
+    QStringList merged;
+    mergeSplitPlanPartsBackward(plan, splitPlanAdjacentSameDocs(plan), &merged);
+    QCOMPARE(plan.size(), 1);
+    QVERIFY(plan[0].description.endsWith(", then print center value, min and max, and whether 'Saddle3D' exists"));
+    QCOMPARE(plan[0].docTopics, (QStringList{"matrix", "graph3d"}));
+}
+
 void AiContentTests::userCorrection_parsesUrgentPrefix()
 {
     bool now = true;
@@ -2216,6 +2429,20 @@ void AiContentTests::userCorrection_blockListsEveryCorrection()
     QVERIFY(block.contains("Correction from the user while this request runs"));
     QVERIFY(block.contains("the correction wins"));
     QVERIFY(block.contains("\n- use table B\n- do not plot"));
+}
+
+void AiContentTests::reuseInsteadOfCompile_allowsSplitModePartReusingEarlierPartsCompile()
+{
+    // Split-mode: an EARLIER part already compiled the function; THIS part correctly just fits it.
+    // originalRequestText is the WHOLE multi-part request and still says "compile" regardless of
+    // which part does it — must not block a later part for correctly not repeating that work.
+    const QString request = "Compile a custom Gaussian peak fit function and fit it with weighted errors.";
+    const QString code = "f = Fittable\n"
+                         "f.configure(\"ai/GaussPeak\", [\"GaussPeak_y\"])\n"
+                         "chi2 = f.fit()\n";
+    const QString earlierPartsCode = "c = Compiler\nc.new()\nc.setFunctionName(\"ai/GaussPeak\")\n"
+                                     "c.setGroup(\"custom:peak\")\nc.setCode(\"...\")\nok = c.compile()\n";
+    QVERIFY(QtiSasAiContent::reuseInsteadOfCompileMistake(code, request, earlierPartsCode).isEmpty());
 }
 
 void AiContentTests::requestedCreation_blocksTableNeverCreated()
