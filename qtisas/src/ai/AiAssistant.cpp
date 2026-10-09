@@ -66,6 +66,56 @@ QString AiAssistant::requestTimingLogPath()
     return sasPath + "ai/request-timing.log";
 }
 
+QString AiAssistant::correctionLogPath()
+{
+    return aiConfigBasePath() + "ai/corrections.log";
+}
+
+static void appendJsonLine(const QString &path, const QJsonObject &entry)
+{
+    QDir().mkpath(QFileInfo(path).absolutePath());
+    QFile f(path);
+    if (f.open(QIODevice::Append | QIODevice::Text))
+        f.write(QJsonDocument(entry).toJson(QJsonDocument::Compact) + "\n");
+}
+
+void AiAssistant::logCorrection(const QString &text, bool now) const
+{
+    const QString step = awaitingSelfReview                           ? "self-review"
+                         : awaitingSplitPlan                          ? "split plan"
+                         : awaitingSplitMerge                         ? "split merge"
+                         : awaitingExistenceCheckScript               ? "existence check"
+                         : m_busy                                     ? "generation"
+                         : (m_retryTimer && m_retryTimer->isActive()) ? "HTTP retry"
+                                                                      : "between steps";
+    QJsonObject entry{{"time", QDateTime::currentDateTime().toString(Qt::ISODate)},
+                      {"event", "correction"},
+                      {"text", text},
+                      {"now", now},
+                      {"model", m_model.isEmpty() ? m_baseUrl : m_model},
+                      {"request", withoutRequestSuffix(originalRequestText).left(600)},
+                      {"step", step},
+                      {"retries", autoContinueCount},
+                      {"last_script", m_history.isEmpty() ? QString() : m_history.last().second.left(3000)},
+                      {"last_error", lastRetryError.left(1500)}};
+    if (listModeActive)
+        entry["list_item"] = listItemIndex + 1;
+    if (splitModeActive)
+        entry["split_part"] = splitPartIndex + 1;
+    appendJsonLine(correctionLogPath(), entry);
+}
+
+void AiAssistant::logCorrectionOutcome(const QString &result, const QString &detail)
+{
+    if (!m_correctionOutcomePending)
+        return;
+    m_correctionOutcomePending = false;
+    appendJsonLine(correctionLogPath(), QJsonObject{{"time", QDateTime::currentDateTime().toString(Qt::ISODate)},
+                                                    {"event", "outcome"},
+                                                    {"result", result},
+                                                    {"detail", detail.left(1500)}});
+}
+
 void AiAssistant::logRequestTiming(QNetworkReply *reply) const
 {
     if (!reply)
@@ -3211,6 +3261,9 @@ void AiAssistant::startNextListItem()
     // it was asked for, and items 9-11 each re-ran the whole create+fit+plot pipeline. A dangling
     // reference costs one EXPLORE round; script-latching silently produces the wrong work.
     m_contextHistoryStart = m_history.size();
+    // A correction belongs to the item it was given for. Confirmed live (supervised LIST 3 run): a correction with code
+    // for item 6's matrix stayed in the prompts of items 7 and 9, and the local model wrote that matrix code there.
+    clearUserCorrections();
     // The same transport suffix askAi() appends to a single request: an item is one, and in generate-only mode the
     // suffix is what says nothing in this session has run.
     beginRequest(item.text + (m_content ? m_content->requestSuffix(autoRun) : QString()), autoRun, wantsSplit);
@@ -4304,7 +4357,7 @@ bool AiAssistant::maybeDispatchSelfReview(QString &code, bool &compilable, QStri
     // mistake.
     const bool isScopeRetryResult = awaitingSelfReviewScopeRetry;
     awaitingSelfReviewScopeRetry = false;
-    if (isSelfReviewResult && !isScopeRetryResult && splitModeActive && m_content)
+    if (isSelfReviewResult && !isScopeRetryResult && splitModeActive && m_content && m_userCorrections.isEmpty())
     {
         const QString earlierPartsCode = splitPartScripts.join("\n\n");
         const QString postViolation =
@@ -4629,15 +4682,16 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
             : (m_singlePartDescription.isEmpty()
                    ? withoutRequestSuffix(originalRequestText)
                    : withoutRequestSuffix(originalRequestText) + "\n" + m_singlePartDescription);
-    const QString scopeViolation = (compilable && m_content && !scopeDescription.isEmpty())
-                                       ? m_content->splitPartScopeViolation(
-                                             code, scopeDescription, splitPartScripts.join("\n\n"), !splitModeActive)
-                                       : QString();
+    // A correction typed during the run may contradict the request these two read: then they are skipped.
+    const bool checkScope = compilable && m_content && !scopeDescription.isEmpty() && m_userCorrections.isEmpty();
+    const QString scopeViolation =
+        checkScope ? m_content->splitPartScopeViolation(code, scopeDescription, splitPartScripts.join("\n\n"),
+                                                        !splitModeActive)
+                   : QString();
     // The under-delivery counterpart, checked against the same scopeDescription and reported in the
     // same round as the overreach one — see missingRequestedDeliverables()'s doc comment.
-    const QString missingDeliverables = (compilable && m_content && !scopeDescription.isEmpty())
-                                            ? m_content->missingRequestedDeliverables(code, scopeDescription)
-                                            : QString();
+    const QString missingDeliverables =
+        checkScope ? m_content->missingRequestedDeliverables(code, scopeDescription) : QString();
     // Unconditional (not gated on splitModeActive) — every pattern detectKnownMistakes() checks is
     // a genuine defect regardless of split mode (e.g. a Compiler setCode() self-shadow bug compiles
     // with no error, so nothing else in the pipeline would ever catch it before it silently
@@ -4750,6 +4804,7 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
             explanations << m.explanation;
         }
         m_host->print("▸▸▸ AI code (blocked — " + headers.join("; ") + "):\n\n" + code);
+        logCorrectionOutcome("blocked", headers.join("; "));
         // The reason, not only its header: confirmed live, a user saw "out of scope for this part" with no way to
         // tell which rule fired or why. The first sentence of each explanation is enough to recognize it.
         // The first sentence ends at the first ". " that is not a list marker: confirmed live, a cut at "1. " showed
@@ -4837,6 +4892,7 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
         // not result.output, since normal fit/print output (e.g. fit progress, Chi2/DoF) also
         // lands there via ApplicationWindow::scriptPrint(), which would make every successful
         // run look like a failure.
+        logCorrectionOutcome(result.error.isEmpty() ? "ran" : "failed", result.error);
         if (result.error.isEmpty())
         {
             // A genuine success breaks any chain of doc-retries that led here — see
@@ -5864,14 +5920,17 @@ QString AiAssistant::generatedScriptWarning(const QString &code) const
     // splitPartScripts is empty outside split mode, so earlierPartsCode passes through naturally.
     QStringList headers;
     QStringList explanations;
-    const QString missingDeliverables = m_content->missingRequestedDeliverables(code, scopeDescription);
+    const QString missingDeliverables =
+        m_userCorrections.isEmpty() ? m_content->missingRequestedDeliverables(code, scopeDescription) : QString();
     if (!missingDeliverables.isEmpty())
     {
         headers << "requested deliverable missing";
         explanations << missingDeliverables;
     }
-    const QString scopeViolation =
-        m_content->splitPartScopeViolation(code, scopeDescription, splitPartScripts.join("\n\n"), !splitModeActive);
+    const QString scopeViolation = m_userCorrections.isEmpty()
+                                       ? m_content->splitPartScopeViolation(
+                                             code, scopeDescription, splitPartScripts.join("\n\n"), !splitModeActive)
+                                       : QString();
     if (!scopeViolation.isEmpty())
     {
         headers << "out of scope";
@@ -6139,15 +6198,19 @@ void AiAssistant::ask(const QString &userText, bool includeDocs, const QString &
         return;
     }
     m_busy = true;
+    m_lastAsk = {userText,     includeDocs,    systemPrompt, docTopics,
+                 addToHistory, includeHistory, expectsCode,  historyText};
 
     // Safety net, not the primary mechanism: callers append their own hint line (topicsHintLine()/
     // noDocsHintLine()) because only they know the right scope. Four sites were found tonight that
     // forgot, and each silently got the server's unscoped whole-corpus fallback instead — one of
     // them 46,332 tokens for a text rewrite. Idempotent: skipped when a TOPICS: line is present.
     static const QRegularExpression topicsLinePresentRe(R"(^TOPICS:\s)", QRegularExpression::MultilineOption);
-    const QString text = topicsLinePresentRe.match(userText).hasMatch()
-                             ? userText
-                             : userText + (includeDocs ? topicsHintLine(docTopics) : noDocsHintLine());
+    const QString corrections = correctionBlock(m_userCorrections);
+    const QString text = (topicsLinePresentRe.match(userText).hasMatch()
+                              ? userText
+                              : userText + (includeDocs ? topicsHintLine(docTopics) : noDocsHintLine())) +
+                         corrections;
 
     // Auto-detect API format from URL: Anthropic Messages API vs OpenAI-compatible
     const bool isAnthropic = m_baseUrl.contains("anthropic.com", Qt::CaseInsensitive);
@@ -6199,7 +6262,7 @@ void AiAssistant::ask(const QString &userText, bool includeDocs, const QString &
     // Store pending user text to save in history after response — historyText, when given,
     // overrides what gets saved (see ask()'s doc comment); userText above is unaffected, so the
     // model always sees the real, fully-constructed prompt regardless of this override.
-    m_pendingUserText = historyText.isEmpty() ? userText : historyText;
+    m_pendingUserText = (historyText.isEmpty() ? userText : historyText) + corrections;
     m_pendingAddToHistory = addToHistory;
 
     const QString endpoint = resolveEndpoint(m_baseUrl, isAnthropic);
@@ -6243,6 +6306,57 @@ void AiAssistant::ask(const QString &userText, bool includeDocs, const QString &
     m_httpRetryCount = 0;
     m_requestTimer.start();
     m_currentReply = m_nam->post(req, payload);
+}
+
+bool AiAssistant::addUserCorrection(const QString &text, bool now)
+{
+    m_userCorrections << text;
+    logCorrection(text, now);
+    m_correctionOutcomePending = true;
+    if (!now)
+        return false;
+    if (m_currentReply)
+    {
+        m_redoWithCorrection = true;
+        m_currentReply->abort(); // finished() -> onReplyFinished() sends the call again
+        return true;
+    }
+    if (m_retryTimer && m_retryTimer->isActive()) // waiting to resend after an HTTP error: resend now, corrected
+    {
+        m_retryTimer->stop();
+        m_httpRetryCount = 0;
+        m_busy = false;
+        redoLastAsk();
+        return true;
+    }
+    return false; // between calls: the next one carries it anyway
+}
+
+void AiAssistant::redoLastAsk()
+{
+    const AskArgs args = m_lastAsk;
+    ask(args.userText, args.includeDocs, args.systemPrompt, args.docTopics, args.addToHistory, args.includeHistory,
+        args.expectsCode, args.historyText);
+}
+
+QString AiAssistant::correctionBlock(const QStringList &corrections)
+{
+    if (corrections.isEmpty())
+        return {};
+    return "\n\nCorrection from the user while this request runs — follow it; where it conflicts with the request "
+           "above, the correction wins:\n- " +
+           corrections.join("\n- ");
+}
+
+QString AiAssistant::parseCorrection(const QString &text, bool *now)
+{
+    QString correction = text.trimmed();
+    const bool urgent = correction.startsWith('!');
+    if (urgent)
+        correction = correction.mid(1).trimmed();
+    if (now)
+        *now = urgent;
+    return correction;
 }
 
 bool AiAssistant::isIdle() const
@@ -6352,6 +6466,13 @@ void AiAssistant::onReplyFinished(QNetworkReply *reply)
     if (m_requestTimer.isValid())
         m_lastCallMs = m_requestTimer.elapsed();
     logRequestTiming(reply); // one line per reply, including transient failures about to be retried
+    if (m_redoWithCorrection) // aborted by a "!" correction: the same call again, now carrying it
+    {
+        m_redoWithCorrection = false;
+        m_pendingUserText.clear();
+        redoLastAsk();
+        return;
+    }
 
     // Single point for all HTTP/network error reporting — used by both the
     // Qt-error path (network failure) and the post-streaming HTTP-code path.

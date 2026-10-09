@@ -6739,6 +6739,7 @@ bool ApplicationWindow::handleAiTextCommand(const QString &trimmed)
         m_ai->listModeActive = false;
         m_ai->listItems.clear();
         m_ai->listItemIndex = -1;
+        m_ai->clearUserCorrections();
         print("▸▸▸ AI: request cancelled.");
         return true;
     }
@@ -6824,6 +6825,25 @@ void ApplicationWindow::askAi(const QString &text, bool autoRun, bool forceConso
         return;
     }
 
+    // A request is running: what the user types now corrects it, from its next model call on, or at once with a
+    // leading "!" — see AiAssistant::addUserCorrection(). Local commands ("stop", "status", ...) still work.
+    if (!m_ai->isIdle())
+    {
+        if (handleAiTextCommand(text.trimmed().toLower()))
+            return;
+        bool now = false;
+        const QString correction = AiAssistant::parseCorrection(text, &now);
+        if (correction.isEmpty())
+            return;
+        print("▸▸▸ AI correction: " + correction);
+        const QString scope =
+            m_ai->listModeActive ? QString("LIST item %1").arg(m_ai->listItemIndex + 1) : QString("this request");
+        print(m_ai->addUserCorrection(correction, now)
+                  ? "▸▸▸ AI: correction noted for " + scope + " — the current model call starts again with it."
+                  : "▸▸▸ AI: correction noted for " + scope + " — applied from its next step.");
+        return;
+    }
+
     // "run it" for the just-shown script — handled directly (confirmed live: re-asking the model hallucinated an
     // unrelated answer). Must run before anything else appends to m_history this turn.
     if (m_ai->hasUnrunLastScript() && AiAssistant::looksLikeRunItRequest(text))
@@ -6859,6 +6879,7 @@ void ApplicationWindow::askAi(const QString &text, bool autoRun, bool forceConso
         return;
     }
 
+    m_ai->clearUserCorrections(); // a new request: the previous one's corrections are in history now
     m_ai->setMaxUserRules(aiSettings.maxUserRules);
     m_ai->setMaxAutoContinue(aiSettings.maxAutoContinue);
     m_ai->setMaxSplitParts(aiSettings.maxSplitParts);

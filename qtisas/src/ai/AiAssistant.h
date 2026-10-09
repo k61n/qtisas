@@ -527,6 +527,27 @@ class AiAssistant : public QObject
     //! runs, the next call is scheduled) it can be idle for an instant: whoever waits should see it idle for a while.
     //! The retry timer counts: m_busy is already false during a retry's backoff (onReplyFinished() resets it).
     bool isIdle() const;
+
+    // Corrections typed while a request runs ("big brother" mode): each later model call of that request carries them
+    // (correctionBlock()), until the next request starts — in a LIST, until the next item starts. `now` (a leading "!"
+    // in the typed text, see parseCorrection()) cancels the model call in flight and sends it again with the
+    // correction; otherwise it applies from the next call. Returns true when a call was restarted. While a correction
+    // is active the scope and deliverable checks are skipped: they read the original request, which the correction may
+    // contradict ("don't plot"); the known-mistake checks stay.
+    bool addUserCorrection(const QString &text, bool now);
+    void clearUserCorrections()
+    {
+        m_userCorrections.clear();
+    }
+    const QStringList &userCorrections() const
+    {
+        return m_userCorrections;
+    }
+    // The text appended to a prompt for these corrections; empty for none.
+    static QString correctionBlock(const QStringList &corrections);
+    // The correction in typed text: a leading "!" is stripped and sets *now.
+    static QString parseCorrection(const QString &text, bool *now);
+
     void setMaxUserRules(int n)
     {
         m_maxUserRules = n;
@@ -1098,6 +1119,9 @@ class AiAssistant : public QObject
     // their own account's reported remaining capacity over time — plain appended text, not surfaced
     // in the UI, since a live console line per request would add noise without helping that goal.
     static QString requestTimingLogPath();
+    // One JSON line per correction (with the request, step, last script and last error at that moment) and one per
+    // outcome of the next script (ran / failed / blocked): the material for turning corrections into checks and docs.
+    static QString correctionLogPath();
     void logRequestTiming(QNetworkReply *reply) const;
 
     // Extracted pieces of ask() — see that method's own body for how they're assembled. Kept as
@@ -1167,6 +1191,25 @@ class AiAssistant : public QObject
     // a different history window if time has passed).
     QNetworkRequest m_lastRequest;
     QByteArray m_lastPayload;
+    // See addUserCorrection(). m_lastAsk holds ask()'s arguments so that a "!" correction can send the same call again
+    // (rebuilt, with the correction); m_redoWithCorrection makes onReplyFinished() do that for the aborted reply.
+    QStringList m_userCorrections;
+    struct AskArgs
+    {
+        QString userText;
+        bool includeDocs = true;
+        QString systemPrompt;
+        QStringList docTopics;
+        bool addToHistory = true;
+        bool includeHistory = true;
+        bool expectsCode = true;
+        QString historyText;
+    } m_lastAsk;
+    bool m_redoWithCorrection = false;
+    void redoLastAsk();
+    bool m_correctionOutcomePending = false; // a correction was logged, the next script's outcome is not yet
+    void logCorrection(const QString &text, bool now) const;
+    void logCorrectionOutcome(const QString &result, const QString &detail);
     int m_httpRetryCount = 0;
     QTimer *m_retryTimer;
 };
