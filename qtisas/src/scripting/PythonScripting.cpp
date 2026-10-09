@@ -605,9 +605,15 @@ QString PythonScripting::mathFunctionDoc(const QString &name) const
 
 	if (mathf) {
 		PyObject *pydocstr = PyObject_GetAttrString(mathf, "__doc__"); // new
-		if (pydocstr) qdocstr = PyUnicode_AsUTF8(pydocstr);
-		Py_XDECREF(pydocstr);
-	}
+        // A __doc__ that is None (or not a str) made PyUnicode_AsUTF8() fail and leave its TypeError set; the next
+        // __doc__ lookup, numpy's ufunc doc formatter, then ran with that exception pending — confirmed: a cascade of
+        // "SystemError: ... returned a result with an exception set" in the console when a ScriptEdit listed the
+        // math functions' docs. Only a str is read, and whatever the lookup raised is cleared here.
+        if (pydocstr && PyUnicode_Check(pydocstr))
+            qdocstr = QString::fromUtf8(PyUnicode_AsUTF8(pydocstr));
+        Py_XDECREF(pydocstr);
+        PyErr_Clear();
+    }
 	PyGILState_Release(state);
 
 	return qdocstr;
