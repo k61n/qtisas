@@ -21,6 +21,7 @@ Description: 3D graph widget
 #include <QFileDialog>
 #include <QImageWriter>
 #include <QMessageBox>
+#include <QOpenGLContext>
 #include <QPixmap>
 #include <QPrintDialog>
 #include <QPrinter>
@@ -3928,6 +3929,18 @@ void Graph3D::dropEvent(QDropEvent* event)
 
 Graph3D::~Graph3D()
 {
-	removeCurve();
-	delete sp;
+    // A plot that never got a GL context (offscreen platform, never shown) cannot free its GL objects: qwtplot3d's
+    // curve and plot destructors call glDeleteLists() regardless — confirmed: SIGSEGV in Qwt3D::Curve::~Curve() when
+    // a -x test script closed a 3D plot under ctest (QT_QPA_PLATFORM=offscreen). Such a plot is detached and left
+    // alive (hidden) instead: a leak of one never-shown plot, not a crash.
+    if (sp)
+        sp->makeCurrent(); // the curve frees its display list in the plot's own context
+    if (sp && !QOpenGLContext::currentContext())
+    {
+        sp->hide();
+        sp->setParent(nullptr);
+        return;
+    }
+    removeCurve();
+    delete sp;
 }
