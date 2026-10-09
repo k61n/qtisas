@@ -2130,6 +2130,80 @@ void AiContentTests::aiSandboxReopen_allowsRequestToChangeExistingFunction()
     QVERIFY(QtiSasAiContent::aiSandboxReopenMistake(code, request, QString()).isEmpty());
 }
 
+
+void AiContentTests::unrequestedRandomData_blocksNoiseOnExactData()
+{
+    // Supervised LIST 3, item 7: exact data got random noise, the fit result was silently wrong.
+    const QString request = "Create a table \"LineData\" with 20 rows: x = 1..20, y = 2x + 1, dy = 0.1.";
+    const QString code = "import random\nfor i in range(1, 21):\n    t.setCell(2, i, 2*i + 1 + random.gauss(0, 0.1))\n";
+    QVERIFY(!QtiSasAiContent::unrequestedRandomDataMistake(code, request).isEmpty());
+    QVERIFY(QtiSasAiContent::unrequestedRandomDataMistake(code, request + " Add 5% Gaussian noise.").isEmpty());
+    QVERIFY(QtiSasAiContent::unrequestedRandomDataMistake("import random\nt.setCell(2, 1, 3)\n", request).isEmpty());
+}
+
+
+void AiContentTests::columnListInsteadOfAggregate_blocksBareColData()
+{
+    // Supervised LIST 3, item 1: "Print the sum of column 2" printed the whole column.
+    const QString request = "Print the sum of column 2. The result label is \"R1:\".";
+    QVERIFY(!QtiSasAiContent::columnListInsteadOfAggregateMistake("scriptPrint(\"R1:\", t.colData(2))\n", request)
+                 .isEmpty());
+    QVERIFY(QtiSasAiContent::columnListInsteadOfAggregateMistake("scriptPrint(\"R1:\", sum(t.colData(2)))\n", request)
+                .isEmpty());
+    QVERIFY(
+        QtiSasAiContent::columnListInsteadOfAggregateMistake("print('R1:', len(t.colData(2)))\n", request).isEmpty());
+    // a request that asks for the values themselves
+    QVERIFY(QtiSasAiContent::columnListInsteadOfAggregateMistake("scriptPrint(\"R1:\", t.colData(2))\n",
+                                                                 "Print the values of column 2.")
+                .isEmpty());
+}
+
+
+void AiContentTests::selfShadowRepair_removesSelfReferentialDeclarations()
+{
+    // LIST 3 item 8 / LIST 5 item 2: "double A = A; double w = w; double c = c;" resubmitted five times despite the
+    // block.
+    QtiSasAiContent content;
+    const QString code =
+        "c.setCode(\"\"\"\ndouble A = A; double w = w; double c = c;\ny = A*exp(-x*x/(2*w*w)) + c;\n\"\"\")\n";
+    const QString repaired = content.compilerSelfShadowRepair(code);
+    QVERIFY(!repaired.isEmpty());
+    QVERIFY(!repaired.contains("double A = A"));
+    QVERIFY(!repaired.contains("double c = c"));
+    QVERIFY(repaired.contains("y = A*exp(-x*x/(2*w*w)) + c;"));
+    QVERIFY(QtiSasAiContent::compiledCodeSelfShadowBug(repaired).isEmpty());
+    QVERIFY(content.compilerSelfShadowRepair("c.setCode(\"double arg = x/w; y = A*arg;\")\n").isEmpty());
+}
+
+
+void AiContentTests::hardcodedResultLine_blocksFixedText()
+{
+    // LIST 3 item 3: scriptPrint("R3: 0 ValueError"), nothing computed.
+    const QString request = "Print the number of empty cells. The result label is \"R3:\".";
+    QVERIFY(!QtiSasAiContent::hardcodedResultLineMistake("scriptPrint(\"R3: 0 ValueError\")\n", request).isEmpty());
+    QVERIFY(QtiSasAiContent::hardcodedResultLineMistake("scriptPrint(\"R3:\", n, name)\n", request).isEmpty());
+    QVERIFY(QtiSasAiContent::hardcodedResultLineMistake("scriptPrint(f\"R3: {n} {name}\")\n", request).isEmpty());
+    // a guard branch's failure message is no fabricated result
+    QVERIFY(
+        QtiSasAiContent::hardcodedResultLineMistake("    scriptPrint(\"R3: table not found\")\n", request).isEmpty());
+    QVERIFY(QtiSasAiContent::hardcodedResultLineMistake("scriptPrint(\"R3: 0 ValueError\")\n", "Print 3.").isEmpty());
+}
+
+
+void AiContentTests::repeatedResultLabel_blocksSeveralTopLevelPrints()
+{
+    // LIST 5 item 4: three top-level scriptPrint("R4:", ...) lines.
+    const QString request = "Print a, b and c. The result label is \"R4:\".";
+    QVERIFY(
+        !QtiSasAiContent::repeatedResultLabelMistake("scriptPrint(\"R4:\", a)\nscriptPrint(\"R4:\", b, c)\n", request)
+             .isEmpty());
+    QVERIFY(QtiSasAiContent::repeatedResultLabelMistake("scriptPrint(\"R4:\", a, b, c)\n", request).isEmpty());
+    // one print per branch is one line at run time
+    QVERIFY(QtiSasAiContent::repeatedResultLabelMistake(
+                "if t is None:\n    scriptPrint(\"R4: no table\")\nelse:\n    scriptPrint(\"R4:\", a)\n", request)
+                .isEmpty());
+}
+
 void AiContentTests::userCorrection_parsesUrgentPrefix()
 {
     bool now = true;

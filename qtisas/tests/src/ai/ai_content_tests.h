@@ -229,6 +229,11 @@ class AiContentTests : public QObject
     static void aiSandboxReopen_blocksReopeningLeftoverForCompileRequest();
     static void aiSandboxReopen_allowsFreshDefinitionAndOwnEarlierPart();
     static void aiSandboxReopen_allowsRequestToChangeExistingFunction();
+    static void unrequestedRandomData_blocksNoiseOnExactData();
+    static void columnListInsteadOfAggregate_blocksBareColData();
+    static void selfShadowRepair_removesSelfReferentialDeclarations();
+    static void hardcodedResultLine_blocksFixedText();
+    static void repeatedResultLabel_blocksSeveralTopLevelPrints();
     static void userCorrection_parsesUrgentPrefix();
     static void userCorrection_blockListsEveryCorrection();
     static void requestedCreation_blocksTableNeverCreated();
