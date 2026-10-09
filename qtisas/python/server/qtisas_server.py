@@ -20,7 +20,10 @@ Protocol: one JSON object per line, both ways. A request
 is answered by zero or more events {"id": 1, "event": "line", "text": "..."} and one final
     {"id": 1, "event": "result", "ok": true, "output": "...", "error": "", "seconds": 0.12,
      "created": ["table:T"], "removed": [], "dialogs": [], "status": "done"}
-or {"id": 1, "event": "busy"} while another request runs. Modes: "python", "status", "quit", and the internal AI:
+or {"id": 1, "event": "busy"} while another request runs. While an AI request runs, "python" and "status" requests
+still run (between the AI's steps), "stop" cancels it (its result then has status "stopped"; a running Python script
+cannot be interrupted), and "follow" ({"mode": "follow", "from": N}) streams its lines from line N on and then its
+result, e.g. to a client that stopped waiting. Modes: "python", "status", "quit", "stop", "follow", and the AI:
 "ai" (generates only, nothing runs) and "ai-run" (the full pipeline with execution), with "text" instead of "code";
 their lines are streamed as "line" events, and the result adds "transcript", "items" (one per LIST item), "r_lines",
 "scripts", "tokens".
@@ -202,7 +205,10 @@ class ScriptServer:
         self.instance = instance
         self.path = path
         self.dialogs = dialogs  # default for requests without their own "dialogs"
-        self.busy = False
+        self.busy = None  # the mode of the request being handled
+        self.inner_busy = False  # a "python"/"status" request handled while an AI request runs
+        self.ai_run = None  # the running AI request: its lines so far and the clients following it
+        self.stop_requested = False  # a "stop" request arrived while an AI request was running
         self.session = None  # the namespace kept between requests with "keep"
         self._buffers = {}
         self._reading = set()  # sockets whose readyRead is being handled right now (a request may run inside it)
@@ -270,16 +276,34 @@ class ScriptServer:
             self._send(socket, {"id": None, "event": "result", "ok": False, "error": "bad request: %s" % e})
             return
         rid = request.get("id")
-        if self.busy:  # e.g. a second request while a dialog of the first one runs its own event loop
+        mode = request.get("mode", "python")
+        if mode == "stop":  # gets through while another request runs
+            result = self.stop_ai()
+            result.update({"id": rid, "event": "result"})
+            self._send(socket, result)
+            return
+        if mode == "follow":
+            self._follow(socket, rid, int(request.get("from") or 0))
+            return
+        # While the AI works, the event loop is mostly free (it waits for the model): Python and status get through.
+        # A script of the AI's own that is running at that moment simply finishes first (one thread).
+        inside_ai = self.busy in ("ai", "ai-run") and mode in ("python", "status") and not self.inner_busy
+        if self.busy and not inside_ai:  # e.g. a second request while a dialog of the first one runs its own loop
             self._send(socket, {"id": rid, "event": "busy"})
             return
-        self.busy = True
+        if inside_ai:
+            self.inner_busy = True
+        else:
+            self.busy = mode
         try:
             result = self.run(request, lambda text: self._send(socket, {"id": rid, "event": "line", "text": text}))
         except Exception:  # a failure of the server itself: still answered, never a client left waiting
             result = {"ok": False, "status": "failed", "error": "qtisas_server: " + traceback.format_exc().rstrip()}
         finally:
-            self.busy = False
+            if inside_ai:
+                self.inner_busy = False
+            else:
+                self.busy = None
         result.update({"id": rid, "event": "result"})
         self._send(socket, result)
         if request.get("mode") == "quit":
@@ -293,7 +317,9 @@ class ScriptServer:
         mode = request.get("mode", "python")
         if mode == "status":
             return {"ok": True, "status": "done", "protocol": PROTOCOL, "instance": self.instance,
-                    "pid": os.getpid(), "home": os.path.expanduser("~")}
+                    "pid": os.getpid(), "home": os.path.expanduser("~"),
+                    "running": None if self.busy == "status" else self.busy,  # not this status request itself
+                    "ai_lines": len(self.ai_run["lines"]) if self.ai_run else 0}
         if mode == "quit":
             return {"ok": True, "status": "done"}
         if mode == "python":
@@ -301,6 +327,30 @@ class ScriptServer:
         if mode in ("ai", "ai-run"):
             return self.run_ai(request, emit)
         return {"ok": False, "status": "failed", "error": "unknown mode %r" % mode}
+
+    def stop_ai(self):
+        """Cancels the running AI request the way QtiSAS's own "stop" command does: the model call and every pending
+        round trip, a LIST's remaining items and a split plan's remaining parts. A Python script that is running
+        cannot be interrupted; an AI script ends at its own time limit."""
+        app = qti.app
+        if app._aiIdle():
+            return {"ok": True, "status": "done", "stopped": False,
+                    "output": "nothing to stop: the AI is idle" + (" (a Python script is running)" if
+                                                                      self.busy == "python" else "") + "\n"}
+        self.stop_requested = True
+        app._askAi("stop", False)  # handled before the AI's own busy check, see handleAiTextCommand()
+        return {"ok": True, "status": "done", "stopped": True, "output": "stop sent: the AI request is cancelled\n"}
+
+    def _follow(self, socket, rid, start):
+        """Streams the running AI request's lines from `start` on, then its result (sent by run_ai())."""
+        run = self.ai_run
+        if run is None:
+            self._send(socket, {"id": rid, "event": "result", "ok": True, "status": "done",
+                                "output": "nothing to follow: no AI request is running\n"})
+            return
+        for text in run["lines"][start:]:
+            self._send(socket, {"id": rid, "event": "line", "text": text})
+        run["followers"].append((socket, rid))
 
     def run_ai(self, request, emit=None):
         """Asks the internal AI (generate only, or with execution) and waits until it is idle; see summarize_ai()."""
@@ -311,8 +361,10 @@ class ScriptServer:
         if not app._aiIdle():
             return {"ok": False, "status": "failed", "error": "the AI is busy with another request"}
         timeout = float(request.get("timeout") or 3600)
+        self.stop_requested = False
         first = app._aiTranscriptSize()
         lines = []
+        self.ai_run = run = {"lines": lines, "followers": []}
         state = {"idle_since": None, "timeout": False}
         start = time.monotonic()
         loop = QEventLoop()
@@ -322,6 +374,8 @@ class ScriptServer:
                 lines.append(line)
                 if emit:
                     emit(line)
+                for socket, frid in run["followers"]:
+                    self._send(socket, {"id": frid, "event": "line", "text": line})
 
         def poll():
             collect()
@@ -351,9 +405,15 @@ class ScriptServer:
         result = summarize_ai(lines)
         if state["timeout"]:
             result.update({"ok": False, "status": "timeout"})
+        elif self.stop_requested:
+            result.update({"ok": False, "status": "stopped"})
+            self.stop_requested = False
         after = snapshot()
         result.update({"seconds": round(time.monotonic() - start, 3), "created": sorted(after - before),
                        "removed": sorted(before - after), "dialogs": answerer.dialogs})
+        self.ai_run = None
+        for socket, frid in run["followers"]:
+            self._send(socket, dict(result, id=frid, event="result"))
         return result
 
     def namespace(self, keep):

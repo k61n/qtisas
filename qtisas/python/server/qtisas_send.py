@@ -8,7 +8,7 @@
 # **************************************************************************** #
 """Sends a request to a running QtiSAS script server and prints its result.
 
-    qtisas_send.py [--instance NAME | --socket PATH] [--mode python|ai|ai-run|status|quit]
+    qtisas_send.py [--instance NAME | --socket PATH] [--mode python|ai|ai-run|status|stop|quit]
                    [-c CODE | -f FILE | -] [--json | --stream-json] [--keep] [--timeout S] [--dialogs auto|leave]
     qtisas_send.py [--instance NAME] [--mode python|ai|ai-run]     # no code in a terminal: the interactive prompt
 
@@ -121,7 +121,11 @@ with LIST (a numbered task list) continues until an empty line, so a whole list 
   :file PATH            send a file in the current mode: a Python script, or an AI request such as a LIST
   :status               the server's state          :instance NAME   talk to another QtiSAS
   :help                 this text                   :quit or Ctrl+D  leave the prompt (QtiSAS keeps running)
-Ctrl+C only stops waiting: a running script or AI request cannot be interrupted from outside."""
+  :stop                 cancel QtiSAS's running AI request (also from another terminal)
+  :follow               show the running AI request's lines again, from where you left it, and its result
+Ctrl+C while the AI works gives the prompt back and the AI goes on: py> inputs run meanwhile (between its steps),
+:follow returns to it, :stop cancels it. While Python runs, Ctrl+C only stops waiting: a running script cannot be
+interrupted from outside."""
 
 
 def needs_more(source):
@@ -179,11 +183,31 @@ def interactive(instance, path, mode="python", timeout=None):
     except ImportError:
         pass
 
-    def send(message):
+    def stop():
         try:
-            return request(message, path, timeout, lambda text: print(text, flush=True))
+            result = request({"id": 0, "mode": "stop"}, path, 10)
+            print((result.get("output") or "").rstrip(), file=sys.stderr)
+        except (OSError, ValueError) as e:
+            print("qtisas_send: stop not sent: %s" % e, file=sys.stderr)
+
+    seen = {"lines": 0}  # lines of the current AI request already shown, where :follow goes on from
+
+    def show(text):
+        seen["lines"] += 1
+        print(text, flush=True)
+
+    def send(message):
+        if message.get("mode") in ("ai", "ai-run"):
+            seen["lines"] = 0
+        try:
+            return request(message, path, timeout, show if message.get("mode") in ("ai", "ai-run", "follow") else
+                           lambda text: print(text, flush=True))
         except KeyboardInterrupt:
-            print("\n(stopped waiting — the request may still be running in QtiSAS)", file=sys.stderr)
+            if message.get("mode") in ("ai", "ai-run", "follow"):
+                print("\n(the AI request goes on in QtiSAS — :follow shows it again, :stop cancels it)",
+                      file=sys.stderr)
+            else:
+                print("\n(stopped waiting — the script may still be running in QtiSAS)", file=sys.stderr)
         except PermissionError as e:
             print("qtisas_send: %s" % e, file=sys.stderr)
         except (FileNotFoundError, ConnectionRefusedError):
@@ -220,6 +244,14 @@ def interactive(instance, path, mode="python", timeout=None):
             command, _, argument = text[1:].partition(" ")
             if command in ("py", "python", "ai", "ai-run"):
                 mode = "python" if command == "py" else command
+            elif command == "stop":
+                stop()
+            elif command == "follow":
+                result = send({"id": 0, "mode": "follow", "from": seen["lines"]})
+                if result and "transcript" in result:  # the followed request's own result
+                    print_result(result, "ai")
+                elif result:  # nothing running
+                    print((result.get("output") or "").rstrip(), file=sys.stderr)
             elif command == "status":
                 result = send({"id": 0, "mode": "status"})
                 if result:
@@ -255,7 +287,7 @@ def main(argv=None):
     p = argparse.ArgumentParser(description="Run Python in a running QtiSAS (script server).")
     p.add_argument("--instance", default=os.environ.get("QTISAS_SERVER", "test"))
     p.add_argument("--socket", help="socket path (default /tmp/qtisas-<uid>/<instance>.sock)")
-    p.add_argument("--mode", default="python", choices=["python", "ai", "ai-run", "status", "quit"])
+    p.add_argument("--mode", default="python", choices=["python", "ai", "ai-run", "status", "stop", "quit"])
     source = p.add_mutually_exclusive_group()
     source.add_argument("-c", dest="code", help="code to run")
     source.add_argument("-f", dest="file", help="script file to run, '-' for stdin")
