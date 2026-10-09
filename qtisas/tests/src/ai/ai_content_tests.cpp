@@ -2130,7 +2130,6 @@ void AiContentTests::aiSandboxReopen_allowsRequestToChangeExistingFunction()
     QVERIFY(QtiSasAiContent::aiSandboxReopenMistake(code, request, QString()).isEmpty());
 }
 
-
 void AiContentTests::unrequestedRandomData_blocksNoiseOnExactData()
 {
     // Supervised LIST 3, item 7: exact data got random noise, the fit result was silently wrong.
@@ -2140,7 +2139,6 @@ void AiContentTests::unrequestedRandomData_blocksNoiseOnExactData()
     QVERIFY(QtiSasAiContent::unrequestedRandomDataMistake(code, request + " Add 5% Gaussian noise.").isEmpty());
     QVERIFY(QtiSasAiContent::unrequestedRandomDataMistake("import random\nt.setCell(2, 1, 3)\n", request).isEmpty());
 }
-
 
 void AiContentTests::columnListInsteadOfAggregate_blocksBareColData()
 {
@@ -2158,7 +2156,6 @@ void AiContentTests::columnListInsteadOfAggregate_blocksBareColData()
                 .isEmpty());
 }
 
-
 void AiContentTests::selfShadowRepair_removesSelfReferentialDeclarations()
 {
     // LIST 3 item 8 / LIST 5 item 2: "double A = A; double w = w; double c = c;" resubmitted five times despite the
@@ -2175,7 +2172,6 @@ void AiContentTests::selfShadowRepair_removesSelfReferentialDeclarations()
     QVERIFY(content.compilerSelfShadowRepair("c.setCode(\"double arg = x/w; y = A*arg;\")\n").isEmpty());
 }
 
-
 void AiContentTests::hardcodedResultLine_blocksFixedText()
 {
     // LIST 3 item 3: scriptPrint("R3: 0 ValueError"), nothing computed.
@@ -2188,7 +2184,6 @@ void AiContentTests::hardcodedResultLine_blocksFixedText()
         QtiSasAiContent::hardcodedResultLineMistake("    scriptPrint(\"R3: table not found\")\n", request).isEmpty());
     QVERIFY(QtiSasAiContent::hardcodedResultLineMistake("scriptPrint(\"R3: 0 ValueError\")\n", "Print 3.").isEmpty());
 }
-
 
 void AiContentTests::repeatedResultLabel_blocksSeveralTopLevelPrints()
 {

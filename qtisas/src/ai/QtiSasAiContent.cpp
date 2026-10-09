@@ -2045,7 +2045,6 @@ QString QtiSasAiContent::compiledCodeSelfShadowBug(const QString &code)
            "double in scope.";
 }
 
-
 QString QtiSasAiContent::compilerSelfShadowRepair(const QString &code) const
 {
     // Only C++ declares "double name = name;", so the whole script can be searched: in Python it does not parse.
@@ -3853,7 +3852,6 @@ QString QtiSasAiContent::missingPyQtImportMistake(const QString &code)
            "import and is a valid substitute specifically for QColor(...), never for the others.";
 }
 
-
 QString QtiSasAiContent::unrequestedRandomDataMistake(const QString &code, const QString &originalRequestText)
 {
     // Confirmed live (supervised LIST 3, item 7, local model): "y = 2x + 1, dy = 0.1" was filled with
@@ -3868,7 +3866,6 @@ QString QtiSasAiContent::unrequestedRandomDataMistake(const QString &code, const
            "noise or random numbers — it gives the values exactly. Fill the cells with exactly the requested values; "
            "noise changes every result computed from them.";
 }
-
 
 QString QtiSasAiContent::columnListInsteadOfAggregateMistake(const QString &code, const QString &originalRequestText)
 {
@@ -3910,12 +3907,10 @@ QString QtiSasAiContent::requestedResultLabel(const QString &originalRequestText
     return labelRe.match(originalRequestText).captured(1);
 }
 
-
 QString QtiSasAiContent::resultLabel(const QString &requestText) const
 {
     return requestedResultLabel(requestText);
 }
-
 
 QString QtiSasAiContent::resultLineDuty(const QString &requestText) const
 {
@@ -3939,7 +3934,6 @@ QString QtiSasAiContent::resultLineDuty(const QString &requestText) const
     return requestText.mid(printStart, labelMatch.capturedEnd() - printStart).simplified();
 }
 
-
 QString QtiSasAiContent::nonFinalResultLineRepair(const QString &code, const QString &requestText,
                                                   bool alsoComputed) const
 {
@@ -3958,7 +3952,6 @@ QString QtiSasAiContent::nonFinalResultLineRepair(const QString &code, const QSt
     repaired.replace(lineRe, "\\1pass");
     return repaired == code ? QString() : repaired;
 }
-
 
 QString QtiSasAiContent::hardcodedResultLineMistake(const QString &code, const QString &originalRequestText)
 {
@@ -3990,7 +3983,6 @@ QString QtiSasAiContent::hardcodedResultLineMistake(const QString &code, const Q
            label + "\". Compute them in the script and print the variables, e.g. scriptPrint(\"" + label +
            "\", value1, value2).";
 }
-
 
 QString QtiSasAiContent::repeatedResultLabelMistake(const QString &code, const QString &originalRequestText)
 {
