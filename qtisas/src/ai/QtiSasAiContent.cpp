@@ -1721,20 +1721,30 @@ QString QtiSasAiContent::splitPartScopeViolation(const QString &code, const QStr
 
         if (!graph3DNames.isEmpty())
         {
-            static const QRegularExpression graphWindowLookupRe(R"re(\bgraphWindow\s*\(\s*["']([^"']+)["'])re");
+            // existGraph() too: confirmed live (benchmark LIST 5, item 4, twice), existGraph("Saddle3D") right after
+            // newPlot3D("Saddle3D", ...) printed False — it only knows 2D graph windows.
+            static const QRegularExpression graphWindowLookupRe(
+                R"re(\b(graphWindow|existGraph)\s*\(\s*["']([^"']+)["'])re");
             QRegularExpressionMatchIterator gwIt = graphWindowLookupRe.globalMatch(code);
             while (gwIt.hasNext())
             {
-                const QString name = gwIt.next().captured(1);
+                const QRegularExpressionMatch lookup = gwIt.next();
+                const QString call = lookup.captured(1);
+                const QString name = lookup.captured(2);
                 if (graph3DNames.contains(name))
-                    violations << "This part calls graphWindow(\"" + name + "\"), but \"" + name +
-                           "\" is a Graph3D window (named via setWindowName() after plot3D(...), "
-                           "or newPlot3D(...)) — graphWindow() is 2D-GraphWindow-ONLY and always "
-                           "returns None for a Graph3D name (there is no graphWindow()-equivalent "
-                           "for Graph3D). Use plot3D(\"" +
-                           name +
-                           "\") to look up this window "
-                           "instead.";
+                    violations << "This part calls " + call + "(\"" + name + "\"), but \"" + name +
+                                      "\" is a Graph3D window (named via setWindowName() after plot3D(...), "
+                                      "or newPlot3D(...)) — " +
+                                      call +
+                                      "() is 2D-GraphWindow-ONLY and always "
+                                      "returns " +
+                                      (call == "existGraph" ? "False" : "None") +
+                                      " for a Graph3D name. "
+                                      "Use plot3D(\"" +
+                                      name + "\") to look up this window instead" +
+                                      (call == "existGraph"
+                                           ? " — or existPlot3D(\"" + name + "\") to test whether it exists."
+                                           : ".");
             }
         }
     }
@@ -3989,6 +3999,114 @@ QString QtiSasAiContent::resultLineDuty(const QString &requestText) const
     return requestText.mid(printStart, labelMatch.capturedEnd() - printStart).simplified();
 }
 
+QString QtiSasAiContent::earlierPartVariableMistake(const QString &code, const QString &earlierPartsCode)
+{
+    // Confirmed live (LIST 5, item 4): part 2 printed m.cell(11, 11) with the "m" of part 1's
+    // m = newMatrix("Saddle", ...) — NameError, one round. Every part runs as a script of its own.
+    if (earlierPartsCode.isEmpty())
+        return {};
+    const QString ownCode = codeWithoutStringLiterals(code);
+    static const QRegularExpression earlierAssignRe(R"(^([A-Za-z_]\w*)\s*=(?!=)\s*([^\n]*))",
+                                                    QRegularExpression::MultilineOption);
+    // the lookup for what the earlier part created: newMatrix("Saddle", ...) -> matrix("Saddle")
+    static const QRegularExpression creationRe(R"RX(^new(Table|Matrix|Note|Plot3D|Graph)\s*\(\s*("[^"]*"|'[^']*'))RX");
+    for (auto it = earlierAssignRe.globalMatch(earlierPartsCode); it.hasNext();)
+    {
+        const QRegularExpressionMatch earlier = it.next();
+        const QString name = earlier.captured(1);
+        const QString n = QRegularExpression::escape(name);
+        const QRegularExpression usedRe(R"((?<![.\w]))" + n + R"(\s*\.\s*\w+)");
+        if (!usedRe.match(ownCode).hasMatch())
+            continue;
+        // bound in this script: assigned, a loop/with/except target, imported as, a def/lambda parameter, global
+        const QRegularExpression boundRe(R"((?<![.\w]))" + n + R"(\s*(?:,[^=\n]*)?=(?!=)|\bfor\s+[^\n]*\b)" + n +
+                                         R"(\b[^\n]*\bin\b|\bas\s+)" + n + R"(\b|\b(?:def|lambda|global)\b[^\n]*\b)" +
+                                         n + R"(\b)");
+        if (boundRe.match(ownCode).hasMatch())
+            continue;
+        const QString rhs = earlier.captured(2).trimmed();
+        const QRegularExpressionMatch created = creationRe.match(rhs);
+        QString lookup = created.hasMatch() ? created.captured(1) + "(" + created.captured(2) + ")" : rhs;
+        if (created.hasMatch())
+            lookup[0] = lookup[0].toLower();
+        if (created.hasMatch() && created.captured(1) == "Graph")
+            lookup = "graphWindow(" + created.captured(2) + ")";
+        return "This script uses \"" + name + "\" (" + name + ".…), but never assigns it: \"" + name +
+               "\" was assigned in an EARLIER part's script, and every part runs as a script of its own, so here it is "
+               "undefined (NameError). Assign it again at the top of this script" +
+               (lookup.isEmpty() || lookup.size() > 80 ? QString(".") : ": " + name + " = " + lookup);
+    }
+    return {};
+}
+
+QString QtiSasAiContent::matrixIndexFormulaMistake(const QString &code, const QString &originalRequestText)
+{
+    // Confirmed live (benchmark LIST 5, item 4): "spanning x and y from -1 to 1 and fill it with x*x - y*y" got
+    // setCoordinates(-1, 1, -1, 1) and then setFormula("i*i-j*j") — the row/column indices, values -440 to 440.
+    // Blocked, not repaired: i is the row (y) and j the column (x), so which one the model meant is a guess.
+    static const QRegularExpression matrixRe(R"(\b(?:newMatrix|matrix)\s*\()");
+    static const QRegularExpression requestXyRe(R"(\bx\s*[*^/+\-]|[*^/+\-]\s*x\b|\by\s*[*^/+\-]|[*^/+\-]\s*y\b)");
+    static const QRegularExpression formulaRe(R"RX(\.\s*setFormula\s*\(\s*(?:"([^"]*)"|'([^']*)'))RX");
+    static const QRegularExpression indexRe(R"(\b[ij]\b)");
+    static const QRegularExpression coordinateRe(R"(\b[xy]\b)");
+    if (!matrixRe.match(code).hasMatch() || !requestXyRe.match(originalRequestText).hasMatch())
+        return {};
+    for (auto it = formulaRe.globalMatch(code); it.hasNext();)
+    {
+        const QRegularExpressionMatch m = it.next();
+        const QString formula = m.captured(1).isEmpty() ? m.captured(2) : m.captured(1);
+        if (indexRe.match(formula).hasMatch() && !coordinateRe.match(formula).hasMatch())
+            return "setFormula(\"" + formula +
+                   "\") uses i and j, but in a matrix formula i and j are the row and column INDICES "
+                   "(1, 2, 3, ...), not coordinates. The request gives the formula in x and y: those are the "
+                   "coordinates set with setCoordinates(...). Write the formula with x and y, as the request does.";
+    }
+    return {};
+}
+
+QString QtiSasAiContent::newNoteExtraTabMistake(const QString &code, const QString &originalRequestText)
+{
+    // Confirmed live (benchmark LIST 5, item 5): "a note with two tabs" got newNote() and then addTab() twice — 3 tabs.
+    // A new note already has one tab (note-python-api.md).
+    static const QRegularExpression requestTabsRe(R"(\b(two|three|four|five|2|3|4|5)\s+(?:\w+\s+)?tabs\b)",
+                                                  QRegularExpression::CaseInsensitiveOption);
+    static const QRegularExpression newNoteRe(R"(\bnewNote\s*\()");
+    static const QRegularExpression addTabRe(R"(\.\s*addTab\s*\()");
+    const QRegularExpressionMatch requested = requestTabsRe.match(originalRequestText);
+    const QRegularExpressionMatch created = newNoteRe.match(code);
+    if (!requested.hasMatch() || !created.hasMatch())
+        return {};
+    static const QStringList words{"two", "three", "four", "five"};
+    const QString n = requested.captured(1).toLower();
+    const int tabs = words.contains(n) ? static_cast<int>(words.indexOf(n)) + 2 : n.toInt();
+    int added = 0;
+    for (auto it = addTabRe.globalMatch(code, created.capturedEnd()); it.hasNext(); it.next())
+        ++added;
+    if (added < tabs)
+        return {};
+    return QString("The request asks for %1 tabs, but this script calls addTab() %2 times after newNote(): a new note "
+                   "already HAS one tab, so it ends with %3. Call addTab() %4 time(s), and give the first tab its "
+                   "name with renameTab(0, ...).")
+        .arg(tabs)
+        .arg(added)
+        .arg(added + 1)
+        .arg(tabs - 1);
+}
+
+QString QtiSasAiContent::rootFolderDeletionMistake(const QString &code)
+{
+    // Confirmed live (LIST 5, item 6, twice): "close and delete the table and the note" got deleteFolder(rootFolder())
+    // after closeWindow(). QtiSAS refuses it (deleting the project folder crashed it once), so it does nothing — but
+    // the model believes it is how a window gets deleted.
+    static const QRegularExpression rootRe(
+        R"(\bdeleteFolder\s*\(\s*(?:\w+\s*\.\s*)?(?:rootFolder|projectFolder)\s*\()");
+    if (!rootRe.match(code).hasMatch())
+        return {};
+    return "deleteFolder(rootFolder()) never deletes anything: the project folder holds the whole project and QtiSAS "
+           "refuses to delete it (it returns False). closeWindow(w) already removes window w from the project — for "
+           "\"close and delete\" that is all it takes. Remove the deleteFolder(...) call.";
+}
+
 QString QtiSasAiContent::scriptPrintKeywordMistake(const QString &code)
 {
     // Confirmed live (LIST 5, item 5): scriptPrint("R5:", n.tabs(), ok, end=" ") then scriptPrint(s) — TypeError, and
@@ -4948,6 +5066,18 @@ QList<AiKnownMistakeMatch> QtiSasAiContent::detectKnownMistakes(const QString &c
         if (!explanation.isEmpty())
             matches << AiKnownMistakeMatch{"the result label printed more than once", explanation};
     }
+    explanation = earlierPartVariableMistake(code, earlierPartsCode);
+    if (!explanation.isEmpty())
+        matches << AiKnownMistakeMatch{"a variable of an earlier part's script used", explanation};
+    explanation = matrixIndexFormulaMistake(code, originalRequestText);
+    if (!explanation.isEmpty())
+        matches << AiKnownMistakeMatch{"matrix formula over indices i, j instead of x, y", explanation};
+    explanation = newNoteExtraTabMistake(code, originalRequestText);
+    if (!explanation.isEmpty())
+        matches << AiKnownMistakeMatch{"one tab too many: a new note already has one", explanation};
+    explanation = rootFolderDeletionMistake(code);
+    if (!explanation.isEmpty())
+        matches << AiKnownMistakeMatch{"deleteFolder() of the project folder", explanation};
     explanation = scriptPrintKeywordMistake(code);
     if (!explanation.isEmpty())
         matches << AiKnownMistakeMatch{"scriptPrint() given end=/sep=", explanation};
