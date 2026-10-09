@@ -937,6 +937,17 @@ void ApplicationWindow::copyPythonConfigurationFiles(bool forceInit) const
     {
         const QString sourceFilePath = pythonDir.filePath(file);
         const QString destinationFilePath = destinationDir.filePath(file);
+        // A bundled file newer than the copy replaces it, also without a version change: a rebuilt QtiSAS with the
+        // same version number otherwise kept running an old qtisasrc.py (confirmed: a one-argument scriptPrint()
+        // after the bundle had the print()-like one). A copy the user edited later is newer and stays.
+        const QFileInfo destination(destinationFilePath);
+        if (destination.exists() && destination.lastModified() < QFileInfo(sourceFilePath).lastModified())
+        {
+            QFile::remove(destinationFilePath);
+            // its compiled .pyc can be newer than the replacement and would be run instead (loadInitFile())
+            if (file.endsWith(".py"))
+                QFile::remove(destinationFilePath + "c");
+        }
         QFile::copy(sourceFilePath, destinationFilePath);
     }
 }
