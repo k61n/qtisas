@@ -8,6 +8,7 @@ internal AI, whose API docs live in `qtisas/python/doc/`.
 |------|------------|
 | `qtisas_server.py` | the server, running inside QtiSAS |
 | `qtisas_send.py` | the client: plain Python 3, no PyQt needed |
+| `qtisas_mcp.py` | MCP server: QtiSAS as a tool of an external AI chat (Claude Code, Codex CLI, Claude Desktop, IDEs) |
 
 The test instance and the AI benchmarks, which use the client, are in `qtisas/tests/src/server/` and
 `qtisas/tests/src/ai/benchmarks/` (see its `README.md`).
@@ -45,6 +46,8 @@ qtisas_send.py --instance second -f myscript.py
 qtisas_send.py --mode ai -c 'Plot column y of table "Data"'       # the AI writes the script, nothing runs
 qtisas_send.py --mode ai-run -c 'Plot column y of table "Data"'   # the AI writes and runs it
 qtisas_send.py --mode status
+qtisas_send.py --mode stop                              # cancel the running AI request
+qtisas_send.py --mode note -c 'use table "B", not "A"'  # correct the running AI request
 ```
 
 The default instance is `test` (or `$QTISAS_SERVER`); use `--instance main` for a QtiSAS started with `-s`.
@@ -60,7 +63,87 @@ The default instance is `test` (or `$QTISAS_SERVER`); use `--instance main` for 
 - `--dialogs auto` closes dialogs (with Cancel) for this request, `--timeout S` stops waiting after S
   seconds (a running script cannot be interrupted from outside).
 - Exit code: 0 ok, 1 the script or the AI run failed, 2 no server, busy, refused or timed out.
+- `--mode stop` cancels a running AI request, also while the server is busy with it: the model call, a LIST's
+  remaining items, a split plan's remaining parts (as QtiSAS's own `stop` command); that request then ends with
+  status `stopped`. A Python script that is running cannot be interrupted; an AI script stops at its 300 s limit.
+- `--mode note` corrects a running AI request, as text typed into QtiSAS's input line while it runs does: every
+  later model call of that request (in a LIST: of the current item) carries the correction; with a leading `!` the
+  call in flight starts again with it.
+  While a correction is active, the scope and deliverable checks (which read the original request) are skipped.
 - `--mode quit` ends QtiSAS at once **without saving** — meant for the test instance.
+
+## The prompt
+
+Without code, in a terminal, `qtisas_send.py` opens a prompt for your QtiSAS:
+
+```
+$ qtisas_send.py --instance main
+QtiSAS main — :help for commands
+py> t = newTable("T", 5, 2)
+py> t.numRows()
+5
+py> :ai-run
+ai-run> plot column 2 of table "T"
+  ... (the AI's lines as they come)
+py> :quit
+```
+
+- **py** (the default): Python in the script server, variables kept from one input to the next. A bare
+  expression prints its value, and a line opening a block (`if`/`for`/`def` ...) continues until an empty
+  line, as in Python's own prompt.
+- **ai / ai-run:** the text goes to QtiSAS's AI, which writes the script (`:ai`) or also runs it (`:ai-run`).
+  A request starting with `LIST` (e.g. `LIST NOSPLIT`) continues until an empty line, so a whole numbered task
+  list can be pasted.
+- `:file PATH` sends a file in the current mode: a Python script under `py>`, an AI request (e.g. a LIST) under
+  `ai>`/`ai-run>`.
+- **Ctrl+C while the AI works** gives the prompt back; the AI request goes on in QtiSAS. Meanwhile `py>` inputs
+  run (between the AI's steps; a script of the AI's own that is running finishes first), `:follow` shows the
+  request again from where you left it, up to its result, `:note TEXT` corrects it (`:note !TEXT` at once) and
+  `:stop` cancels it. While a Python input runs,
+  Ctrl+C only stops waiting: the script goes on.
+- `:status`, `:instance NAME` (another QtiSAS), `:help`, `:quit` or Ctrl+D. History with the arrow keys, kept in `~/.config/qtisas/qtisas_send_history`.
+- Errors carry the same hints as QtiSAS's console, e.g. "'setDecimalSeparators' is not a global function but
+  a method of Table".
+
+## QtiSAS as a tool of an external AI chat (MCP)
+
+`qtisas_mcp.py` is an MCP server (Model Context Protocol, over stdio; plain Python 3): a chat app that supports MCP
+gets tools for a running QtiSAS, and the chat's own model writes the code from the API docs.
+
+| Tool | |
+|------|---|
+| `run_python(code)` | Python in QtiSAS, variables kept between calls; output, error (with the console's hints), created/removed objects |
+| `ask_qtisas_ai(text, run, wait)` | hands a request or a LIST to QtiSAS's own AI; its transcript and summary — or, with `wait=false`, starts it and returns at once |
+| `qtisas_ai_progress(from_line, wait_seconds)` | the new lines of a request started with `wait=false`, and its result once finished |
+| `list_objects()` | tables, matrices, graphs, 3D plots, notes, `ai/` fit functions |
+| `show_graph(name)` | a 2D graph or 3D plot as a PNG image in the chat (at most 1200 px) |
+| `get_file(path)` | a file from QtiSAS's computer: an image as an image, a text file as text, a small binary as a blob (larger: copy it, e.g. `scp`) |
+| `status()`, `stop()` | the server's state; cancel a running AI request |
+| `correct_qtisas_ai(text)` | correct a running `ask_qtisas_ai` request (`!text`: restart its current model call) |
+
+The API docs (`*-python-api.md`, `.pyi`) are offered as resources `qtisas-doc://...`.
+
+**Supervising QtiSAS's AI.** For a long or complicated request, the chat can hand it to QtiSAS's AI with
+`wait=false`, watch it with `qtisas_ai_progress` and step in with `correct_qtisas_ai` (or `stop`) when it goes wrong —
+e.g. in Claude Code: "Give this LIST to QtiSAS's AI, watch it, and correct it if a step goes wrong".
+
+```bash
+claude mcp add qtisas -- python3 /path/to/qtisas_mcp.py --instance main                      # Claude Code
+claude mcp add qtisas -- ssh computer1 python3 /path/to/qtisas_mcp.py --instance main        # QtiSAS on computer1
+codex mcp add qtisas -- python3 /path/to/qtisas_mcp.py --instance main                       # Codex CLI
+```
+
+Claude Desktop (`claude_desktop_config.json`): `{"mcpServers": {"qtisas": {"command": "python3", "args":
+["/path/to/qtisas_mcp.py", "--instance", "main"]}}}`.
+
+- It talks to the script server of the named instance (default `main`): start QtiSAS with `-s` (a window to watch) or
+  `-S` (offscreen); `--start-offscreen` starts it with `-S` when none answers, `--qtisas PATH` chooses which QtiSAS.
+- Dialogs follow the server: with `-S` they are closed automatically, with `-s` they are left to you (a dialog a script
+  opens waits for you; your own dialogs, e.g. Preferences, stay open while the chat's request runs).
+- In an installed QtiSAS the file is `qtisas.app/Contents/Resources/python/server/qtisas_mcp.py`.
+- Over the network, use SSH as above: the script server only listens on a local socket, and SSH does the login and
+  encryption. Do not expose it otherwise: the tools run any code as your user.
+- Nothing is saved by itself: the chat saves with `saveProjectAs(...)` when asked.
 
 ## AI agents and settings from Python
 

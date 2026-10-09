@@ -46,7 +46,9 @@ Read the API docs first (resources qtisas-doc://...; the .pyi files are the comp
 inside QtiSAS, with its variables kept between calls; print() and scriptPrint() output comes back. Names you create
 (tables, graphs, fit functions "ai/...") persist in QtiSAS. Use show_graph to see a graph as an image. Nothing is
 saved by itself: save with saveProjectAs("/path/file.qti") when asked. ask_qtisas_ai hands a request (or a LIST of
-numbered tasks) to QtiSAS's own built-in AI instead of writing the code yourself; stop cancels it while it runs."""
+numbered tasks) to QtiSAS's own built-in AI instead of writing the code yourself; while it runs, correct_qtisas_ai
+steers it and stop cancels it. To supervise a long request, start it with wait=false and watch it with
+qtisas_ai_progress (wait_seconds avoids tight polling); correct it when it goes wrong."""
 
 TOOLS = [
     {"name": "run_python",
@@ -64,8 +66,18 @@ TOOLS = [
      "inputSchema": {"type": "object", "properties": {
          "text": {"type": "string"},
          "run": {"type": "boolean", "description": "also run the scripts (default true)"},
-         "timeout": {"type": "number", "description": "seconds, default 1800"}},
+         "timeout": {"type": "number", "description": "seconds, default 1800"},
+         "wait": {"type": "boolean", "description": "wait for the result (default true); false starts it and "
+                                                    "returns at once, to watch it with qtisas_ai_progress and steer "
+                                                    "it with correct_qtisas_ai"}},
          "required": ["text"]}},
+    {"name": "qtisas_ai_progress",
+     "description": "The progress of an ask_qtisas_ai request started with wait=false: its new lines from line "
+                    "from_line on, and its result once it has finished. wait_seconds (up to 120) waits for new "
+                    "lines first.",
+     "inputSchema": {"type": "object", "properties": {
+         "from_line": {"type": "integer", "description": "the first line to return, default 0"},
+         "wait_seconds": {"type": "number", "description": "wait up to this long for something new, default 0"}}}},
     {"name": "list_objects",
      "description": "The current project's tables, matrices, 2D graphs, 3D plots, notes and compiled ai/ fit "
                     "functions.",
@@ -84,6 +96,10 @@ TOOLS = [
     {"name": "stop",
      "description": "Cancel QtiSAS's running AI request (a running Python script cannot be interrupted).",
      "inputSchema": {"type": "object", "properties": {}}},
+    {"name": "correct_qtisas_ai",
+     "description": "While ask_qtisas_ai runs: a correction for QtiSAS's AI (e.g. 'use table B, not A'), followed "
+                    "from its next step on; a text starting with '!' restarts its current model call with it.",
+     "inputSchema": {"type": "object", "properties": {"text": {"type": "string"}}, "required": ["text"]}},
 ]
 
 LIST_OBJECTS = r"""
@@ -129,6 +145,7 @@ def log(*args):
 
 class Server:
     def __init__(self, instance, start_offscreen=False, qtisas=None):
+        self.background = None  # an ask_qtisas_ai request started with wait=false, see start_ai()
         self.instance = instance
         self.path = qtisas_send.default_socket_path(instance)
         self.start_offscreen = start_offscreen
@@ -195,7 +212,9 @@ class Server:
         changes = "; ".join(["%s: %s" % (key, ", ".join(r[key])) for key in ("created", "removed") if r.get(key)])
         return self.text(r.get("output", "").rstrip(), r.get("error", ""), changes, error=not r.get("ok"))
 
-    def ask_qtisas_ai(self, text, run=True, timeout=1800):
+    def ask_qtisas_ai(self, text, run=True, timeout=1800, wait=True):
+        if not wait:
+            return self.start_ai(text, run, timeout)
         lines = []
         r = self.send({"mode": "ai-run" if run else "ai", "text": text, "timeout": timeout},
                       timeout + 30, lines.append)
@@ -203,6 +222,43 @@ class Server:
         if len(transcript) > 30000:  # a long LIST: keep the end, where the results are
             transcript = "...(earlier lines left out)\n" + transcript[-30000:]
         return self.text(transcript, qtisas_send.summary(r), error=not r.get("ok"))
+
+    def start_ai(self, text, run, timeout):
+        """Starts the request in a thread of its own and returns at once: the caller watches it with
+        qtisas_ai_progress() and can correct or stop it meanwhile."""
+        if self.background and not self.background["done"]:
+            return self.text("an AI request started earlier is still running: watch it with qtisas_ai_progress, or "
+                             "stop it", error=True)
+        job = self.background = {"lines": [], "result": None, "done": False}
+
+        def work():
+            try:
+                job["result"] = self.send({"mode": "ai-run" if run else "ai", "text": text, "timeout": timeout},
+                                          timeout + 30, job["lines"].append)
+            except Exception as e:  # reported by qtisas_ai_progress
+                job["result"] = {"ok": False, "status": "failed", "error": "%s: %s" % (type(e).__name__, e)}
+            job["done"] = True
+
+        threading.Thread(target=work, daemon=True).start()
+        return self.text("started: watch it with qtisas_ai_progress(from_line=0), steer it with correct_qtisas_ai, "
+                         "cancel it with stop")
+
+    def ai_progress(self, from_line=0, wait_seconds=0):
+        job = self.background
+        if job is None:
+            return self.text("no AI request was started with ask_qtisas_ai(wait=false)", error=True)
+        deadline = time.monotonic() + min(max(wait_seconds, 0), 120)
+        while not job["done"] and len(job["lines"]) <= from_line and time.monotonic() < deadline:
+            time.sleep(0.5)
+        lines = job["lines"][from_line:]
+        done = job["done"]
+        head = "lines %d to %d, %s" % (from_line, from_line + len(lines),
+                                       "finished" if done else "still running")
+        result = job["result"] if done else None
+        return self.text(head, "\n".join(lines),
+                         (qtisas_send.summary(result) + ("\n" + result["error"] if result.get("error") else ""))
+                         if result else "",
+                         error=bool(result) and not result.get("ok"))
 
     def list_objects(self):
         r = self.send({"mode": "python", "code": LIST_OBJECTS, "filename": "<mcp>"}, 60)
@@ -256,11 +312,18 @@ class Server:
         r = self.send({"mode": "stop"}, 10)
         return self.text(r.get("output", "").rstrip())
 
+    def correct_qtisas_ai(self, text):
+        r = self.send({"mode": "note", "text": text}, 10)
+        return self.text((r.get("output") or r.get("error") or "").rstrip(), error=not r.get("ok"))
+
     def call(self, name, args):
         if name == "run_python":
             return self.run_python(args["code"], args.get("timeout") or 600)
         if name == "ask_qtisas_ai":
-            return self.ask_qtisas_ai(args["text"], args.get("run", True), args.get("timeout") or 1800)
+            return self.ask_qtisas_ai(args["text"], args.get("run", True), args.get("timeout") or 1800,
+                                      args.get("wait", True))
+        if name == "qtisas_ai_progress":
+            return self.ai_progress(int(args.get("from_line") or 0), float(args.get("wait_seconds") or 0))
         if name == "list_objects":
             return self.list_objects()
         if name == "show_graph":
@@ -271,6 +334,8 @@ class Server:
             return self.status()
         if name == "stop":
             return self.stop()
+        if name == "correct_qtisas_ai":
+            return self.correct_qtisas_ai(args["text"])
         raise KeyError(name)
 
     # ---- resources: the API docs ----
@@ -332,8 +397,8 @@ class Server:
             stdout.flush()
 
     def serve(self, stdin=sys.stdin, stdout=sys.stdout):
-        # A tool call runs in a thread of its own: an ask_qtisas_ai call can take minutes, and stop and status are
-        # meant to be called meanwhile.
+        # A tool call runs in a thread of its own: an ask_qtisas_ai call can take minutes, and stop,
+        # correct_qtisas_ai and status are meant to be called meanwhile.
         lock = threading.Lock()
         calls = []
         for line in stdin:

@@ -8,7 +8,7 @@
 # **************************************************************************** #
 """Sends a request to a running QtiSAS script server and prints its result.
 
-    qtisas_send.py [--instance NAME | --socket PATH] [--mode python|ai|ai-run|status|stop|quit]
+    qtisas_send.py [--instance NAME | --socket PATH] [--mode python|ai|ai-run|status|stop|note|quit]
                    [-c CODE | -f FILE | -] [--json | --stream-json] [--keep] [--timeout S] [--dialogs auto|leave]
     qtisas_send.py [--instance NAME] [--mode python|ai|ai-run]     # no code in a terminal: the interactive prompt
 
@@ -123,9 +123,10 @@ with LIST (a numbered task list) continues until an empty line, so a whole list 
   :help                 this text                   :quit or Ctrl+D  leave the prompt (QtiSAS keeps running)
   :stop                 cancel QtiSAS's running AI request (also from another terminal)
   :follow               show the running AI request's lines again, from where you left it, and its result
+  :note TEXT            correct the running AI request: from its next step on, or at once with "!TEXT"
 Ctrl+C while the AI works gives the prompt back and the AI goes on: py> inputs run meanwhile (between its steps),
-:follow returns to it, :stop cancels it. While Python runs, Ctrl+C only stops waiting: a running script cannot be
-interrupted from outside."""
+:follow returns to it, :note corrects it, :stop cancels it. While Python runs, Ctrl+C only stops waiting: a running
+script cannot be interrupted from outside."""
 
 
 def needs_more(source):
@@ -246,6 +247,13 @@ def interactive(instance, path, mode="python", timeout=None):
                 mode = "python" if command == "py" else command
             elif command == "stop":
                 stop()
+            elif command == "note":
+                if argument.strip():
+                    result = send({"id": 0, "mode": "note", "text": argument.strip()})
+                    if result:
+                        print((result.get("output") or result.get("error") or "").rstrip(), file=sys.stderr)
+                else:
+                    print("qtisas_send: :note TEXT — the correction for the running AI request", file=sys.stderr)
             elif command == "follow":
                 result = send({"id": 0, "mode": "follow", "from": seen["lines"]})
                 if result and "transcript" in result:  # the followed request's own result
@@ -287,7 +295,7 @@ def main(argv=None):
     p = argparse.ArgumentParser(description="Run Python in a running QtiSAS (script server).")
     p.add_argument("--instance", default=os.environ.get("QTISAS_SERVER", "test"))
     p.add_argument("--socket", help="socket path (default /tmp/qtisas-<uid>/<instance>.sock)")
-    p.add_argument("--mode", default="python", choices=["python", "ai", "ai-run", "status", "stop", "quit"])
+    p.add_argument("--mode", default="python", choices=["python", "ai", "ai-run", "status", "stop", "note", "quit"])
     source = p.add_mutually_exclusive_group()
     source.add_argument("-c", dest="code", help="code to run")
     source.add_argument("-f", dest="file", help="script file to run, '-' for stdin")
@@ -299,7 +307,9 @@ def main(argv=None):
     args = p.parse_args(argv)
 
     message = {"id": 1, "mode": args.mode}
-    if args.mode in ("python", "ai", "ai-run"):
+    if args.mode == "note":  # qtisas_send.py --mode note -c "use table B instead"
+        message["text"] = args.code if args.code is not None else (sys.stdin.read() if not sys.stdin.isatty() else "")
+    elif args.mode in ("python", "ai", "ai-run"):
         if args.code is not None:
             message["code"] = args.code
         elif args.file == "-" or (args.file is None and not sys.stdin.isatty()):

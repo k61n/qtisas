@@ -22,11 +22,12 @@ is answered by zero or more events {"id": 1, "event": "line", "text": "..."} and
      "created": ["table:T"], "removed": [], "dialogs": [], "status": "done"}
 or {"id": 1, "event": "busy"} while another request runs. While an AI request runs, "python" and "status" requests
 still run (between the AI's steps), "stop" cancels it (its result then has status "stopped"; a running Python script
-cannot be interrupted), and "follow" ({"mode": "follow", "from": N}) streams its lines from line N on and then its
-result, e.g. to a client that stopped waiting. Modes: "python", "status", "quit", "stop", "follow", and the AI:
-"ai" (generates only, nothing runs) and "ai-run" (the full pipeline with execution), with "text" instead of "code";
-their lines are streamed as "line" events, and the result adds "transcript", "items" (one per LIST item), "r_lines",
-"scripts", "tokens".
+cannot be interrupted), "note" ({"mode": "note", "text": "..."}) adds a correction to it, from its next model
+call on or at once with a leading "!", and "follow" ({"mode": "follow", "from": N}) streams its lines from line N on
+and then its result, e.g. to a client that stopped waiting. Modes: "python", "status", "quit", "stop", "note",
+"follow", and the AI: "ai" (generates only, nothing runs) and "ai-run" (the full pipeline with execution), with
+"text" instead of "code"; their lines are streamed as "line" events, and the result adds "transcript", "items" (one
+per LIST item), "r_lines", "scripts", "tokens".
 """
 
 import builtins
@@ -277,8 +278,8 @@ class ScriptServer:
             return
         rid = request.get("id")
         mode = request.get("mode", "python")
-        if mode == "stop":  # gets through while another request runs
-            result = self.stop_ai()
+        if mode in ("stop", "note"):  # get through while another request runs
+            result = self.stop_ai() if mode == "stop" else self.note_ai(request.get("text") or "")
             result.update({"id": rid, "event": "result"})
             self._send(socket, result)
             return
@@ -340,6 +341,21 @@ class ScriptServer:
         self.stop_requested = True
         app._askAi("stop", False)  # handled before the AI's own busy check, see handleAiTextCommand()
         return {"ok": True, "status": "done", "stopped": True, "output": "stop sent: the AI request is cancelled\n"}
+
+    def note_ai(self, text):
+        """A correction to the running AI request, as typed into QtiSAS's input line while it runs: from its next
+        model call on, or at once with a leading "!" (the call in flight starts again with it)."""
+        app = qti.app
+        if not text.strip():
+            return {"ok": False, "status": "failed", "error": "no correction text"}
+        if app._aiIdle():
+            return {"ok": True, "status": "done", "noted": False,
+                    "output": "nothing to correct: the AI is idle — send it as a new request\n"}
+        app._askAi(text, False)  # while the AI works, askAi() takes the text as a correction
+        return {"ok": True, "status": "done", "noted": True,
+                "output": "correction sent" + (": the current model call starts again with it\n"
+                                               if text.strip().startswith("!") else
+                                               ", applied from the next step of the request\n")}
 
     def _follow(self, socket, rid, start):
         """Streams the running AI request's lines from `start` on, then its result (sent by run_ai())."""
