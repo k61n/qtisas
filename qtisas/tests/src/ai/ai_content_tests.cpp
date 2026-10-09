@@ -2130,6 +2130,25 @@ void AiContentTests::aiSandboxReopen_allowsRequestToChangeExistingFunction()
     QVERIFY(QtiSasAiContent::aiSandboxReopenMistake(code, request, QString()).isEmpty());
 }
 
+void AiContentTests::userCorrection_parsesUrgentPrefix()
+{
+    bool now = true;
+    QCOMPARE(AiAssistant::parseCorrection("  use table B  ", &now), QString("use table B"));
+    QVERIFY(!now);
+    QCOMPARE(AiAssistant::parseCorrection("! do not plot", &now), QString("do not plot"));
+    QVERIFY(now);
+    QCOMPARE(AiAssistant::parseCorrection("!", &now), QString()); // nothing to correct
+}
+
+void AiContentTests::userCorrection_blockListsEveryCorrection()
+{
+    QVERIFY(AiAssistant::correctionBlock({}).isEmpty()); // no correction: prompts unchanged
+    const QString block = AiAssistant::correctionBlock({"use table B", "do not plot"});
+    QVERIFY(block.contains("Correction from the user while this request runs"));
+    QVERIFY(block.contains("the correction wins"));
+    QVERIFY(block.contains("\n- use table B\n- do not plot"));
+}
+
 void AiContentTests::requestedCreation_blocksTableNeverCreated()
 {
     // Confirmed live: the request asked to create table "SAXS_data" and fill it with a sphere
