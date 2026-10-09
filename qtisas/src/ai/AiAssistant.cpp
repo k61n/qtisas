@@ -3211,7 +3211,9 @@ void AiAssistant::startNextListItem()
     // it was asked for, and items 9-11 each re-ran the whole create+fit+plot pipeline. A dangling
     // reference costs one EXPLORE round; script-latching silently produces the wrong work.
     m_contextHistoryStart = m_history.size();
-    beginRequest(item.text, autoRun, wantsSplit);
+    // The same transport suffix askAi() appends to a single request: an item is one, and in generate-only mode the
+    // suffix is what says nothing in this session has run.
+    beginRequest(item.text + (m_content ? m_content->requestSuffix(autoRun) : QString()), autoRun, wantsSplit);
 }
 
 void AiAssistant::advanceListItem()
