@@ -204,6 +204,7 @@ class ScriptServer:
         self.busy = False
         self.session = None  # the namespace kept between requests with "keep"
         self._buffers = {}
+        self._reading = set()  # sockets whose readyRead is being handled right now (a request may run inside it)
         folder = os.path.dirname(path) or "."
         if not os.path.exists(folder):
             os.makedirs(folder)
@@ -231,18 +232,28 @@ class ScriptServer:
 
     def _forget(self, socket):
         self._buffers.pop(socket, None)
-        socket.deleteLater()
+        # Not while its own readyRead is still being handled: an AI request waits in a nested event loop inside it, and
+        # a client that left meanwhile (Ctrl+C, then "stop") had its socket deleted in there — confirmed live, a
+        # SIGSEGV in doActivate() once that emission went on. _read() deletes it when it is done.
+        if socket not in self._reading:
+            socket.deleteLater()
 
     def _read(self, socket):
         if socket not in self._buffers:  # already disconnected
             return
-        self._buffers[socket] += bytes(socket.readAll())
-        # A request can run a nested event loop (a dialog) in which this socket disconnects or sends more: the
-        # buffer is stored before each request and read again after it.
-        while socket in self._buffers and b"\n" in self._buffers[socket]:
-            line, self._buffers[socket] = self._buffers[socket].split(b"\n", 1)
-            if line.strip():
-                self._handle(socket, line)
+        self._reading.add(socket)
+        try:
+            self._buffers[socket] += bytes(socket.readAll())
+            # A request can run a nested event loop (a dialog, the AI) in which this socket disconnects or sends more:
+            # the buffer is stored before each request and read again after it.
+            while socket in self._buffers and b"\n" in self._buffers[socket]:
+                line, self._buffers[socket] = self._buffers[socket].split(b"\n", 1)
+                if line.strip():
+                    self._handle(socket, line)
+        finally:
+            self._reading.discard(socket)
+            if socket not in self._buffers:  # it left while being handled: deleted now that nothing uses it
+                socket.deleteLater()
 
     def _send(self, socket, message):
         try:
