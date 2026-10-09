@@ -1152,6 +1152,19 @@ public:
   }
 %End
 	double integrate();
+  // The smallest and the largest cell value (Matrix::range()). Confirmed live (benchmark LIST 5, local model): asked
+  // for the smallest and the largest value of all cells, the model guessed m.min()/m.max(), minValue(), minCell()
+  // and colData() in turn, each an AttributeError.
+  double min();
+%MethodCode
+  double largest = 0.0;
+  sipCpp->range(&sipRes, &largest);
+%End
+  double max();
+%MethodCode
+  double smallest = 0.0;
+  sipCpp->range(&smallest, &sipRes);
+%End
 
 	void setViewType(ViewType, bool renderImage = true);
 	void setHeaderViewType(HeaderViewType);
@@ -4091,6 +4104,7 @@ public:
   bool checkNoteExistence(const QString &noteName) /PyName=existNote/;
   bool checkMatrixExistence(const QString &matrixName) /PyName=existMatrix/;
   bool checkGraphExistence(const QString &graphName) /PyName=existGraph/;
+  bool checkPlot3DExistence(const QString &plotName) /PyName=existPlot3D/;
 
   // custom actions
   bool addCustomAction(const QString &name, const QString &scriptName,

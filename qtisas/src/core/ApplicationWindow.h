@@ -295,6 +295,7 @@ public:
     bool checkNoteExistence(const QString &noteName);
     bool checkMatrixExistence(const QString &matrixName);
     bool checkGraphExistence(const QString &graphName);
+    bool checkPlot3DExistence(const QString &plotName);
     bool existWindow(const QString &name);
 
     QLabel *d_status_info;

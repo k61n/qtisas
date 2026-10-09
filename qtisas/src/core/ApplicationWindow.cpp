@@ -23349,6 +23349,16 @@ bool ApplicationWindow::checkGraphExistence(const QString &graphName)
     return false;
 }
 
+// existGraph()'s counterpart for 3D plots, which it does not count (it knows 2D graph windows only). Confirmed live
+// (benchmark LIST 5, item 4): existGraph("Saddle3D") right after newPlot3D("Saddle3D", ...) printed False.
+bool ApplicationWindow::checkPlot3DExistence(const QString &plotName)
+{
+    foreach (MdiSubWindow *w, windowsList())
+        if (QString(w->metaObject()->className()) == "Graph3D" && w->name() == plotName)
+            return true;
+    return false;
+}
+
 bool ApplicationWindow::existWindow(const QString &name)
 {
     foreach (MdiSubWindow *w, windowsList())

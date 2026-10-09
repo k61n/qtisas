@@ -62,7 +62,7 @@ if __name__ == '__main__':
         'colorIndex', 'colorNames', 'columnsList', 'Compiler', 'copyFolder',
         'currentGraph', 'currentMatrix', 'currentNote',
         'currentTable', 'customActionNames', 'customActionsPath', 'Dan', 'deleteFolder',
-        'displayInfo', 'existGraph', 'existMatrix', 'existNote', 'existTable',
+        'displayInfo', 'existGraph', 'existMatrix', 'existNote', 'existPlot3D', 'existTable',
         'existWindow', 'Fittable',
         'graphWindow', 'graphs', 'hideWindow', 'importWaveFile', 'infoLineEdit',
         'addRule', 'matrices', 'matrix', 'matrixNames', 'matrixToTable', 'maximizeWindow',

@@ -476,6 +476,7 @@ existTable
 existNote
 existMatrix
 existGraph
+existPlot3D
 addCustomAction
 removeCustomAction
 runCustomAction
