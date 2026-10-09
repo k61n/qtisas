@@ -89,18 +89,11 @@ class AiContentProvider
     // host-independent interface depending back on AiAssistant's own type.
     virtual QString splitPlanPreflightPrompt(const QString &requestText, bool docsIntegrated) const = 0;
 
-    // The one-shot pre-flight prompt asking the model which doc topics `requestText` needs.
-    // Host-specific only insofar as its topic list/index comes from this same provider — the
-    // wording itself is closer to generic mechanism, but kept alongside splitPlanPreflightPrompt()
-    // for the same reason: ApplicationWindow.cpp (or any other host) should hold no QString
-    // prompt literals of its own, only orchestration/wiring.
-    virtual QString docSelectionPreflightPrompt(const QString &requestText) const = 0;
-
     // The one-shot pre-flight prompt asking whether `newRequestText` continues the ongoing
     // conversation or is a new, independent task, or is genuinely unclear — asked before
     // split-mode decomposition begins, only when there's existing conversation history/an existing
     // original request that could conflict. Deliberately NOT self-contained this time: unlike
-    // splitPlanPreflightPrompt()/docSelectionPreflightPrompt(), this call's own ask() site passes
+    // splitPlanPreflightPrompt(), this call's own ask() site passes
     // includeHistory=true, so the real (settings-windowed) conversation history — including
     // whatever the prior turn actually PRODUCED (e.g. a created object's real name), not just what
     // was asked — arrives as genuine prior messages ahead of this text. Confirmed live: an earlier

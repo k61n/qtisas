@@ -6561,16 +6561,8 @@ void ApplicationWindow::connectAiSignalsOnce()
             m_ai->handleContinuationCheckResponse(code);
             return;
         }
-        // Doc-selection round-trip — see AiAssistant::handleDocSelectionResponse()'s doc comment.
-        if (m_ai->awaitingDocSelection)
-        {
-            m_ai->handleDocSelectionResponse(code);
-            return;
-        }
         // Split-mode decomposition/merge round-trips — see AiAssistant::handleSplitPlanResponse()/
-        // handleSplitMergeResponse()'s doc comments. Mutually exclusive with awaitingDocSelection
-        // above by construction — a split-mode request never enters that branch at all (see the
-        // splitModeActive branch below).
+        // handleSplitMergeResponse()'s doc comments.
         if (m_ai->awaitingSplitPlan)
         {
             m_ai->handleSplitPlanResponse(code);

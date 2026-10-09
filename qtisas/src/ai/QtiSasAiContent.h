@@ -26,7 +26,6 @@ class QtiSasAiContent : public AiContentProvider
     QStringList baselineDocTopics() const override;
     QString loadDocs(bool unlimited, QString *statusOut) const override;
     QString splitPlanPreflightPrompt(const QString &requestText, bool docsIntegrated) const override;
-    QString docSelectionPreflightPrompt(const QString &requestText) const override;
     QString continuationCheckPreflightPrompt(const QString &newRequestText) const override;
     QString requestSuffix(bool autoRun) const override;
     QString apiCallingConventionHint() const override;

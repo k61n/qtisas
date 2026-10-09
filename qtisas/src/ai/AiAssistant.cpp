@@ -298,7 +298,7 @@ static QString docTopicsDisplayLabel(const QStringList &topics)
     return topics.isEmpty() ? "all" : topics.join(", ");
 }
 
-// Shared by handleDocSelectionResponse() below and splitPartTopicsFromAnswer() further down —
+// Shared by docTopicsFromRequestText() below and splitPartTopicsFromAnswer() further down —
 // dedicated synonym regexes for topic names that rarely appear verbatim in natural prose:
 // "fittable" (the class name itself) and "graph3d" (users say "3D surface"/"3D plot", never the
 // literal topic name) — confirmed live via ai-test-requests.md's own "3D surface plot" fixture
@@ -324,11 +324,10 @@ static const QHash<QString, QRegularExpression> topicSynonymRe = {
                                     QRegularExpression::CaseInsensitiveOption)},
     {"graph3d",
      QRegularExpression(R"(\b3d\b|\bsurface\s*plot\b|\bplot3d\b)", QRegularExpression::CaseInsensitiveOption)},
-    // table/matrix/graph/note/compile added for LIST mode's mechanical per-item doc-topic
-    // assignment (beginListRequest()), which has no model-generated DOCS field to fall back on
-    // the way splitPartTopicsFromAnswer()/handleDocSelectionResponse() do — these five need to
-    // carry the full keyword-matching weight on their own, unlike fittable/graph3d above (which
-    // were only ever meant as a backstop for cases the model's own answer already mostly covered).
+    // table/matrix/graph/note/compile: docTopicsFromRequestText() has no model-generated DOCS field
+    // to fall back on the way splitPartTopicsFromAnswer() does — these five need to carry the full
+    // keyword-matching weight on their own, unlike fittable/graph3d above (which were only ever
+    // meant as a backstop for cases the model's own answer already mostly covered).
     {"table",
      QRegularExpression(R"(\btables?\b|\bcolumns?\b|\bspreadsheet\b)", QRegularExpression::CaseInsensitiveOption)},
     {"matrix", QRegularExpression(R"(\bmatri(?:x|ces)\b)", QRegularExpression::CaseInsensitiveOption)},
@@ -360,7 +359,7 @@ static QString topicAnalysisText(const QString &text)
 }
 
 // True if topic's own keyword regex matches text — shared by splitPartTopicsFromAnswer() (widens
-// a DOCS-field selection) and handleDocSelectionResponse()'s backstop (narrows a free-text one).
+// a DOCS-field selection) and docTopicsFromRequestText().
 static bool topicSynonymMatch(const QString &topic, const QString &text)
 {
     const auto it = topicSynonymRe.constFind(topic);
@@ -371,41 +370,8 @@ static bool topicSynonymMatch(const QString &topic, const QString &text)
     return true;
 }
 
-void AiAssistant::handleDocSelectionResponse(const QString &code)
-{
-    awaitingDocSelection = false;
-    const QString lower = code.toLower();
-    if (lower.contains("none"))
-    {
-        if (m_host)
-            m_host->print("▸▸▸ AI doc selection: none");
-        startRequest({kNoDocsSentinel});
-        return;
-    }
-    // Order here becomes doc order (after the "ai"/"app" baseline — see below): data
-    // "container"/presentation topics first, then the "verb" topics (compile,
-    // fittable) last so the one actually driving the final action sits closest to
-    // the request itself (same "lost in the middle" rationale as the baseline
-    // prepend below). Match order doesn't affect correctness either way — each topic is checked
-    // independently via textNamesTopic() below.
-    const QStringList knownTopics = m_content ? m_content->knownDocTopics() : QStringList();
-    QStringList selected;
-    if (!lower.contains("all"))
-        for (const QString &topic : knownTopics)
-            if (textNamesTopic(lower, topic))
-                selected << topic;
-    // Backstop against a topic surviving purely because the model's free-text answer echoed back
-    // part of the topic index it was just shown, not because the request implies it — confirmed
-    // live twice: "configures analysis defaults" and a note+table+autoexec item both selected
-    // matrix/graph/graph3d/compile with nothing in the request actually touching them.
-    for (const QString &topic : knownTopics)
-        if (selected.contains(topic) && !topicSynonymMatch(topic, pendingRequestText))
-            selected.removeAll(topic);
-    startRequestWithSelectedTopics(selected, QStringLiteral("AI doc selection"));
-}
-
-// Every known topic whose OWN keyword regex matches the request text — the same predicate
-// handleDocSelectionResponse() used only as a narrowing filter, applied additively instead.
+// Every known topic whose OWN keyword regex matches the request text — the same predicate the
+// removed doc-selection pre-flight used only as a narrowing filter, applied additively instead.
 //
 // Confirmed live: "Compile a custom Porod power-law fit function ... then simulate a curve from
 // it" selected `compile` alone, with no `fittable` — yet simulateCurve()/the Fittable stage API
@@ -700,7 +666,6 @@ QStringList missingEntityNames(const QString &scriptOutput, const QList<QPair<QS
 void AiAssistant::resetPendingRoundTrips()
 {
     awaitingSelfReview = false;
-    awaitingDocSelection = false;
     awaitingSelfReviewSkepticismRetry = false;
     awaitingSelfReviewScopeRetry = false;
     awaitingSelfReviewFunctionNameRetry = false;
@@ -926,7 +891,6 @@ void AiAssistant::dispatchAfterExistenceCheck(const QString &aiText)
     // which then got prefixed with a misleading "your actual goal is: new Table" reminder and
     // duly regenerated a table nobody asked for that turn. Gating on splitModeActive here instead
     // of inside dispatchByMode() fixes that for both modes at once.
-    awaitingDocSelection = false;
     if (!m_content)
     {
         // No content provider to phrase any preflight with (shouldn't happen in practice — see
@@ -2538,7 +2502,7 @@ void AiAssistant::handleSplitPlanResponse(const QString &code)
         {
             // No content provider (shouldn't happen in practice — see setContentProvider()'s call
             // sites) — fall back to a plain request instead of firing ask() with an empty prompt
-            // and leaving awaitingDocSelection stuck waiting on nothing.
+            // and leaving a flag stuck waiting on nothing.
             startRequest(QStringList());
         }
         return;
@@ -2986,7 +2950,7 @@ void AiAssistant::startSplitPart(int index)
 
     const SplitPart &part = splitPlan[index];
     // "none"/ambiguous-"all" stay exactly as returned (never get the baseline topics prepended) —
-    // same guard as handleDocSelectionResponse()'s own baseline-topic prepend above.
+    // same guard as startRequestWithSelectedTopics()'s own baseline-topic prepend.
     const bool noneOrAmbiguous = part.docTopics.isEmpty() || part.docTopics == QStringList{kNoDocsSentinel};
     selectedDocTopics = noneOrAmbiguous
                             ? part.docTopics
@@ -5162,8 +5126,8 @@ QString filterDocsByTopic(const QString &allDocs, const QStringList &topics)
     // Emit matched sections in the ORDER `topics` is given, not disk/alphabetical order. LLMs
     // attend to the start/end of a long prompt more reliably than the middle ("lost in the
     // middle") — the caller lists baseline topics ("ai"/"app") first and the model's own
-    // selected, task-specific topics last (see selectedDocTopics' construction in
-    // handleDocSelectionResponse()), so the doc content most relevant to THIS request ends up closest to the
+    // selected, task-specific topics last (see startRequestWithSelectedTopics()), so the doc
+    // content most relevant to THIS request ends up closest to the
     // actual request text that follows the system prompt, instead of wherever it happens to
     // sort alphabetically among unrelated topics.
     QString result;

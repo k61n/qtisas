@@ -814,26 +814,6 @@ QString QtiSasAiContent::splitPlanPreflightPrompt(const QString &requestText, bo
            docTopicIndex() + "\nRequest:\n" + requestText;
 }
 
-QString QtiSasAiContent::docSelectionPreflightPrompt(const QString &requestText) const
-{
-    return "Which documentation topics do you need to fulfill the request below? Answer with "
-           "ONLY a comma-separated list of topic names from the index below — base this ONLY on "
-           "the request's own CONCRETE actions (what it actually names creating/reading/"
-           "plotting/fitting/compiling), never on what a vaguely-described PURPOSE might "
-           "eventually need. If part of the request is left unspecified (e.g. \"configures "
-           "analysis defaults\" without saying what those defaults are), that is NOT grounds to "
-           "select more topics defensively — the script for that unspecified part should be a "
-           "minimal placeholder, not real API calls guessing at every topic it might touch, so "
-           "it needs no extra topic's docs either. Confirmed live: a request to create a note "
-           "with a script that \"configures analysis defaults\" (mechanics fully specified: "
-           "auto-exec, active tab; purpose left abstract) selected all seven topics — table, "
-           "matrix, graph, graph3d, note, compile, fittable — when only \"note\" was actually "
-           "needed. Say \"none\" if this is a question/discussion about something already done "
-           "rather than a new coding/analysis task — no code, no explanation, nothing else.\n\n"
-           "Available topics:\n" +
-           docTopicIndex() + "\nRequest:\n" + requestText;
-}
-
 QString QtiSasAiContent::continuationCheckPreflightPrompt(const QString &newRequestText) const
 {
     return "The conversation above is what has actually happened so far. A new message just "

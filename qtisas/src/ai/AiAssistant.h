@@ -227,12 +227,6 @@ class AiAssistant : public QObject
     // grounded the model back to its own prior work once retries stopped resending docs.
     static QStringList compiledFunctionNamesFromHistory(const QList<QPair<QString, QString>> &history);
 
-    // Handles the doc-topic-selection round-trip's answer (parses topics, sets
-    // selectedDocTopics, kicks off the real request). Call only when awaitingDocSelection is
-    // true; it resets that flag itself. Needs setHost() to have been called first (uses it to
-    // print the "AI doc selection: ..." line).
-    void handleDocSelectionResponse(const QString &code);
-
     // Top-level entry point for a new request — replaces ApplicationWindow::askAi()'s own direct
     // dispatch to beginSplitPlanDecomposition()/the doc-selection preflight, so the "existing X"
     // verification gate (see extractExistingEntityNames()'s doc comment) stays fully encapsulated
@@ -274,7 +268,7 @@ class AiAssistant : public QObject
 
     // Handles the continuation-check pre-flight's answer — see dispatchAfterExistenceCheck() and
     // AiContentProvider::continuationCheckPreflightPrompt(). Call only when awaitingContinuationCheck
-    // is true (mirrors handleDocSelectionResponse()/handleSplitPlanResponse()'s own contract); it
+    // is true (mirrors handleSplitPlanResponse()'s own contract); it
     // resets that flag itself. CONTINUE or an unrecognized answer (fail-open, matching every other
     // verify-and-retry in this class) re-anchors originalRequestText to pendingDispatchRequestText
     // and calls dispatchByMode() with it, history intact. NEW clears history first, printing a
@@ -297,11 +291,10 @@ class AiAssistant : public QObject
     void handleExistenceCheckScriptResponse(const QString &code);
 
     // Restates the original-request anchor (see originalRequestText's declaration) and fires the
-    // real request with `docTopics` attached. Called by handleDocSelectionResponse() after a doc-
-    // selection answer (every mode, including Integrated, now runs that preflight — see
-    // beginNonSplitRequest()'s doc comment for why the topics chosen there matter under Integrated
-    // mode too), and directly with an empty topic list from the handful of "no content provider"
-    // fallbacks that can't phrase any preflight at all.
+    // real request with `docTopics` attached. Called by startRequestWithSelectedTopics() with the
+    // topics matched from the request's keywords, by the split-mode paths with a part's topics,
+    // and directly with an empty topic list from the handful of "no content provider" fallbacks
+    // that can't phrase any preflight at all.
     void startRequest(const QStringList &docTopics, const QString &resolvedTaskDescription = QString());
 
     // "\n\nTOPICS: ..." line for an optional server-side RAG proxy to scope ITS OWN retrieval —
@@ -324,7 +317,7 @@ class AiAssistant : public QObject
     QString noDocsHintLine() const;
 
     // Call only when `code` is confirmed to start with "# EXPLORE" (the caller keeps that check,
-    // matching handleDocSelectionResponse's pattern); this method assumes it's definitely
+    // matching handleSplitPlanResponse's pattern); this method assumes it's definitely
     // handling one. Needs setHost() first (uses it for both print() and runScript()).
     void handleExploreResponse(const QString &code);
 
@@ -684,7 +677,6 @@ class AiAssistant : public QObject
     void resetPendingRoundTrips();
 
     bool awaitingSelfReview = false;
-    bool awaitingDocSelection = false;
     QString pendingRequestText;
     // Set ONCE per conversation — the first askAi() call after history is empty/cleared — and
     // never overwritten by later short follow-ups ("try again", "noch mal", ...) in the same
@@ -834,7 +826,7 @@ class AiAssistant : public QObject
     bool splitModeActive = false;
     // True only while beginRequest()'s "existing X" verification script is in flight — the
     // EARLIEST gate a request passes through, before even awaitingContinuationCheck/
-    // awaitingSplitPlan/awaitingDocSelection. handleExistenceCheckScriptResponse() resets this.
+    // awaitingSplitPlan. handleExistenceCheckScriptResponse() resets this.
     bool awaitingExistenceCheckScript = false;
     // The request text beginRequest() is gating behind the existence-check script — resumed with
     // (via dispatchAfterExistenceCheck()) once it reports every referenced name found, or if the
@@ -864,7 +856,7 @@ class AiAssistant : public QObject
     bool awaitingSplitPlanCreationCheckScript = false;
     // True only while beginSplitPlanDecomposition()'s continuation-check pre-flight (see
     // AiContentProvider::continuationCheckPreflightPrompt()) is in flight — mirrors
-    // awaitingDocSelection/awaitingSplitPlan. Exactly one of this and awaitingSplitPlan is live at
+    // awaitingSplitPlan. Exactly one of this and awaitingSplitPlan is live at
     // a time; onReplyFinished() resets this and either dispatches the split-plan preflight itself
     // (CONTINUE/NEW answers) or pauses for the real user's own clarification (UNCLEAR answer, see
     // awaitingContinuationClarification). Confirmed live: without this check, an unrelated,
@@ -884,8 +876,8 @@ class AiAssistant : public QObject
     // split or not. Not consumed/cleared by the check itself, only by whichever branch finally
     // dispatches.
     QString pendingDispatchRequestText;
-    // Mirrors awaitingDocSelection — true only while the decomposition pre-flight call is in
-    // flight. handleSplitPlanResponse() resets it.
+    // True only while the decomposition pre-flight call is in flight. handleSplitPlanResponse()
+    // resets it.
     bool awaitingSplitPlan = false;
     // Combined, capped retry counter for handleSplitPlanResponse()'s three decomposition-fixup
     // checks (naming completeness, action coverage, unnecessary fragmentation). These used to be
@@ -929,7 +921,7 @@ class AiAssistant : public QObject
     // round on a question the system already settled. startSplitPart() tells the part outright
     // instead. Reset (cleared) in beginRequest().
     QStringList splitPlanSandboxExemptNames;
-    // Mirrors awaitingDocSelection/awaitingSplitPlan — true only while the final, NEVER-EXECUTED
+    // Mirrors awaitingSplitPlan — true only while the final, NEVER-EXECUTED
     // merge call (see requestSplitMerge()) is in flight. handleSplitMergeResponse() resets it.
     bool awaitingSplitMerge = false;
     // Set when handleSplitMergeResponse() sends the merge back once, pointing out which part's
@@ -947,8 +939,8 @@ class AiAssistant : public QObject
                                // that part's own generation prompt from
         QStringList docTopics; // this part's OWN doc topics, parallel to selectedDocTopics but
                                // scoped per-part; {"ai","app"} prepended by startSplitPart() the
-                               // same way handleDocSelectionResponse() prepends them for a whole
-                               // request
+                               // same way startRequestWithSelectedTopics() prepends them for a
+                               // whole request
     };
     // Ordered plan from the decomposition call; empty until handleSplitPlanResponse() parses it
     // (or falls back to a single synthetic part covering the whole request — see that method).
@@ -1056,11 +1048,8 @@ class AiAssistant : public QObject
 
     // The plain (non-split) half of dispatchByMode() — lifted out of ApplicationWindow::askAi()
     // (which used to call this inline) so beginRequest()'s existence-check gate can resume into it
-    // the same way it resumes into beginSplitPlanDecomposition(). Sets awaitingDocSelection=false
-    // and calls startRequest() directly when docsMode() is Integrated (no doc content is ever
-    // attached regardless of topic, so asking which topics are needed would be a wasted round-trip)
-    // or m_content is null; otherwise sets awaitingDocSelection=true and dispatches the
-    // doc-selection preflight.
+    // the same way it resumes into beginSplitPlanDecomposition(). Selects the doc topics
+    // mechanically from the request's keywords (docTopicsFromRequestText()) — no model call.
     void beginNonSplitRequest(const QString &aiText);
 
     // Shared by runActionScript()'s three "give up" branches and handleExploreResponse()'s
@@ -1096,7 +1085,7 @@ class AiAssistant : public QObject
     QStringList docTopicsFromRequestText(const QString &text) const;
 
     // Reports the chosen topics under `label`, prepends the content provider's baseline topics,
-    // and dispatches. Shared by the mechanical path and handleDocSelectionResponse().
+    // and dispatches. Shared by beginNonSplitRequest() and the failed-split-plan fallback.
     void startRequestWithSelectedTopics(const QStringList &selected, const QString &label);
 
     void resetErrorRetryState();
