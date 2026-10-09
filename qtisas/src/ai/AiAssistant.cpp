@@ -3789,8 +3789,22 @@ bool AiAssistant::runExploreProbe(const QString &code, QString *output, QString 
     // containing the marker text is therefore not proof the action script actually ran in full —
     // only `safeCode.length() == code.length()` (nothing was truncated at all) is. Requiring that
     // explicitly closes the gap regardless of how complete that write-call list happens to be.
-    if (safeCode.length() == code.length() && exploreResult.error.isEmpty() &&
-        kActionScriptMarkerRe.match(safeCode).hasMatch())
+    //
+    // Nor is a marker proof the action script did its job: confirmed live (LIST 5, item 6), a reply cut short as
+    // repetition-loop garbage kept only "c = Compiler" after the marker, deleted nothing, and the part counted as done.
+    // A bundled action script never went through the deliverable check, so it is checked here, after the fact: when
+    // it misses something its task asked for, the usual follow-up asks for the action script with this output.
+    const bool bundledAction = safeCode.length() == code.length() && exploreResult.error.isEmpty() &&
+                               kActionScriptMarkerRe.match(safeCode).hasMatch();
+    const QString bundledMissing =
+        bundledAction && m_content
+            ? m_content->missingRequestedDeliverables(
+                  safeCode.mid(kActionScriptMarkerRe.match(safeCode).capturedStart()), currentScopeDescription())
+            : QString();
+    if (bundledAction && !bundledMissing.isEmpty())
+        m_host->print("▸▸▸ AI: the action script bundled with this EXPLORE did not do the whole task — asking for "
+                      "the action script.");
+    if (bundledAction && bundledMissing.isEmpty())
     {
         m_host->print("▸▸▸ AI: EXPLORE response already included and ran the action script — done.");
         // The same success path as a script run by runActionScript(): without it a split part or LIST item that ended
@@ -3829,10 +3843,15 @@ void AiAssistant::requestActionScriptAfterExplore(const QString &code, const QSt
     // A byte-identical repeat means this round produced nothing new to converge on — waiting for the
     // round cap just spends another 40-50s reproducing it. Confirmed live: the same EXPLORE script
     // came back 3 rounds running, unchanged.
-    const bool repeatedIdenticalExplore = !lastExploreCode.isEmpty() && code == lastExploreCode;
+    // The read-only probes compared, not the whole replies: confirmed live (LIST 5, item 3), the same probe came back
+    // with a bundled action script that differed by one import line, and ran again for nothing.
+    const bool repeatedIdenticalExplore =
+        !lastExploreCode.isEmpty() &&
+        (code == lastExploreCode || (m_content && m_content->explorePrefixBeforeFirstWriteCall(code) ==
+                                                      m_content->explorePrefixBeforeFirstWriteCall(lastExploreCode)));
     lastExploreCode = code;
     if (repeatedIdenticalExplore && m_host)
-        m_host->print("▸▸▸ AI: this EXPLORE script is identical to the previous round's — exploring "
+        m_host->print("▸▸▸ AI: this EXPLORE probe is identical to the previous round's — exploring "
                       "again can't add anything, asking for the action script instead.");
 
     ++consecutiveExploreCount;
@@ -3896,6 +3915,20 @@ void AiAssistant::handleExploreResponse(const QString &code)
     printExploreScript(code);
     if (exploreRoundBudgetExhausted(/*refusing=*/false))
         return;
+    // The same probe as the round before, with nothing run in between (lastExploreCode is cleared by every action
+    // attempt): its output is already in hand, so it is not run again.
+    if (m_content && !lastExploreCode.isEmpty() && !lastExploreOutput.isEmpty())
+    {
+        const QString probe = m_content->explorePrefixBeforeFirstWriteCall(code);
+        if (probe == m_content->explorePrefixBeforeFirstWriteCall(lastExploreCode))
+        {
+            if (m_host)
+                m_host->print("▸▸▸ AI: the same EXPLORE probe as the previous round — not run again; its output is "
+                              "already in hand.");
+            requestActionScriptAfterExplore(code, lastExploreOutput, code.mid(probe.length()));
+            return;
+        }
+    }
     QString output;
     QString discardedDraft;
     if (!runExploreProbe(code, &output, &discardedDraft))
