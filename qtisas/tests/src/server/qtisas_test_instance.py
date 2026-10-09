@@ -17,6 +17,7 @@
 QtiSAS builds every path from the home folder (~/.config/qtisas/...: settings, FitFunctions, python, ai), so the
 instance runs with HOME set to the test home, started with -S=<instance> (offscreen script server; -s with --visible).
 Its settings start as defaults except the AI's (presets and options copied); dialogs are closed automatically.
+Every start copies the user's AI options ([AI] group) again, so the instance runs with the user's current ones.
 Packages installed with "qtisas pip ..." are read from the user's site-packages (or copied: --copy-site-packages).
 """
 
@@ -74,6 +75,45 @@ def ai_settings(ini):
     return lines
 
 
+def with_ai_settings(ini_lines, ai_lines):
+    """The settings file's lines with its [AI] group replaced by ai_lines (appended when it has none)."""
+    result, inside, replaced = [], False, False
+    for line in ini_lines:
+        if line.startswith("["):
+            inside = line.strip() == "[AI]"
+            if inside and not replaced:
+                result.extend(ai_lines)
+                replaced = True
+        if not inside:
+            result.append(line)
+    if not replaced and ai_lines:
+        if result and not result[-1].endswith("\n"):
+            result[-1] += "\n"
+        if result and result[-1].strip():
+            result.append("\n")
+        result.extend(ai_lines)
+    return result
+
+
+def sync_ai_settings(args):
+    """Copies the user's [AI] group into the test home again; prints what changed (API keys only by name)."""
+    user_ai = ai_settings(os.path.join(config(os.path.expanduser("~")), "qtisas.ini"))
+    test_ini = os.path.join(config(args.home), "qtisas.ini")
+    if not user_ai:
+        return
+    old_ai = ai_settings(test_ini)
+    if old_ai == user_ai:
+        return
+    lines = open(test_ini, encoding="utf-8").readlines() if os.path.isfile(test_ini) else []
+    with open(test_ini, "w", encoding="utf-8") as f:
+        f.write("".join(with_ai_settings(lines, user_ai)))
+    old = dict(line.rstrip("\n").split("=", 1) for line in old_ai if "=" in line)
+    new = dict(line.rstrip("\n").split("=", 1) for line in user_ai if "=" in line)
+    changed = sorted(k for k in set(old) | set(new) if old.get(k) != new.get(k) and k != "Info")
+    shown = [k if "key" in k.lower() else "%s=%s" % (k, new.get(k, "(removed)")) for k in changed]
+    print("AI settings updated from the user's: " + (", ".join(shown) if shown else "(Info only)"))
+
+
 def reset(args):
     user = config(os.path.expanduser("~"))
     test = config(args.home)
@@ -129,6 +169,9 @@ def start(args):
         return 0
     if not os.path.isdir(config(args.home)):
         reset(args)
+    # confirmed: a test home made days earlier kept MaxAutoContinue=4 and MaxSplitParts=8 while the user's QtiSAS ran
+    # with 15 and 3 — the benchmark scored 0-2 of 6 where the same list in the user's QtiSAS scored 6
+    sync_ai_settings(args)
     # dialogs closed automatically also with a visible window: nobody is expected to click them
     env = dict(os.environ, HOME=args.home, QTISAS_SERVER_SOCKET=args.socket, QTISAS_SERVER_DIALOGS="auto")
     option = ("-s=" if args.visible else "-S=") + args.instance
