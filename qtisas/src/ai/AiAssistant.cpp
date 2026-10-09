@@ -4658,6 +4658,13 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
                           "script actually provides — running the corrected version below.");
             code = countRepaired;
         }
+        const QString shadowRepaired = m_content->compilerSelfShadowRepair(code);
+        if (!shadowRepaired.isEmpty())
+        {
+            m_host->print("▸▸▸ AI: auto-corrected setCode(): removed self-referential declarations such as "
+                          "\"double A = A;\" (the parameter is used directly) — running the corrected version below.");
+            code = shadowRepaired;
+        }
         const QString yNameRepaired = m_content->compilerYNameAssignmentRepair(code);
         if (!yNameRepaired.isEmpty())
         {

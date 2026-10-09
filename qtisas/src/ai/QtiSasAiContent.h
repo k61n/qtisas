@@ -69,6 +69,7 @@ class QtiSasAiContent : public AiContentProvider
     QString exploreGroupsIgnoredMistake(const QString &code, const QString &exploreOutput) const override;
     QString compilerParamCountRepair(const QString &code) const override;
     QString compilerYNameAssignmentRepair(const QString &code) const override;
+    QString compilerSelfShadowRepair(const QString &code) const override;
     QString fabricatedConversationCheck(const QString &code) const override;
     static QString repairedSetCodeBody(const QString &body, const QString &yName);
     // Python string literals blanked out, so a name inside one is not mistaken for a variable
@@ -127,6 +128,11 @@ class QtiSasAiContent : public AiContentProvider
     static QString bareColumnNameInColumnsListMistake(const QString &code);
     static QString missingPyQtImportMistake(const QString &code);
     static QString missingRandomImportMistake(const QString &code);
+    static QString unrequestedRandomDataMistake(const QString &code, const QString &originalRequestText);
+    static QString columnListInsteadOfAggregateMistake(const QString &code, const QString &originalRequestText);
+    static QString requestedResultLabel(const QString &originalRequestText);
+    static QString hardcodedResultLineMistake(const QString &code, const QString &originalRequestText);
+    static QString repeatedResultLabelMistake(const QString &code, const QString &originalRequestText);
     static QString pythonInputCallMistake(const QString &code);
     static QString guessedNameCandidateListMistake(const QString &code);
     static QString fragmentedStaticScriptPrintMistake(const QString &code);

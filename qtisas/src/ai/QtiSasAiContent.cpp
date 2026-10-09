@@ -2045,6 +2045,16 @@ QString QtiSasAiContent::compiledCodeSelfShadowBug(const QString &code)
            "double in scope.";
 }
 
+
+QString QtiSasAiContent::compilerSelfShadowRepair(const QString &code) const
+{
+    // Only C++ declares "double name = name;", so the whole script can be searched: in Python it does not parse.
+    static const QRegularExpression selfShadowRe(R"([ \t]*\b(?:double|float|int)\s+(\w+)\s*=\s*\1\s*;[ \t]*\n?)");
+    QString repaired = code;
+    repaired.remove(selfShadowRe);
+    return repaired == code ? QString() : repaired;
+}
+
 QString QtiSasAiContent::compilerYNameAssignmentRepair(const QString &code) const
 {
     // EVERY setCode() in the script, not just the first: confirmed live, a part compiling two
@@ -3843,6 +3853,117 @@ QString QtiSasAiContent::missingPyQtImportMistake(const QString &code)
            "import and is a valid substitute specifically for QColor(...), never for the others.";
 }
 
+
+QString QtiSasAiContent::unrequestedRandomDataMistake(const QString &code, const QString &originalRequestText)
+{
+    // Confirmed live (supervised LIST 3, item 7, local model): "y = 2x + 1, dy = 0.1" was filled with
+    // y = 2*x + 1 + random.gauss(0, 0.1), so the fit printed a = 2.0013, b = 0.9962 instead of 2.0000 and 1.0000 — a
+    // silent wrong result. Data the request gives exactly must not get noise the request never asked for.
+    static const QRegularExpression randomCallRe(R"(\b(?:random|np\.random|numpy\.random)\.\w+\s*\()");
+    static const QRegularExpression noiseAskedRe(R"(\b(?:nois[ey]\w*|random\w*|jitter\w*|perturb\w*|scatter\w*)\b)",
+                                                 QRegularExpression::CaseInsensitiveOption);
+    if (!randomCallRe.match(code).hasMatch() || noiseAskedRe.match(originalRequestText).hasMatch())
+        return {};
+    return "This script adds random values (random.<...>() / numpy.random) to the data, but the request never asks for "
+           "noise or random numbers — it gives the values exactly. Fill the cells with exactly the requested values; "
+           "noise changes every result computed from them.";
+}
+
+
+QString QtiSasAiContent::columnListInsteadOfAggregateMistake(const QString &code, const QString &originalRequestText)
+{
+    // Confirmed live (supervised LIST 3, item 1, local model): "Print the sum of column 2" was printed as
+    // scriptPrint("R1:", t.colData(2)) — the whole column instead of one number, accepted as a successful run.
+    static const QRegularExpression aggregateAskedRe(
+        R"(\b(?:sum|total|mean|average|maximum|minimum|number of|count)\b)", QRegularExpression::CaseInsensitiveOption);
+    if (!aggregateAskedRe.match(originalRequestText).hasMatch())
+        return {};
+    // a print whose argument is a bare colData(...) list (not inside sum(), len(), max(), min(), ...)
+    static const QRegularExpression printLineRe(R"((?:scriptPrint|print)\s*\((.*)\))");
+    static const QRegularExpression bareColDataRe(R"((^|[,(\s])\w+\.colData\s*\()");
+    static const QRegularExpression wrappedRe(
+        R"(\b(?:sum|len|max|min|mean|round|abs|sorted|statistics\.\w+)\s*\(\s*$)");
+    for (const QString &line : code.split('\n'))
+    {
+        const QRegularExpressionMatch print = printLineRe.match(line);
+        if (!print.hasMatch())
+            continue;
+        const QString args = print.captured(1);
+        for (auto it = bareColDataRe.globalMatch(args); it.hasNext();)
+        {
+            const QRegularExpressionMatch m = it.next();
+            const QString before = args.left(m.capturedStart() + m.captured(1).size());
+            if (!wrappedRe.match(before).hasMatch())
+                return "The request asks for a single value (a sum, count, mean, maximum or minimum), but this script "
+                       "prints a whole column — colData(...) is the list of all cell values. Compute the value first, "
+                       "e.g. sum(t.colData(n)) or len(...), and print that number.";
+        }
+    }
+    return {};
+}
+
+// The label the request asks the result line to start with ("The result label is \"R3:\"" -> "R3:"), or empty.
+QString QtiSasAiContent::requestedResultLabel(const QString &originalRequestText)
+{
+    static const QRegularExpression labelRe(R"RX(\blabel\b[^"\n]{0,20}"([^"\s]{1,12}:)")RX",
+                                            QRegularExpression::CaseInsensitiveOption);
+    return labelRe.match(originalRequestText).captured(1);
+}
+
+
+QString QtiSasAiContent::hardcodedResultLineMistake(const QString &code, const QString &originalRequestText)
+{
+    // Confirmed live (LIST 3, item 3, local model): scriptPrint("R3: 0 ValueError") — the result written as fixed
+    // text, nothing in the script computes it. A plain string literal (not an f-string, no further arguments) after
+    // the label cannot be a result.
+    const QString label = requestedResultLabel(originalRequestText);
+    if (label.isEmpty())
+        return {};
+    const QRegularExpression literalRe(R"((?:scriptPrint|print)\s*\(\s*(["']))" + QRegularExpression::escape(label) +
+                                       R"(\s*[^"'{}\n]*\S[^"'{}\n]*\1\s*\))");
+    // A literal reporting a failure ("R3: table not found") is a guard branch's message, not a fabricated result.
+    static const QRegularExpression failureTextRe(
+        R"(\b(?:error|not found|missing|failed|fails|does not exist|doesn't exist|cannot|could not|unavailable)\b)",
+        QRegularExpression::CaseInsensitiveOption);
+    QRegularExpressionMatch m;
+    for (auto it = literalRe.globalMatch(code); it.hasNext();)
+    {
+        const QRegularExpressionMatch candidate = it.next();
+        if (!failureTextRe.match(candidate.captured(0)).hasMatch())
+        {
+            m = candidate;
+            break;
+        }
+    }
+    if (!m.hasMatch())
+        return {};
+    return "The result line " + m.captured(0) + " is fixed text: nothing in this script computes the values after \"" +
+           label + "\". Compute them in the script and print the variables, e.g. scriptPrint(\"" + label +
+           "\", value1, value2).";
+}
+
+
+QString QtiSasAiContent::repeatedResultLabelMistake(const QString &code, const QString &originalRequestText)
+{
+    // Confirmed live (LIST 5, item 4, local model): three top-level scriptPrint("R4:", ...) lines, one per value, where
+    // the item asks for exactly ONE result line. Only unindented prints count: one per if/else branch is fine.
+    const QString label = requestedResultLabel(originalRequestText);
+    if (label.isEmpty())
+        return {};
+    const QRegularExpression topLevelRe(R"(^(?:scriptPrint|print)\s*\(\s*f?["'])" + QRegularExpression::escape(label),
+                                        QRegularExpression::MultilineOption);
+    int count = 0;
+    for (auto it = topLevelRe.globalMatch(code); it.hasNext(); it.next())
+        ++count;
+    if (count < 2)
+        return {};
+    return QString("This script prints the result label \"%1\" %2 times, but the request asks for exactly ONE result "
+                   "line. Collect all requested values first and print them together in one line: "
+                   "scriptPrint(\"%1\", value1, value2, ...).")
+        .arg(label)
+        .arg(count);
+}
+
 QString QtiSasAiContent::missingRandomImportMistake(const QString &code)
 {
     // Confirmed live, repeatedly — a script generating synthetic data with added noise calls
@@ -4652,6 +4773,18 @@ QList<AiKnownMistakeMatch> QtiSasAiContent::detectKnownMistakes(const QString &c
     explanation = missingRandomImportMistake(code);
     if (!explanation.isEmpty())
         matches << AiKnownMistakeMatch{"random module used without import", explanation};
+    explanation = unrequestedRandomDataMistake(code, originalRequestText);
+    if (!explanation.isEmpty())
+        matches << AiKnownMistakeMatch{"random values the request never asked for", explanation};
+    explanation = columnListInsteadOfAggregateMistake(code, originalRequestText);
+    if (!explanation.isEmpty())
+        matches << AiKnownMistakeMatch{"a whole column printed instead of the requested value", explanation};
+    explanation = hardcodedResultLineMistake(code, originalRequestText);
+    if (!explanation.isEmpty())
+        matches << AiKnownMistakeMatch{"the result line is fixed text, not computed", explanation};
+    explanation = repeatedResultLabelMistake(code, originalRequestText);
+    if (!explanation.isEmpty())
+        matches << AiKnownMistakeMatch{"the result label printed more than once", explanation};
     explanation = pythonInputCallMistake(code);
     if (!explanation.isEmpty())
         matches << AiKnownMistakeMatch{"input() call would hang the application", explanation};

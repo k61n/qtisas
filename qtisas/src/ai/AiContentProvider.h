@@ -512,6 +512,11 @@ class AiContentProvider
     // live twice, "double I" -> clang error -> "double y" -> blocked cost two rounds every time.
     virtual QString compilerYNameAssignmentRepair(const QString &code) const = 0;
 
+    // Returns `code` without its self-referential C++ declarations (`double A = A;`, which reads an uninitialized
+    // local instead of the parameter), or empty when there are none. Repaired because the block alone did not help:
+    // confirmed live, the local model resubmitted the same declarations five times in a row and gave the item up.
+    virtual QString compilerSelfShadowRepair(const QString &code) const = 0;
+
     // Non-empty when the script role-plays further turns ("USER:"/"ASSISTANT:" lines) with
     // invented prompts, scripts and tool output. Checked even for a script that failed to
     // compile — that is the usual way this surfaces, and "SyntaxError" names the wrong problem.
