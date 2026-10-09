@@ -2098,6 +2098,38 @@ void AiContentTests::reuseInsteadOfCompile_allowsSplitModePartReusingEarlierPart
     QVERIFY(QtiSasAiContent::reuseInsteadOfCompileMistake(code, request, earlierPartsCode).isEmpty());
 }
 
+void AiContentTests::aiSandboxReopen_blocksReopeningLeftoverForCompileRequest()
+{
+    // Benchmark LIST 3, item 8: the leftover ai/RefDecay was reopened and recompiled instead of defined as asked.
+    const QString request = "Compile a new fit function \"ai/RefDecay\" for y = A*exp(-k*x) + c with all three "
+                            "parameters adjustable.";
+    const QString code = "c = Compiler\nc.open(\"ai/RefDecay\")\nok = c.compile()\n";
+    QVERIFY(!QtiSasAiContent::aiSandboxReopenMistake(code, request, QString()).isEmpty());
+}
+
+void AiContentTests::aiSandboxReopen_allowsFreshDefinitionAndOwnEarlierPart()
+{
+    const QString request = "Compile a new fit function \"ai/RefDecay\" for y = A*exp(-k*x) + c.";
+    const QString fresh = "c = Compiler\nc.new()\nc.setFunctionName(\"ai/RefDecay\")\nc.setCode(\"y = A;\")\n"
+                          "ok = c.compile()\n";
+    QVERIFY(QtiSasAiContent::aiSandboxReopenMistake(fresh, request, QString()).isEmpty());
+    // a later part reopening what an earlier part of this plan defined is this request's own work
+    const QString reopen = "c = Compiler\nc.open(\"ai/RefDecay\")\nok = c.compile()\n";
+    const QString earlier = "c.new()\nc.setFunctionName(\"ai/RefDecay\")\nok = c.compile()\n";
+    QVERIFY(QtiSasAiContent::aiSandboxReopenMistake(reopen, request, earlier).isEmpty());
+    // a library function outside ai/ may be reopened
+    QVERIFY(
+        QtiSasAiContent::aiSandboxReopenMistake("c.open(\"sasviewmodels/sphere\")\nc.compile()\n", request, QString())
+            .isEmpty());
+}
+
+void AiContentTests::aiSandboxReopen_allowsRequestToChangeExistingFunction()
+{
+    const QString request = "Open the existing fit function \"ai/RefDecay\", change c to 0.5 and compile it again.";
+    const QString code = "c = Compiler\nc.open(\"ai/RefDecay\")\nok = c.compile()\n";
+    QVERIFY(QtiSasAiContent::aiSandboxReopenMistake(code, request, QString()).isEmpty());
+}
+
 void AiContentTests::requestedCreation_blocksTableNeverCreated()
 {
     // Confirmed live: the request asked to create table "SAXS_data" and fill it with a sphere

@@ -226,6 +226,9 @@ class AiContentTests : public QObject
     static void reuseInsteadOfCompile_allowsRealCompileCall();
     static void reuseInsteadOfCompile_allowsFitOnlyRequestWithNoCompileWord();
     static void reuseInsteadOfCompile_allowsSplitModePartReusingEarlierPartsCompile();
+    static void aiSandboxReopen_blocksReopeningLeftoverForCompileRequest();
+    static void aiSandboxReopen_allowsFreshDefinitionAndOwnEarlierPart();
+    static void aiSandboxReopen_allowsRequestToChangeExistingFunction();
     static void requestedCreation_blocksTableNeverCreated();
     static void requestedCreation_allowsRealNewTableCall();
     static void requestedCreation_allowsRequestWithNoCreateWord();
