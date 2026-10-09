@@ -192,4 +192,4 @@ for docs in full compact; do for list in list4 list3; do for i in 1 2 3; do
 done; done; done
 ```
 
-Both lists as text, to paste into QtiSAS by hand: [ai-test-requests.md, "LIST 3 and LIST 4"](../ai-test-requests.md#list-3-and-list-4--the-benchmark-lists).
+The lists as text, to paste into QtiSAS by hand: [ai-test-requests.md, "LIST 3, LIST 4 and LIST 5"](../ai-test-requests.md#list-3-list-4-and-list-5--the-benchmark-lists).

@@ -5,7 +5,7 @@ Realistic requests for testing the AI assistant, from single requests to whole c
 | Part | What | How it runs |
 |------|------|-------------|
 | [1. Topic detection](#part-1--topic-detection) | one request per entry, with the doc topics it must select | automatically, by `ai_content_tests` |
-| [2. LIST requests](#part-2--list-requests) | whole lists of tasks; LIST 3 and LIST 4 are also the [benchmarks](benchmarks/README.md) | by hand, pasted into the app |
+| [2. LIST requests](#part-2--list-requests) | whole lists of tasks; LIST 3, LIST 4 and LIST 5 are also the [benchmarks](benchmarks/README.md) | by hand, pasted into the app |
 | [3. Conversations](#part-3--conversations) | several turns, typed one at a time | by hand |
 | [4. Commands, markers, settings, rules](#part-4--commands-markers-settings-rules) | what QtiSAS handles itself, and what switches an AI stage on or off | by hand |
 
@@ -222,10 +222,11 @@ For every item, use the exact object names given and verify the underlying logic
 'z']". Without the role in item 6, "z" got role Y, and item 7 noticed it but gave up silently, without a 3D
 plot.
 
-## LIST 3 and LIST 4 — the benchmark lists
+## LIST 3, LIST 4 and LIST 5 — the benchmark lists
 
 **Tests:** every item prints one checkable `R<n>: …` line. The expected values are in
-[benchmarks/list3.json](benchmarks/list3.json) and [benchmarks/list4.json](benchmarks/list4.json);
+[benchmarks/list3.json](benchmarks/list3.json), [benchmarks/list4.json](benchmarks/list4.json) and
+[benchmarks/list5.json](benchmarks/list5.json);
 `benchmarks/qtisas_benchmark.py` runs and scores the same lists automatically.
 
 **Before pasting**, delete the functions the list creates (Python console):
@@ -233,6 +234,7 @@ plot.
 ```python
 Compiler.delete("ai/RefLine"); Compiler.delete("ai/RefDecay"); Compiler.scanGroups()   # LIST 3
 Compiler.delete("ai/RefGauss"); Compiler.scanGroups()                                   # LIST 4
+Compiler.delete("ai/Quad"); Compiler.delete("ai/Gauss5"); Compiler.delete("ai/Lor5"); Compiler.scanGroups()  # LIST 5
 ```
 
 **After editing a JSON file**, regenerate its text here: `qtisas_benchmark.py <list>.json --print`, without
@@ -268,6 +270,19 @@ Use exactly the object names given. End the item by printing exactly ONE line: t
 4. In table "Peak", add a column named "y2" with a column formula that is 2 times the y column, recalculate it, and print the sum of "y2" with 4 decimals. The result label is "R4:".
 5. Create a table "Names" with 3 rows and 2 columns: column 1 holds 1, 2, 3 and column 2, in text format, holds "alpha", "beta", "gamma". Print the text in row 2 of column 2 and the number in row 3 of column 1. The result label is "R5:".
 6. Close and delete the table "Names" and the matrix "Grid". Print whether each still exists afterwards, table first. The result label is "R6:".
+```
+
+**LIST 5** (combined tasks: each item chains several steps and reuses what earlier items created):
+
+```
+LIST
+Use exactly the object names given. End the item by printing exactly ONE line: the result label the item gives, then only the values asked for, in the order asked, separated by spaces.
+1. Create a table "Calib" with 21 rows and three columns: "x" (role X) = 0, 0.1, ..., 2; "y" (role Y) given by a column formula 3*x^2 - 2*x + 1 recalculated in the default scripting language; "dy" (role yErr) = 0.05 everywhere. Compile a new fit function "ai/Quad" for y = a*x^2 + b*x + c with all three parameters adjustable, and fit it to "Calib" weighted by dy, starting from a = b = c = 1. Print a, b and c with 4 decimals, and the number of rows where y is greater than 5. The result label is "R1:".
+2. Create a table "Peak5" with 81 rows: x = -4, -3.9, ..., 4 and y = 2/(1 + (x/0.5)^2) + 0.1 (roles X, Y). Compile two new fit functions, "ai/Gauss5" for y = A*exp(-x^2/(2*w^2)) + c and "ai/Lor5" for y = A/(1 + (x/w)^2) + c, each with A, w and c adjustable. Fit both to "Peak5", each starting from A = 1, w = 1, c = 0. Print the name of the function with the smaller chi2/dof, then its fitted A and w (as a positive number), each with 4 decimals. The result label is "R2:".
+3. Create a graph "Report5" with two stacked layers: the top one with the "Calib" y data as points and the fitted curve from table "fitCurve-ai/Quad" as a line, the bottom one with that table's residuals. Set the Y axis title of the top layer to "y" and the X axis title of the bottom layer to "x". Print the number of layers, the number of curves in the top and in the bottom layer, and the largest absolute residual with 4 decimals. The result label is "R3:".
+4. Create a 21x21 matrix "Saddle" spanning x and y from -1 to 1 and fill it with x*x - y*y. Plot it as a 3D surface in a window named "Saddle3D". Print the value at the centre of the matrix (row 11, column 11), the smallest and the largest value of all cells, and whether a 3D window "Saddle3D" exists. The result label is "R4:".
+5. Create a note "Pipeline" with two tabs named "make" and "check" (the first tab renamed too). The "make" tab holds a script that creates a table "Auto" with 5 rows whose column 1 is 1, 2, ..., 5; the "check" tab holds a script that prints the sum of column 1 of "Auto". Run only the "make" tab. Print the number of tabs, whether table "Auto" exists, and the sum of its column 1. The result label is "R5:".
+6. Delete the fit functions "ai/Quad", "ai/Gauss5" and "ai/Lor5" from the library, and close and delete the table "Peak5" and the note "Pipeline". Print which of the three function names still exist (a list, [] if none), then whether "Peak5" and "Pipeline" still exist. The result label is "R6:".
 ```
 
 # Part 3 — Conversations
