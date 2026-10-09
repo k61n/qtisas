@@ -14,6 +14,7 @@ import socket
 import sys
 import tempfile
 import threading
+import time
 
 try:
     from PyQt6.QtCore import QEventLoop, QTimer
@@ -78,6 +79,26 @@ assert 'File "demo.py", line 2' in r["error"] and "y = x / 0" in r["error"], r["
 assert "qtisas_server" not in r["error"] and r["error"].endswith("ZeroDivisionError: division by zero"), r["error"]
 r = run("raise SystemExit(0)")
 assert r["ok"], r
+
+# a prompt input (qtisas_send.py's prompt): a bare expression prints its value; error hints as in QtiSAS's console
+assert run("1 + 2", interactive=True)["output"] == "3\n"
+assert run("1 + 2")["output"] == ""  # a script prints nothing by itself
+assert run("a = 1; b = 2", interactive=True)["ok"]
+r = run("setDecimalSeparators(2)", interactive=True)
+assert "a method of Table" in r["error"] and "t.setDecimalSeparators(...)" in r["error"], r["error"]
+r = run('n = newNote("ServerTestN")\nn.tab(1).text()')
+assert "toPlainText()" in r["error"] and "contextMenu" not in r["error"], r["error"]
+assert "The object is None" in run('note("ServerTestN").tab("nope").setText("x")')["error"]
+closeWindow(note("ServerTestN"))
+
+# "stop" with nothing running: answered, nothing cancelled (while an AI request runs it cancels it, even when busy)
+r = server.stop_ai()
+assert r["ok"] and r["stopped"] is False and "nothing to stop" in r["output"], r
+r = server.run({"mode": "status"})
+assert r["running"] is None and r["ai_lines"] == 0, r  # while an AI request runs: "ai-run" and its lines so far
+r = server.note_ai("use table B")  # a correction needs a running AI request; idle, nothing is started
+assert r["ok"] and r["noted"] is False and "nothing to correct" in r["output"], r
+assert not server.note_ai(" ")["ok"]
 
 # variables: fresh by default, kept with "keep"
 assert run("a = 41", keep=True)["ok"]
@@ -154,6 +175,49 @@ loop.exec()
 timer.stop()
 thread.join(1)
 assert codes == {"ok": 0, "failed": 1, "busy": 2}, codes
+
+# the MCP server (qtisas_mcp.py), its protocol side only: tools, the API docs as resources, errors as JSON-RPC errors
+import io  # noqa: E402
+import json  # noqa: E402
+import qtisas_mcp  # noqa: E402
+mcp_in = io.StringIO("\n".join(json.dumps(m) for m in (
+    {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2025-06-18"}},
+    {"jsonrpc": "2.0", "method": "notifications/initialized"},
+    {"jsonrpc": "2.0", "id": 2, "method": "tools/list"},
+    {"jsonrpc": "2.0", "id": 3, "method": "resources/list"},
+    {"jsonrpc": "2.0", "id": 4, "method": "resources/read", "params": {"uri": "qtisas-doc://table-python-api.pyi"}},
+    {"jsonrpc": "2.0", "id": 5, "method": "tools/call", "params": {"name": "nope", "arguments": {}}},
+    {"jsonrpc": "2.0", "id": 6, "method": "no/such"},
+    {"jsonrpc": "2.0", "id": 7, "method": "tools/call",
+     "params": {"name": "get_file",
+                "arguments": {"path": os.path.join(qtisas_mcp.DOCS, "table-python-api.pyi")}}})) + "\n")
+mcp_out = io.StringIO()
+qtisas_mcp.Server("mcp-test").serve(mcp_in, mcp_out)
+replies = {r["id"]: r for r in map(json.loads, mcp_out.getvalue().splitlines())}
+assert sorted(replies) == [1, 2, 3, 4, 5, 6, 7], replies.keys()  # the notification is not answered
+assert replies[1]["result"]["serverInfo"]["name"] == "qtisas", replies[1]
+assert {t["name"] for t in replies[2]["result"]["tools"]} >= {"run_python", "ask_qtisas_ai", "show_graph", "stop",
+                                                               "correct_qtisas_ai"}
+assert any(r["uri"] == "qtisas-doc://table-python-api.md" for r in replies[3]["result"]["resources"]), replies[3]
+assert "newTable" in replies[4]["result"]["contents"][0]["text"], replies[4]
+assert replies[5]["result"]["isError"], replies[5]  # an unknown tool: reported to the model, not a protocol error
+assert replies[6]["error"]["code"] == -32601, replies[6]
+assert not replies[7]["result"]["isError"] and "newTable" in replies[7]["result"]["content"][0]["text"], replies[7]
+
+# an AI request started without waiting (wait=false): watched with qtisas_ai_progress (the script server faked here)
+mcp = qtisas_mcp.Server("mcp-test")
+assert mcp.ai_progress()["isError"]  # nothing started
+mcp.send = lambda message, timeout, on_line=None: [on_line(t) for t in ("first", "second")] and {
+    "ok": True, "status": "done", "seconds": 1.0, "created": [], "removed": [], "scripts": 1, "tokens": 100}
+assert "started" in mcp.ask_qtisas_ai("make a table", wait=False)["content"][0]["text"]
+r = mcp.ai_progress(0, 10)["content"][0]["text"]
+for _ in range(20):  # the thread has finished within moments
+    if "finished" in r:
+        break
+    time.sleep(0.1)
+    r = mcp.ai_progress(0)["content"][0]["text"]
+assert "finished" in r and "first\nsecond" in r, r
+assert "lines 1 to 2" in mcp.ai_progress(1)["content"][0]["text"]
 
 server.server.close()
 os.remove(path) if os.path.exists(path) else None
