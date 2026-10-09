@@ -679,6 +679,11 @@ class AiAssistant : public QObject
     // Confirmed live: each retry of a note task ran addTab() again (2, 3, then 4 tabs). Cleared on success and for
     // every new request.
     QStringList m_failedRunObjects;
+    // The scripts of this request that ran and failed — passed to the known-mistake checks with the earlier split
+    // parts' scripts, so that a retry reusing what its own failed attempt compiled or created counts as this request's
+    // own work. Confirmed live (LIST 5, item 1): the retry reopened "ai/Quad", compiled by its failed attempt a moment
+    // before, and was blocked as reopening a leftover. Cleared together with m_failedRunObjects.
+    QStringList m_failedRunScripts;
     // The retry prompts' sentence naming m_failedRunObjects; empty when there are none.
     QString failedRunObjectsNote() const;
     // Clears every "a network reply for THIS is still coming" flag at once. Must be called by any

@@ -27,6 +27,8 @@ Description: AI assistant implementation
 #include <QTextStream>
 #include <QTimer>
 
+#include <algorithm>
+
 // The config directory NAME userRulesFilePath()/requestTimingLogPath() build their path under —
 // defaults to "qtisas" (this app's own identity) so nothing needs to call setConfigDirName() for
 // QtiSAS itself; exists so a different host embedding this class isn't stuck writing into
@@ -767,6 +769,7 @@ void AiAssistant::beginRequest(const QString &aiText, bool autoRunValue, bool wa
     autoRun = autoRunValue;
     autoContinueCount = 0;
     m_failedRunObjects.clear();
+    m_failedRunScripts.clear();
     consecutiveExploreCount = 0;
     lastExploreOutput.clear();
     lastExploreCode.clear();
@@ -3729,6 +3732,15 @@ bool AiAssistant::runExploreProbe(const QString &code, QString *output, QString 
         kActionScriptMarkerRe.match(safeCode).hasMatch())
     {
         m_host->print("▸▸▸ AI: EXPLORE response already included and ran the action script — done.");
+        // The same success path as a script run by runActionScript(): without it a split part or LIST item that ended
+        // here never moved on — confirmed live (LIST 5 with EXPLORE on), the list waited 40 minutes on item 3.
+        consecutiveDocRetryCount = 0;
+        m_failedRunObjects.clear();
+        m_failedRunScripts.clear();
+        if (splitModeActive)
+            advanceSplitPart(safeCode);
+        else if (listModeActive)
+            advanceListItem();
         return false;
     }
     return true;
@@ -4713,6 +4725,22 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
             ? m_content->detectKnownMistakes(code, originalRequestText, splitPartScripts.join("\n\n"),
                                              laterSplitPartDescriptions())
             : QList<AiKnownMistakeMatch>();
+    // What this request's own failed attempts already did counts as its own work: a check that no longer fires once
+    // their scripts count as earlier code (a retry reusing the function its failed attempt compiled) is dropped. Only
+    // dropped, never added: a check that fires only WITH them (e.g. "configure() again discards the earlier setup")
+    // would wrongly treat the failed attempt as a finished earlier part. See m_failedRunScripts.
+    if (!knownMistakes.isEmpty() && !m_failedRunScripts.isEmpty())
+    {
+        QStringList stillFiring;
+        for (const AiKnownMistakeMatch &m : m_content->detectKnownMistakes(
+                 code, originalRequestText, (splitPartScripts + m_failedRunScripts).join("\n\n"),
+                 laterSplitPartDescriptions()))
+            stillFiring << m.header;
+        knownMistakes.erase(
+            std::remove_if(knownMistakes.begin(), knownMistakes.end(),
+                           [&](const AiKnownMistakeMatch &m) { return !stillFiring.contains(m.header); }),
+            knownMistakes.end());
+    }
     if (compilable)
         if (const QString recreated = existingTableRecreatedMistake(code); !recreated.isEmpty())
             knownMistakes << AiKnownMistakeMatch{"newTable() would wipe an existing table", recreated};
@@ -4907,6 +4935,7 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
             // success, not on every attempt like consecutiveExploreCount does.
             consecutiveDocRetryCount = 0;
             m_failedRunObjects.clear();
+            m_failedRunScripts.clear();
             if (splitModeActive)
                 advanceSplitPart(code);
             else if (listModeActive)
@@ -4920,6 +4949,7 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
         for (const QString &object : m_host->liveObjects())
             if (!objectsBefore.contains(object) && !m_failedRunObjects.contains(object))
                 m_failedRunObjects << object;
+        m_failedRunScripts << code;
     }
     // Broader, complementary check to the one below: if errContext is byte-for-byte identical to
     // the previous retry's, the SAME diagnosis was handed back twice and wasn't acted on either
