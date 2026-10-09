@@ -72,6 +72,7 @@ class QtiSasAiContent : public AiContentProvider
     QString compilerSelfShadowRepair(const QString &code) const override;
     QString fabricatedConversationCheck(const QString &code) const override;
     static QString repairedSetCodeBody(const QString &body, const QString &yName);
+    static QString renamedResultAssignment(const QString &body, const QString &yName, const QStringList &reservedNames);
     QString resultLabel(const QString &requestText) const override;
     QString resultLineDuty(const QString &requestText) const override;
     QString nonFinalResultLineRepair(const QString &code, const QString &requestText, bool alsoComputed) const override;

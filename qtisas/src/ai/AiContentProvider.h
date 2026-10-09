@@ -506,10 +506,11 @@ class AiContentProvider
     // back byte-identical twice, which then discarded the rest of a 12-item LIST.
     virtual QString compilerParamCountRepair(const QString &code) const = 0;
 
-    // Returns `code` with setCode()'s lone declaration turned into an assignment to the yName, or
-    // empty when there is nothing to repair or the body has several declarations (then which one
-    // was meant to be the result is a guess). Same rationale as the count repair above: confirmed
-    // live twice, "double I" -> clang error -> "double y" -> blocked cost two rounds every time.
+    // Returns `code` with setCode()'s lone declaration turned into an assignment to the yName, or, when the body
+    // declares nothing it could mean, its one assignment to an undeclared name ("I = ...;" under setYName("y"))
+    // renamed to the yName; empty when there is nothing to repair or which name holds the result is a guess.
+    // Same rationale as the count repair above: confirmed live twice, "double I" -> clang error -> "double y" ->
+    // blocked cost two rounds every time.
     virtual QString compilerYNameAssignmentRepair(const QString &code) const = 0;
 
     // Returns `code` without its self-referential C++ declarations (`double A = A;`, which reads an uninitialized

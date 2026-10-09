@@ -4795,8 +4795,9 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
         const QString yNameRepaired = m_content->compilerYNameAssignmentRepair(code);
         if (!yNameRepaired.isEmpty())
         {
-            m_host->print("▸▸▸ AI: auto-corrected setCode() to assign the dependent variable "
-                          "directly instead of declaring a local — running the corrected version below.");
+            m_host->print("▸▸▸ AI: auto-corrected setCode() to assign the dependent variable set by setYName() "
+                          "(it declared a local or assigned another name instead) — running the corrected version "
+                          "below.");
             code = yNameRepaired;
         }
     }

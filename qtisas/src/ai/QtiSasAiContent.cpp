@@ -2073,6 +2073,19 @@ QString QtiSasAiContent::compilerYNameAssignmentRepair(const QString &code) cons
     if (!yMatch.hasMatch())
         return {};
     const QString yName = yMatch.captured(1);
+    // Names the generated function already provides: assigning one of them is not a misnamed result.
+    QStringList reservedNames;
+    static const QRegularExpression xNameRe(R"(setXName\s*\(\s*["']([^"']+)["'])");
+    if (const QRegularExpressionMatch xMatch = xNameRe.match(code); xMatch.hasMatch())
+        reservedNames << xMatch.captured(1);
+    static const QRegularExpression paramNamesRe(R"(setParamNamesAll\s*\(\s*\[([^\]]*)\])");
+    static const QRegularExpression quotedRe(R"(["']([^"']+)["'])");
+    for (auto it = paramNamesRe.globalMatch(code); it.hasNext();)
+    {
+        const QString list = it.next().captured(1);
+        for (auto q = quotedRe.globalMatch(list); q.hasNext();)
+            reservedNames << q.next().captured(1);
+    }
 
     // Rebuilt back-to-front so each splice cannot shift the offsets of the ones not yet applied.
     QString repaired = code;
@@ -2087,7 +2100,9 @@ QString QtiSasAiContent::compilerYNameAssignmentRepair(const QString &code) cons
         if (bodyGroup == 0)
             continue;
         const QString body = codeCall.captured(bodyGroup);
-        const QString fixedBody = repairedSetCodeBody(body, yName);
+        QString fixedBody = repairedSetCodeBody(body, yName);
+        if (fixedBody.isEmpty())
+            fixedBody = renamedResultAssignment(body, yName, reservedNames);
         if (fixedBody.isEmpty())
             continue;
         repaired.replace(codeCall.capturedStart(bodyGroup), codeCall.capturedLength(bodyGroup), fixedBody);
@@ -2132,6 +2147,46 @@ QString QtiSasAiContent::repairedSetCodeBody(const QString &body, const QString 
     QString repairedBody = body;
     repairedBody.replace(decl.capturedStart(), decl.capturedLength(), yName + " = " + decl.captured(2).trimmed() + ";");
     return repairedBody;
+}
+
+// Returns `body` with its one assignment to an undeclared name renamed to yName, or empty when the body
+// already assigns yName, or when which name holds the result is a guess. Confirmed live (LIST 5, items 1 and 2,
+// local model): setYName("y") with "I = a*x*x + b*x + c;" (I is the default yName) was blocked as "never assigns
+// y" and cost a full round each time.
+QString QtiSasAiContent::renamedResultAssignment(const QString &body, const QString &yName,
+                                                 const QStringList &reservedNames)
+{
+    const QRegularExpression yAssignRe(R"(\b)" + QRegularExpression::escape(yName) + R"(\s*(?:[+\-*/]?)=(?!=))");
+    if (yAssignRe.match(body).hasMatch())
+        return {};
+    // Statement-start assignments only: "double t = ..." starts with its type, "for (i = 0; ..." with "(".
+    static const QRegularExpression assignRe(R"((?:^|[;{}\n])\s*([A-Za-z_]\w*)\s*=(?!=))");
+    static const QRegularExpression declRe(
+        R"(\b(?:double|float|int|long|short|unsigned|signed|char|bool|auto)\s+([A-Za-z_]\w*))");
+    QStringList declared;
+    for (auto it = declRe.globalMatch(body); it.hasNext();)
+        declared << it.next().captured(1);
+    QList<QRegularExpressionMatch> candidates;
+    for (auto it = assignRe.globalMatch(body); it.hasNext();)
+    {
+        const QRegularExpressionMatch m = it.next();
+        const QString name = m.captured(1);
+        if (!declared.contains(name) && !reservedNames.contains(name))
+            candidates << m;
+    }
+    if (candidates.size() != 1)
+        return {};
+    // Assigned once and never read: anything else and the name is more than a misnamed result.
+    const QString name = candidates.first().captured(1);
+    const QRegularExpression usesRe(R"(\b)" + QRegularExpression::escape(name) + R"(\b)");
+    int uses = 0;
+    for (auto it = usesRe.globalMatch(body); it.hasNext(); it.next())
+        ++uses;
+    if (uses != 1)
+        return {};
+    QString repaired = body;
+    repaired.replace(candidates.first().capturedStart(1), candidates.first().capturedLength(1), yName);
+    return repaired;
 }
 
 QString QtiSasAiContent::compilerParamCountRepair(const QString &code) const
