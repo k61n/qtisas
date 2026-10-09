@@ -345,6 +345,14 @@ class AiAssistant : public QObject
     // from "a LATER part creates this" (see AiContentProvider.h's doc comment).
     QString laterSplitPartDescriptions() const;
 
+    // What the current script is checked against: this part's description in split mode, otherwise the request (with
+    // a one-part plan's description) — or, for the result-line retry, that retry's own task (m_resultLineTask).
+    QString currentScopeDescription() const;
+
+    // Once per LIST item: asks for the item's result line when the item finished and nothing printed it. True when it
+    // asked (the item then ends after that script).
+    bool requestMissingResultLine();
+
     QString exploreSlotText(bool expectsCode) const;
 
     // Builds the VERIFIED PROJECT STATE note for every name `requestText` calls existing, by asking
@@ -873,6 +881,12 @@ class AiAssistant : public QObject
     // The compiled script sent to self-review: kept if the review answers with no runnable script at all.
     QString m_selfReviewDraftCode;
     bool m_unprintedOutputRetried = false;
+    // Everything the scripts of the current LIST item printed, for requestMissingResultLine().
+    QString m_itemOutput;
+    // The result-line retry's task while it runs (its scope instead of the whole item), empty otherwise; and whether
+    // this item already had it.
+    QString m_resultLineTask;
+    bool m_resultLineRetried = false;
     // True only while a finalized split plan's creation-name collision-check script (see
     // handleSplitPlanResponse()'s doc comment) is in flight — checked whether the plan's own
     // to-be-created names (splitPlanCreationNames()) already exist, so a silent recompile-over-an-

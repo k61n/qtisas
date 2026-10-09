@@ -816,6 +816,7 @@ void AiAssistant::beginRequest(const QString &aiText, bool autoRunValue, bool wa
     m_existingInputTables.clear();
     m_unprintedOutputRetried = false;
     m_singlePartDescription.clear();
+    m_resultLineTask.clear();
     if (autoRun)
     {
         QString factsSummary;
@@ -2826,6 +2827,24 @@ void AiAssistant::handleSplitPlanResponse(const QString &code)
 
 void AiAssistant::finalizeSplitPlanAndLaunch()
 {
+    // The result line is the last part's job: only it can compute every value. Confirmed live (LIST 5, items 4 and 6):
+    // no part's description carried it, so either no part printed it or two parts each printed half of it.
+    if (m_content && !splitPlan.isEmpty())
+    {
+        const QString duty = m_content->resultLineDuty(withoutRequestSuffix(originalRequestText));
+        const QString label = m_content->resultLabel(duty);
+        // The duty itself, not just its label: confirmed live (benchmark LIST 5, item 6, 4 of 5 runs), the plan's last
+        // part read "check which functions still exist and print the result with label R6:" — the label was there,
+        // the existence of Peak5 and Pipeline was not, and the line came out as "R6: []".
+        if (!duty.isEmpty() && !splitPlan.last().description.contains(duty))
+        {
+            splitPlan.last().description += " Then: " + duty;
+            if (m_host && splitPlan.size() > 1)
+                m_host->print(QString("▸▸▸ AI split-plan: the result line (\"%1\") is part %2's job.")
+                                  .arg(label)
+                                  .arg(splitPlan.size()));
+        }
+    }
     // A plan that settled on exactly one part is, by definition, not actually being split — run
     // it as a plain request instead of paying for split-mode's overhead (the "Split-mode part 1 of
     // 1" framing in startSplitPart()'s prompt, and — the real cost — requestSplitMerge()'s entire
@@ -3267,6 +3286,8 @@ void AiAssistant::startNextListItem()
     // A correction belongs to the item it was given for. Confirmed live (supervised LIST 3 run): a correction with code
     // for item 6's matrix stayed in the prompts of items 7 and 9, and the local model wrote that matrix code there.
     clearUserCorrections();
+    m_itemOutput.clear();
+    m_resultLineRetried = false;
     // The same transport suffix askAi() appends to a single request: an item is one, and in generate-only mode the
     // suffix is what says nothing in this session has run.
     beginRequest(item.text + (m_content ? m_content->requestSuffix(autoRun) : QString()), autoRun, wantsSplit);
@@ -3274,7 +3295,46 @@ void AiAssistant::startNextListItem()
 
 void AiAssistant::advanceListItem()
 {
+    if (requestMissingResultLine())
+        return;
     startNextListItem();
+}
+
+bool AiAssistant::requestMissingResultLine()
+{
+    if (!m_content || !m_host || m_resultLineRetried || listItemIndex < 0 || listItemIndex >= listItems.size())
+        return false;
+    const QString itemText = withoutRequestSuffix(listItems[listItemIndex].text);
+    const QString label = m_content->resultLabel(itemText);
+    if (label.isEmpty())
+        return false;
+    const QRegularExpression printedRe("^\\s*" + QRegularExpression::escape(label),
+                                       QRegularExpression::MultilineOption);
+    if (printedRe.match(m_itemOutput).hasMatch())
+        return false;
+    // Confirmed live (LIST 5, item 4): a block removed the line from part 1, part 2 never had it, and the item ended
+    // silently without a result. Once per item; everything the item made already exists, so this is a print-only task.
+    m_resultLineRetried = true;
+    const QString duty = m_content->resultLineDuty(itemText);
+    m_resultLineTask = duty.isEmpty() ? "Print the result line \"" + label + "\" the request asks for." : duty;
+    m_host->print("▸▸▸ AI: this item finished, but no script printed its \"" + label +
+                  "\" result line — asking for "
+                  "it once.");
+    autoContinueCount = 0;
+    consecutiveExploreCount = 0;
+    consecutiveDocRetryCount = 0;
+    m_failedRunObjects.clear();
+    m_failedRunScripts.clear();
+    resetErrorRetryState();
+    const QString prompt =
+        "Every step of this request has run, but no script printed its result line. The request asks:\n" +
+        m_resultLineTask +
+        "\n\nWrite a script that only computes and prints that line: look up what this request created by name (" +
+        m_content->lookupByNameExamples() +
+        ", ...), compute every value from the project as it is now, and print exactly ONE line starting with \"" +
+        label + "\". Do not create, change or delete anything.";
+    ask(prompt + topicsHintLine(selectedDocTopics), true, QString(), selectedDocTopics, true, true, true, prompt);
+    return true;
 }
 
 void AiAssistant::requestSplitMerge()
@@ -3703,6 +3763,7 @@ bool AiAssistant::runExploreProbe(const QString &code, QString *output, QString 
     // here too, see that method's doc comment on why that would double every scriptPrint() line.
     const AiScriptResult exploreResult = m_host->runScript(safeCode, "<ai-explore>");
     *output = exploreResult.output.isEmpty() ? "(no output)" : exploreResult.output;
+    m_itemOutput += exploreResult.output + "\n";
 
     // The model sometimes bundles a complete action script into the same response as EXPLORE
     // (marked by a dedicated "# Action script" comment LINE) instead of keeping the two-phase split
@@ -4310,6 +4371,20 @@ bool AiAssistant::maybeDispatchSelfReview(QString &code, bool &compilable, QStri
         compilable = true;
         syntaxError.clear();
     }
+    // In a part before the last, a review that adds the result line has done another part's job. Confirmed live
+    // (LIST 5, item 6): asked to review "close Peak5 and Pipeline" (3 lines), the review returned the whole item —
+    // deleting the functions with invented calls and printing "R6:" — three times, and the item was given up. Only the
+    // line goes: going back to the draft instead kept a bad draft three times (once an unrelated sphere compile) and
+    // threw away what the review had fixed.
+    if (isSelfReviewResult && compilable && m_content && m_host && !m_selfReviewDraftCode.isEmpty() &&
+        !laterSplitPartDescriptions().isEmpty())
+        if (const QString stripped = m_content->nonFinalResultLineRepair(code, originalRequestText, true);
+            !stripped.isEmpty())
+        {
+            m_host->print("▸▸▸ AI: self-review printed the result line, which is the last part's job — that line "
+                          "removed.");
+            code = stripped;
+        }
     if (isSelfReviewResult)
         m_selfReviewDraftCode.clear();
 
@@ -4379,8 +4454,8 @@ bool AiAssistant::maybeDispatchSelfReview(QString &code, bool &compilable, QStri
                 .isEmpty())
         {
             if (m_host)
-                m_host->print("▸▸▸ AI self-review: added out-of-scope content to an already-correct "
-                              "script — asking it to revert once.");
+                m_host->print("▸▸▸ AI self-review: added out-of-scope content to the reviewed draft — asking it "
+                              "to revert once.");
             awaitingSelfReview = true;
             awaitingSelfReviewScopeRetry = true;
             askSelfReviewRound(buildScopeRetryPrompt(postViolation, preReviewDraft));
@@ -4677,6 +4752,13 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
                           "\"double A = A;\" (the parameter is used directly) — running the corrected version below.");
             code = shadowRepaired;
         }
+        if (!laterSplitPartDescriptions().isEmpty())
+            if (const QString repaired = m_content->nonFinalResultLineRepair(code, originalRequestText, false);
+                !repaired.isEmpty())
+            {
+                m_host->print("▸▸▸ AI: removed a fixed-text result line — the last part of the plan prints it.");
+                code = repaired;
+            }
         const QString yNameRepaired = m_content->compilerYNameAssignmentRepair(code);
         if (!yNameRepaired.isEmpty())
         {
@@ -4695,12 +4777,7 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
     // renamed and maximized the window; two other items added unrequested styling.
     // A one-part plan's description joins the request: confirmed live, the plan named the unnamed 3D plot "Surface",
     // the script used that name, and was blocked because the bare request never mentions it.
-    const QString scopeDescription =
-        splitModeActive && splitPartIndex < splitPlan.size()
-            ? splitPlan[splitPartIndex].description
-            : (m_singlePartDescription.isEmpty()
-                   ? withoutRequestSuffix(originalRequestText)
-                   : withoutRequestSuffix(originalRequestText) + "\n" + m_singlePartDescription);
+    const QString scopeDescription = currentScopeDescription();
     // A correction typed during the run may contradict the request these two read: then they are skipped.
     const bool checkScope = compilable && m_content && !scopeDescription.isEmpty() && m_userCorrections.isEmpty();
     const QString scopeViolation =
@@ -4923,6 +5000,7 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
         // live: exactly this happened).
         const QStringList objectsBefore = m_host->liveObjects();
         const AiScriptResult result = m_host->runScript(code, "<ai>");
+        m_itemOutput += result.output + "\n";
         // result.error alone is still the GATE for "did this run actually fail" — deliberately
         // not result.output, since normal fit/print output (e.g. fit progress, Chi2/DoF) also
         // lands there via ApplicationWindow::scriptPrint(), which would make every successful
@@ -5910,6 +5988,17 @@ QString AiAssistant::unprintedOutputLineMistake(const QString &code, const QStri
                "the form the request asks for — never write the values into the string yourself.";
     }
     return {};
+}
+
+QString AiAssistant::currentScopeDescription() const
+{
+    if (splitModeActive && splitPartIndex >= 0 && splitPartIndex < splitPlan.size())
+        return splitPlan[splitPartIndex].description;
+    if (!m_resultLineTask.isEmpty())
+        return m_resultLineTask;
+    return m_singlePartDescription.isEmpty()
+               ? withoutRequestSuffix(originalRequestText)
+               : withoutRequestSuffix(originalRequestText) + "\n" + m_singlePartDescription;
 }
 
 QString AiAssistant::laterSplitPartDescriptions() const

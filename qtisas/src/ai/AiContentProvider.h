@@ -517,6 +517,21 @@ class AiContentProvider
     // confirmed live, the local model resubmitted the same declarations five times in a row and gave the item up.
     virtual QString compilerSelfShadowRepair(const QString &code) const = 0;
 
+    // The label the request asks its result line to start with ("R4:"), or empty when it names none.
+    virtual QString resultLabel(const QString &requestText) const = 0;
+
+    // The request's own sentences that ask for the result line ("Print ... The result label is \"R4:\"."), or empty.
+    // A split plan gives them to its last part: confirmed live (LIST 5, item 4), no part's description carried the
+    // result line, the part that printed one was told to compute values only a later part had, and no line was left.
+    virtual QString resultLineDuty(const QString &requestText) const = 0;
+
+    // Returns `code` with its fixed-text result lines (scriptPrint("R4: done")) turned into `pass` — with
+    // `alsoComputed`, every one-line result-line print — or empty when it has none. Used for a split part before the
+    // last one: that line is the last part's job, and blocking it there cost the item (the model sent it back
+    // unchanged twice).
+    virtual QString nonFinalResultLineRepair(const QString &code, const QString &requestText,
+                                             bool alsoComputed) const = 0;
+
     // Non-empty when the script role-plays further turns ("USER:"/"ASSISTANT:" lines) with
     // invented prompts, scripts and tool output. Checked even for a script that failed to
     // compile — that is the usual way this surfaces, and "SyntaxError" names the wrong problem.

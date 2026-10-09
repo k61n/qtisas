@@ -72,6 +72,9 @@ class QtiSasAiContent : public AiContentProvider
     QString compilerSelfShadowRepair(const QString &code) const override;
     QString fabricatedConversationCheck(const QString &code) const override;
     static QString repairedSetCodeBody(const QString &body, const QString &yName);
+    QString resultLabel(const QString &requestText) const override;
+    QString resultLineDuty(const QString &requestText) const override;
+    QString nonFinalResultLineRepair(const QString &code, const QString &requestText, bool alsoComputed) const override;
     // Python string literals blanked out, so a name inside one is not mistaken for a variable
     // reference — setParamNamesAll(["sigma", ...]) and setCode()'s C++ body are other namespaces.
     static QString codeWithoutStringLiterals(const QString &code);

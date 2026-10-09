@@ -3911,6 +3911,55 @@ QString QtiSasAiContent::requestedResultLabel(const QString &originalRequestText
 }
 
 
+QString QtiSasAiContent::resultLabel(const QString &requestText) const
+{
+    return requestedResultLabel(requestText);
+}
+
+
+QString QtiSasAiContent::resultLineDuty(const QString &requestText) const
+{
+    // From the last "Print" sentence before the label sentence through the label sentence: 'Print the value at the
+    // centre ..., and whether a 3D window "Saddle3D" exists. The result label is "R4:".'
+    const QString label = requestedResultLabel(requestText);
+    if (label.isEmpty())
+        return {};
+    static const QRegularExpression labelSentenceRe(R"RX(The result label is "[^"\n]{1,13}"\.?)RX",
+                                                    QRegularExpression::CaseInsensitiveOption);
+    const QRegularExpressionMatch labelMatch = labelSentenceRe.match(requestText);
+    if (!labelMatch.hasMatch())
+        return {};
+    static const QRegularExpression printRe(R"((?:^|[.:!?]\s+|\n)(Print\b))");
+    const QString beforeLabel = requestText.left(labelMatch.capturedStart());
+    qsizetype printStart = -1;
+    for (auto it = printRe.globalMatch(beforeLabel); it.hasNext();)
+        printStart = it.next().capturedStart(1);
+    if (printStart < 0)
+        return {};
+    return requestText.mid(printStart, labelMatch.capturedEnd() - printStart).simplified();
+}
+
+
+QString QtiSasAiContent::nonFinalResultLineRepair(const QString &code, const QString &requestText,
+                                                  bool alsoComputed) const
+{
+    // Confirmed live (LIST 5, item 3): blocking a result line in an earlier part did not work either — the local model
+    // sent the same line back twice and the item was given up. A fixed-text line there says nothing, so it goes.
+    const QString label = requestedResultLabel(requestText);
+    if (label.isEmpty())
+        return {};
+    const QRegularExpression lineRe(alsoComputed
+                                        ? R"(^([ \t]*)(?:scriptPrint|print)\s*\(\s*f?(["']))" +
+                                              QRegularExpression::escape(label) + R"([^\n]*\)[ \t]*$)"
+                                        : R"(^([ \t]*)(?:scriptPrint|print)\s*\(\s*(["']))" +
+                                              QRegularExpression::escape(label) + R"(\s*[^"'{}\n]*\2\s*\)[ \t]*$)",
+                                    QRegularExpression::MultilineOption);
+    QString repaired = code;
+    repaired.replace(lineRe, "\\1pass");
+    return repaired == code ? QString() : repaired;
+}
+
+
 QString QtiSasAiContent::hardcodedResultLineMistake(const QString &code, const QString &originalRequestText)
 {
     // Confirmed live (LIST 3, item 3, local model): scriptPrint("R3: 0 ValueError") — the result written as fixed
@@ -4779,12 +4828,19 @@ QList<AiKnownMistakeMatch> QtiSasAiContent::detectKnownMistakes(const QString &c
     explanation = columnListInsteadOfAggregateMistake(code, originalRequestText);
     if (!explanation.isEmpty())
         matches << AiKnownMistakeMatch{"a whole column printed instead of the requested value", explanation};
-    explanation = hardcodedResultLineMistake(code, originalRequestText);
-    if (!explanation.isEmpty())
-        matches << AiKnownMistakeMatch{"the result line is fixed text, not computed", explanation};
-    explanation = repeatedResultLabelMistake(code, originalRequestText);
-    if (!explanation.isEmpty())
-        matches << AiKnownMistakeMatch{"the result label printed more than once", explanation};
+    // The result line belongs to the last part of a split plan: an earlier part cannot compute all of its values.
+    // Confirmed live (LIST 5, item 4): part 1 of 2 printed "R4: done", the fixed-text check told it to compute the
+    // values, one of which was part 2's 3D window, and the retry dropped the line altogether. An earlier part's
+    // fixed-text line is removed by nonFinalResultLineRepair() instead; a computed one may stay (the last line counts).
+    if (laterPartsDescriptions.trimmed().isEmpty())
+    {
+        explanation = hardcodedResultLineMistake(code, originalRequestText);
+        if (!explanation.isEmpty())
+            matches << AiKnownMistakeMatch{"the result line is fixed text, not computed", explanation};
+        explanation = repeatedResultLabelMistake(code, originalRequestText);
+        if (!explanation.isEmpty())
+            matches << AiKnownMistakeMatch{"the result label printed more than once", explanation};
+    }
     explanation = pythonInputCallMistake(code);
     if (!explanation.isEmpty())
         matches << AiKnownMistakeMatch{"input() call would hang the application", explanation};
