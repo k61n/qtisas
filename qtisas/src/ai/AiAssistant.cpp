@@ -1627,7 +1627,12 @@ void dedupeSplitPlanExactDuplicateParts(QList<AiAssistant::SplitPart> &plan, QSt
 // 3 into 2, then 2 into 1.
 void mergeSplitPlanUnnecessaryFragments(QList<AiAssistant::SplitPart> &plan, QStringList *mergedAway)
 {
-    const QList<int> fragments = splitPlanUnnecessaryFragments(plan);
+    mergeSplitPlanPartsBackward(plan, splitPlanUnnecessaryFragments(plan), mergedAway);
+}
+
+void mergeSplitPlanPartsBackward(QList<AiAssistant::SplitPart> &plan, const QList<int> &parts, QStringList *mergedAway)
+{
+    const QList<int> &fragments = parts;
     for (int k = static_cast<int>(fragments.size()) - 1; k >= 0; --k)
     {
         const int i = fragments[k];
@@ -2605,6 +2610,36 @@ void AiAssistant::handleSplitPlanResponse(const QString &code)
         m_host->print("▸▸▸ AI split-plan: merged back " + QString::number(mergedFragments.size()) +
                       " part(s) that only configured what an earlier part created — \"" +
                       mergedFragments.join("\", \"") + "\" (one action, not two).");
+    // Removed here, not asked for: confirmed live (LIST 5, item 2), the model resent the plan with the same "fittable"
+    // in a compile-only part's DOCS field three rounds in a row, and the plan went ahead with it anyway.
+    QStringList trimmedDocsParts;
+    for (int i : splitPlanCompileOnlyHasFittable(splitPlan))
+    {
+        QStringList &topics = splitPlan[i].docTopics;
+        for (qsizetype t = topics.size() - 1; t >= 0; --t)
+            if (topics.at(t).compare(QStringLiteral("fittable"), Qt::CaseInsensitive) == 0)
+                topics.removeAt(t);
+        trimmedDocsParts << QString::number(i + 1);
+    }
+    if (!trimmedDocsParts.isEmpty() && m_host)
+        m_host->print("▸▸▸ AI split-plan: removed the fittable docs from compile-only part(s) " +
+                      trimmedDocsParts.join(", ") + " — compiling alone never needs them.");
+    // Merged here, not asked for: confirmed live (LIST 5, item 4), "Part 2 needs no DOCS topic beyond Part 1 — merge
+    // them" came back unchanged for 2 rounds and the plan went ahead unmerged. A compare-only part merges FORWARD (its
+    // own complaint below), so it is left to that one.
+    {
+        QList<int> sameDocs;
+        const QList<int> forward = splitPlanCompareOnlyMergesForward(splitPlan);
+        for (int i : splitPlanAdjacentSameDocs(splitPlan))
+            if (!forward.contains(i))
+                sameDocs << i;
+        QStringList mergedSameDocs;
+        mergeSplitPlanPartsBackward(splitPlan, sameDocs, &mergedSameDocs);
+        if (!mergedSameDocs.isEmpty() && m_host)
+            m_host->print("▸▸▸ AI split-plan: merged " + QString::number(mergedSameDocs.size()) +
+                          " part(s) needing no docs beyond the part before into that part — \"" +
+                          mergedSameDocs.join("\", \"") + "\".");
+    }
     const QList<int> missingNames = splitPartsMissingCreationName(splitPlan);
     const QStringList missingActions = splitPlanMissingRequestedActions(originalRequestText, splitPlan);
     const QList<int> unnecessaryFragments = splitPlanUnnecessaryFragments(splitPlan);
@@ -3205,11 +3240,6 @@ void AiAssistant::startListItems(const QStringList &items, bool forceSplit, bool
     {
         ListItem item;
         item.text = text;
-        // Mechanical, no LLM call — see topicSynonymRe's own doc comment on the entries added
-        // specifically for this.
-        for (auto it = topicSynonymRe.cbegin(); it != topicSynonymRe.cend(); ++it)
-            if (it.value().match(text).hasMatch())
-                item.docTopics << it.key();
         listItems << item;
     }
     listItemIndex = -1;

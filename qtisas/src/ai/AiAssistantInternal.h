@@ -55,6 +55,8 @@ void assignSplitPlanCreationNames(QList<AiAssistant::SplitPart> &plan, QStringLi
 // DOCS topics unioned, fragment removed); `mergedAway`, if non-null, collects each removed
 // description. See AiAssistant.cpp for the confirmed-live non-convergence this replaces.
 void mergeSplitPlanUnnecessaryFragments(QList<AiAssistant::SplitPart> &plan, QStringList *mergedAway);
+// Folds each part in `parts` (ascending indices) into the part before it, the same way.
+void mergeSplitPlanPartsBackward(QList<AiAssistant::SplitPart> &plan, const QList<int> &parts, QStringList *mergedAway);
 
 // Generates a name that differs from `oldName` and doesn't already appear in `plan`'s descriptions
 // (appends "_2", "_3", ...). See AiAssistant.cpp for the full rationale.

@@ -1009,9 +1009,7 @@ class AiAssistant : public QObject
     bool listModeActive = false;
     struct ListItem
     {
-        QString text;          // this item's own request text, run via startRequest() as-is
-        QStringList docTopics; // mechanical keyword match against knownDocTopics() — see
-                               // beginListRequest()'s doc comment
+        QString text; // this item's own request text, run via beginRequest() as-is
     };
     QList<ListItem> listItems;
     int listItemIndex = -1;
