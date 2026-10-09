@@ -12,6 +12,7 @@
     {
       "text": "Create a table \"Peak5\" with 81 rows: x = -4, -3.9, ..., 4 and y = 2/(1 + (x/0.5)^2) + 0.1 (roles X, Y). Compile two new fit functions, \"ai/Gauss5\" for y = A*exp(-x^2/(2*w^2)) + c and \"ai/Lor5\" for y = A/(1 + (x/w)^2) + c, each with A, w and c adjustable. Fit both to \"Peak5\", each starting from A = 1, w = 1, c = 0. Print the name of the function with the smaller chi2/dof, then its fitted A and w (as a positive number), each with 4 decimals.",
       "expected": "ai/Lor5 2.0000 0.5000",
+      "also": ["Lor5 2.0000 0.5000"],
       "hint": "the second fit's chi2/dof compared with itself, the parameters of the other model printed, or ^ in the C++ code"
     },
     {

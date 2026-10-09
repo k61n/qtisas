@@ -76,8 +76,10 @@ python3 qtisas/tests/src/ai/benchmarks/qtisas_benchmark.py qtisas/tests/src/ai/b
 
 Each run starts a fresh test instance (a new project, no AI history, the user's AI preset), runs the list
 in mode `ai-run` and compares every item's `R<n>:` line with the expected value — number formatting
-ignored (385.0 is 385, -0.0 is 0). Verdicts: `ok`; `wrong` or `missing`, each `(reported)` when the
-assistant itself said the item failed, `(silent)` when it reported success. Per run, in
+ignored (385.0 is 385, -0.0 is 0). Where a request allows two readings, the item lists the other answer
+under `"also"` (LIST 5 item 2: the function's name with or without its `ai/` folder); after adding one,
+`--rescore` scores the saved reports again and updates `history.csv`. Verdicts: `ok`; `wrong` or `missing`,
+each `(reported)` when the assistant itself said the item failed, `(silent)` when it reported success. Per run, in
 `~/.qtisas-test/reports`: the full log, a JSON report (per item: expected, got, verdict, scripts,
 seconds) and one line in `history.csv` (markers, preset, model, score, silent, reported, seconds,
 scripts, tokens, `--label`). The harness reads the `R<n>:` lines itself, so the items do not write a

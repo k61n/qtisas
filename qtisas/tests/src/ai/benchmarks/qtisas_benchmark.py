@@ -15,7 +15,8 @@
     qtisas_benchmark.py BENCHMARK.json --reference [DIR]           # the reference scripts instead of the AI: 100%
     ... --instance NAME [--home DIR]   # another test instance (default "test"), e.g. one per AI agent in parallel
 
-A benchmark file: {"name", "instruction", "setup" (Python run before), "items": [{"text", "expected", "hint"}]}.
+A benchmark file: {"name", "instruction", "setup" (Python run before), "items": [{"text", "expected", "hint"}]};
+an item may add "also": further answers that count as right where the request allows two readings.
 Its reference scripts, reference/<file name>/item01.py ..., solve the items with the documented API: run with
 --reference (in python mode, in order, in one instance like a LIST), they must score 100% — proof that every item is
 solvable and its expected value right.
@@ -23,12 +24,14 @@ Each run starts a fresh test instance (a new project, no AI history), runs the s
 and compares every item's R<n>: line with its expected value. Verdicts: ok; wrong or missing, each "reported" when the
 assistant itself said the item failed, "silent" when it reported success. Written to ~/.qtisas-test/reports: the full
 log, a JSON report, and one line per run in history.csv. Exit code: 0 all items ok, 1 not all, 2 no run.
+    qtisas_benchmark.py BENCHMARK.json --rescore    # score the saved reports of this benchmark again (after "also")
 """
 
 import argparse
 import csv
 import datetime
 import fcntl
+import glob
 import json
 import os
 import re
@@ -81,13 +84,16 @@ qti.app.setAiAgent(name)
 """
 
 
-def list_text(bench, markers=""):
+def list_text(bench, markers="", item_prefix=False):
     lines = [("LIST " + markers).strip()]
     if bench.get("instruction"):
         lines.append(bench["instruction"])
-    # "Item n:" in the text: a LIST item is sent on its own, without its number, which the R<n>: line needs.
-    # The label itself too: with only a generic example ("R1: 385"), a weak model copied "R1:" for every item
-    lines += ['%d. Item %d: %s The result label is "R%d:".' % (i + 1, i + 1, item["text"], i + 1)
+    # The label in the text: with only a generic example ("R1: 385"), a weak model copied "R1:" for every item.
+    # "Item n:" before each item (item_prefix) came first, for the same reason; the label made it redundant, and
+    # without it the text is the one in ai-test-requests.md that users paste. With it, the local model (pyi and md)
+    # compiled the same wrong Lorentzian in three runs; the pasted list, in the user's QtiSAS, did not
+    lines += [('%d. Item %d: %s The result label is "R%d:".' % (i + 1, i + 1, item["text"], i + 1)) if item_prefix
+              else ('%d. %s The result label is "R%d:".' % (i + 1, item["text"], i + 1))
               for i, item in enumerate(bench["items"])]
     return "\n".join(lines)
 
@@ -132,7 +138,7 @@ def score(bench, result):
         # never got to its items (the instance hung, the server check or the first call failed): no AI answer
         if not result.get("items"):
             verdict = "not run"
-        elif got and matches(got, item["expected"]):
+        elif got and any(matches(got, e) for e in [item["expected"]] + item.get("also", [])):
             verdict = "ok"
         elif run.get("backend_error"):  # the model's backend failed (crashed, refused): says nothing about the AI
             verdict = "backend error"
@@ -141,6 +147,44 @@ def score(bench, result):
         rows.append({"item": n, "expected": item["expected"], "got": got, "verdict": verdict,
                      "scripts": run.get("scripts"), "seconds": run.get("seconds"), "hint": item.get("hint", "")})
     return rows
+
+
+def rescore(bench, reports):
+    """Scores the saved reports of this benchmark again and updates them and history.csv; returns the changed ones."""
+    changed = {}
+    for report in sorted(glob.glob(os.path.join(reports, "*.json"))):
+        try:
+            data = json.load(open(report, encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        summary = data.get("summary") if isinstance(data, dict) else None
+        if not summary or summary.get("benchmark") != bench["name"] or "result" not in data:
+            continue
+        rows = score(bench, data["result"])
+        counts = {"score": sum(r["verdict"] == "ok" for r in rows),
+                  "silent": sum(r["verdict"].endswith("(silent)") for r in rows),
+                  "reported": sum(r["verdict"].endswith("(reported)") for r in rows)}
+        if all(summary.get(k) == v for k, v in counts.items()):
+            continue
+        changed[summary["date"]] = (summary.get("score"), counts["score"])
+        summary.update(counts)
+        data["items"] = rows
+        with open(report, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=1, ensure_ascii=False)
+        history = os.path.join(reports, "history.csv")
+        if os.path.exists(history):
+            with open(history + ".lock", "w") as lock:
+                fcntl.flock(lock, fcntl.LOCK_EX)
+                reader = csv.DictReader(open(history, encoding="utf-8"))
+                fields, old = reader.fieldnames, list(reader)
+                for row in old:
+                    if row.get("date") == summary["date"] and row.get("benchmark") == bench["name"]:
+                        row.update({k: str(v) for k, v in counts.items()})
+                with open(history, "w", newline="", encoding="utf-8") as f:
+                    w = csv.DictWriter(f, fieldnames=fields)
+                    w.writeheader()
+                    w.writerows(old)
+    return changed
 
 
 def preset_api_key(home, agent):
@@ -214,10 +258,19 @@ def main(argv=None):
     p.add_argument("--probe-wait", type=float, default=120, help="seconds between two server checks")
     p.add_argument("--reports", default=DEFAULT_REPORTS)
     p.add_argument("--quiet", action="store_true", help="do not print the AI's lines while it runs")
+    p.add_argument("--visible", action="store_true", help="start the test instance with its window (default offscreen)")
+    p.add_argument("--item-prefix", action="store_true", help='"Item n:" before each item, as before 2026-10-09')
+    p.add_argument("--rescore", action="store_true", help="score the saved reports again instead of running")
     args = p.parse_args(argv)
 
     bench = json.load(open(args.benchmark, encoding="utf-8"))
-    text = list_text(bench, args.markers)
+    if args.rescore:
+        changed = rescore(bench, args.reports)
+        for date, (old, new) in changed.items():
+            print("%s %s: %s -> %s of %d" % (date, bench["name"], old, new, len(bench["items"])))
+        print("%d report(s) changed" % len(changed))
+        return 0
+    text = list_text(bench, args.markers, args.item_prefix)
     if args.print:
         print(text)
         return 0
@@ -231,7 +284,11 @@ def main(argv=None):
             os.path.splitext(os.path.basename(args.benchmark))[0])
     if not args.keep_instance:  # a new project and no AI history: every run starts the same
         instance("stop")
-        started = instance("start", *(["--app", args.app] if args.app else []))
+        started = instance("start", *(["--app", args.app] if args.app else []),
+                           *(["--visible"] if args.visible else []))
+        for line in started.stdout.splitlines():
+            if line.startswith("AI settings updated"):
+                print(line)
         if started.returncode != 0:
             print("qtisas_benchmark: the test instance did not start:\n" + started.stdout + started.stderr)
             return 2
@@ -313,7 +370,7 @@ def main(argv=None):
                "score": ok, "of": len(rows), "silent": silent, "reported": reported, "backend_errors": backend,
                "seconds": result.get("seconds"), "scripts": result.get("scripts"), "tokens": result.get("tokens"),
                "status": result.get("status"), "settings": " ".join(args.set), "app": args.app or "",
-               "label": args.label, **probed}
+               "label": args.label, "visible": args.visible, **probed}
     with open(base + ".json", "w", encoding="utf-8") as f:
         json.dump({"summary": summary, "ai_config": ai_config, "items": rows, "result": result}, f, indent=1,
                   ensure_ascii=False)
