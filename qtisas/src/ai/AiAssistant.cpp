@@ -4822,6 +4822,11 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
                 m_host->print("▸▸▸ AI: removed a fixed-text result line — the last part of the plan prints it.");
                 code = repaired;
             }
+        if (const QString repaired = m_content->noteTabIndexRepair(code); !repaired.isEmpty())
+        {
+            m_host->print("▸▸▸ AI: auto-corrected tab(0) to tab(1) — tab() is 1-based, tab(0) is always None.");
+            code = repaired;
+        }
         const QString yNameRepaired = m_content->compilerYNameAssignmentRepair(code);
         if (!yNameRepaired.isEmpty())
         {
@@ -5921,6 +5926,20 @@ QString AiAssistant::existingTableRecreatedMistake(const QString &code) const
                    "\" already exists and this request only uses it. newTable() on an existing name WIPES it "
                    "(resized, all data cleared) — use t = table(\"" +
                    name + "\") and work on the table as it is.";
+        // Confirmed live (LIST 5, item 2): part 2 of 3 ("compile the functions") also re-ran part 1's
+        // newTable("Peak5", ...) — harmless with the same data, a wiped table with any other.
+        if (splitModeActive)
+            for (const QString &earlier : splitPartScripts)
+                for (auto e = newTableRe.globalMatch(earlier); e.hasNext();)
+                    if (e.next().captured(1) == name)
+                        return "This script calls newTable(\"" + name +
+                               "\"), but an earlier part of this plan already "
+                               "created table \"" +
+                               name +
+                               "\" and it exists now. newTable() on an existing name WIPES "
+                               "it — this part must not create it again. Remove that table-creating code; if this part "
+                               "needs the table, use t = table(\"" +
+                               name + "\").";
     }
     return {};
 }

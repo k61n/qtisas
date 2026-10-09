@@ -3989,6 +3989,48 @@ QString QtiSasAiContent::resultLineDuty(const QString &requestText) const
     return requestText.mid(printStart, labelMatch.capturedEnd() - printStart).simplified();
 }
 
+QString QtiSasAiContent::scriptPrintKeywordMistake(const QString &code)
+{
+    // Confirmed live (LIST 5, item 5): scriptPrint("R5:", n.tabs(), ok, end=" ") then scriptPrint(s) — TypeError, and
+    // the two-piece line could never have been ONE result line anyway.
+    static const QRegularExpression keywordRe(R"(\bscriptPrint\s*\([^()\n]*(?:\([^()\n]*\)[^()\n]*)*\b(end|sep)\s*=)");
+    const QRegularExpressionMatch m = keywordRe.match(code);
+    if (!m.hasMatch())
+        return {};
+    return "scriptPrint() takes no " + m.captured(1) +
+           "= argument (TypeError): it prints its arguments separated by spaces and always ends the line. Compute "
+           "every value first, then print the whole line in ONE call: scriptPrint(\"label\", value1, value2, ...).";
+}
+
+QString QtiSasAiContent::currentEditorAfterAddTabMistake(const QString &code)
+{
+    // Confirmed live (LIST 5, item 5): "Run only the make tab" — the script renamed tab 0 to "make", called addTab()
+    // (which activates the new tab), then n.currentEditor().execute(): it ran the empty-table "check" tab instead.
+    static const QRegularExpression addTabRe(R"(\baddTab\s*\()");
+    static const QRegularExpression runCurrentRe(R"(\bcurrentEditor\s*\(\s*\)\s*\.\s*execute\s*\()");
+    const QRegularExpressionMatch add = addTabRe.match(code);
+    if (!add.hasMatch() || !runCurrentRe.match(code, add.capturedEnd()).hasMatch())
+        return {};
+    return "This script calls addTab() and later currentEditor().execute(). addTab() makes the NEW tab the current "
+           "one, so this runs the tab added last, not the one the request names. Run a tab by its name or 1-based "
+           "index instead: n.tab(\"make\").execute() or n.tab(1).execute().";
+}
+
+QString QtiSasAiContent::noteTabIndexRepair(const QString &code) const
+{
+    // Confirmed live (LIST 5, item 5): n.tab(0).execute() — tab() is 1-based, so tab(0) is None. The runtime hint named
+    // the None but not the index, and the same line came back twice until the item was given up.
+    static const QRegularExpression tabZeroRe(R"(\.\s*tab\s*\(\s*(0)\s*\))");
+    QString repaired = code;
+    // Back to front, so a replacement cannot shift the offsets of the ones not yet applied.
+    QList<qsizetype> zeros;
+    for (auto it = tabZeroRe.globalMatch(code); it.hasNext();)
+        zeros.prepend(it.next().capturedStart(1));
+    for (const qsizetype at : zeros)
+        repaired.replace(static_cast<int>(at), 1, QStringLiteral("1")); // int: Qt5's operator[] is ambiguous for it
+    return zeros.isEmpty() ? QString() : repaired;
+}
+
 QString QtiSasAiContent::nonFinalResultLineRepair(const QString &code, const QString &requestText,
                                                   bool alsoComputed) const
 {
@@ -4547,6 +4589,24 @@ QString QtiSasAiContent::redundantFittableReconfigureMistake(const QString &code
     const QRegularExpressionMatch thisMatch = configureRe.match(code);
     if (!thisMatch.hasMatch() || thisMatch.captured(1) != earlierModel)
         return {};
+    // Nothing is lost when this script sets up again everything the earlier part set after its configure(): confirmed
+    // live (LIST 5, item 1), a part that re-did configure, the start values, the weighting and the fit was blocked
+    // twice, and the item given up.
+    static const QRegularExpression setterRe(
+        R"re(\b(setParam(?:Value|Limits|Varies)\s*\(\s*"[^"]+"|setWeighting(?:Enabled|Dataset)\b))re");
+    const qsizetype lastEarlierConfigure = earlierPartsCode.lastIndexOf(configureRe);
+    QStringList earlierSetters;
+    for (auto it = setterRe.globalMatch(earlierPartsCode, lastEarlierConfigure); it.hasNext();)
+        earlierSetters << it.next().captured(1).remove(QRegularExpression(R"(\s)"));
+    QStringList ownSetters;
+    for (auto it = setterRe.globalMatch(code, thisMatch.capturedEnd()); it.hasNext();)
+        ownSetters << it.next().captured(1).remove(QRegularExpression(R"(\s)"));
+    bool allRedone = true;
+    for (const QString &setter : earlierSetters)
+        if (!ownSetters.contains(setter))
+            allRedone = false;
+    if (allRedone)
+        return {};
     return "This script calls configure(\"" + earlierModel +
            "\", ...) again, but an earlier part "
            "in this same conversation already configured Fittable for this exact model — "
@@ -4888,6 +4948,12 @@ QList<AiKnownMistakeMatch> QtiSasAiContent::detectKnownMistakes(const QString &c
         if (!explanation.isEmpty())
             matches << AiKnownMistakeMatch{"the result label printed more than once", explanation};
     }
+    explanation = scriptPrintKeywordMistake(code);
+    if (!explanation.isEmpty())
+        matches << AiKnownMistakeMatch{"scriptPrint() given end=/sep=", explanation};
+    explanation = currentEditorAfterAddTabMistake(code);
+    if (!explanation.isEmpty())
+        matches << AiKnownMistakeMatch{"currentEditor() after addTab() is the new tab", explanation};
     explanation = pythonInputCallMistake(code);
     if (!explanation.isEmpty())
         matches << AiKnownMistakeMatch{"input() call would hang the application", explanation};

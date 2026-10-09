@@ -533,6 +533,10 @@ class AiContentProvider
     virtual QString nonFinalResultLineRepair(const QString &code, const QString &requestText,
                                              bool alsoComputed) const = 0;
 
+    // Returns `code` with note.tab(0) corrected to tab(1) (tab() is 1-based: tab(0) is always None), or empty when it
+    // has none. Repaired because the model did not act on the runtime error: the same line came back twice.
+    virtual QString noteTabIndexRepair(const QString &code) const = 0;
+
     // Non-empty when the script role-plays further turns ("USER:"/"ASSISTANT:" lines) with
     // invented prompts, scripts and tool output. Checked even for a script that failed to
     // compile — that is the usual way this surfaces, and "SyntaxError" names the wrong problem.
