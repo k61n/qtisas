@@ -4236,8 +4236,9 @@ bool AiAssistant::maybeDispatchSelfReview(QString &code, bool &compilable, QStri
     awaitingSelfReview = false;
     // Confirmed live: self-review answered "The script is already compliant with all checklist items." — prose, no
     // script — which then counted as a script that does not compile, and the retry lost the reviewed (runnable)
-    // draft altogether. A review with nothing runnable in it changes nothing: the draft it reviewed stays.
-    if (isSelfReviewResult && !compilable && m_host && !m_selfReviewDraftCode.isEmpty())
+    // draft altogether. A review with nothing runnable in it changes nothing: the draft it reviewed stays. An empty
+    // answer compiles but is no review either.
+    if (isSelfReviewResult && (!compilable || code.trimmed().isEmpty()) && m_host && !m_selfReviewDraftCode.isEmpty())
     {
         m_host->print("▸▸▸ AI: self-review returned no runnable script — keeping the reviewed one.");
         code = m_selfReviewDraftCode;
@@ -6521,6 +6522,14 @@ void AiAssistant::onReplyFinished(QNetworkReply *reply)
         return;
     }
 
+    // Confirmed live (benchmark item 12, part 3): the self-review call came back empty and ended the request, although
+    // the reviewed draft was complete. An empty review changes nothing — the draft runs, as for a prose-only review.
+    if (text.isEmpty() && awaitingSelfReview && !m_selfReviewDraftCode.isEmpty())
+    {
+        m_pendingUserText.clear();
+        emit responseReady(QString());
+        return;
+    }
     if (text.isEmpty())
     {
         m_pendingUserText.clear();
