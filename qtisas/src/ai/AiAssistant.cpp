@@ -4847,6 +4847,10 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
     const QString fabricated = m_content ? m_content->fabricatedConversationCheck(code) : QString();
 
     QString errContext;
+    // The script a block stopped, for the retry prompt: its history entry is replaced by a placeholder (so nothing
+    // treats it as having run), and confirmed live (LIST 5, item 4) the retry, told "keep every other line", could not
+    // see them and wrote a different script from scratch, dropping the result line.
+    QString blockedScript;
     if (!fabricated.isEmpty())
     {
         m_host->print("▸▸▸ AI code (blocked — script invents further conversation turns):\n\n" + code);
@@ -4943,6 +4947,7 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
         // (and same guaranteed-last-entry invariant) as the self-review/invalid-response ones above.
         if (!m_history.isEmpty())
             m_history.last().second = "(blocked before running — " + headers.join("; ") + "; corrected below)";
+        blockedScript = code;
         if (explanations.size() == 1)
         {
             errContext = explanations.first();
@@ -5152,8 +5157,15 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
     const QString splitPartAnchor =
         splitModeActive ? ("Generate a script for ONLY this part: " + splitPlan[splitPartIndex].description + "\n\n")
                         : QString();
+    const QString blockedScriptBlock =
+        blockedScript.isEmpty()
+            ? QString()
+            : "Your script, blocked before running (it did NOT run):\n```\n" + blockedScript.trimmed() +
+                  "\n```\nCorrect THIS script: change only what the reason below names.\n\n";
     const QString retryPromptBase =
-        splitPartAnchor + retryHint + originalRequestReminder() + "The action script raised an error:\n```\n" +
+        splitPartAnchor + retryHint + originalRequestReminder() + blockedScriptBlock +
+        (blockedScript.isEmpty() ? "The action script raised an error:\n```\n"
+                                 : "It was blocked for this reason:\n```\n") +
         errContext +
         "\n```\nProvide a corrected script. IMPORTANT: if this "
         "error names a specific available option — an exact "
