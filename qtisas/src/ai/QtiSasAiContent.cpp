@@ -3051,8 +3051,10 @@ QString QtiSasAiContent::reuseInsteadOfCompileMistake(const QString &code, const
            "leftover from an earlier session/attempt). Finding the name in both "
            "Compiler.functionNames() and Fittable.fitFunctions() proves a working compiled function "
            "currently exists, but 'compile X' is an action that was requested, not a precondition "
-           "to verify — call c.compile() in this script regardless. If the name already exists: "
-           "c.open(name); c.compile(). If it doesn't (or you're authoring genuinely new code): "
+           "to verify — call c.compile() in this script regardless. A name under \"ai/\" is the AI's own "
+           "scratch area, so an existing one is a leftover that may hold other code: define it fresh anyway "
+           "(the full sequence below; compile() replaces it). Only a library function outside \"ai/\" is "
+           "reopened: c.open(name); c.compile(). The full sequence: "
            "c.new(); c.setFunctionName(name); c.setGroup(group); c.setYName(yname); "
            "c.setXName(xname); c.setParamCount(n); c.setParamNamesAll([...]); "
            "c.setParamInitsAll([...]); c.setParamLimitsAll([...]); c.setParamVariesAll([...]); "
@@ -3060,6 +3062,44 @@ QString QtiSasAiContent::reuseInsteadOfCompileMistake(const QString &code, const
            "setCode()+compile(); there is no single consolidated 'add a parameter' call (no "
            "addParameter()/addParam() method exists) — parameter count, names, inits, limits, and "
            "vary-flags are five SEPARATE bulk-setter calls, each taking a same-length list.";
+}
+
+QString QtiSasAiContent::aiSandboxReopenMistake(const QString &code, const QString &originalRequestText,
+                                                const QString &earlierPartsCode)
+{
+    // Confirmed live (benchmark LIST 3, item 8): "Compile a new fit function \"ai/RefDecay\" for y = A*exp(-k*x) + c"
+    // with ai/RefDecay left over from an earlier run — the script opened the old one and recompiled it, so whatever
+    // code the leftover held was fitted instead of the requested model. "ai/" is the AI's scratch area: a compile
+    // request defines the function fresh there. Exempt: a request that asks to use or change an existing function, and
+    // a name an earlier part of this plan defined (that one is this request's own work).
+    static const QRegularExpression requestedCompileRe(R"(\bcompile\b)", QRegularExpression::CaseInsensitiveOption);
+    static const QRegularExpression existingTargetRe(R"(\b(?:existing|modify|change|edit|extend|update|recompile)\b)",
+                                                     QRegularExpression::CaseInsensitiveOption);
+    if (!requestedCompileRe.match(originalRequestText).hasMatch() ||
+        existingTargetRe.match(originalRequestText).hasMatch())
+        return {};
+    static const QRegularExpression newCallRe(R"(\.new\s*\(\s*\))");
+    if (newCallRe.match(code).hasMatch())
+        return {};
+    static const QRegularExpression openAiRe(R"(\.open\s*\(\s*["'](ai/[^"']+)["'])");
+    for (auto it = openAiRe.globalMatch(code); it.hasNext();)
+    {
+        const QString name = it.next().captured(1);
+        const QRegularExpression definedEarlierRe(R"(setFunctionName\s*\(\s*["'])" + QRegularExpression::escape(name) +
+                                                      R"(["'])",
+                                                  QRegularExpression::CaseInsensitiveOption);
+        if (definedEarlierRe.match(earlierPartsCode).hasMatch())
+            continue;
+        return "The request asks to compile a function, but this script reopens the existing \"" + name +
+               "\" with c.open(). \"ai/\" is the AI's own scratch area: an existing name there is a leftover from an "
+               "earlier attempt and may hold other code, so reopening it recompiles that old code, not the requested "
+               "one. Define it fresh instead: c.new(); c.setFunctionName(\"" +
+               name +
+               "\"); c.setGroup(...); c.setYName(...); c.setXName(...); c.setParamCount(n); "
+               "c.setParamNamesAll([...]); c.setParamInitsAll([...]); c.setParamLimitsAll([...]); "
+               "c.setParamVariesAll([...]); c.setCode(...); ok = c.compile() — this replaces the old one.";
+    }
+    return {};
 }
 
 QString QtiSasAiContent::requestedCreationNeverHappenedMistake(const QString &code, const QString &originalRequestText,
@@ -4562,6 +4602,9 @@ QList<AiKnownMistakeMatch> QtiSasAiContent::detectKnownMistakes(const QString &c
         explanation = reuseInsteadOfCompileMistake(code, originalRequestText, earlierPartsCode);
         if (!explanation.isEmpty())
             matches << AiKnownMistakeMatch{"requested compile never happened", explanation};
+        explanation = aiSandboxReopenMistake(code, originalRequestText, earlierPartsCode);
+        if (!explanation.isEmpty())
+            matches << AiKnownMistakeMatch{"a leftover ai/ function reopened instead of compiled fresh", explanation};
         explanation =
             requestedCreationNeverHappenedMistake(code, originalRequestText, earlierPartsCode, laterPartsDescriptions);
         if (!explanation.isEmpty())

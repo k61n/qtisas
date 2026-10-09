@@ -107,6 +107,8 @@ class QtiSasAiContent : public AiContentProvider
     static QString unannouncedModelNameSubstitution(const QString &code, const QString &originalRequestText);
     static QString reuseInsteadOfCompileMistake(const QString &code, const QString &originalRequestText,
                                                 const QString &earlierPartsCode);
+    static QString aiSandboxReopenMistake(const QString &code, const QString &originalRequestText,
+                                          const QString &earlierPartsCode);
     static QString requestedCreationNeverHappenedMistake(const QString &code, const QString &originalRequestText,
                                                          const QString &earlierPartsCode,
                                                          const QString &laterPartsDescriptions);
