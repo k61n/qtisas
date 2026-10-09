@@ -3791,7 +3791,14 @@ bool AiAssistant::runExploreProbe(const QString &code, QString *output, QString 
     }
     // Display already happened live during runScript() itself — do NOT print exploreResult.output
     // here too, see that method's doc comment on why that would double every scriptPrint() line.
-    const AiScriptResult exploreResult = m_host->runScript(safeCode, "<ai-explore>");
+    // A probe in a part before the last does not print the result line either: confirmed live (benchmark LIST 5, item
+    // 6), part 1's probe printed "R6: [...]" before anything was deleted — the item's answer if a later part fails.
+    QString probeCode = safeCode;
+    if (m_content && !laterSplitPartDescriptions().isEmpty())
+        if (const QString stripped = m_content->nonFinalResultLineRepair(safeCode, originalRequestText, true);
+            !stripped.isEmpty())
+            probeCode = stripped;
+    const AiScriptResult exploreResult = m_host->runScript(probeCode, "<ai-explore>");
     *output = exploreResult.output.isEmpty() ? "(no output)" : exploreResult.output;
     m_itemOutput += exploreResult.output + "\n";
 

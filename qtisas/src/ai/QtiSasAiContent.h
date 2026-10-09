@@ -77,6 +77,8 @@ class QtiSasAiContent : public AiContentProvider
     QString resultLineDuty(const QString &requestText) const override;
     QString nonFinalResultLineRepair(const QString &code, const QString &requestText, bool alsoComputed) const override;
     static QString rootFolderDeletionMistake(const QString &code);
+    static QString labeledResultLineMistake(const QString &code, const QString &originalRequestText);
+    static QString inventedDeletionCallHint(const QString &errContext);
     static QString matrixIndexFormulaMistake(const QString &code, const QString &originalRequestText);
     static QString newNoteExtraTabMistake(const QString &code, const QString &originalRequestText);
     static QString earlierPartVariableMistake(const QString &code, const QString &earlierPartsCode);

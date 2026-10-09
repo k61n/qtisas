@@ -4093,6 +4093,65 @@ QString QtiSasAiContent::newNoteExtraTabMistake(const QString &code, const QStri
         .arg(tabs - 1);
 }
 
+QString QtiSasAiContent::labeledResultLineMistake(const QString &code, const QString &originalRequestText)
+{
+    // Confirmed live (benchmark LIST 5, item 6): "R6: [] Peak5:missing Pipeline:missing" and "R6: [] Table 'Peak5'
+    // exists: False ..." — the request asks for the values only. The fixed text of the result line's print (string
+    // literals, f-string text outside {...}) after the label must not hold a "name:" or "name=" label.
+    const QString label = requestedResultLabel(originalRequestText);
+    if (label.isEmpty())
+        return {};
+    const QRegularExpression printRe(R"(^[ \t]*(?:scriptPrint|print)\s*\(\s*f?["'])" +
+                                         QRegularExpression::escape(label) + "[^\\n]*$",
+                                     QRegularExpression::MultilineOption);
+    static const QRegularExpression literalRe(R"RX(f?("(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'))RX");
+    static const QRegularExpression fieldRe(R"(\{[^{}]*\})");
+    static const QRegularExpression innerLabelRe(R"((?:^|\s)([A-Za-z_][\w']*)\s*[:=](?!=))");
+    for (auto it = printRe.globalMatch(code); it.hasNext();)
+    {
+        const QString line = it.next().captured(0);
+        QString fixedText;
+        for (auto lit = literalRe.globalMatch(line); lit.hasNext();)
+        {
+            QString text = lit.next().captured(1);
+            text = text.mid(1, text.size() - 2);
+            text.replace(fieldRe, " ");
+            fixedText += " " + text;
+        }
+        fixedText.replace(label, " ");
+        const QRegularExpressionMatch inner = innerLabelRe.match(fixedText);
+        if (inner.hasMatch())
+            return "The result line " + line.trimmed() + " labels its values (\"" + inner.captured(1) +
+                   ":\"), but the request asks for the values only, in the order asked: print \"" + label +
+                   "\" and then just the values, e.g. scriptPrint(\"" + label + "\", value1, value2).";
+    }
+    return {};
+}
+
+QString QtiSasAiContent::inventedDeletionCallHint(const QString &errContext)
+{
+    // Confirmed live (benchmark LIST 5, item 6): deleteFunction, removeFitFunction, deleteTable, deleteWindow,
+    // closeTable — one invented name after the other, 705 s for a cleanup item. None exists, so the console's "a
+    // method of ..." hint had nothing to point at.
+    static const QRegularExpression windowRe(
+        R"((?:NameError: name|has no attribute) )"
+        R"('((?:delete|close|remove|kill)\w*(?:Table|Window|Note|Matrix|Graph|Plot)\w*)')",
+        QRegularExpression::CaseInsensitiveOption);
+    static const QRegularExpression functionRe(
+        R"((?:NameError: name|has no attribute) '((?:delete|remove|unload)\w*Function\w*)')",
+        QRegularExpression::CaseInsensitiveOption);
+    if (const QRegularExpressionMatch m = windowRe.match(errContext); m.hasMatch())
+        return "REMINDER: \"" + m.captured(1) +
+               "\" does not exist. closeWindow(w) closes a table, matrix, note or graph window AND removes it "
+               "from the project — that is the whole \"close and delete\": closeWindow(table(\"T\")), "
+               "closeWindow(note(\"N\")). Afterwards table(\"T\") is None.\n\n";
+    if (const QRegularExpressionMatch m = functionRe.match(errContext); m.hasMatch())
+        return "REMINDER: \"" + m.captured(1) +
+               "\" does not exist. A compiled fit function is deleted with Compiler.delete(\"ai/Name\"); "
+               "whether it still exists: \"ai/Name\" in Compiler.functionNames(\"ALL\").\n\n";
+    return {};
+}
+
 QString QtiSasAiContent::rootFolderDeletionMistake(const QString &code)
 {
     // Confirmed live (LIST 5, item 6, twice): "close and delete the table and the note" got deleteFolder(rootFolder())
@@ -5065,6 +5124,9 @@ QList<AiKnownMistakeMatch> QtiSasAiContent::detectKnownMistakes(const QString &c
         explanation = repeatedResultLabelMistake(code, originalRequestText);
         if (!explanation.isEmpty())
             matches << AiKnownMistakeMatch{"the result label printed more than once", explanation};
+        explanation = labeledResultLineMistake(code, originalRequestText);
+        if (!explanation.isEmpty())
+            matches << AiKnownMistakeMatch{"the result line labels its values", explanation};
     }
     explanation = earlierPartVariableMistake(code, earlierPartsCode);
     if (!explanation.isEmpty())
@@ -5200,6 +5262,9 @@ QString QtiSasAiContent::explorePrefixBeforeFirstWriteCall(const QString &code) 
 
 QString QtiSasAiContent::retryHintForError(const QString &errContext) const
 {
+    if (const QString deletion = inventedDeletionCallHint(errContext); !deletion.isEmpty())
+        return deletion;
+
     // A ValueError converting fitCurve table text to float, where the failing line calls
     // .text(N, M) with LITERAL row/column indices, is the confirmed-live "hardcoded row instead
     // of searching by label" mistake fittable-python-api.md/.pyi explicitly warns against: a
