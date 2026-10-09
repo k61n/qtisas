@@ -6902,11 +6902,6 @@ void ApplicationWindow::askAi(const QString &text, bool autoRun, bool forceConso
     // REVIEW markers in any order/position.
     m_ai->setExploreEnabled(AiAssistant::parseExploreMarker(effectiveText, aiSettings.exploreEnabled, &effectiveText));
 
-    // Chained onto effectiveText (already stripped of SPLIT/NOSPLIT), so REVIEW/NOREVIEW work
-    // together with the split marker in any order/position.
-    m_ai->setSelfReviewEnabled(
-        AiAssistant::parseReviewMarker(effectiveText, aiSettings.selfReviewEnabled, &effectiveText));
-
     connectAiSignalsOnce();
     echoAiRequest(effectiveText);
 
