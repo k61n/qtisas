@@ -16,6 +16,7 @@ replaced.
 
 Protocol: one JSON object per line, both ways. A request
     {"id": 1, "mode": "python", "code": "...", "keep": false, "dialogs": "auto", "filename": "script.py"}
+("interactive": true runs the code as one prompt input: a bare expression prints its value, as in Python's prompt)
 is answered by zero or more events {"id": 1, "event": "line", "text": "..."} and one final
     {"id": 1, "event": "result", "ok": true, "output": "...", "error": "", "seconds": 0.12,
      "created": ["table:T"], "removed": [], "dialogs": [], "status": "done"}
@@ -390,7 +391,7 @@ class ScriptServer:
         with contextlib.redirect_stdout(output), contextlib.redirect_stderr(output):
             with answerer if answer else contextlib.nullcontext():
                 try:
-                    exec(compile(code, filename, "exec"), ns)
+                    exec(self._compile(code, filename, bool(request.get("interactive"))), ns)
                 except SystemExit as e:
                     if e.code not in (None, 0):
                         error = "SystemExit: %s" % e.code
@@ -403,8 +404,56 @@ class ScriptServer:
                 "removed": sorted(before - after), "dialogs": answerer.dialogs}
 
     @staticmethod
+    def _compile(code, filename, interactive):
+        """Python's "single" mode for a prompt input (a bare expression's value is printed), else a whole script."""
+        if interactive:
+            try:
+                return compile(code + "\n", filename, "single")
+            except SyntaxError:
+                pass  # several statements: run them as a script, the real error (if any) comes from there
+        return compile(code, filename, "exec")
+
+    @staticmethod
     def _format_error(e, filename):
         tb = e.__traceback__
         while tb is not None and tb.tb_frame.f_code.co_filename == __file__:
             tb = tb.tb_next  # drop this server's own frames
-        return "".join(traceback.format_exception(type(e), e, tb)).rstrip()
+        hint = ScriptServer._error_hint(e)
+        return "".join(traceback.format_exception(type(e), e, tb)).rstrip() + ("\n" + hint if hint else "")
+
+    @staticmethod
+    def _error_hint(e):
+        """The hints QtiSAS's own error messages carry (PythonScripting.cpp: methodOwnerHint()/attributeHint())."""
+        name = getattr(e, "name", None)
+        if isinstance(e, NameError) and name and not name.startswith("_"):
+            owners = [(kind, call) for kind, call, obj in (
+                ("Table", "t", getattr(qti, "Table", None)), ("Matrix", "m", getattr(qti, "Matrix", None)),
+                ("Note", "n", getattr(qti, "Note", None)), ("GraphWindow", "g", getattr(qti, "GraphWindow", None)),
+                ("Graph", "layer", getattr(qti, "Graph", None)), ("Graph3D", "g3", getattr(qti, "Graph3D", None)),
+                ("Compiler", "Compiler", getattr(builtins, "Compiler", None)),
+                ("Fittable", "Fittable", getattr(builtins, "Fittable", None)),
+                ("Dan", "Dan", getattr(builtins, "Dan", None))) if obj is not None and hasattr(obj, name)]
+            if owners:
+                return ("'%s' is not a global function but a method of %s — call it on that object, e.g. %s.%s(...)"
+                        % (name, ", ".join(kind for kind, _ in owners), owners[0][1], name))
+        if isinstance(e, AttributeError) and name and hasattr(e, "obj"):
+            if e.obj is None:
+                return ("The object is None: the call that should have returned it found nothing — e.g. "
+                        "table(\"…\"), matrix(\"…\") or n.tab(\"…\") for a name that does not exist.")
+            if len(name) >= 3:
+                similar = sorted((c for c in dir(e.obj) if not c.startswith("_") and c != name and
+                                  ScriptServer._has_word(c, name)), key=len)[:6]
+                if similar:
+                    return "'%s' has no '%s'; its methods with a similar name: %s()" % (
+                        type(e.obj).__name__, name, "(), ".join(similar))
+        return ""
+
+    @staticmethod
+    def _has_word(candidate, name):
+        """`name` as a word of the camelCase `candidate`: "text" is in setText and toPlainText, not in contextMenu."""
+        at = candidate.lower().find(name.lower())
+        while at >= 0:
+            if at == 0 or candidate[at].isupper():
+                return True
+            at = candidate.lower().find(name.lower(), at + 1)
+        return False
