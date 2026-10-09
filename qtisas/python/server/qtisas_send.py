@@ -10,15 +10,18 @@
 
     qtisas_send.py [--instance NAME | --socket PATH] [--mode python|ai|ai-run|status|quit]
                    [-c CODE | -f FILE | -] [--json | --stream-json] [--keep] [--timeout S] [--dialogs auto|leave]
+    qtisas_send.py [--instance NAME] [--mode python|ai|ai-run]     # no code in a terminal: the interactive prompt
 
 python: the script's output goes to stdout, its error to stderr. ai / ai-run: the text is a request to the internal AI
 (ai generates only, ai-run also runs its scripts); its lines are printed as they come. A one-line summary goes to
 stderr; --json prints the whole result as JSON instead, --stream-json every event as one JSON line.
 Exit code: 0 ok, 1 the script or the AI run failed, 2 no server, busy or no reply in time.
+Without code in a terminal it opens a prompt: Python (variables kept between inputs) or the AI, see :help.
 Plain Python 3, no PyQt needed.
 """
 
 import argparse
+import codeop
 import json
 import os
 import socket
@@ -108,6 +111,146 @@ def summary(result):
     return " · ".join(parts)
 
 
+PROMPTS = {"python": "py> ", "ai": "ai> ", "ai-run": "ai-run> "}
+
+PROMPT_HELP = """Python runs in the QtiSAS script server, with its variables kept from one input to the next; a line
+that opens a block (if/for/def ...) continues until an empty line. ai: the text is a request to QtiSAS's AI, which only
+writes the script; ai-run: the AI also runs it. The AI's lines are printed as they come; a request starting
+with LIST (a numbered task list) continues until an empty line, so a whole list can be pasted.
+  :py  :ai  :ai-run     switch the mode (the prompt shows it)
+  :file PATH            send a file in the current mode: a Python script, or an AI request such as a LIST
+  :status               the server's state          :instance NAME   talk to another QtiSAS
+  :help                 this text                   :quit or Ctrl+D  leave the prompt (QtiSAS keeps running)
+Ctrl+C only stops waiting: a running script or AI request cannot be interrupted from outside."""
+
+
+def needs_more(source):
+    """True while `source` is an incomplete Python block, as Python's own prompt decides it."""
+    try:
+        return codeop.compile_command(source, "<qtisas-prompt>", "exec") is None
+    except (SyntaxError, OverflowError, ValueError):
+        return False  # a real error: send it, the server reports it
+
+
+def read_entry(mode):
+    """One input: a line; in python mode a block until it is complete; for the AI a LIST until an empty line."""
+    lines = [input(PROMPTS[mode])]
+    if mode == "python":
+        while needs_more("\n".join(lines)):
+            lines.append(input("... "))
+    elif lines[0].split()[:1] == ["LIST"]:  # "LIST", "LIST NOSPLIT ...": the items follow, one per line
+        while lines[-1].strip():
+            lines.append(input("... "))
+    return "\n".join(lines).rstrip()
+
+
+def print_result(result, mode):
+    if result.get("output"):
+        sys.stdout.write(result["output"] if result["output"].endswith("\n") else result["output"] + "\n")
+    if result.get("error"):
+        print(result["error"], file=sys.stderr)
+    if mode != "python" or not result.get("ok") or result.get("created") or result.get("removed"):
+        print(summary(result), file=sys.stderr)
+
+
+def history_path():
+    """The prompt's history, in QtiSAS's own settings folder: ~/.config/qtisas (AppData/Local/qtisas on Windows)."""
+    folder = os.path.join(os.path.expanduser("~"), "AppData", "Local", "qtisas") if os.name == "nt" else \
+        os.path.join(os.path.expanduser("~"), ".config", "qtisas")
+    os.makedirs(folder, exist_ok=True)
+    history = os.path.join(folder, "qtisas_send_history")
+    old = os.path.expanduser("~/.qtisas_send_history")  # where earlier versions kept it
+    if os.path.exists(old) and not os.path.exists(history):
+        os.replace(old, history)
+    return history
+
+
+def interactive(instance, path, mode="python", timeout=None):
+    """The prompt for a person at a terminal: Python or the AI of the QtiSAS behind `path`, one input at a time."""
+    try:
+        import readline  # arrow keys and history; not on every platform
+        history = history_path()
+        try:
+            readline.read_history_file(history)
+        except OSError:
+            pass
+        import atexit
+        atexit.register(lambda: readline.write_history_file(history))
+    except ImportError:
+        pass
+
+    def send(message):
+        try:
+            return request(message, path, timeout, lambda text: print(text, flush=True))
+        except KeyboardInterrupt:
+            print("\n(stopped waiting — the request may still be running in QtiSAS)", file=sys.stderr)
+        except PermissionError as e:
+            print("qtisas_send: %s" % e, file=sys.stderr)
+        except (FileNotFoundError, ConnectionRefusedError):
+            print("qtisas_send: no server at %s (start QtiSAS with -s=%s)" % (path, instance), file=sys.stderr)
+        except (ConnectionError, socket.timeout) as e:
+            print("qtisas_send: %s" % (e or "no result in time"), file=sys.stderr)
+        return None
+
+    status = send({"id": 0, "mode": "status"})
+    print("QtiSAS %s%s — :help for commands" % (instance, "" if status else " (not reachable yet)"))
+    rid = 0
+    while True:
+        try:
+            entry = read_entry(mode)
+        except EOFError:
+            print()
+            return 0
+        except KeyboardInterrupt:
+            print()
+            continue
+        text = entry.strip()
+        if not text:
+            continue
+        source_file = None
+        if text.startswith(":file"):
+            source_file = os.path.expanduser(text[len(":file"):].strip())
+            try:
+                with open(source_file, encoding="utf-8") as f:
+                    entry = f.read()
+            except OSError as e:
+                print("qtisas_send: %s" % e, file=sys.stderr)
+                continue
+        elif text.startswith(":"):
+            command, _, argument = text[1:].partition(" ")
+            if command in ("py", "python", "ai", "ai-run"):
+                mode = "python" if command == "py" else command
+            elif command == "status":
+                result = send({"id": 0, "mode": "status"})
+                if result:
+                    print(json.dumps({k: v for k, v in result.items() if k not in ("id", "event")}))
+            elif command == "instance" and argument.strip():
+                instance = argument.strip()
+                path = default_socket_path(instance)
+                print("now talking to QtiSAS %s" % instance)
+            elif command in ("quit", "exit", "q"):
+                return 0
+            elif command == "help":
+                print(PROMPT_HELP)
+            else:
+                print("unknown command %s — :help lists them" % text.split()[0], file=sys.stderr)
+            continue
+        rid += 1
+        message = {"id": rid, "mode": mode}
+        if mode == "python":
+            message.update(code=entry, keep=True, interactive=source_file is None,
+                           filename=os.path.abspath(source_file) if source_file else "<qtisas-prompt>")
+        else:
+            message["text"] = entry
+        result = send(message)
+        if result is None:
+            continue
+        if result.get("event") == "busy":
+            print("qtisas_send: QtiSAS is busy with another request", file=sys.stderr)
+            continue
+        print_result(result, mode)
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(description="Run Python in a running QtiSAS (script server).")
     p.add_argument("--instance", default=os.environ.get("QTISAS_SERVER", "test"))
@@ -133,10 +276,9 @@ def main(argv=None):
             with open(args.file, encoding="utf-8") as f:
                 message["code"] = f.read()
             message["filename"] = os.path.abspath(args.file)
-        else:
-            print("qtisas_send: give -c CODE, -f FILE or code on stdin (the interactive prompt comes later)",
-                  file=sys.stderr)
-            return 2
+        else:  # a person at a terminal
+            return interactive(args.instance, args.socket or default_socket_path(args.instance), args.mode,
+                               args.timeout)
         message["keep"] = args.keep
         if args.dialogs:
             message["dialogs"] = args.dialogs
