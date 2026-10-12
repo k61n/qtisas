@@ -107,6 +107,9 @@ public:
     AiScriptResult runScript(const QString &code, const QString &scriptName) override;
     QList<QStringList> entityKinds(const QStringList &names) override;
     QStringList liveObjects() override;
+    QStringList closeObjects(const QStringList &objects) override;
+    QString formulaLanguage() const override;
+    QString tableShape(const QString &name) override;
 
     void print(const QString &message) override;
     bool canCompile(const QString &code, QString *errorOut = nullptr) const override;

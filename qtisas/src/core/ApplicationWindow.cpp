@@ -6350,6 +6350,33 @@ QList<QStringList> ApplicationWindow::entityKinds(const QStringList &names)
     return result;
 }
 
+QString ApplicationWindow::tableShape(const QString &name)
+{
+    for (MdiSubWindow *w : windowsList())
+    {
+        auto *t = qobject_cast<Table *>(w);
+        if (!t || t->objectName() != name)
+            continue;
+        static const QStringList roles = {"None", "X", "Y", "Z", "xErr", "yErr", "Label"};
+        const QStringList labels = t->colNames();
+        QStringList columns;
+        for (int c = 0; c < t->numCols() && c < labels.size(); ++c)
+        {
+            const int role = t->colPlotDesignation(c);
+            columns << QString("%1 \"%2\" %3")
+                           .arg(c + 1)
+                           .arg(labels[c], role >= 0 && role < roles.size() ? roles[role] : "?");
+        }
+        return QString("%1 rows; columns: %2").arg(t->numRows()).arg(columns.join(", "));
+    }
+    return {};
+}
+
+QString ApplicationWindow::formulaLanguage() const
+{
+    return scriptEnv ? QString(scriptEnv->objectName()) : QString();
+}
+
 // Windows by kind, and the fit functions of the "ai/" folder (a directory listing: cheap enough to run before and after
 // every AI script, unlike groupFunctions(), which re-reads every .fif file).
 QStringList ApplicationWindow::liveObjects()
@@ -6376,6 +6403,27 @@ QStringList ApplicationWindow::liveObjects()
         for (const QFileInfo &fif : QDir(compileWidget->pathFIF + "/ai").entryInfoList({"*.fif"}, QDir::Files))
             objects << "function:ai/" + fif.completeBaseName();
     return objects;
+}
+
+QStringList ApplicationWindow::closeObjects(const QStringList &objects)
+{
+    QStringList closed;
+    const QStringList live = liveObjects(); // the same "kind:name" spelling, so the kind must match too
+    for (const QString &object : objects)
+    {
+        const QString kind = object.section(':', 0, 0);
+        const QString name = object.section(':', 1);
+        if (kind == "function" || !live.contains(object))
+            continue;
+        for (MdiSubWindow *w : windowsList())
+            if (w && w->objectName() == name)
+            {
+                closeWindow(w, true, false);
+                closed << object;
+                break;
+            }
+    }
+    return closed;
 }
 
 // Checks syntax only — WITHOUT running `code` — so the caller can decide "not runnable" (plain

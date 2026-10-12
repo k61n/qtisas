@@ -81,6 +81,31 @@ class AiScriptHost
     {
         return {};
     }
+
+    // The language a table column formula is evaluated in ("Python", "muParser", ...), or empty when unknown. A repair
+    // that rewrites formula syntax must know it: ^ is the power in muParser and XOR in Python.
+    virtual QString formulaLanguage() const
+    {
+        return {};
+    }
+
+    // The shape of the table `name` — "21 rows; columns: 1 \"x\" X, 2 \"y\" Y, 3 \"dy\" yErr" — or empty when there is
+    // no such table or the host cannot tell. Read from live state, like entityKinds(): it answers the most frequent
+    // EXPLORE probe ("the column names of the table ...") without a round-trip.
+    virtual QString tableShape(const QString &name)
+    {
+        Q_UNUSED(name)
+        return {};
+    }
+
+    // Closes and deletes the windows among `objects` ("kind:name", as liveObjects() lists them: tables, matrices,
+    // notes, graphs, 3D plots — never functions) and returns the ones it closed. Used to give a retry the state the
+    // failed attempt started from; a host that cannot close returns an empty list and the retry is told instead.
+    virtual QStringList closeObjects(const QStringList &objects)
+    {
+        Q_UNUSED(objects)
+        return {};
+    }
 };
 
 #endif
