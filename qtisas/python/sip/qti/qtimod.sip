@@ -2630,7 +2630,15 @@ public:
         sipError = sipErrorFail;
     }
 %End
-    QStringList functionNames(const QString &categoryName) /PyName=functionNames/;
+    // "ALL" by default: confirmed live (LIST 5 item 6, 2026-10-11), Compiler.functionNames() without an argument raised
+    // "not enough arguments" twice and the item was given up — the natural call now works.
+    QStringList functionNames(const QString &categoryName = "ALL") /PyName=functionNames/;
+    // The call models guess (18 times on 2026-10-11, AttributeError each, the doc pointing to fitFunctions() ignored):
+    // whether a compiled function exists. groupFunctions("ALL") — no category selection, no UI side effect.
+    bool functionExists(const QString &name) /PyName=functionExists/;
+%MethodCode
+    sipRes = sipCpp->groupFunctions("ALL").contains(*a0);
+%End
     bool openFunction(const QString &name) /PyName=open/;
 %MethodCode
     sipRes = sipCpp->openFunction(*a0);
@@ -3040,8 +3048,21 @@ public:
         // guessed dataset names in a row because the actual available name was never visible to
         // it anywhere except this now-added detail.
         QString detail;
-        if (!sipCpp->fitFunctions().contains(*a0)) {
-            detail = QString(" Function '%1' not found — use fitFunctions() to list available names.").arg(*a0);
+        const QStringList functions = sipCpp->fitFunctions();
+        if (!functions.contains(*a0)) {
+            // A name without its folder: confirmed live (LIST 5 local pyi, every run), best = "Lor5" for the compiled
+            // "ai/Lor5" — "not found" alone was retried unchanged until the item was given up. One function whose
+            // name ends in "/<name>" is named; several or none leave the message as it was.
+            QStringList withFolder;
+            for (const QString &f : functions)
+                if (f.endsWith("/" + *a0))
+                    withFolder << f;
+            if (withFolder.size() == 1)
+                detail = QString(" Function '%1' not found. Did you mean '%2'? A fit function is named with its "
+                                 "folder, in every call.")
+                             .arg(*a0, withFolder.first());
+            else
+                detail = QString(" Function '%1' not found — use fitFunctions() to list available names.").arg(*a0);
         } else {
             const QStringList avail = sipCpp->availableDatasets();
             QStringList missing;
@@ -3077,6 +3098,11 @@ public:
 %End
 
     QStringList fitFunctions(const QString &pattern = QString()) /PyName=fitFunctions/;
+    // Whether a fit function exists — the call models guess (see Compiler.functionExists()).
+    bool functionExists(const QString &name) /PyName=functionExists/;
+%MethodCode
+    sipRes = sipCpp->fitFunctions().contains(*a0);
+%End
     QString currentFunction() const;
     bool setFunction(const QString &name);
 %MethodCode
