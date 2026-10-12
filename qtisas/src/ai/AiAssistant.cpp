@@ -1795,6 +1795,7 @@ QStringList splitPlanMissingRequestedActions(const QString &originalRequestText,
     {
         QString label;
         QRegularExpression re;
+        QRegularExpression requestAlso; // the request must match this too (default: anything)
     };
     static const QList<ActionGroup> groups = {
         {"compile", QRegularExpression(R"(\bcompile\b)", QRegularExpression::CaseInsensitiveOption)},
@@ -1836,6 +1837,14 @@ QStringList splitPlanMissingRequestedActions(const QString &originalRequestText,
         // the simulate part was silently dropped during a fixup round, leaving only the compile
         // part, and nothing caught it since "simulate" wasn't a tracked action group at all.
         {"simulate", QRegularExpression(R"(\bsimulat(?:e|ion|ing)\b)", QRegularExpression::CaseInsensitiveOption)},
+        // Confirmed live (LIST 5, item 5): "the "make" tab holds a script that creates ..." became "create the note
+        // with two tabs" + "execute the make tab" — no part wrote any script into a tab, so there was nothing to run.
+        // Only a WRITING verb before "script" counts: "execute the script in the make tab" is no such part.
+        {"write the scripts into the note's tabs",
+         QRegularExpression(R"(\b(?:holds?|contains?|writes?|writing|sets?|puts?|adds?|adding|with)\b[^.\n]{0,40})"
+                            R"(\bscripts?\b)",
+                            QRegularExpression::CaseInsensitiveOption),
+         QRegularExpression(R"(\btabs?\b)", QRegularExpression::CaseInsensitiveOption)},
     };
     QString combinedDescriptions;
     for (const AiAssistant::SplitPart &p : plan)
@@ -1843,7 +1852,7 @@ QStringList splitPlanMissingRequestedActions(const QString &originalRequestText,
     QStringList missing;
     for (const ActionGroup &g : groups)
     {
-        if (!g.re.match(originalRequestText).hasMatch())
+        if (!g.re.match(originalRequestText).hasMatch() || !g.requestAlso.match(originalRequestText).hasMatch())
             continue;
         if (!g.re.match(combinedDescriptions).hasMatch())
             missing << g.label;

@@ -12,6 +12,7 @@ Description: See QtiSasAiContent.h.
 #include <QDir>
 #include <QFile>
 #include <QHash>
+#include <QMap>
 #include <QRegularExpression>
 #include <QSet>
 
@@ -3225,6 +3226,24 @@ QString QtiSasAiContent::requestedCreationNeverHappenedMistake(const QString &co
         // is responsible for creating it (see this function's split-mode doc comment above).
         if (laterPartsDescriptions.contains(m.captured(1), Qt::CaseInsensitive))
             continue;
+        // Created BY a script the request puts into a note's tab ("the "make" tab holds a script that creates a table
+        // "Auto""): the remedy is that tab's script, not a direct call. Confirmed live (LIST 5, item 5): the plain
+        // message sent the model toward newTable() in the main script — the item's known wrong answer.
+        static const QRegularExpression tabScriptRe(R"(\btab\b[^.]{0,40}\bscript\b[^.]*$)",
+                                                    QRegularExpression::CaseInsensitiveOption);
+        static const QRegularExpression tabNameRe(R"RX("([^"]+)"\s+tab\b)RX");
+        const QString before = originalRequestText.left(m.capturedStart());
+        if (tabScriptRe.match(before).hasMatch())
+        {
+            const QRegularExpressionMatch tab = tabNameRe.match(before.mid(before.lastIndexOf('.') + 1));
+            const QString tabName = tab.hasMatch() ? tab.captured(1) : QString("the tab");
+            return "The request creates the " + kind.noun + " \"" + m.captured(1) +
+                   "\" through a script in a note's tab, and nothing has written or run that script yet. Write it "
+                   "into the tab (n.tab(\"" +
+                   tabName + R"(").setText("..." with )" + kind.creationCall + "(\"" + m.captured(1) +
+                   "\", ...)) and run that tab: n.tab(\"" + tabName + "\").execute(). Do not create \"" +
+                   m.captured(1) + "\" directly in this script.";
+        }
         return "The request explicitly asks to CREATE a " + kind.noun + " named \"" + m.captured(1) +
                "\", but this script never calls " + kind.creationCall +
                "(...) anywhere (and no earlier part in this plan created it either) — it only "
@@ -4149,6 +4168,40 @@ QString QtiSasAiContent::inventedDeletionCallHint(const QString &errContext)
         return "REMINDER: \"" + m.captured(1) +
                "\" does not exist. A compiled fit function is deleted with Compiler.delete(\"ai/Name\"); "
                "whether it still exists: \"ai/Name\" in Compiler.functionNames(\"ALL\").\n\n";
+    return {};
+}
+
+QString QtiSasAiContent::otherTabRunMistake(const QString &code, const QString &originalRequestText)
+{
+    // Confirmed live (LIST 5, item 5): "Run only the "make" tab" — the plan and the script also ran the "check" tab.
+    static const QRegularExpression onlyRe(R"RX(\brun\s+only\s+(?:the\s+)?"([^"]+)"\s+tab\b)RX",
+                                           QRegularExpression::CaseInsensitiveOption);
+    const QRegularExpressionMatch only = onlyRe.match(originalRequestText);
+    if (!only.hasMatch())
+        return {};
+    const QString allowed = only.captured(1);
+    // tab names by 0-based index, from renameTab(i, "name") in this script; tab(int) is 1-based
+    QMap<int, QString> names;
+    static const QRegularExpression renameRe(R"RX(\brenameTab\s*\(\s*(\d+)\s*,\s*["']([^"']+)["'])RX");
+    for (auto it = renameRe.globalMatch(code); it.hasNext();)
+    {
+        const QRegularExpressionMatch r = it.next();
+        names[r.captured(1).toInt()] = r.captured(2);
+    }
+    static const QRegularExpression runRe(
+        R"RX(\b(?:tab\s*\(\s*(?:["']([^"']+)["']|(\d+))|editorAt\s*\(\s*(\d+))\s*\)\s*\.\s*execute\s*\()RX");
+    for (auto it = runRe.globalMatch(code); it.hasNext();)
+    {
+        const QRegularExpressionMatch r = it.next();
+        QString ran = r.captured(1);
+        if (ran.isEmpty() && !r.captured(2).isEmpty())
+            ran = names.value(r.captured(2).toInt() - 1);
+        if (ran.isEmpty() && !r.captured(3).isEmpty())
+            ran = names.value(r.captured(3).toInt());
+        if (!ran.isEmpty() && ran != allowed)
+            return "The request says to run ONLY the \"" + allowed + "\" tab, but this script also runs the \"" + ran +
+                   "\" tab. Remove that execute() call: the other tab's script is written into it, not run.";
+    }
     return {};
 }
 
@@ -5137,6 +5190,9 @@ QList<AiKnownMistakeMatch> QtiSasAiContent::detectKnownMistakes(const QString &c
     explanation = newNoteExtraTabMistake(code, originalRequestText);
     if (!explanation.isEmpty())
         matches << AiKnownMistakeMatch{"one tab too many: a new note already has one", explanation};
+    explanation = otherTabRunMistake(code, originalRequestText);
+    if (!explanation.isEmpty())
+        matches << AiKnownMistakeMatch{"a tab run that the request does not run", explanation};
     explanation = rootFolderDeletionMistake(code);
     if (!explanation.isEmpty())
         matches << AiKnownMistakeMatch{"deleteFolder() of the project folder", explanation};
