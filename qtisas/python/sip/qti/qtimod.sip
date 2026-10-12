@@ -20,7 +20,18 @@ class ScriptEdit: QTextEdit
 #include "ScriptEdit.h"
 %End
 public slots:
+  // A failure inside the tab's own script raises here, at the call — confirmed live (series 4/5, local, LIST 5 item 5):
+  // a tab's script failed with nothing reaching the calling script, which then read an empty table twice.
   void executeAll() /PyName=execute/;
+%MethodCode
+    sipCpp->executeAll();
+    if (sipCpp->lastRunFailed())
+    {
+        sipIsErr = 1;
+        const QString msg = "the tab's script failed: " + sipCpp->errorMessage().trimmed();
+        PyErr_SetString(PyExc_RuntimeError, msg.toUtf8().constData());
+    }
+%End
   void print();
   void insertFunction(const QString &);
   void exportPDF(const QString& fileName);
