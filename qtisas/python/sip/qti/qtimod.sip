@@ -227,7 +227,10 @@ static int cellDataHelper(Table* table, int row, int col, PyObject** item) {
   switch (table->columnType(col)) {
   case Table::Numeric:
     if (table->text(row, col).isEmpty())
+    {
+      Py_INCREF(Py_None); // a new reference: the caller owns what it gets
       *item = Py_None;
+    }
     else
       *item = PyFloat_FromDouble(table->cell(row, col));
     break;
@@ -236,7 +239,10 @@ static int cellDataHelper(Table* table, int row, int col, PyObject** item) {
     break;
   case Table::Date:
     if (table->text(row, col).isEmpty())
+    {
+      Py_INCREF(Py_None); // a new reference: the caller owns what it gets
       *item = Py_None;
+    }
     else {
       if (!PyDateTimeAPI)
         PyDateTime_IMPORT;
@@ -249,7 +255,10 @@ static int cellDataHelper(Table* table, int row, int col, PyObject** item) {
     break;
   case Table::Time:
     if (table->text(row, col).isEmpty())
+    {
+      Py_INCREF(Py_None); // a new reference: the caller owns what it gets
       *item = Py_None;
+    }
     else {
       if (!PyDateTimeAPI)
         PyDateTime_IMPORT;
@@ -259,7 +268,10 @@ static int cellDataHelper(Table* table, int row, int col, PyObject** item) {
     break;
   case Table::Month:
     if (table->text(row, col).isEmpty())
+    {
+      Py_INCREF(Py_None); // a new reference: the caller owns what it gets
       *item = Py_None;
+    }
     else {
       QDate date = QDate::fromString(table->text(row, col), table->columnFormat(col));
       *item = PyLong_FromLong(date.month());
@@ -267,7 +279,10 @@ static int cellDataHelper(Table* table, int row, int col, PyObject** item) {
     break;
   case Table::Day:
     if (table->text(row, col).isEmpty())
+    {
+      Py_INCREF(Py_None); // a new reference: the caller owns what it gets
       *item = Py_None;
+    }
     else {
       QDate date = QDate::fromString(table->text(row, col), table->columnFormat(col));
       *item = PyLong_FromLong(date.dayOfWeek());
