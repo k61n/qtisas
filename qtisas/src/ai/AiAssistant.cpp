@@ -739,13 +739,40 @@ void AiAssistant::resetPendingRoundTrips()
 
 QString AiAssistant::failedRunObjectsNote() const
 {
-    if (m_failedRunObjects.isEmpty())
+    if (m_failedRunObjects.isEmpty() && m_closedFailedObjects.isEmpty())
         return {};
-    QStringList named;
+    QString closedNote;
+    if (!m_closedFailedObjects.isEmpty())
+    {
+        QStringList named;
+        for (const QString &object : m_closedFailedObjects)
+            named << object.section(':', 0, 0) + " \"" + object.section(':', 1) + "\"";
+        closedNote = "The failed attempt's " + named.join(", ") +
+                     " was closed — it no longer exists: create it again exactly as the request says. ";
+    }
+    // Confirmed live (LIST 5, item 1, NOSPLIT): "look each up and reuse it" for a table became `if t is None:` around
+    // its whole creation — the corrected formula inside it never ran. newTable() on the same name clears the table,
+    // so a table or matrix is simply created again; only what would be added twice is reused.
+    QStringList recreate;
+    QStringList reuse;
     for (const QString &object : m_failedRunObjects)
-        named << object.section(':', 0, 0) + " \"" + object.section(':', 1) + "\"";
-    return "The failed attempt(s) already created these, and they still exist: " + named.join(", ") +
-           ". Look each up by name and reuse it; create it only if it is missing. ";
+    {
+        const QString kind = object.section(':', 0, 0);
+        const QString named = kind + " \"" + object.section(':', 1) + "\"";
+        if (kind == "table" || kind == "matrix")
+            recreate << named;
+        else if (kind != "function") // a requested function is compiled again: see the sentence above
+            reuse << named;
+    }
+    QString note;
+    if (!recreate.isEmpty())
+        note += "The failed attempt(s) left " + recreate.join(", ") +
+                ": create and fill it again exactly as the request says, with no existence check around it — "
+                "the new...() call on its name clears it. ";
+    if (!reuse.isEmpty())
+        note += "The failed attempt(s) already created these, and they still exist: " + reuse.join(", ") +
+                ". Look each up by name and reuse it; do not add its tabs, layers or curves a second time. ";
+    return closedNote + note;
 }
 
 void AiAssistant::beginRequest(const QString &aiText, bool autoRunValue, bool wantsSplit)
@@ -769,7 +796,9 @@ void AiAssistant::beginRequest(const QString &aiText, bool autoRunValue, bool wa
     autoRun = autoRunValue;
     autoContinueCount = 0;
     m_failedRunObjects.clear();
+    m_closedFailedObjects.clear();
     m_failedRunScripts.clear();
+    m_objectsAtRequestStart = m_host ? m_host->liveObjects() : QStringList();
     consecutiveExploreCount = 0;
     lastExploreOutput.clear();
     lastExploreCode.clear();
@@ -818,6 +847,7 @@ void AiAssistant::beginRequest(const QString &aiText, bool autoRunValue, bool wa
     m_singlePartDescription.clear();
     m_resultLineTask.clear();
     m_rejectedSetCodes.clear();
+    m_lastFailedStatement.clear();
     if (autoRun)
     {
         QString factsSummary;
@@ -3064,6 +3094,7 @@ void AiAssistant::startSplitPart(int index)
     lastAvailableBlock.clear();
     lastRetryError.clear();
     isErrorRetryCorrection = false;
+    m_freshRetryUsed = false;
 
     const SplitPart &part = splitPlan[index];
     // "none"/ambiguous-"all" stay exactly as returned (never get the baseline topics prepended) —
@@ -3328,6 +3359,9 @@ void AiAssistant::startNextListItem()
     clearUserCorrections();
     m_itemOutput.clear();
     m_resultLineRetried = false;
+    m_lastBlockedScript.clear();
+    m_freshRetryUsed = false;
+    m_blockedRounds = 0;
     // The same transport suffix askAi() appends to a single request: an item is one, and in generate-only mode the
     // suffix is what says nothing in this session has run.
     beginRequest(item.text + (m_content ? m_content->requestSuffix(autoRun) : QString()), autoRun, wantsSplit);
@@ -3364,6 +3398,7 @@ bool AiAssistant::requestMissingResultLine()
     consecutiveExploreCount = 0;
     consecutiveDocRetryCount = 0;
     m_failedRunObjects.clear();
+    m_closedFailedObjects.clear();
     m_failedRunScripts.clear();
     resetErrorRetryState();
     const QString prompt =
@@ -3858,6 +3893,7 @@ bool AiAssistant::runExploreProbe(const QString &code, QString *output, QString 
         // here never moved on — confirmed live (LIST 5 with EXPLORE on), the list waited 40 minutes on item 3.
         consecutiveDocRetryCount = 0;
         m_failedRunObjects.clear();
+        m_closedFailedObjects.clear();
         m_failedRunScripts.clear();
         if (splitModeActive)
             advanceSplitPart(safeCode);
@@ -4931,6 +4967,26 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
                     break;
                 }
     if (compilable)
+        if (const QString moved = guardedCreationRepair(code, m_objectsAtRequestStart); !moved.isEmpty())
+        {
+            m_host->print("▸▸▸ AI: auto-corrected: only newTable()/newMatrix() stays inside \"if ... is None:\" — "
+                          "the set-up after it now runs on the table whether it was just created or existed.");
+            code = moved;
+        }
+    if (compilable && !m_lastFailedStatement.isEmpty())
+        if (const QString unguarded = skippedFailedStepRepair(code, m_lastFailedStatement, m_failedRunObjects);
+            !unguarded.isEmpty())
+        {
+            m_host->print("▸▸▸ AI: auto-corrected: the step that failed (" + m_lastFailedStatement.trimmed() +
+                          ") was inside an existence check that the failed attempt's own object makes skip — the "
+                          "check is removed, so the corrected step runs.");
+            code = unguarded;
+        }
+    if (compilable && !m_lastFailedStatement.isEmpty())
+        if (const QString skipped = skippedFailedStepMistake(code, m_lastFailedStatement, m_failedRunObjects);
+            !skipped.isEmpty())
+            knownMistakes << AiKnownMistakeMatch{"the failed step is skipped behind an existence check", skipped};
+    if (compilable)
         if (const QString recreated = existingTableRecreatedMistake(code); !recreated.isEmpty())
             knownMistakes << AiKnownMistakeMatch{"newTable() would wipe an existing table", recreated};
     if (compilable && !m_removedTrailingOutput.isEmpty())
@@ -4963,6 +5019,8 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
     // treats it as having run), and confirmed live (LIST 5, item 4) the retry, told "keep every other line", could not
     // see them and wrote a different script from scratch, dropping the result line.
     QString blockedScript;
+    bool blockedUnchanged = false;   // the script blocked just before, sent back as it was
+    bool failedRunUnchanged = false; // the script that failed just before, sent back as it was
     if (!fabricated.isEmpty())
     {
         m_host->print("▸▸▸ AI code (blocked — script invents further conversation turns):\n\n" + code);
@@ -5033,6 +5091,8 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
         }
         m_host->print("▸▸▸ AI code (blocked — " + headers.join("; ") + "):\n\n" + code);
         logCorrectionOutcome("blocked", headers.join("; "));
+        blockedUnchanged = code.trimmed() == m_lastBlockedScript.trimmed();
+        m_lastBlockedScript = code;
         // The reason, not only its header: confirmed live, a user saw "out of scope for this part" with no way to
         // tell which rule fired or why. The first sentence of each explanation is enough to recognize it.
         // The first sentence ends at the first ". " that is not a list marker: confirmed live, a cut at "1. " showed
@@ -5118,6 +5178,16 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
         consecutiveExploreCount = 0;
         lastExploreOutput.clear();
         lastExploreCode.clear();
+        m_lastBlockedScript.clear();
+        // What runs is what the conversation keeps. Every auto-repair above changes only `code`; the reply in m_history
+        // still held the draft before them, and a retry rebuilt from it brought the repaired lines back. Confirmed live
+        // (LIST 5 NOSPLIT local pyi, item 2): param[k] in setCode() was repaired, the script failed later for another
+        // reason, and every retry wrote param[k] again. The draft is replaced where the reply holds it — the whole
+        // reply, or the action half of an EXPLORE reply. Here, at the one place a script runs, so a repair added later
+        // is covered too.
+        if (code != rawCode && !m_history.isEmpty() && !rawCode.trimmed().isEmpty() &&
+            m_history.last().second.contains(rawCode.trimmed()))
+            m_history.last().second.replace(rawCode.trimmed(), code.trimmed());
         m_host->print("▸▸▸ AI code (running):\n\n" + code.trimmed() + "\n\n");
         // Runs via runScript() (AiScriptHost) — see AiScriptResult's doc comment. Display already
         // happened live during runScript() itself — do NOT print result.output here too, see
@@ -5138,6 +5208,7 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
             // success, not on every attempt like consecutiveExploreCount does.
             consecutiveDocRetryCount = 0;
             m_failedRunObjects.clear();
+            m_closedFailedObjects.clear();
             m_failedRunScripts.clear();
             if (splitModeActive)
                 advanceSplitPart(code);
@@ -5152,7 +5223,28 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
         for (const QString &object : m_host->liveObjects())
             if (!objectsBefore.contains(object) && !m_failedRunObjects.contains(object))
                 m_failedRunObjects << object;
+        // A clean slate for the retry: confirmed live three times (series 5–6, local and BlaBlaDor) — a retry found the
+        // failed attempt's note or graph by name (newNote()/graphWindow() reuse it) and added its tabs or curves a
+        // second time: 3 tabs, 5 tabs, 4 curves, each printed as a result. The windows that attempt created are closed;
+        // functions stay (a retry compiles them again).
+        if (const QStringList closed = m_host->closeObjects(m_failedRunObjects); !closed.isEmpty())
+        {
+            for (const QString &object : closed)
+            {
+                m_failedRunObjects.removeAll(object);
+                if (!m_closedFailedObjects.contains(object))
+                    m_closedFailedObjects << object;
+            }
+            m_host->print("▸▸▸ AI: closed what the failed attempt created (" + closed.join(", ") +
+                          ") — the retry starts from the state the first attempt saw.");
+        }
+        failedRunUnchanged = !m_failedRunScripts.isEmpty() && m_failedRunScripts.last().trimmed() == code.trimmed();
         m_failedRunScripts << code;
+        static const QRegularExpression failedLineRe(R"(at <ai>:\d+ — ([^\n]+))");
+        QString failedStatement;
+        for (auto it = failedLineRe.globalMatch(result.error + "\n" + result.output); it.hasNext();)
+            failedStatement = it.next().captured(1);
+        m_lastFailedStatement = failedStatement;
         // clang rejected the body — unless it stopped at an #include that names no file: then the header line is the
         // fault, not the body. Confirmed live (series 4, LIST 5 item 2): setHHeaders('#include "sasviewmodels/
         // gaussian.h"') on a plain formula; every retry's body was blocked as "already rejected", the model rewrote
@@ -5177,6 +5269,45 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
     // specific alternative (unlike the dataset-not-found case below), so the "Available X:" check
     // can't catch it — an exact repeat of the DIAGNOSIS is its own signal regardless of whether the
     // code attempts themselves differed.
+    // At most 2 x maxAutoContinue() blocked attempts — the same budget runtime errors have, doubled because a block
+    // costs no run.
+    if (!blockedScript.isEmpty() && ++m_blockedRounds > 2 * maxAutoContinue())
+    {
+        recordGiveUpInHistory(QString("stopping — %1 attempts blocked").arg(m_blockedRounds - 1), errContext);
+        QString msg = QString("▸▸▸ AI: stopping — %1 attempts in a row were blocked before running; the last reason:\n")
+                          .arg(m_blockedRounds - 1) +
+                      errContext;
+        msg += splitModeGiveUpNote();
+        m_host->print(msg);
+        lastRetryError.clear();
+        return;
+    }
+    // The same block for the same script: the retry prompt quotes the blocked script and the conversation holds it, and
+    // the model copied it. Once, it is asked from the request itself, without either; a second repeat stops below.
+    // The same for a script that failed at run time and came back unchanged with the same error: confirmed live (LIST
+    // 4 item 3, iteration 7), m.cell(4, 3) on a 3x4 matrix, "no row 4 ... takes the row first", the identical script.
+    if ((blockedUnchanged || failedRunUnchanged) && !m_freshRetryUsed &&
+        normalizeErrorForDedup(errContext) == normalizeErrorForDedup(lastRetryError))
+    {
+        m_freshRetryUsed = true;
+        m_host->print(QString("▸▸▸ AI: the %1 script came back unchanged — asking once more from the request "
+                              "itself, without the conversation.")
+                          .arg(failedRunUnchanged ? "failed" : "blocked"));
+        const QString freshPrompt =
+            (splitModeActive ? "Generate a script for ONLY this part: " + splitPlan[splitPartIndex].description + "\n\n"
+                             : QString()) +
+            "Request:\n" + mistakeCheckRequestText() +
+            (failedRunUnchanged
+                 ? "\n\nA script written for it failed twice, unchanged, with this error:\n```\n"
+                 : "\n\nA script written for it was rejected before running, twice, for this reason:\n```\n") +
+            errContext +
+            "\n```\nWrite the script anew from the request itself, so that it does everything the request asks for "
+            "and avoids that reason. " +
+            failedRunObjectsNote();
+        ask(freshPrompt + topicsHintLine(selectedDocTopics), true, QString(), selectedDocTopics, true, false, true,
+            freshPrompt);
+        return;
+    }
     if (normalizeErrorForDedup(errContext) == normalizeErrorForDedup(lastRetryError))
     {
         recordGiveUpInHistory("stopping — same diagnosis repeated, not corrected", errContext);
@@ -5251,7 +5382,6 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
                          "before inventing yet another new function name.\n\n";
     }
     const QString creationCallExamples = m_content ? m_content->creationCallExamples() : QString();
-    const QString lookupExample = m_content ? m_content->lookupByNameExamples().section(',', 0, 0) : QString();
     // Re-attaches the SAME doc topics already selected for this request (selectedDocTopics is set
     // once during doc selection and persists for the request's lifetime — see its declaration in
     // AiAssistant.h) rather than leaving this round doc-free. Confirmed live, repeatedly, in one
@@ -5307,10 +5437,18 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
         "script already executed some lines successfully before the error, send the WHOLE "
         "script again (every script is checked and run as a whole), but make it safe to run "
         "a second time — an earlier successful side-effecting call (" +
-        creationCallExamples + ", ...) already took effect live; check whether its target already exists (e.g. " +
-        lookupExample +
-        " is not None) and reuse it instead of creating it again or adding to it a second "
-        "time (tabs, rows, curves). " +
+        creationCallExamples +
+        ", ...) already took effect live. Never add to an object a second time: a note's tabs, a graph's layers or "
+        "curves — reuse such a note or graph by name. A table or matrix needs no existence check at all: newTable() / "
+        "newMatrix() on its name clears it, so create and fill it again exactly as before; if you keep such a "
+        "check, only the newTable()/newMatrix() call goes inside it, every other step on the table after it, "
+        "outside. But the step that FAILED "
+        "must run again: never put it, or its correction, into "
+        "a branch that is skipped because the object now exists — fix it on the existing object, outside such a "
+        "check, or create the object again. Not so for a function the request asks to COMPILE: define and compile it "
+        "again, "
+        "every time, never behind a check whether it already exists — a failed compile leaves its definition behind, "
+        "so such a check skips the compile and the next call fails with \"not found\". " +
         failedRunObjectsNote() +
         "IMPORTANT: change only what "
         "this error actually implicates — confirmed live, a retry that correctly fixed one line "
@@ -5636,6 +5774,9 @@ void AiAssistant::clearHistory()
 
 void AiAssistant::resetErrorRetryState()
 {
+    m_blockedRounds = 0;
+    m_lastBlockedScript.clear();
+    m_freshRetryUsed = false;
     lastAvailableBlock.clear();
     lastRetryError.clear();
     isErrorRetryCorrection = false;
@@ -6116,6 +6257,193 @@ QString AiAssistant::withoutTrailingAnnotationOutput(const QString &code)
     return removed > 0 && !lines.isEmpty() ? lines.join('\n') : QString();
 }
 
+namespace
+{
+// The `if X is None:` / `if not exist...("X"):` block that skips the failed statement — see
+// AiAssistant::skippedFailedStepMistake(). guardLine is -1 when there is none.
+struct SkippedFailedStep
+{
+    int guardLine = -1;
+    int blockEnd = 0; // the first line after the guarded block
+    QString guardText;
+    QString object;
+};
+
+SkippedFailedStep findSkippedFailedStep(const QString &code, const QString &failedStatement,
+                                        const QStringList &failedRunObjects)
+{
+    static const QRegularExpression callRe(R"((?:^|[=\s.])([A-Za-z_]\w*)\s*\()");
+    const QRegularExpressionMatch failedCall = callRe.match(failedStatement.trimmed());
+    if (!failedCall.hasMatch() || failedRunObjects.isEmpty())
+        return {};
+    const QRegularExpression callInLineRe(R"(\b)" + QRegularExpression::escape(failedCall.captured(1)) + R"(\s*\()");
+    // var = table("Calib") / matrix(...) / note(...) ...: the guarded variable's object name
+    static const QRegularExpression lookupRe(R"RX(^\s*(\w+)\s*=\s*\w+\s*\(\s*["']([^"']+)["']\s*\))RX",
+                                             QRegularExpression::MultilineOption);
+    QHash<QString, QString> objectOf;
+    for (auto it = lookupRe.globalMatch(code); it.hasNext();)
+    {
+        const QRegularExpressionMatch m = it.next();
+        objectOf[m.captured(1)] = m.captured(2);
+    }
+    static const QRegularExpression guardRe(
+        R"RX(^([ \t]*)if\s+(?:(\w+)\s+is\s+None|not\s+\w*[Ee]xist\w*\s*\(\s*["']([^"']+)["']\s*\))\s*:[ \t]*$)RX",
+        QRegularExpression::MultilineOption);
+    auto indentOf = [](const QString &line) {
+        qsizetype n = 0;
+        while (n < line.size() && (line.at(n) == ' ' || line.at(n) == '\t'))
+            ++n;
+        return n;
+    };
+    const QStringList lines = code.split('\n');
+    for (auto it = guardRe.globalMatch(code); it.hasNext();)
+    {
+        const QRegularExpressionMatch guard = it.next();
+        const QString object = guard.captured(2).isEmpty() ? guard.captured(3) : objectOf.value(guard.captured(2));
+        bool existed = false;
+        for (const QString &failed : failedRunObjects)
+            if (!object.isEmpty() && failed.endsWith(":" + object))
+                existed = true;
+        if (!existed)
+            continue;
+        const qsizetype indent = guard.captured(1).size();
+        const int guardLine = static_cast<int>(code.left(guard.capturedStart(0)).count('\n'));
+        bool containsFailed = false;
+        int i = guardLine + 1;
+        for (; i < lines.size(); ++i)
+        {
+            const QString &line = lines.at(i);
+            if (line.trimmed().isEmpty())
+                continue;
+            if (indentOf(line) <= indent) // the guarded block ends here
+                break;
+            if (callInLineRe.match(line).hasMatch())
+                containsFailed = true;
+        }
+        if (containsFailed)
+            return {guardLine, i, guard.captured(0).trimmed(), object};
+    }
+    return {};
+}
+} // namespace
+
+QString AiAssistant::guardedCreationRepair(const QString &code, const QStringList &objectsBefore)
+{
+    // Confirmed live (LIST 5, item 1, NOSPLIT): `t = table("Calib")` / `if t is None:` held the table's whole set-up,
+    // corrected formula included; the table existed from the failed attempt, so none of it ran. Only the creating
+    // call belongs behind such a check: the set-up after it runs on the table either way. Not for a table or matrix
+    // that existed before this request: there the set-up may be sample data meant only for a missing one.
+    static const QRegularExpression guardRe(R"(^([ \t]*)if\s+(\w+)\s+is\s+None\s*:[ \t]*$)");
+    static const QRegularExpression elseRe(R"(^\s*(?:else|elif)\b)");
+    auto indentOf = [](const QString &line) {
+        qsizetype n = 0;
+        while (n < line.size() && (line.at(n) == ' ' || line.at(n) == '\t'))
+            ++n;
+        return n;
+    };
+    static const QRegularExpression lookupRe(R"RX(^\s*(\w+)\s*=\s*(table|matrix)\s*\(\s*["']([^"']+)["']\s*\))RX",
+                                             QRegularExpression::MultilineOption);
+    QHash<QString, QString> objectOf;
+    for (auto it = lookupRe.globalMatch(code); it.hasNext();)
+    {
+        const QRegularExpressionMatch m = it.next();
+        objectOf[m.captured(1)] = m.captured(2) + ":" + m.captured(3);
+    }
+    QStringList lines = code.split('\n');
+    bool any = false;
+    for (int g = 0; g < lines.size(); ++g)
+    {
+        const QRegularExpressionMatch guard = guardRe.match(lines.at(g));
+        if (!guard.hasMatch() || objectsBefore.contains(objectOf.value(guard.captured(2))))
+            continue;
+        const qsizetype indent = guard.captured(1).size();
+        const QRegularExpression createRe(R"(^\s*)" + QRegularExpression::escape(guard.captured(2)) +
+                                          R"(\s*=\s*new(?:Table|Matrix)\s*\()");
+        int first = g + 1; // the block's first statement must be the creating call
+        while (first < lines.size() && lines.at(first).trimmed().isEmpty())
+            ++first;
+        if (first >= lines.size() || indentOf(lines.at(first)) <= indent || !createRe.match(lines.at(first)).hasMatch())
+            continue;
+        const qsizetype blockIndent = indentOf(lines.at(first));
+        int end = first + 1;
+        for (; end < lines.size(); ++end)
+            if (!lines.at(end).trimmed().isEmpty() && indentOf(lines.at(end)) <= indent)
+                break;
+        if (end < lines.size() && elseRe.match(lines.at(end)).hasMatch())
+            continue; // moving the set-up out would split the if from its else
+        int moved = 0;
+        for (int i = first + 1; i < end; ++i)
+            if (!lines.at(i).trimmed().isEmpty())
+            {
+                if (indentOf(lines.at(i)) < blockIndent) // a continuation line: leave the block alone
+                {
+                    moved = 0;
+                    break;
+                }
+                ++moved;
+            }
+        if (moved == 0)
+            continue;
+        for (int i = first + 1; i < end; ++i)
+            if (!lines.at(i).trimmed().isEmpty())
+                lines[i] = guard.captured(1) + lines.at(i).mid(blockIndent);
+        any = true;
+        g = first;
+    }
+    return any ? lines.join('\n') : QString();
+}
+
+QString AiAssistant::skippedFailedStepMistake(const QString &code, const QString &failedStatement,
+                                              const QStringList &failedRunObjects)
+{
+    // Confirmed live (LIST 5, item 1, NOSPLIT, local model): recalculate() failed on "^" in the column formula; the
+    // retry put the whole table creation, corrected formula included, behind `t = table("Calib")` / `if t is None:`.
+    // Calib existed from the failed attempt, so the block was skipped, the column stayed empty, and fit() failed twice.
+    const SkippedFailedStep step = findSkippedFailedStep(code, failedStatement, failedRunObjects);
+    if (step.guardLine < 0)
+        return {};
+    return "The step that failed (" + failedStatement.trimmed() + ") is now inside \"" + step.guardText +
+           "\" — but \"" + step.object +
+           "\" exists since the failed attempt, so this block is skipped and the corrected step never "
+           "runs. Run the corrected step outside the check, on the existing \"" +
+           step.object + "\" (or create it again: the new... call on its name clears it).";
+}
+
+QString AiAssistant::skippedFailedStepRepair(const QString &code, const QString &failedStatement,
+                                             const QStringList &failedRunObjects)
+{
+    // Confirmed live (LIST 5, item 1, NOSPLIT): told so twice, the local model only added the comment "Recalculate
+    // outside the existence check" and left the block as it was. The guard goes, its block runs every time: the
+    // object came from this request's own failed attempt, so creating it again is what the request asked for.
+    const SkippedFailedStep step = findSkippedFailedStep(code, failedStatement, failedRunObjects);
+    if (step.guardLine < 0)
+        return {};
+    QStringList lines = code.split('\n');
+    static const QRegularExpression elseRe(R"(^\s*(?:else|elif)\b)");
+    if (step.blockEnd < lines.size() && elseRe.match(lines.at(step.blockEnd)).hasMatch())
+        return {}; // an else branch would run too: left to the model
+    const QString guardIndent = lines.at(step.guardLine).left(lines.at(step.guardLine).indexOf("if"));
+    qsizetype blockIndent = -1;
+    for (int i = step.guardLine + 1; i < step.blockEnd; ++i)
+    {
+        const QString &line = lines.at(i);
+        if (line.trimmed().isEmpty())
+            continue;
+        qsizetype n = 0;
+        while (n < line.size() && (line.at(n) == ' ' || line.at(n) == '\t'))
+            ++n;
+        if (blockIndent < 0 || n < blockIndent)
+            blockIndent = n;
+    }
+    if (blockIndent <= guardIndent.size())
+        return {};
+    for (int i = step.guardLine + 1; i < step.blockEnd; ++i)
+        if (!lines.at(i).trimmed().isEmpty())
+            lines[i] = guardIndent + lines.at(i).mid(blockIndent);
+    lines.removeAt(step.guardLine);
+    return lines.join('\n');
+}
+
 QString AiAssistant::unprintedOutputLineMistake(const QString &code, const QString &removedText)
 {
     // "R5: beta 3" or "Number of tabs: 2": a short label, a colon, a value. The label counts as printed when any
@@ -6155,6 +6483,15 @@ QString AiAssistant::currentScopeDescription() const
     return m_singlePartDescription.isEmpty()
                ? withoutRequestSuffix(originalRequestText)
                : withoutRequestSuffix(originalRequestText) + "\n" + m_singlePartDescription;
+}
+
+// The request a candidate script is checked against: the item's, or — while its missing result line is asked for —
+// that print-only task. Confirmed live (LIST 5 local pyi, item 5): the item's first script made the note, ran its tab
+// and created "Auto"; the result-line follow-up only printed, and the creation check, reading the item's "Create a
+// note ...", blocked it twice as "creation never happened" until the item was given up.
+QString AiAssistant::mistakeCheckRequestText() const
+{
+    return m_resultLineTask.isEmpty() ? originalRequestText : m_resultLineTask;
 }
 
 QString AiAssistant::laterSplitPartDescriptions() const

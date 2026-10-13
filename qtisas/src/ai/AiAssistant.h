@@ -379,6 +379,19 @@ class AiAssistant : public QObject
     // The removed trailing text has a "label: values" line whose label no string in the script prints: the model
     // wrote its result line as text instead of printing it. Empty if not.
     static QString unprintedOutputLineMistake(const QString &code, const QString &removedText);
+    // `code` with the statements after `t = newTable(...)` (or newMatrix) moved out of its `if t is None:` block, so
+    // only the creation is conditional; empty when there is no such block (or an else branch follows it). A table in
+    // `objectsBefore` (AiScriptHost::liveObjects() when the request started) is left alone.
+    static QString guardedCreationRepair(const QString &code, const QStringList &objectsBefore);
+    // The statement that failed (`failedStatement`, from "at <ai>:N — ...") put by the retry inside an `if X is None:`
+    // (or `if not exist...("X"):`) block whose object `failedRunObjects` says exists since the failed attempt: the
+    // block is skipped, so the corrected step never runs. Empty when there is no such block.
+    static QString skippedFailedStepMistake(const QString &code, const QString &failedStatement,
+                                            const QStringList &failedRunObjects);
+    // `code` with that check removed and its block run every time, or empty when there is none (or an else branch
+    // follows it, which would then run as well).
+    static QString skippedFailedStepRepair(const QString &code, const QString &failedStatement,
+                                           const QStringList &failedRunObjects);
     // The script with that missing label put in front of its LAST line, when that line is a top-level print() or
     // scriptPrint() of the values; empty if it is not.
     static QString labeledLastPrintRepair(const QString &code, const QString &removedText);
@@ -394,6 +407,7 @@ class AiAssistant : public QObject
     // False means stop: no host, or the reply bundled an action script that has now already run.
     bool runExploreProbe(const QString &code, QString *output, QString *discardedDraft);
     void requestActionScriptAfterExplore(const QString &code, const QString &output, const QString &discardedDraft);
+    QString mistakeCheckRequestText() const;
 
     // Sets `compilable` (via AiScriptHost::canCompile()) and returns true if self-review was
     // just dispatched (caller should return immediately without doing anything else with
@@ -687,6 +701,10 @@ class AiAssistant : public QObject
     // Confirmed live: each retry of a note task ran addTab() again (2, 3, then 4 tabs). Cleared on success and for
     // every new request.
     QStringList m_failedRunObjects;
+    // Windows the failed attempt(s) created and QtiSAS closed before the retry (AiScriptHost::closeObjects()), so the
+    // retry starts from the state the first attempt saw; named in failedRunObjectsNote(). Cleared with
+    // m_failedRunObjects.
+    QStringList m_closedFailedObjects;
     // The scripts of this request that ran and failed — passed to the known-mistake checks with the earlier split
     // parts' scripts, so that a retry reusing what its own failed attempt compiled or created counts as this request's
     // own work. Confirmed live (LIST 5, item 1): the retry reopened "ai/Quad", compiled by its failed attempt a moment
@@ -695,6 +713,9 @@ class AiAssistant : public QObject
     // setCode() bodies (whitespace-simplified) this request had blocked or failed to compile, with the reason — a retry
     // sending one again is blocked. Cleared for every new request.
     QList<QPair<QString, QString>> m_rejectedSetCodes;
+    // The statement the last failed run of this request stopped at ("at <ai>:N — <statement>"), for
+    // skippedFailedStepMistake(); cleared for every new request.
+    QString m_lastFailedStatement;
     // The retry prompts' sentence naming m_failedRunObjects; empty when there are none.
     QString failedRunObjectsNote() const;
     // Clears every "a network reply for THIS is still coming" flag at once. Must be called by any
@@ -875,6 +896,7 @@ class AiAssistant : public QObject
     // see startRequest()'s textForHistory comment for the two confirmed-live leaks that caused.
     QString pendingLiveFactsNote;
     QStringList m_existingInputTables; // see existingInputNamesNote()
+    QStringList m_objectsAtRequestStart; // AiScriptHost::liveObjects() when the request started
     // Set by maybeDispatchSelfReview() when it removed trailing output lines; the flag allows one retry per request
     // for an output line written as text instead of printed (see unprintedOutputLineMistake()).
     QString m_removedTrailingOutput;
@@ -1167,6 +1189,16 @@ class AiAssistant : public QObject
 
     AiScriptHost *m_host = nullptr;
     AiContentProvider *m_content = nullptr;
+    // The last script blocked, until a script runs: a retry that sends it back unchanged is anchored on its own
+    // answer. Confirmed live (LIST 5 NOSPLIT NOEXPLORE local pyi, item 6, 3 of 3 runs): the same print-only script,
+    // deleting nothing, came back for both retries and the item was given up.
+    QString m_lastBlockedScript;
+    // One retry per request or item is asked without the conversation, when a blocked script came back unchanged
+    // with the same block; set once used.
+    bool m_freshRetryUsed = false;
+    // Blocked attempts of this request or item: blocks do not count against maxAutoContinue(). Confirmed live (LIST 3
+    // item 9, 2026-10-11): 24 model calls, 22 min, one block after another.
+    int m_blockedRounds = 0;
     QNetworkAccessManager *m_nam;
     QString m_apiKey;
     QString m_baseUrl;
