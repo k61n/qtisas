@@ -541,6 +541,10 @@ class AiContentProvider
     // result line, the part that printed one was told to compute values only a later part had, and no line was left.
     virtual QString resultLineDuty(const QString &requestText) const = 0;
 
+    // The values the request's result line is asked for, one entry each, in order (a lower bound — see
+    // QtiSasAiContent::requestedResultValues()), or empty when it names no result line.
+    virtual QStringList resultLineValueList(const QString &requestText) const = 0;
+
     // Returns `code` with its fixed-text result lines (scriptPrint("R4: done")) turned into `pass` — with
     // `alsoComputed`, every one-line result-line print — or empty when it has none. Used for a split part before the
     // last one: that line is the last part's job, and blocking it there cost the item (the model sent it back
@@ -548,9 +552,71 @@ class AiContentProvider
     virtual QString nonFinalResultLineRepair(const QString &code, const QString &requestText,
                                              bool alsoComputed) const = 0;
 
+    // Returns `code` with every top-level result-line print but the last turned into `pass`, or empty when it prints
+    // the result label at most once. For the last (or only) part: blocking it did not help, the model sent the same
+    // script back unchanged and the item was given up.
+    virtual QString repeatedResultLabelRepair(const QString &code, const QString &requestText) const = 0;
+
+    // Returns `code` with a print of the bare result label removed and the label put in front of the one later print
+    // that carries the requested values without it, or empty when the shape is not that unambiguous one.
+    virtual QString labelOnlyResultLineRepair(const QString &code, const QString &requestText) const = 0;
+
+    // Returns `code` with every string literal that is exactly the short part of a name the request quotes with its
+    // folder ("MyPeak" for "ai/MyPeak") replaced by that full name, or empty when there is none.
+    virtual QString bareFolderNameRepair(const QString &code, const QString &requestText) const = 0;
+
+    // Returns `code` with setCode(<variable>) replaced by setCode(<the string literal the variable was assigned once,
+    // above it>), so the body is checked and repaired like a literal one — or empty when there is no such call.
+    virtual QString setCodeVariableRepair(const QString &code) const = 0;
+
+    // Returns `code` with the two indices of every cell()/setCell() on a matrix it creates swapped, when some are out
+    // of the matrix's range and all fit swapped — the matrix read transposed — or empty.
+    virtual QString matrixTransposedCellRepair(const QString &code) const = 0;
+
+    // Returns `code` with every cell call of a table this script creates with literal sizes swapped to (col, row) when
+    // it can only have been meant that way (see matrixTransposedCellRepair()), or empty.
+    virtual QString tableTransposedCellRepair(const QString &code) const = 0;
+
+    // Returns `code` with ** made ^ in the formula of a column it recalculates with muParser forced, or empty.
+    virtual QString muParserPowerRepair(const QString &code) const = 0;
+
+    // Returns `code` with each bare delete(...) call made Compiler.delete(...) when the script defines no delete of its
+    // own — there is no global delete() — or empty.
+    virtual QString bareCompilerDeleteRepair(const QString &code) const = 0;
+
+    // Returns `code` with each <note>.tab(...)/.currentEditor()/.editorAt(...).setAutoexec(x) made
+    // <note>.setAutoexec(x) — setAutoexec() exists only on the Note — or empty when there is none.
+    virtual QString noteAutoexecReceiverRepair(const QString &code) const = 0;
+
+    // Returns `code` with the calls whose fix has one form only repaired (a bare functionExists(), setCellData(col,
+    // <list>), Note.setTabText()/setTabScript(), one addTab() too many after newNote(), int() around an existence value
+    // in the result line, a result line printed before its last value), one note per repair kind in `notes`; or empty.
+    // `resultLine`: the script prints the item's result line (the last or only part) — the result-line repairs run.
+    // The doc topic for objects of `kind` as AiScriptHost::liveObjects() names them ("note", "graph", ...); empty when
+    // there is none.
+    virtual QString docTopicForKind(const QString &kind) const = 0;
+
+    virtual QString apiCallRepairs(const QString &code, const QString &requestText, bool resultLine,
+                                   QStringList *notes) const = 0;
+
+    // Returns `code` with ^ in its table column formulas (setCommand()) replaced by ** when `formulaLanguage` (the
+    // host's, AiScriptHost::formulaLanguage()) is Python, where ^ is XOR — or empty when there is none, the language is
+    // another or unknown, or the script forces muParser.
+    virtual QString tableFormulaCaretRepair(const QString &code, const QString &formulaLanguage) const = 0;
+
+    // Returns `code` with a setGroup() after the setFunctionName() of each new() ... compile()/save() that sets none —
+    // the last setGroup(...) written before that new() (new() clears the group), or "ai" for an "ai/" name — or empty.
+    // save()/compile() refuse an empty group.
+    virtual QString compilerMissingGroupRepair(const QString &code) const = 0;
+
     // Returns `code` with note.tab(0) corrected to tab(1) (tab() is 1-based: tab(0) is always None), or empty when it
     // has none. Repaired because the model did not act on the runtime error: the same line came back twice.
     virtual QString noteTabIndexRepair(const QString &code) const = 0;
+
+    // Returns `code` with a run of a note's editor (n.currentEditor().execute(), n.tab(...).execute()) removed from the
+    // script text a setText() writes into a tab, or empty when there is none: a tab's own script has no note variable
+    // and never runs its note — the main script runs the tab.
+    virtual QString noteTabSelfRunRepair(const QString &code) const = 0;
 
     // Non-empty when the script role-plays further turns ("USER:"/"ASSISTANT:" lines) with
     // invented prompts, scripts and tool output. Checked even for a script that failed to

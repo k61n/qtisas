@@ -16,6 +16,8 @@ Description: See QtiSasAiContent.h.
 #include <QRegularExpression>
 #include <QSet>
 
+#include <algorithm>
+
 // Graph/curve styling — GraphWindow vs Graph methods, colour handling, axis titles, layer setup.
 static QString graphChecklistRules()
 {
@@ -1083,8 +1085,9 @@ QString QtiSasAiContent::liveEntityFactsNote(const QList<QPair<QString, QStringL
                 "turns out to be absent and then do the requested work — never invent substitute data, a "
                 "stand-in table, or extra objects the request never asked for.";
     if (anyExisting)
-        note += "\n\nFor any name that exists above: use that object rather than creating another, and do "
-                "not write a script to look it up again. If its kind is not the kind this request needs — "
+        note += "\n\nFor any name that exists above: use that object rather than creating another — when the "
+                "request deletes, changes or reads it, your script still makes that call — and do not write a "
+                "separate script to look it up again. If its kind is not the kind this request needs — "
                 "an existing fit function where the request wants a graph of that name, say — that is a "
                 "name collision, not the object you want: say so plainly, and do not overwrite it.";
     return note;
@@ -1100,12 +1103,18 @@ QString QtiSasAiContent::exploreModeReminder() const
     // an unrelated name anyway — twice, even when the printed list was complete). A bare label has
     // nothing for the next line of code to be held to; stating the use at least makes the model
     // commit to something concrete before it sees the answer.
+    // No worked example: every one was copied as the probe itself. Confirmed live three times — "need an existing group
+    // name to reuse in setGroup()" opened nearly every compile item (LIST 5 local pyi, 2026-10-10); "the column names
+    // of the table the request names" became "the column names of the table \"Peak5\"" for the table the item creates;
+    // "... of the existing table the request only reads, to pick its Y and error columns" was 19 of 36 probes word for
+    // word (2026-10-11). A created object is ruled out in words instead.
     return "If you need to check real state (an existing table/graph/3D-plot/compiled function's "
            "actual name, its current parameters, or simply whether something already exists) "
            "before writing the real script, return a READ-ONLY script whose EXACT first line is "
-           "\"# EXPLORE: <what you need to know, and what you'll do with the answer>\" (e.g. "
-           "\"# EXPLORE: need an existing group name to reuse in setGroup(), instead of inventing "
-           "one\") — state the actual use, not just a label for what's being checked. QtiSAS runs "
+           "\"# EXPLORE: <what you need to know, and what you'll do with the answer>\" — state the actual use, not "
+           "just "
+           "a label for what's being checked. An object this request itself creates has nothing to explore: it does "
+           "not exist until your script makes it. QtiSAS runs "
            "it, captures every scriptPrint()/print() call's output, and sends it back to you as "
            "context — then return the real action script (no EXPLORE marker) using what you just "
            "confirmed, rather than guessing or repeating a value you assumed before seeing this. An "
@@ -1719,6 +1728,19 @@ QString QtiSasAiContent::splitPartScopeViolation(const QString &code, const QStr
             if (!graph3DNames.contains(name))
                 graph3DNames << name;
         }
+        // Where this script itself first creates a Graph3D of that name: a 2D lookup BEFORE it is about the window that
+        // is there now — a 2D graph of the same name, closed so the 3D one can take the name. Confirmed live (Codex
+        // BIGMODEL, "Plot it as a 3D surface instead"): `if existGraph("MetricsGraph"): closeWindow(graphWindow(...))`
+        // then newPlot3D("MetricsGraph", ...) was blocked four times — MetricsGraph was a 2D graph — and the item was
+        // lost.
+        QHash<QString, qsizetype> ownNewPlot3DAt;
+        for (auto it = newPlot3DNameRe.globalMatch(code); it.hasNext();)
+        {
+            const QRegularExpressionMatch m = it.next();
+            if (!ownNewPlot3DAt.contains(m.captured(1)))
+                ownNewPlot3DAt.insert(m.captured(1), m.capturedStart());
+        }
+        const bool namedEarlier = earlierPartsCode.contains("newPlot3D") || earlierPartsCode.contains("setWindowName");
 
         if (!graph3DNames.isEmpty())
         {
@@ -1732,6 +1754,9 @@ QString QtiSasAiContent::splitPartScopeViolation(const QString &code, const QStr
                 const QRegularExpressionMatch lookup = gwIt.next();
                 const QString call = lookup.captured(1);
                 const QString name = lookup.captured(2);
+                if (!namedEarlier && ownNewPlot3DAt.contains(name) &&
+                    lookup.capturedStart() < ownNewPlot3DAt.value(name))
+                    continue;
                 if (graph3DNames.contains(name))
                     violations << "This part calls " + call + "(\"" + name + "\"), but \"" + name +
                                       "\" is a Graph3D window (named via setWindowName() after plot3D(...), "
@@ -1997,6 +2022,22 @@ QString QtiSasAiContent::fabricatedConversationMistake(const QString &code)
            "the actual output.";
 }
 
+QString QtiSasAiContent::codeWithLiteralsBlanked(const QString &code)
+{
+    // Same literals as codeWithoutStringLiterals(), each replaced by spaces of its own length: offsets stay valid.
+    static const QRegularExpression literalRe(
+        R"RX("""[\s\S]*?"""|'''[\s\S]*?'''|"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*')RX");
+    QString out = code;
+    for (auto it = literalRe.globalMatch(code); it.hasNext();)
+    {
+        const QRegularExpressionMatch m = it.next();
+        for (qsizetype i = m.capturedStart(); i < m.capturedEnd(); ++i)
+            if (out.at(i) != QLatin1Char('\n'))
+                out[i] = QLatin1Char(' ');
+    }
+    return out;
+}
+
 QString QtiSasAiContent::codeWithoutStringLiterals(const QString &code)
 {
     // Triple-quoted first, so a setCode("""...""") body is removed whole rather than leaving its
@@ -2187,6 +2228,19 @@ QString QtiSasAiContent::compilerSelfShadowRepair(const QString &code) const
     return repaired == code ? QString() : repaired;
 }
 
+// The yName of the function `code` defines: its setYName() literal, or "f" when it starts a new function with c.new()
+// and never sets one (after new() the variables are x = "x" and y = "f", compile-python-api.md RULE 7). Empty when
+// unknown — after c.load()/open() of an existing function. Confirmed live (LIST 5 NOSPLIT, item 1): no setYName(),
+// "I = a*x*x + b*x + c;", clang's "undeclared identifier 'I'" cost a round the repair could have saved.
+static QString scriptYName(const QString &code)
+{
+    static const QRegularExpression yNameRe(R"(setYName\s*\(\s*["']([^"']+)["'])");
+    if (const QRegularExpressionMatch m = yNameRe.match(code); m.hasMatch())
+        return m.captured(1);
+    static const QRegularExpression newFunctionRe(R"(\.new\s*\(\s*\))");
+    return newFunctionRe.match(code).hasMatch() ? QStringLiteral("f") : QString();
+}
+
 QString QtiSasAiContent::compilerYNameAssignmentRepair(const QString &code) const
 {
     // EVERY setCode() in the script, not just the first: confirmed live, a part compiling two
@@ -2200,17 +2254,17 @@ QString QtiSasAiContent::compilerYNameAssignmentRepair(const QString &code) cons
     if (codeCalls.isEmpty())
         return {};
 
-    // Only when this script states the yName itself — after c.load()/open() it is unknown here.
-    static const QRegularExpression yNameRe(R"(setYName\s*\(\s*["']([^"']+)["'])");
-    const QRegularExpressionMatch yMatch = yNameRe.match(code);
-    if (!yMatch.hasMatch())
+    // Only when this script states the yName itself, or starts a new function — after c.load()/open() it is unknown.
+    const QString yName = scriptYName(code);
+    if (yName.isEmpty())
         return {};
-    const QString yName = yMatch.captured(1);
     // Names the generated function already provides: assigning one of them is not a misnamed result.
     QStringList reservedNames;
     static const QRegularExpression xNameRe(R"(setXName\s*\(\s*["']([^"']+)["'])");
     if (const QRegularExpressionMatch xMatch = xNameRe.match(code); xMatch.hasMatch())
         reservedNames << xMatch.captured(1);
+    else
+        reservedNames << QStringLiteral("x");
     static const QRegularExpression paramNamesRe(R"(setParamNamesAll\s*\(\s*\[([^\]]*)\])");
     static const QRegularExpression quotedRe(R"(["']([^"']+)["'])");
     for (auto it = paramNamesRe.globalMatch(code); it.hasNext();)
@@ -2286,6 +2340,16 @@ QString QtiSasAiContent::repairedSetCodeBody(const QString &body, const QString 
 // already assigns yName, or when which name holds the result is a guess. Confirmed live (LIST 5, items 1 and 2,
 // local model): setYName("y") with "I = a*x*x + b*x + c;" (I is the default yName) was blocked as "never assigns
 // y" and cost a full round each time.
+// `body` with the line breaks a one-line Python string writes as "\n" / "\t" made real, for word-boundary matching:
+// in "x;\nI = ..." the "n" before "I" is a word character, so \bI did not match.
+static QString withWrittenBreaks(const QString &body)
+{
+    QString text = body;
+    text.replace(QLatin1String("\\n"), QLatin1String("\n"));
+    text.replace(QLatin1String("\\t"), QLatin1String("\t"));
+    return text;
+}
+
 QString QtiSasAiContent::renamedResultAssignment(const QString &body, const QString &yName,
                                                  const QStringList &reservedNames)
 {
@@ -2293,7 +2357,10 @@ QString QtiSasAiContent::renamedResultAssignment(const QString &body, const QStr
     if (yAssignRe.match(body).hasMatch())
         return {};
     // Statement-start assignments only: "double t = ..." starts with its type, "for (i = 0; ..." with "(".
-    static const QRegularExpression assignRe(R"((?:^|[;{}\n])\s*([A-Za-z_]\w*)\s*=(?!=))");
+    // A body written in a one-line Python string carries its line breaks as the two characters "\n" (or "\t"):
+    // confirmed live, "double x2 = x * x;\nI = a*x2 + b*x + c;" was never repaired because "I" did not start a
+    // statement.
+    static const QRegularExpression assignRe(R"((?:^|[;{}\n]|\\[nt])\s*([A-Za-z_]\w*)\s*=(?!=))");
     static const QRegularExpression declRe(
         R"(\b(?:double|float|int|long|short|unsigned|signed|char|bool|auto)\s+([A-Za-z_]\w*))");
     QStringList declared;
@@ -2313,7 +2380,7 @@ QString QtiSasAiContent::renamedResultAssignment(const QString &body, const QStr
     const QString name = candidates.first().captured(1);
     const QRegularExpression usesRe(R"(\b)" + QRegularExpression::escape(name) + R"(\b)");
     int uses = 0;
-    for (auto it = usesRe.globalMatch(body); it.hasNext(); it.next())
+    for (auto it = usesRe.globalMatch(withWrittenBreaks(body)); it.hasNext(); it.next())
         ++uses;
     if (uses != 1)
         return {};
@@ -2389,28 +2456,33 @@ QString QtiSasAiContent::compilerYNameNeverAssignedMistake(const QString &code)
     if (bodies.isEmpty())
         return {};
 
-    // Only when this script states the yName itself — after c.load()/open() of an existing
+    // Only when this script states the yName itself or starts a new function — after c.load()/open() of an existing
     // function the real yName is unknown here, so staying silent beats a false block.
-    static const QRegularExpression yNameRe(R"(setYName\s*\(\s*["']([^"']+)["'])");
-    const QRegularExpressionMatch yMatch = yNameRe.match(code);
-    if (!yMatch.hasMatch())
+    const QString yName = scriptYName(code);
+    if (yName.isEmpty())
         return {};
-    const QString yName = yMatch.captured(1);
 
     // Each body separately: one function assigning yName must not excuse another that doesn't.
     // Confirmed live, a part compiling two functions had only its first body checked.
     const QRegularExpression assignRe(R"(\b)" + QRegularExpression::escape(yName) + R"(\s*(?:[+\-*/]?)=(?!=))");
     bool allAssign = true;
     for (const QString &b : bodies)
-        if (!assignRe.match(b).hasMatch())
+        if (!assignRe.match(withWrittenBreaks(b)).hasMatch())
             allAssign = false;
     if (allAssign)
         return {};
 
-    return "The setCode() body never assigns to \"" + yName +
-           "\", the dependent variable set by "
-           "setYName(\"" +
-           yName + "\"). The generated function ends with \"return " + yName +
+    // Without a setYName() call "f" is the c.new() default — the message must not claim a call that is not there.
+    // Confirmed live: "set by setYName(\"f\")" for a script with no setYName() at all, whose body assigned "I".
+    static const QRegularExpression setYNameRe(R"(\bsetYName\s*\()");
+    const QString origin =
+        setYNameRe.match(code).hasMatch()
+            ? "set by setYName(\"" + yName + "\")"
+            : "\"" + yName +
+                  "\" after c.new(), since no setYName() sets another — or call "
+                  "c.setYName(...) first to use your own name (\"y\" for a request written as y = ...)";
+    return "The setCode() body never assigns to \"" + yName + "\", the dependent variable " + origin +
+           ". The generated function ends with \"return " + yName +
            ";\", so as written it returns an UNINITIALIZED value on every evaluation — and this "
            "compiles cleanly, with no error to warn you. Assign the result to \"" +
            yName + "\" itself: write \"" + yName + " = ...;\". Do NOT declare it (no \"double " + yName +
@@ -3261,6 +3333,34 @@ QString QtiSasAiContent::reuseInsteadOfCompileMistake(const QString &code, const
            "vary-flags are five SEPARATE bulk-setter calls, each taking a same-length list.";
 }
 
+QString QtiSasAiContent::columnFormulaInLoopMistake(const QString &code)
+{
+    // Confirmed live (LIST 5, item 1, NOSPLIT, local model): setCommand(2, f"3*{x}^2 - 2*{x} + 1") once per row in a
+    // for loop. Each call replaced the column's formula, the last one (x = 2.0) gave every row y = 9, and the fit to
+    // that constant column "succeeded" with a = b = 0, c = 9 — a clean run with a wrong answer.
+    static const QRegularExpression loopRe(R"(^([ \t]*)(?:for|while)\b.*:\s*(?:#.*)?$)");
+    static const QRegularExpression setCommandRe(R"(^([ \t]*)\S.*\.setCommand\s*\()");
+    QList<qsizetype> loopIndents;
+    for (const QString &line : code.split('\n'))
+    {
+        if (line.trimmed().isEmpty() || line.trimmed().startsWith('#'))
+            continue;
+        qsizetype indent = 0;
+        while (indent < line.size() && (line.at(indent) == ' ' || line.at(indent) == '\t'))
+            ++indent;
+        while (!loopIndents.isEmpty() && indent <= loopIndents.last())
+            loopIndents.removeLast();
+        if (!loopIndents.isEmpty() && setCommandRe.match(line).hasMatch())
+            return "setCommand() is called inside a loop. It sets the formula of the WHOLE column, which "
+                   "recalculate() then evaluates for every row, so each call replaces the one before and only the "
+                   "last stays. Call it ONCE, outside any loop, with a formula that refers to other columns by name, "
+                   "e.g. t.setCommand(2, \"3*col(\\\"x\\\")**2 + 1\"), then t.recalculate(2).";
+        if (const QRegularExpressionMatch loop = loopRe.match(line); loop.hasMatch())
+            loopIndents << indent;
+    }
+    return {};
+}
+
 QString QtiSasAiContent::guardedCompileMistake(const QString &code, const QString &originalRequestText)
 {
     // Confirmed live (LIST 5, item 1, local model, twice): after a failed compile the retry wrapped the compile in
@@ -3419,6 +3519,24 @@ QString QtiSasAiContent::requestedCreationNeverHappenedMistake(const QString &co
                "inspects/opens existing objects instead, with nothing that actually creates \"" +
                m.captured(1) + "\". Add the actual " + kind.creationCall + "(\"" + m.captured(1) +
                "\", ...) call, then perform the rest of the request against it.";
+    }
+    // A 3D window the request names ("Plot it as a 3D surface in a window named \"Saddle3D\""): confirmed live (LIST 5
+    // local pyi, item 4, all 6 runs of a series with EXPLORE on), the script filled the matrix and only looked the
+    // window up with plot3D("Saddle3D") — the item printed False for its own window. plot3D("name") with a string is a
+    // lookup; creating is newPlot3D(), plot3D() of a matrix or formula, or setWindowName().
+    static const QRegularExpression window3DRe(
+        R"RX(\b3D\b[^."]{0,60}?\b(?:window|plot|surface)\b[^."]{0,30}?\b(?:named|called)\s+"([^"]+)")RX",
+        QRegularExpression::CaseInsensitiveOption);
+    if (const QRegularExpressionMatch w = window3DRe.match(originalRequestText);
+        w.hasMatch() && !laterPartsDescriptions.contains(w.captured(1), Qt::CaseInsensitive))
+    {
+        static const QRegularExpression create3DRe(
+            R"RX(\bnewPlot3D\s*\(|\bplot3D\s*\(\s*[^"'\s)]|\bsetWindowName\s*\()RX");
+        if (!create3DRe.match(code).hasMatch() && !create3DRe.match(earlierPartsCode).hasMatch())
+            return "The request asks for a 3D plot in a window named \"" + w.captured(1) +
+                   "\", but this script never creates one — plot3D(\"" + w.captured(1) +
+                   "\") with a name only looks an existing window up. Create it, e.g. newPlot3D(\"" + w.captured(1) +
+                   "\", matrix, style), then do the rest of the request.";
     }
     return {};
 }
@@ -4167,6 +4285,11 @@ QString QtiSasAiContent::resultLabel(const QString &requestText) const
 
 QString QtiSasAiContent::resultLineDuty(const QString &requestText) const
 {
+    return resultLineDutyOf(requestText);
+}
+
+QString QtiSasAiContent::resultLineDutyOf(const QString &requestText)
+{
     // From the last "Print" sentence before the label sentence through the label sentence: 'Print the value at the
     // centre ..., and whether a 3D window "Saddle3D" exists. The result label is "R4:".'
     const QString label = requestedResultLabel(requestText);
@@ -4185,6 +4308,59 @@ QString QtiSasAiContent::resultLineDuty(const QString &requestText) const
     if (printStart < 0)
         return {};
     return requestText.mid(printStart, labelMatch.capturedEnd() - printStart).simplified();
+}
+
+QStringList QtiSasAiContent::requestedResultValues(const QString &requestText)
+{
+    // The values the result line is asked for, one entry each, from the Print sentence of resultLineDutyOf(): "Print a,
+    // b and c with 4 decimals, and the number of rows where y is greater than 5." gives four. A sentence lists its
+    // values separated by commas, "and" and "then"; text in parentheses explains a value ("(row 11, column 11)", "(a
+    // list, [] if none)"), "each with 4 decimals" formats them all, and "row 3, column 4" is one cell. Only a lower
+    // bound: "the three texts" counts as one, so a check may only ever ask for more values, never fewer.
+    QString sentence = resultLineDutyOf(requestText);
+    if (sentence.isEmpty())
+        return {};
+    static const QRegularExpression printRe(R"(^Print\s+)", QRegularExpression::CaseInsensitiveOption);
+    sentence.remove(printRe);
+    // up to the end of the Print sentence: a period followed by a space and a capital letter, outside quotes
+    static const QRegularExpression endRe(R"RX(\.\s+(?=[A-Z])|\.$)RX");
+    QString cut;
+    bool inQuote = false;
+    for (qsizetype i = 0; i < sentence.size(); ++i)
+    {
+        const QChar ch = sentence.at(i);
+        if (ch == QLatin1Char('"'))
+            inQuote = !inQuote;
+        if (!inQuote && ch == QLatin1Char('.') && endRe.match(sentence.mid(i, 3)).capturedStart() == 0)
+            break;
+        cut += ch;
+    }
+    static const QRegularExpression parenRe(R"(\([^()]*\))");
+    cut.replace(parenRe, QStringLiteral(" "));
+    static const QRegularExpression splitRe(R"(\s*,\s*(?:and\s+|then\s+)?|\s+and\s+|\s+then\s+)");
+    static const QRegularExpression eachRe(R"(^each\b)", QRegularExpression::CaseInsensitiveOption);
+    // an order for the values, no value of its own: "whether each still exists afterwards, table first" (LIST 4, item
+    // 6) became the values "whether each still exists afterwards" and "table first"
+    static const QRegularExpression orderRe(R"(^(?:the\s+)?\S+\s+first$|^(?:in\s+)?(?:that|this|the\s+same)\s+order$)",
+                                            QRegularExpression::CaseInsensitiveOption);
+    static const QRegularExpression coordinateRe(R"(^(?:row|column|col)\s+\d)",
+                                                 QRegularExpression::CaseInsensitiveOption);
+    static const QRegularExpression hasCoordinateRe(R"(\b(?:row|column|col)\s+\d)",
+                                                    QRegularExpression::CaseInsensitiveOption);
+    QStringList parts;
+    for (QString part : cut.split(splitRe))
+    {
+        part = part.simplified();
+        if (part.isEmpty() || eachRe.match(part).hasMatch() || orderRe.match(part).hasMatch())
+            continue;
+        if (!parts.isEmpty() && coordinateRe.match(part).hasMatch() && hasCoordinateRe.match(parts.last()).hasMatch())
+        {
+            parts.last() += ", " + part;
+            continue;
+        }
+        parts << part;
+    }
+    return parts;
 }
 
 QString QtiSasAiContent::earlierPartVariableMistake(const QString &code, const QString &earlierPartsCode)
@@ -4207,9 +4383,9 @@ QString QtiSasAiContent::earlierPartVariableMistake(const QString &code, const Q
         if (!usedRe.match(ownCode).hasMatch())
             continue;
         // bound in this script: assigned, a loop/with/except target, imported as, a def/lambda parameter, global
-        const QRegularExpression boundRe(R"((?<![.\w]))" + n + R"(\s*(?:,[^=\n]*)?=(?!=)|\bfor\s+[^\n]*\b)" + n +
-                                         R"(\b[^\n]*\bin\b|\bas\s+)" + n + R"(\b|\b(?:def|lambda|global)\b[^\n]*\b)" +
-                                         n + R"(\b)");
+        const QRegularExpression boundRe(
+            R"((?<![.\w]))" + n + R"(\s*(?:,[^=\n]*)?=(?!=)|\bfor\s+(?:(?!\bin\b)[^\n])*\b)" + n +
+            R"(\b(?:(?!\bin\b)[^\n])*\bin\b|\bas\s+)" + n + R"(\b|\b(?:def|lambda|global)\b[^\n]*\b)" + n + R"(\b)");
         if (boundRe.match(ownCode).hasMatch())
             continue;
         const QString rhs = earlier.captured(2).trimmed();
@@ -4374,41 +4550,296 @@ QString QtiSasAiContent::otherTabRunMistake(const QString &code, const QString &
     return {};
 }
 
-QString QtiSasAiContent::rootFolderDeletionMistake(const QString &code)
+QString QtiSasAiContent::noteAutoexecReceiverRepair(const QString &code) const
 {
-    // Confirmed live (LIST 5, item 6, twice): "close and delete the table and the note" got deleteFolder(rootFolder())
-    // after closeWindow(). QtiSAS refuses it (deleting the project folder crashed it once), so it does nothing — but
-    // the model believes it is how a window gets deleted.
-    static const QRegularExpression rootRe(
-        R"(\bdeleteFolder\s*\(\s*(?:\w+\s*\.\s*)?(?:rootFolder|projectFolder)\s*\()");
-    if (!rootRe.match(code).hasMatch())
+    // Confirmed live (series 4, LIST 3 item 10, local, NOSPLIT): n.tab(1).setAutoexec(False) and n.tab(2).setAutoexec(
+    // False) — setAutoexecOnScriptEditMistake() blocked it, the model moved ONE call to n and kept the other, the same
+    // block came back and the item was given up. setAutoexec() exists only on the Note, so the fix has one form: the
+    // editor in between goes. Code only, not a tab's script text.
+    static const QRegularExpression wrongObjectRe(
+        R"re(\b[A-Za-z_]\w*(?:\s*\([^()\n]*\))?(\s*\.\s*(?:currentEditor\s*\(\s*\))re"
+        R"re(|tab\s*\([^()\n]*\)|editorAt\s*\([^()\n]*\)))\s*\.\s*setAutoexec\s*\()re");
+    const QString masked = codeWithLiteralsBlanked(code);
+    QList<QPair<qsizetype, qsizetype>> spans; // [start, end) of each ".tab(...)" between the note and setAutoexec
+    for (auto it = wrongObjectRe.globalMatch(masked); it.hasNext();)
+    {
+        const QRegularExpressionMatch m = it.next();
+        spans << qMakePair(m.capturedStart(1), m.capturedEnd(1));
+    }
+    if (spans.isEmpty())
         return {};
-    return "deleteFolder(rootFolder()) never deletes anything: the project folder holds the whole project and QtiSAS "
-           "refuses to delete it (it returns False). closeWindow(w) already removes window w from the project — for "
-           "\"close and delete\" that is all it takes. Remove the deleteFolder(...) call.";
+    QString repaired = code;
+    for (int i = static_cast<int>(spans.size()) - 1; i >= 0; --i)
+        repaired.remove(spans[i].first, spans[i].second - spans[i].first);
+    return repaired;
+}
+
+QString QtiSasAiContent::bareCompilerDeleteRepair(const QString &code) const
+{
+    // Confirmed live (split-mode LIST 5, item 6, two runs in a row): delete("ai/Quad") — NameError, the error itself
+    // naming Compiler.delete(...), the same line sent back until the item was given up. There is no global delete():
+    // a call of that name, in a script that defines none, can only be Compiler's. Code only, not a tab's script text.
+    static const QRegularExpression callRe(R"((?<![.\w])delete\s*\()");
+    static const QRegularExpression definedRe(
+        R"(\bdef\s+delete\b|(?<![.\w])delete\s*=(?!=)|\bimport\b[^\n]*\bdelete\b)");
+    // A mask of the same length (every string literal's characters blanked): codeWithoutStringLiterals() shortens the
+    // text, and its offsets applied to `code` put "Compiler." inside other words — confirmed live, "deCompiler.lete(".
+    const QString stripped = codeWithLiteralsBlanked(code);
+    if (!callRe.match(stripped).hasMatch() || definedRe.match(stripped).hasMatch())
+        return {};
+    // Replace only the calls outside string literals: walk the code with the masked text.
+    QString repaired;
+    qsizetype last = 0;
+    for (auto it = callRe.globalMatch(stripped); it.hasNext();)
+    {
+        const QRegularExpressionMatch m = it.next();
+        repaired += code.mid(last, m.capturedStart() - last) + "Compiler.";
+        last = m.capturedStart();
+    }
+    return repaired + code.mid(last);
+}
+
+QString QtiSasAiContent::recalculateExceptionNameMistake(const QString &code)
+{
+    // Confirmed live (LIST 3 item 3, every configuration, 2026-10-11): "the name of the Python error the formula
+    // caused" printed as type(e).__name__ of the exception recalculate() raised — always ValueError, because
+    // recalculate() wraps the formula's error; table-python-api says the formula's own error is the message's second
+    // line, and the model read past it every time.
+    static const QRegularExpression recalcRe(R"(\.\s*recalculate\s*\()");
+    static const QRegularExpression nameRe(
+        R"(\btype\s*\(\s*(\w+)\s*\)\s*\.\s*__name__|\b(\w+)\s*\.\s*__class__\s*\.\s*__name__)");
+    const QString stripped = codeWithoutStringLiterals(code);
+    if (!recalcRe.match(stripped).hasMatch())
+        return {};
+    const QRegularExpressionMatch m = nameRe.match(stripped);
+    if (!m.hasMatch())
+        return {};
+    const QString e = m.captured(1).isEmpty() ? m.captured(2) : m.captured(1);
+    // A script that reads the message's lines already takes the formula's error; type().__name__ is then only its
+    // fallback. Confirmed live (series 5, LIST 3 item 3): error_lines = str(e).splitlines(), type(e).__name__ only
+    // when there is no second line — blocked twice anyway and the item given up.
+    const QRegularExpression linesRe(R"(\bstr\s*\(\s*)" + QRegularExpression::escape(e) +
+                                     R"(\s*\)\s*\.\s*(?:splitlines|split)\s*\()");
+    if (linesRe.match(stripped).hasMatch())
+        return {};
+    return m.captured(0) +
+           " of the exception recalculate() raised is always ValueError: recalculate() wraps the "
+           "formula's own error. That error is the message's second line, and its name is str(" +
+           e + ").splitlines()[1].split(\":\")[0] (e.g. ZeroDivisionError) — use that for the formula's error.";
+}
+
+QString QtiSasAiContent::bareObjectMethodMistake(const QString &code)
+{
+    // Confirmed live (LIST 3 item 3, 2026-10-12, all four local runs): t.setCommand(4, ...) then a BARE recalculate(4)
+    // inside try/except — the NameError was caught and printed as the formula's error, no cell computed. These are
+    // Table/Matrix methods with no global of the same name; a script that defines one itself is left alone.
+    static const QRegularExpression callRe(
+        R"((?<![.\w])(recalculate|setCommand|setCell|setColNames|setColumnRole|setColTextFormat)"
+        R"(|setReadOnlyColumn|colNames|numRows|numCols|setFormula|calculate)\s*\()");
+    const QString stripped = codeWithLiteralsBlanked(code);
+    for (auto it = callRe.globalMatch(stripped); it.hasNext();)
+    {
+        const QRegularExpressionMatch m = it.next();
+        const QString name = m.captured(1);
+        const QRegularExpression definedRe(R"(\bdef\s+)" + name + R"(\b|(?<![.\w]))" + name +
+                                           R"(\s*=(?!=)|\bimport\b[^\n]*\b)" + name + R"(\b)");
+        if (definedRe.match(stripped).hasMatch())
+            continue;
+        return name + "() is called without its table/matrix — there is no global " + name +
+               "(): it raises NameError (and an except around it hides that). Call it on the object: t." + name +
+               "(...), e.g. t.recalculate(4).";
+    }
+    return {};
+}
+
+QString QtiSasAiContent::existenceReadBeforeCreationMistake(const QString &code)
+{
+    // Confirmed live twice (LIST 5 item 4, 2026-10-11, NOSPLIT; ai-python-api says it): g3_exists =
+    // existPlot3D("Saddle3D") — or g3 = plot3D("Saddle3D") — read BEFORE newPlot3D("Saddle3D", ...), then printed:
+    // "False" for a window the script did create. A value of name N read before the call that creates N, and printed
+    // after it.
+    static const QRegularExpression readRe(
+        R"RX(^[ \t]*(\w+)\s*=\s*(?:not\s+)?(?:exist(?:Table|Matrix|Note|Graph|Plot3D)RX"
+        R"RX(|Window)|table|matrix|note|graphWindow|plot3D)\s*\(\s*["']([^"'\n]+)["']\s*\))RX",
+        QRegularExpression::MultilineOption);
+    for (auto it = readRe.globalMatch(code); it.hasNext();)
+    {
+        const QRegularExpressionMatch read = it.next();
+        const QString var = QRegularExpression::escape(read.captured(1));
+        const QString name = QRegularExpression::escape(read.captured(2));
+        // The creating call, or the deleting one: closeWindow() of the name's object or of the variable itself.
+        // Confirmed live (series 4, LIST 5 item 6, NOSPLIT): t = table("Peak5"); closeWindow(t); ... then
+        // scriptPrint("R6:", ..., t is not None) — "True" for a table the script had just deleted.
+        const QRegularExpression createRe(R"RX(\bnew(?:Table|Matrix|Note|Graph|Plot3D)\s*\(\s*["'])RX" + name +
+                                          R"RX(["']|\bcloseWindow\s*\(\s*(?:\w+\s*\(\s*["'])RX" + name +
+                                          R"RX(["']\s*\)|)RX" + var + R"RX()\s*\))RX");
+        const QRegularExpressionMatch create = createRe.match(code, read.capturedEnd());
+        if (!create.hasMatch())
+            continue;
+        const bool deleted = create.captured(0).startsWith("closeWindow");
+        // assigned again after the read (t = newTable(...) in an "if t is None:" guard): read again, fine
+        const QRegularExpression reassignRe("(?<![.\\w])" + var + R"(\s*=(?!=))");
+        if (reassignRe.match(code, read.capturedEnd()).hasMatch())
+            continue;
+        const QRegularExpression printedRe(R"RX(\b(?:scriptPrint|print)\s*\([^\n]*(?<![.\w]))RX" + var +
+                                           R"RX((?!\w))RX");
+        if (!printedRe.match(code, create.capturedEnd()).hasMatch())
+            continue;
+        if (deleted)
+            return read.captured(1) + " is read before " + create.captured(0) + " deletes \"" + read.captured(2) +
+                   "\", and then printed — so it reports the state BEFORE the deletion (a variable keeps its old "
+                   "object). Read every printed value after the work: call the existence check (e.g. existTable(\"" +
+                   read.captured(2) + "\")) after closeWindow(), in the result line.";
+        return read.captured(1) + " is read before " + create.captured(0) + "...) creates \"" + read.captured(2) +
+               "\", and then printed — so it reports the state BEFORE the creation. Read every printed value after the "
+               "work: call the existence check (e.g. existPlot3D(\"" +
+               read.captured(2) + "\")) after the creating call, in the result line.";
+    }
+    return {};
+}
+
+QString QtiSasAiContent::unusedParameterMistake(const QString &code) const
+{
+    // Confirmed live twice (local, series 6 and 7): a formula copied without one of its terms — "y = A / (1 +
+    // arg*arg);" for y = A/(1 + (x/w)^2) + c — compiled and fitted to wrong values with no error. A parameter the
+    // script declares with setParamNamesAll() that its setCode() body never uses is that slip, or a dead parameter.
+    static const QRegularExpression namesRe(R"RX(setParamNamesAll\s*\(\s*\[([^\]]*)\])RX");
+    static const QRegularExpression quotedRe(R"RX(["']([A-Za-z_]\w*)["'])RX");
+    const QRegularExpressionMatch names = namesRe.match(code);
+    const QStringList bodies = compiledCodeBodies(code);
+    if (!names.hasMatch() || bodies.size() != 1)
+        return {};
+    QStringList unused;
+    for (auto it = quotedRe.globalMatch(names.captured(1)); it.hasNext();)
+    {
+        const QString name = it.next().captured(1);
+        if (!QRegularExpression("\\b" + QRegularExpression::escape(name) + "\\b").match(bodies.first()).hasMatch())
+            unused << name;
+    }
+    if (unused.isEmpty())
+        return {};
+    return "The parameter(s) " + unused.join(", ") +
+           " are declared with setParamNamesAll() but never used in the setCode() body — the compiled function does "
+           "not depend on them, so their fit values mean nothing. Write the formula exactly as the request gives it, "
+           "every term included (e.g. \"... + " +
+           unused.first() + "\").";
+}
+
+QString QtiSasAiContent::resultsAfterConfigureMistake(const QString &code)
+{
+    // Confirmed live twice (local, LIST 5 item 2: series 4 NOSPLIT, and series 5 NOSPLIT with fittable-python-api
+    // saying it): both models fitted, then for the winner f.configure("ai/Lor5", ...) AGAIN and f.results() — the
+    // function's start values, printed as "fitted" (1.0000 1.0000, then 0.0 0.0). A results() read whose nearest
+    // preceding configure()/fit()/simulate() call is configure() reads no fit.
+    static const QRegularExpression callRe(R"(\.\s*(configure|fit|simulate|results)\s*\()");
+    const QString stripped = codeWithLiteralsBlanked(code);
+    QString last;
+    bool fitted = false;
+    for (auto it = callRe.globalMatch(stripped); it.hasNext();)
+    {
+        const QString call = it.next().captured(1);
+        if (call != "results")
+        {
+            fitted = fitted || call != "configure";
+            last = call;
+            continue;
+        }
+        if (last == "configure" && fitted)
+            return "This script reads f.results() right after configure() — configure() resets every parameter to "
+                   "the function's initial values, so results() returns the START values, not the fit's. Read each "
+                   "model's results() right after its own fit(): chi_a = f.fit(); A_a, _ = f.results()[\"A\"]; then "
+                   "configure and fit the next model, and compare the values you kept.";
+    }
+    return {};
+}
+
+QString QtiSasAiContent::requestDataNumberMistake(const QString &code, const QString &originalRequestText)
+{
+    // Confirmed live (LIST 3 item 8, 2026-10-11, NOSPLIT and in split plans): "y = 3*exp(-0.5*x) + 0.2" written as
+    // "+ 0.02" — the fit then found c = 0.02. Every decimal number of a data formula the request gives ("y = ...", up
+    // to its comma) must appear in a script that creates the data. Decimals only: an integer like 2 is everywhere.
+    static const QRegularExpression newDataRe(R"(\bnew(?:Table|Matrix)\s*\()");
+    if (!newDataRe.match(code).hasMatch())
+        return {};
+    static const QRegularExpression formulaRe(R"(\by\s*=\s*([^,;\n]+))");
+    static const QRegularExpression decimalRe(R"((?<![\d.])(\d*\.\d+)(?![\d.]))");
+    for (auto it = formulaRe.globalMatch(originalRequestText); it.hasNext();)
+    {
+        const QString formula = it.next().captured(1);
+        if (!formula.contains(QLatin1Char('x')))
+            continue;
+        for (auto d = decimalRe.globalMatch(formula); d.hasNext();)
+        {
+            const QString number = d.next().captured(1);
+            const QRegularExpression inCodeRe("(?<![\\d.])" + QRegularExpression::escape(number) + R"((?![\d]))");
+            if (inCodeRe.match(code).hasMatch())
+                continue;
+            return "The request's data formula \"y = " + formula.trimmed() + "\" contains " + number +
+                   ", but this script never uses " + number + " — copy the formula's numbers exactly.";
+        }
+    }
+    return {};
 }
 
 QString QtiSasAiContent::scriptPrintKeywordMistake(const QString &code)
 {
     // Confirmed live (LIST 5, item 5): scriptPrint("R5:", n.tabs(), ok, end=" ") then scriptPrint(s) — TypeError, and
     // the two-piece line could never have been ONE result line anyway.
-    static const QRegularExpression keywordRe(R"(\bscriptPrint\s*\([^()\n]*(?:\([^()\n]*\)[^()\n]*)*\b(end|sep)\s*=)");
-    const QRegularExpressionMatch m = keywordRe.match(code);
-    if (!m.hasMatch())
+    // sep= is supported (qtisasrc.py: scriptPrint(*args, sep=" ")), end= is not: one call is always one whole line.
+    static const QRegularExpression keywordRe(R"(\bscriptPrint\s*\([^()\n]*(?:\([^()\n]*\)[^()\n]*)*\bend\s*=)");
+    if (!keywordRe.match(code).hasMatch())
         return {};
-    return "scriptPrint() takes no " + m.captured(1) +
-           "= argument (TypeError): it prints its arguments separated by spaces and always ends the line. Compute "
-           "every value first, then print the whole line in ONE call: scriptPrint(\"label\", value1, value2, ...).";
+    return "scriptPrint() takes no end= argument (TypeError): one call always prints one whole line. Compute every "
+           "value first, then print the whole line in ONE call: scriptPrint(\"label\", value1, value2, ...).";
+}
+
+QString QtiSasAiContent::noteTabSelfRunRepair(const QString &code) const
+{
+    // Confirmed live (LIST 5 local pyi, item 5, runs 1 and 2 of iteration 2): the "make" tab's script text ended with
+    // "n.currentEditor().execute()" — inside a tab's own script there is no "n", and a tab never runs its note; the
+    // main script already ran it with n.tab("make").execute(). Blocked as "currentEditor() after addTab()", the model
+    // dropped the whole note and printed made-up values twice. The line is removed from the tab's text.
+    static const QRegularExpression setTextRe(
+        R"RX(\.\s*setText\s*\(\s*(?:"""([\s\S]*?)"""|'''([\s\S]*?)'''|"((?:[^"\\\n]|\\.)*)"|'((?:[^'\\\n]|\\.)*)'))RX");
+    // a run of a note's editor, as one line of the tab's text — written as "\n..." inside a one-line literal, or as a
+    // real line of a triple-quoted one
+    static const QRegularExpression selfRunRe(R"((?:\\n|\n)[ \t]*[A-Za-z_]\w*\s*\.\s*(?:currentEditor\s*\)"
+                                              R"((\s*\)|tab\s*\([^()\n]*\))\s*\.\s*execute\s*\(\s*\)[ \t]*)");
+    QList<QRegularExpressionMatch> texts;
+    for (auto it = setTextRe.globalMatch(code); it.hasNext();)
+        texts << it.next();
+    QString repaired = code;
+    bool anyRepair = false;
+    for (int i = static_cast<int>(texts.size()) - 1; i >= 0; --i)
+    {
+        int group = 0;
+        for (int g = 1; g <= 4 && group == 0; ++g)
+            if (!texts[i].captured(g).isEmpty())
+                group = g;
+        if (group == 0)
+            continue;
+        QString text = texts[i].captured(group);
+        const QString before = text;
+        text.remove(selfRunRe);
+        if (text == before)
+            continue;
+        repaired.replace(static_cast<int>(texts[i].capturedStart(group)),
+                         static_cast<int>(texts[i].capturedLength(group)), text);
+        anyRepair = true;
+    }
+    return anyRepair ? repaired : QString();
 }
 
 QString QtiSasAiContent::currentEditorAfterAddTabMistake(const QString &code)
 {
     // Confirmed live (LIST 5, item 5): "Run only the make tab" — the script renamed tab 0 to "make", called addTab()
     // (which activates the new tab), then n.currentEditor().execute(): it ran the empty-table "check" tab instead.
+    // Real calls only: text inside a string — a tab's script — is not this script's code (see noteTabSelfRunRepair()).
     static const QRegularExpression addTabRe(R"(\baddTab\s*\()");
     static const QRegularExpression runCurrentRe(R"(\bcurrentEditor\s*\(\s*\)\s*\.\s*execute\s*\()");
-    const QRegularExpressionMatch add = addTabRe.match(code);
-    if (!add.hasMatch() || !runCurrentRe.match(code, add.capturedEnd()).hasMatch())
+    const QString stripped = codeWithoutStringLiterals(code);
+    const QRegularExpressionMatch add = addTabRe.match(stripped);
+    if (!add.hasMatch() || !runCurrentRe.match(stripped, add.capturedEnd()).hasMatch())
         return {};
     return "This script calls addTab() and later currentEditor().execute(). addTab() makes the NEW tab the current "
            "one, so this runs the tab added last, not the one the request names. Run a tab by its name or 1-based "
@@ -4449,6 +4880,1109 @@ QString QtiSasAiContent::nonFinalResultLineRepair(const QString &code, const QSt
     return repaired == code ? QString() : repaired;
 }
 
+// The values a one-line result print carries after its label, as Python expressions — scriptPrint(f"R1: {a:.4f} {b}",
+// c) gives format(a, ".4f"), b, c — or false when the line is no such print: fixed text after the label ("R1: 5"), an
+// unbalanced bracket, a nested field.
+static bool resultLineValues(const QString &line, const QString &label, QStringList *values)
+{
+    static const QRegularExpression literalRe(R"RX(\(\s*(f?)("(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'))RX");
+    const QRegularExpressionMatch literal = literalRe.match(line);
+    if (!literal.hasMatch())
+        return false;
+    QString text = literal.captured(2).mid(1, literal.captured(2).size() - 2);
+    const qsizetype labelAt = text.indexOf(label);
+    if (labelAt < 0)
+        return false;
+    text = text.mid(labelAt + label.size());
+    if (literal.captured(1) == QLatin1String("f"))
+    {
+        static const QRegularExpression fieldRe(R"(\{([^{}]*)\})");
+        for (auto it = fieldRe.globalMatch(text); it.hasNext();)
+        {
+            QString field = it.next().captured(1).trimmed();
+            // a format spec after the last ':' outside quotes and brackets
+            int depth = 0;
+            QChar quote;
+            qsizetype specAt = -1;
+            for (qsizetype i = 0; i < field.size(); ++i)
+            {
+                const QChar ch = field.at(i);
+                if (!quote.isNull())
+                    quote = ch == quote ? QChar() : quote;
+                else if (ch == QLatin1Char('"') || ch == QLatin1Char('\''))
+                    quote = ch;
+                else if (ch == QLatin1Char('(') || ch == QLatin1Char('[') || ch == QLatin1Char('{'))
+                    ++depth;
+                else if (ch == QLatin1Char(')') || ch == QLatin1Char(']') || ch == QLatin1Char('}'))
+                    --depth;
+                else if (ch == QLatin1Char(':') && depth == 0)
+                    specAt = i;
+            }
+            if (field.isEmpty() || field.contains(QLatin1Char('!')))
+                return false;
+            *values << (specAt < 0 ? field
+                                   : "format(" + field.left(specAt).trimmed() + ", \"" + field.mid(specAt + 1) + "\")");
+        }
+        text.replace(fieldRe, QStringLiteral(" "));
+    }
+    if (!text.trimmed().isEmpty())
+        return false;
+    // the arguments after the literal, split at the commas outside brackets and quotes — only arguments: a literal
+    // continued by an operator ("R5: " + str(n)) is a line whose values cannot be read off
+    const QString rest = line.mid(literal.capturedEnd(0));
+    const QString restStart = rest.trimmed();
+    if (!restStart.startsWith(QLatin1Char(',')) && !restStart.startsWith(QLatin1Char(')')))
+        return false;
+    int depth = 0;
+    QChar quote;
+    QString argument;
+    bool closed = false;
+    for (const QChar ch : rest)
+    {
+        if (!quote.isNull())
+        {
+            quote = ch == quote ? QChar() : quote;
+            argument += ch;
+            continue;
+        }
+        if (ch == QLatin1Char('"') || ch == QLatin1Char('\''))
+            quote = ch;
+        else if (ch == QLatin1Char('(') || ch == QLatin1Char('[') || ch == QLatin1Char('{'))
+            ++depth;
+        else if (ch == QLatin1Char(')') || ch == QLatin1Char(']') || ch == QLatin1Char('}'))
+        {
+            if (depth == 0)
+            {
+                closed = true;
+                break;
+            }
+            --depth;
+        }
+        else if (ch == QLatin1Char(',') && depth == 0)
+        {
+            if (!argument.trimmed().isEmpty())
+                *values << argument.trimmed();
+            argument.clear();
+            continue;
+        }
+        argument += ch;
+    }
+    if (!closed)
+        return false;
+    if (!argument.trimmed().isEmpty())
+        *values << argument.trimmed();
+    // a keyword argument (sep=" ") is no value
+    static const QRegularExpression keywordRe(R"(^[A-Za-z_]\w*\s*=(?!=))");
+    values->erase(
+        std::remove_if(values->begin(), values->end(), [](const QString &v) { return keywordRe.match(v).hasMatch(); }),
+        values->end());
+    return true;
+}
+
+QString QtiSasAiContent::repeatedResultLabelRepair(const QString &code, const QString &requestText) const
+{
+    // Confirmed live (LIST 5 NOSPLIT, item 5): an early scriptPrint("R5:", n.tabs(), exists_auto) and the full result
+    // line at the end — blocked, the same script came back unchanged, the item was given up and item 6 failed with it.
+    // Two shapes are repaired, anything else is left to repeatedResultLabelMistake():
+    //   - the last line already carries every value of the earlier ones: they become `pass`;
+    //   - the lines carry different values, the answer split over several lines — confirmed live twice (local pyi
+    //     re-runs): "R1: a b c" then "R1: count", and "R6: {functions}" then "R6: peak pipeline"; keeping the last
+    //     one alone printed "R1: 5" and "R6: missing missing". They become one line at the last one's place, the
+    //     values in their order.
+    // Values overlapping in part (n.tabs() in both lines above, with different others) are a guess, as is a print over
+    // several lines or with fixed text after the label.
+    const QString label = requestedResultLabel(requestText);
+    if (label.isEmpty())
+        return {};
+    const QRegularExpression topLevelRe(R"(^(?:scriptPrint|print)\s*\(\s*f?["'])" + QRegularExpression::escape(label) +
+                                            R"([^\n]*$)",
+                                        QRegularExpression::MultilineOption);
+    QList<QRegularExpressionMatch> lines;
+    for (auto it = topLevelRe.globalMatch(code); it.hasNext();)
+        lines << it.next();
+    if (lines.size() < 2)
+        return {};
+    QList<QStringList> lineValues;
+    for (const QRegularExpressionMatch &line : lines)
+    {
+        QStringList values;
+        if (!resultLineValues(line.captured(0), label, &values) || values.isEmpty())
+            return {};
+        QStringList simplified;
+        for (const QString &value : values)
+            simplified << value.simplified();
+        lineValues << simplified;
+    }
+    const QStringList &last = lineValues.last();
+    bool lastHasAll = true;
+    for (int i = 0; i + 1 < static_cast<int>(lineValues.size()) && lastHasAll; ++i)
+        for (const QString &value : lineValues[i])
+            lastHasAll = lastHasAll && last.contains(value);
+    QStringList merged;
+    if (!lastHasAll)
+        for (const QStringList &values : lineValues)
+            for (const QString &value : values)
+            {
+                if (merged.contains(value))
+                    return {};
+                merged << value;
+            }
+    // When the request says how many values it asks for, that decides: confirmed live (local pyi, item 6), an early
+    // draft line and the real one carried different values and merged into four for a three-value item. The last line
+    // complete: the others go; the merged line exactly complete: it stands; neither: left to the check.
+    const int asked = static_cast<int>(requestedResultValues(requestText).size());
+    // requestedResultValues() is a lower bound: a last line with at least that many values is complete.
+    if (asked > 0)
+    {
+        if (static_cast<int>(last.size()) >= asked)
+            lastHasAll = true;
+        else if (lastHasAll || static_cast<int>(merged.size()) != asked)
+            return {};
+    }
+    QString repaired = code;
+    const QRegularExpressionMatch &lastLine = lines.last();
+    if (!lastHasAll)
+        repaired.replace(static_cast<int>(lastLine.capturedStart(0)), static_cast<int>(lastLine.capturedLength(0)),
+                         "scriptPrint(\"" + label + "\", " + merged.join(", ") + ")");
+    // Back to front, so a replacement cannot shift the offsets of the ones not yet applied.
+    for (int i = static_cast<int>(lines.size()) - 2; i >= 0; --i)
+        repaired.replace(static_cast<int>(lines[i].capturedStart(0)), static_cast<int>(lines[i].capturedLength(0)),
+                         QStringLiteral("pass"));
+    return repaired;
+}
+
+// The result-line print with the most readable values, at any indentation, and its values — a guarded line counts too
+// (confirmed live, LIST 5 local pyi, item 3: "if ...: ... else: scriptPrint(f\"R3: {r:.4f}\")" was not seen by a
+// top-level-only search). A fallback branch's fixed text cannot be read off and drops out. False when none can.
+static bool fullestResultLine(const QString &code, const QString &label, QString *line, QStringList *values)
+{
+    const QRegularExpression printRe(R"(^[ \t]*(?:scriptPrint|print)\s*\(\s*f?["'])" +
+                                         QRegularExpression::escape(label) + R"([^\n]*$)",
+                                     QRegularExpression::MultilineOption);
+    bool found = false;
+    for (auto it = printRe.globalMatch(code); it.hasNext();)
+    {
+        const QString candidate = it.next().captured(0).trimmed();
+        QStringList candidateValues;
+        if (!resultLineValues(candidate, label, &candidateValues) || candidateValues.isEmpty())
+            continue;
+        if (!found || candidateValues.size() > values->size())
+        {
+            *line = candidate;
+            *values = candidateValues;
+            found = true;
+        }
+    }
+    return found;
+}
+
+QString QtiSasAiContent::resultLineTooFewValuesMistake(const QString &code, const QString &originalRequestText)
+{
+    // Confirmed live, the most frequent local-pyi failure (LIST 5: R2 "2.0000 0.5000" without the function name, R3
+    // "0.0000" without the layer and curve counts, R5 "15.0" without the tab count and the existence): the result line
+    // carries fewer values than the request lists, the others printed on lines of their own or not at all. Fewer only —
+    // requestedResultValues() is a lower bound — and only for a line whose values can be read off.
+    const QString label = requestedResultLabel(originalRequestText);
+    const QStringList asked = requestedResultValues(originalRequestText);
+    if (label.isEmpty() || asked.isEmpty())
+        return {};
+    QString lastLine;
+    QStringList values;
+    if (!fullestResultLine(code, label, &lastLine, &values) || values.size() >= asked.size())
+        return {};
+    return QString("The result line %1 prints %2 value(s), but the request asks for %3, in this order: %4. Compute "
+                   "every one of them and print them all on that ONE line: scriptPrint(\"%5\", value1, value2, ...) — "
+                   "a value printed on another line does not count.")
+        .arg(lastLine.trimmed())
+        .arg(values.size())
+        .arg(asked.size())
+        .arg(asked.join(" | "))
+        .arg(label);
+}
+
+QString QtiSasAiContent::rowRangeEndsOneShortMistake(const QString &code)
+{
+    // Confirmed live (LIST 5 local pyi, item 1): "for i in range(1, 21): if t.cell(2, i) > 5" on a 21-row table counted
+    // 4 rows instead of 5 — rows are 1-based and range() excludes its end, so the last row was never read. Flagged when
+    // the end is the row count itself — t.numRows() (m.numRows() too), or the literal row count of a newTable() /
+    // newMatrix() of this script — and the loop body reads or writes cells by that index.
+    const QString stripped = codeWithoutStringLiterals(code);
+    static const QRegularExpression forRe(R"(^([ \t]*)for\s+([A-Za-z_]\w*)\s+in\s+range\s*\(\s*1\s*,\s*)"
+                                          R"(([A-Za-z_]\w*\s*\.\s*numRows\s*\(\s*\)|\d+)\s*\)\s*:)",
+                                          QRegularExpression::MultilineOption);
+    // the literal row counts survive codeWithoutStringLiterals(): only the name argument is a string
+    static const QRegularExpression newRe(R"(\bnew(?:Table|Matrix)\s*\([^,()]*,\s*(\d+))");
+    QSet<QString> rowCounts;
+    for (auto it = newRe.globalMatch(stripped); it.hasNext();)
+        rowCounts.insert(it.next().captured(1));
+    for (auto it = forRe.globalMatch(stripped); it.hasNext();)
+    {
+        const QRegularExpressionMatch loop = it.next();
+        const QString end = loop.captured(3).simplified();
+        if (!end.contains(QLatin1String("numRows")) && !rowCounts.contains(end))
+            continue;
+        // the loop body: the following non-empty lines indented deeper than the for line
+        const qsizetype indent = loop.captured(1).size();
+        QString body;
+        const QStringList after = stripped.mid(loop.capturedEnd(0)).split('\n');
+        for (int i = 1; i < after.size(); ++i)
+        {
+            const QString &line = after.at(i);
+            if (line.trimmed().isEmpty())
+                continue;
+            qsizetype lead = 0;
+            while (lead < line.size() && line.at(lead).isSpace())
+                ++lead;
+            if (lead <= indent)
+                break;
+            body += line + "\n";
+        }
+        const QRegularExpression cellRe(R"(\.\s*(?:cell|setCell|text|setText|cellData|setCellData)\s*\([^()\n]*\b)" +
+                                        QRegularExpression::escape(loop.captured(2)) + R"(\b)");
+        if (cellRe.match(body).hasMatch())
+            return "This script loops for " + loop.captured(2) + " in range(1, " + end +
+                   ") over cells, but rows are 1-based and range() excludes its end: the last row is never visited. "
+                   "Use range(1, " +
+                   end + " + 1).";
+    }
+    return {};
+}
+
+QString QtiSasAiContent::tableFormulaCaretRepair(const QString &code, const QString &formulaLanguage) const
+{
+    // Confirmed live (LIST 5 NOSPLIT, item 1): t.setCommand(2, "3*col(\"x\")^2 - 2*col(\"x\") + 1") — a column formula
+    // is evaluated in the global scripting language, here Python, where ^ is XOR: "unsupported operand type(s) for ^"
+    // and a retry. Only for Python, the language the host reports: in muParser — the global language there, or asked
+    // for with recalculate(..., forceMuParser=True) — ^ is the power.
+    // Confirmed live (series 5, Codex, LIST 3 item 2): "col(1)^3" recalculated with recalculate(3, 1, -1, True) —
+    // muParser forced by the positional argument, which the old keyword-only test missed — became "col(1)**3", failed
+    // in muParser three times and the item was given up. A column forced to muParser keeps its ^.
+    if (formulaLanguage.compare(QLatin1String("Python"), Qt::CaseInsensitive) != 0)
+        return {};
+    static const QRegularExpression forcedRe(
+        R"RX(\.\s*recalculate\s*\(\s*([^,()]+?)\s*,(?:[^,()]*,){2}\s*True\b)RX"
+        R"RX(|\.\s*recalculate\s*\(\s*([^,()]+?)\s*,[^()]*forceMuParser\s*=\s*True)RX");
+    QStringList forced;
+    for (auto it = forcedRe.globalMatch(code); it.hasNext();)
+    {
+        const QRegularExpressionMatch m = it.next();
+        forced << (m.captured(1).isEmpty() ? m.captured(2) : m.captured(1)).trimmed();
+    }
+    static const QRegularExpression setCommandRe(
+        R"RX(\bsetCommand\s*\(([^,()\n]+),\s*(?:"((?:[^"\\\n]|\\.)*)"|'((?:[^'\\\n]|\\.)*)'))RX");
+    QList<QRegularExpressionMatch> formulas;
+    for (auto it = setCommandRe.globalMatch(code); it.hasNext();)
+        formulas << it.next();
+    QString repaired = code;
+    bool anyRepair = false;
+    for (int i = static_cast<int>(formulas.size()) - 1; i >= 0; --i)
+    {
+        if (forced.contains(formulas[i].captured(1).trimmed()))
+            continue;
+        const int group = formulas[i].captured(2).isEmpty() ? 3 : 2;
+        QString formula = formulas[i].captured(group);
+        if (!formula.contains(QLatin1Char('^')))
+            continue;
+        formula.replace(QLatin1String("^"), QLatin1String("**"));
+        repaired.replace(static_cast<int>(formulas[i].capturedStart(group)),
+                         static_cast<int>(formulas[i].capturedLength(group)), formula);
+        anyRepair = true;
+    }
+    return anyRepair ? repaired : QString();
+}
+
+QString QtiSasAiContent::compilerMissingGroupRepair(const QString &code) const
+{
+    // new() clears the editor, group included, and save()/compile() refuse an empty group. Each new() ...
+    // compile()/save() stretch that sets no group gets one after its setFunctionName(): the last setGroup(...) written
+    // before that new() — the script's own choice, lost by the order — or, with none and an "ai/" name, "ai" (RULE 12's
+    // namespace). Both confirmed live (LIST 5 local pyi, items 1-2): no setGroup() at all, "group is empty" four times
+    // in 22 minutes; and c.setGroup(match ...) moved above c.new() in all three runs of a series, the item given up
+    // each time.
+    static const QRegularExpression newRe(R"(\b([A-Za-z_]\w*)\s*\.\s*new\s*\(\s*\))");
+    static const QRegularExpression groupRe(
+        R"(\b[A-Za-z_]\w*\s*\.\s*setGroup\s*\(([^()\n]*(?:\([^()\n]*\)[^()\n]*)*)\))");
+    static const QRegularExpression buildRe(R"(\.\s*(?:compile|save)\s*\()");
+    static const QRegularExpression nameRe(
+        R"RX(^([ \t]*)([A-Za-z_]\w*)\s*\.\s*setFunctionName\s*\(\s*["']([^"'\n]+)["']\s*\)[^\n]*$)RX",
+        QRegularExpression::MultilineOption);
+    QList<QRegularExpressionMatch> news;
+    for (auto it = newRe.globalMatch(code); it.hasNext();)
+        news << it.next();
+    QList<QPair<int, QString>> inserts; // position, text
+    for (int i = 0; i < static_cast<int>(news.size()); ++i)
+    {
+        const int start = static_cast<int>(news[i].capturedEnd(0));
+        const int nextNew =
+            i + 1 < news.size() ? static_cast<int>(news[i + 1].capturedStart(0)) : static_cast<int>(code.size());
+        const QRegularExpressionMatch build = buildRe.match(code, start);
+        if (!build.hasMatch() || build.capturedStart(0) > nextNew)
+            continue;
+        const int end = static_cast<int>(build.capturedStart(0));
+        if (groupRe.match(code.mid(start, end - start)).hasMatch())
+            continue;
+        const QRegularExpressionMatch name = nameRe.match(code, start);
+        if (!name.hasMatch() || name.capturedStart(0) > end)
+            continue;
+        QString group;
+        for (auto it = groupRe.globalMatch(code.left(static_cast<int>(news[i].capturedStart(0)))); it.hasNext();)
+            group = it.next().captured(1).trimmed();
+        if (group.isEmpty() && name.captured(3).startsWith(QLatin1String("ai/")))
+            group = QStringLiteral("\"ai\"");
+        if (group.isEmpty())
+            continue;
+        inserts << qMakePair(static_cast<int>(name.capturedEnd(0)),
+                             "\n" + name.captured(1) + name.captured(2) + ".setGroup(" + group + ")");
+    }
+    if (inserts.isEmpty())
+        return {};
+    QString repaired = code;
+    for (int i = static_cast<int>(inserts.size()) - 1; i >= 0; --i)
+        repaired.insert(inserts[i].first, inserts[i].second);
+    return repaired;
+}
+
+// A value of a result line that is fixed text: a plain string literal, or an f-string without a field. `text` gets
+// what it says.
+static bool fixedTextValue(const QString &value, QString *text)
+{
+    static const QRegularExpression literalRe(R"RX(^(f?)("((?:[^"\\]|\\.)*)"|'((?:[^'\\]|\\.)*)')$)RX");
+    const QRegularExpressionMatch m = literalRe.match(value.trimmed());
+    if (!m.hasMatch())
+        return false;
+    *text = m.captured(3).isNull() ? m.captured(4) : m.captured(3);
+    return m.captured(1).isEmpty() || !text->contains(QLatin1Char('{'));
+}
+
+QString QtiSasAiContent::docTopicForKind(const QString &kind) const
+{
+    // liveObjects()'s kinds (ApplicationWindow::liveObjects()) -> the python/doc file topics
+    static const QHash<QString, QString> topics{{"table", "table"}, {"matrix", "matrix"},   {"note", "note"},
+                                                {"graph", "graph"}, {"3D plot", "graph3d"}, {"function", "compile"}};
+    return topics.value(kind);
+}
+
+// The argument spans of the call whose "(" is at `open` in `masked` (code with its string literals blanked, same
+// length): top-level commas split, brackets and parentheses nest. False when the call is not closed.
+static bool callArgumentSpans(const QString &masked, qsizetype open, QList<QPair<qsizetype, qsizetype>> *args,
+                              qsizetype *close)
+{
+    int depth = 0;
+    qsizetype start = open + 1;
+    for (qsizetype i = open; i < masked.size(); ++i)
+    {
+        const QChar ch = masked.at(i);
+        if (ch == QLatin1Char('(') || ch == QLatin1Char('[') || ch == QLatin1Char('{'))
+            ++depth;
+        else if (ch == QLatin1Char(')') || ch == QLatin1Char(']') || ch == QLatin1Char('}'))
+        {
+            if (--depth == 0)
+            {
+                // a blanked literal is spaces in `masked`: an argument after a comma counts whatever it holds
+                if (!args->isEmpty() || !masked.mid(start, i - start).trimmed().isEmpty())
+                    *args << qMakePair(start, i);
+                *close = i;
+                return true;
+            }
+        }
+        else if (ch == QLatin1Char(',') && depth == 1)
+        {
+            *args << qMakePair(start, i);
+            start = i + 1;
+        }
+    }
+    return false;
+}
+
+QString QtiSasAiContent::apiCallRepairs(const QString &code, const QString &requestText, bool resultLine,
+                                        QStringList *notes) const
+{
+    // Calls whose fix has one form only, each confirmed live more than once (series 4–6). Applied back to front within
+    // each rule, on the code with its string literals blanked, so a tab's script text is never touched.
+    QString repaired = code;
+    auto note = [notes](const QString &text) {
+        if (notes)
+            *notes << text;
+    };
+
+    // 1. A plain functionExists(...) — a method of Compiler/Fittable (6/6 local LIST 3 runs, item 12: NameError).
+    {
+        const QString masked = codeWithLiteralsBlanked(repaired);
+        static const QRegularExpression bareRe(R"((?<![.\w])functionExists\s*\()");
+        static const QRegularExpression definedRe(R"(\bdef\s+functionExists\b|(?<![.\w])functionExists\s*=(?!=))");
+        if (!definedRe.match(masked).hasMatch())
+        {
+            QList<qsizetype> at;
+            for (auto it = bareRe.globalMatch(masked); it.hasNext();)
+                at.prepend(it.next().capturedStart());
+            for (const qsizetype pos : at)
+                repaired.insert(pos, QStringLiteral("Compiler."));
+            if (!at.isEmpty())
+                note("functionExists(...) became Compiler.functionExists(...) — it is a method, not a global.");
+        }
+    }
+
+    // 2. setCellData(col, <list>) with two arguments — setCellData() writes ONE cell; a column from a list is
+    //    setColData() (3 local runs: TypeError "argument 2 has unexpected type 'list'").
+    {
+        const QString masked = codeWithLiteralsBlanked(repaired);
+        static const QRegularExpression callRe(R"(\.\s*(setCellData)\s*\()");
+        QList<QPair<qsizetype, qsizetype>> names; // name spans to rename
+        for (auto it = callRe.globalMatch(masked); it.hasNext();)
+        {
+            const QRegularExpressionMatch m = it.next();
+            QList<QPair<qsizetype, qsizetype>> args;
+            qsizetype close = 0;
+            if (!callArgumentSpans(masked, m.capturedEnd() - 1, &args, &close) || args.size() != 2)
+                continue;
+            const QString second = repaired.mid(args[1].first, args[1].second - args[1].first).trimmed();
+            if (second.startsWith(QLatin1Char('[')) || second.startsWith(QLatin1String("list(")))
+                names.prepend(qMakePair(m.capturedStart(1), m.capturedEnd(1)));
+        }
+        for (const auto &span : names)
+            repaired.replace(static_cast<int>(span.first), static_cast<int>(span.second - span.first),
+                             QStringLiteral("setColData"));
+        if (!names.isEmpty())
+            note("setCellData(col, <list>) became setColData(col, <list>) — setCellData() writes one cell.");
+    }
+
+    // 3. n.setTabText(i, code) / n.setTabScript(x, code) — Note has neither (16 AttributeErrors in the logs); a tab's
+    //    script is its editor's text: n.editorAt(i).setText(code) (0-based, like the Qt index the model meant) /
+    //    n.tab(x).setText(code).
+    {
+        const QString masked = codeWithLiteralsBlanked(repaired);
+        static const QRegularExpression callRe(R"(\.\s*(setTabText|setTabScript)\s*\()");
+        struct Edit
+        {
+            qsizetype from, to;
+            QString text;
+        };
+        QList<Edit> edits;
+        for (auto it = callRe.globalMatch(masked); it.hasNext();)
+        {
+            const QRegularExpressionMatch m = it.next();
+            QList<QPair<qsizetype, qsizetype>> args;
+            qsizetype close = 0;
+            if (!callArgumentSpans(masked, m.capturedEnd() - 1, &args, &close) || args.size() != 2)
+                continue;
+            const QString index = repaired.mid(args[0].first, args[0].second - args[0].first).trimmed();
+            const QString text = repaired.mid(args[1].first, args[1].second - args[1].first).trimmed();
+            const QString editor = m.captured(1) == QLatin1String("setTabText") ? "editorAt(" : "tab(";
+            edits.prepend({m.capturedStart(1), close + 1, editor + index + ").setText(" + text + ")"});
+        }
+        for (const Edit &e : edits)
+            repaired.replace(static_cast<int>(e.from), static_cast<int>(e.to - e.from), e.text);
+        if (!edits.isEmpty())
+            note("n.setTabText()/setTabScript() became n.editorAt(i)/tab(x).setText(...) — a tab's script is its "
+                 "editor's text; Note has no setTabText().");
+    }
+
+    // 4. One addTab() too many after newNote() (3 local runs, LIST 4 item 1: blocked, sent back unchanged until the
+    //    item was given up): the request asks for N tabs, the script calls addTab() exactly N times, each as a line of
+    //    its own — the first goes, the new note's own tab is tab 1. Not when a numbered tab(k >= 2) / editorAt(k >= 1)
+    //    is used before the second addTab(): that tab would no longer exist there.
+    {
+        static const QRegularExpression requestTabsRe(R"(\b(two|three|four|five|2|3|4|5)\s+(?:\w+\s+)?tabs\b)",
+                                                      QRegularExpression::CaseInsensitiveOption);
+        static const QRegularExpression newNoteRe(R"(\bnewNote\s*\()");
+        static const QRegularExpression addTabLineRe(R"(^[ \t]*[A-Za-z_]\w*\s*\.\s*addTab\s*\(\s*\)[ \t]*\n?)",
+                                                     QRegularExpression::MultilineOption);
+        static const QRegularExpression anyAddTabRe(R"(\.\s*addTab\s*\()");
+        static const QRegularExpression numberedRe(R"(\.\s*(tab|editorAt)\s*\(\s*(\d+)\s*\))");
+        const QRegularExpressionMatch requested = requestTabsRe.match(requestText);
+        const QString masked = codeWithLiteralsBlanked(repaired);
+        const QRegularExpressionMatch created = newNoteRe.match(masked);
+        if (requested.hasMatch() && created.hasMatch())
+        {
+            static const QStringList words{"two", "three", "four", "five"};
+            const QString n = requested.captured(1).toLower();
+            const int tabs = words.contains(n) ? static_cast<int>(words.indexOf(n)) + 2 : n.toInt();
+            QList<QRegularExpressionMatch> lines;
+            for (auto it = addTabLineRe.globalMatch(masked, created.capturedEnd()); it.hasNext();)
+                lines << it.next();
+            int all = 0;
+            for (auto it = anyAddTabRe.globalMatch(masked, created.capturedEnd()); it.hasNext(); it.next())
+                ++all;
+            bool numberedBefore = false;
+            if (lines.size() == tabs && all == tabs)
+            {
+                const qsizetype end = lines.size() > 1 ? lines[1].capturedStart() : masked.size();
+                for (auto it = numberedRe.globalMatch(masked.left(end), lines[0].capturedEnd()); it.hasNext();)
+                {
+                    const QRegularExpressionMatch m = it.next();
+                    numberedBefore =
+                        numberedBefore || (m.captured(1) == QLatin1String("tab") ? m.captured(2).toInt() >= 2
+                                                                                 : m.captured(2).toInt() >= 1);
+                }
+                if (!numberedBefore)
+                {
+                    repaired.remove(static_cast<int>(lines[0].capturedStart()),
+                                    static_cast<int>(lines[0].capturedLength()));
+                    note(QString("the first addTab() removed — the request asks for %1 tabs and a new note already has "
+                                 "one.")
+                             .arg(tabs));
+                }
+            }
+        }
+    }
+
+    // 7. AlignPolicy is GraphWindow's enum, not Graph's (6 AttributeErrors in 3 logs, series 5–7; the docs list
+    //    Graph.Axis/Scale/Ticks/CurveType together, the model extends the pattern) — and setAlignPolicy() takes no int
+    //    (local series 7, LIST 5 item 3: the retry wrote setAlignPolicy(1) three times). 0 = AlignLayers, 1 =
+    //    AlignCanvases (qtimod.sip).
+    {
+        const QString masked = codeWithLiteralsBlanked(repaired);
+        static const QRegularExpression wrongEnumRe(R"((?<![.\w])Graph\s*\.\s*AlignPolicy\b)");
+        static const QRegularExpression intArgRe(R"(\.\s*setAlignPolicy\s*\(\s*([01])\s*\))");
+        QList<QPair<QRegularExpressionMatch, QString>> edits;
+        for (auto it = wrongEnumRe.globalMatch(masked); it.hasNext();)
+            edits.prepend(qMakePair(it.next(), QStringLiteral("GraphWindow.AlignPolicy")));
+        for (auto it = intArgRe.globalMatch(masked); it.hasNext();)
+        {
+            const QRegularExpressionMatch m = it.next();
+            edits.prepend(
+                qMakePair(m, QString(".setAlignPolicy(GraphWindow.AlignPolicy.%1)")
+                                 .arg(m.captured(1) == QLatin1String("1") ? "AlignCanvases" : "AlignLayers")));
+        }
+        std::sort(edits.begin(), edits.end(),
+                  [](const auto &a, const auto &b) { return a.first.capturedStart() > b.first.capturedStart(); });
+        for (const auto &e : edits)
+            repaired.replace(static_cast<int>(e.first.capturedStart()), static_cast<int>(e.first.capturedLength()),
+                             e.second);
+        if (!edits.isEmpty())
+            note("AlignPolicy written as GraphWindow.AlignPolicy.<value> — it is GraphWindow's enum, and "
+                 "setAlignPolicy() takes no int.");
+    }
+
+    // 8. setColTextFormat(c) before writing a NUMBER as text into a column this script filled with numbers (BlaBlaDor,
+    //    series 6 and 7, LIST 3 item 5: setColTextFormat(1) then setText(1, 2, "2,5") — the cell then held text and
+    //    cell() read 0.0; table-python-api says a number as text needs no text format). Only when every text written
+    //    into that column after it is number-like and the column got setCell() numbers before.
+    {
+        const QString masked = codeWithLiteralsBlanked(repaired);
+        static const QRegularExpression formatRe(
+            R"(^[ \t]*([A-Za-z_]\w*)\s*\.\s*setColTextFormat\s*\(\s*(\d+)\s*\)[ \t]*\n?)",
+            QRegularExpression::MultilineOption);
+        QList<QRegularExpressionMatch> drops;
+        for (auto it = formatRe.globalMatch(masked); it.hasNext();)
+        {
+            const QRegularExpressionMatch m = it.next();
+            const QString var = QRegularExpression::escape(m.captured(1));
+            const QString col = m.captured(2);
+            const QRegularExpression setCellRe("\\b" + var + R"(\s*\.\s*setCell\s*\(\s*)" + col + R"(\s*,)");
+            const QRegularExpression setTextRe("\\b" + var + R"(\s*\.\s*setText\s*\(\s*)" + col +
+                                               R"RX(\s*,[^,()]*,\s*(["'])(.*?)\1)RX");
+            if (!setCellRe.match(repaired.left(m.capturedStart())).hasMatch())
+                continue;
+            static const QRegularExpression numberRe(R"(^\s*[-+]?\d[\d.,]*\s*$)");
+            bool any = false;
+            bool allNumbers = true;
+            for (auto t = setTextRe.globalMatch(repaired, m.capturedEnd()); t.hasNext();)
+            {
+                any = true;
+                allNumbers = allNumbers && numberRe.match(t.next().captured(2)).hasMatch();
+            }
+            if (any && allNumbers)
+                drops.prepend(m);
+        }
+        for (const QRegularExpressionMatch &m : drops)
+            repaired.remove(static_cast<int>(m.capturedStart()), static_cast<int>(m.capturedLength()));
+        if (!drops.isEmpty())
+            note("setColTextFormat() removed — the column holds numbers, and a number written as text (\"2,5\") is "
+                 "stored as that number in a Numeric column.");
+    }
+
+    const QString label = resultLine ? requestedResultLabel(requestText) : QString();
+
+    // 5. int(<existence>) in the result line — a "whether" value is the boolean itself (BlaBlaDor, 2 runs: "0 0").
+    if (!label.isEmpty())
+    {
+        const QRegularExpression lineRe(R"(^[ \t]*(?:scriptPrint|print)\s*\(\s*f?["'])" +
+                                            QRegularExpression::escape(label) + R"([^\n]*$)",
+                                        QRegularExpression::MultilineOption);
+        static const QRegularExpression intRe(
+            R"(\bint\s*\(\s*((?:not\s+)?(?:exist\w*\s*\([^()\n]*\)|[A-Za-z_]\w*))\s*\))");
+        static const QRegularExpression existAssignRe(R"(^[ \t]*([A-Za-z_]\w*)\s*=\s*(?:not\s+)?exist\w*\s*\()",
+                                                      QRegularExpression::MultilineOption);
+        QStringList existVars;
+        for (auto it = existAssignRe.globalMatch(repaired); it.hasNext();)
+            existVars << it.next().captured(1);
+        bool changed = false;
+        QList<QRegularExpressionMatch> resultLines;
+        for (auto it = lineRe.globalMatch(repaired); it.hasNext();)
+            resultLines.prepend(it.next());
+        for (const QRegularExpressionMatch &l : resultLines)
+        {
+            QString line = l.captured(0);
+            QList<QRegularExpressionMatch> ints;
+            for (auto it = intRe.globalMatch(line); it.hasNext();)
+                ints.prepend(it.next());
+            for (const QRegularExpressionMatch &m : ints)
+            {
+                const QString inner = m.captured(1);
+                if (!inner.contains(QLatin1String("exist")) && !existVars.contains(inner))
+                    continue;
+                line.replace(static_cast<int>(m.capturedStart()), static_cast<int>(m.capturedLength()), inner);
+                changed = true;
+            }
+            repaired.replace(static_cast<int>(l.capturedStart()), static_cast<int>(l.capturedLength()), line);
+        }
+        if (changed)
+            note("int(...) removed around an existence value in the result line — a \"whether\" value is printed as "
+                 "True/False.");
+    }
+
+    // 6. The result line printed before the last value, that value printed unlabelled after it (local LIST 3 item 5,
+    //    series 4 and 6: "R5: 1234,5 0,25 -3" then "2.5"). Only when the labelled line is unindented and the only one,
+    //    the later prints are unindented, unlabelled and the script's last prints, and together they give at least as
+    //    many values as the request asks for while the labelled line alone gives fewer. The labelled line's values are
+    //    kept where they were computed (a later step may change what they read) and printed with the rest at the end.
+    if (!label.isEmpty())
+    {
+        // requestedResultValues() lists phrases: "the three texts read first" counts as three values
+        qsizetype asked = 0;
+        static const QRegularExpression countRe(R"(^(?:the\s+|its\s+)?(two|three|four|five|six|2|3|4|5|6)\s)",
+                                                QRegularExpression::CaseInsensitiveOption);
+        static const QStringList countWords{"two", "three", "four", "five", "six"};
+        for (const QString &phrase : requestedResultValues(requestText))
+        {
+            const QRegularExpressionMatch m = countRe.match(phrase.trimmed());
+            const QString n = m.captured(1).toLower();
+            asked += !m.hasMatch() ? 1 : (countWords.contains(n) ? countWords.indexOf(n) + 2 : n.toInt());
+        }
+        const QRegularExpression labelledRe(R"(^(?:scriptPrint|print)\s*\(\s*f?["'])" +
+                                                QRegularExpression::escape(label) + R"([^\n]*$)",
+                                            QRegularExpression::MultilineOption);
+        const QRegularExpression anyLabelRe(R"((?:scriptPrint|print)\s*\(\s*f?["']\s*)" +
+                                            QRegularExpression::escape(label));
+        static const QRegularExpression printRe(R"(^(scriptPrint|print)\s*\(([^\n]*)\)[ \t]*$)",
+                                                QRegularExpression::MultilineOption);
+        static const QRegularExpression anyPrintRe(R"(^[ \t]*(?:scriptPrint|print)\s*\()",
+                                                   QRegularExpression::MultilineOption);
+        QList<QRegularExpressionMatch> labelled;
+        for (auto it = labelledRe.globalMatch(repaired); it.hasNext();)
+            labelled << it.next();
+        int labelPrints = 0;
+        for (auto it = anyLabelRe.globalMatch(repaired); it.hasNext(); it.next())
+            ++labelPrints;
+        QStringList first;
+        if (asked > 0 && labelled.size() == 1 && labelPrints == 1 &&
+            resultLineValues(labelled[0].captured(0), label, &first) && first.size() < asked)
+        {
+            QList<QRegularExpressionMatch> later;
+            bool onlyTopLevel = true;
+            for (auto it = anyPrintRe.globalMatch(repaired, labelled[0].capturedEnd()); it.hasNext();)
+            {
+                const QRegularExpressionMatch p = it.next();
+                const QRegularExpressionMatch whole = printRe.match(repaired, p.capturedStart());
+                if (!whole.hasMatch() || whole.capturedStart() != p.capturedStart())
+                {
+                    onlyTopLevel = false;
+                    break;
+                }
+                later << whole;
+            }
+            QStringList rest;
+            for (const QRegularExpressionMatch &p : later)
+            {
+                QStringList values;
+                if (!resultLineValues("scriptPrint(\"" + label + "\", " + p.captured(2) + ")", label, &values))
+                {
+                    onlyTopLevel = false;
+                    break;
+                }
+                rest << values;
+            }
+            QString text;
+            const bool fixedText =
+                std::any_of(rest.cbegin(), rest.cend(), [&text](const QString &v) { return fixedTextValue(v, &text); });
+            if (onlyTopLevel && !later.isEmpty() && !fixedText && first.size() + rest.size() >= asked)
+            {
+                QString merged = repaired;
+                // the later prints first (back to front), then the labelled line, so offsets stay valid
+                for (int i = static_cast<int>(later.size()) - 1; i >= 0; --i)
+                    merged.replace(static_cast<int>(later[i].capturedStart()),
+                                   static_cast<int>(later[i].capturedLength()),
+                                   i == later.size() - 1
+                                       ? "scriptPrint(\"" + label + "\", *_result_values, " + rest.join(", ") + ")"
+                                       : QStringLiteral("pass"));
+                merged.replace(static_cast<int>(labelled[0].capturedStart()),
+                               static_cast<int>(labelled[0].capturedLength()),
+                               "_result_values = (" + first.join(", ") + (first.size() == 1 ? ",)" : ")"));
+                repaired = merged;
+                note("the result line was printed before its last value — it now prints every value at the end, "
+                     "on one line.");
+            }
+        }
+    }
+    return repaired == code ? QString() : repaired;
+}
+
+QString QtiSasAiContent::muParserPowerRepair(const QString &code) const
+{
+    // Confirmed live (Codex, LIST 3 item 2, 2 of 4 runs): "a formula ... written in muParser syntax with ^" became
+    // setCommand(3, "col(1)**3") with recalculate(3, 1, -1, True) — muParser has no **, the formula failed four times
+    // and the item was given up. The mirror of tableFormulaCaretRepair(): ** becomes ^ in the formula of a column this
+    // script recalculates with muParser forced (the 4th argument True, or forceMuParser=True).
+    static const QRegularExpression forcedRe(
+        R"RX(\.\s*recalculate\s*\(\s*([^,()]+?)\s*,(?:[^,()]*,){2}\s*True\b)RX"
+        R"RX(|\.\s*recalculate\s*\(\s*([^,()]+?)\s*,[^()]*forceMuParser\s*=\s*True)RX");
+    QStringList columns;
+    for (auto it = forcedRe.globalMatch(code); it.hasNext();)
+    {
+        const QRegularExpressionMatch m = it.next();
+        columns << (m.captured(1).isEmpty() ? m.captured(2) : m.captured(1)).trimmed();
+    }
+    if (columns.isEmpty())
+        return {};
+    QString repaired = code;
+    for (const QString &column : std::as_const(columns))
+    {
+        const QRegularExpression commandRe(R"RX(\.\s*setCommand\s*\(\s*)RX" + QRegularExpression::escape(column) +
+                                           R"RX(\s*,\s*(?:"([^"\n]*)"|'([^'\n]*)'))RX");
+        QList<QRegularExpressionMatch> commands;
+        for (auto it = commandRe.globalMatch(repaired); it.hasNext();)
+            commands << it.next();
+        for (int i = static_cast<int>(commands.size()) - 1; i >= 0; --i)
+        {
+            const int group = commands[i].captured(1).isNull() ? 2 : 1;
+            QString formula = commands[i].captured(group);
+            if (!formula.contains(QLatin1String("**")))
+                continue;
+            formula.replace(QLatin1String("**"), QLatin1String("^"));
+            repaired.replace(static_cast<int>(commands[i].capturedStart(group)),
+                             static_cast<int>(commands[i].capturedLength(group)), formula);
+        }
+    }
+    return repaired == code ? QString() : repaired;
+}
+
+// The cell calls of each object `creatorName` makes in `code` with literal sizes (name, rows, columns), swapped when
+// they can only have been meant transposed: not square; every call of `methods` on it has literal indices; at least one
+// is out of range; every one fits once its two indices are swapped. `rowFirst`: the calls take (row, col), else (col,
+// row). Shared by matrixTransposedCellRepair() and tableTransposedCellRepair().
+static QString swappedCellIndices(const QString &code, const QString &creatorName, const QString &methods,
+                                  bool rowFirst)
+{
+    const QRegularExpression newRe(R"RX(^[ \t]*([A-Za-z_]\w*)\s*=\s*)RX" + creatorName +
+                                       R"RX(\s*\(\s*(?:"[^"]*"|'[^']*')\s*,\s*(\d+)\s*,\s*(\d+)\s*\))RX",
+                                   QRegularExpression::MultilineOption);
+    QString repaired = code;
+    for (auto it = newRe.globalMatch(code); it.hasNext();)
+    {
+        const QRegularExpressionMatch created = it.next();
+        const QString var = QRegularExpression::escape(created.captured(1));
+        const int rows = created.captured(2).toInt();
+        const int cols = created.captured(3).toInt();
+        if (rows == cols)
+            continue;
+        const int first = rowFirst ? rows : cols;
+        const int second = rowFirst ? cols : rows;
+        const QRegularExpression anyCellRe(R"((?<![.\w]))" + var + R"(\s*\.\s*(?:)" + methods + R"()\s*\()");
+        const QRegularExpression literalCellRe(R"((?<![.\w]))" + var + R"(\s*\.\s*(?:)" + methods +
+                                               R"()\s*\(\s*(\d+)\s*,\s*(\d+)\s*([,)]))");
+        int all = 0;
+        for (auto c = anyCellRe.globalMatch(repaired); c.hasNext(); c.next())
+            ++all;
+        QList<QRegularExpressionMatch> calls;
+        for (auto c = literalCellRe.globalMatch(repaired); c.hasNext();)
+            calls << c.next();
+        if (calls.isEmpty() || calls.size() != all)
+            continue;
+        bool outOfRange = false;
+        bool allFitSwapped = true;
+        for (const QRegularExpressionMatch &c : calls)
+        {
+            const int a = c.captured(1).toInt();
+            const int b = c.captured(2).toInt();
+            outOfRange = outOfRange || a < 1 || a > first || b < 1 || b > second;
+            allFitSwapped = allFitSwapped && b >= 1 && b <= first && a >= 1 && a <= second;
+        }
+        if (!outOfRange || !allFitSwapped)
+            continue;
+        for (int i = static_cast<int>(calls.size()) - 1; i >= 0; --i)
+        {
+            const QRegularExpressionMatch &c = calls[i];
+            repaired.replace(static_cast<int>(c.capturedStart(1)),
+                             static_cast<int>(c.capturedEnd(2) - c.capturedStart(1)),
+                             c.captured(2) + ", " + c.captured(1));
+        }
+    }
+    return repaired == code ? QString() : repaired;
+}
+
+QString QtiSasAiContent::matrixTransposedCellRepair(const QString &code) const
+{
+    // Confirmed live (LIST 4 item 3, iteration 4 twice and iteration 7 run 1): "a matrix with 3 rows and 4 columns ...
+    // the value in row 3, column 4, and the sum of row 3" got m.cell(4, 3) and m.cell(1, 3) + ... + m.cell(4, 3) —
+    // the whole matrix read transposed. The runtime error ("no row 4 ... cell(row, col) takes the row first") came
+    // back with the identical script. Matrix cells take (row, col).
+    return swappedCellIndices(code, "newMatrix", "cell|setCell", true);
+}
+
+QString QtiSasAiContent::tableTransposedCellRepair(const QString &code) const
+{
+    // Confirmed live twice (LIST 3 item 5, series 4 NOSPLIT and series 5 LIST, local): newTable("Format", 3, 1) then
+    // t.setCell(2, 1, 0.25), t.text(2, 1), ... — rows written as columns; "There's no column 2 in table Format! It
+    // has 1 columns" came back with the same script three times and the item was given up. Table cells take
+    // (col, row), table-python-api says so with an example.
+    return swappedCellIndices(code, "newTable", "cell|setCell|text|setText|cellData|setCellData|cellOrNone", false);
+}
+
+QString QtiSasAiContent::setCodeVariableRepair(const QString &code) const
+{
+    // Every setCode() check and repair reads the body from the call's string literal. Confirmed live (iteration 7,
+    // LIST 5 item 1): code_body = """double I = a*x*x + b*x + c;""" then c.setCode(code_body) — the yName repair never
+    // saw the body, y was never assigned, and the fit printed its starting values 1 1 1; setCode(<variable>) was
+    // written 119 times across the 2026-10-10 logs. A variable assigned a string literal once, at the top level, and
+    // passed to setCode() is replaced there by that literal, so the body is checked like any other.
+    static const QRegularExpression callRe(R"(\bsetCode\s*\(\s*([A-Za-z_]\w*)\s*\))");
+    QString repaired = code;
+    QList<QRegularExpressionMatch> calls;
+    for (auto it = callRe.globalMatch(code); it.hasNext();)
+        calls << it.next();
+    for (int i = static_cast<int>(calls.size()) - 1; i >= 0; --i)
+    {
+        const QString name = calls[i].captured(1);
+        const QString n = QRegularExpression::escape(name);
+        const QRegularExpression assignRe(
+            "^" + n + R"RX(\s*=\s*("""[\s\S]*?"""|'''[\s\S]*?'''|"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*')[ \t]*$)RX",
+            QRegularExpression::MultilineOption);
+        const QRegularExpression anyAssignRe(R"((?<![.\w]))" + n + R"(\s*(?:[-+*/]?=)(?!=))");
+        const QRegularExpressionMatch assign = assignRe.match(code);
+        int assignments = 0;
+        for (auto it = anyAssignRe.globalMatch(codeWithoutStringLiterals(code)); it.hasNext(); it.next())
+            ++assignments;
+        if (!assign.hasMatch() || assignments != 1 || assign.capturedStart(0) > calls[i].capturedStart(0))
+            continue;
+        repaired.replace(static_cast<int>(calls[i].capturedStart(1)), static_cast<int>(calls[i].capturedLength(1)),
+                         assign.captured(1));
+    }
+    return repaired == code ? QString() : repaired;
+}
+
+QString QtiSasAiContent::bareFolderNameRepair(const QString &code, const QString &requestText) const
+{
+    // Confirmed live (LIST 5 NOSPLIT local pyi, all three runs of 2026-10-10 and 37 times across the earlier logs):
+    // the function compiled as setFunctionName("ai/Lor5"), then best = "Lor5" to print "the name of the function", and
+    // configure(best, ...) failed "not found" on every retry. A string literal that is exactly the part after the last
+    // "/" of a name the request quotes with its folder becomes that full name — unless the request quotes the short
+    // name too (then it may be another object), two quoted names share it, or the script never writes the full name
+    // itself (it then shows no sign of meaning that object). Whole literals only: "Lor5 fit" stays.
+    // The quoted names, paired quote by quote: a pattern for "a name with a slash" alone would pair the closing quote
+    // of one name with the opening quote of the next across a formula's "/" — confirmed live, "2/(1 + (x/0.5)^2)"
+    // between "Peak5" and "ai/Gauss5" hid both function names.
+    static const QRegularExpression quotedRe(R"re("([^"\n]{1,80})")re");
+    static const QRegularExpression folderNameRe(R"(^[^\s/]+(?:/[^\s/]+)+$)");
+    QSet<QString> quoted;
+    for (auto it = quotedRe.globalMatch(requestText); it.hasNext();)
+        quoted.insert(it.next().captured(1));
+    QHash<QString, QString> fullOf; // short name -> full name; empty when ambiguous
+    for (const QString &full : std::as_const(quoted))
+    {
+        if (!folderNameRe.match(full).hasMatch())
+            continue;
+        const QString shortName = full.mid(full.lastIndexOf('/') + 1);
+        if (shortName.trimmed().isEmpty() || quoted.contains(shortName) || !code.contains(full))
+            continue;
+        fullOf[shortName] = fullOf.contains(shortName) && fullOf.value(shortName) != full ? QString() : full;
+    }
+    if (fullOf.isEmpty())
+        return {};
+    // Triple-quoted literals first (a setCode() body is matched whole and left alone), then single-line ones.
+    static const QRegularExpression literalRe(
+        R"RX("""[\s\S]*?"""|'''[\s\S]*?'''|"((?:[^"\\\n]|\\.)*)"|'((?:[^'\\\n]|\\.)*)')RX");
+    QString repaired;
+    qsizetype last = 0;
+    for (auto it = literalRe.globalMatch(code); it.hasNext();)
+    {
+        const QRegularExpressionMatch m = it.next();
+        const bool doubleQuoted = !m.captured(1).isNull();
+        const QString text = doubleQuoted ? m.captured(1) : m.captured(2);
+        if (text.isNull() || fullOf.value(text).isEmpty())
+            continue;
+        const QChar q = doubleQuoted ? QLatin1Char('"') : QLatin1Char('\'');
+        repaired += code.mid(last, m.capturedStart(0) - last) + q + fullOf.value(text) + q;
+        last = m.capturedEnd(0);
+    }
+    if (last == 0)
+        return {};
+    return repaired + code.mid(last);
+}
+
+QString QtiSasAiContent::labelOnlyResultLineRepair(const QString &code, const QString &requestText) const
+{
+    // Confirmed live (LIST 5 NOSPLIT NOEXPLORE local pyi, item 3): scriptPrint("R3:") at the top, and at the end of the
+    // work scriptPrint(num_layers, curves_top, curves_bottom, f"{r:.4f}") — every value right, on a line of its own,
+    // so the result line was "R3:" alone. Repaired only when that is unambiguous: one print of the bare label, no other
+    // print of the label, and exactly one later print without it whose values are computed (no fixed text) and at
+    // least as many as the request asks for (requestedResultValues() is a lower bound). The label moves onto it.
+    const QString label = requestedResultLabel(requestText);
+    const qsizetype asked = requestedResultValues(requestText).size();
+    if (label.isEmpty() || asked == 0)
+        return {};
+    const QString escaped = QRegularExpression::escape(label);
+    const QRegularExpression labelOnlyRe(R"(^([ \t]*)(?:scriptPrint|print)\s*\(\s*(["'])\s*)" + escaped +
+                                             R"(\s*\2\s*(,\s*end\s*=\s*(?:"[^"\n]*"|'[^'\n]*'))?\s*\)[ \t]*$)",
+                                         QRegularExpression::MultilineOption);
+    const QRegularExpression anyLabelRe(R"((?:scriptPrint|print)\s*\(\s*f?["']\s*)" + escaped);
+    // Confirmed live (series 5, local, LIST 3 item 3, NOSPLIT): a first line scriptPrint("R3:", end="") — meant to
+    // start the line the later print continues — kept through three retries after scriptPrintKeywordMistake() named
+    // it, while the script also printed the full "R3:" line with its values; the item was given up. Such a line,
+    // beside another print of the label, says nothing: it goes.
+    {
+        QList<QRegularExpressionMatch> endOnly;
+        for (auto it = labelOnlyRe.globalMatch(code); it.hasNext();)
+            if (const QRegularExpressionMatch m = it.next(); !m.captured(3).isEmpty())
+                endOnly << m;
+        qsizetype prints = 0;
+        for (auto it = anyLabelRe.globalMatch(code); it.hasNext(); it.next())
+            ++prints;
+        if (!endOnly.isEmpty() && prints > endOnly.size())
+        {
+            QString repaired = code;
+            for (int i = static_cast<int>(endOnly.size()) - 1; i >= 0; --i)
+                repaired.replace(static_cast<int>(endOnly[i].capturedStart(0)),
+                                 static_cast<int>(endOnly[i].capturedLength(0)), endOnly[i].captured(1) + "pass");
+            return repaired;
+        }
+    }
+    QList<QRegularExpressionMatch> labelOnly;
+    for (auto it = labelOnlyRe.globalMatch(code); it.hasNext();)
+        labelOnly << it.next();
+    qsizetype labelPrints = 0;
+    for (auto it = anyLabelRe.globalMatch(code); it.hasNext(); it.next())
+        ++labelPrints;
+    if (labelOnly.size() != 1 || labelPrints != 1)
+        return {};
+    static const QRegularExpression printRe(R"(^([ \t]*)(scriptPrint|print)\s*\(([^\n]*)$)",
+                                            QRegularExpression::MultilineOption);
+    QList<QRegularExpressionMatch> candidates;
+    for (auto it = printRe.globalMatch(code, labelOnly.first().capturedEnd(0)); it.hasNext();)
+    {
+        const QRegularExpressionMatch m = it.next();
+        QStringList values;
+        if (!resultLineValues("scriptPrint(\"" + label + "\", " + m.captured(3), label, &values) ||
+            values.size() < asked)
+            continue;
+        QString text;
+        if (std::any_of(values.cbegin(), values.cend(), [&text](const QString &v) { return fixedTextValue(v, &text); }))
+            continue;
+        candidates << m;
+    }
+    if (candidates.size() != 1)
+        return {};
+    const QRegularExpressionMatch &values = candidates.first();
+    QString repaired = code;
+    // the later line first, so the earlier offsets stay valid
+    repaired.insert(static_cast<int>(values.capturedStart(3)), "\"" + label + "\", ");
+    repaired.replace(static_cast<int>(labelOnly.first().capturedStart(0)),
+                     static_cast<int>(labelOnly.first().capturedLength(0)), labelOnly.first().captured(1) + "pass");
+    return repaired;
+}
+
+QString QtiSasAiContent::placeholderResultValueMistake(const QString &code, const QString &originalRequestText)
+{
+    // Confirmed live (LIST 5 NOSPLIT NOEXPLORE local pyi, item 5): scriptPrint("R5:", n.tabs(), existTable("Auto"),
+    // "not used") — a requested value (the sum the tab's script computes) replaced by fixed text. Only a line that also
+    // computes values (all fixed text is hardcodedResultLineMistake()'s), and only text the request does not give
+    // itself ("[]" for "a list, [] if none") or that reports a failure.
+    const QString label = requestedResultLabel(originalRequestText);
+    if (label.isEmpty())
+        return {};
+    // Every result line, but an indented one only when it is the script's only one: confirmed live (LIST 3 item 3,
+    // 2026-10-11), the guard branch `if t is None: scriptPrint("R3:", -1, "TableNotFound")` was taken for the result
+    // line (as many values as the real one, and first) and blocked until the item was given up. Failure words are
+    // matched inside names too ("TableNotFound", "MissingData").
+    const QRegularExpression printRe(R"(^([ \t]*)(?:scriptPrint|print)\s*\(\s*f?["'])" +
+                                         QRegularExpression::escape(label) + R"([^\n]*$)",
+                                     QRegularExpression::MultilineOption);
+    QList<QRegularExpressionMatch> lines;
+    for (auto it = printRe.globalMatch(code); it.hasNext();)
+        lines << it.next();
+    static const QRegularExpression failureTextRe(R"((?:error|not\s*found|missing|failed|fails|does\s*not\s*exist)"
+                                                  R"(|doesn'?t\s*exist|cannot|could\s*not|unavailable))",
+                                                  QRegularExpression::CaseInsensitiveOption);
+    for (const QRegularExpressionMatch &m : lines)
+    {
+        if (lines.size() > 1 && !m.captured(1).isEmpty())
+            continue;
+        const QString line = m.captured(0).trimmed();
+        QStringList values;
+        if (!resultLineValues(line, label, &values) || values.isEmpty())
+            continue;
+        QString placeholder;
+        bool computed = false;
+        for (const QString &value : values)
+        {
+            QString text;
+            if (!fixedTextValue(value, &text))
+                computed = true;
+            else if (placeholder.isEmpty() && !text.trimmed().isEmpty() &&
+                     !originalRequestText.contains(text.trimmed(), Qt::CaseInsensitive) &&
+                     !failureTextRe.match(text).hasMatch())
+                placeholder = value.trimmed();
+        }
+        if (!computed || placeholder.isEmpty())
+            continue;
+        return "The result line " + line + " prints the fixed text " + placeholder +
+               " where the request asks for a value. Compute that value in this script and print it instead — if "
+               "another script computes it (a note tab's script that is not run), compute it here the same way.";
+    }
+    return {};
+}
+
+QString QtiSasAiContent::noWorkFailureResultMistake(const QString &code, const QString &originalRequestText)
+{
+    // Confirmed live three times (series 4, local, LIST 3 item 3 in three runs): after a correct block the model sent
+    // only scriptPrint("R3:", -1, "TableNotFound") — "Squares" existed and the PROJECT STATE note said so. It ran
+    // and the item was lost: every value is a literal, so the placeholder check exempts it as failure text and the
+    // fixed-text check wants a single literal. A "not found" result that no lookup in the script produced is a guess.
+    // Only a script that does nothing but print: any other statement may be the lookup that reports the failure.
+    const QString label = requestedResultLabel(originalRequestText);
+    if (label.isEmpty())
+        return {};
+    static const QRegularExpression printLineRe(R"(^(?:scriptPrint|print)\s*\()");
+    static const QRegularExpression skipLineRe(R"(^(?:#|import\b|from\s+\S+\s+import\b|pass$))");
+    for (const QString &raw : code.split('\n'))
+    {
+        const QString line = raw.trimmed();
+        if (!line.isEmpty() && !skipLineRe.match(line).hasMatch() && !printLineRe.match(line).hasMatch())
+            return {};
+    }
+    const QRegularExpression resultRe(R"(^[ \t]*(?:scriptPrint|print)\s*\(\s*f?["'])" +
+                                          QRegularExpression::escape(label) + R"([^\n]*$)",
+                                      QRegularExpression::MultilineOption);
+    static const QRegularExpression failureTextRe(R"((?:error|not\s*found|missing|failed|fails|does\s*not\s*exist)"
+                                                  R"(|doesn'?t\s*exist|cannot|could\s*not|unavailable))",
+                                                  QRegularExpression::CaseInsensitiveOption);
+    for (auto it = resultRe.globalMatch(code); it.hasNext();)
+    {
+        const QString line = it.next().captured(0).trimmed();
+        QStringList values;
+        if (!resultLineValues(line, label, &values) || values.isEmpty())
+            continue;
+        bool allFixed = true;
+        bool failure = false;
+        static const QRegularExpression constantRe(R"(^(?:[-+]?\d+(?:\.\d*)?(?:[eE][-+]?\d+)?|True|False|None|\[\])$)");
+        for (const QString &value : values)
+        {
+            QString text;
+            if (fixedTextValue(value, &text))
+                failure = failure || failureTextRe.match(text).hasMatch();
+            else
+                allFixed = allFixed && constantRe.match(value.trimmed()).hasMatch();
+        }
+        if (allFixed && failure)
+            return "This script does no work: it only prints " + line +
+                   " — fixed values and a failure that no lookup in it found. Nothing reported the objects missing: "
+                   "the ones this request uses are listed in the PROJECT STATE note when they exist. Do the item's "
+                   "work in this script and print the values it produces; if an object really is missing, the script's "
+                   "own lookup (table(\"name\") is None) must say so.";
+    }
+    return {};
+}
+
 QString QtiSasAiContent::hardcodedResultLineMistake(const QString &code, const QString &originalRequestText)
 {
     // Confirmed live (LIST 3, item 3, local model): scriptPrint("R3: 0 ValueError") — the result written as fixed
@@ -4463,11 +5997,20 @@ QString QtiSasAiContent::hardcodedResultLineMistake(const QString &code, const Q
     static const QRegularExpression failureTextRe(
         R"(\b(?:error|not found|missing|failed|fails|does not exist|doesn't exist|cannot|could not|unavailable)\b)",
         QRegularExpression::CaseInsensitiveOption);
+    // Nor is an indented one in a script that also prints a computed result line: a fallback branch. Confirmed live
+    // (LIST 5 local pyi, item 3): "if t is None: scriptPrint(\"R3: -1\") else: ... scriptPrint(\"R3:\", n, ...)" —
+    // blocked twice, the item given up.
+    const QRegularExpression computedLineRe(R"((?:scriptPrint|print)\s*\(\s*(?:f["'])" +
+                                            QRegularExpression::escape(label) + R"(|["'])" +
+                                            QRegularExpression::escape(label) + R"(\s*["']\s*,))");
+    const bool printsComputed = computedLineRe.match(code).hasMatch();
     QRegularExpressionMatch m;
     for (auto it = literalRe.globalMatch(code); it.hasNext();)
     {
         const QRegularExpressionMatch candidate = it.next();
-        if (!failureTextRe.match(candidate.captured(0)).hasMatch())
+        const qsizetype lineStart = code.lastIndexOf('\n', candidate.capturedStart(0)) + 1;
+        const bool indented = lineStart < code.size() && code.at(lineStart).isSpace();
+        if (!failureTextRe.match(candidate.captured(0)).hasMatch() && !(indented && printsComputed))
         {
             m = candidate;
             break;
@@ -5057,10 +6600,13 @@ QString QtiSasAiContent::fittableFitBeforeConfigureMistake(const QString &code)
     // round-trip for a precondition the docs state outright.
     static const QRegularExpression fitRe(R"((?<![.\w])\w+\s*\.\s*fit\s*\(\s*\))");
     static const QRegularExpression functionSelectRe(R"(\b(?:configure|setFunction)\s*\()");
-    const QRegularExpressionMatch fitMatch = fitRe.match(code);
+    // Calls only, never text: confirmed live (BIGMODEL, ai-test-requests item 10) — scriptPrint("... run a fit first
+    // (e.g. f.fit() ...)") was blocked as a fit() call without configure().
+    const QString calls = codeWithLiteralsBlanked(code);
+    const QRegularExpressionMatch fitMatch = fitRe.match(calls);
     if (!fitMatch.hasMatch())
         return {};
-    const QRegularExpressionMatch functionMatch = functionSelectRe.match(code);
+    const QRegularExpressionMatch functionMatch = functionSelectRe.match(calls);
     if (functionMatch.hasMatch() && functionMatch.capturedStart() < fitMatch.capturedStart())
         return {};
     return "This script calls fit() without configure()/setFunction() having selected a function "
@@ -5115,15 +6661,38 @@ QString QtiSasAiContent::textIntoNumericColumnMistake(const QString &code)
     // setColTextFormat(2) — a new table's columns are Numeric, Table::cellEdited() evaluates "alpha" as an expression
     // and leaves the cell empty, so text(2, 2) read back "". Only tables this script creates: their columns are known
     // to be Numeric until a setCol...Format() call says otherwise.
-    static const QRegularExpression newTableRe(R"(\b(\w+)\s*=\s*newTable\s*\()");
-    QRegularExpressionMatchIterator tables = newTableRe.globalMatch(code);
-    while (tables.hasNext())
+    // The table's variable: t = newTable(...), or — the same table — newTable("Names", ...) on a line of its own and
+    // t = table("Names") after it (confirmed live, LIST 4 item 5 in split mode: the check never saw the table).
+    struct CreatedTable
     {
-        const QRegularExpressionMatch table = tables.next();
-        const QString var = QRegularExpression::escape(table.captured(1));
+        QString var;
+        qsizetype from = 0;
+    };
+    QList<CreatedTable> created;
+    static const QRegularExpression newTableRe(R"(\b(\w+)\s*=\s*newTable\s*\()");
+    for (auto it = newTableRe.globalMatch(code); it.hasNext();)
+    {
+        const QRegularExpressionMatch m = it.next();
+        created << CreatedTable{m.captured(1), m.capturedEnd()};
+    }
+    static const QRegularExpression bareNewTableRe(R"RX(^[ \t]*newTable\s*\(\s*(?:"([^"]+)"|'([^']+)'))RX",
+                                                   QRegularExpression::MultilineOption);
+    for (auto it = bareNewTableRe.globalMatch(code); it.hasNext();)
+    {
+        const QRegularExpressionMatch m = it.next();
+        const QString name = QRegularExpression::escape(m.captured(1).isEmpty() ? m.captured(2) : m.captured(1));
+        const QRegularExpression lookupRe(R"RX(\b(\w+)\s*=\s*table\s*\(\s*["'])RX" + name + R"RX(["']\s*\))RX");
+        if (const QRegularExpressionMatch lookup = lookupRe.match(code, m.capturedEnd()); lookup.hasMatch())
+            created << CreatedTable{lookup.captured(1), lookup.capturedEnd()};
+    }
+    for (const CreatedTable &table : std::as_const(created))
+    {
+        const QString var = QRegularExpression::escape(table.var);
+        // The text is a literal, or the first word of a list of them indexed per row — confirmed live (BlaBlaDor,
+        // series 6, LIST 4 item 5): t.setText(2, i, ["alpha", "beta", "gamma"][i-1]), every cell left empty.
         const QRegularExpression setTextRe("\\b" + var +
-                                           R"(\s*\.\s*setText\s*\(\s*(\d+)\s*,[^,()]*,\s*(["'])(.*?)\2\s*\))");
-        QRegularExpressionMatchIterator it = setTextRe.globalMatch(code, table.capturedEnd());
+                                           R"(\s*\.\s*setText\s*\(\s*(\d+)\s*,[^,()]*,\s*(?:\[\s*)?(["'])(.*?)\2)");
+        QRegularExpressionMatchIterator it = setTextRe.globalMatch(code, table.from);
         while (it.hasNext())
         {
             const QRegularExpressionMatch m = it.next();
@@ -5135,13 +6704,13 @@ QString QtiSasAiContent::textIntoNumericColumnMistake(const QString &code)
                 continue;
             const QRegularExpression formatRe("\\b" + var + R"(\s*\.\s*setCol\w*Format\s*\(\s*)" + m.captured(1) +
                                               R"(\s*[,)])");
-            const QRegularExpressionMatch format = formatRe.match(code, table.capturedEnd());
+            const QRegularExpressionMatch format = formatRe.match(code, table.from);
             if (format.hasMatch() && format.capturedStart() < m.capturedStart())
                 continue;
             return "This script writes the text \"" + text + "\" with setText() into column " + m.captured(1) +
                    " of a table it created with newTable(), whose columns are Numeric. In a Numeric column, text that "
                    "is no number is evaluated as an expression, and \"" +
-                   text + "\" is none, so the cell stays EMPTY. Call " + table.captured(1) + ".setColTextFormat(" +
+                   text + "\" is none, so the cell stays EMPTY. Call " + table.var + ".setColTextFormat(" +
                    m.captured(1) + ") before writing text into that column.";
         }
     }
@@ -5176,10 +6745,13 @@ QString QtiSasAiContent::fittableSelectStageBeforeFunctionMistake(const QString 
     static const QRegularExpression selectStageRe(R"(\bselectStage\s*\(\s*(['"])([^'"]*)\1\s*\))");
     static const QRegularExpression functionSelectRe(R"(\b(?:configure|setFunction)\s*\()");
     QRegularExpressionMatch stageMatch;
+    const QString calls = codeWithLiteralsBlanked(code); // a call inside a string literal is text, not a call
     QRegularExpressionMatchIterator it = selectStageRe.globalMatch(code);
     while (it.hasNext())
     {
         const QRegularExpressionMatch m = it.next();
+        if (calls.at(m.capturedStart()).isSpace())
+            continue;
         if (m.captured(2).compare("init", Qt::CaseInsensitive) != 0)
         {
             stageMatch = m;
@@ -5188,7 +6760,7 @@ QString QtiSasAiContent::fittableSelectStageBeforeFunctionMistake(const QString 
     }
     if (!stageMatch.hasMatch())
         return {};
-    const QRegularExpressionMatch functionMatch = functionSelectRe.match(code);
+    const QRegularExpressionMatch functionMatch = functionSelectRe.match(calls);
     if (functionMatch.hasMatch() && functionMatch.capturedStart() < stageMatch.capturedStart())
         return {};
     return "This script calls selectStage(\"" + stageMatch.captured(2) +
@@ -5278,6 +6850,9 @@ QList<AiKnownMistakeMatch> QtiSasAiContent::detectKnownMistakes(const QString &c
         explanation = reuseInsteadOfCompileMistake(code, originalRequestText, earlierPartsCode);
         if (!explanation.isEmpty())
             matches << AiKnownMistakeMatch{"requested compile never happened", explanation};
+        explanation = columnFormulaInLoopMistake(code);
+        if (!explanation.isEmpty())
+            matches << AiKnownMistakeMatch{"a column formula set once per row", explanation};
         explanation = guardedCompileMistake(code, originalRequestText);
         if (!explanation.isEmpty())
             matches << AiKnownMistakeMatch{"the compile is skipped when the function seems to exist", explanation};
@@ -5352,7 +6927,25 @@ QList<AiKnownMistakeMatch> QtiSasAiContent::detectKnownMistakes(const QString &c
         explanation = labeledResultLineMistake(code, originalRequestText);
         if (!explanation.isEmpty())
             matches << AiKnownMistakeMatch{"the result line labels its values", explanation};
+        explanation = resultLineTooFewValuesMistake(code, originalRequestText);
+        if (!explanation.isEmpty())
+            matches << AiKnownMistakeMatch{"the result line carries fewer values than asked", explanation};
+        explanation = placeholderResultValueMistake(code, originalRequestText);
+        if (!explanation.isEmpty())
+            matches << AiKnownMistakeMatch{"fixed text in place of a result value", explanation};
+        explanation = noWorkFailureResultMistake(code, originalRequestText);
+        if (!explanation.isEmpty())
+            matches << AiKnownMistakeMatch{"a made-up failure printed instead of the work", explanation};
     }
+    explanation = rowRangeEndsOneShortMistake(code);
+    if (!explanation.isEmpty())
+        matches << AiKnownMistakeMatch{"a row loop that stops one row short", explanation};
+    explanation = unusedParameterMistake(code);
+    if (!explanation.isEmpty())
+        matches << AiKnownMistakeMatch{"a declared parameter the code never uses", explanation};
+    explanation = resultsAfterConfigureMistake(code);
+    if (!explanation.isEmpty())
+        matches << AiKnownMistakeMatch{"results() read after configure() without a fit", explanation};
     explanation = earlierPartVariableMistake(code, earlierPartsCode);
     if (!explanation.isEmpty())
         matches << AiKnownMistakeMatch{"a variable of an earlier part's script used", explanation};
@@ -5365,12 +6958,21 @@ QList<AiKnownMistakeMatch> QtiSasAiContent::detectKnownMistakes(const QString &c
     explanation = otherTabRunMistake(code, originalRequestText);
     if (!explanation.isEmpty())
         matches << AiKnownMistakeMatch{"a tab run that the request does not run", explanation};
-    explanation = rootFolderDeletionMistake(code);
+    explanation = bareObjectMethodMistake(code);
     if (!explanation.isEmpty())
-        matches << AiKnownMistakeMatch{"deleteFolder() of the project folder", explanation};
+        matches << AiKnownMistakeMatch{"a table/matrix method called without its object", explanation};
+    explanation = existenceReadBeforeCreationMistake(code);
+    if (!explanation.isEmpty())
+        matches << AiKnownMistakeMatch{"a value read before the call that creates it", explanation};
+    explanation = requestDataNumberMistake(code, originalRequestText);
+    if (!explanation.isEmpty())
+        matches << AiKnownMistakeMatch{"a number of the request's data formula missing", explanation};
+    explanation = recalculateExceptionNameMistake(code);
+    if (!explanation.isEmpty())
+        matches << AiKnownMistakeMatch{"the wrapping ValueError named instead of the formula's error", explanation};
     explanation = scriptPrintKeywordMistake(code);
     if (!explanation.isEmpty())
-        matches << AiKnownMistakeMatch{"scriptPrint() given end=/sep=", explanation};
+        matches << AiKnownMistakeMatch{"scriptPrint() given end=", explanation};
     explanation = currentEditorAfterAddTabMistake(code);
     if (!explanation.isEmpty())
         matches << AiKnownMistakeMatch{"currentEditor() after addTab() is the new tab", explanation};
@@ -5490,8 +7092,36 @@ QString QtiSasAiContent::explorePrefixBeforeFirstWriteCall(const QString &code) 
 
 QString QtiSasAiContent::retryHintForError(const QString &errContext) const
 {
+    // Confirmed live (LIST 5 item 2, 2026-10-11): best_A = results["A"] then abs(best_A) — "bad operand type for abs():
+    // 'tuple'", the same script twice and the item given up, although fittable-python-api shows exactly this as WRONG.
+    // A tuple where a number belongs is, in a fit script, results()["name"]: the (value, error) pair.
+    // Also "unsupported format string passed to tuple.__format__" — the type named without quotes; confirmed live
+    // (series 6, local, LIST 3 item 7: "{:.4f}".format(r_a) with r_a = f.results()["a"]): the hint never fired, the
+    // same script came back and the item was given up.
+    static const QRegularExpression tupleErrorRe(R"(TypeError:[^\n]*(?:'tuple'|\btuple\.__format__))");
+    if (tupleErrorRe.match(errContext).hasMatch())
+        return "REMINDER (this error): f.results()[\"name\"] is the (value, error) TUPLE, never a number — unpack it "
+               "first: value, error = f.results()[\"name\"], then use value (abs(value), f\"{value:.4f}\").\n\n";
+
     if (const QString deletion = inventedDeletionCallHint(errContext); !deletion.isEmpty())
         return deletion;
+
+    // Confirmed live (series 5, BlaBlaDor, LIST 3 item 2, two runs): setCommand(3, "x^3") recalculated with muParser —
+    // "Unexpected token "x" found at position 0." on the error's second line — sent back unchanged until the item
+    // was given up. table-python-api says it ("Bare names fail -- always col("x") or col(idx)"); the error does not.
+    static const QRegularExpression bareColumnRe(R"RX(recalculate:[^\n]*\n\s*Unexpected token "([A-Za-z_]\w*)")RX");
+    if (const QRegularExpressionMatch bare = bareColumnRe.match(errContext); bare.hasMatch())
+        return "REMINDER (this error): a column formula refers to a column as col(\"" + bare.captured(1) +
+               "\") or col(index), never by the bare name \"" + bare.captured(1) + "\" — e.g. \"col(1)^3\".\n\n";
+
+    // Confirmed live (series 4, LIST 5 item 2, local): a plain formula compiled with setHHeaders('#include
+    // "sasviewmodels/gaussian.h"') — a header that does not exist; the retries changed the body and kept the include.
+    static const QRegularExpression missingHeaderRe(R"(fatal error: '([^']+)' file not found)");
+    if (const QRegularExpressionMatch header = missingHeaderRe.match(errContext); header.hasMatch())
+        return "REMINDER (this error): the compile failed at the #include of \"" + header.captured(1) +
+               "\" — that header does not exist; the setCode() body is not the cause. A formula written with "
+               "exp/sin/pow/sqrt needs NO setHHeaders() at all: remove the setHHeaders() call. Include a header only "
+               "when the code calls a library function whose header exists.\n\n";
 
     // A ValueError converting fitCurve table text to float, where the failing line calls
     // .text(N, M) with LITERAL row/column indices, is the confirmed-live "hardcoded row instead

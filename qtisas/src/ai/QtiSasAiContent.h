@@ -78,8 +78,29 @@ class QtiSasAiContent : public AiContentProvider
     static QString renamedResultAssignment(const QString &body, const QString &yName, const QStringList &reservedNames);
     QString resultLabel(const QString &requestText) const override;
     QString resultLineDuty(const QString &requestText) const override;
+    QStringList resultLineValueList(const QString &requestText) const override
+    {
+        return requestedResultValues(requestText);
+    }
     QString nonFinalResultLineRepair(const QString &code, const QString &requestText, bool alsoComputed) const override;
-    static QString rootFolderDeletionMistake(const QString &code);
+    QString repeatedResultLabelRepair(const QString &code, const QString &requestText) const override;
+    QString labelOnlyResultLineRepair(const QString &code, const QString &requestText) const override;
+    QString bareFolderNameRepair(const QString &code, const QString &requestText) const override;
+    QString setCodeVariableRepair(const QString &code) const override;
+    QString matrixTransposedCellRepair(const QString &code) const override;
+    QString tableTransposedCellRepair(const QString &code) const override;
+    QString muParserPowerRepair(const QString &code) const override;
+    static QString existenceReadBeforeCreationMistake(const QString &code);
+    static QString bareObjectMethodMistake(const QString &code);
+    static QString requestDataNumberMistake(const QString &code, const QString &originalRequestText);
+    QString bareCompilerDeleteRepair(const QString &code) const override;
+    QString noteAutoexecReceiverRepair(const QString &code) const override;
+    QString docTopicForKind(const QString &kind) const override;
+    QString apiCallRepairs(const QString &code, const QString &requestText, bool resultLine,
+                           QStringList *notes) const override;
+    static QString recalculateExceptionNameMistake(const QString &code);
+    QString tableFormulaCaretRepair(const QString &code, const QString &formulaLanguage) const override;
+    QString compilerMissingGroupRepair(const QString &code) const override;
     static QString otherTabRunMistake(const QString &code, const QString &originalRequestText);
     static QString labeledResultLineMistake(const QString &code, const QString &originalRequestText);
     static QString inventedDeletionCallHint(const QString &errContext);
@@ -87,11 +108,14 @@ class QtiSasAiContent : public AiContentProvider
     static QString newNoteExtraTabMistake(const QString &code, const QString &originalRequestText);
     static QString earlierPartVariableMistake(const QString &code, const QString &earlierPartsCode);
     QString noteTabIndexRepair(const QString &code) const override;
+    QString noteTabSelfRunRepair(const QString &code) const override;
     static QString scriptPrintKeywordMistake(const QString &code);
     static QString currentEditorAfterAddTabMistake(const QString &code);
     // Python string literals blanked out, so a name inside one is not mistaken for a variable
     // reference — setParamNamesAll(["sigma", ...]) and setCode()'s C++ body are other namespaces.
     static QString codeWithoutStringLiterals(const QString &code);
+    // The same, but each literal replaced by spaces of its own length (newlines kept): offsets match `code`.
+    static QString codeWithLiteralsBlanked(const QString &code);
     static QString fabricatedConversationMistake(const QString &code);
 
   private:
@@ -125,6 +149,7 @@ class QtiSasAiContent : public AiContentProvider
     static QString unannouncedModelNameSubstitution(const QString &code, const QString &originalRequestText);
     static QString reuseInsteadOfCompileMistake(const QString &code, const QString &originalRequestText,
                                                 const QString &earlierPartsCode);
+    static QString columnFormulaInLoopMistake(const QString &code);
     static QString guardedCompileMistake(const QString &code, const QString &originalRequestText);
     static QString aiSandboxReopenMistake(const QString &code, const QString &originalRequestText,
                                           const QString &earlierPartsCode);
@@ -149,7 +174,15 @@ class QtiSasAiContent : public AiContentProvider
     static QString unrequestedRandomDataMistake(const QString &code, const QString &originalRequestText);
     static QString columnListInsteadOfAggregateMistake(const QString &code, const QString &originalRequestText);
     static QString requestedResultLabel(const QString &originalRequestText);
+    static QString resultLineDutyOf(const QString &requestText);
+    static QStringList requestedResultValues(const QString &requestText);
+    static QString resultLineTooFewValuesMistake(const QString &code, const QString &originalRequestText);
+    static QString rowRangeEndsOneShortMistake(const QString &code);
     static QString hardcodedResultLineMistake(const QString &code, const QString &originalRequestText);
+    static QString placeholderResultValueMistake(const QString &code, const QString &originalRequestText);
+    static QString noWorkFailureResultMistake(const QString &code, const QString &originalRequestText);
+    static QString resultsAfterConfigureMistake(const QString &code);
+    QString unusedParameterMistake(const QString &code) const;
     static QString repeatedResultLabelMistake(const QString &code, const QString &originalRequestText);
     static QString pythonInputCallMistake(const QString &code);
     static QString guessedNameCandidateListMistake(const QString &code);
