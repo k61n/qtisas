@@ -692,6 +692,9 @@ class AiAssistant : public QObject
     // own work. Confirmed live (LIST 5, item 1): the retry reopened "ai/Quad", compiled by its failed attempt a moment
     // before, and was blocked as reopening a leftover. Cleared together with m_failedRunObjects.
     QStringList m_failedRunScripts;
+    // setCode() bodies (whitespace-simplified) this request had blocked or failed to compile, with the reason — a retry
+    // sending one again is blocked. Cleared for every new request.
+    QList<QPair<QString, QString>> m_rejectedSetCodes;
     // The retry prompts' sentence naming m_failedRunObjects; empty when there are none.
     QString failedRunObjectsNote() const;
     // Clears every "a network reply for THIS is still coming" flag at once. Must be called by any

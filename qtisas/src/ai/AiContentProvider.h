@@ -518,6 +518,21 @@ class AiContentProvider
     // confirmed live, the local model resubmitted the same declarations five times in a row and gave the item up.
     virtual QString compilerSelfShadowRepair(const QString &code) const = 0;
 
+    // Returns `code` with param[k] (also params/par/pars/parameters/p[k]) in setCode() replaced by the k-th name of the
+    // script's literal setParamNamesAll([...]), or empty when there is none. Confirmed live (LIST 5, item 1, local
+    // model): every version used param[k]; clang's "did you mean 'ParaM'?" sent it further off and the item died.
+    virtual QString compilerParamIndexRepair(const QString &code) const = 0;
+
+    // The setCode() bodies of `code` (empty when it compiles nothing) — to recognize a body this request already had
+    // rejected (blocked, or failed to compile) when a retry sends it again.
+    virtual QStringList compiledCodeBodies(const QString &code) const = 0;
+
+    // Returns `code` with setParamVariesAll([True, ...]) added before each compile() whose definition sets no vary
+    // flags, or empty when there is none — or when the request names fixed parameters. A parameter declared by
+    // setParamCount() is fixed by default; confirmed live (LIST 5, item 2, local model): both functions compiled
+    // all-fixed and fit() failed "no adjustable parameters".
+    virtual QString compilerParamVariesRepair(const QString &code, const QString &request) const = 0;
+
     // The label the request asks its result line to start with ("R4:"), or empty when it names none.
     virtual QString resultLabel(const QString &requestText) const = 0;
 

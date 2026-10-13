@@ -70,6 +70,9 @@ class QtiSasAiContent : public AiContentProvider
     QString compilerParamCountRepair(const QString &code) const override;
     QString compilerYNameAssignmentRepair(const QString &code) const override;
     QString compilerSelfShadowRepair(const QString &code) const override;
+    QString compilerParamIndexRepair(const QString &code) const override;
+    QStringList compiledCodeBodies(const QString &code) const override;
+    QString compilerParamVariesRepair(const QString &code, const QString &request) const override;
     QString fabricatedConversationCheck(const QString &code) const override;
     static QString repairedSetCodeBody(const QString &body, const QString &yName);
     static QString renamedResultAssignment(const QString &body, const QString &yName, const QStringList &reservedNames);
@@ -122,6 +125,7 @@ class QtiSasAiContent : public AiContentProvider
     static QString unannouncedModelNameSubstitution(const QString &code, const QString &originalRequestText);
     static QString reuseInsteadOfCompileMistake(const QString &code, const QString &originalRequestText,
                                                 const QString &earlierPartsCode);
+    static QString guardedCompileMistake(const QString &code, const QString &originalRequestText);
     static QString aiSandboxReopenMistake(const QString &code, const QString &originalRequestText,
                                           const QString &earlierPartsCode);
     static QString requestedCreationNeverHappenedMistake(const QString &code, const QString &originalRequestText,

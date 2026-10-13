@@ -2056,6 +2056,128 @@ QString QtiSasAiContent::compiledCodeSelfShadowBug(const QString &code)
            "double in scope.";
 }
 
+QStringList QtiSasAiContent::compiledCodeBodies(const QString &code) const
+{
+    static const QRegularExpression setCodeRe(
+        R"RX(setCode\s*\(\s*(?:"""([\s\S]*?)"""|'''([\s\S]*?)'''|"((?:[^"\\]|\\.)*)"|'((?:[^'\\]|\\.)*)'))RX");
+    QStringList bodies;
+    for (auto it = setCodeRe.globalMatch(code); it.hasNext();)
+    {
+        const QRegularExpressionMatch m = it.next();
+        for (int g = 1; g <= 4; ++g)
+            if (!m.captured(g).trimmed().isEmpty())
+            {
+                bodies << m.captured(g);
+                break;
+            }
+    }
+    return bodies;
+}
+
+QString QtiSasAiContent::compilerParamIndexRepair(const QString &code) const
+{
+    static const QRegularExpression namesRe(R"RX(setParamNamesAll\s*\(\s*\[([^\]]*)\])RX");
+    const QRegularExpressionMatch names = namesRe.match(code);
+    if (!names.hasMatch())
+        return {};
+    QStringList paramNames;
+    static const QRegularExpression quotedRe(R"RX(["']([^"']+)["'])RX");
+    for (auto it = quotedRe.globalMatch(names.captured(1)); it.hasNext();)
+        paramNames << it.next().captured(1);
+    if (paramNames.isEmpty())
+        return {};
+    static const QRegularExpression setCodeRe(
+        R"RX(setCode\s*\(\s*(?:"""([\s\S]*?)"""|'''([\s\S]*?)'''|"((?:[^"\\]|\\.)*)"|'((?:[^'\\]|\\.)*)'))RX");
+    static const QRegularExpression indexRe(R"(\b(param|params|par|pars|parameters|p)\s*\[\s*(\d+)\s*\])");
+    static const QRegularExpression ownArrayRe(R"(\b(?:double|float|int|auto)\s+(\w+)\s*\[)");
+    QString repaired = code;
+    bool any = false;
+    QList<QRegularExpressionMatch> calls;
+    for (auto it = setCodeRe.globalMatch(code); it.hasNext();)
+        calls << it.next();
+    for (int c = static_cast<int>(calls.size()) - 1; c >= 0; --c) // back to front: offsets stay valid
+    {
+        int group = 0;
+        for (int g = 1; g <= 4 && group == 0; ++g)
+            if (!calls[c].captured(g).isEmpty())
+                group = g;
+        if (group == 0)
+            continue;
+        QString body = calls[c].captured(group);
+        QStringList ownArrays; // an array the body declares itself is not a parameter list
+        for (auto it = ownArrayRe.globalMatch(body); it.hasNext();)
+            ownArrays << it.next().captured(1);
+        QList<QRegularExpressionMatch> uses;
+        for (auto it = indexRe.globalMatch(body); it.hasNext();)
+            uses << it.next();
+        bool changed = false;
+        for (int u = static_cast<int>(uses.size()) - 1; u >= 0; --u)
+        {
+            const int k = uses[u].captured(2).toInt();
+            if (ownArrays.contains(uses[u].captured(1)) || k < 0 || k >= paramNames.size())
+                continue;
+            body.replace(uses[u].capturedStart(), uses[u].capturedLength(), paramNames.at(k));
+            changed = true;
+        }
+        if (!changed)
+            continue;
+        repaired.replace(calls[c].capturedStart(group), calls[c].capturedLength(group), body);
+        any = true;
+    }
+    return any ? repaired : QString();
+}
+
+QString QtiSasAiContent::compilerParamVariesRepair(const QString &code, const QString &request) const
+{
+    static const QRegularExpression fixedRe(R"(\b(?:fix|fixed|fixing|hold|held|frozen)\b)",
+                                            QRegularExpression::CaseInsensitiveOption);
+    if (fixedRe.match(request).hasMatch()) // the request decides which parameters stay fixed
+        return {};
+    static const QRegularExpression compileRe(R"(^([ \t]*)(?:\w+\s*=\s*)?(\w+)\.compile\s*\(\s*\))",
+                                              QRegularExpression::MultilineOption);
+    static const QRegularExpression startRe(R"(\.(?:new|compile)\s*\(\s*\))");
+    static const QRegularExpression namesRe(R"RX(setParamNamesAll\s*\(\s*\[([^\]]*)\])RX");
+    static const QRegularExpression quotedRe(R"RX(["']([^"']+)["'])RX");
+    static const QRegularExpression countRe(R"(setParamCount\s*\(\s*(\d+)\s*\))");
+    QList<QRegularExpressionMatch> compiles;
+    for (auto it = compileRe.globalMatch(code); it.hasNext();)
+        compiles << it.next();
+    QString repaired = code;
+    bool any = false;
+    for (int c = static_cast<int>(compiles.size()) - 1; c >= 0; --c) // back to front: offsets stay valid
+    {
+        const qsizetype end = compiles[c].capturedStart();
+        // this function's own definition: from its c.new() (or the previous compile()) to this compile()
+        qsizetype begin = 0;
+        for (auto it = startRe.globalMatch(code); it.hasNext();)
+        {
+            const QRegularExpressionMatch m = it.next();
+            if (m.capturedStart() >= end)
+                break;
+            begin = m.capturedEnd();
+        }
+        const QString definition = code.mid(begin, end - begin);
+        if (definition.contains("setParamVaries"))
+            continue;
+        qsizetype count = 0;
+        if (const QRegularExpressionMatch names = namesRe.match(definition); names.hasMatch())
+            for (auto it = quotedRe.globalMatch(names.captured(1)); it.hasNext(); it.next())
+                ++count;
+        if (count == 0)
+            if (const QRegularExpressionMatch n = countRe.match(definition); n.hasMatch())
+                count = n.captured(1).toInt();
+        if (count <= 0)
+            continue;
+        QStringList trues;
+        for (qsizetype i = 0; i < count; ++i)
+            trues << "True";
+        repaired.insert(end, compiles[c].captured(1) + compiles[c].captured(2) + ".setParamVariesAll([" +
+                                 trues.join(", ") + "])\n");
+        any = true;
+    }
+    return any ? repaired : QString();
+}
+
 QString QtiSasAiContent::compilerSelfShadowRepair(const QString &code) const
 {
     // Only C++ declares "double name = name;", so the whole script can be searched: in Python it does not parse.
@@ -3137,6 +3259,53 @@ QString QtiSasAiContent::reuseInsteadOfCompileMistake(const QString &code, const
            "setCode()+compile(); there is no single consolidated 'add a parameter' call (no "
            "addParameter()/addParam() method exists) — parameter count, names, inits, limits, and "
            "vary-flags are five SEPARATE bulk-setter calls, each taking a same-length list.";
+}
+
+QString QtiSasAiContent::guardedCompileMistake(const QString &code, const QString &originalRequestText)
+{
+    // Confirmed live (LIST 5, item 1, local model, twice): after a failed compile the retry wrapped the compile in
+    // `if fn not in c.functionNames("ALL"):` — the failed compile had left its definition behind, so the check was
+    // false, the compile never ran (no compile error to see) and configure() failed with "not found". A function a
+    // request compiles is defined and compiled again every time; "ai/" is the AI's own sandbox.
+    static const QRegularExpression requestedCompileRe(R"(\bcompile\b)", QRegularExpression::CaseInsensitiveOption);
+    static const QRegularExpression existingTargetRe(R"(\b(?:existing|modify|change|edit|extend|update|recompile)\b)",
+                                                     QRegularExpression::CaseInsensitiveOption);
+    if (!requestedCompileRe.match(originalRequestText).hasMatch() ||
+        existingTargetRe.match(originalRequestText).hasMatch())
+        return {};
+    static const QRegularExpression guardRe(
+        R"(^([ \t]*)(?:if|elif)\b[^\n]*(?:\bfunctionNames\s*\(|\bfitFunctions\s*\(|\.open\s*\(|)"
+        R"(\bfunctionName\s*\(\s*\)|\bexist\w*\s*\()[^\n]*:[ \t]*$)",
+        QRegularExpression::MultilineOption);
+    static const QRegularExpression compileRe(R"(\.\s*compile\s*\()");
+    const QStringList lines = code.split('\n');
+    for (auto it = guardRe.globalMatch(code); it.hasNext();)
+    {
+        const QRegularExpressionMatch guard = it.next();
+        const int indent = static_cast<int>(guard.captured(1).size());
+        const int firstLine = static_cast<int>(code.left(guard.capturedEnd()).count('\n')) + 1;
+        // the guarded block: the following lines indented deeper than the if (blank lines included)
+        for (int i = firstLine; i < lines.size(); ++i)
+        {
+            const QString &line = lines.at(i);
+            if (line.trimmed().isEmpty())
+                continue;
+            const int lineIndent =
+                static_cast<int>(line.size() - QString(line).remove(QRegularExpression("^[ \t]+")).size());
+            if (lineIndent <= indent)
+                break;
+            if (compileRe.match(line).hasMatch())
+                return "This script compiles the function only if a check says it does not exist yet (" +
+                       guard.captured(0).trimmed() +
+                       "). A function the request asks to compile is defined and compiled again every time — "
+                       "\"ai/\" is the AI's own sandbox: a failed earlier compile leaves its definition behind, "
+                       "so this check skips the compile and configure() then reports \"not found\". Remove the "
+                       "check: c.new(); c.setFunctionName(...); ... ; c.compile(), unconditionally. (Where a script "
+                       "must know whether a fit function is usable, ask Fittable.fitFunctions() — the compiled "
+                       "ones; Compiler.functionNames() lists definitions, also one whose compile failed.)";
+        }
+    }
+    return {};
 }
 
 QString QtiSasAiContent::aiSandboxReopenMistake(const QString &code, const QString &originalRequestText,
@@ -5109,6 +5278,9 @@ QList<AiKnownMistakeMatch> QtiSasAiContent::detectKnownMistakes(const QString &c
         explanation = reuseInsteadOfCompileMistake(code, originalRequestText, earlierPartsCode);
         if (!explanation.isEmpty())
             matches << AiKnownMistakeMatch{"requested compile never happened", explanation};
+        explanation = guardedCompileMistake(code, originalRequestText);
+        if (!explanation.isEmpty())
+            matches << AiKnownMistakeMatch{"the compile is skipped when the function seems to exist", explanation};
         explanation = aiSandboxReopenMistake(code, originalRequestText, earlierPartsCode);
         if (!explanation.isEmpty())
             matches << AiKnownMistakeMatch{"a leftover ai/ function reopened instead of compiled fresh", explanation};

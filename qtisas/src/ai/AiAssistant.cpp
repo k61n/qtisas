@@ -817,6 +817,7 @@ void AiAssistant::beginRequest(const QString &aiText, bool autoRunValue, bool wa
     m_unprintedOutputRetried = false;
     m_singlePartDescription.clear();
     m_resultLineTask.clear();
+    m_rejectedSetCodes.clear();
     if (autoRun)
     {
         QString factsSummary;
@@ -4824,6 +4825,19 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
                           "script actually provides — running the corrected version below.");
             code = countRepaired;
         }
+        if (const QString varied = m_content->compilerParamVariesRepair(code, originalRequestText); !varied.isEmpty())
+        {
+            m_host->print("▸▸▸ AI: auto-corrected: setParamVariesAll([True, ...]) added before compile() — the "
+                          "request fixes no parameter, so every parameter of the new function is adjustable.");
+            code = varied;
+        }
+        // before the self-shadow repair: "double a = param[0];" becomes "double a = a;", which that one removes
+        if (const QString indexed = m_content->compilerParamIndexRepair(code); !indexed.isEmpty())
+        {
+            m_host->print("▸▸▸ AI: auto-corrected setCode(): param[k] replaced by the parameter names from "
+                          "setParamNamesAll() — inside setCode() a parameter is used by its name.");
+            code = indexed;
+        }
         const QString shadowRepaired = m_content->compilerSelfShadowRepair(code);
         if (!shadowRepaired.isEmpty())
         {
@@ -4903,6 +4917,19 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
                            [&](const AiKnownMistakeMatch &m) { return !stillFiring.contains(m.header); }),
             knownMistakes.end());
     }
+    // A setCode() body this request already had rejected is not tried again. Confirmed live (LIST 5, item 1, local
+    // model): the retries switched between a body blocked for redeclared parameters and one that failed to compile.
+    if (compilable && m_content)
+        for (const QString &body : m_content->compiledCodeBodies(code))
+            for (const QPair<QString, QString> &rejected : m_rejectedSetCodes)
+                if (body.simplified() == rejected.first)
+                {
+                    knownMistakes << AiKnownMistakeMatch{
+                        "a setCode() this request already rejected",
+                        "This setCode() body was already tried in this request and rejected: " + rejected.second +
+                            ". Do not send it again — write a different body that fixes exactly that."};
+                    break;
+                }
     if (compilable)
         if (const QString recreated = existingTableRecreatedMistake(code); !recreated.isEmpty())
             knownMistakes << AiKnownMistakeMatch{"newTable() would wipe an existing table", recreated};
@@ -5033,6 +5060,14 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
         if (!m_history.isEmpty())
             m_history.last().second = "(blocked before running — " + headers.join("; ") + "; corrected below)";
         blockedScript = code;
+        // only a block about the setCode() body itself: one for an unrelated line says nothing about the body
+        QStringList bodyReasons;
+        for (const QString &header : headers)
+            if (header.contains("setCode", Qt::CaseInsensitive))
+                bodyReasons << header;
+        if (m_content && !bodyReasons.isEmpty())
+            for (const QString &body : m_content->compiledCodeBodies(code))
+                m_rejectedSetCodes << qMakePair(body.simplified(), "blocked (" + bodyReasons.join("; ") + ")");
         if (explanations.size() == 1)
         {
             errContext = explanations.first();
@@ -5118,6 +5153,16 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
             if (!objectsBefore.contains(object) && !m_failedRunObjects.contains(object))
                 m_failedRunObjects << object;
         m_failedRunScripts << code;
+        // clang rejected the body — unless it stopped at an #include that names no file: then the header line is the
+        // fault, not the body. Confirmed live (series 4, LIST 5 item 2): setHHeaders('#include "sasviewmodels/
+        // gaussian.h"') on a plain formula; every retry's body was blocked as "already rejected", the model rewrote
+        // the correct body five times, kept the include and the item was lost.
+        static const QRegularExpression missingHeaderRe(R"(fatal error: '[^']+' file not found)");
+        if (m_content && result.error.contains("compilation of", Qt::CaseInsensitive) &&
+            !missingHeaderRe.match(result.error + "\n" + result.output).hasMatch())
+            for (const QString &body : m_content->compiledCodeBodies(code))
+                m_rejectedSetCodes << qMakePair(body.simplified(),
+                                                "it failed to compile (" + result.error.section('\n', 0, 1) + ")");
     }
     // Broader, complementary check to the one below: if errContext is byte-for-byte identical to
     // the previous retry's, the SAME diagnosis was handed back twice and wasn't acted on either
