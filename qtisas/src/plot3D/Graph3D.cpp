@@ -39,6 +39,22 @@ Description: 3D graph widget
 #include "LinearColorMap.h"
 #include "MyParser.h"
 
+// A qwtplot3d object frees its GL display lists in its destructor (glDeleteLists()), which needs the plot's GL context.
+// A plot that never got one (offscreen platform, never shown) cannot free them: the object is left alive — a leak of a
+// never-shown plot's data, not a crash. Confirmed: SIGSEGV in glDeleteLists() via Qwt3D::Curve::~Curve() when an AI
+// script under the offscreen test instance called newPlot3D() on a matrix (Graph3D::updateScalesFromMatrix() deleting
+// the active curve), as Graph3D::~Graph3D() already guards for closing.
+template <typename Plot, typename T> static void deleteGLObject(Plot *sp, T *object)
+{
+    if (!object)
+        return;
+    if (sp)
+        sp->makeCurrent();
+    if (sp && !QOpenGLContext::currentContext())
+        return;
+    delete object;
+}
+
 ConstFunction::ConstFunction(Qwt3D::Curve *pw)
 : Function(pw)
 {}
@@ -285,12 +301,12 @@ void Graph3D::initCoord()
 void Graph3D::addHiddenConstantCurve(double xl, double xr, double yl, double yr, double zl, double zr)
 {
 	if (d_const_curve){
-		delete d_const_curve;
+        deleteGLObject(sp, d_const_curve);
 		d_const_curve = 0;
 	}
 
 	if (d_const_func){
-		delete d_const_func;
+        deleteGLObject(sp, d_const_func);
 		d_const_func = 0;
 	}
 
@@ -339,25 +355,25 @@ Curve* Graph3D::addCurve()
 void Graph3D::removeCurve()
 {
 	if (d_surface){
-		delete d_surface;
+        deleteGLObject(sp, d_surface);
 		d_surface = 0;
 	} else if (d_func){
-		delete d_func;
+        deleteGLObject(sp, d_func);
 		d_func = 0;
 	}
 
 	if (d_const_curve){
-		delete d_const_curve;
+        deleteGLObject(sp, d_const_curve);
 		d_const_curve = 0;
 	}
 
 	if (d_const_func){
-		delete d_const_func;
+        deleteGLObject(sp, d_const_func);
 		d_const_func = 0;
 	}
 
 	if (d_active_curve){
-		delete d_active_curve;
+        deleteGLObject(sp, d_active_curve);
 		d_active_curve = 0;
 	}
 }
@@ -372,12 +388,12 @@ void Graph3D::addFunction(const QString& s, double xl, double xr, double yl,
 
     if (d_surface)
     {
-        delete d_surface;
+        deleteGLObject(sp, d_surface);
         d_surface = nullptr;
     }
     else if (d_func)
     {
-        delete d_func;
+        deleteGLObject(sp, d_func);
         d_func = nullptr;
     }
     d_matrix = nullptr;
@@ -417,12 +433,12 @@ void Graph3D::addParametricSurface(const QString& xFormula, const QString& yForm
 
     if (d_surface)
     {
-        delete d_surface;
+        deleteGLObject(sp, d_surface);
         d_surface = nullptr;
     }
     else if (d_func)
     {
-        delete d_func;
+        deleteGLObject(sp, d_func);
         d_func = nullptr;
     }
     d_matrix = nullptr;
@@ -577,12 +593,12 @@ void Graph3D::addMatrixData(Matrix* m)
 	d_table = nullptr;
     if (d_surface)
     {
-        delete d_surface;
+        deleteGLObject(sp, d_surface);
         d_surface = nullptr;
     }
     else if (d_func)
     {
-        delete d_func;
+        deleteGLObject(sp, d_func);
         d_func = nullptr;
     }
 
@@ -625,12 +641,12 @@ void Graph3D::addMatrixData(Matrix* m, double xl, double xr,
 
     if (d_surface)
     {
-        delete d_surface;
+        deleteGLObject(sp, d_surface);
         d_surface = nullptr;
     }
     else if (d_func)
     {
-        delete d_func;
+        deleteGLObject(sp, d_func);
         d_func = nullptr;
     }
 
@@ -1770,7 +1786,7 @@ void Graph3D::updateScalesFromMatrix(double xl, double xr, double yl, double yr,
 
 	if (xmin > xEnd || xmax < xStart || ymin > yEnd || ymax < yStart || zmin > zEnd || zmax < zStart){
 		if (d_active_curve)
-			delete d_active_curve;
+            deleteGLObject(sp, d_active_curve);
 		d_active_curve = 0;
 
         changeScales(xminL, xmaxL, yminL, ymaxL, zminL, zmaxL);
