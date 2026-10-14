@@ -1,4 +1,5 @@
 
+ * move to msvc2026 in builds for windows arm64
  * Drop Debian 11 support for future versions
  * Use C++20
  * upd Qt to 6.11.2
