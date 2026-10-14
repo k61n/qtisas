@@ -211,15 +211,16 @@ macos-release:
     - cd ../bin
     - ~/Qt/6.12.0/macos/bin/macdeployqt qtisas.app -verbose=3 || true
     - cp ../install/osx/Info.plist_release qtisas.app/Contents/Info.plist
-    - cp $(find ../deps -name "libzstd.1.*.*.dylib") qtisas.app/Contents/Frameworks/libzstd.1.dylib
+    - cp $(find ../deps -name "libaec.0.dylib") qtisas.app/Contents/Frameworks
     - cp $(find ../deps -name "libjpeg.*.dylib") qtisas.app/Contents/Frameworks
+    - cp $(find ../deps -name "liblzma.?.dylib") qtisas.app/Contents/Frameworks
+    - cp $(find ../deps -name "libsz.?.dylib") qtisas.app/Contents/Frameworks
+    - cp $(find ../deps -name "libzstd.?.dylib") qtisas.app/Contents/Frameworks
     - install_name_tool
         -change
         $(otool -L $(find ../deps -name libtiff.dylib) | grep libjpeg | awk '{print $1}' | sort -u)
         @rpath/$(basename $(otool -L $(find ../deps -name libtiff.dylib) | grep libjpeg | awk '{print $1}' | sort -u))
         qtisas.app/Contents/Frameworks/$(readlink $(find ../deps -name libtiff.dylib))
-    - cp $(find ../deps -name "libsz.2.dylib") qtisas.app/Contents/Frameworks
-    - cp $(find ../deps -name "libaec.0.dylib") qtisas.app/Contents/Frameworks
     - rm -rf qtisas.app/Contents/plugins
     - find ../deps -name "*.pyc" -delete
     - cp -r ../deps/$PYTHONDIR qtisas.app/Contents/Resources
