@@ -1,8 +1,9 @@
 
+ * min macOS version for bundles is 14
+ * upd Qt to 6.12.0
  * move to msvc2026 in builds for windows arm64
  * Drop Debian 11 support for future versions
  * Use C++20
- * upd Qt to 6.11.2
 
 # v0.17.1
 

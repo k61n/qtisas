@@ -55,7 +55,7 @@ macos:
   parallel:
     matrix:
       - { ARCH: "arm64", SDK: MacOSX.sdk,     PYTHON: -DWITH_PYTHON=ON }
-      - { ARCH: "arm64", SDK: MacOSX13.3.sdk, PYTHON: -DWITH_PYTHON=ON }
+      - { ARCH: "arm64", SDK: MacOSX14.5.sdk, PYTHON: -DWITH_PYTHON=ON }
       - { ARCH: "intel", SDK: MacOSX.sdk,     PYTHON: -DWITH_PYTHON=ON }
       - { ARCH: "arm64", SDK: MacOSX.sdk,     PYTHON: -DWITH_PYTHON=OFF }
   tags:
@@ -112,7 +112,7 @@ windows:
       -Dqwt_ROOT="C:/qtisas_libs/$TOOL/qwt"
       -Dyaml-cpp_ROOT="C:/qtisas_libs/$TOOL/yaml-cpp"
       -DZLIB_ROOT="C:/qtisas_libs/$TOOL/zlib"
-      -DCMAKE_PREFIX_PATH="C:/Qt/6.11.2/$TOOL"
+      -DCMAKE_PREFIX_PATH="C:/Qt/6.12.0/$TOOL"
       -DPython3_ROOT_DIR="C:/Users/$USER/AppData/Local/Programs/Python/Python314"
     - cmake.exe --build . --config Release
 
@@ -199,9 +199,9 @@ macos-release:
         -Dmuparser_ROOT=$CI_PROJECT_DIR/deps/muparser
         -Dqwt_ROOT=$CI_PROJECT_DIR/deps/qwt
         -Dyaml-cpp_ROOT=$CI_PROJECT_DIR/deps/yaml-cpp
-        -DCMAKE_PREFIX_PATH=~/Qt/6.11.2/macos
+        -DCMAKE_PREFIX_PATH=~/Qt/6.12.0/macos
         -DPython3_ROOT_DIR=$CI_PROJECT_DIR/deps/$PYTHONDIR
-        -DCMAKE_OSX_SYSROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX13.3.sdk
+        -DCMAKE_OSX_SYSROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX14.5.sdk
         -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
         -DCMAKE_IGNORE_PATH="/usr/local;/opt/homebrew"
         -DCMAKE_IGNORE_PREFIX_PATH="/usr/local;/opt/homebrew"
@@ -209,7 +209,7 @@ macos-release:
         -DCMAKE_SYSTEM_IGNORE_PREFIX_PATH="/usr/local;/opt/homebrew"
     - /opt/homebrew/bin/cmake --build . --parallel $(sysctl -n hw.ncpu)
     - cd ../bin
-    - ~/Qt/6.11.2/macos/bin/macdeployqt qtisas.app -verbose=3 || true
+    - ~/Qt/6.12.0/macos/bin/macdeployqt qtisas.app -verbose=3 || true
     - cp ../install/osx/Info.plist_release qtisas.app/Contents/Info.plist
     - cp $(find ../deps -name "libzstd.1.*.*.dylib") qtisas.app/Contents/Frameworks/libzstd.1.dylib
     - cp $(find ../deps -name "libjpeg.*.dylib") qtisas.app/Contents/Frameworks
@@ -263,7 +263,7 @@ windows-release:
   only:
     - tags@qtisas/qtisas
   script:
-    - $env:Path = "C:\Qt\6.11.2\$TOOL\bin;" + $env:Path
+    - $env:Path = "C:\Qt\6.12.0\$TOOL\bin;" + $env:Path
     - $env:Path = "C:\Qt\Tools\QtInstallerFramework\4.10\bin;" + $env:Path
     - git submodule update --init --recursive
     - if (Test-Path .\bin) { Remove-Item .\bin -Recurse -Force }
@@ -280,7 +280,7 @@ windows-release:
       -DTIFF_ROOT="C:/qtisas_libs/$TOOL/libtiff"
       -Dyaml-cpp_ROOT="C:/qtisas_libs/$TOOL/yaml-cpp"
       -DZLIB_ROOT="C:/qtisas_libs/$TOOL/zlib"
-      -DCMAKE_PREFIX_PATH="C:/Qt/6.11.2/$TOOL"
+      -DCMAKE_PREFIX_PATH="C:/Qt/6.12.0/$TOOL"
       -DPython3_ROOT_DIR="C:\Users\$USER\AppData\Local\Programs\Python\Python314"
     - cmake --build . --config Release
     - cd ..
