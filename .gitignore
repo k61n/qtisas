@@ -6,7 +6,7 @@ build/
 libs/
 tmp/
 cmake-build*/
-*/__pycache__/
+__pycache__/
 qtisas/python/qtisasrc.pyc
 qtisas/python/pyproject.toml
 .claude
