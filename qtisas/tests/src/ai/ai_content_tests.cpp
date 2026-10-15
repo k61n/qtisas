@@ -2695,7 +2695,8 @@ void AiContentTests::noteTabSelfRun_removedFromTabText()
     QVERIFY(content.noteTabSelfRunRepair("n.tab(\"make\").setText('x = 1')\nn.tab(\"make\").execute()\n").isEmpty());
     // the addTab()/currentEditor() check reads code, not a tab's text
     QVERIFY(QtiSasAiContent::currentEditorAfterAddTabMistake(
-                "n.addTab()\nn.tab(1).setText('m.currentEditor().execute()')\nn.tab(\"make\").execute()\n")
+                "n.addTab()\nn.tab(1).setText('m.currentEditor().execute()')\nn.tab(\"make\").execute()\n",
+                "Run only the \"make\" tab.")
                 .isEmpty());
 }
 
@@ -3296,9 +3297,19 @@ void AiContentTests::currentEditorAfterAddTab_blocksRunningNewTab()
     // LIST 5, item 5: "Run only the make tab" — addTab() then currentEditor().execute() ran the "check" tab.
     const QString code = "n = newNote(\"Pipeline\")\nn.renameTab(0, \"make\")\nn.addTab()\nn.renameTab(1, \"check\")\n"
                          "n.currentEditor().execute()\n";
-    QVERIFY(!QtiSasAiContent::currentEditorAfterAddTabMistake(code).isEmpty());
-    QVERIFY(QtiSasAiContent::currentEditorAfterAddTabMistake("n.addTab()\nn.tab(\"make\").execute()\n").isEmpty());
-    QVERIFY(QtiSasAiContent::currentEditorAfterAddTabMistake("n.currentEditor().execute()\nn.addTab()\n").isEmpty());
+    const QString request = R"(Create a note "Pipeline" with two tabs named "make" and "check". Run only the "make)"
+                            " tab.";
+    QVERIFY(!QtiSasAiContent::currentEditorAfterAddTabMistake(code, request).isEmpty());
+    QVERIFY(
+        QtiSasAiContent::currentEditorAfterAddTabMistake("n.addTab()\nn.tab(\"make\").execute()\n", request).isEmpty());
+    QVERIFY(QtiSasAiContent::currentEditorAfterAddTabMistake("n.currentEditor().execute()\nn.addTab()\n", request)
+                .isEmpty());
+    // benchmark LIST 1 item 4: the tab just added is the one to run — no tab named, no block
+    QVERIFY(
+        QtiSasAiContent::currentEditorAfterAddTabMistake(
+            "n = newNote(\"Setup\")\nn.addTab()\nn.currentEditor().setText(\"x = 1\")\nn.currentEditor().execute()\n",
+            "Create a note \"Setup\" with an auto-executing script tab. Run that tab once to test it.")
+            .isEmpty());
 }
 
 void AiContentTests::matrixIndexFormula_blocksIndicesForXyFormula()

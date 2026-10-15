@@ -4997,11 +4997,19 @@ QString QtiSasAiContent::noteTabSelfRunRepair(const QString &code) const
     return anyRepair ? repaired : QString();
 }
 
-QString QtiSasAiContent::currentEditorAfterAddTabMistake(const QString &code)
+QString QtiSasAiContent::currentEditorAfterAddTabMistake(const QString &code, const QString &originalRequestText)
 {
     // Confirmed live (LIST 5, item 5): "Run only the make tab" — the script renamed tab 0 to "make", called addTab()
     // (which activates the new tab), then n.currentEditor().execute(): it ran the empty-table "check" tab instead.
     // Real calls only: text inside a string — a tab's script — is not this script's code (see noteTabSelfRunRepair()).
+    // Only when the request names a tab: "add a script tab … run that tab once" means the tab just added, which
+    // currentEditor() is. Confirmed live (benchmark LIST 1 item 4, 2026-10-15): blocked in every lane, BlaBlaDor then
+    // ran n.tab(1) — the empty first tab — and printed recalculation still on. A dry run over every logged script: the
+    // narrower rule keeps all 70 LIST 5 item 5 blocks and drops exactly the three item 4 ones.
+    static const QRegularExpression namedTabRe(R"RX("[^"]+"\s+tab\b|\btab\s+"[^"]+")RX",
+                                               QRegularExpression::CaseInsensitiveOption);
+    if (!namedTabRe.match(originalRequestText).hasMatch())
+        return {};
     static const QRegularExpression addTabRe(R"(\baddTab\s*\()");
     static const QRegularExpression runCurrentRe(R"(\bcurrentEditor\s*\(\s*\)\s*\.\s*execute\s*\()");
     const QString stripped = codeWithoutStringLiterals(code);
@@ -5009,8 +5017,8 @@ QString QtiSasAiContent::currentEditorAfterAddTabMistake(const QString &code)
     if (!add.hasMatch() || !runCurrentRe.match(stripped, add.capturedEnd()).hasMatch())
         return {};
     return "This script calls addTab() and later currentEditor().execute(). addTab() makes the NEW tab the current "
-           "one, so this runs the tab added last, not the one the request names. Run a tab by its name or 1-based "
-           "index instead: n.tab(\"make\").execute() or n.tab(1).execute().";
+           "one, so this runs the tab added last, not the one the request names. Run the tab the request names by "
+           "its name or its 1-based index (the first tab is 1): n.tab(\"make\").execute().";
 }
 
 QString QtiSasAiContent::noteTabIndexRepair(const QString &code) const
@@ -7162,7 +7170,7 @@ QList<AiKnownMistakeMatch> QtiSasAiContent::detectKnownMistakes(const QString &c
     explanation = scriptPrintKeywordMistake(code);
     if (!explanation.isEmpty())
         matches << AiKnownMistakeMatch{"scriptPrint() given end=", explanation};
-    explanation = currentEditorAfterAddTabMistake(code);
+    explanation = currentEditorAfterAddTabMistake(code, originalRequestText);
     if (!explanation.isEmpty())
         matches << AiKnownMistakeMatch{"currentEditor() after addTab() is the new tab", explanation};
     explanation = pythonInputCallMistake(code);

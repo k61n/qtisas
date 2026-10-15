@@ -111,7 +111,7 @@ class QtiSasAiContent : public AiContentProvider
     QString noteTabIndexRepair(const QString &code) const override;
     QString noteTabSelfRunRepair(const QString &code) const override;
     static QString scriptPrintKeywordMistake(const QString &code);
-    static QString currentEditorAfterAddTabMistake(const QString &code);
+    static QString currentEditorAfterAddTabMistake(const QString &code, const QString &originalRequestText);
     // Python string literals blanked out, so a name inside one is not mistaken for a variable
     // reference — setParamNamesAll(["sigma", ...]) and setCode()'s C++ body are other namespaces.
     static QString codeWithoutStringLiterals(const QString &code);
