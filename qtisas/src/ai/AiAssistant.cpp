@@ -414,6 +414,12 @@ QString AiAssistant::createdByEarlierItemsNote() const
             static const QString fitPrefix = QStringLiteral("fitCurve-");
             if (kind == "table" && name.startsWith(fitPrefix) && !name.endsWith("-session"))
                 line += " — the result table of a fit of " + name.mid(fitPrefix.size());
+            // A simulated curve is the model's output, not data to fit. Confirmed live (Codex BIGMODEL, LIST 2 item 5,
+            // 5 of 6 rounds): "Fit the model against the data" fitted item 3's simulatedCurve-... table instead of the
+            // data table the list had made.
+            static const QString simPrefix = QStringLiteral("simulatedCurve-");
+            if (kind == "table" && name.startsWith(simPrefix) && !name.endsWith("-session"))
+                line += " — a curve simulated from " + name.mid(simPrefix.size()) + ": model output, not data";
             described << line;
         }
         if (described.isEmpty())
