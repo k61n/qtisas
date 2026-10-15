@@ -686,7 +686,11 @@ void Plot3DDialog::setPlot(Graph3D *g)
 
 	d_plot = g;
 
-	d_color_map_editor->setRange(g->zStart(), g->zStop());
+    // The data's z range, not the axis range: setDataColorMap() spreads the map over the data, so the levels the
+    // editor shows are the z values each color appears at on the surface
+    double zmin, zmax;
+    g->dataZRange(&zmin, &zmax);
+    d_color_map_editor->setRange(zmin, zmax);
 	d_color_map_editor->setColorMap(g->colorMap());
 	btnTitleColor->setColor(g->titleColor());
 	btnMesh->setColor(g->meshColor());

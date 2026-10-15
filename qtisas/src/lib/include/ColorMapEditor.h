@@ -53,6 +53,8 @@ public:
     void setColorMap(LinearColorMap *map);
 	//! Use this function to initialize the values range.
 	void setRange(double min, double max);
+    //! Spin box ranges and the "<="/">" rows for the levels as they are (no respacing)
+    void setRowLimits();
     //! Build a LinearColorMap directly from preset index (no widget needed).
     static std::unique_ptr<LinearColorMap> presetColorMap(int index, const QString &mapPath,
                                                           const QString &mapName = QString());
@@ -111,6 +113,10 @@ private:
     std::unique_ptr<LinearColorMap> color_map;
 	//! Levels range
 	double min_val, max_val;
+    //! Data range given by setRange() when there is no matrix (3D plot, matrix color map dialog): the levels show
+    //! values in it instead of 0..1
+    bool d_has_range = false;
+    double d_range_min = 0.0, d_range_max = 1.0;
 	//! Locale settings used to display level values
 	QLocale d_locale;
 	//! Precision used to display level values

@@ -284,6 +284,8 @@ public slots:
 	double yStop();
 	double zStart();
 	double zStop();
+    //! The z range of the data, which a linear color map is spread over (setDataColorMap()); the axis range if no data
+    void dataZRange(double *zmin, double *zmax);
 
 	int axisType(int axis){return scaleType[axis];};
 	void setAxisType(int axis, int type);

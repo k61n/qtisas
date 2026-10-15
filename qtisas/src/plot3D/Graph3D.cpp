@@ -1426,6 +1426,19 @@ double Graph3D::zStart()
 	return start;
 }
 
+void Graph3D::dataZRange(double *zmin, double *zmax)
+{
+    if (d_active_curve)
+    {
+        *zmin = d_active_curve->hull().minVertex.z;
+        *zmax = d_active_curve->hull().maxVertex.z;
+        if (*zmax > *zmin)
+            return;
+    }
+    *zmin = zStart();
+    *zmax = zStop();
+}
+
 double Graph3D::zStop()
 {
 	double start,stop;

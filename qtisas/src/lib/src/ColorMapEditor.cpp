@@ -160,8 +160,20 @@ void ColorMapEditor::setColorMap(LinearColorMap *map0)
 
     table->setRowCount(rows);
 
-    if (m) m->range(&min_val,&max_val,false);
-    else {min_val=0.0;max_val=1.0;};
+    // Without a matrix the levels show the range setRange() gave (the 3D plot's z data): they were always 0..1 before,
+    // so a level never matched the z value its color has on the surface
+    if (m)
+        m->range(&min_val, &max_val, false);
+    else if (d_has_range)
+    {
+        min_val = d_range_min;
+        max_val = d_range_max;
+    }
+    else
+    {
+        min_val = 0.0;
+        max_val = 1.0;
+    }
 
     auto range = QwtInterval(min_val, max_val);
     double width = range.width();
@@ -219,9 +231,33 @@ void ColorMapEditor::setColorMap(LinearColorMap *map0)
     }
     table->blockSignals(false);
 
-    // Rescale rows 1 and N-2 to boundary values and evenly space intermediate rows,
-    // matching the display produced by the Update button
-    setScaledColorsLog(scaleColorsBoxLog->isChecked(), false, false, false);
+    // The levels stay where the map has its stops. This used to call setScaledColorsLog(), which spaced them evenly
+    // like the Update button: a level the user had moved (green from 2 to 5, applied) came back at 2 when the dialog
+    // was opened again, while the surface still had green at 5. The sentinel rows above already put the first and last
+    // level at min/max, which is what that call was added for (8db10b51); only the limits are set here.
+    setRowLimits();
+    updateColorMap();
+}
+
+void ColorMapEditor::setRowLimits()
+{
+    const int rows = table->rowCount();
+    if (rows < 4)
+        return;
+    auto box = [this](int row) { return (DoubleSpinBox *)table->cellWidget(row, 0); };
+    for (int i = 0; i < rows; i++)
+        box(i)->blockSignals(true);
+    const double low = box(1)->value();
+    const double high = box(rows - 2)->value();
+    box(1)->setRange(min_val, high);
+    box(rows - 2)->setRange(low, max_val);
+    for (int i = 2; i < rows - 2; i++)
+        box(i)->setRange(low, high);
+    // "<=" and ">" rows show the lowest and highest level, as setScaledColorsLog() does
+    box(0)->setValue(low);
+    box(rows - 1)->setValue(high);
+    for (int i = 0; i < rows; i++)
+        box(i)->blockSignals(false);
 }
 
 void ColorMapEditor::updateLowerRangeLimit(double)
@@ -240,6 +276,9 @@ void ColorMapEditor::setRange(double min, double max)
 {
 	min_val = qMin(min, max);
 	max_val = qMax(min, max);
+    d_has_range = max_val > min_val;
+    d_range_min = min_val;
+    d_range_max = max_val;
 }
 
 void ColorMapEditor::insertLevel()
@@ -413,6 +452,20 @@ void ColorMapEditor::setScaledColorsLog(bool scale, bool fromCheckBox, bool lowL
                 maxvalue=1.0;
             }
             else if (scale && minvalue1<=0 ) minvalue1=0.1*maxvalue;
+        }
+        else if (d_has_range)
+        {
+            minvalue0 = d_range_min;
+            minvalue1 = d_range_min;
+            maxvalue = d_range_max;
+            if (scale && maxvalue <= 0)
+            {
+                minvalue0 = 0;
+                minvalue1 = 0.1;
+                maxvalue = 1.0;
+            }
+            else if (scale && minvalue1 <= 0)
+                minvalue1 = 0.1 * maxvalue;
         }
         else
         {
