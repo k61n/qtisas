@@ -8231,10 +8231,17 @@ void AiAssistant::onReplyFinished(QNetworkReply *reply)
         const int written = usage.value("cache_creation_input_tokens").toInt();
         const int input = usage.contains("prompt_tokens") ? usage.value("prompt_tokens").toInt()
                                                           : usage.value("input_tokens").toInt() + read + written;
-        m_host->print(QString("▸▸▸ AI cache: %1 of %2 prompt tokens read from the cache, %3 written")
-                          .arg(read)
-                          .arg(input)
-                          .arg(written));
+        // A missing field is no "0 cached": confirmed (BlaBlaDor, vLLM without --enable-prompt-tokens-details,
+        // "prompt_tokens_details": null), a repeated 49K-token prefix answered 13x faster than a new one.
+        const bool reported = usage.contains("cache_read_input_tokens") ||
+                              usage.value("prompt_tokens_details").toObject().contains("cached_tokens");
+        if (reported)
+            m_host->print(QString("▸▸▸ AI cache: %1 of %2 prompt tokens read from the cache, %3 written")
+                              .arg(read)
+                              .arg(input)
+                              .arg(written));
+        else
+            m_host->print(QString("▸▸▸ AI cache: %1 prompt tokens; the provider does not report cache use").arg(input));
     }
 
     if (obj.contains("content"))
