@@ -1084,6 +1084,15 @@ bool fittable18::setFunction(const QString &name)
     // delegate full fitting-session initialization to slotStackFitNext():
     // initLimits, initFitPage, comboBoxFunction setup, initMultiTable, saveUndo, page transition
     slotStackFitNext();
+    // A listed function whose library does not open leaves the init page: confirmed live (local, benchmark LIST 2
+    // item 3), configure("ai/sasviewmodels-parallelepiped-fuzzy", []) returned True, the stage stayed "init" with the
+    // previous function still set, and selectStage() failed four times with a message about another call.
+    if (widgetStackFit->currentIndex() == 0)
+    {
+        app()->scriptPrint("setFunction: '" + name +
+                           "' is listed but could not be opened: its compiled library is missing or does not load.");
+        return false;
+    }
     return true;
 }
 

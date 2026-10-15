@@ -2776,10 +2776,15 @@ public:
                                          : sipCpp->lastCompileErrors.trimmed();
             // Confirmed live: code assigning "I = ..." (the SANS habit) to a function whose y is named "f" — clang's
             // "undeclared identifier 'I'" alone was repeated until the request gave up; name the real variables
+            // The parameters by name too: confirmed live (local, benchmark LIST 2 item 4), "undeclared identifier
+            // 'background'" for a function with scale, rate and offset came back five times.
             if (errText.contains("undeclared identifier"))
                 errText += QString("\nThis function's variables are named x = '%1' and y = '%2' "
-                                   "(setXName()/setYName()); the parameters by their names from setParamNamesAll().")
-                               .arg(sipCpp->xName(), sipCpp->yName());
+                                   "(setXName()/setYName()); its parameters are %3 (setParamNamesAll()) — the code "
+                                   "can use only these names.")
+                               .arg(sipCpp->xName(), sipCpp->yName(),
+                                    sipCpp->paramNames().isEmpty() ? QString("none")
+                                                                   : "'" + sipCpp->paramNames().join("', '") + "'");
             PyErr_SetString(PyExc_RuntimeError,
                 QString("compile: compilation of '%1' failed:\n%2")
                     .arg(sipCpp->functionName(), errText).toLocal8Bit().constData());
@@ -3067,6 +3072,11 @@ public:
                              .arg(*a0, withFolder.first());
             else
                 detail = QString(" Function '%1' not found — use fitFunctions() to list available names.").arg(*a0);
+        } else if (sipCpp->stage() == "init") {
+            detail = QString(" Function '%1' is listed but could not be opened: its compiled library is missing "
+                             "or does not load. Compile it first (Compiler.open(name), then Compiler.compile()), or "
+                             "use another function from fitFunctions().")
+                         .arg(*a0);
         } else {
             const QStringList avail = sipCpp->availableDatasets();
             QStringList missing;
@@ -3454,7 +3464,8 @@ public:
             sipRes = false;  // already in init, silently do nothing
         } else {
             PyErr_SetString(PyExc_RuntimeError,
-                "selectStage(): call setFunction() first (currently in init stage)");
+                "selectStage(): no function is set yet (init stage) — call configure(function, datasets) first, "
+                "and fix the error it raises if it raised one.");
             sipIsErr = 1;
         }
     } else {
@@ -3501,6 +3512,26 @@ public:
         sipIsErr = 1;
     } else {
         sipRes = sipCpp->simulateCurve();
+        // A simulation that made no table used to return a number all the same. Confirmed live (BlaBlaDor, LIST 1
+        // item 8, 4 of 4 runs) and reproduced: setSimUniformX(False) takes the x values from the selected dataset's
+        // X column — on a table without one (both columns Y) the curve is not made, table("simulatedCurve-...")
+        // returned None, and every retry failed on that None without a word about why.
+        const QString base = "simulatedCurve-" + sipCpp->currentFunction();
+        bool made = false;
+        for (const QString &name : sipCpp->app()->tableNames())
+            if (name == base || (name.startsWith(base + "-") && !name.endsWith("-session")))
+                made = true;
+        if (!made) {
+            PyErr_SetString(PyExc_RuntimeError,
+                QString("simulateCurve(): no simulated curve was made (no table \"%1\"). With "
+                        "setSimUniformX(False) the x values come from the X column of the selected dataset \"%2\" — "
+                        "its table needs a column with the X role; or use setSimUniformX(True) with "
+                        "setSimFromX()/setSimToX()/setSimNumPoints() for an x range of its own.")
+                    .arg(base, sipCpp->selectedDataset(1))
+                    .toUtf8()
+                    .constData());
+            sipIsErr = 1;
+        }
     }
 %End
 

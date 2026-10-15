@@ -6960,8 +6960,8 @@ QString QtiSasAiContent::fittableSelectStageBeforeFunctionMistake(const QString 
     return "This script calls selectStage(\"" + stageMatch.captured(2) +
            "\") before "
            "configure()/setFunction() has selected a function — Fittable is still in its \"init\" "
-           "stage at that point, and selectStage() raises RuntimeError (\"call setFunction() "
-           "first\") for any target besides \"init\" while there. Call configure(...) or "
+           "stage at that point, and selectStage() raises RuntimeError (\"no function is set yet\") "
+           "for any target besides \"init\" while there. Call configure(...) or "
            "setFunction(...) BEFORE selectStage(...).";
 }
 
