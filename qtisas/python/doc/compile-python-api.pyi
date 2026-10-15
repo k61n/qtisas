@@ -8,6 +8,8 @@
 #   Category known → filter c.categories() first; functionNames() needs the EXACT category name.
 #   functionNames() lists DEFINITIONS (.fif) — also one whose last compile failed. Whether a
 #   function can be fitted: name in Fittable.fitFunctions() (compiled ones only).
+#   functionNames() CLOSES the open function: functionName() is "" and paramNames() [] afterwards
+#   (scanGroups() clears functionName() too) — read them first, or c.open(name) again.
 #   A function the request asks to compile: always c.new() … c.compile(), never behind such a check.
 #     c.open(refs[0]); ref_code = c.code(); ref_params = c.paramNames()
 #

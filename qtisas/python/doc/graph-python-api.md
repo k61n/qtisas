@@ -100,7 +100,7 @@ GraphWindow.AlignPolicy     # AlignLayers=0, AlignCanvases — GraphWindow's enu
 | Method | Returns | Notes |
 |--------|---------|-------|
 | `numLayers()` | `int` | total number of layers |
-| `activeLayer()` | `Graph` | currently selected panel |
+| `activeLayer()` | `Graph` | currently selected panel — in a multi-layer graph the layer added last (the bottom one after `newGraph(name, 2, 2, 1)` or `plotResults()`), not the top one: for a layer the request names ("the top layer", "the first panel") use `layer(n)` |
 | `setActiveLayer(g)` | — | make `g` the active layer |
 | `layer(n)` | `Graph` | **1-based** index — `layer(1)` is the first |
 | `layersList()` | `list[Graph]` | all layers |

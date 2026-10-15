@@ -63,6 +63,8 @@
 
 # GraphWindow:
 # numLayers()->int  activeLayer()->Graph  layer(n)->Graph  layersList()->list
+#   activeLayer() in a multi-layer graph is the layer added last (the bottom one after newGraph(name,2,2,1) or
+#   plotResults()), not the top one — for "the top layer" / "the first panel" use layer(1)
 # addLayer(x,y,w,h,linked)->Graph  removeLayer(g)->bool  removeActiveLayer()->bool
 # setNumLayers(n)  setActiveLayer(g)  swapLayers(src,dest)  setEqualSizedLayers()
 # setCols(n)  setRows(n)  setMargins(l,r,t,b)

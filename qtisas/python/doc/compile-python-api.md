@@ -713,6 +713,10 @@ functions = c.functionNames()             # "ALL" by default: every function nam
 Calls `selectCategory(categoryName)` first, then returns the function list from the explorer.
 After this call the category is selected in the UI and `open()` + `compile()` work correctly.
 
+**It closes the function that was open:** afterwards `functionName()` is `""` and `paramNames()` is `[]`
+(`scanGroups()` clears `functionName()` too). Read a function's names before it, or `open(name)` again:
+`c.compile(); names = c.paramNames(); n = len([f for f in c.functionNames() if f == "ai/X"])`.
+
 Requires an **exact** category name as returned by `categories()` — wildcards and substrings are not accepted.
 
 > **`Compiler` has `functionNames()`; it does NOT have `fitFunctions()`** — that name belongs to
