@@ -2033,7 +2033,7 @@ QString QtiSasAiContent::codeWithLiteralsBlanked(const QString &code)
         const QRegularExpressionMatch m = it.next();
         for (qsizetype i = m.capturedStart(); i < m.capturedEnd(); ++i)
             if (out.at(i) != QLatin1Char('\n'))
-                out[i] = QLatin1Char(' ');
+                out[static_cast<int>(i)] = QLatin1Char(' ');
     }
     return out;
 }

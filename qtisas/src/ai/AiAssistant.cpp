@@ -285,6 +285,178 @@ QString AiAssistant::functionNotFoundNameFromError(const QString &errContext)
     return m.hasMatch() ? m.captured(1) : QString();
 }
 
+QString AiAssistant::createdByEarlierPartsNote() const
+{
+    // What the earlier parts created, by name, from the host's live state — not left to the model to infer from the
+    // plan. Confirmed live (LIST 5 item 5, split mode): part 2's tab script created "Auto", part 3 called
+    // newTable("Auto") again, was blocked ("would wipe an existing table") and sent the same script until the item
+    // was given up.
+    if (!m_host)
+        return {};
+    QStringList created;
+    for (const QString &object : m_host->liveObjects())
+        if (!m_objectsAtRequestStart.contains(object))
+            created << object;
+    if (created.isEmpty())
+        return {};
+    m_host->print("▸▸▸ AI split-mode: created by earlier parts — " + created.join(", "));
+    // A created table with its rows, columns and roles: what a later part needs to read it (dataset "Calib_y", the
+    // error column), not only its name — confirmed live, a fit part re-guessed the column names part 1 had chosen.
+    QStringList described;
+    for (const QString &object : created)
+    {
+        const QString tablePrefix = QStringLiteral("table:");
+        const QString shape =
+            object.startsWith(tablePrefix) ? m_host->tableShape(object.mid(tablePrefix.size())) : QString();
+        described << (shape.isEmpty() ? object : object + " (" + shape + ")");
+    }
+    return " They are, exactly: " + described.join(", ") +
+           " — they exist now: use them as they are, never create any of them again.";
+}
+
+QString AiAssistant::projectFactsNote() const
+{
+    // What a refused probe usually asks for — which objects exist, their kinds, a table's columns — answered from the
+    // host's own state, with nothing executed. Confirmed live (BIGMODEL, newest build): a refused probe asked for
+    // tableNames() and Fittable's current function; the refusal told the model nothing. Objects created during this
+    // LIST or request come first, with table shapes; the rest by name, capped.
+    if (!m_host)
+        return {};
+    const QStringList live = m_host->liveObjects();
+    if (live.isEmpty())
+        return {};
+    const QStringList &baseline = listModeActive ? m_listObjectsAtStart : m_objectsAtRequestStart;
+    QStringList recent;
+    QStringList older;
+    for (const QString &object : live)
+        (baseline.contains(object) ? older : recent) << object;
+    QStringList described;
+    for (const QString &object : recent)
+    {
+        const QString name = object.section(':', 1);
+        QString line = object.section(':', 0, 0) + " \"" + name + "\"";
+        if (object.startsWith(QLatin1String("table:")))
+            if (const QString shape = m_host->tableShape(name); !shape.isEmpty())
+                line += " (" + shape + ")";
+        described << line;
+    }
+    constexpr int kMaxOlder = 40;
+    for (int i = 0; i < older.size() && i < kMaxOlder; ++i)
+        described << older[i].section(':', 0, 0) + " \"" + older[i].section(':', 1) + "\"";
+    if (older.size() > kMaxOlder)
+        described << QString("... and %1 more").arg(older.size() - kMaxOlder);
+    return "\n\nWhat QtiSAS knows about the project right now (read from its own state, nothing executed): " +
+           described.join("; ") + ". A fit's results are in table \"fitCurve-<function>\".";
+}
+
+void AiAssistant::recordFinishedListItem()
+{
+    // What the item that just ended made: new objects (the host's live state against the item's start) and the
+    // functions its successful scripts compiled — a recompiled function keeps its name, so the object list alone
+    // misses it. Confirmed live (Codex BIGMODEL): item 4 deleted and recompiled "ai/ExpDecay", item 5 "Fit the model
+    // against the data" then fitted item 3's simulated sasviewmodels model — the note had listed only new tables.
+    if (!listModeActive || listItemIndex < 0 || listItemIndex >= listItems.size() || !m_host)
+        return;
+    EarlierItem item;
+    item.number = listItemIndex + 1;
+    for (const QString &object : m_host->liveObjects())
+        if (!m_itemObjectsAtStart.contains(object))
+            item.objects << object;
+    static const QRegularExpression nameRe(R"RX(\bsetFunctionName\s*\(\s*["']([^"']+)["'])RX");
+    static const QRegularExpression compileRe(R"(\.\s*compile\s*\()");
+    for (const QString &script : std::as_const(m_itemRanScripts))
+        if (compileRe.match(script).hasMatch())
+            for (auto it = nameRe.globalMatch(script); it.hasNext();)
+            {
+                const QString object = "function:" + it.next().captured(1);
+                if (!item.objects.contains(object) && !item.compiled.contains(object))
+                    item.compiled << object;
+            }
+    if (!item.objects.isEmpty() || !item.compiled.isEmpty())
+        m_earlierItems << item;
+}
+
+QString AiAssistant::createdByEarlierItemsNote() const
+{
+    // What the earlier items of this LIST made, item by item, from the host's live state — a LIST item gets no
+    // history, so "the previous step" / "the model" / "it" pointed at nothing. Confirmed live (BIGMODEL,
+    // ai-test-requests item 10): the model fitted a leftover library function to the wrong data; on the newest build it
+    // sent an EXPLORE probe asking for Fittable's current function and the table names — refused with EXPLORE off.
+    if (!listModeActive || listItemIndex <= 0 || !m_host || m_earlierItems.isEmpty())
+        return {};
+    const QStringList live = m_host->liveObjects();
+    QStringList perItem;
+    QStringList consoleParts;
+    for (const EarlierItem &item : m_earlierItems)
+    {
+        QStringList described;
+        for (const QString &object : item.objects + item.compiled)
+        {
+            const bool compiledAgain = item.compiled.contains(object);
+            if (!compiledAgain && !live.contains(object))
+                continue; // deleted since
+            const QString kind = object.section(':', 0, 0);
+            const QString name = object.section(':', 1);
+            QString line = kind + " \"" + name + "\"" + (compiledAgain ? " (compiled)" : QString());
+            if (kind == "table")
+                if (const QString shape = m_host->tableShape(name); !shape.isEmpty())
+                    line += " (" + shape + ")";
+            static const QString fitPrefix = QStringLiteral("fitCurve-");
+            if (kind == "table" && name.startsWith(fitPrefix) && !name.endsWith("-session"))
+                line += " — the result table of a fit of " + name.mid(fitPrefix.size());
+            described << line;
+        }
+        if (described.isEmpty())
+            continue;
+        perItem << QString("item %1: ").arg(item.number) + described.join("; ");
+        consoleParts << QString("item %1: ").arg(item.number) + (item.objects + item.compiled).join(", ");
+    }
+    if (perItem.isEmpty())
+        return {};
+    m_host->print("▸▸▸ AI LIST: made by earlier items — " + consoleParts.join(" | "));
+    return "\n\nMADE BY EARLIER ITEMS of this list (read from QtiSAS — they exist now), item by item:\n- " +
+           perItem.join("\n- ") +
+           "\nWhen this item refers to an earlier result without naming it (\"the previous step\", \"the model\", "
+           "\"the data\", \"it\"), it means these objects — the most recent item's first; use them by name.";
+}
+
+bool AiAssistant::namesSomethingNew(const QString &description, const QString &requestText)
+{
+    // name-like only: a planner also quotes formulas ("pow(column(1), 3)") and labels, which name no object
+    static const QRegularExpression quotedRe(R"RX("([A-Za-z_][\w./:-]{0,79})"|'([A-Za-z_][\w./:-]{0,79})')RX");
+    for (auto it = quotedRe.globalMatch(description); it.hasNext();)
+    {
+        const QRegularExpressionMatch m = it.next();
+        const QString name = m.captured(1).isEmpty() ? m.captured(2) : m.captured(1);
+        if (!requestText.contains(name, Qt::CaseInsensitive))
+            return true;
+    }
+    return false;
+}
+
+bool AiAssistant::requestCreatesName(const QString &requestText, const QString &name)
+{
+    const QRegularExpression createRe(
+        R"RX((?:\b(?:create|make|build|compile|new|add)\b\W+(?:\w+\W+){0,4}|\bnamed\s+)")RX" +
+            QRegularExpression::escape(name) + "\"",
+        QRegularExpression::CaseInsensitiveOption);
+    return createRe.match(requestText).hasMatch();
+}
+
+QString AiAssistant::quotedNameWithFolder(const QString &requestText, const QString &shortName)
+{
+    if (shortName.isEmpty() || shortName.contains('/'))
+        return {};
+    static const QRegularExpression quotedRe(R"re("([^"\n]{1,80})")re");
+    for (auto it = quotedRe.globalMatch(requestText); it.hasNext();)
+    {
+        const QString name = it.next().captured(1);
+        if (name.endsWith("/" + shortName))
+            return name;
+    }
+    return {};
+}
+
 QStringList AiAssistant::compiledFunctionNamesFromHistory(const QList<QPair<QString, QString>> &history)
 {
     QStringList names;
@@ -497,6 +669,17 @@ static bool inCreationClause(const QString &text, qsizetype nameStart, qsizetype
     static const QRegularExpression conditionalRe(
         R"(\bif\b(?:\s+\S+){0,4}?\s+(?:not\s+exist\w*|n't\s+exist\w*|missing|absent|needed|necessary)\b)",
         QRegularExpression::CaseInsensitiveOption);
+    // A name the creation READS FROM is its input, not its target: "Create a graph \"Report5\" ... with the \"Calib\" y
+    // data ... the fitted curve from table \"fitCurve-ai/Quad\"". Confirmed live (LIST 5 item 3, 2026-10-11): both were
+    // taken as created, so no project state was given for them, and the model printed "-1 -1 -1" with the comment
+    // "cannot execute without proper data" while both tables existed. A name right after from/of (with at most "the"
+    // and a kind word between), or right before data/points/values/column(s)/residuals, is read.
+    static const QRegularExpression sourceBeforeRe(R"(\b(?:from|of)\s+(?:the\s+)?(?:\w+\s+)?"?$)",
+                                                   QRegularExpression::CaseInsensitiveOption);
+    static const QRegularExpression sourceAfterRe(R"(^"?\s+(?:\w+\s+)?(?:data|points|values|columns?|residuals)\b)",
+                                                  QRegularExpression::CaseInsensitiveOption);
+    if (sourceBeforeRe.match(text.left(nameStart)).hasMatch() || sourceAfterRe.match(text.mid(nameEnd)).hasMatch())
+        return false;
     const QString before = text.left(nameStart);
     // Last boundary's END, not its start: a ", then" boundary is several characters long, and
     // keeping its own text in the lookback would leave nothing wrong but reads as sloppy.
@@ -515,6 +698,33 @@ static bool inCreationClause(const QString &text, qsizetype nameStart, qsizetype
     const QRegularExpressionMatch nextBoundary = clauseBoundaryRe.match(after);
     const QString lookahead = nextBoundary.hasMatch() ? after.left(nextBoundary.capturedStart(0)) : after;
     return creationVerbRe.match(lookahead).hasMatch() && conditionalRe.match(lookahead).hasMatch();
+}
+
+// True if the name starting at `nameStart` in `text` is what its clause deletes or closes ("close and delete the table
+// \"Peak5\" and the note \"Pipeline\""). Such a name is no input that must exist: missing is already the end state the
+// request asks for, and the item's own script reports it. Confirmed live (LIST 5 NOSPLIT, item 6): an earlier item had
+// failed to create "Pipeline", and the existence check stopped the cleanup item outright instead of letting it delete
+// the rest and print that "Pipeline" does not exist. Not when the name only holds what is deleted ("delete rows 2-5
+// from table \"Data\"", "remove column \"y\" of table \"T\""): a from/in/of between verb and name keeps it an input.
+static bool inDeletionClause(const QString &text, qsizetype nameStart)
+{
+    // Word forms of the verbs, not prefixes: "clos\w*" also took "closest" and "closer".
+    static const QRegularExpression deletionVerbRe(R"(\b(?:delet(?:e|es|ed|ing)|remov(?:e|es|ed|ing)|clos(?:e)"
+                                                   R"(|es|ed|ing)|discard(?:s|ed|ing)?|drop(?:s|ped|ping)?)\b)",
+                                                   QRegularExpression::CaseInsensitiveOption);
+    static const QRegularExpression containerRe(R"(\b(?:from|in|of|inside)\b)",
+                                                QRegularExpression::CaseInsensitiveOption);
+    static const QRegularExpression clauseBoundaryRe(R"([.;\n]|,\s*(?:then|next|afterwards?|finally|after that)\b)",
+                                                     QRegularExpression::CaseInsensitiveOption);
+    const QString before = text.left(nameStart);
+    qsizetype boundaryEnd = 0;
+    for (auto it = clauseBoundaryRe.globalMatch(before); it.hasNext();)
+        boundaryEnd = it.next().capturedEnd(0);
+    const QString lookback = before.mid(boundaryEnd);
+    qsizetype verbEnd = -1;
+    for (auto it = deletionVerbRe.globalMatch(lookback); it.hasNext();)
+        verbEnd = it.next().capturedEnd(0);
+    return verbEnd >= 0 && !containerRe.match(lookback.mid(verbEnd)).hasMatch();
 }
 
 // Every quoted name the request creates somewhere — in any of its clauses. Such a name is never an input, wherever
@@ -611,7 +821,7 @@ QList<QPair<QString, QString>> extractExistingEntityNames(const QString &request
             if (between.contains("new", Qt::CaseInsensitive))
                 continue;
             const QString name = m.captured(1);
-            if (created.contains(name.trimmed()))
+            if (created.contains(name.trimmed()) || inDeletionClause(requestText, m.capturedStart(1)))
                 continue;
             // `between` always ends with the pattern's own literal opening quote character (both
             // patterns end with \s*"(...)"), which would otherwise defeat trailingNounRe's \s*$
@@ -665,7 +875,8 @@ QList<QPair<QString, QString>> extractExistingEntityNames(const QString &request
     {
         const QRegularExpressionMatch m = kindIt.next();
         const QString name = m.captured(2);
-        if (created.contains(name.trimmed()) || inCreationClause(requestText, m.capturedStart(0), m.capturedEnd(0)))
+        if (created.contains(name.trimmed()) || inCreationClause(requestText, m.capturedStart(0), m.capturedEnd(0)) ||
+            inDeletionClause(requestText, m.capturedStart(2)))
             continue;
         bool merged = false;
         for (QPair<QString, QString> &entry : names)
@@ -855,7 +1066,11 @@ void AiAssistant::beginRequest(const QString &aiText, bool autoRunValue, bool wa
             existingInputNamesNote(withoutRequestSuffix(aiText), &m_existingInputTables, &factsSummary);
         if (!factsSummary.isEmpty() && m_host)
             m_host->print("▸▸▸ AI: " + factsSummary);
+        m_earlierItemsNote = createdByEarlierItemsNote();
+        pendingLiveFactsNote += m_earlierItemsNote;
     }
+    else
+        m_earlierItemsNote.clear();
 
     // Generate-only mode (autoRun == false) skips existence verification altogether.
     //
@@ -879,6 +1094,37 @@ void AiAssistant::beginRequest(const QString &aiText, bool autoRunValue, bool wa
     if (m_content && autoRun)
     {
         const QList<QPair<QString, QString>> existingNames = extractExistingEntityNames(aiText);
+        // The host answers itself (entityKinds(), its own live state), as the split-plan check does since series 4:
+        // no model-written script, no round-trip. Confirmed live (BIGMODEL, ai-test-requests item 9): the check cost a
+        // whole ~114K-token call to print "(window) EXISTS: SAXS_data". The model-written script stays the fallback
+        // for a host that cannot tell.
+        if (!existingNames.isEmpty() && m_host)
+        {
+            QStringList plainNames;
+            for (const QPair<QString, QString> &entry : existingNames)
+                plainNames << entry.first;
+            const QList<QStringList> kinds = m_host->entityKinds(plainNames);
+            if (kinds.size() == plainNames.size())
+            {
+                static const QStringList windowKinds = {"window", "table", "matrix", "note", "graph", "3D plot"};
+                QStringList missing;
+                for (int i = 0; i < plainNames.size(); ++i)
+                {
+                    bool exists = false;
+                    // a "function" is compiled or fittable — entityKinds() names those two
+                    const QString label = existingNames[i].second;
+                    for (const QString &kind : kinds[i])
+                        exists = exists || label.isEmpty() ||
+                                 (label == "window"     ? windowKinds.contains(kind)
+                                  : label == "function" ? (kind == "compile" || kind == "fittable")
+                                                        : kind == label);
+                    if (!exists)
+                        missing << plainNames[i];
+                }
+                finishExistenceCheck(aiText, missing);
+                return;
+            }
+        }
         if (!existingNames.isEmpty())
         {
             QList<QPair<QString, QStringList>> names;
@@ -942,7 +1188,13 @@ void AiAssistant::handleExistenceCheckScriptResponse(const QString &code)
         return;
     }
     const QList<QPair<QString, QString>> checkedNames = extractExistingEntityNames(aiText);
-    const QStringList missing = missingEntityNames(result.output, checkedNames);
+    finishExistenceCheck(aiText, missingEntityNames(result.output, checkedNames));
+}
+
+void AiAssistant::finishExistenceCheck(const QString &aiText, const QStringList &missing)
+{
+    if (!m_host)
+        return;
     // Gated on autoRun even though beginRequest() no longer starts a check in generate-only mode: a
     // reply for a check dispatched while auto-run was still on can land here after the flag changed,
     // and refusing the request then would be the one outcome generate-only mode must never produce
@@ -1126,7 +1378,20 @@ void AiAssistant::startRequest(const QStringList &docTopics, const QString &reso
     selectedDocTopics = docTopics;
     QString requestForModel;
     m_singlePartDescription = resolvedTaskDescription;
-    if (!resolvedTaskDescription.isEmpty())
+    // The one-part plan's paraphrase goes along only when it names an object the request does not — the case it exists
+    // for (a request with no name, the plan settled on one). Otherwise it adds nothing the request does not say and can
+    // only contradict it. Confirmed live (split-mode LISTs, 2026-10-11): 10 of 30 one-part items failed against 2 of
+    // 18 multi-part ones — "In \"Squares\", give column 3 ..." planned as "create table named 'Squares' with three
+    // columns and five rows", "column 2, in text format" planned without "in text format" (the text cell came back
+    // empty).
+    if (!resolvedTaskDescription.isEmpty() && !namesSomethingNew(resolvedTaskDescription, originalRequestText))
+    {
+        if (m_host)
+            m_host->print("▸▸▸ AI split-plan: the plan's wording names nothing the request does not — the request "
+                          "itself is sent.");
+        m_singlePartDescription.clear();
+    }
+    if (!m_singlePartDescription.isEmpty())
     {
         // Called from handleSplitPlanResponse()'s single-part shortcut: a plan that settled on
         // exactly one part is collapsed into a direct (non-split) call to skip split-mode's
@@ -2886,6 +3151,33 @@ void AiAssistant::handleSplitPlanResponse(const QString &code)
                                   "(compile-python-api.md Rule 6).")
                               .arg(skippedAsExempt.join(", ")));
     }
+    // The host answers itself when it can: the same lookup the PROJECT STATE note uses, no model-written script.
+    // Confirmed live (LIST 5 item 5, split mode, 2026-10-11): on a fresh project the model's check script printed
+    // "(window) MISSING: Pipeline", then "(window) EXISTS: Pipeline" and "VERDICT: EXISTS", the item was stopped as a
+    // collision, and a stray note "Notes1" was left behind. The answer is written in that script's own line format,
+    // so the decision below stays the same.
+    if (!creationNames.isEmpty() && m_content && m_host)
+    {
+        QStringList names;
+        for (const QPair<QString, QStringList> &entry : creationNames)
+            names << entry.first;
+        const QList<QStringList> kinds = m_host->entityKinds(names);
+        if (kinds.size() == names.size())
+        {
+            static const QStringList windowKinds = {"window", "table", "matrix", "note", "graph", "3D plot"};
+            QStringList lines;
+            for (int i = 0; i < names.size(); ++i)
+                for (const QString &label : creationNames[i].second)
+                {
+                    bool exists = false;
+                    for (const QString &kind : kinds[i])
+                        exists = exists || (label == "window" ? windowKinds.contains(kind) : kind == label);
+                    lines << "(" + label + ") " + (exists ? "EXISTS" : "MISSING") + ": " + names[i];
+                }
+            finishSplitPlanCreationCheck(lines.join("\n"));
+            return;
+        }
+    }
     if (!creationNames.isEmpty() && m_content)
     {
         awaitingSplitPlanCreationCheckScript = true;
@@ -2968,8 +3260,13 @@ void AiAssistant::handleSplitPlanCreationCheckScriptResponse(const QString &code
         finalizeSplitPlanAndLaunch();
         return;
     }
+    finishSplitPlanCreationCheck(result.output);
+}
+
+void AiAssistant::finishSplitPlanCreationCheck(const QString &checkOutput)
+{
     const QList<QPair<QString, QStringList>> checkedNames = splitPlanCreationNames(splitPlan);
-    QStringList collisions = splitPlanCreationCollisions(result.output, checkedNames);
+    QStringList collisions = splitPlanCreationCollisions(checkOutput, checkedNames);
     QStringList sandboxExempt;
     collisions = splitPlanCollisionsAfterSandboxExemption(collisions, checkedNames, &sandboxExempt);
     if (!sandboxExempt.isEmpty())
@@ -2980,6 +3277,29 @@ void AiAssistant::handleSplitPlanCreationCheckScriptResponse(const QString &code
                                   "disposable scratch (compile-python-api.md Rule 6), proceeding to "
                                   "recompile over it.")
                               .arg(sandboxExempt.join(", ")));
+    }
+
+    // A name the request only works ON was made a creation by the plan. Confirmed live (LIST 3 items 2 and 3, split
+    // mode, 4 of 4): "In \"Squares\", give column 3 a formula ..." was planned as "create table named 'Squares' with
+    // three columns ...", and the collision stop below gave the item up without running anything. The plan's part
+    // is told to use the existing object instead; a script that would create it again is still blocked
+    // (existingTableRecreatedMistake()).
+    QStringList workedOn;
+    for (const QString &n : collisions)
+        if (originalRequestText.contains("\"" + n + "\"") && !requestCreatesName(originalRequestText, n))
+            workedOn << n;
+    if (!workedOn.isEmpty())
+    {
+        for (SplitPart &part : splitPlan)
+            for (const QString &n : workedOn)
+                if (part.description.contains(n))
+                    part.description += " (\"" + n + "\" already exists: use it, do not create it again.)";
+        for (const QString &n : workedOn)
+            collisions.removeAll(n);
+        if (m_host)
+            m_host->print("▸▸▸ AI split-plan: " + workedOn.join(", ") +
+                          " already exist(s) and the request works on it, not creates it — the plan uses the "
+                          "existing one.");
     }
 
     if (!collisions.isEmpty())
@@ -3096,10 +3416,19 @@ void AiAssistant::startSplitPart(int index)
     isErrorRetryCorrection = false;
     m_freshRetryUsed = false;
 
-    const SplitPart &part = splitPlan[index];
+    SplitPart part = splitPlan[index];
     // "none"/ambiguous-"all" stay exactly as returned (never get the baseline topics prepended) —
     // same guard as startRequestWithSelectedTopics()'s own baseline-topic prepend.
     const bool noneOrAmbiguous = part.docTopics.isEmpty() || part.docTopics == QStringList{kNoDocsSentinel};
+    // The doc of every kind an earlier part created goes along: a later part works on those objects whatever its
+    // description stresses. Confirmed live (series 6, local, LIST 5 item 5): part 2 wrote the scripts into the note's
+    // "tabs" with topics ai, app, table — no note doc — invented setTabText() and the item was given up.
+    if (index > 0 && !noneOrAmbiguous && m_host && m_content)
+        for (const QString &object : m_host->liveObjects())
+            if (!m_objectsAtRequestStart.contains(object))
+                if (const QString topic = m_content->docTopicForKind(object.section(':', 0, 0));
+                    !topic.isEmpty() && !part.docTopics.contains(topic))
+                    part.docTopics << topic;
     selectedDocTopics = noneOrAmbiguous
                             ? part.docTopics
                             : ((m_content ? m_content->baselineDocTopics() : QStringList()) + part.docTopics);
@@ -3171,10 +3500,13 @@ void AiAssistant::startSplitPart(int index)
         "this message — read that section first if it helps. Everything between here and there "
         "(the full plan, the original request, prior turns) is reference material to consult while "
         "doing that task, not a list of additional things to do.\n\n"
-        "Split-mode part " + QString::number(index + 1) + " of " + QString::number(splitPlan.size()) +
+        "Split-mode part " +
+        QString::number(index + 1) + " of " + QString::number(splitPlan.size()) +
         ".\n\nFull plan for context — do not redo an earlier part, do not jump ahead to a later one:\n" +
-        allParts.join("\n") + "\n\nOriginal request (baseline goal for the whole plan):\n" + originalRequestText +
-        "\n\nGenerate a script for ONLY this part: " + part.description + topicsHint +
+        allParts.join("\n") +
+        "\n\nOriginal request — its names, formulas, numbers and roles are authoritative; the part description "
+        "below only says WHICH of its steps this script does (where they differ, the request is right):\n" +
+        originalRequestText + "\n\nGenerate a script for ONLY this part: " + part.description + topicsHint +
         "\n\nThis part's description above is the COMPLETE task for this script — perform it now. "
         "The other parts listed above are shown for context only (what already ran, what comes "
         "next); they are separate, already-decided tasks, never a backup that will additionally "
@@ -3188,9 +3520,11 @@ void AiAssistant::startSplitPart(int index)
                          ", etc.) — do NOT assume any variable from "
                          "an earlier part's script is still bound; only the conversation's PRINTED output "
                          "carries forward between separate script runs, never the Python objects "
-                         "themselves (the same rule that already governs EXPLORE rounds)."
+                         "themselves (the same rule that already governs EXPLORE rounds)." +
+                         createdByEarlierPartsNote()
                    : QString()) +
-        currentRequestBlock + sandboxExemptNote;
+        m_earlierItemsNote + currentRequestBlock + sandboxExemptNote + m_partMissingNote;
+    m_partMissingNote.clear();
     // historyText: a short "Part N of M: <description>" instead of `prompt` itself — the ONE call
     // in this file not already following startRequest()'s own rule (raw scaffolding must never be
     // what gets stored in m_history). Confirmed live: the full plan re-listing was being saved
@@ -3202,6 +3536,84 @@ void AiAssistant::startSplitPart(int index)
 
 void AiAssistant::advanceSplitPart(const QString &code)
 {
+    // The names this part's description says it creates must exist now — a part counted as done when its script ran
+    // without an error, never whether it delivered (confirmed live, LIST 5 2026-10-11: later parts recreated or missed
+    // what an earlier part should have made). Missing: the part runs once more with the reason; still missing, the
+    // plan goes on and the later parts see the real state (createdByEarlierPartsNote()). A part whose description
+    // writes a script into a tab creates its names only when that tab runs — not checked.
+    if (m_host && !m_partVerifyRetried &&
+        !splitPlan[splitPartIndex].description.contains("script", Qt::CaseInsensitive))
+    {
+        const QString description = splitPlan[splitPartIndex].description;
+        const QList<QPair<QString, QStringList>> planned = splitPlanCreationNames({splitPlan[splitPartIndex]});
+        // Only names of objects: a name the description gives to a tab, column, layer or label is part of an object,
+        // never one itself. Confirmed live (series 7, local, LIST 5 item 5): "a note named 'Pipeline' with two tabs
+        // named 'make' and 'check'" — "make" was reported missing, the part ran again and added a third tab.
+        static const QRegularExpression nounRe(R"(\b(tabs?|columns?|layers?|labels?|parameters?|table|graph)"
+                                               R"(|matrix|note|functions?|panels?|surface|plot|window)\b)",
+                                               QRegularExpression::CaseInsensitiveOption);
+        static const QStringList partNouns{"tab",    "tabs",  "column", "columns",   "layer",
+                                           "layers", "label", "labels", "parameter", "parameters"};
+        QStringList names;
+        for (const QPair<QString, QStringList> &entry : planned)
+        {
+            const qsizetype at = description.indexOf(entry.first);
+            QString noun;
+            for (auto it = nounRe.globalMatch(description.left(qMax<qsizetype>(at, 0))); it.hasNext();)
+                noun = it.next().captured(1).toLower();
+            if (!partNouns.contains(noun))
+                names << entry.first;
+        }
+        const QList<QStringList> kinds = names.isEmpty() ? QList<QStringList>() : m_host->entityKinds(names);
+        QStringList missing;
+        if (kinds.size() == names.size())
+            for (int i = 0; i < names.size(); ++i)
+                if (kinds[i].isEmpty())
+                    missing << "\"" + names[i] + "\"";
+
+        // A created table must also have the columns the description names. Confirmed live (series 7, local, LIST 5
+        // item 1): part 1 ran only newTable("Calib", 21, 3) — taken from an EXPLORE reply — so "Calib" existed but had
+        // no "x", "y", "dy"; the part counted as done and the next two failed. The table is the one the description
+        // creates ("create table "Calib" ... columns "x", ..."), whether or not it is phrased with "named".
+        static const QRegularExpression createdTableRe(
+            R"RX(\b(?:create|make|build)\b[^.;]*?\btable\s+(?:named\s+|called\s+)?["']([^"'\n]+)["'])RX",
+            QRegularExpression::CaseInsensitiveOption);
+        // the quoted list right after "columns" ("columns "x", "y" and "dy"") — not quoted values further on
+        // ("column 2 holds "alpha", "beta"")
+        static const QRegularExpression columnsClauseRe(
+            R"RX(\bcolumns?\s*(?:named\s+|called\s+|:\s*)?((?:["'][A-Za-z_]\w{0,30}["']\s*(?:,|\band\b)?\s*)+))RX",
+            QRegularExpression::CaseInsensitiveOption);
+        // identifier-like only: a quoted formula or a result label ("R1:") is no column name
+        static const QRegularExpression quotedRe(R"RX(["']([A-Za-z_]\w{0,30})["'])RX");
+        if (const QRegularExpressionMatch created = createdTableRe.match(description); created.hasMatch())
+        {
+            const QString table = created.captured(1);
+            const QString shape = m_host->tableShape(table);
+            for (auto c = columnsClauseRe.globalMatch(description, created.capturedEnd()); c.hasNext();)
+                for (auto q = quotedRe.globalMatch(c.next().captured(1)); q.hasNext();)
+                {
+                    const QString column = q.next().captured(1);
+                    const QString entry = "column \"" + column + "\" of table \"" + table + "\"";
+                    if (!shape.isEmpty() && column != table && !shape.contains("\"" + column + "\"") &&
+                        !missing.contains(entry))
+                        missing << entry;
+                }
+        }
+        if (!missing.isEmpty())
+        {
+            m_partVerifyRetried = true;
+            m_partMissingNote = "\n\nThis part ran once already, but " + missing.join(", ") +
+                                " does not exist afterwards — this part's script must create it.";
+            m_host->print(QString("▸▸▸ AI split-mode: part %1/%2 ran, but %3 does not exist — running the part "
+                                  "once more.")
+                              .arg(splitPartIndex + 1)
+                              .arg(splitPlan.size())
+                              .arg(missing.join(", ")));
+            startSplitPart(splitPartIndex);
+            return;
+        }
+    }
+    m_partVerifyRetried = false;
     splitPartScripts << code;
     const int next = splitPartIndex + 1;
     if (next < splitPlan.size())
@@ -3284,6 +3696,8 @@ void AiAssistant::startListItems(const QStringList &items, bool forceSplit, bool
         listItems << item;
     }
     listItemIndex = -1;
+    m_listObjectsAtStart = m_host ? m_host->liveObjects() : QStringList();
+    m_earlierItems.clear();
     listItemForceSplit = forceSplit;
     listItemForceNoSplit = forceNoSplit;
     listItemForceReview = forceReview;
@@ -3322,6 +3736,7 @@ QString AiAssistant::listItemElapsedNote() const
 void AiAssistant::startNextListItem()
 {
     const QString finishedNote = listItemElapsedNote();
+    recordFinishedListItem();
     ++listItemIndex;
     if (listItemIndex >= listItems.size())
     {
@@ -3338,6 +3753,8 @@ void AiAssistant::startNextListItem()
                           .arg(finishedNote)
                           .arg(item.text));
     m_listItemTimer.start();
+    m_itemObjectsAtStart = m_host ? m_host->liveObjects() : QStringList();
+    m_itemRanScripts.clear();
     const bool wantsSplit = listItemForceSplit ? true : listItemForceNoSplit ? false : listSplitByDefault;
     setSelfReviewEnabled(listItemForceReview ? true : listItemForceNoReview ? false : listReviewByDefault);
     // Re-applied per item, exactly like self-review above: every list item runs through the normal
@@ -3364,7 +3781,22 @@ void AiAssistant::startNextListItem()
     m_blockedRounds = 0;
     // The same transport suffix askAi() appends to a single request: an item is one, and in generate-only mode the
     // suffix is what says nothing in this session has run.
-    beginRequest(item.text + (m_content ? m_content->requestSuffix(autoRun) : QString()), autoRun, wantsSplit);
+    // The result line's values as a numbered list, from the request's own Print sentence: the most frequent local-pyi
+    // failure was a result line short of values (the others on lines of their own), checked only after the script
+    // was written; said up front, it costs a line. Only for two or more values, where an order can be lost.
+    QString itemText = item.text;
+    if (m_content)
+    {
+        const QStringList values = m_content->resultLineValueList(item.text);
+        if (values.size() >= 2)
+        {
+            QStringList numbered;
+            for (int i = 0; i < static_cast<int>(values.size()); ++i)
+                numbered << QString("%1) %2").arg(i + 1).arg(values.at(i));
+            itemText += "\nIts result line holds these values, in this order: " + numbered.join("; ") + ".";
+        }
+    }
+    beginRequest(itemText + (m_content ? m_content->requestSuffix(autoRun) : QString()), autoRun, wantsSplit);
 }
 
 void AiAssistant::advanceListItem()
@@ -3782,7 +4214,7 @@ void AiAssistant::refuseExploreRound(const QString &code)
         "— that is the supported way to handle unknown project state here, and it needs no separate "
         "round-trip. Do not invent a value you would have checked, and do not drop part of the task "
         "because you could not check it first." +
-        bundledDraftBlock;
+        projectFactsNote() + bundledDraftBlock;
     // Same call shape as requestActionScriptAfterExplore()'s own ask() — see its
     // topicsHintLine()/historyText notes for why the hinted text is not what gets stored.
     ask(followUp + topicsHintLine(selectedDocTopics), true, QString(), selectedDocTopics, true, true, true, followUp);
@@ -3819,7 +4251,7 @@ bool AiAssistant::runExploreProbe(const QString &code, QString *output, QString 
     // EXPLORE previously skipped it entirely and could crash at runtime (e.g. scriptPrint()'s
     // multi-arg mistake) on something already cataloged and normally caught for free beforehand.
     const QList<AiKnownMistakeMatch> knownMistakes =
-        m_content ? m_content->detectKnownMistakes(safeCode, originalRequestText, splitPartScripts.join("\n\n"),
+        m_content ? m_content->detectKnownMistakes(safeCode, mistakeCheckRequestText(), splitPartScripts.join("\n\n"),
                                                    laterSplitPartDescriptions(), /*exploreScript=*/true)
                   : QList<AiKnownMistakeMatch>();
     if (!knownMistakes.isEmpty())
@@ -3895,6 +4327,7 @@ bool AiAssistant::runExploreProbe(const QString &code, QString *output, QString 
         m_failedRunObjects.clear();
         m_closedFailedObjects.clear();
         m_failedRunScripts.clear();
+        m_itemRanScripts << safeCode;
         if (splitModeActive)
             advanceSplitPart(safeCode);
         else if (listModeActive)
@@ -3977,6 +4410,15 @@ void AiAssistant::requestActionScriptAfterExplore(const QString &code, const QSt
     ask(followUp + topicsHintLine(selectedDocTopics), true, QString(), selectedDocTopics, true, true, true, followUp);
 }
 
+// True when `code` holds a line that is neither blank nor a comment.
+static bool hasExecutableLine(const QString &code)
+{
+    return std::ranges::any_of(code.split('\n'), [](const QString &line) {
+        const QString trimmed = line.trimmed();
+        return !trimmed.isEmpty() && !trimmed.startsWith('#');
+    });
+}
+
 // Two-phase agentic loop orchestration: decide, then carry out. Each step's own doc comment above
 // carries the confirmed-live incidents that shaped it.
 void AiAssistant::handleExploreResponse(const QString &code)
@@ -4008,15 +4450,83 @@ void AiAssistant::handleExploreResponse(const QString &code)
             if (m_host)
                 m_host->print("▸▸▸ AI: the same EXPLORE probe as the previous round — not run again; its output is "
                               "already in hand.");
+            // The reply carries an action script written after that output came back: take it. Confirmed live (LIST 5
+            // local pyi, item 2): the identical probe with the same bundled action script four rounds in a row, each
+            // round answered with "write the action script".
+            if (kActionScriptMarkerRe.match(code).hasMatch() && takeBundledActionScript(code))
+                return;
             requestActionScriptAfterExplore(code, lastExploreOutput, code.mid(probe.length()));
             return;
         }
     }
+    // A probe was answered already, and this reply carries an action script written after that answer came back: it is
+    // the answer, not another question. Confirmed live (LIST 5 NOSPLIT local pyi, item 2): after "Table 'Peak5' not
+    // found." the same check came back twice more, each with its action script, differing by one import line, so the
+    // identical-probe rule above did not see the repeat.
+    if (!lastExploreOutput.isEmpty() && kActionScriptMarkerRe.match(code).hasMatch() && takeBundledActionScript(code))
+        return;
+    // A probe with nothing to run: the reply is an action script under an EXPLORE header. Confirmed live (LIST 5
+    // NOSPLIT, item 4): "# EXPLORE" over m = newMatrix(...) ... — the read-only prefix was the header alone, nothing
+    // ran, and the next round only asked for the script that was already there.
+    const QString probe = m_content ? m_content->explorePrefixBeforeFirstWriteCall(code) : code;
+    if (!hasExecutableLine(probe) && takeBundledActionScript(code))
+        return;
     QString output;
     QString discardedDraft;
     if (!runExploreProbe(code, &output, &discardedDraft))
         return;
+    // A probe that printed nothing taught nothing: the next round would write the bundled action script again
+    // knowing exactly what it knew when it wrote it. Only with an "# ACTION SCRIPT" marker: confirmed live (LIST 5
+    // NOSPLIT re-run, item 5), a probe cut at newNote() before its first print had no action script behind it at all.
+    if (!discardedDraft.trimmed().isEmpty() && output == QLatin1String("(no output)") &&
+        kActionScriptMarkerRe.match(code).hasMatch() && takeBundledActionScript(code))
+        return;
     requestActionScriptAfterExplore(code, output, discardedDraft);
+}
+
+// Hands the reply minus its "# EXPLORE" header line to the action path, the same way refuseExploreRound() hands back a
+// bundled draft — through responseReady(), so self-review, the repairs, the known-mistake checks and the LIST advance
+// all apply. A read-only probe half left in it runs again, which is harmless. False when nothing executable is left.
+bool AiAssistant::takeBundledActionScript(const QString &code)
+{
+    // From the "# ACTION SCRIPT" marker when every write statement above it is repeated below it (a read-only probe
+    // half has none) — otherwise the probe half is part of the work and the whole reply goes. Both confirmed live (LIST
+    // 5 NOSPLIT re-runs, item 4): newMatrix() above the marker and an action half that only read "Saddle" (the action
+    // half alone dropped the matrix); and the same newMatrix() lines in both halves, where the whole reply came back
+    // from self-review as the probe half alone, without the action half's plot3D(). A write statement is one line that
+    // explorePrefixBeforeFirstWriteCall() cuts at, compared whitespace-simplified.
+    static const QRegularExpression headerRe(R"(^#\s*EXPLORE\b[^\n]*\n?)", QRegularExpression::CaseInsensitiveOption);
+    const QRegularExpressionMatch marker = kActionScriptMarkerRe.match(code);
+    bool actionHalfAlone = false;
+    if (marker.hasMatch() && m_content)
+    {
+        const QString probeHalf = code.left(marker.capturedStart());
+        QSet<QString> actionLines;
+        for (const QString &line : code.mid(marker.capturedStart()).split('\n'))
+            actionLines.insert(line.simplified());
+        actionHalfAlone = true;
+        for (const QString &line : probeHalf.split('\n'))
+        {
+            const QString statement = line.trimmed();
+            const bool isWrite = !statement.isEmpty() && !statement.startsWith('#') &&
+                                 m_content->explorePrefixBeforeFirstWriteCall(statement) != statement;
+            if (isWrite && !actionLines.contains(line.simplified()))
+            {
+                actionHalfAlone = false;
+                break;
+            }
+        }
+    }
+    QString script = actionHalfAlone ? code.mid(marker.capturedStart()) : code;
+    script.remove(headerRe);
+    if (!hasExecutableLine(script))
+        return false;
+    if (m_host)
+        m_host->print("▸▸▸ AI: taking the action script this EXPLORE reply carries instead of asking for it again — "
+                      "another probe round has nothing to tell.");
+    consecutiveExploreCount = 0;
+    QTimer::singleShot(0, this, [this, script]() { emit responseReady(script.trimmed()); });
+    return true;
 }
 
 // Despite every generation/retry prompt instructing "return ONLY executable Python code," a
@@ -4501,6 +5011,36 @@ bool AiAssistant::maybeDispatchSelfReview(QString &code, bool &compilable, QStri
                           "removed.");
             code = stripped;
         }
+    // A review that brings in a known mistake its draft did not have undid a fix — the review has no docs to check
+    // against. Confirmed live (series 5, BlaBlaDor, LIST 3 item 3): the retry draft read the formula's error with
+    // str(e).splitlines()[1]; the review rewrote it to type(e).__name__, which was blocked again, and the item was
+    // given up. Then the draft runs.
+    if (isSelfReviewResult && compilable && m_content && m_host && !m_selfReviewDraftCode.isEmpty() &&
+        code.trimmed() != m_selfReviewDraftCode.trimmed())
+    {
+        auto headersOf = [this](const QString &script) {
+            QStringList headers;
+            for (const AiKnownMistakeMatch &m : m_content->detectKnownMistakes(
+                     script, mistakeCheckRequestText(), splitPartScripts.join("\n\n"), laterSplitPartDescriptions()))
+                headers << m.header;
+            return headers;
+        };
+        const QStringList reviewed = headersOf(code);
+        const QStringList draft = headersOf(m_selfReviewDraftCode);
+        QStringList introduced;
+        for (const QString &h : reviewed)
+            if (!draft.contains(h))
+                introduced << h;
+        bool draftOnlyFewer = true;
+        for (const QString &h : draft)
+            draftOnlyFewer = draftOnlyFewer && reviewed.contains(h);
+        if (!introduced.isEmpty() && draftOnlyFewer)
+        {
+            m_host->print("▸▸▸ AI: self-review brought in a mistake its draft did not have (" + introduced.join("; ") +
+                          ") — running the draft instead.");
+            code = m_selfReviewDraftCode;
+        }
+    }
     if (isSelfReviewResult)
         m_selfReviewDraftCode.clear();
 
@@ -4854,6 +5394,13 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
     // the confirmed-live retry loop that made asking pointless. Printed so the edit is never silent.
     if (compilable && m_content)
     {
+        // first: every setCode() repair and check below reads the body from the call's literal
+        if (const QString inlined = m_content->setCodeVariableRepair(code); !inlined.isEmpty())
+        {
+            m_host->print("▸▸▸ AI: setCode(<variable>) written with the variable's text, so its body is checked "
+                          "like any other.");
+            code = inlined;
+        }
         const QString countRepaired = m_content->compilerParamCountRepair(code);
         if (!countRepaired.isEmpty())
         {
@@ -4888,6 +5435,90 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
                 m_host->print("▸▸▸ AI: removed a fixed-text result line — the last part of the plan prints it.");
                 code = repaired;
             }
+        // The last (or only) part: an earlier result line goes, the last one is the answer. Confirmed live (LIST 5
+        // NOSPLIT, item 5): blocked, the same script came back unchanged, and the item and the next one were lost.
+        if (laterSplitPartDescriptions().isEmpty())
+            if (const QString repaired = m_content->repeatedResultLabelRepair(code, originalRequestText);
+                !repaired.isEmpty())
+            {
+                m_host->print("▸▸▸ AI: auto-corrected: only the last result line stays — the request asks for "
+                              "exactly ONE.");
+                code = repaired;
+            }
+        if (laterSplitPartDescriptions().isEmpty())
+            if (const QString repaired = m_content->labelOnlyResultLineRepair(code, originalRequestText);
+                !repaired.isEmpty())
+            {
+                m_host->print("▸▸▸ AI: auto-corrected: the result label, printed alone, moved onto the line that "
+                              "prints the values.");
+                code = repaired;
+            }
+        {
+            QStringList notes;
+            if (const QString repaired = m_content->apiCallRepairs(code, originalRequestText,
+                                                                   laterSplitPartDescriptions().isEmpty(), &notes);
+                !repaired.isEmpty())
+            {
+                for (const QString &n : notes)
+                    m_host->print("▸▸▸ AI: auto-corrected: " + n);
+                code = repaired;
+            }
+        }
+        if (const QString repaired = m_content->noteAutoexecReceiverRepair(code); !repaired.isEmpty())
+        {
+            m_host->print("▸▸▸ AI: auto-corrected: setAutoexec() moved from the tab/editor to the note — only a "
+                          "note has setAutoexec().");
+            code = repaired;
+        }
+        if (const QString repaired = m_content->bareCompilerDeleteRepair(code); !repaired.isEmpty())
+        {
+            m_host->print("▸▸▸ AI: auto-corrected: delete(...) became Compiler.delete(...) — there is no global "
+                          "delete().");
+            code = repaired;
+        }
+        if (const QString repaired = m_content->tableTransposedCellRepair(code); !repaired.isEmpty())
+        {
+            m_host->print("▸▸▸ AI: auto-corrected: the table's cell calls wrote rows as columns (out of range as "
+                          "written, all in range swapped) — a table cell is (col, row).");
+            code = repaired;
+        }
+        if (const QString repaired = m_content->matrixTransposedCellRepair(code); !repaired.isEmpty())
+        {
+            m_host->print("▸▸▸ AI: auto-corrected: the matrix's cell(row, col) calls read it transposed (out of range "
+                          "as written, all in range swapped) — row and column swapped.");
+            code = repaired;
+        }
+        if (const QString repaired = m_content->bareFolderNameRepair(code, originalRequestText); !repaired.isEmpty())
+        {
+            m_host->print("▸▸▸ AI: auto-corrected: a name the request gives with its folder was written without it — "
+                          "it is used whole (\"ai/\" is part of the name).");
+            code = repaired;
+        }
+        if (const QString repaired = m_content->muParserPowerRepair(code); !repaired.isEmpty())
+        {
+            m_host->print("▸▸▸ AI: auto-corrected a muParser formula: ** became ^ — muParser has no ** (its power is "
+                          "^).");
+            code = repaired;
+        }
+        if (const QString repaired = m_content->tableFormulaCaretRepair(code, m_host->formulaLanguage());
+            !repaired.isEmpty())
+        {
+            m_host->print("▸▸▸ AI: auto-corrected a column formula: ^ became ** — a column formula is Python, where ^ "
+                          "is XOR.");
+            code = repaired;
+        }
+        if (const QString repaired = m_content->compilerMissingGroupRepair(code); !repaired.isEmpty())
+        {
+            m_host->print("▸▸▸ AI: auto-corrected: setGroup() added after setFunctionName() — new() clears the group, "
+                          "and save()/compile() need one.");
+            code = repaired;
+        }
+        if (const QString repaired = m_content->noteTabSelfRunRepair(code); !repaired.isEmpty())
+        {
+            m_host->print("▸▸▸ AI: auto-corrected: a tab's own script no longer runs the note (removed its "
+                          "currentEditor()/tab().execute() line) — the main script runs the tab.");
+            code = repaired;
+        }
         if (const QString repaired = m_content->noteTabIndexRepair(code); !repaired.isEmpty())
         {
             m_host->print("▸▸▸ AI: auto-corrected tab(0) to tab(1) — tab() is 1-based, tab(0) is always None.");
@@ -4902,7 +5533,6 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
             code = yNameRepaired;
         }
     }
-
     // Recognizing "this looks like a plot" / "this looks like a fit" is host-API-specific
     // knowledge, not generic orchestration — lives behind AiContentProvider, not hardcoded here.
     // See AiContentProvider.h's splitPartScopeViolation() doc comment.
@@ -4934,7 +5564,7 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
     // first" rationale.
     QList<AiKnownMistakeMatch> knownMistakes =
         (compilable && m_content)
-            ? m_content->detectKnownMistakes(code, originalRequestText, splitPartScripts.join("\n\n"),
+            ? m_content->detectKnownMistakes(code, mistakeCheckRequestText(), splitPartScripts.join("\n\n"),
                                              laterSplitPartDescriptions())
             : QList<AiKnownMistakeMatch>();
     // What this request's own failed attempts already did counts as its own work: a check that no longer fires once
@@ -4945,7 +5575,7 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
     {
         QStringList stillFiring;
         for (const AiKnownMistakeMatch &m : m_content->detectKnownMistakes(
-                 code, originalRequestText, (splitPartScripts + m_failedRunScripts).join("\n\n"),
+                 code, mistakeCheckRequestText(), (splitPartScripts + m_failedRunScripts).join("\n\n"),
                  laterSplitPartDescriptions()))
             stillFiring << m.header;
         knownMistakes.erase(
@@ -4986,6 +5616,9 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
         if (const QString skipped = skippedFailedStepMistake(code, m_lastFailedStatement, m_failedRunObjects);
             !skipped.isEmpty())
             knownMistakes << AiKnownMistakeMatch{"the failed step is skipped behind an existence check", skipped};
+    if (compilable)
+        if (const QString unknownColumn = formulaColumnNameMistake(code); !unknownColumn.isEmpty())
+            knownMistakes << AiKnownMistakeMatch{"a formula column name the table does not have", unknownColumn};
     if (compilable)
         if (const QString recreated = existingTableRecreatedMistake(code); !recreated.isEmpty())
             knownMistakes << AiKnownMistakeMatch{"newTable() would wipe an existing table", recreated};
@@ -5210,6 +5843,7 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
             m_failedRunObjects.clear();
             m_closedFailedObjects.clear();
             m_failedRunScripts.clear();
+            m_itemRanScripts << code;
             if (splitModeActive)
                 advanceSplitPart(code);
             else if (listModeActive)
@@ -5368,6 +6002,13 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
     // AiContentProvider::retryHintForError()'s doc comment. Empty (the common case) when
     // errContext matches nothing known.
     QString retryHint = m_content ? m_content->retryHintForError(errContext) : QString();
+    // A name the request quotes in full, used without its folder: confirmed live (LIST 5 local pyi, item 2), "ai/Lor5"
+    // configured as "Lor5" — not found, the same error twice, the item given up. Any folder, any kind of name.
+    if (const QString quoted = quotedNameWithFolder(originalRequestText, functionNotFoundNameFromError(errContext));
+        !quoted.isEmpty())
+        retryHint += "REMINDER: \"" + functionNotFoundNameFromError(errContext) +
+                     "\" was not found, and the request names \"" + quoted +
+                     "\" — use a name exactly as the request quotes it, its folder included.\n\n";
     // Re-grounds against THIS conversation's own prior compiles, not just static docs — see
     // functionNotFoundNameFromError()/compiledFunctionNamesFromHistory()'s doc comments.
     if (!functionNotFoundNameFromError(errContext).isEmpty())
@@ -5775,6 +6416,8 @@ void AiAssistant::clearHistory()
 void AiAssistant::resetErrorRetryState()
 {
     m_blockedRounds = 0;
+    m_partVerifyRetried = false;
+    m_partMissingNote.clear();
     m_lastBlockedScript.clear();
     m_freshRetryUsed = false;
     lastAvailableBlock.clear();
@@ -5811,7 +6454,7 @@ void AiAssistant::runLastScript(const QString &confirmationMessage)
     // unconditionally beforehand was wrong exactly when a correction cycle fired right after it.
     const bool blocked =
         m_content && !m_content
-                          ->detectKnownMistakes(code, originalRequestText, splitPartScripts.join("\n\n"),
+                          ->detectKnownMistakes(code, mistakeCheckRequestText(), splitPartScripts.join("\n\n"),
                                                 laterSplitPartDescriptions())
                           .isEmpty();
     if (m_host && !blocked)
@@ -6036,7 +6679,7 @@ bool AiAssistant::runHistoryScript(int oneBasedIndex)
     // the mechanical detectKnownMistakes() check runActionScript() itself is about to run.
     const bool blocked =
         m_content && !m_content
-                          ->detectKnownMistakes(code, originalRequestText, splitPartScripts.join("\n\n"),
+                          ->detectKnownMistakes(code, mistakeCheckRequestText(), splitPartScripts.join("\n\n"),
                                                 laterSplitPartDescriptions())
                           .isEmpty();
     if (m_host && !blocked)
@@ -6104,8 +6747,15 @@ QString AiAssistant::existingInputNamesNote(const QString &requestText, QStringL
     {
         if (kinds[i].isEmpty())
             continue;
-        facts << qMakePair(names[i], kinds[i]);
-        summary << "\"" + names[i] + "\": " + kinds[i].join("+");
+        // A table's columns, roles and rows go with its existence: the column names of a table the request names were
+        // the most frequent EXPLORE probe (about 30 of 36 in the 2026-10-11 runs), 19 of them the prompt's own example
+        // copied word for word. Facts the host holds are given, not asked for.
+        QStringList described = kinds[i];
+        if (const qsizetype t = described.indexOf("table"); t >= 0)
+            if (const QString shape = m_host->tableShape(names[i]); !shape.isEmpty())
+                described[t] = "table (" + shape + ")";
+        facts << qMakePair(names[i], described);
+        summary << "\"" + names[i] + "\": " + described.join("+");
         if (existingTables && kinds[i].contains("table"))
             *existingTables << names[i];
     }
@@ -6116,32 +6766,143 @@ QString AiAssistant::existingInputNamesNote(const QString &requestText, QStringL
     return m_content->liveEntityFactsNote(facts);
 }
 
+QString AiAssistant::formulaColumnNameMistake(const QString &code) const
+{
+    // Confirmed live (LIST 3 item 3, 2026-10-11, NOSPLIT): the PROJECT STATE note gave "Squares" with columns "x",
+    // "y", "dy", "d" and table-python-api says col("1") is the column NAMED "1"; the retry still wrote
+    // setCommand(4, "1/(col(\"1\")-5)"), every row failed, and the item printed 10 empty cells. Only a table this
+    // script looks up and does not rename (setColNames()), checked against its columns as the host has them now.
+    if (!m_host)
+        return {};
+    static const QRegularExpression lookupRe(R"RX(\b(\w+)\s*=\s*table\s*\(\s*["']([^"'\n]+)["']\s*\))RX");
+    static const QRegularExpression shapeColumnRe(R"RX(\d+ "([^"]*)")RX");
+    static const QRegularExpression colRe(R"RX(\bcol\s*\(\s*\\?["']([^"'\\]+)\\?["']\s*\))RX");
+    for (auto it = lookupRe.globalMatch(code); it.hasNext();)
+    {
+        const QRegularExpressionMatch lookup = it.next();
+        const QString var = QRegularExpression::escape(lookup.captured(1));
+        if (QRegularExpression("\\b" + var + R"(\s*\.\s*setColNames\s*\()").match(code).hasMatch())
+            continue;
+        const QString shape = m_host->tableShape(lookup.captured(2));
+        if (shape.isEmpty())
+            continue;
+        QStringList columns;
+        for (auto c = shapeColumnRe.globalMatch(shape); c.hasNext();)
+            columns << c.next().captured(1);
+        const QRegularExpression commandRe("\\b" + var + R"RX(\s*\.\s*setCommand\s*\([^\n]*)RX");
+        for (auto c = commandRe.globalMatch(code, lookup.capturedEnd()); c.hasNext();)
+        {
+            const QString line = c.next().captured(0);
+            for (auto r = colRe.globalMatch(line); r.hasNext();)
+            {
+                const QString name = r.next().captured(1);
+                if (columns.contains(name))
+                    continue;
+                QStringList listed;
+                for (int i = 0; i < columns.size(); ++i)
+                    listed << QString("%1 \"%2\"").arg(i + 1).arg(columns[i]);
+                return "A column formula of table \"" + lookup.captured(2) + "\" uses col(\"" + name +
+                       "\"), but that table has no column named \"" + name + "\" — its columns are " +
+                       listed.join(", ") + ". col(\"name\") takes a column NAME; for a column number write col(" +
+                       "index), e.g. col(1).";
+            }
+        }
+    }
+    return {};
+}
+
+QStringList newTableNamesThatRun(const QString &code)
+{
+    // Confirmed live twice (series 4, local): a newTable() blocked as "would wipe" could not run —
+    // (1) LIST 4 item 2: `t = table("Peak")` / `if t is None: t = newTable("Peak", ...)` on an existing "Peak";
+    // (2) LIST 5 item 5: newTable("Auto", ...) inside the text of a note tab (a string literal), never executed.
+    // Each item was lost to the repeated block. Returned: the names of newTable() calls outside string literals and
+    // not inside an "if" that runs only when that table is missing.
+    static const QRegularExpression literalRe(
+        R"RX("""[\s\S]*?"""|'''[\s\S]*?'''|"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*')RX");
+    QString blanked = code; // each literal's characters blanked, newlines kept: offsets stay valid
+    for (auto it = literalRe.globalMatch(code); it.hasNext();)
+    {
+        const QRegularExpressionMatch m = it.next();
+        // The name argument itself stays readable: only literals that are not newTable()'s first argument go.
+        static const QRegularExpression callBeforeRe(R"(\bnewTable\s*\(\s*$)");
+        if (callBeforeRe.match(blanked.left(m.capturedStart())).hasMatch())
+            continue;
+        for (qsizetype i = m.capturedStart(); i < m.capturedEnd(); ++i)
+            if (blanked.at(i) != QLatin1Char('\n'))
+                blanked[static_cast<int>(i)] = QLatin1Char(' ');
+    }
+    auto indentOf = [](const QString &line) {
+        qsizetype n = 0;
+        while (n < line.size() && (line.at(n) == ' ' || line.at(n) == '\t'))
+            ++n;
+        return n;
+    };
+    const QStringList lines = blanked.split('\n');
+    const QStringList original = code.split('\n'); // the same lines with their literals: the checks read names
+    static const QRegularExpression newTableRe(R"RX(\bnewTable\s*\(\s*["']([^"']+)["'])RX");
+    // Line `at` opens a block that runs only when table `name` is missing: "if not existTable("<name>"):", or
+    // "if <v> is None:" / "if not <v>:" with <v> = table("<name>") assigned above it.
+    auto opensMissingBlock = [&original](int at, const QString &name) {
+        const QString esc = QRegularExpression::escape(name);
+        const QRegularExpression existRe(R"RX(^\s*if\s+not\s+existTable\s*\(\s*["'])RX" + esc + R"RX(["']\s*\)\s*:)RX");
+        static const QRegularExpression noneRe(R"(^\s*if\s+(?:(\w+)\s+is\s+None|not\s+(\w+))\s*:)");
+        if (existRe.match(original[at]).hasMatch())
+            return true;
+        const QRegularExpressionMatch none = noneRe.match(original[at]);
+        if (!none.hasMatch())
+            return false;
+        const QString var = none.captured(1).isEmpty() ? none.captured(2) : none.captured(1);
+        const QRegularExpression lookupRe("\\b" + QRegularExpression::escape(var) + R"RX(\s*=\s*table\s*\(\s*["'])RX" +
+                                          esc + R"RX(["']\s*\))RX");
+        return lookupRe.match(original.mid(0, at).join('\n')).hasMatch();
+    };
+    QStringList names;
+    for (int li = 0; li < lines.size(); ++li)
+        for (auto it = newTableRe.globalMatch(lines[li]); it.hasNext();)
+        {
+            const QString name = it.next().captured(1);
+            // The same line ("if t is None: t = newTable(...)") or the nearest enclosing, less indented line above.
+            bool guarded = opensMissingBlock(li, name);
+            for (int up = li - 1; up >= 0 && !guarded && indentOf(lines[li]) > 0; --up)
+                if (!original[up].trimmed().isEmpty() && indentOf(original[up]) < indentOf(lines[li]))
+                {
+                    guarded = opensMissingBlock(up, name);
+                    break; // only the nearest enclosing block decides
+                }
+            if (!guarded && !names.contains(name))
+                names << name;
+        }
+    return names;
+}
+
 QString AiAssistant::existingTableRecreatedMistake(const QString &code) const
 {
-    static const QRegularExpression newTableRe(R"re(\bnewTable\s*\(\s*["']([^"']+)["'])re");
-    QRegularExpressionMatchIterator it = newTableRe.globalMatch(code);
-    while (it.hasNext())
+    for (const QString &name : newTableNamesThatRun(code))
     {
-        const QString name = it.next().captured(1);
         if (m_existingInputTables.contains(name))
             return "This script calls newTable(\"" + name + "\"), but table \"" + name +
                    "\" already exists and this request only uses it. newTable() on an existing name WIPES it "
                    "(resized, all data cleared) — use t = table(\"" +
                    name + "\") and work on the table as it is.";
         // Confirmed live (LIST 5, item 2): part 2 of 3 ("compile the functions") also re-ran part 1's
-        // newTable("Peak5", ...) — harmless with the same data, a wiped table with any other.
-        if (splitModeActive)
-            for (const QString &earlier : splitPartScripts)
-                for (auto e = newTableRe.globalMatch(earlier); e.hasNext();)
-                    if (e.next().captured(1) == name)
-                        return "This script calls newTable(\"" + name +
-                               "\"), but an earlier part of this plan already "
-                               "created table \"" +
-                               name +
-                               "\" and it exists now. newTable() on an existing name WIPES "
-                               "it — this part must not create it again. Remove that table-creating code; if this part "
-                               "needs the table, use t = table(\"" +
-                               name + "\").";
+        // newTable("Peak5", ...) — harmless with the same data, a wiped table with any other. "Exists now" is the
+        // host's live answer, not the earlier script's text (series 4: a newTable() in a note tab's text was read
+        // as a created table that never existed).
+        if (!splitModeActive || !m_host)
+            continue;
+        bool createdEarlier = false;
+        for (const QString &earlier : splitPartScripts)
+            createdEarlier = createdEarlier || newTableNamesThatRun(earlier).contains(name);
+        if (!createdEarlier)
+            continue;
+        const QList<QStringList> kinds = m_host->entityKinds({name});
+        if (kinds.size() == 1 && kinds.first().contains("table"))
+            return "This script calls newTable(\"" + name +
+                   "\"), but an earlier part of this plan already created table \"" + name +
+                   "\" and it exists now. newTable() on an existing name WIPES it — this part must not create it "
+                   "again. Remove that table-creating code; if this part needs the table, use t = table(\"" +
+                   name + "\").";
     }
     return {};
 }
@@ -6556,7 +7317,7 @@ QString AiAssistant::generatedScriptWarning(const QString &code) const
         explanations << scopeViolation;
     }
     for (const AiKnownMistakeMatch &m : m_content->detectKnownMistakes(
-             code, originalRequestText, splitPartScripts.join("\n\n"), laterSplitPartDescriptions()))
+             code, mistakeCheckRequestText(), splitPartScripts.join("\n\n"), laterSplitPartDescriptions()))
     {
         headers << m.header;
         explanations << m.explanation;
@@ -6582,7 +7343,43 @@ QString AiAssistant::exploreSlotText(bool expectsCode) const
         return {};
     if (!m_exploreEnabled || !autoRun)
         return m_content->exploreUnavailableNote();
+    // Invited only when the request refers to an object that neither exists nor is created by it. Confirmed live
+    // (2026-10-11): with the project state already giving existence and each table's columns, the model still probed
+    // 11 times in one LIST 3 run, asking what that state said ("check if table Squares exists and get its column
+    // names"); it probes because it is invited, and NOEXPLORE scored equal or better in every comparison.
+    if (!requestHasUnknownObject())
+        return {};
     return docsMode() == DocsMode::Integrated ? m_content->exploreModeReminder() : QString();
+}
+
+bool AiAssistant::requestHasUnknownObject() const
+{
+    if (!m_host)
+        return true;
+    if (m_unknownObjectCheckedFor == originalRequestText)
+        return m_unknownObject;
+    m_unknownObjectCheckedFor = originalRequestText;
+    static const QRegularExpression objectRe(R"RX(\b(?:table|matrix|graph|note|window|plot|functions?|in|from)\s+)RX"
+                                             R"RX((?:the\s+)?"([^"\n]{1,80})"|"([^"\n/]{1,80}/[^"\n]{1,80})")RX",
+                                             QRegularExpression::CaseInsensitiveOption);
+    QStringList names;
+    for (auto it = objectRe.globalMatch(originalRequestText); it.hasNext();)
+    {
+        const QRegularExpressionMatch m = it.next();
+        const QString name = m.captured(1).isEmpty() ? m.captured(2) : m.captured(1);
+        if (!names.contains(name) && !requestCreatesName(originalRequestText, name))
+            names << name;
+    }
+    m_unknownObject = false;
+    if (!names.isEmpty())
+    {
+        const QList<QStringList> kinds = m_host->entityKinds(names);
+        if (kinds.size() != names.size())
+            m_unknownObject = true; // the host cannot tell: a probe may help
+        for (const QStringList &k : kinds)
+            m_unknownObject = m_unknownObject || k.isEmpty();
+    }
+    return m_unknownObject;
 }
 
 QString AiAssistant::buildSystemPrompt(const QString &systemPrompt, bool includeDocs, const QStringList &docTopics,

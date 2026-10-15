@@ -58,6 +58,10 @@ void mergeSplitPlanUnnecessaryFragments(QList<AiAssistant::SplitPart> &plan, QSt
 // Folds each part in `parts` (ascending indices) into the part before it, the same way.
 void mergeSplitPlanPartsBackward(QList<AiAssistant::SplitPart> &plan, const QList<int> &parts, QStringList *mergedAway);
 
+// The names of the newTable("NAME", ...) calls in `code` that can run: outside string literals and not inside an
+// "if" that runs only when that table is missing. See AiAssistant.cpp for the confirmed-live false blocks.
+QStringList newTableNamesThatRun(const QString &code);
+
 // Generates a name that differs from `oldName` and doesn't already appear in `plan`'s descriptions
 // (appends "_2", "_3", ...). See AiAssistant.cpp for the full rationale.
 QString mechanicalAlternateSplitPlanName(const QString &oldName, const QList<AiAssistant::SplitPart> &plan);

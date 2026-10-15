@@ -215,6 +215,24 @@ class AiAssistant : public QObject
     // match. Used to gate the compiled-function-history reminder below to the one error shape it
     // actually helps with, rather than injecting it into every unrelated retry.
     static QString functionNotFoundNameFromError(const QString &errContext);
+    // True when `requestText` asks to create the quoted `name` — a creation verb (create, make, build, compile, new,
+    // add) at most four words before it, or "named" right before it — false when it only works on it ("In \"T\",
+    // give column 3 ...").
+    static bool requestCreatesName(const QString &requestText, const QString &name);
+    // True when `description` quotes a name ('X' or "X") that `requestText` does not contain — a plan that resolved a
+    // name the request left open.
+    static bool namesSomethingNew(const QString &description, const QString &requestText);
+    // " They are, exactly: table:Auto, ..." — the objects created since the request started, for a later split part;
+    // empty when there are none or the host cannot tell.
+    QString createdByEarlierPartsNote() const;
+    // True when the request refers to an object (a quoted name after table/matrix/graph/note/window/plot/function/
+    // in/from, or one with a folder) that neither exists now nor is created by the request: the one case a probe can
+    // learn something. Cached per request text.
+    bool requestHasUnknownObject() const;
+    mutable QString m_unknownObjectCheckedFor;
+    mutable bool m_unknownObject = false;
+    // The quoted name of `requestText` that is `shortName` with a folder ("ai/Lor5" for "Lor5"), or empty.
+    static QString quotedNameWithFolder(const QString &requestText, const QString &shortName);
 
     // Scans every assistant-side turn in `history` for setFunctionName("Y") calls, returning the
     // unique names in first-seen order — a record of every function this exact conversation has
@@ -370,6 +388,9 @@ class AiAssistant : public QObject
                                    QString *consoleLine = nullptr) const;
     // newTable(name) for a table this request only uses: newTable on an existing name wipes it.
     QString existingTableRecreatedMistake(const QString &code) const;
+    // Non-empty when a column formula of an existing table (t = table("X") ... t.setCommand(...)) refers to
+    // col("NAME") and the table, as the host reads it now, has no column of that name.
+    QString formulaColumnNameMistake(const QString &code) const;
     // The script without 1, 2 or 3 trailing lines that may be no Python (a weak model's "expected output" after its
     // code), smallest cut first; empty if no line qualifies. The caller takes the first one that compiles.
     static QStringList withoutTrailingOutputLines(const QString &code);
@@ -407,6 +428,8 @@ class AiAssistant : public QObject
     // False means stop: no host, or the reply bundled an action script that has now already run.
     bool runExploreProbe(const QString &code, QString *output, QString *discardedDraft);
     void requestActionScriptAfterExplore(const QString &code, const QString &output, const QString &discardedDraft);
+    // For a probe that has nothing to tell: hands the reply's action script to the action path; false when it has none.
+    bool takeBundledActionScript(const QString &code);
     QString mistakeCheckRequestText() const;
 
     // Sets `compilable` (via AiScriptHost::canCompile()) and returns true if self-review was
@@ -462,6 +485,9 @@ class AiAssistant : public QObject
     // the request outright (mirrors handleExistenceCheckScriptResponse()'s halt for a MISSING
     // claimed-existing name); otherwise proceeds via finalizeSplitPlanAndLaunch().
     void handleSplitPlanCreationCheckScriptResponse(const QString &code);
+    // The collision decision on a creation check's "(label) EXISTS/MISSING: name" lines — from the host's own lookup,
+    // or from a model-written check script when the host cannot tell.
+    void finishSplitPlanCreationCheck(const QString &checkOutput);
 
     // Starts generation for splitPlan[index]: resets the same per-request state a brand-new
     // whole request gets (autoContinueCount, awaitingSelfReview, lastAvailableBlock,
@@ -705,6 +731,21 @@ class AiAssistant : public QObject
     // retry starts from the state the first attempt saw; named in failedRunObjectsNote(). Cleared with
     // m_failedRunObjects.
     QStringList m_closedFailedObjects;
+    // The live objects when the current LIST started (createdByEarlierItemsNote()), and that note for the current item.
+    QStringList m_listObjectsAtStart;
+    QString m_earlierItemsNote;
+    // Per finished LIST item: what it made (new objects, functions its successful scripts compiled) — see
+    // recordFinishedListItem(). m_itemObjectsAtStart / m_itemRanScripts: the current item's baseline and its scripts
+    // that ran without an error.
+    struct EarlierItem
+    {
+        int number = 0;
+        QStringList objects;
+        QStringList compiled;
+    };
+    QList<EarlierItem> m_earlierItems;
+    QStringList m_itemObjectsAtStart;
+    QStringList m_itemRanScripts;
     // The scripts of this request that ran and failed — passed to the known-mistake checks with the earlier split
     // parts' scripts, so that a retry reusing what its own failed attempt compiled or created counts as this request's
     // own work. Confirmed live (LIST 5, item 1): the retry reopened "ai/Quad", compiled by its failed attempt a moment
@@ -1102,6 +1143,14 @@ class AiAssistant : public QObject
     // nothing to conflict with) or no content provider, dispatches immediately via
     // dispatchByMode()/startRequest(); otherwise defers to handleContinuationCheckResponse().
     void dispatchAfterExistenceCheck(const QString &aiText);
+    // The existence check's outcome, from the host's own state or a check script: stop on a missing name, else go on.
+    void finishExistenceCheck(const QString &aiText, const QStringList &missing);
+    // What the earlier items of the current LIST created, read from the host — empty outside a LIST or on item 1.
+    QString createdByEarlierItemsNote() const;
+    void recordFinishedListItem();
+    // The project's objects as the host knows them (recent ones with table shapes) — given with a refused EXPLORE
+    // probe.
+    QString projectFactsNote() const;
 
     // Dispatches `aiText` into split-mode decomposition or the plain doc-selection preflight,
     // whichever splitModeActive calls for — called once the continuation-check gate (if any) has
@@ -1199,6 +1248,10 @@ class AiAssistant : public QObject
     // Blocked attempts of this request or item: blocks do not count against maxAutoContinue(). Confirmed live (LIST 3
     // item 9, 2026-10-11): 24 model calls, 22 min, one block after another.
     int m_blockedRounds = 0;
+    // Split mode: the current part was run again because a name it should create was missing (once per part), and
+    // the reason given to that second run.
+    bool m_partVerifyRetried = false;
+    QString m_partMissingNote;
     QNetworkAccessManager *m_nam;
     QString m_apiKey;
     QString m_baseUrl;
