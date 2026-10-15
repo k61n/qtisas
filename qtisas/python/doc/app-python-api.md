@@ -336,11 +336,13 @@ saveFolder(results, "/data/results.qti")
 | Call | Returns | Notes |
 |------|---------|-------|
 | `existWindow("name")` | `bool` | `True` if any window with that object name exists anywhere in the project |
-| `existTable("name")` | `bool` | `True` only if a `Table` with that name exists |
+| `existTable("name")` | `bool` | `True` only if a `Table` with that name exists — for "whether X still exists" print `existTable("X")` itself (`True` = still exists), never `not existTable("X")` |
 | `existNote("name")` | `bool` | `True` only if a `Note` with that name exists |
 | `existMatrix("name")` | `bool` | `True` only if a `Matrix` with that name exists |
-| `existGraph("name")` | `bool` | `True` only if a 2D graph window (`GraphWindow`) with that name exists |
-| `closeWindow(window)` | — | close and delete a window outright — no "hide or delete?" prompt |
+| `existGraph("name")` | `bool` | `True` only if a 2D graph window (`GraphWindow`) with that name exists — `False` for a 3D plot |
+| `existPlot3D("name")` | `bool` | `True` only if a 3D plot (`Graph3D`) with that name exists |
+| *(a fit function)* | `bool` | `Compiler.functionExists("ai/Quad")` (also `Fittable.functionExists`) — no `exist…()` call for functions |
+| `closeWindow(window)` | — | close and delete a window outright — **this IS "close and delete"**: no separate delete call exists for a window (`deleteFolder()` is for project folders, never for a window); no "hide or delete?" prompt; `closeWindow(None)` does nothing, so no existence check is needed first; the Python variable stays bound (still not `None`), so check by name afterwards: `existTable("T")` / `table("T") is None` |
 | `activateWindow(window)` | — | bring a window to the front (accepts `MdiSubWindow` or name string) |
 | `activateWindow("name")` | `bool` | activate by name; returns `True` if found |
 | `hideWindow(window)` | — | hide a window without closing it |
@@ -525,7 +527,7 @@ layer.setCurveSymbolStyle(0, symbolIndex("diamond"))
 | Call | Returns | Notes |
 |------|---------|-------|
 | `autoUpdateTableValues()` | `bool` | `True` if formula columns recalculate automatically on edit |
-| `setAutoUpdateTableValues(on)` | — | enable or disable automatic formula recalculation project-wide |
+| `setAutoUpdateTableValues(on)` | — | enable or disable automatic formula recalculation project-wide — the one switch for "automatic table-formula recalculation"; no other name exists |
 | `columnsList(role)` | `list[str]` | all column full-names (e.g. `"MyTable_I"`) matching the given plot role |
 
 `role` values: `Table.PlotDesignation.X`, `.Y`, `.Z`, `.xErr`, `.yErr`, `.Label`, `.None_`.  

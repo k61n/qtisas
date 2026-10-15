@@ -2,6 +2,8 @@
 # gw=newGraph("name")|newGraph("name",layers,rows,cols)|graphWindow("name")|currentGraph()
 # graphWindow("name") returns None (confirmed) if no graph with that name exists — ALWAYS
 # check "if gw is None:" before use.
+#   A request that plots INTO graph "X" creates it when it is missing: gw = graphWindow("X") or newGraph("X", ...).
+#   Only "the existing graph X" is a lookup that may stop with a message.
 # newGraph("name",layers,...) reused against an EXISTING window of that name now clears every
 #   layer's curves first (build-from-scratch contract) — was a silent curve-doubling trap on
 #   script re-run. Use graphWindow("name") instead if you want to add to it, not rebuild it.
@@ -57,6 +59,7 @@
 #            VerticalDropLines=6 Spline=7 HorizontalSteps=8 Histogram=9 HorizontalBars=10
 #            VectXYXY=11 ErrorBars=12 Box=13 VectXYAM=14 VerticalSteps=15
 #            ColorMap=16 GrayScale=17 Contour=18 Function=19
+# AlignPolicy is NOT on Graph — it is GraphWindow.AlignPolicy.AlignCanvases (Graph.AlignPolicy → AttributeError; an int → TypeError)
 
 # GraphWindow:
 # numLayers()->int  activeLayer()->Graph  layer(n)->Graph  layersList()->list
@@ -69,7 +72,7 @@
 # setAlignPolicy(policy)  — GraphWindow.AlignPolicy.AlignLayers(default) | GraphWindow.AlignPolicy.AlignCanvases
 #   AlignCanvases: arrangeLayers pins canvases directly → same X, same width for all layers in a column
 #                  setSpacing(rowGap,colGap) becomes canvas-to-canvas gap (NOT layer-widget gap)
-#   g.setAlignPolicy(GraphWindow.AlignPolicy.AlignCanvases)  ← correct; int fails; g.AlignCanvases fails
+#   g.setAlignPolicy(GraphWindow.AlignPolicy.AlignCanvases)  ← correct; Graph.AlignPolicy fails; int fails; g.AlignCanvases fails
 # setSpacing(rowGap,colGap)  — layer-widget gap (AlignLayers) OR canvas-to-canvas gap (AlignCanvases)
 #
 # STACKED PANELS (e.g. data+fit / residuals) — ZERO CANVAS GAP — ALWAYS use this pattern:
@@ -121,6 +124,8 @@
 # WRONG: g.addCurve("SANS_Data_I", Graph.CurveType.Scatter)
 # RIGHT: t = table("SANS_Data"); g.addCurve(t, "I", Graph.CurveType.Scatter)
 # ONE Y column (str), X auto-detected: g.addCurve(t, "y", Graph.CurveType.Line)
+# WRONG: g.addCurve(t, "x", "y", style) → TypeError (no X column argument)
+# RIGHT: g.insertCurve(t, "x", "y", style) for explicit X and Y, or g.addCurve(t, "y", style)
 # TUPLE of Y columns:                  g.addCurves(t, ("y1","y2"), Graph.CurveType.Scatter)
 # addCurve(t,col,style=0,lineWidth=1,pointSize=3,startRow=0,endRow=-1)->bool
 # addCurves(t,cols_tuple,style=0,lineWidth=1,pointSize=3,startRow=0,endRow=-1)->bool
@@ -246,7 +251,7 @@
 #   show/hide instead: layer.enableAxis(Graph.Axis.Right, True)
 # setAxisFont(axis,QFont)  setAxisLabelsColor(axis,QColor)  # tick label number colour; axis required
 # to apply to all axes: for ax in [Graph.Axis.Bottom,Graph.Axis.Left,Graph.Axis.Top,Graph.Axis.Right]: layer.setAxisLabelsColor(ax,c); layer.setAxisTitleColor(ax,c)
-# setAxisNumericFormat(axis,fmt,prec=6,formula="")   # fmt:0=auto 1=decimal 2=scientific 3=superscripts
+# setAxisNumericFormat(axis,fmt,prec=6,formula="")   # all positional (prec=3 -> TypeError); fmt:0=auto 1=decimal 2=scientific 3=superscripts
 #   4=engineering 5=superscriptsGER — 3 is superscripts, NOT engineering (4 is); 4th arg is a
 #   label-transform FORMULA string, not a text suffix appended to labels
 # setAxisLabelRotation(axis,degrees)
@@ -276,16 +281,17 @@
 # Graph — title/legend/text:
 # setTitle(text)  setTitleFont(QFont)  setTitleColor(QColor)  setTitleAlignment(align)  removeTitle()
 # newLegend()->LegendWidget  newLegend(text)->LegendWidget  setLegend(text)  legend()->LegendWidget|None
+#   all LAYER methods — on a GraphWindow: gw.activeLayer().newLegend() (gw.newLegend() -> AttributeError)
 # NOTE: legend() is a GETTER — returns None if no legend exists yet; use newLegend() to CREATE one.
 #   No addLegend() method exists. Confirmed live: legend() -> None -> AttributeError on .setText().
 # NOTE: setLegend(text) is ALSO silent if no legend exists yet — it calls legend() internally and
 #   just no-ops if that's None (verified in source: Graph::setLegend). No error, text goes nowhere.
 #   Same "check/create first" pattern as above applies before calling setLegend() too.
 # NOTE: newLegend() has NO dedup check — calling it again stacks a 2nd overlapping legend, silently.
-#   Always: leg = g.legend(); leg = g.newLegend() if leg is None else leg  (reuse, don't blindly create)
+#   Always: leg = layer.legend(); leg = layer.newLegend() if leg is None else leg  (reuse, don't blindly create)
 # removeLegend()  addText(lw)->LegendWidget  addTimeStamp()->LegendWidget  add(fw,copy)->FrameWidget
 # NOTE: addText(lw) CLONES lw into a new, separate LegendWidget and returns the CLONE — it does NOT
-#   modify/frame lw itself. leg=g.newLegend(); g.addText(leg).setFrameStyle(...) styles the clone, not
+#   modify/frame lw itself. leg=layer.newLegend(); layer.addText(leg).setFrameStyle(...) styles the clone, not
 #   leg (silently leaves 2 overlapping widgets). To style leg, call leg.setFrameStyle(...) directly.
 # add(fw,copy): copy=True clones fw (same behavior as addText, for Legend/Image/Rectangle/Tex widgets)
 #   and returns the clone; copy=False attaches fw ITSELF (no clone) and returns the same object —

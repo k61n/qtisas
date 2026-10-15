@@ -55,6 +55,7 @@
 #   print(f.results())   # {"Rg": (52.3, 0.4), "I0": (0.01, 0.001)}
 
 configure(fn,datasets=[])  fit()->chi2_dof  simulate()->chi2_dof  simulateCurve()->chi2_dof
+# fn is the FULL name, folder included: f.configure("ai/MyPeak", ...), never "MyPeak"
 # configure(fn) with datasets OMITTED/EMPTY still sets datasetCount=1 but selects NO actual
 #   table/column for it — always pass the real dataset list: configure(fn, ["table_col"]).
 # fit() raises RuntimeError if the selected dataset(s) can't be read (e.g. an empty table) —
@@ -68,6 +69,8 @@ configure(fn,datasets=[])  fit()->chi2_dof  simulate()->chi2_dof  simulateCurve(
 #   chi2/dof arithmetic reported "0.0078" (= 1.1413/146, its own dof) — self-consistent-looking,
 #   no error, silently wrong by a factor of 146.
 beforeFit()  afterFit()  plotResults(graphName="",graphTemplate="")->MultiLayer
+# plotResults("Name") into an EXISTING 2-layer graph fills it: data + fit curve -> layer 1, residuals -> layer 2.
+#   Either let plotResults() build the panels, or build them yourself with insertCurve() — not both (every curve twice).
 # plotResults() returns a MultiLayer (GraphWindow) — NOT a Graph (layer). EVERY layer-level
 #   method (legend(), newLegend(), setLegend(), setXTitle(), setYTitle(), addCurve(),
 #   setCurveLineColor(), setCurveSymbolColor(), etc.) raises AttributeError if called directly
@@ -118,7 +121,7 @@ results()->{n:(v,e)} or {n:[(v,e),...]}  fitReport()->str
 #   again — silently wrong the moment the fit converges anywhere else, no error, no warning.
 #   WRONG: f.setParamValue("R",50.0); f.fit(); leg.setText("R = 50.00 Å")
 #   RIGHT: f.fit(); r_val,_ = f.results()["R"]; leg.setText(f"R = {r_val:.2f} Å")
-r2()->float  qFactor()->float  lastChi2  lastDoF  stage()->str  selectStage(s)->bool  state()->dict
+r2()->float  qFactor()->float  lastChi2 (already chi2/dof — don't divide by lastDoF)  lastDoF  stage()->str  selectStage(s)->bool  state()->dict
 # stage()/selectStage(s) use a DIFFERENT 5-value vocabulary than state()["stage"] (see below):
 #   "init"(no function loaded) "fit"(function+datasets configured) "simulate"(Simulate Curve tab)
 #   "results"(Generate Tables tab) "batch-fit"(Batch-Fit tab). selectStage(s) raises RuntimeError if
@@ -130,6 +133,7 @@ r2()->float  qFactor()->float  lastChi2  lastDoF  stage()->str  selectStage(s)->
 #   chi2(float or None)  dof(float or None) — TWO SEPARATE keys (not one "chi2/dof" key), both None
 #   until fitted — a one-call diagnostic snapshot, e.g. in EXPLORE.
 fitFunctions(pattern="")->list  currentFunction()->str
+f.functionExists(name)->bool  # Fittable.functionExists("ai/Quad") = "ai/Quad" in fitFunctions(); a method, never bare
 # Fittable has fitFunctions(); it does NOT have functionNames() — that belongs to Compiler, a
 #   DIFFERENT singleton (see compile-python-api.pyi). Don't borrow either singleton's method name
 #   onto the other — Compiler needs c.functionNames("ALL"), never c.fitFunctions(...).
@@ -146,6 +150,7 @@ setScaleErrors(bool)  setStatisticsNotes(bool)  setSaveSession(bool)
 
 # FIT CURVE TABLE — created by fit() and simulate()
 # Single dataset: table name = "fitCurve-<model>"   Global fit N: "fitCurve-<model>-global-N"
+#   <model> = the FULL name given to configure(), folder included: "fitCurve-ai/GaussPeak", never "fitCurve-GaussPeak"
 # Columns (1-based index for Python cell/addCurve access):
 #   col 1  "x"              role X     — Q values (same grid as input data)
 #   col 2  "y"              role Y     — fitted I(Q)
@@ -315,6 +320,10 @@ setWeightingA(v)  setWeightingB(v)  setWeightingC(v)  setWeightingXmax(v)
 # under an "old" label, no error, no warning that the comparison never happened.
 #   WRONG: f.fit(); new=f.results(); old=f.lastChi2  # "old" is already the new value
 #   RIGHT: old=f.lastChi2; f.fit(); new=f.lastChi2   # capture old BEFORE the second fit()
+# configure() resets every parameter to the function's initial values — results() after a new
+#   configure() (without fit()) returns the START values, not the last fit's. Comparing two models
+#   in one script: read each model's results() right after its own fit():
+#   chi_g = f.fit(); A_g, _ = f.results()["A"]   # then configure the 2nd model, fit, read, compare
 
 # IMPORTANT: resolution smearing (below) and polydispersity (further below) are OPTIONAL
 #   refinements — add them ONLY when the request explicitly asks for resolution/instrumental

@@ -43,7 +43,7 @@ setColNames(["x","y","dy"])   # list length must equal numCols()
 cell(col,row)->float      # t.cell(2,3) → col 2, row 3
 cellOrNone(col,row)->float|None  # None if empty or not a number — use when a parse failure must be visible
 text(col,row)->str        # displayed text; Numeric cells follow the numerical format ("1,5") — use cell() for numbers
-cellData(col,row)->str|float
+cellData(col,row)->str|float|None  # None for an EMPTY cell (Numeric/Date/Time) — test "is None", never == ""; or cellOrNone()
 colData(col)->list        # t.colData(1) → [0.1, 0.2, ...]  all rows of col 1
 rowData(row)->tuple       # t[n]→rowData(n+1) 0-based, negative ok;  t[a:b]→list of tuples
 # cell()/text()/cellData()/setCell() do NOT support negative indices (only t[n]/t[a:b] do):
@@ -58,8 +58,9 @@ rowData(row)->tuple       # t[n]→rowData(n+1) 0-based, negative ok;  t[a:b]→
 
 # Write — col FIRST, row second — both 1-based:
 setCell(col,row,value)    # t.setCell(2,3,1.5) → col 2, row 3
-setText(col,row,value)    # Numeric column: a C number "1.5" is stored as that number; ANY other text is evaluated as an expression ("2*pi") and leaves the cell EMPTY if it is none — setColTextFormat(col) first for labels
-setCellData(col,row,value)
+setText(col,row,value)    # Numeric column: a number as text ("1.5", or "2,5" with German separators) is stored as that number — NO text format needed; ANY other text is evaluated as an expression ("2*pi") and leaves the cell EMPTY if it is none — setColTextFormat(col) first for labels (words)
+setCellData(col,row,value)  # ONE cell: setCellData(3, 1, 0.05) — a whole column from a list is setColData(3, [0.05]*21)
+#   writes by the column's type: a str into a Numeric column raises TypeError — setColTextFormat(col) first
 setColData(col,iterable,offset=0)   # offset 0-based: t.setColData(1,[0.1,0.2,0.3])
 appendRowData(tuple)->int
 setRowData(row,tuple)     # row is 1-based
@@ -69,7 +70,10 @@ setRowData(row,tuple)     # row is 1-based
 
 # Column role / format:
 setColumnRole(col,Table.PlotDesignation.X)   # col can be int or str label
-setColNumericFormat(col,Table.NumericFormat.Scientific,prec=4,updateCells=True)
+# Columns start as NumericFormat.Default with 13 significant digits: 3 -> 3, 3.000001 -> 3.000001, 1234.5 -> 1234.5.
+# Change the format only when the request asks for one (a format or a number of decimals).
+setColNumericFormat(col,Table.NumericFormat.Scientific,4,updateCells=True)   # prec positional (prec=4 -> TypeError)
+#   prec = significant digits for Default, digits after the point for Decimal/Scientific; reset: (col,Default,13)
 setColTextFormat(col)
 setColDateFormat(col,fmt,updateCells=True)   # fmt e.g. "yyyy-MM-dd"
 setColTimeFormat(col,fmt,updateCells=True)   # fmt e.g. "hh:mm:ss"
@@ -85,11 +89,16 @@ comment(col)->str  setComment(col,text)  showComments(on=True)
 
 # Formula:
 setCommand(col,expr)      # t.setCommand("y2","pow(col(\"y\"),2)")
+# ONE call for the whole column, outside any loop: the formula refers to col("x"), never to a Python row value
 recalculate(col,startRow=1,endRow=-1,forceMuParser=False,notifyChanges=True)->bool
 # raises ValueError if the column is read-only or the formula fails; 2nd line: the formula's first error
 #   its name: str(e).splitlines()[1].split(":")[0]   → e.g. "ZeroDivisionError" (e is that ValueError)
+# after the raise the column is still filled: rows that evaluated hold their values (only failing rows stay
+#   empty); a read-only column keeps its old values — count/sum AFTER the try/except, whatever happened
 # expr runs in the global language (Python by default); forceMuParser=True -> muParser
 # powers: pow(a,b) in both; ^ only muParser, ** only Python. Bare names fail -- always col("x") or col(idx)
+# col("1") is the column NAMED "1" — after setColNames() that name is gone; col(1) is column number 1
+# The row number in a formula is i (1, 2, ...), in both languages: x = 0, 0.1, ... is "0.1*(i-1)"; no row / row()
 
 # Sort:
 sort(type=0,order=0,leadCol="")   # type:0=single 1=grouped; order:0=asc 1=desc

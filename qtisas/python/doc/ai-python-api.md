@@ -156,14 +156,14 @@ currently active list is also shown in its own **Help → Python API → User Ru
 ### PRE-FLIGHT checklist
 
 > **PRE-FLIGHT — answer these before writing ANY script:**
-> 1. **Does the task ask you to READ/analyze/fit/plot data the user implies already exists** (a named table, "the data", "my results", a column referenced as if already there)? → `table("name")` / `matrix("name")` / `graphWindow("name")` / `note("name")` return **`None`** (confirmed) when missing — **always check `if t is None:` before using the result**, even for a single-line read: `t = table("X"); scriptPrint("not found" if t is None else str(t.cell(2, 3)))`. Beyond a single read — needing column names/structure first — **run EXPLORE** (`existTable("X")`, `existMatrix("X")`, `existGraph("X")`, `existNote("X")` — each is type-specific; anything else uses the lookup-returns-None pattern). If missing: stop and report — do NOT generate synthetic data as a substitute. **After EXPLORE: only use tables/column names that actually appeared in the output — never invent names by pattern-matching from similar ones observed.** If required data isn't confirmed by EXPLORE, stop and ask the user.
+> 1. **Does the task ask you to READ/analyze/fit/plot data the user implies already exists** (a named table, "the data", "my results", a column referenced as if already there)? → `table("name")` / `matrix("name")` / `graphWindow("name")` / `note("name")` return **`None`** (confirmed) when missing — **always check `if t is None:` before using the result**, even for a single-line read: `t = table("X"); scriptPrint("not found" if t is None else str(t.cell(2, 3)))`. A named table's columns (number, name, role) and row count are already in the `PROJECT STATE` block — use them; beyond that — needing more structure first — **run EXPLORE** (`existTable("X")`, `existMatrix("X")`, `existGraph("X")`, `existPlot3D("X")`, `existNote("X")` — each is type-specific; anything else uses the lookup-returns-None pattern). If missing: stop and report — do NOT generate synthetic data as a substitute. **After EXPLORE: only use tables/column names that actually appeared in the output — never invent names by pattern-matching from similar ones observed.** If required data isn't confirmed by EXPLORE, stop and ask the user.
 >    **THIS DOES NOT APPLY when the task asks you to CREATE/generate/synthesize/set up the object yourself** (e.g. "create a table with sphere form factor data", "create a note with an auto-executing script") — the object doesn't exist yet BY DESIGN; checking for it first is backwards, not a safety check. Confirmed live, two different object types: (1) a working "create a table + fit + plot" script was "corrected" by inserting `if not existTable("Sphere"): scriptPrint("Table 'Sphere' does not exist")` before the `newTable("Sphere", ...)` call about to create it, so the script short-circuited and never ran any actual work (no table, no fit, no plot) — a CREATE task treated as a READ task; (2) asked to CREATE a note "Setup" from scratch, every attempt across 4 retries called the LOOKUP `note("Setup")` instead of the CREATE `newNote("Setup")` — since the note genuinely didn't exist yet, `note("Setup")` correctly returned `None` every time, and the task ended with a clean-looking `if n is None: scriptPrint("Failed to create note 'Setup'")` guard that never once called `newNote()` — a plausible, error-free report of failure for an object that was simply never asked to be created via the right function. If the task says "create"/"generate"/"make me"/"synthesize"/"set up", go straight to the CREATE function (`newTable()`, `newMatrix()`, `newNote()`, `newGraph()`, ...) for that object type — don't gate it behind an existence check on the name you're about to create, and don't substitute that object type's LOOKUP function for its CREATE function just because both happen to take the same name argument.
 > 2. Does the action script use `random.*`? → `import random` must be its first line.
 > 3. Does the action script use `QColor` / `QFont` / `QPen`? → `from PyQt6.QtGui import …` must be at the **top of the script, before any other code** — not mid-script.
 > 4. Does the script add curves to a graph? → `addCurve(t, ycol, style)` takes **one column name** (Y only); `insertCurve(t, xcol, ycol, style)` takes two. `addCurve(t, "x", "y", style)` → `TypeError: argument 3 has unexpected type 'str'`.
 > 5. Stacked panels: X title goes on **l2 only** (l1's bottom axis is disabled). `l1.setXTitle(...)` is silent but invisible.
 > 6. **EXPLORE must be read-only.** If it contains `newGraph()`, `newTable()`, `addCurve()`, `maximizeWindow()`, `plot()`, or any write/create call, **split those lines into the action script** — an EXPLORE that creates windows or modifies state runs twice, leaving duplicate windows or corrupted state. `plot()` is easiest to miss — it doesn't read like a "write" call the way `newTable()`/`newGraph()` do, but unconditionally creates a new graph window every call.
-> 7. **`scriptPrint()` works like Python's `print()`:** any number of values, each converted with `str()` and joined by spaces (`sep="..."` to change it) — `scriptPrint("R1:", t.cell(2, 3))` prints `R1: 1.5`. Build a multi-line report as one string and call it once (see above).
+> 7. **`scriptPrint()` works like Python's `print()`:** any number of values, each converted with `str()` and joined by spaces (`sep="..."` to change it) — `scriptPrint("R1:", t.cell(2, 3))` prints `R1: 1.5`. Build a multi-line report as one string and call it once (see above). There is no `end=`. **A requested result line holds every value the request lists, in its order, in that ONE call** — a value printed on another line does not count, and a "whether …" value is the boolean itself (`True`/`False`), not a sentence — the state the question names, `True` when it holds, never its negation: "whether recalculation is switched on" prints `autoUpdateTableValues()`, not `not autoUpdateTableValues()`. "Which of … (a list)" is **one** value, the list itself — `[n for n in names if …]`, `[]` when none. The label goes in that same call — `scriptPrint("R1:", a, b)`, never `scriptPrint("R1:")` on a line of its own — and every value is computed: never fixed text (`"not used"`, `"N/A"`, `-1`) in place of a value you could not get — and never wrap the work in `try`/`except` that prints a fixed line when it fails (`except: scriptPrint("R9: fit failed")`): let the error raise, so it is reported and fixed. A value the request calls noise-free, exact or theoretical is computed from the formula, never read from a cell the script added noise to. **Do all the work first, then read every printed value after it:** an existence value by name after the creating or deleting call (`existPlot3D("X")`), never a lookup made before it, never an action call (`closeWindow()`, `delete()`, `new…()`) inside `scriptPrint()` — it returns `None`. Every value is read **after** the work that changes it — a count or state read before is the state before the task: `n_tabs = n.tabs(); n.addTab(); scriptPrint("R3:", n_tabs)` prints the old count; `n.addTab(); scriptPrint("R3:", n.tabs(), n.autoexec())` prints the result.
 > 8. **Does the task modify an existing compiled function and save under a NEW name** (e.g. "fix X's normalization, save as X-correct")? → call `c.setFunctionName("new-name")` **before** `c.compile()` / `c.save()` — they use whatever name is currently loaded, so compiling without renaming first **silently overwrites the original function**. Confirmed live: opening `sasviewmodels/ellipsoid`, fixing its polydispersity normalization, and calling `c.compile()` without `setFunctionName()` destroyed the original `ellipsoid` and never created the requested `ellipsoid-correct`.
 > 9. **Does the action script call `f.setParamValue(name, value)`?** → `name` must be one of the EXACT strings from `c.paramNames()` for the function just configured — an exact-match lookup that **raises `ValueError: setParamValue: no such parameter '<name>'.` if unmatched** (same for `setParamVaries()`). Never guess generic names (`xc`, `A`, `sigma`, `y0`) — read `c.paramNames()` at RUN TIME in this same script (or use names already printed for this function) and match against them; catching the error after the fact still means the fit never ran. A probe can't supply this: `paramVaries()` only means anything after `configure()`, which EXPLORE forbids.
 > 10. **Is "stop and report" the right outcome** (required data doesn't exist, nothing to fit)? → The report must still be a **valid, executable Python script** — wrap the message in `scriptPrint(...)`. Plain English text instead of code fails to compile, shown as "AI code (not runnable)", never reaching the user as a clean message.
@@ -209,6 +209,9 @@ registries and puts the answer in the request:
     PROJECT STATE (read directly from QtiSAS, not guessed):
     - "sasviewmodels/sphere": exists NOW, as: compiled function and fit function.
     - "SAXS_data": UNKNOWN — cannot be resolved ahead of time.
+    - "Calib": exists NOW, as: table (21 rows; columns: 1 "x" X, 2 "y" Y, 3 "dy" yErr).
+
+A table's line carries its rows and columns (number, name, role): use them, never probe a table's columns.
 
 These are facts, not hints. Act on them directly:
 
@@ -258,6 +261,8 @@ does the work still has to contain those calls.
 > f.plotResults("FitResult", "")
 > ```
 > Only catch exceptions you can actually recover from **within the same script** (e.g. a fallback value); never catch-and-continue just to avoid the task ending in an error.
+>
+> **The same for ANY call:** never wrap a call in a `try/except` whose body only passes or prints (`except Exception: pass`) — a wrong call (an invented method) then fails silently and the step counts as done. Let it raise.
 
 ### The marker is required every round
 
@@ -585,7 +590,7 @@ After receiving the output, generate the action script without the `# EXPLORE` l
 | Situation | What to query |
 |---|---|
 | Using `plotResults` with a template | `qti.app.graphTemplates()` → pick a valid name or `""` |
-| Compiling a new function | `c.functionNames("ALL")` → check the name is not already taken |
+| Compiling a new function under a name the request does NOT give | `c.functionNames("ALL")` → check the name is not already taken. An `"ai/"` name the request gives is recompiled over — no check (compile-python-api Rule 6) |
 | Fitting a library function whose exact name you were NOT given | `f.fitFunctions("*keyword*")` → discover the exact name. Skip entirely when the request names it and an existence check already confirmed it |
 | **Accessing a named table, graph, matrix, or note** | **Do NOT probe for this** — QtiSAS checks these names itself and states the answer in the request under `PROJECT STATE` (see "Project state you are given" below). Never write a script to look up a name it already reported. Where that block says UNKNOWN, resolve it at run time instead: `t = table(name)` then `if t is None: t = newTable(name, ...)`. Never pass an unverified object to `addCurve()`, `cell()`, or any write method, and do not generate synthetic data as a substitute for a named input unless the task explicitly asks for it |
 | **Creating a graph template (stacked or multi-panel)** | **`graphTitleOn()`, `graphMajTicksStyle()`, `graphCanvasColor()`, etc. → read current defaults before overriding** |
@@ -611,32 +616,31 @@ After reading these values, the action script:
 The following rules **must** be followed when generating Python code for QtiSAS.
 Violations produce runtime errors that are hard for users to diagnose.
 
-> **RULE #1 — PyQt6 imports: `QColor`, `QFont`, `QPen`, `Qt`, `QFrame`, `QBrush` are NEVER in the default namespace.**
+> **RULE #1 — PyQt6 imports: `QColor`, `QFont`, `QPen`, `Qt`, `QBrush` are NEVER in the default namespace.**
 > Any script that uses any of these symbols MUST start with the imports — NO EXCEPTIONS:
 > ```python
 > from PyQt6.QtGui import QColor, QFont, QPen, QBrush
 > from PyQt6.QtCore import Qt
-> from PyQt6.QtWidgets import QFrame   # only if QFrame is used
 > ```
+> Import only what the script uses. A frame style is `Frame.FrameStyle`, not PyQt6's `QFrame`.
 > **Every single script that uses `QColor`, `QFont`, or `QPen` and does not have these imports will fail with `NameError`.**
 > Never import `QApplication` — it crashes the app.
 
 > **MANDATORY: if the script uses `random.gauss()`, `random.random()`, or any `random.*` call,
 > `import random` MUST be the very first line of the script — without it, every `random.*` call
-> raises `NameError: name 'random' is not defined`.**
+> raises `NameError: name 'random' is not defined`.** `exp()`, `sin()` and the other math functions are global
+> (no `import math`); only `random` needs the import.
 >
-> ```python
-> import random                          # FIRST LINE — mandatory whenever random is used
-> t = newTable("Data", 100, 2)
-> for i in range(1, 101):
->     x = 0.01 * i
->     y = exp(-x) + random.gauss(0, 0.02)   # exp() is global; random needs import
->     t.setCell(1, i, x)
->     t.setCell(2, i, y)
-> ```
->
-> Or avoid the import entirely by using built-in column helpers:
+> Noise without the import — built-in column helpers:
 > `t.setRandomValues(col)` (uniform) / `t.setNormalRandomValues(col, sd=1.0)` (Gaussian noise)
+
+> **Standard SAS/peak models — a request that names one uses exactly this formula**, for generated data and
+> for fit functions alike (no extra factors, no squaring a power law; the sphere form factor is not a template for
+> the others). Python forms:
+> Porod / power law `scale*q**(-n) + bg` · Guinier `I0*exp(-q*q*Rg*Rg/3) + bg` ·
+> sphere form factor `scale*(3*(sin(q*R)-q*R*cos(q*R))/(q*R)**3)**2 + bg` ·
+> Gaussian `A*exp(-(x-xc)**2/(2*w*w)) + c` · Lorentzian `A/(1+((x-xc)/w)**2) + c`.
+> The C++ forms for `setCode()` are in compile-python-api.md ("Standard models").
 
 > **`import math` is NEVER correct in QtiSAS scripts — do not write it, ever.**
 > The only math-related import you may need is `import random` (for random numbers).
@@ -1041,7 +1045,6 @@ Qt symbols (`QColor`, `QFont`, `QPen`, `Qt`, `QFrame`) are **not** in the defaul
 ```python
 from PyQt6.QtGui import QColor, QFont, QPen, QBrush
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QFrame
 ```
 
 > **Never switch an already-correct `PyQt6` import to `PyQt5` (or vice versa) — confirmed live:** a

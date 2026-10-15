@@ -32,6 +32,7 @@ print(n.text())
 | `newNote()` | `Note` | new empty note |
 | `newNote("name")` | `Note` | new note with given name — if a note named `"name"` ALREADY exists, returns it completely unmodified (a genuinely safe reuse, unlike `newTable`'s destructive resize+clear) |
 | `currentNote()` | `Note` or `None` | active note window; returns `None` if no Note is focused |
+| `closeWindow(n)` | — | delete the note — that is "close and delete"; never `deleteFolder()` |
 
 > **Warning:** `currentNote()` returns `None` whenever the active MDI window is not a Note — including while a script is running (focus is on the console). Always prefer `note("name")` to look up a note by its object name.
 >
@@ -64,6 +65,10 @@ For a **multi-tab** note, only the tab that is/was the currently *active* tab ge
 scripts in the note's other tabs do NOT run, even though `autoexec` is a note-level (not per-tab)
 setting.
 
+A tab's text is stored now and only runs later (autoexec, `execute()`), so nothing checks it when it is
+written: use only documented calls in it, and an f-string inside it uses single braces
+(`f"{t.numRows()}"`), not `{{...}}` — doubled braces print the literal text.
+
 | Method | Returns | Notes |
 |--------|---------|-------|
 | `autoexec()` | `bool` | whether auto-execute is on |
@@ -93,7 +98,7 @@ A note can have multiple editor tabs. Tab indices are **0-based**.
 | `tabs()` | `int` | number of tabs |
 | `addTab()` | — | add a new empty tab |
 | `removeTab(index=-1)` | — | remove tab at `index`; default (`-1`) removes the **currently active** tab (Qt convention), NOT the last tab. A note always keeps one tab: removing the last one raises `ValueError` — clear tabs with `while n.tabs() > 1`. |
-| `renameTab(index, name)` | — | rename tab at `index` — **0-based** (confirmed against source: passes `index` straight to Qt's `QTabWidget::setTabText(index, ...)`), unlike `tab(index)` below, which is 1-based. |
+| `renameTab(index, name)` | — | rename tab at `index` — **0-based**, unlike `tab(index)` below, which is 1-based. |
 
 ```python
 n = newNote("MultiTab")
@@ -108,8 +113,14 @@ n.removeTab(2)           # remove last tab
 
 ### Tabs — renameTab() is 0-based, tab() is 1-based
 
+A tab's script is written with `n.tab("make").setText(code)` (or `n.tab(1).setText(code)`) and read with
+`n.tab("make").toPlainText()` — **`Note` has no `setTabText()`, `setTabScript()` or `tabText()`**: the text belongs
+to the tab's editor, not to the note.
+
 A new note has one tab, named **`Tab 1`**; `addTab()` adds `Tab 2`, `Tab 3`, … — there is no tab called `Main`.
-A first tab plus a second named tab: `n.tab(1).setText(...)`, `n.addTab()`, `n.renameTab(1, "Calc")`.
+A first tab plus a second named tab: `n.tab(1).setText(...)`, `n.addTab()`, `n.renameTab(1, "Calc")`,
+`n.tab("Calc").setText(...)` — after a rename, address the tab **by name**: `renameTab(1)` is the SECOND tab, `tab(1)`
+the FIRST.
 
 > **`renameTab()` is 0-based; `tab()` is 1-based — do not mix them up.** Confirmed live: a script
 > called `n.renameTab(n.tabs(), "Configuration")` right after `addTab()`, treating the tab COUNT as
@@ -162,7 +173,7 @@ n.tab("Fit").execute()      # execute tab named "Fit"
 |--------|---------|-------|
 | `setText(s)` | — | set tab content (inherited from QTextEdit) |
 | `toPlainText()` | `str` | get tab content as plain text (inherited from QTextEdit) |
-| `execute()` | — | execute all code in this editor tab |
+| `execute()` | — | execute all code in this editor tab; raises `RuntimeError("the tab's script failed: <its error>")` when the tab's own script fails — the error is in the tab's text |
 | `print()` | — | opens the system print dialog to print the tab on paper — never in a script; the tab's text is `toPlainText()` |
 | `insertFunction(name)` | — | insert a function name at the current cursor position |
 | `save()` | `str` | save to the previously used file; returns file path — **if this tab has never been saved** (no known file path, e.g. a fresh `newNote()`/`addTab()`), this opens a BLOCKING file-choice dialog instead. Use `saveAs(file)` with an explicit path in automated scripts. |

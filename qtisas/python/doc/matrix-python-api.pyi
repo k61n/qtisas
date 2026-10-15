@@ -22,9 +22,11 @@ calculate(startRow=0,endRow=-1,startCol=0,endCol=-1,forceMuParser=False)->bool  
 # calculate() has NO error handling — an empty/malformed formula does NOT raise (unlike
 #   Table.recalculate(), which raises ValueError on a bad formula); it just silently returns
 #   False. Always check the return value if the formula came from anywhere less than certain.
+# calculate() writes the formula (setFormula()) into EVERY cell — with no formula it overwrites them all with 0
+#   (and returns True): after filling cells with setCell(), do NOT call calculate()
 setNumericPrecision(prec)
 
-transpose()  invert()->bool  determinant()->float  integrate()->float
+transpose()  invert()->bool  determinant()->float  integrate()->float  min()->float  max()->float
 # integrate() is the integral over the matrix's x/y coordinates (trapezoidal rule, times dx*dy), NOT the sum of the
 #   cells — the plain sum: sum(m.cell(r, c) for r in range(1, m.numRows()+1) for c in range(1, m.numCols()+1))
 # invert()/determinant() raise ValueError if the matrix is not square

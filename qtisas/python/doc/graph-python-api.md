@@ -72,7 +72,7 @@ g2.addCurve(t, "dI", Graph.CurveType.Scatter)
 > gw.activeLayer().insertCurve(sc, "x", "y", Graph.CurveType.Line)
 > ```
 
-> **Warning:** `graphWindow("name")` returns `None` (confirmed) — not an error, not a placeholder — when no graph with that name exists. Always check `if g is None:` before using the result.
+> **Warning:** `graphWindow("name")` returns `None` (confirmed) — not an error, not a placeholder — when no graph with that name exists. Always check `if g is None:` before using the result. A request that plots **into** graph "X" creates it when it is missing — `gw = graphWindow("X") or newGraph("X", ...)`; only "the existing graph X" is a lookup that may stop with a message.
 
 > **`graphWindow("name")` is 2D-`GraphWindow`-ONLY — returns `None` for a `Graph3D` window even
 > when one exists under that exact name** (confirmed live). To look up an existing 3D surface
@@ -92,7 +92,7 @@ g2.addCurve(t, "dI", Graph.CurveType.Scatter)
 ```python
 GraphWindow.HorAlignement   # HCenter, Left, Right
 GraphWindow.VertAlignement  # VCenter, Top, Bottom
-GraphWindow.AlignPolicy     # AlignLayers=0, AlignCanvases
+GraphWindow.AlignPolicy     # AlignLayers=0, AlignCanvases — GraphWindow's enum, NOT Graph.AlignPolicy (AttributeError); setAlignPolicy() takes no int
 ```
 
 ### Layer access
@@ -296,7 +296,7 @@ ColorMap=16  GrayScale=17  Contour=18  ImagePlot=20  Function=19
 
 | Method | Returns | Notes |
 |--------|---------|-------|
-| `addCurve(t, col, style=0, lineWidth=1, pointSize=3, startRow=0, endRow=-1)` | `bool` | add one Y column; `col` is bare Y column name — **no xcol arg**; X is the column with `PlotDesignation.X` role |
+| `addCurve(t, col, style=0, lineWidth=1, pointSize=3, startRow=0, endRow=-1)` | `bool` | add one Y column; `col` is bare Y column name — **no xcol arg** (`addCurve(t, "x", "y", style)` is a `TypeError`: use `insertCurve(t, "x", "y", style)`); X is the column with `PlotDesignation.X` role |
 | `addCurves(t, cols_tuple, style=0, lineWidth=1, pointSize=3, startRow=0, endRow=-1)` | `bool` | add multiple Y columns |
 | `insertCurve(t, col, style=1, startRow=0, endRow=-1)` | `DataCurve` | note the default `style` differs from `addCurve`'s (`0`) |
 | `insertCurve(t, xcol, ycol, style=1, startRow=0, endRow=-1)` | `DataCurve` | explicit X and Y columns by name |
@@ -514,7 +514,7 @@ Confirmed live.
 
 | Method | Returns | Notes |
 |--------|---------|-------|
-| `newLegend()` | `LegendWidget` | add default legend |
+| `newLegend()` | `LegendWidget` | add default legend — a layer method: on a GraphWindow `gw.activeLayer().newLegend()` (`gw.newLegend()` → AttributeError) |
 | `newLegend("text")` | `LegendWidget` | add legend with custom text |
 | `setLegend("text")` | — | replace legend text |
 | `legend()` | `LegendWidget` or `None` | get the EXISTING legend — `None` if none was ever added |
@@ -740,7 +740,7 @@ leg.setOrigin(10, 10)
 | `setAxisColor(axis, QColor)` | axis line colour |
 | `setAxisFont(axis, QFont)` | tick label font |
 | `setAxisLabelsColor(axis, QColor)` | tick-label colour — requires explicit `axis` argument |
-| `setAxisNumericFormat(axis, format, precision=6, formula="")` | `format`: 0=Automatic, 1=Decimal, 2=Scientific, 3=Superscripts, 4=Engineering, 5=SuperscriptsGER — **3 is Superscripts, not engineering** (4 is); 4th arg is a label-transform FORMULA string, not a text suffix appended to labels |
+| `setAxisNumericFormat(axis, format, precision=6, formula="")` | all arguments positional (`precision=3` → TypeError); `format`: 0=Automatic, 1=Decimal, 2=Scientific, 3=Superscripts, 4=Engineering, 5=SuperscriptsGER — **3 is Superscripts, not engineering** (4 is); 4th arg is a label-transform FORMULA string, not a text suffix appended to labels |
 | `setAxisLabelRotation(axis, degrees)` | |
 | `setMajorTicksType(axis, Graph.Ticks.*)` | |
 | `setMinorTicksType(axis, Graph.Ticks.*)` | |

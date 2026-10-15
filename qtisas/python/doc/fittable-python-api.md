@@ -136,6 +136,8 @@ f.fitFunctions("*SANS*")     # substring match
 ```
 
 Returns sorted list of function names. Wildcards: `*` matches any substring including `/`.
+Whether a function exists: `f.functionExists("ai/Quad")` (the same as `"ai/Quad" in f.fitFunctions()`);
+`Compiler.functionExists(name)` does the same.
 
 > **`Fittable` has `fitFunctions()`; it does NOT have `functionNames()`** — that belongs to
 > `Compiler`, a different singleton (see compile-python-api.md). Don't borrow one's method name onto
@@ -168,7 +170,8 @@ Resets to `init` stage, then runs the full mandatory sequence
 `setDatasetCount → setFunction → selectDataset` in one call.
 
 > `function` must be the **name** of a function already in the Fittable library — **not a formula string**.
-> Use `f.fitFunctions()` to see all available names.
+> Use `f.fitFunctions()` to see all available names. The name includes its folder:
+> `f.configure("ai/MyPeak", ...)`, never `"MyPeak"`.
 
 ```python
 f.configure("Guinier")                              # single dataset (select manually after)
@@ -610,7 +613,7 @@ empty string.
 ### Fit curve table — creation and column structure
 
 After `fit()` and after `simulate()`, fit curve tables are created in the workspace:
-- Single dataset: `fitCurve-<function>`
+- Single dataset: `fitCurve-<function>` — `<function>` is the FULL name given to `configure()`, folder included: `fitCurve-ai/GaussPeak`, never `fitCurve-GaussPeak`
 - Global fit dataset N: `fitCurve-<function>-global-N`
 
 **Fit curve table columns** (column index is 1-based for Python cell access):
@@ -801,6 +804,11 @@ for the original data instead of adding the real data table's own curve.
 Always plots into **layer 1** (data scatter + fit line).  
 If the MultiLayer has a second layer and `radioButtonSameQrange` is checked, residuals (scatter) are added to **layer 2** and the X axes are linked.  
 Existing curves are never duplicated — repeated calls are safe.
+
+**Into a graph you built yourself: either `plotResults()` or your own `insertCurve()`/`addCurve()`, not both.**
+`plotResults("Name")` on an existing 2-layer graph already fills it — data + fit curve in layer 1, residuals in
+layer 2. Adding the same curves with `insertCurve()`/`addCurve()` afterwards puts every curve in twice: only
+`plotResults()` itself skips curves already present.
 
 **Curve order/index in layer 1, per dataset: DATA scatter is inserted first, FIT line second.** For
 a single dataset that's index **0 = data**, index **1 = fit** — NOT reversed, NOT "the only curve =
@@ -1004,7 +1012,7 @@ g.insertCurve(sc, "x", "y", Graph.CurveType.Line)
 ### Scalar results
 
 ```python
-chi2 = f.lastChi2    # Chi²/DoF from last fit
+chi2 = f.lastChi2    # Chi²/DoF from last fit — already divided: never f.lastChi2 / f.lastDoF
 dof  = f.lastDoF     # degrees of freedom
 ```
 
@@ -1049,6 +1057,11 @@ dof  = f.lastDoF     # degrees of freedom
 > Same gotcha as the convergence check above — `fit()`'s return value is always a fresh snapshot
 > each call; `lastChi2`/`results()` are safe only for "the current state," never as a stand-in for
 > "before the call I just made."
+>
+> **`configure()` resets every parameter to the function's initial values** — `results()` after a new
+> `configure()` (without `fit()`) returns the START values, not the last fit's. To compare two models in
+> one script, read each model's `results()` right after its own `fit()`:
+> `chi_g = f.fit(); A_g, _ = f.results()["A"]` — then configure the second model, fit, read, compare.
 
 ---
 

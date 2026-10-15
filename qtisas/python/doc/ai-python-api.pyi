@@ -2,20 +2,42 @@
 # Entry: Status bar (Ctrl+Enter=show code, Ctrl+Shift+Enter=auto-run) | Script Window Ask AI | Note Ask AI
 # Setup: Settings → AI  (API key, model, base URL, unlimited docs toggle)
 
-# MANDATORY IMPORT RULE — EVERY script that uses QColor, QFont, QPen, Qt, QFrame, QBrush MUST begin with:
+# MANDATORY IMPORT RULE — EVERY script that uses QColor, QFont, QPen, Qt, QBrush MUST begin with:
 #   from PyQt6.QtGui import QColor, QFont, QPen, QBrush
 #   from PyQt6.QtCore import Qt
-#   from PyQt6.QtWidgets import QFrame
+#   Import only what the script uses. (A frame style is Frame.FrameStyle, not PyQt6's QFrame.)
 # These symbols are NEVER in the default namespace. Omitting the import → NameError at runtime.
 # NEVER import QApplication — crashes the app.
 
 # scriptPrint() works like print(): any values, converted with str() and joined by spaces —
-#   scriptPrint("R1:", t.cell(2, 3)) → "R1: 1.5". sep="..." sets the separator.
+#   scriptPrint("R1:", t.cell(2, 3)) → "R1: 1.5". sep="..." sets the separator; there is no end=.
+# A requested result line holds EVERY value the request lists, in its order, in ONE call — a value printed on
+#   another line does not count; a "whether ..." value is the boolean itself (True/False), not a sentence —
+#   the state the question names, True when it holds, never its negation: "whether recalculation is switched
+#   on" prints autoUpdateTableValues(), not `not autoUpdateTableValues()`;
+#   "which of ... (a list)" is ONE value, the list itself: [n for n in names if ...] — [] when none.
+# The label goes in that same call — scriptPrint("R1:", a, b), never scriptPrint("R1:") on a line of its own.
+#   Every value is computed: never fixed text ("not used", "N/A", -1) in place of a value you could not get.
+#   Never wrap the work in try/except that prints a fixed line on failure ("R9: fit failed") — let the error raise.
+#   A value the request calls noise-free, exact or theoretical is computed from the formula, never read from a cell
+#   the script added noise to.
+# Do all the work first, then read every printed value after it: an existence value by name after the
+#   creating/deleting call (existPlot3D("X")), never a lookup made before it, never an action call
+#   (closeWindow(), delete(), new…()) inside scriptPrint() — it returns None. Every value is read AFTER the work
+#   that changes it — a count or state read before is the state before the task:
+#   WRONG: n_tabs = n.tabs(); n.addTab(); n.setAutoexec(True); scriptPrint("R3:", n_tabs, auto_on)
+#   RIGHT: n.addTab(); n.setAutoexec(True); scriptPrint("R3:", n.tabs(), n.autoexec())
 
 # MATH FUNCTIONS ARE GLOBAL — sin cos exp log sqrt pi e floor ceil abs are in the global namespace.
 #   Do NOT write "import math" — use bare names directly. No import needed.
 #   WRONG: import math; math.exp(-x)   ← leads to math.random() mistakes; "import math" not needed
 #   RIGHT: exp(-x)   sin(q)   sqrt(v)   pi   e             ← no import, works everywhere
+# STANDARD SAS/PEAK MODELS — a request that NAMES one uses exactly this formula, for data and for fit functions alike
+#   (no extra factors, no squaring a power law; the sphere form factor is not a template for the others):
+#   Porod / power law: scale*q**(-n) + bg        Guinier: I0*exp(-q*q*Rg*Rg/3) + bg
+#   Sphere form factor: scale*(3*(sin(q*R)-q*R*cos(q*R))/(q*R)**3)**2 + bg
+#   Gaussian: A*exp(-(x-xc)**2/(2*w*w)) + c      Lorentzian: A/(1+((x-xc)/w)**2) + c
+#   (C++ forms for setCode(): compile-python-api "STANDARD MODELS".)
 #   APPLIES DURING SELF-REVIEW TOO: don't "fix" compliant bare sin/cos/pi/sqrt usage by adding
 #   "from math import ...", even though that looks like safer standard Python — the bare globals
 #   ARE correct here. Confirmed live: self-review silently inserted that import into an already-
@@ -59,14 +81,8 @@
 #   retries fixing an unrelated later call. No name-based reuse exists for compile() — mitigate by
 #   ordering the risky/uncertain calls BEFORE expensive ones so a failure happens before the cost.
 #
-# Example — synthetic data with noise (no "import math" needed):
-#   import random
-#   t = newTable("Data", 100, 2)
-#   for i in range(1, 101):
-#       x = 0.01 * i
-#       y = exp(-x) + random.gauss(0, 0.02)   # exp() is global; random needs import
-#       t.setCell(1, i, x)
-#       t.setCell(2, i, y)
+# Noise: random.gauss() etc. need "import random" as the first line; exp(), sin() and the other math functions
+#   are global (no "import math").
 #
 # NOISE MODEL: sqrt(abs(y)) is a shot-noise (raw photon COUNT) model — do NOT reuse it as a
 #   generic "add noise" recipe for a value already in its own calibrated physical units (intensity
@@ -133,6 +149,7 @@
 #   "exists NOW, as: <kind>" = use that object; never script a lookup for it, never wildcard-search
 #   a name you were given exactly. Wrong kind (a fit function where a graph of that name is wanted)
 #   = a name collision: say so, do not overwrite it.
+#   For a table it also gives rows and columns (number, name, role) — use them; never probe a table's columns.
 #   "UNKNOWN — cannot be resolved ahead of time" = nothing generated this session has run yet and an
 #   earlier step may create it. Assume neither way, state neither as fact in your script, and decide
 #   at run time: t = table(name) then "if t is None: t = newTable(name, ...)". For a request that only
@@ -144,7 +161,8 @@
 #   the request whose calls appear nowhere in your script (residuals, fit curve, legend, axis titles,
 #   script tab); add them. A guard clause is fine, but the branch that does the work must contain
 #   those calls.
-# If you need to read current state before acting (e.g. read existing code/info/params),
+# Only for a fact the PROJECT STATE block does not give (a library function's code/params, an object it
+#   does not list and the request does not create) — if you need to read it before acting,
 # return ONLY a read-only script with "# EXPLORE" as the VERY FIRST LINE.
 # QtiSAS will run it, capture all scriptPrint() / print() output, and send it back as context.
 # Once you have everything you need, return the action script (without # EXPLORE).
@@ -171,6 +189,8 @@
 # — if still failing after several attempts, reconsider whether the task's premise is wrong
 # instead of retrying the same mistake.
 #
+# NEVER wrap a call in try/except whose body only passes or prints ("except Exception: pass") — a wrong
+#   call (an invented method) then fails silently and the step counts as done. Let it raise.
 # DO NOT WRAP setParamValue()/setParamVaries()/fit() IN A BROAD try/except THAT JUST PRINTS AND
 # CONTINUES — this defeats the automatic retry above. QtiSAS only captures errors that reach the
 # script's top level (uncaught); swallow it locally and execution continues past the failed
@@ -332,9 +352,9 @@
 # results"). t.cell(...) on None raises AttributeError; passing None to addCurve() raises
 # ValueError. One line handles it gracefully: t=table("X"); scriptPrint("not found" if t is
 # None else str(t.cell(2,3))) — no separate EXPLORE round-trip needed for a single lookup.
-# For tasks needing MORE than one value (structure/columns) before a follow-up action
-# script, run EXPLORE first to gather that: existTable("X"), existMatrix("X"), existGraph("X"),
-# existNote("X") — each is type-specific (a matrix is never a table).
+# A named table's columns and rows are in the PROJECT STATE block. For anything more before a
+# follow-up action script, run EXPLORE first to gather that: existTable("X"), existMatrix("X"), existGraph("X"),
+# existPlot3D("X"), existNote("X") — each is type-specific (a matrix is never a table).
 #
 # THIS EXISTENCE CHECK DOES NOT APPLY WHEN THE TASK ASKS YOU TO CREATE/SET UP THE OBJECT
 # YOURSELF (e.g. "create a table with sphere form factor data", "create a note with an

@@ -118,7 +118,7 @@ Row arguments are always 1-based.
 | `text(col, row)` | `str` | cell text as displayed — in a Numeric column formatted in the application's numerical format (e.g. `1,5` with German settings); read numbers with `cell()`, never `float(t.text(...))` |
 | `cell(col, row)` | `float` | numeric value; raises `ValueError` if empty |
 | `cellOrNone(col, row)` | `float` or `None` | numeric value, or `None` if the cell is empty or not a number — use it where a parse failure must be visible (unlike `cell()`, which gives `0.0`) |
-| `cellData(col, row)` | `str` or `float` | type-aware: float for numeric cols, str for text |
+| `cellData(col, row)` | `str`, `float` or `None` | type-aware: float for numeric cols, str for text; **`None` for an empty cell** (Numeric/Date/Time) — test `is None`, never `== ""`; or use `cellOrNone()` |
 | `rowData(row)` | `tuple` | all cells of a row — an empty numeric cell becomes `None`, NOT `0` |
 | `colData(col)` | `list` | all cells of a column — an empty numeric cell becomes `None`, NOT `0` |
 | `t[n]` | `tuple` | row at **0-based** index `n`; equivalent to `rowData(n+1)`; supports negative indices (`t[-1]` = last row) |
@@ -161,9 +161,9 @@ last_row_tuple = t[-1]          # bracket access DOES support -1
 
 | Method | Notes |
 |--------|-------|
-| `setText(col, row, value)` | write string to cell — in a Numeric column a C number string (`"1.5"`) is stored as that number and shown in the numerical format; any other text is evaluated as an expression (`"2*pi"`), and text that is none (a label like `"beta"`) leaves the cell **empty**. Call `setColTextFormat(col)` first for text |
+| `setText(col, row, value)` | write string to cell — in a Numeric column a C number string (`"1.5"`) is stored as that number and shown in the numerical format; any other text is evaluated as an expression (`"2*pi"`), and text that is none (a label like `"beta"`) leaves the cell **empty**. Call `setColTextFormat(col)` first for words (labels) — a number written as text (`"2,5"` with German separators) needs **no** text format |
 | `setCell(col, row, value)` | write float to cell |
-| `setCellData(col, row, value)` | type-aware write (str or float) |
+| `setCellData(col, row, value)` | **one cell**: `setCellData(3, 1, 0.05)` — a whole column from a list is `setColData(3, [0.05]*21)`. Writes by the **column's** type: a `str` into a Numeric column raises `TypeError` ("Can't convert <str> into a float") — call `setColTextFormat(col)` first |
 | `setRowData(row, tuple)` | overwrite entire row from a tuple — `row` is **1-based** |
 | `t[row] = tuple` | **0-based, negative-index-capable** (`t[0]` writes row 1, `t[-1]` writes the last row) — converts to `setRowData(row+1, tuple)`; unlike `setRowData`'s own 1-based `row` above |
 | `appendRowData(tuple)` | add a new row at the end; returns new row index |
@@ -248,7 +248,7 @@ t.setColumnRole("dy", Table.PlotDesignation.yErr)
 | Method | Notes |
 |--------|-------|
 | `setColTextFormat(col)` | mark column as text |
-| `setColNumericFormat(col, format, prec, updateCells=True)` | `format` (not `fmt`): `Table.NumericFormat.*`; `prec` = significant digits |
+| `setColNumericFormat(col, format, prec, updateCells=True)` | `format` (not `fmt`): `Table.NumericFormat.*`; `prec` positional (`prec=4` → TypeError): significant digits for `Default`, digits after the point for `Decimal`/`Scientific`. Columns start as `Default` with 13 digits (3 → `3`, 3.000001 → `3.000001`) — change the format only when the request asks for one |
 | `setColDateFormat(col, fmtStr, updateCells=True)` | e.g. `"yyyy-MM-dd"` |
 | `setColTimeFormat(col, fmtStr, updateCells=True)` | e.g. `"hh:mm:ss"` |
 | `setColMonthFormat(col, fmtStr, updateCells=True)` | e.g. `"MMM"` (Jan), `"MMMM"` (January), `"MM"` (01); column must contain integers 1–12 |
@@ -274,10 +274,10 @@ t.setColumnRole("dy", Table.PlotDesignation.yErr)
 
 | Method | Notes |
 |--------|-------|
-| `setCommand(col, expr)` | assign a formula expression to a column |
-| `recalculate(col, startRow=1, endRow=-1, forceMuParser=False, notifyChanges=True)` | evaluate formula in the global scripting language (Python by default); `forceMuParser=True` → muParser; returns `True` on success — raises `ValueError` if the column is read-only or the formula fails (a syntax error leaves the column unchanged; rows without a finite result are left empty); the message's second line is the formula's first error, e.g. `name 'x' is not defined`; its name: `str(e).splitlines()[1].split(":")[0]` (e.g. `ZeroDivisionError`) |
+| `setCommand(col, expr)` | assign a formula expression to the whole column — ONE call, outside any loop; the formula refers to `col("x")`, never to a Python row value |
+| `recalculate(col, startRow=1, endRow=-1, forceMuParser=False, notifyChanges=True)` | evaluate formula in the global scripting language (Python by default); `forceMuParser=True` → muParser; returns `True` on success — raises `ValueError` if the column is read-only or the formula fails (a syntax error leaves the column unchanged; rows without a finite result are left empty); the message's second line is the formula's first error, e.g. `name 'x' is not defined`; its name: `str(e).splitlines()[1].split(":")[0]` (e.g. `ZeroDivisionError`). After the raise the column is still filled — rows that evaluated hold their values, only failing rows stay empty; a read-only column keeps its old values — so count or sum **after** the `try/except`, whatever happened |
 
-> **The formula runs in the global scripting language (Python by default), or in muParser with `forceMuParser=True`. Reference another column via `col("name")` or `col(index)`, never by bare name. Powers: `pow(a, b)` works in both; `^` is power only in muParser (in Python it is XOR and fails), `**` only in Python.** A bare identifier like `x` is neither a muParser variable nor a Python name. `setCommand()` accepts the string unvalidated; the failure only surfaces on `recalculate()`. Confirmed live (in muParser): `t.setCommand("y", "exp(-pow(x-100, 2)/100)")` raised `Unexpected token "x" found at position 9`, immediately followed by `ValueError: recalculate: column 2 is read-only or its formula failed to evaluate` — and the mistake repeated across several retries (including swapping `pow(...)` for `**`) with the bare `x` never fixed. In Python, the same mistake gives `NameError: name 'x' is not defined` on the `ValueError`'s second line.
+> **The formula runs in the global scripting language (Python by default), or in muParser with `forceMuParser=True`. Reference another column via `col("name")` or `col(index)`, never by bare name — `col("1")` is the column *named* "1", gone after `setColNames()`; `col(1)` is column number 1. The row number in a formula is `i` (1, 2, …), in both languages — `x = 0, 0.1, …` is `"0.1*(i-1)"`; there is no `row` or `row()`. Powers: `pow(a, b)` works in both; `^` is power only in muParser (in Python it is XOR and fails), `**` only in Python.** A bare identifier like `x` is neither a muParser variable nor a Python name. `setCommand()` accepts the string unvalidated; the failure only surfaces on `recalculate()`. Confirmed live (in muParser): `t.setCommand("y", "exp(-pow(x-100, 2)/100)")` raised `Unexpected token "x" found at position 9`, immediately followed by `ValueError: recalculate: column 2 is read-only or its formula failed to evaluate` — and the mistake repeated across several retries (including swapping `pow(...)` for `**`) with the bare `x` never fixed. In Python, the same mistake gives `NameError: name 'x' is not defined` on the `ValueError`'s second line.
 >
 > **WRONG:**
 > ```python

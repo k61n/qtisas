@@ -138,9 +138,12 @@ m.calculate()
 | `setNumericPrecision(prec)` | significant digits for display |
 
 > **`calculate()` has NO error handling** — unlike `Table.recalculate()`, which raises `ValueError`
-> on a bad formula, `calculate()` has no validation at all: an empty or malformed formula just makes
-> it silently return `False` (or leave data unchanged), with no exception and no message. Always
-> check the return value if the formula came from anywhere less than certain.
+> on a bad formula, `calculate()` has no validation at all: a malformed formula just makes it
+> silently return `False`, with no exception and no message. Always check the return value if the
+> formula came from anywhere less than certain.
+>
+> **`calculate()` writes the formula (`setFormula()`) into EVERY cell — with no formula it overwrites
+> them all with 0** (and returns `True`). After filling cells with `setCell()`, do not call `calculate()`.
 
 ---
 
@@ -151,6 +154,7 @@ m.calculate()
 | `transpose()` | transpose rows ↔ columns |
 | `invert()` | matrix inversion (square matrix) — raises `ValueError` if the matrix is not square |
 | `determinant()` | → `float` — raises `ValueError` if the matrix is not square |
+| `min()`, `max()` | → `float` — the smallest / largest value of all cells |
 | `integrate()` | → `float` — integral over the x/y coordinates (trapezoidal rule, times `dx()*dy()`) — **not** the sum of the cells; for that: `sum(m.cell(r, c) for r in range(1, m.numRows()+1) for c in range(1, m.numCols()+1))` |
 | `flipVertically()` | flip upside down |
 | `flipHorizontally()` | flip left–right |

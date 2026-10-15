@@ -223,6 +223,21 @@ y = scale * exp(-pow((x - center) / sigma, 2.0) / 2.0) + background;
 y = scale * exp(-(x - center) * (x - center) / (2.0 * sigma * sigma)) + background;
 ```
 
+**Standard models — a request that names one of these uses exactly this formula** (no extra factors, no
+invented normalisation, no squaring a power law, parameters as named, background added). None needs a header:
+`exp`/`pow`/`sin`/`cos` are always available.
+
+| Model | `[code]` (C++) |
+|---|---|
+| Porod / power law | `I = scale*pow(q,-n) + background;` |
+| Guinier | `I = I0*exp(-q*q*Rg*Rg/3.0) + background;` |
+| Sphere form factor | `I = scale*pow(3.0*(sin(q*R)-q*R*cos(q*R))/pow(q*R,3), 2) + background;` |
+| Gaussian peak | `y = A*exp(-(x-xc)*(x-xc)/(2.0*w*w)) + c;` |
+| Lorentzian peak | `y = A/(1.0+((x-xc)/w)*((x-xc)/w)) + c;` |
+
+The sphere form factor is one model among these, not a template for others: a power law is not squared, and
+no other model is multiplied by it.
+
 ### setCode() — C++ ternary vs Python ternary
 
 **The reverse mistake also happens: C++'s `cond ? a : b` ternary leaking into surrounding PYTHON
@@ -263,6 +278,12 @@ I = scale * pq + background;
 ```
 
 ### setCode() — unset xName/yName defaults and silent failure
+
+**A request written as `y = a*x^2 + b*x + c` uses its own names:** `c.setXName("x")`, `c.setYName("y")`, code
+`"y = a*x*x + b*x + c;"` — `y` assigned directly, no `double`. The `q`/`I` in the other examples are the SAS
+convention, not a default. A formula written with `exp`/`sin`/`pow`/`sqrt` needs **no** `setHHeaders()` — include a
+header only when the code calls a library function whose header exists; never a guessed name
+(`"sasviewmodels/gaussian.h"`).
 
 **If `setXName()`/`setYName()` are never called, the unset defaults are `"x"` and `"f"`** — NOT
 `"I"`, despite `"I"` being the typical SANS/SAXS convention and the most common value used in
@@ -373,7 +394,10 @@ in the generated `.cpp`. Only `#include` lines are copied into the output; other
 The following headers are **always included automatically** — do not add them:
 `<math.h>`, `<gsl/gsl_math.h>`, `<gsl/gsl_vector.h>`, `<gsl/gsl_matrix.h>`.
 
-**Any other header must be added explicitly.** In particular, every GSL sub-library requires its own header:
+**Any other header must be added explicitly** — but only for a function whose `[code]` really calls a library
+function. A formula of `exp`/`pow`/`sin`/`sqrt` (power law, Guinier, Gaussian, Lorentzian) needs **no** header;
+`sasviewmodels/sphere.h` in the examples is the case of *reusing* a library model, not a default. Every GSL
+sub-library requires its own header:
 
 | If you use | Add to hHeaders |
 |---|---|
@@ -669,11 +693,21 @@ Raises `ValueError` if the category name is not found.
 
 ---
 
-### functionNames(groupName)
+### Compiler.functionExists(name)
+
+A method of `Compiler` (also `Fittable.functionExists`) — a plain `functionExists(...)` call is a `NameError`.
+
+```python
+c.functionExists("ai/MyPeak")    # True when a compiled function of that full name exists
+```
+
+No category is selected (unlike `functionNames()`); the same as `"ai/MyPeak" in Fittable.fitFunctions()`.
+
+### functionNames(groupName="ALL")
 
 ```python
 functions = c.functionNames("Spheres")    # select category and return its function names
-functions = c.functionNames("ALL")        # select ALL and return every function name
+functions = c.functionNames()             # "ALL" by default: every function name
 ```
 
 Calls `selectCategory(categoryName)` first, then returns the function list from the explorer.
@@ -685,8 +719,14 @@ Requires an **exact** category name as returned by `categories()` — wildcards 
 > `Fittable`, a different singleton. Confirmed live, repeated even after the first AttributeError:
 > `c = Compiler` then `c.fitFunctions(...)` — never call a `Fittable`-only method (`fitFunctions()`,
 > `configure()`, `fit()`, `setWeightingMethod()`, ...) on `c`. To check whether a name already
-> exists among compiled functions, filter `c.functionNames("ALL")` yourself, e.g.
+> exists among the definitions, filter `c.functionNames("ALL")` yourself, e.g.
 > `[h for h in c.functionNames("ALL") if h.lower() == name.lower()]` — never `c.fitFunctions(...)`.
+
+> **`functionNames()` lists DEFINITIONS (the `.fif` files) — also one whose last `compile()` failed.**
+> Whether a function is compiled and can be fitted: `name in Fittable.fitFunctions()` (on `Fittable`, not on
+> `c`). A function the request asks to compile is defined and compiled again every time — never put
+> `c.new()` … `c.compile()` behind a check whether it exists: after a failed compile the definition is still
+> listed, the check skips the compile, and `configure()` then reports "not found".
 
 To search by **category keyword**, filter `categories()` first:
 ```python
@@ -841,6 +881,8 @@ c.delete("cylinder")                    # delete by name
 c.delete("sasviewmodels/cylinder")      # delete from sub-folder
 c.delete("cylinder", path="/custom/p")  # delete from custom path
 ```
+
+`delete()` is a `Compiler` method like every one here — a bare `delete("...")` is a `NameError`.
 
 Deletes the FIF file (and its `.cpp`/`.so`/`.dylib`/`.dll`) from disk and refreshes the explorer.
 If `name` is empty, deletes the currently open function. Empty sub-folders are removed automatically.
@@ -1955,7 +1997,7 @@ t = table("Density-Profile")
 
 win_name = "Graph-Density-Profiles"
 existing = [w.objectName() for w in qti.app.windows()]
-g = graph(win_name) if win_name in existing else newGraph(win_name)
+g = graphWindow(win_name) if win_name in existing else newGraph(win_name)
 
 l = g.activeLayer()
 for i in range(l.numCurves()):
@@ -2328,6 +2370,11 @@ folder** (`sasviewmodels/`, `custom/`, `qtiplot/`, ...) that a real library func
 use or later collide with. This is the SAME `/`-folder mechanism the library already uses for
 `sasviewmodels/sphere`, `custom/sphere`, etc. — `"ai/"` is simply a reserved namespace for it.
 
+**`"ai/"` is both the folder the function is stored in (`pathFIF/ai/<shortName>.fif`) and part of its
+name:** the function *is* `"ai/<shortName>"` in every call — `f.configure("ai/MyPeak", ...)`,
+`Compiler.delete("ai/MyPeak")`, `f.fitFunctions()`, `table("fitCurve-ai/MyPeak")`. A bare `"MyPeak"` is
+another, missing function. Print and compare it with the folder too.
+
 ```python
 # WRONG — no dedicated folder; risks colliding with a real library name later, and looks
 # indistinguishable from a vetted model in future EXPLORE searches
@@ -2355,19 +2402,20 @@ hits = [h for h in c.functionNames("ALL") if "sphere" in h.lower()]
 hits = [h for h in c.functionNames("ALL") if "sphere" in h.lower() and not h.startswith("ai/")]
 ```
 
-### Rule 7 — `setGroup()`: reuse an existing group if one fits, only invent a new one otherwise
+### Rule 7 — `setGroup()`: `"ai"` for an `ai/` function, an existing group reused exactly
 
-**Before calling `setGroup()`, check for an existing group that already matches the function's
-domain and reuse it EXACTLY (byte-for-byte)** — only invent a new one if nothing matches. Reusing
-near-variants inconsistently (`"SANS"` vs `"sans"` vs `"Sans"`) fragments the Explorer category
-tree into duplicates instead of one real group.
+**An existing group is reused EXACTLY (byte-for-byte)** — near-variants (`"SANS"` vs `"sans"` vs `"Sans"`)
+fragment the Explorer category tree into duplicates instead of one real group.
 
-```python
-c.scanGroups()
-existing = c.groups()
-match = next((g for g in existing if "sans" in g.lower()), None)
-c.setGroup(match if match else "custom:sans")   # reuse if found, else propose one
-```
+An `ai/` function takes `c.setGroup("ai")` — unless the request names a group: then that group, exactly. The group
+only sorts the Explorer tree; a guessed domain group is worse than `"ai"`.
+
+**The group is not the folder:** `setGroup("ai")` only files the function under `"ai"` in the Explorer tree and adds
+nothing to its name. The name is what `setFunctionName()` gave — `"ai/MyPeak"` — and is used whole in every call;
+`"MyPeak"` stays a missing function whatever the group is.
+
+Call `setGroup()` **after** `c.new()` and `setFunctionName()`: `new()` clears the group again, as `scanGroups()`
+clears the editor — a group set before `new()` is lost, and `compile()` then fails with "group is empty".
 
 New group names follow the library's existing `":"`-hierarchy convention (e.g. `"shape:sphere"` in
 the Quick Start above) — `setGroup()` still rejects `"/"` (`ValueError`, see Rule 3's group note).

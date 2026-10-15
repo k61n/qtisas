@@ -91,8 +91,15 @@ saveProject(compress=False)->bool  saveProjectAs("path",compress=False)
 # NameError for openProject: an older qtisasrc.py in the python config folder — use qti.app.openProject(...)
 existWindow("name")->bool  existTable("name")->bool  existNote("name")->bool
 existMatrix("name")->bool  existGraph("name")->bool   # each type-specific: a matrix is never a table
+existPlot3D("name")->bool   # a 3D plot (Graph3D); existGraph() is 2D only
+# A fit function: Compiler.functionExists("ai/Quad") (also Fittable.functionExists) — no exist…() for functions
 closeWindow(window)  activateWindow(window)  activateWindow("name")->bool
 # closeWindow deletes outright, no "hide or delete?" dialog (unlike the UI close button)
+# closeWindow(w) IS "close and delete": it deletes the window outright — no separate delete call exists
+#   (deleteFolder() is for project folders, never for a window); closeWindow(None) does nothing — no existence check needed
+# closeWindow(t) leaves the Python variable t bound — still not None: check by name afterwards,
+#   existTable("T") / table("T") is None (existNote/note, existMatrix/matrix, existGraph/graphWindow)
+# "whether X still exists": print existTable("X") itself — True = it still exists; never not existTable("X")
 hideWindow(window)  maximizeWindow(window)  # call activateWindow(window) before maximizeWindow
 openTemplate("path")->MdiSubWindow  saveAsTemplate(window,"path")
 clone(window)->MdiSubWindow  setWindowName(window,"name")->bool
@@ -139,7 +146,7 @@ colorNames()->list[str]  colorIndex("name")->int
 symbolNames()->list[str]  symbolIndex("name")->int
 
 # Data state:
-autoUpdateTableValues()->bool  setAutoUpdateTableValues(on)
+autoUpdateTableValues()->bool  setAutoUpdateTableValues(on)   # automatic formula recalculation, project-wide (False = off)
 columnsList()->list[str]  columnsList(Table.PlotDesignation.Y)->list[str]
 # columnsList() with no args defaults to "all columns" internally (C++ Table.All) — but there is
 #   no Table.PlotDesignation.All in Python (omitted from the exposed enum); it's reachable only by

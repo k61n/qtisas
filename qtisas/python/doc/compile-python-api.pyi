@@ -6,6 +6,9 @@
 #   IMMEDIATELY to new()/setCode()/compile() in the SAME script. Never stop after printing.
 #   Name unknown → filter c.functionNames("ALL") (no wildcards); stop and report if not found.
 #   Category known → filter c.categories() first; functionNames() needs the EXACT category name.
+#   functionNames() lists DEFINITIONS (.fif) — also one whose last compile failed. Whether a
+#   function can be fitted: name in Fittable.fitFunctions() (compiled ones only).
+#   A function the request asks to compile: always c.new() … c.compile(), never behind such a check.
 #     c.open(refs[0]); ref_code = c.code(); ref_params = c.paramNames()
 #
 # RULE 2 — save() vs compile(): compile() auto-saves the .fif — NEVER call c.save() before
@@ -111,7 +114,8 @@
 #   Generalizes to NONLINEAR expressions too (Int2 = <V^2>, not V_mean^2 — same per-node averaging):
 #     RIGHT: if currentInt==2: V=form_volume(radius); return V*V
 #            meanV2 = Int2
-#   GSL is already linked (gsl_sf_bessel_J1/J0/etc.) — never reimplement special functions;
+#   GSL is already linked (gsl_sf_bessel_J1/J0/etc.) — never reimplement special functions; a GSL header only for
+#   a function whose [code] really calls one (never for a power law, Guinier, Gaussian or Lorentzian);
 #   copy integration patterns (sin(alpha) weight, trapezoidal rule) from existing code.
 #   Place every "if currentInt==N: return ..." check at the very TOP of [code] — these branches
 #   return early, so anything computed above them is wasted work on every beforeIter call.
@@ -145,6 +149,20 @@
 #     double R = radius;                 // OK: params/new helper names get "double"
 #     I = (q < 1e-6) ? 1.0 : pow(3.0*(sin(q*R)-q*R*cos(q*R))/pow(q*R,3), 2);  // "q" used directly,
 #                                         // "I" assigned directly — neither is declared with "double"
+#   PLAIN y(x) TEMPLATE — a request written as "y = a*x^2 + b*x + c" uses its own names:
+#     c.setXName("x"); c.setYName("y")
+#     code: "y = a*x*x + b*x + c;"          // "y" assigned directly, no "double"
+#   "q"/"I" in the examples here are the SAS convention, not a default.
+#   STANDARD MODELS — a request that NAMES one of these uses exactly this formula: no extra factors, no invented
+#   normalisation, no squaring a power law, parameters as named, background added (C++ [code] syntax):
+#     Porod / power law:   I = scale*pow(q,-n) + background;
+#     Guinier:             I = I0*exp(-q*q*Rg*Rg/3.0) + background;
+#     Sphere form factor:  I = scale*pow(3.0*(sin(q*R)-q*R*cos(q*R))/pow(q*R,3), 2) + background;
+#     Gaussian peak:       y = A*exp(-(x-xc)*(x-xc)/(2.0*w*w)) + c;
+#     Lorentzian peak:     y = A/(1.0+((x-xc)/w)*((x-xc)/w)) + c;
+#   None of these needs a header: exp/pow/sin/cos are always available.
+#   A formula written with exp/sin/pow/sqrt needs NO setHHeaders() — include a header only when
+#   [code] calls a library function whose header exists; never a guessed name ("sasviewmodels/gaussian.h").
 #   IF setXName()/setYName() ARE NEVER CALLED AT ALL, the unset defaults are "x" and "f" — NOT
 #   "I", despite "I" being the typical convention. A THIRD failure mode, worse than both above:
 #   guessing "I" when setYName() was never called (real default "f") does NOT collide with
@@ -178,6 +196,10 @@
 #   (sasviewmodels/, custom/, qtiplot/, ...) that a real library function might already use or
 #   later collide with. This is the SAME "/" folder mechanism the library already uses for
 #   sasviewmodels/sphere, custom/sphere, etc. — "ai/" is just a reserved namespace for it.
+#   "ai/" is BOTH the folder the function is stored in (pathFIF/ai/<shortName>.fif) AND part of
+#   its name: the function IS "ai/<shortName>" in every call — configure("ai/MyPeak"),
+#   Compiler.delete("ai/MyPeak"), fitFunctions(), table("fitCurve-ai/MyPeak"); a bare "MyPeak" is
+#   another, missing function. Print and compare it with the folder too.
 #   WRONG: c.new(); c.setFunctionName("sansTest")
 #   RIGHT: c.new(); c.setFunctionName("ai/sansTest")
 #   PAYOFF: when a task says "use an EXISTING library model" (the discovery pattern above, or
@@ -191,16 +213,18 @@
 #            an old "ai/sphere-test" from a previous turn, not a real library model
 #     RIGHT: hits = [h for h in c.functionNames("ALL")
 #                     if "sphere" in h.lower() and not h.startswith("ai/")]
-# RULE 13 — GROUP: before setGroup(), check for an existing group that already fits the
-#   function's domain and reuse it EXACTLY (byte-for-byte) — only invent a new one if nothing
-#   matches. Reusing near-variants inconsistently (e.g. "SANS" vs "sans" vs "Sans") fragments
-#   the Explorer category tree into duplicates instead of one real group.
+# RULE 13 — GROUP: an existing group is reused EXACTLY (byte-for-byte) — near-variants (e.g. "SANS" vs
+#   "sans" vs "Sans") fragment the Explorer category tree into duplicates instead of one real group.
 #   scanGroups() CLEARS the editor (group and function name) while it refreshes the explorer, so
 #   call it BEFORE new() — never between setFunctionName() and compile(), or compile() fails with
 #   "function name is empty" despite the setFunctionName() call sitting right above it.
-#   c.scanGroups(); existing = c.groups()
-#   match = next((g for g in existing if "sans" in g.lower()), None)
-#   c.setGroup(match if match else "custom:sans")   # reuse if found, else propose one
+#   An ai/ function takes c.setGroup("ai") — unless the request names a group: then that group, exactly.
+#   The group only sorts the Explorer tree; a guessed domain group is worse than "ai".
+#   The group is NOT the folder: setGroup("ai") only files the function under "ai" in the Explorer
+#   tree and adds nothing to its name. The name is what setFunctionName() gave — "ai/MyPeak" — and is
+#   used whole in every call; "MyPeak" stays a missing function whatever the group is.
+#   setGroup() AFTER c.new() and setFunctionName(): new() clears the group again, like scanGroups() clears the
+#   editor — a group set before new() is lost, and compile() then fails "group is empty".
 #   New group names follow the library's existing ":"-hierarchy convention (e.g. "shape:sphere"
 #   in the Quick Example below) — setGroup() still rejects "/" (ValueError, see RULE 3's group
 #   note); ":" for group hierarchy and "/" for the function-name folder are separate mechanisms,
@@ -258,6 +282,8 @@ paramCount()->int   # total number of fit parameters; use setParamCount(n) to ch
 code()->str         setCode(text)              # [code] section: use yName() variable (not always "I"); do NOT end with return {yName}; — boilerplate provides it
 # STOP after reading 1-2 references — proceed to new()/setCode()/compile(); never loop c.open() over all functions
 hHeaders()->str     setHHeaders(text)          # [h-headers]: extra #include lines; add GSL sub-headers here (e.g. #include <gsl/gsl_sf_bessel.h> for gsl_sf_bessel_J1)
+                                               # ONLY for a function that calls a library function: a formula of exp/pow/sin/sqrt needs none
+                                               # (sasviewmodels/sphere.h below = an example of REUSING a library model, not a default)
                                                # namespace mixing: 'namespace ff {#include "sasviewmodels/sphere.h"}' — parser expands to proper block
 # IMPORTANT: c.open(existing) + setFunctionName(newFolder/newName) does NOT rewrite the inherited
 #   hHeaders — copied verbatim, never corrected for the new location. A quoted #include resolves
@@ -318,7 +344,8 @@ scanGroups()
 category()->str                       # currently selected row in category list
 categories()->list                    # includes "ALL" and sub-folders
 selectCategory(categoryName)->bool    # selects category, populates function list
-functionNames(categoryName)->list     # selectCategory(categoryName) + return its function names
+functionNames(categoryName="ALL")->list  # selectCategory(categoryName) + return its function names
+c.functionExists(name)->bool           # Compiler.functionExists("ai/X") — a method: a plain functionExists() is a NameError
 #   ("ALL" returns every function). NOTE: there is no functions() method — confirmed live
 #   AttributeError, repeatedly, across separate conversations; the real name is functionNames().
 # Compiler has functionNames(); it does NOT have fitFunctions() — that belongs to Fittable, a
@@ -335,7 +362,8 @@ save(name="", path="", askYN=False)->str  # returns saved FIF text; save(); save
 # setGroup() rules (empty/'/' both raise ValueError) are above — save()/compile() need it set too.
 # Subfolder storage goes in save(), not setGroup():
 #   c.save("qtiplot/MyGauss")  → saved to pathFIF/qtiplot/MyGauss.fif; f.configure("qtiplot/MyGauss")
-delete(name="", path="")  # delete(); delete("cylinder"); delete("sasviewmodels/cylinder"); delete("cylinder",path="/p")
+delete(name="", path="")  # c.delete(); c.delete("cylinder"); c.delete("sasviewmodels/cylinder"); c.delete("cylinder",path="/p")
+# a Compiler method like every one here (c = Compiler): a bare delete("...") is a NameError
 # NOTE: delete() silently no-ops if `name` doesn't match any existing function — no error, no
 #   return value, nothing (verified in source: plain QFile::remove(), no existence check first).
 download(repoUrl="https://iffgit.fz-juelich.de/qtisas/fitfunctions.git", silent=True)
