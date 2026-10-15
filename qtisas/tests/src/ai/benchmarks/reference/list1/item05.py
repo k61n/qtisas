@@ -1,0 +1,6 @@
+m = newMatrix("SphereMap", 50, 50)
+m.setCoordinates(-pi, pi, -pi, pi)
+m.setFormula("sin(x)*cos(y)")
+m.calculate()
+big = max(m.cell(i, j) for i in range(1, 51) for j in range(1, 51))
+scriptPrint("R5: %d %d %.4f" % (m.numRows(), m.numCols(), big))

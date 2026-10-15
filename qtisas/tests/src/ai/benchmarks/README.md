@@ -5,6 +5,7 @@ scored without judgement. Nothing here is loaded by the AI or shipped with QtiSA
 
 | File | What it is |
 |------|------------|
+| `list1.json`, `list2.json` | LIST 1 and LIST 2 of ai-test-requests.md made checkable (see below) |
 | `list3.json`, `list4.json` | the benchmarks: instruction, setup, items with expected values and hints |
 | `list5.json` | combined tasks: each item chains several steps (data, formula, compile, fit, graph, 3D, note) and reuses what earlier items created |
 | `reference/<list>/itemNN.py` | reference scripts: every item solved with the documented API, must score 100% |
@@ -44,6 +45,40 @@ Each run starts a fresh test instance, runs the list in mode `ai-run` and compar
 one line per run in `history.csv` (the instance in the file names and in a column of its own). A single
 run varies by one or two items, so compare several runs before drawing conclusions.
 
+## LIST 1 and LIST 2 as benchmarks
+
+`list1.json` and `list2.json` are the manual integration lists of
+[ai-test-requests.md](../ai-test-requests.md) (LIST 1: every Part 1 request, simplest first; LIST 2: the
+instruction line, the existence check, EXPLORE, recompiling one name on purpose, an underspecified request and
+"it"), each item with the same task but scorable:
+
+- **Fixed data and names.** "Sample data" is given as a formula (LIST 1 item 2: y = x squared), a window the
+  request left unnamed gets a name ("SinCos3D", "MetricsPlot", "Metrics3D"), and so do the compiled functions
+  ("ai/Porod", "ai/GPeak", "ai/LPeak").
+- **Noise only where the request asks for it, and never printed.** Items 7 and 12 of LIST 1 still add 3% and 5%
+  Gaussian noise; their result lines hold values the noise cannot change: row counts, the noise-free model
+  value, the fitted radius rounded to an integer, chi²/dof below a bound, the better model's name.
+- **Formula fidelity is scored.** LIST 1 item 7 prints the noise-free sphere intensity at Q = 0.1 and item 8 the
+  first simulated Porod value (q = 0.01, n = 4: 1e8) — a wrong formula gives a wrong number, where the manual
+  list could only look at the code.
+- **State, not claims.** Where the API can read it back, the line reports the result's state: tab counts and
+  `autoexec()`, `autoUpdateTableValues()` after running the "Setup" tab, layers and curves per layer,
+  `legend() is not None`, `existPlot3D()`, the project's Z columns (`columnsList(Table.PlotDesignation.Z)`).
+- **What a line cannot show** (doc topics per item, split parts, colors, fonts, plot style) stays with the manual
+  lists.
+
+Reference scripts: `reference/list1`, `reference/list2` — 12 of 12 and 7 of 7 (2026-10-14), with verification.
+
+**Verification.** Several of these result lines can be guessed from the request text alone: in the first local
+run (all-pyi BIGMODEL) the model answered "plot into two layers… print the layers and curves" with
+`scriptPrint("R10:", 2, 2, 1)` and nothing plotted. An item may therefore carry `"verify"`: a snippet the harness
+runs in the instance **after the whole list**, which reads the real state and reports it with `check(...)`
+(printed as `V<n>: …`), compared with `"verified"` (or, without it, `"expected"`). A right `R<n>:` line whose
+state does not match scores `unverified (silent)` — it counts as a silent wrong answer, not as ok. Verified after the
+whole list, so a snippet checks what later items leave unchanged (LIST 1 item 1: the note exists; its tab count is
+item 3's). A negative test (item 10 and 11 replaced by the bare lines) scored both `unverified`. Reports from before
+verification have no state and keep their scores on `--rescore`.
+
 ## LIST 3 request — mode comparison benchmark with checkable results
 
 Purpose: ONE fixed task list to run unchanged under every
@@ -82,7 +117,9 @@ under `"also"` (LIST 5 item 2: the function's name with or without its `ai/` fol
 each `(reported)` when the assistant itself said the item failed, `(silent)` when it reported success. Per run, in
 `~/.qtisas-test/reports`: the full log, a JSON report (per item: expected, got, verdict, scripts,
 seconds) and one line in `history.csv` (markers, preset, model, score, silent, reported, seconds,
-scripts, tokens, `--label`). The harness reads the `R<n>:` lines itself, so the items do not write a
+scripts, tokens, calls, callEfficiency, `--label`). `calls` counts the model calls (one "AI: sending" line each);
+`callEfficiency` is the fewest calls the list could take (one per item) divided by `calls` — 1 means no extra call,
+and it tells two runs with the same score apart. The harness reads the `R<n>:` lines itself, so the items do not write a
 results table (an earlier "Results" table instruction added an error-prone task to every item and was
 the main source of retries in one run).
 

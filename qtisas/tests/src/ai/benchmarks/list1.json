@@ -1,0 +1,95 @@
+{
+  "name": "LIST 1",
+  "description": "The full AI integration test of ai-test-requests.md (LIST 1) made checkable: every Part 1 request, simplest first; data, names and the values to print are fixed, noise only where the request asks for it, and only noise-proof values are printed (see README.md).",
+  "instruction": "Use exactly the object names given. End the item by printing exactly ONE line: the result label the item gives, then only the values asked for, in the order asked, separated by spaces.",
+  "setup": "for n in ('ai/Porod', 'ai/GPeak', 'ai/LPeak'):\n    Compiler.delete(n)\nCompiler.scanGroups()\n",
+  "items": [
+    {
+      "text": "Create a note \"Batch\" with no content yet. Print whether note \"Batch\" exists, its number of tabs and the length of the text of its first tab.",
+      "expected": "True 1 0",
+      "hint": "a tab added or text written into the empty note",
+      "verify": "check(existNote(\"Batch\"))",
+      "verified": "True"
+    },
+    {
+      "text": "Create a table \"RawScan\" with 50 rows of x, y sample data: x = 1, 2, ..., 50 and y = x squared (columns named \"x\" and \"y\", roles X and Y). Print the number of rows and the sum of y.",
+      "expected": "50 42925",
+      "hint": "random values added to the sample data, or ^ in a Python column formula",
+      "verify": "t = table(\"RawScan\")\ncheck(t.numRows(), sum(t.colData(2)))",
+      "verified": "50 42925"
+    },
+    {
+      "text": "Add a script tab to note \"Batch\" that reads table \"RawScan\" and prints its row count each time the project loads via autoexec; the new tab must be the active one, so that it is the one that runs. Do not create \"Batch\" or \"RawScan\" again. Print the number of tabs of \"Batch\", whether \"Batch\" is set to autoexec, and the row count of \"RawScan\".",
+      "expected": "2 True 50",
+      "hint": "the existing first tab overwritten instead of a tab added, autoexec set on a tab instead of the note, or the note created again",
+      "verify": "n = note(\"Batch\")\ncheck(n.tabs(), n.autoexec(), \"RawScan\" in n.tab(n.tabs()).toPlainText())",
+      "verified": "2 True True"
+    },
+    {
+      "text": "Create a note \"Setup\" with an auto-executing script tab that disables automatic table-formula recalculation project-wide when the project file is opened; keep it as the active tab so it actually runs. Run that tab once to test it, then print whether \"Setup\" is set to autoexec and whether automatic recalculation is switched on now, and switch it back on afterwards.",
+      "expected": "True False",
+      "hint": "an invented API in the tab (the real one is setAutoUpdateTableValues(False)), the tab never run, or the state read before running it",
+      "verify": "n = note(\"Setup\")\ncheck(n.autoexec(), \"setAutoUpdateTableValues(False)\" in n.tab(1).toPlainText().replace(\" \", \"\"), autoUpdateTableValues())",
+      "verified": "True True True"
+    },
+    {
+      "text": "Create a 50x50 matrix \"SphereMap\" with x and y from -pi to pi and fill every cell using the formula sin(x)*cos(y) via setFormula() and calculate(). Print the number of rows and columns and the largest cell value with 4 decimals.",
+      "expected": "50 50 0.9995",
+      "hint": "the coordinates not set (the formula then runs over the cell indices), or the matrix filled cell by cell instead of setFormula()/calculate()",
+      "verify": "m = matrix(\"SphereMap\")\ncheck(m.numRows(), m.numCols(), \"%.4f\" % max(m.cell(i, j) for i in range(1, m.numRows() + 1) for j in range(1, m.numCols() + 1)))",
+      "verified": "50 50 0.9995"
+    },
+    {
+      "text": "Plot a 3D surface of sin(x)*cos(y) over x and y in the range -pi to pi in a 3D window named \"SinCos3D\", using a filled mesh style, then add a legend and axis labels. Print whether a 3D window \"SinCos3D\" exists.",
+      "expected": "True",
+      "hint": "the 3D window looked up with graphWindow() (2D only), or its name not set",
+      "verify": "check(existPlot3D(\"SinCos3D\"))",
+      "verified": "True"
+    },
+    {
+      "text": "Create a table \"SAXS_data\" with 100 rows and 3 columns Q, I, dI (roles X, Y, yErr): Q = 0.005, 0.010, ..., 0.5; I = the sphere form factor for radius 50 (scale 1, no background) plus 3% Gaussian noise; dI = 3% of the noise-free I. Print the number of rows and the noise-free I at Q = 0.1 with 6 decimals.",
+      "expected": "100 0.003255",
+      "hint": "a wrong sphere form factor (it is [3(sin(qR) - qR cos(qR))/(qR)^3]^2, nothing more), or dI taken from the noise",
+      "verify": "t = table(\"SAXS_data\")\nqs, ii = t.colData(1), t.colData(2)\nsph = lambda q: (3 * (sin(q * 50) - q * 50 * cos(q * 50)) / (q * 50) ** 3) ** 2\ncheck(t.numRows(), max(abs(i / sph(q) - 1) for q, i in zip(qs, ii)) < 0.25)",
+      "verified": "100 True"
+    },
+    {
+      "text": "Compile a custom Porod power-law fit function \"ai/Porod\" with parameters scale, n (the exponent, adjustable) and background, then simulate a curve from it without fitting any real data: 100 points from q = 0.01 to 1 in logarithmic steps, with scale = 1, n = 4 and background = 0. Print the number of rows of the simulated curve's table and its first y value.",
+      "expected": "100 100000000",
+      "hint": "a wrong power law (it is scale*q^(-n) + background — not squared, no extra factors), a fit run, or the NaN that simulateCurve() returns in uniform-x mode taken as a failure",
+      "verify": "s = table(\"simulatedCurve-ai/Porod\")\ncheck(s.numRows(), s.cell(2, 1))",
+      "verified": "100 100000000"
+    },
+    {
+      "text": "Fit the existing \"sasviewmodels/sphere\" form-factor model (scale, background and radius adjustable) from the Fittable library against table \"SAXS_data\" columns I and dI, using weighted Levenberg-Marquardt, and report chi2/dof. Print the fitted radius rounded to the nearest integer and whether chi2/dof is below 3.",
+      "expected": "50 True",
+      "hint": "the fit unweighted, dI not used as the weight, or the radius taken from the initial value instead of results()",
+      "verify": "check(existTable(\"fitCurve-sasviewmodels/sphere\"))",
+      "verified": "True"
+    },
+    {
+      "text": "Plot the fit results from the previous step into graph \"FitResults\" with two stacked layers: the data and the fit curve in the top layer, the residuals in the bottom one. Print the number of layers and the number of curves in the top and in the bottom layer.",
+      "expected": "2 2 1",
+      "hint": "plotResults() and insertCurve() both used (every curve twice), the graph looked up instead of created, or the residuals in the top layer, or another fit plotted instead of the previous step's sphere fit",
+      "verify": "gw = graphWindow(\"FitResults\")\ntop, bottom = gw.layer(1), gw.layer(2)\nfromFit = lambda l: any(l.curveTitle(i).startswith(\"fitCurve-sasviewmodels/sphere_\") for i in range(l.numCurves()))\ncheck(gw.numLayers(), top.numCurves(), bottom.numCurves(), fromFit(top), fromFit(bottom))",
+      "verified": "2 2 1 True True"
+    },
+    {
+      "text": "Restyle the existing graph \"FitResults\" — set the legend font to bold 12pt, change the first curve's line color to red, and add minor tick marks on both axes. Print the number of layers of \"FitResults\", the number of curves in its top layer, and whether that layer has a legend.",
+      "expected": "2 2 True",
+      "hint": "a new graph made instead of restyling, curves added again, or the legend only styled if one already existed",
+      "verify": "gw = graphWindow(\"FitResults\")\ncheck(gw.numLayers(), gw.layer(1).numCurves(), gw.layer(1).legend() is not None)",
+      "verified": "2 2 True"
+    },
+    {
+      "text": "Create a table \"GaussPeak\" with 200 rows of synthetic Gaussian-peak data (x, y, dy columns, roles X, Y, yErr): x = 0, 0.025, ..., 4.975 and y = exp(-(x-2.5)^2/(2*0.5^2)) + 0.1 plus 5% Gaussian noise, dy = 5% of the noise-free y. Compile a custom Gaussian peak fit function \"ai/GPeak\" and a Lorentzian fit function \"ai/LPeak\". Fit both models with weighted errors. Compare chi2/dof and report which model fits better. Plot the winning model's data, fit curve, and residuals into graph \"GaussPeakFit\" with two stacked panels, a styled legend, and axis titles. Print the name of the better function and the number of curves in the top and in the bottom panel.",
+      "expected": "ai/GPeak 2 1",
+      "also": [
+        "GPeak 2 1"
+      ],
+      "hint": "the fit-curve table looked up without its ai/ folder, plotResults() and insertCurve() both used, or the chi2/dof of one fit compared with itself",
+      "verify": "gw = graphWindow(\"GaussPeakFit\")\ncheck(existTable(\"fitCurve-ai/GPeak\"), existTable(\"fitCurve-ai/LPeak\"), gw.layer(1).numCurves(), gw.layer(2).numCurves())",
+      "verified": "True True 2 1"
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+t = newTable("Baseline", 30, 2)
+t.setColNames(["x", "y"])
+t.setColumnRole(1, Table.PlotDesignation.X)
+t.setColumnRole(2, Table.PlotDesignation.Y)
+t.setColData(1, range(1, 31))
+t.setColData(2, [2 * x + 1 for x in range(1, 31)])
+scriptPrint("R1: %d %g" % (t.numRows(), sum(t.colData(2))))

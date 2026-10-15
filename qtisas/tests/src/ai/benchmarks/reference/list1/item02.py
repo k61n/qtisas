@@ -1,0 +1,7 @@
+t = newTable("RawScan", 50, 2)
+t.setColNames(["x", "y"])
+t.setColumnRole(1, Table.PlotDesignation.X)
+t.setColumnRole(2, Table.PlotDesignation.Y)
+t.setColData(1, range(1, 51))
+t.setColData(2, [x * x for x in range(1, 51)])
+scriptPrint("R2: %d %g" % (t.numRows(), sum(t.colData(2))))

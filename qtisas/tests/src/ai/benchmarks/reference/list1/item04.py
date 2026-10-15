@@ -1,0 +1,7 @@
+n = newNote("Setup")
+n.tab(1).setText("setAutoUpdateTableValues(False)\n")
+n.setAutoexec(True)
+n.tab(1).execute()
+on = autoUpdateTableValues()
+setAutoUpdateTableValues(True)
+scriptPrint("R4: %s %s" % (n.autoexec(), on))

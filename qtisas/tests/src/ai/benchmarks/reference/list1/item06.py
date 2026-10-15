@@ -1,0 +1,7 @@
+g3 = newPlot3D("SinCos3D", "sin(x)*cos(y)", -pi, pi, -pi, pi, -1, 1, 40, 40)
+g3.setPlotStyle(Qti3D.FILLEDMESH)
+g3.showLegend(True)
+g3.setXAxisLabel("x")
+g3.setYAxisLabel("y")
+g3.setZAxisLabel("z")
+scriptPrint("R6: %s" % existPlot3D("SinCos3D"))

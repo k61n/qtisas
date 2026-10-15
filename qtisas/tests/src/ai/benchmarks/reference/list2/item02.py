@@ -1,0 +1,6 @@
+t = table("Baseline")
+t.addColumn()
+t.setColName(3, "z")
+t.setColumnRole(3, Table.PlotDesignation.Z)
+t.setColData(3, [x * y for x, y in zip(t.colData(1), t.colData(2))])
+scriptPrint("R2: %d %g %s" % (t.numCols(), sum(t.colData(3)), "Baseline_z" in columnsList(Table.PlotDesignation.Z)))

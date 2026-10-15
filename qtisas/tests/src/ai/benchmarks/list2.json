@@ -1,0 +1,66 @@
+{
+  "name": "LIST 2",
+  "description": "The extended AI mechanics test of ai-test-requests.md (LIST 2) made checkable: the instruction line reaching every item, the existence check, EXPLORE, recompiling one name on purpose, an underspecified request and 'it' referring to the previous item (see README.md).",
+  "instruction": "For every item, use the exact object names given and verify the underlying logic (formulas, fit setup, column roles) before considering it done. Use exactly the object names given. End the item by printing exactly ONE line: the result label the item gives, then only the values asked for, in the order asked, separated by spaces.",
+  "setup": "Compiler.delete('ai/ExpDecay')\nCompiler.scanGroups()\n",
+  "items": [
+    {
+      "text": "Create a table \"Baseline\" with 30 rows of x, y sample data: x = 1, 2, ..., 30 and y = 2*x + 1 (roles X and Y). Print the number of rows and the sum of y.",
+      "expected": "30 960",
+      "hint": "random values added to the sample data",
+      "verify": "t = table(\"Baseline\")\ncheck(t.numRows(), sum(t.colData(2)))",
+      "verified": "30 960"
+    },
+    {
+      "text": "Add a column \"z\" to the existing table \"Baseline\" computed as x*y, using the Z column role — reuse the table you just created, don't make a new one. Print the number of columns of \"Baseline\", the sum of z, and whether \"Baseline_z\" is one of the project's Z columns.",
+      "expected": "3 19375 True",
+      "hint": "the table created again (its x, y lost), role Y instead of Z, or the existence check stopping on a table that exists",
+      "verify": "t = table(\"Baseline\")\ncheck(t.numCols(), sum(t.colData(3)), \"Baseline_z\" in columnsList(Table.PlotDesignation.Z))",
+      "verified": "3 19375 True"
+    },
+    {
+      "text": "Check which sasviewmodels fit functions are already compiled, then simulate one of them without fitting any real data. Print whether the function you simulated is one of them and whether its table \"simulatedCurve-<function name>\" exists.",
+      "expected": "True True",
+      "hint": "a function name guessed instead of read from the list, a fit run, or the table looked up without the function's folder",
+      "verify": "sims = [n for n in tableNames() if n.startswith(\"simulatedCurve-sasviewmodels/\") and not n.endswith(\"-session\")]\ncheck(len(sims) > 0)",
+      "verified": "True"
+    },
+    {
+      "text": "Compile a custom exponential-decay fit function named \"ai/ExpDecay\" with parameters scale and rate. Then recompile \"ai/ExpDecay\" again, this time adding an extra \"offset\" parameter — the second call should intentionally overwrite the first, not fail or create a duplicate. Print the parameter names of \"ai/ExpDecay\" in their order and how many functions named \"ai/ExpDecay\" exist.",
+      "expected": "scale rate offset 1",
+      "also": [
+        "offset scale rate 1",
+        "scale offset rate 1"
+      ],
+      "hint": "the second compile blocked as a duplicate, a second name invented, or the old two-parameter version still compiled",
+      "verify": "c = Compiler\nc.open(\"ai/ExpDecay\")\ncheck(len(c.paramNames()), \"offset\" in c.paramNames(), c.functionNames(\"ALL\").count(\"ai/ExpDecay\"))",
+      "verified": "3 True 1"
+    },
+    {
+      "text": "Fit the model against the data. Print the name of the function you fitted and the dataset you fitted it to.",
+      "expected": "ai/ExpDecay Baseline_y",
+      "also": [
+        "ExpDecay Baseline_y",
+        "ai/ExpDecay Baseline_z",
+        "ExpDecay Baseline_z"
+      ],
+      "hint": "an invented model or dataset name instead of the ones the earlier items created",
+      "verify": "check(existTable(\"fitCurve-ai/ExpDecay\"))",
+      "verified": "True"
+    },
+    {
+      "text": "Create a note \"Log\", a table \"Metrics\" with 20 rows of x, y, and z sample data (x = 1, 2, ..., 20, y = 21 - x, z = x*y computed from x and y, using the Z column role for z), and a styled graph \"MetricsPlot\" of it with a legend — all in one request. Print whether note \"Log\" exists, the sum of z, and whether graph \"MetricsPlot\" has a legend.",
+      "expected": "True 1540 True",
+      "hint": "z given role Y, one of the three objects left out, or the legend only styled if one already existed",
+      "verify": "t = table(\"Metrics\")\ngw = graphWindow(\"MetricsPlot\")\ncheck(existNote(\"Log\"), sum(t.colData(3)), \"Metrics_z\" in columnsList(Table.PlotDesignation.Z), gw.activeLayer().legend() is not None)",
+      "verified": "True 1540 True True"
+    },
+    {
+      "text": "Plot it as a 3D surface instead, using a filled mesh style, in a 3D window named \"Metrics3D\". Print whether a 3D window \"Metrics3D\" exists.",
+      "expected": "True",
+      "hint": "\"it\" taken for another table than \"Metrics\", the 3D window looked up with graphWindow(), or the item given up without a plot",
+      "verify": "check(existPlot3D(\"Metrics3D\"))",
+      "verified": "True"
+    }
+  ]
+}

@@ -177,6 +177,11 @@ LIST
 | 11 | the same "FitResults" (no new graph): legend bold 12 pt, first curve red, minor ticks on both axes |
 | 12 | runs as split parts (`AI split-mode: part i/N`); "GaussPeak" with 200 rows, two compiled functions, two fits, the better chi²/dof named, graph "GaussPeakFit" with two stacked layers, legend and axis titles |
 
+**Checkable version:** [benchmarks/list1.json](benchmarks/list1.json) — the same twelve tasks with fixed data and
+names and one `R<n>:` line each, for `qtisas_benchmark.py` (see "LIST 1 and LIST 2 as benchmarks" in
+[benchmarks/README.md](benchmarks/README.md)). The list above stays the manual test: it also checks what a result
+line cannot, such as the doc topics per item and the split parts of item 12.
+
 ## LIST 2 — extended AI mechanics test
 
 **Tests:** what LIST 1 cannot reach, because each of its items creates something new:
@@ -221,6 +226,9 @@ For every item, use the exact object names given and verify the underlying logic
 **Seen in earlier runs:** with Y instead of Z, item 5 failed on "expected exactly one Y column; found ['y',
 'z']". Without the role in item 6, "z" got role Y, and item 7 noticed it but gave up silently, without a 3D
 plot.
+
+**Checkable version:** [benchmarks/list2.json](benchmarks/list2.json) — the same seven tasks with fixed data and
+names and one `R<n>:` line each (see "LIST 1 and LIST 2 as benchmarks" in [benchmarks/README.md](benchmarks/README.md)).
 
 ## LIST 3, LIST 4 and LIST 5 — the benchmark lists
 

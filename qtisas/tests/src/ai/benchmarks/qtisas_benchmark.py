@@ -72,6 +72,36 @@ def run_reference(bench, folder, path, on_line):
             "scripts": len(items), "tokens": 0, "seconds": round(seconds, 2)}
 
 
+def verify_code(bench):
+    """One script that runs every item's "verify" snippet after the list: each reads the real state and reports it
+    with check(...), printed as "V<n>: ..."; a snippet that raises reports "V<n>: error ..." instead."""
+    code = []
+    for n, item in enumerate(bench["items"], 1):
+        if not item.get("verify"):
+            continue
+        body = "\n".join("    " + line for line in item["verify"].splitlines())
+        code.append("def _verify%d(check):\n%s\n" % (n, body))
+        code.append("try:\n    _verify%d(lambda *v: scriptPrint('V%d:', *v))\n"
+                    "except Exception as e:\n    scriptPrint('V%d: error', type(e).__name__, e)\n" % (n, n, n))
+    return "\n".join(code)
+
+
+def run_verify(bench, path, on_line):
+    """The items' verify snippets, run after the list in the same instance: {item number: "V<n>: ..." line}."""
+    code = verify_code(bench)
+    if not code:
+        return {}
+    on_line("▸▸  verify: the real state after the list")
+    answer = qtisas_send.request({"id": 5, "mode": "python", "code": code}, path, timeout=120)
+    lines = {}
+    for line in ((answer.get("output") or "") + (answer.get("error") or "")).splitlines():
+        on_line(line)
+        m = re.match(r"^V(\d+):", line)
+        if m:
+            lines[int(m.group(1))] = line
+    return lines
+
+
 # Run in the test instance (its HOME is the test home): a copy of the selected preset with DocsMode set, selected
 DOCS_PRESET = r"""
 agent = qti.app.aiAgent()
@@ -79,6 +109,18 @@ folder = os.path.expanduser("~/.config/qtisas/ai")
 text = open(os.path.join(folder, agent + ".ai"), encoding="utf-8").read()
 text = re.sub(r"(?m)^DocsMode=.*\n?", "", text).replace("[AI]\n", "[AI]\nDocsMode=%(mode)d\n", 1)
 name = agent + "-docs-%(docs)s"
+open(os.path.join(folder, name + ".ai"), "w", encoding="utf-8").write(text)
+qti.app.setAiAgent(name)
+"""
+
+
+# BIGMODEL for this run: the agent's preset copied, in the test home only, with the "Large model" switch set
+BIG_PRESET = r"""
+agent = qti.app.aiAgent()
+folder = os.path.expanduser("~/.config/qtisas/ai")
+text = open(os.path.join(folder, agent + ".ai"), encoding="utf-8").read()
+text = re.sub(r"(?m)^BigModel=.*\n?", "", text).replace("[AI]\n", "[AI]\nBigModel=%(on)s\n", 1)
+name = agent + "-bigmodel-%(state)s"
 open(os.path.join(folder, name + ".ai"), "w", encoding="utf-8").write(text)
 qti.app.setAiAgent(name)
 """
@@ -99,8 +141,8 @@ def list_text(bench, markers="", item_prefix=False):
 
 
 def values(line):
-    """The values of an R<n>: line, normalized: no prefix, separators, brackets, quotes or "name=" labels."""
-    text = re.sub(r"^R\d+:\s*", "", line.strip())
+    """The values of an R<n>: (or V<n>:) line, normalized: no prefix, separators, brackets, quotes or "name=" labels."""
+    text = re.sub(r"^[RV]\d+:\s*", "", line.strip())
     text = re.sub(r"[,;]\s+", " ", text)  # a separator, not the decimal comma of "1234,5"
     text = re.sub(r"\b\w+\s*=\s*", "", text)  # "a=2.0000" is 2.0000
     text = text.replace("[]", " <empty list> ")  # an empty list is a value; an empty line is none
@@ -140,11 +182,18 @@ def score(bench, result):
             verdict = "not run"
         elif got and any(matches(got, e) for e in [item["expected"]] + item.get("also", [])):
             verdict = "ok"
+            # the printed line is right; with a verify snippet, the real state must be too — a line guessed from the
+            # request text (local model, LIST 1 items 3 and 10: "R10: 2 2 1" with nothing plotted) is not a result
+            if item.get("verify") and "verify" in result:
+                state = result["verify"].get(str(n), "")
+                if not (state and matches(state, item.get("verified", item["expected"]))):
+                    verdict = "unverified" + (" (reported)" if reported else " (silent)")
         elif run.get("backend_error"):  # the model's backend failed (crashed, refused): says nothing about the AI
             verdict = "backend error"
         else:
             verdict = ("wrong" if got else "missing") + (" (reported)" if reported else " (silent)")
         rows.append({"item": n, "expected": item["expected"], "got": got, "verdict": verdict,
+                     "verified": result.get("verify", {}).get(str(n), "") if item.get("verify") else None,
                      "scripts": run.get("scripts"), "seconds": run.get("seconds"), "hint": item.get("hint", "")})
     return rows
 
@@ -245,6 +294,8 @@ def main(argv=None):
     p.add_argument("--agent", help="the AI agent (preset) to use; default: the test instance's selected one")
     p.add_argument("--docs", choices=["compact", "full", "integrated"],
                    help='"API docs sent" for this run: compact (.pyi), full (.md) or integrated (none)')
+    p.add_argument("--bigmodel", choices=["on", "off"],
+                   help="the agent's BIGMODEL switch for this run (a copy of its preset, test home only)")
     p.add_argument("--set", action="append", default=[], metavar="KEY=VALUE",
                    help='an "Ask AI" setting for this run, e.g. exploreEnabled=False or maxAutoContinue=6')
     p.add_argument("--timeout", type=float, default=900, help="seconds per run before the AI is stopped")
@@ -299,6 +350,8 @@ def main(argv=None):
         code.append("qti.app.setAiAgent(%r)" % args.agent)
     if args.docs:  # the agent's preset copied, in the test home only, with another "API docs sent" mode
         code.append(DOCS_PRESET % {"mode": {"compact": 0, "full": 1, "integrated": 2}[args.docs], "docs": args.docs})
+    if args.bigmodel:  # after --docs: the copy keeps that docs mode
+        code.append(BIG_PRESET % {"on": "true" if args.bigmodel == "on" else "false", "state": args.bigmodel})
     for item in args.set:
         key, _, value = item.partition("=")
         code.append("qti.app.setAiConfig(%r, %s)" % (key.strip(), value.strip()))
@@ -332,10 +385,17 @@ def main(argv=None):
     # the instance in the name: lanes running in parallel finish the same list in the same second
     base = os.path.join(args.reports, "%s-%s%s" % (stamp, re.sub(r"\W+", "_", bench["name"]).strip("_"),
                                                    "" if args.instance == "test" else "-" + args.instance))
+    current = [0]
+    calls = [0]  # model calls, one "▸▸▸ AI: sending" line each
     with open(base + ".log", "w", encoding="utf-8") as log:
         def on_line(line):
             log.write(line + "\n")
             log.flush()
+            m = re.match(r"^▸▸  AI LIST: item (\d+)/", line)
+            if m:
+                current[0] = int(m.group(1))
+            if line.startswith("▸▸▸ AI: sending"):
+                calls[0] += 1
             if not args.quiet:
                 print(line, flush=True)
 
@@ -357,12 +417,22 @@ def main(argv=None):
             result = {"ok": False, "status": "timeout", "items": [], "r_lines": [], "scripts": None,
                       "tokens": None, "seconds": None}
             instance("stop")
+        else:
+            if result.get("items"):
+                try:  # JSON keys are strings: stored so, a --rescore reads the same
+                    result["verify"] = {str(k): v for k, v in run_verify(bench, path, on_line).items()}
+                except (TimeoutError, OSError) as e:
+                    log.write("\n(qtisas_benchmark: verify failed: %s — scored without it)\n" % e)
 
     rows = score(bench, result)
     ok = sum(r["verdict"] == "ok" for r in rows)
-    silent = sum(r["verdict"].endswith("(silent)") for r in rows)
+    silent = sum(r["verdict"].endswith("(silent)") for r in rows)  # an unverified line counts as silent
     reported = sum(r["verdict"].endswith("(reported)") for r in rows)
     backend = sum(r["verdict"] in ("backend error", "not run") for r in rows)
+    # call efficiency: the fewest model calls the list could take (one per item) / the calls it took; 1 = no extra call.
+    # Compares runs with the same score: 12/12 in 12 calls is better than 12/12 in 25.
+    ai_calls = calls[0] if args.reference is None else None
+    call_efficiency = round(len(rows) / ai_calls, 2) if ai_calls else None
     preset, model = ai_config.get("agent", ""), ai_config.get("model", "")
     if args.reference is not None:
         preset, model = "reference", os.path.relpath(args.reference, os.path.dirname(os.path.abspath(args.benchmark)))
@@ -370,6 +440,7 @@ def main(argv=None):
                "score": ok, "of": len(rows), "silent": silent, "reported": reported, "backend_errors": backend,
                "seconds": result.get("seconds"), "scripts": result.get("scripts"), "tokens": result.get("tokens"),
                "status": result.get("status"), "settings": " ".join(args.set), "app": args.app or "",
+               "calls": ai_calls, "callEfficiency": call_efficiency,
                "label": args.label, "visible": args.visible, **probed}
     with open(base + ".json", "w", encoding="utf-8") as f:
         json.dump({"summary": summary, "ai_config": ai_config, "items": rows, "result": result}, f, indent=1,
@@ -385,16 +456,19 @@ def main(argv=None):
     if not args.keep_instance:
         instance("stop")
 
-    print("\n%s %s — %d of %d ok, %d silent, %d reported%s · %s s · %s scripts · ~%sK tokens · %s %s%s"
+    print("\n%s %s — %d of %d ok, %d silent, %d reported%s · %s s · %s scripts · %s calls (call efficiency %s) · "
+          "~%sK tokens · %s %s%s"
           % (bench["name"], ("LIST " + args.markers).strip(), ok, len(rows), silent, reported,
              ", %d backend errors (run not valid)" % backend if backend else "", summary["seconds"],
-             summary["scripts"], (summary["tokens"] or 0) // 1000, preset, model,
-             " · server check %s s%s" % (probed["probe_seconds"], ", answered by " + probed["probe_model"]
-                                         if probed["probe_model"] and probed["probe_model"] != model else "")
-             if probed["probe_seconds"] is not None else ""))
+             summary["scripts"], ai_calls, call_efficiency, (summary["tokens"] or 0) // 1000, preset, model,
+             (" · server check %s s%s" % (probed["probe_seconds"], ", answered by " + probed["probe_model"]
+                                          if probed["probe_model"] and probed["probe_model"] != model else "")
+              if probed["probe_seconds"] is not None else "")))
     for r in rows:
-        print("  %2d %-20s %-24s %s" % (r["item"], r["verdict"], r["got"][:24] or "—",
-                                        "" if r["verdict"] == "ok" else "expected %s; %s" % (r["expected"], r["hint"])))
+        note = "" if r["verdict"] == "ok" else "expected %s; %s" % (r["expected"], r["hint"])
+        if r["verdict"].startswith("unverified"):
+            note = "the state after the list: %s" % (r["verified"] or "nothing reported")
+        print("  %2d %-22s %-24s %s" % (r["item"], r["verdict"], r["got"][:24] or "—", note))
     print("report: %s.json, log: %s.log" % (base, base))
     return 0 if ok == len(rows) else 1
 
