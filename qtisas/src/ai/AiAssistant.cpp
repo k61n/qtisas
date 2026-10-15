@@ -387,6 +387,8 @@ QString AiAssistant::createdByEarlierItemsNote() const
     const QStringList live = m_host->liveObjects();
     QStringList perItem;
     QStringList consoleParts;
+    QStringList previousDescribed; // what the item right before this one made, as described below
+    QString previousTable;
     for (const EarlierItem &item : m_earlierItems)
     {
         QStringList described;
@@ -410,14 +412,39 @@ QString AiAssistant::createdByEarlierItemsNote() const
             continue;
         perItem << QString("item %1: ").arg(item.number) + described.join("; ");
         consoleParts << QString("item %1: ").arg(item.number) + (item.objects + item.compiled).join(", ");
+        if (item.number == listItemIndex)
+        {
+            previousDescribed = described;
+            for (const QString &object : item.objects)
+                if (object.startsWith("table:") && !object.endsWith("-session") && live.contains(object))
+                {
+                    previousTable = object.section(':', 1);
+                    break;
+                }
+        }
     }
     if (perItem.isEmpty())
         return {};
+    // "The previous step" pinned to the item it names. Confirmed live (local all-pyi LIST 1, item 10, five runs of
+    // 2026-10-14): "Plot the fit results from the previous step" with item 9's "fitCurve-sasviewmodels/sphere" listed
+    // above; every run made up data and a fit of its own instead, or looked up an invented fit table.
+    static const QRegularExpression previousRe(R"(\b(?:previous|preceding|last|earlier)\s+(?:step|item|task|part)\b)",
+                                               QRegularExpression::CaseInsensitiveOption);
+    QString previousNote;
+    if (!previousDescribed.isEmpty() && listItemIndex < listItems.size() &&
+        previousRe.match(listItems[listItemIndex].text).hasMatch())
+        previousNote = QString("\n\"The previous step\" in this item is item %1, and it made: ").arg(listItemIndex) +
+                       previousDescribed.join("; ") + ". Work on exactly these objects, by name" +
+                       (previousTable.isEmpty() ? QString() : " — e.g. table(\"" + previousTable + "\")") +
+                       "; nothing else is meant.";
     m_host->print("▸▸▸ AI LIST: made by earlier items — " + consoleParts.join(" | "));
+    if (!previousNote.isEmpty())
+        m_host->print(QString("▸▸▸ AI LIST: \"the previous step\" = item %1").arg(listItemIndex));
     return "\n\nMADE BY EARLIER ITEMS of this list (read from QtiSAS — they exist now), item by item:\n- " +
            perItem.join("\n- ") +
            "\nWhen this item refers to an earlier result without naming it (\"the previous step\", \"the model\", "
-           "\"the data\", \"it\"), it means these objects — the most recent item's first; use them by name.";
+           "\"the data\", \"it\"), it means these objects — the most recent item's first; use them by name." +
+           previousNote;
 }
 
 bool AiAssistant::namesSomethingNew(const QString &description, const QString &requestText)
@@ -5993,7 +6020,11 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
             errContext +
             "\n```\nWrite the script anew from the request itself, so that it does everything the request asks for "
             "and avoids that reason. " +
-            failedRunObjectsNote();
+            failedRunObjectsNote() +
+            // The request's own facts go with it: without the conversation, a LIST item lost the note on what the
+            // earlier items made. Confirmed live (local LIST 1, item 10): the fresh retry wrote "not guaranteed
+            // without knowing what was actually fit" and looked up the docs' example table instead of item 9's fit.
+            m_earlierItemsNote;
         ask(freshPrompt + topicsHintLine(selectedDocTopics), true, QString(), selectedDocTopics, true, false, true,
             freshPrompt);
         return;
