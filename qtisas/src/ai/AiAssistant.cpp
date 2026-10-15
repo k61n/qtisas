@@ -659,6 +659,22 @@ void AiAssistant::startRequestWithSelectedTopics(const QStringList &selected, co
                                     : ((m_content ? m_content->baselineDocTopics() : QStringList()) + selected));
 }
 
+// Where a clause of a request ends: a sentence end, a semicolon, a line end or ", then ...". A full stop only before
+// whitespace or the end, and never one of "...": confirmed live (LIST 2 item 6), "Create a note \"Log\", a table
+// \"Metrics\" ... (x = 1, 2, ..., 20, ...), and a styled graph \"MetricsPlot\"" ended a clause at the dots of the
+// range, the graph lost its "Create", was taken as an existing input and the item was refused.
+static const QString kClauseBoundaryPattern =
+    QStringLiteral(R"((?<!\.)\.(?!\.)(?=\s|$)|[;\n]|,\s*(?:then|next|afterwards?|finally|after that)\b)");
+
+// A quoted name with a <placeholder> in it ("simulatedCurve-<function name>") is a pattern the request fills in, not a
+// name that could exist: confirmed live (LIST 2 item 3), "whether its table \"simulatedCurve-<function name>\" exists"
+// was checked as an existing input, came back missing and the item was refused.
+static bool isPlaceholderName(const QString &name)
+{
+    static const QRegularExpression placeholderRe(R"(<[^<>]+>)");
+    return placeholderRe.match(name).hasMatch();
+}
+
 // True if the name spanning [nameStart, nameEnd) in `text` is something the request CREATES, not an input: a creation
 // verb earlier in its own clause, or a conditional creation ("create it if it does not exist") later in it. Shared by
 // extractExistingEntityNames() and inputNamesInRequest().
@@ -690,8 +706,7 @@ static bool inCreationClause(const QString &text, qsizetype nameStart, qsizetype
     // one case the comma was added for. Widening this errs toward skipping a check rather than
     // claiming a creation target, which is the safe direction: a skipped check costs nothing here,
     // while a wrong claim feeds a false fact and, in auto-run mode, refuses the item outright.
-    static const QRegularExpression clauseBoundaryRe(R"([.;\n]|,\s*(?:then|next|afterwards?|finally|after that)\b)",
-                                                     QRegularExpression::CaseInsensitiveOption);
+    static const QRegularExpression clauseBoundaryRe(kClauseBoundaryPattern, QRegularExpression::CaseInsensitiveOption);
     // "if it does not exist", "if missing", "if needed": the creation is meant only when the name is absent
     static const QRegularExpression conditionalRe(
         R"(\bif\b(?:\s+\S+){0,4}?\s+(?:not\s+exist\w*|n't\s+exist\w*|missing|absent|needed|necessary)\b)",
@@ -741,8 +756,7 @@ static bool inDeletionClause(const QString &text, qsizetype nameStart)
                                                    QRegularExpression::CaseInsensitiveOption);
     static const QRegularExpression containerRe(R"(\b(?:from|in|of|inside)\b)",
                                                 QRegularExpression::CaseInsensitiveOption);
-    static const QRegularExpression clauseBoundaryRe(R"([.;\n]|,\s*(?:then|next|afterwards?|finally|after that)\b)",
-                                                     QRegularExpression::CaseInsensitiveOption);
+    static const QRegularExpression clauseBoundaryRe(kClauseBoundaryPattern, QRegularExpression::CaseInsensitiveOption);
     const QString before = text.left(nameStart);
     qsizetype boundaryEnd = 0;
     for (auto it = clauseBoundaryRe.globalMatch(before); it.hasNext();)
@@ -785,7 +799,7 @@ QStringList inputNamesInRequest(const QString &requestText)
     {
         const QRegularExpressionMatch m = it.next();
         const QString name = m.captured(1).trimmed();
-        if (name.isEmpty() || names.contains(name) || created.contains(name))
+        if (name.isEmpty() || names.contains(name) || created.contains(name) || isPlaceholderName(name))
             continue;
         names << name;
     }
@@ -848,7 +862,8 @@ QList<QPair<QString, QString>> extractExistingEntityNames(const QString &request
             if (between.contains("new", Qt::CaseInsensitive))
                 continue;
             const QString name = m.captured(1);
-            if (created.contains(name.trimmed()) || inDeletionClause(requestText, m.capturedStart(1)))
+            if (created.contains(name.trimmed()) || isPlaceholderName(name) ||
+                inDeletionClause(requestText, m.capturedStart(1)))
                 continue;
             // `between` always ends with the pattern's own literal opening quote character (both
             // patterns end with \s*"(...)"), which would otherwise defeat trailingNounRe's \s*$
@@ -902,7 +917,8 @@ QList<QPair<QString, QString>> extractExistingEntityNames(const QString &request
     {
         const QRegularExpressionMatch m = kindIt.next();
         const QString name = m.captured(2);
-        if (created.contains(name.trimmed()) || inCreationClause(requestText, m.capturedStart(0), m.capturedEnd(0)) ||
+        if (created.contains(name.trimmed()) || isPlaceholderName(name) ||
+            inCreationClause(requestText, m.capturedStart(0), m.capturedEnd(0)) ||
             inDeletionClause(requestText, m.capturedStart(2)))
             continue;
         bool merged = false;
