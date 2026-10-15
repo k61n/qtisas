@@ -4230,6 +4230,7 @@ public:
   put("model", PyUnicode_FromString(model.toUtf8().constData()));
   put("maxTokens", PyLong_FromLong(maxTokens));
   put("docsMode", PyUnicode_FromString(docsModes[qBound(0, docsMode, 2)]));
+  put("bigModel", PyBool_FromLong(ai ? ai->bigModel() : AiAssistant::bigModelFromSettings(preset)));
   put("maxUserRules", PyLong_FromLong(st.maxUserRules));
   put("maxAutoContinue", PyLong_FromLong(st.maxAutoContinue));
   put("splitByDefault", PyBool_FromLong(st.splitByDefault));
@@ -4270,7 +4271,7 @@ public:
         *f.field = a1 == Py_True;
     }
   if (!done) {
-    const QStringList agentKeys = {"agent", "baseUrl", "model", "maxTokens", "docsMode"};
+    const QStringList agentKeys = {"agent", "baseUrl", "model", "maxTokens", "docsMode", "bigModel"};
     error = agentKeys.contains(*a0) ? QString("setAiConfig: %1 belongs to the agent: use setAiAgent(name)").arg(*a0)
                                     : QString("setAiConfig: no setting %1").arg(*a0);
   }

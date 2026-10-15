@@ -102,6 +102,26 @@ AiConfig::AiConfig(ApplicationWindow *app, QWidget *parent) : QWidget(parent), m
                               "pre-request entirely."));
     lay->addWidget(m_docsMode, 5, 1);
 
+    // BIGMODEL: a preset switch for a large model that needs none of the help for a small one
+    m_bigModel = new QCheckBox(tr("Large model (BIGMODEL)"));
+    m_bigModel->setToolTip(tr("The model needs no planning, self-review or exploring:\n"
+                              "split, self-review and EXPLORE are off for this preset\n"
+                              "(a request turns one back on with SPLIT, REVIEW or EXPLORE),\n"
+                              "and every doc of the docs mode is sent, first and unchanged,\n"
+                              "so the provider's prompt cache can reuse it.\n"
+                              "Checking it selects the compact .pyi docs instead of the full .md ones\n"
+                              "(Integrated stays: the server holds the docs); the docs mode can still be changed."));
+    lay->addWidget(m_bigModel, 5, 2);
+    connect(m_bigModel, &QCheckBox::toggled, this, [this](bool on) {
+        // Measured (lists 3/4/5, Codex and BlaBlaDor, 24/24 either way): the compact .pyi docs keep the full score at
+        // less than half the tokens of the .md ones.
+        // Only Full is switched: Integrated means the server adds the docs itself (local all-pyi backend), and
+        // switching it to Compact sent every doc twice, once from QtiSAS and once from the server.
+        if (on && m_docsMode->currentData().toInt() == static_cast<int>(AiAssistant::DocsMode::Full))
+            m_docsMode->setCurrentIndex(m_docsMode->findData(static_cast<int>(AiAssistant::DocsMode::Compact)));
+        showBigModelState();
+    });
+
     auto *clearHistBtn = new QPushButton(tr("Clear conversation history"));
     clearHistBtn->setToolTip(tr("Reset AI chat context"));
     connect(clearHistBtn, &QPushButton::clicked, app, [app]() {
@@ -224,6 +244,11 @@ AiConfig::AiConfig(ApplicationWindow *app, QWidget *parent) : QWidget(parent), m
         m_apiKey->setPlaceholderText("");
         m_maxTokens->setValue(sf.value("AI/MaxTokens", 4096).toInt());
         m_docsMode->setCurrentIndex(m_docsMode->findData(static_cast<int>(AiAssistant::docsModeFromSettings(sf))));
+        {
+            const QSignalBlocker blocker(m_bigModel); // the preset's own docs mode stays as saved
+            m_bigModel->setChecked(AiAssistant::bigModelFromSettings(sf));
+        }
+        showBigModelState();
         m_apiKey->setEnabled(true);
         m_maxTokens->setVisible(true);
         labelMaxTokens->setVisible(true);
@@ -253,6 +278,7 @@ AiConfig::AiConfig(ApplicationWindow *app, QWidget *parent) : QWidget(parent), m
         sf.setValue("AI/Model", m_model->text());
         sf.setValue("AI/MaxTokens", m_maxTokens->value());
         sf.setValue("AI/DocsMode", m_docsMode->currentData().toInt());
+        sf.setValue("AI/BigModel", m_bigModel->isChecked());
         sf.setValue("AI/Mode", mode);
         sf.setValue("AI/Info", infoLabel->toNormalizedHtml());
         sf.sync();
@@ -342,10 +368,30 @@ AiConfig::AiConfig(ApplicationWindow *app, QWidget *parent) : QWidget(parent), m
     }
 }
 
+void AiConfig::showBigModelState()
+{
+    const bool big = m_bigModel->isChecked();
+    const AiSettings &st = m_app->aiSettings;
+    const QList<QPair<QCheckBox *, bool>> overridden = {{m_splitByDefault, st.splitByDefault},
+                                                        {m_selfReviewEnabled, st.selfReviewEnabled},
+                                                        {m_exploreEnabled, st.exploreEnabled}};
+    for (const auto &[box, value] : overridden)
+    {
+        const QSignalBlocker blocker(box); // display only: the global setting keeps its value
+        box->setChecked(big ? false : value);
+        box->setEnabled(!big);
+    }
+    // split's own settings mean nothing while split is off (a SPLIT request still uses them)
+    m_splitRequestMerge->setEnabled(!big);
+    m_maxSplitParts->setEnabled(!big);
+}
+
 void AiConfig::apply()
 {
     m_app->askAiConfigure(m_apiKey->text().trimmed(), m_baseUrl->text().trimmed(), m_model->text().trimmed(),
                           m_maxTokens->value(), static_cast<AiAssistant::DocsMode>(m_docsMode->currentData().toInt()));
+    if (m_app->aiAssistant())
+        m_app->aiAssistant()->setBigModel(m_bigModel->isChecked());
     QSettings *s = Settings::DefaultSettings();
     s->setValue("/AI/SelectedPreset", m_mode->currentText());
     delete s;

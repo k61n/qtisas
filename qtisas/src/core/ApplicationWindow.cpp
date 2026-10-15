@@ -6501,6 +6501,7 @@ bool ApplicationWindow::setAiAgent(const QString &name)
     askAiConfigure(sf.value("AI/ApiKey").toString(), sf.value("AI/BaseUrl").toString(),
                    sf.value("AI/Model", "claude-opus-4-8").toString(), sf.value("AI/MaxTokens", 4096).toInt(),
                    AiAssistant::docsModeFromSettings(sf));
+    m_ai->setBigModel(AiAssistant::bigModelFromSettings(sf));
     QSettings *s = Settings::DefaultSettings();
     s->setValue("/AI/SelectedPreset", name);
     delete s;
@@ -6540,6 +6541,7 @@ void ApplicationWindow::ensureAiAssistant()
         m_ai->configure(sf.value("AI/ApiKey").toString(), sf.value("AI/BaseUrl").toString(),
                         sf.value("AI/Model", "claude-opus-4-8").toString(), sf.value("AI/MaxTokens", 4096).toInt(),
                         AiAssistant::docsModeFromSettings(sf));
+        m_ai->setBigModel(AiAssistant::bigModelFromSettings(sf));
     }
 }
 
@@ -6932,7 +6934,13 @@ void ApplicationWindow::askAi(const QString &text, bool autoRun, bool forceConso
     m_ai->setMaxAutoContinue(aiSettings.maxAutoContinue);
     m_ai->setMaxSplitParts(aiSettings.maxSplitParts);
     m_ai->setSplitMergeEnabled(aiSettings.splitRequestMerge);
-    m_ai->setSelfReviewEnabled(aiSettings.selfReviewEnabled);
+    // BIGMODEL preset: split, self-review and EXPLORE are off whatever the global settings say;
+    // the request's SPLIT / REVIEW / EXPLORE markers still switch a step back on.
+    const bool bigModel = m_ai->bigModel();
+    const bool splitDefault = aiSettings.splitByDefault && !bigModel;
+    const bool reviewDefault = aiSettings.selfReviewEnabled && !bigModel;
+    const bool exploreDefault = aiSettings.exploreEnabled && !bigModel;
+    m_ai->setSelfReviewEnabled(reviewDefault);
     m_ai->setRequestTimeoutSec(aiSettings.requestTimeoutSec);
 
     m_aiForceConsole = forceConsole;
@@ -6949,15 +6957,14 @@ void ApplicationWindow::askAi(const QString &text, bool autoRun, bool forceConso
         // so with no execution every item would emit part 1's script and lose parts 2..N (the
         // next item then resets the split state, hiding it). One script per item is what
         // generate-only can honestly deliver.
-        m_ai->beginListRequest(parsedList, autoRun && aiSettings.splitByDefault, aiSettings.selfReviewEnabled,
-                               aiSettings.exploreEnabled, autoRun);
+        m_ai->beginListRequest(parsedList, autoRun && splitDefault, reviewDefault, exploreDefault, autoRun);
         return;
     }
 
     // Split-mode trigger — see AiAssistant.h's splitModeActive doc comment and
     // AiAssistant::parseSplitMarker()'s doc comment for the "SPLIT"/"NOSPLIT" marker rules.
     QString effectiveText;
-    bool wantsSplit = AiAssistant::parseSplitMarker(text, aiSettings.splitByDefault, &effectiveText);
+    bool wantsSplit = AiAssistant::parseSplitMarker(text, splitDefault, &effectiveText);
     if (wantsSplit && !autoRun)
     {
         // Split mode needs execution to advance, so can't honor "generate only" — previously force-enabled autoRun,
@@ -6968,11 +6975,10 @@ void ApplicationWindow::askAi(const QString &text, bool autoRun, bool forceConso
 
     // Chained onto effectiveText (already stripped of SPLIT/NOSPLIT), so REVIEW/NOREVIEW work
     // together with either marker in any order/position.
-    m_ai->setSelfReviewEnabled(
-        AiAssistant::parseReviewMarker(effectiveText, aiSettings.selfReviewEnabled, &effectiveText));
+    m_ai->setSelfReviewEnabled(AiAssistant::parseReviewMarker(effectiveText, reviewDefault, &effectiveText));
     // Chained onto effectiveText the same way, so EXPLORE/NOEXPLORE combines with the SPLIT and
     // REVIEW markers in any order/position.
-    m_ai->setExploreEnabled(AiAssistant::parseExploreMarker(effectiveText, aiSettings.exploreEnabled, &effectiveText));
+    m_ai->setExploreEnabled(AiAssistant::parseExploreMarker(effectiveText, exploreDefault, &effectiveText));
 
     connectAiSignalsOnce();
     echoAiRequest(effectiveText);

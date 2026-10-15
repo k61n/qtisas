@@ -560,6 +560,19 @@ class AiAssistant : public QObject
     {
         return m_docsMode;
     }
+    // BIGMODEL (a preset's "Large model" switch): split, self-review and EXPLORE off by default (request markers turn
+    // them back on), every doc of the preset's docs mode sent unfiltered and FIRST in the system prompt,
+    // byte-identical on every call, so a provider's prompt cache can reuse it. Measured (lists 3/4/5, Codex and
+    // BlaBlaDor): the full score with about 3x fewer calls and 2.7-5.5x less time than split mode with self-review.
+    void setBigModel(bool on)
+    {
+        m_bigModel = on;
+    }
+    bool bigModel() const
+    {
+        return m_bigModel;
+    }
+    static bool bigModelFromSettings(const QSettings &settings);
     int historySize() const
     {
         return static_cast<int>(m_history.size());
@@ -936,7 +949,7 @@ class AiAssistant : public QObject
     // pendingRequestText because that string is also what gets stored as this turn's history text —
     // see startRequest()'s textForHistory comment for the two confirmed-live leaks that caused.
     QString pendingLiveFactsNote;
-    QStringList m_existingInputTables; // see existingInputNamesNote()
+    QStringList m_existingInputTables;   // see existingInputNamesNote()
     QStringList m_objectsAtRequestStart; // AiScriptHost::liveObjects() when the request started
     // Set by maybeDispatchSelfReview() when it removed trailing output lines; the flag allows one retry per request
     // for an output line written as text instead of printed (see unprintedOutputLineMistake()).
@@ -1263,6 +1276,7 @@ class AiAssistant : public QObject
     int m_maxSplitParts = 8;
     bool m_splitMergeEnabled = true;
     bool m_selfReviewEnabled = true;
+    bool m_bigModel = false;
     bool m_exploreEnabled = true;
     int m_requestTimeoutSec = 0;
     QList<QPair<QString, QString>> m_history; // (user, assistant) pairs — the FULL transcript,

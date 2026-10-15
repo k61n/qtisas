@@ -6297,6 +6297,10 @@ static const QString kBasePromptTemplate =
     "%4"
     "%5";
 
+// Between the stable, cacheable part of a BIGMODEL system prompt (the docs) and its per-call part; ask() splits on
+// it and never sends it.
+static const QString kStablePrefixEnd = QStringLiteral("\n\x1E-- qtisas stable prefix end --\x1E\n");
+
 static const QString kDocsIntro = "QtiSAS Python API documentation is provided below. "
                                   "Use it to answer questions about available classes and functions.\n\n";
 
@@ -6606,6 +6610,11 @@ void AiAssistant::configure(const QString &apiKey, const QString &baseUrl, const
 QString AiAssistant::docTopicIndex() const
 {
     return m_content ? m_content->docTopicIndex() : QString();
+}
+
+bool AiAssistant::bigModelFromSettings(const QSettings &settings)
+{
+    return settings.value("AI/BigModel", false).toBool();
 }
 
 AiAssistant::DocsMode AiAssistant::docsModeFromSettings(const QSettings &settings)
@@ -7532,6 +7541,36 @@ QString AiAssistant::buildSystemPrompt(const QString &systemPrompt, bool include
     if (!systemPrompt.isEmpty())
         return sysPrompt + systemPrompt;
 
+    // BIGMODEL: the docs FIRST and whole — every file of the docs mode, no topic filter — so the system prompt starts
+    // byte-identically on every call; the per-call rules (the template above changes with the request) come after the
+    // marker that ask() splits on: Anthropic gets the docs as their own system block with cache_control, an
+    // OpenAI-compatible server two system messages, the docs first — the exact prefix its automatic cache needs.
+    if (m_bigModel && includeDocs && m_docsMode != DocsMode::Integrated)
+    {
+        if (m_cachedDocs.isEmpty() && m_content)
+        {
+            QString status;
+            m_cachedDocs = m_content->loadDocs(m_docsMode == DocsMode::Full, &status);
+            if (!status.isEmpty())
+                emit infoMessage(status);
+        }
+        if (!m_cachedDocs.isEmpty())
+        {
+            QString rules = sysPrompt;
+            rules += QString("\n\nCurrent auto-continue limit: %1 total automatic EXPLORE/error-retry "
+                             "continuations per request (see the rules above).\n")
+                         .arg(m_maxAutoContinue);
+            const QStringList userRuleList = userRules();
+            if (!userRuleList.isEmpty())
+            {
+                rules += QString("\n\n## User Rules (%1/%2)\n\n").arg(userRuleList.size()).arg(m_maxUserRules);
+                for (const QString &r : userRuleList)
+                    rules += "- " + r + "\n";
+            }
+            return kDocsIntro + m_cachedDocs + kStablePrefixEnd + rules;
+        }
+    }
+
     // The API docs are tens of thousands of tokens, and every ask() call is a stateless HTTP
     // request that must resend the full system prompt. `askSelfReviewRound()` (the checklist-
     // compliance pass and its regression backstops) is the one call site that still deliberately
@@ -7768,9 +7807,18 @@ void AiAssistant::ask(const QString &userText, bool includeDocs, const QString &
 
     if (isAnthropic)
     {
-        // Anthropic Messages API: system is a top-level field; wrap in array for prompt caching
-        body["system"] = QJsonArray{
-            QJsonObject{{"type", "text"}, {"text", sysPrompt}, {"cache_control", QJsonObject{{"type", "ephemeral"}}}}};
+        // Anthropic Messages API: system is a top-level field; wrap in array for prompt caching. A BIGMODEL prompt
+        // (kStablePrefixEnd in it) becomes two blocks: the docs with the cache breakpoint — the last block identical
+        // across calls — then the per-call rules, uncached.
+        if (const qsizetype cut = sysPrompt.indexOf(kStablePrefixEnd); cut >= 0)
+            body["system"] =
+                QJsonArray{QJsonObject{{"type", "text"},
+                                       {"text", sysPrompt.left(cut)},
+                                       {"cache_control", QJsonObject{{"type", "ephemeral"}}}},
+                           QJsonObject{{"type", "text"}, {"text", sysPrompt.mid(cut + kStablePrefixEnd.size())}}};
+        else
+            body["system"] = QJsonArray{QJsonObject{
+                {"type", "text"}, {"text", sysPrompt}, {"cache_control", QJsonObject{{"type", "ephemeral"}}}}};
         for (qsizetype i = start; i < m_history.size(); ++i)
         {
             messages.append(QJsonObject{{"role", "user"}, {"content", m_history[i].first}});
@@ -7781,8 +7829,16 @@ void AiAssistant::ask(const QString &userText, bool includeDocs, const QString &
     }
     else
     {
-        // OpenAI-compatible: system is the first entry in the messages array
-        messages.append(QJsonValue(QJsonObject{{"role", "system"}, {"content", sysPrompt}}));
+        // OpenAI-compatible: system is the first entry in the messages array. A BIGMODEL prompt becomes two system
+        // messages — the docs first, byte-identical every call, as the cacheable prefix; the per-call rules second.
+        if (const qsizetype cut = sysPrompt.indexOf(kStablePrefixEnd); cut >= 0)
+        {
+            messages.append(QJsonValue(QJsonObject{{"role", "system"}, {"content", sysPrompt.left(cut)}}));
+            messages.append(
+                QJsonValue(QJsonObject{{"role", "system"}, {"content", sysPrompt.mid(cut + kStablePrefixEnd.size())}}));
+        }
+        else
+            messages.append(QJsonValue(QJsonObject{{"role", "system"}, {"content", sysPrompt}}));
         for (qsizetype i = start; i < m_history.size(); ++i)
         {
             messages.append(QJsonObject{{"role", "user"}, {"content", m_history[i].first}});
@@ -7821,7 +7877,7 @@ void AiAssistant::ask(const QString &userText, bool includeDocs, const QString &
     {
         req.setRawHeader("x-api-key", m_apiKey.toUtf8());
         req.setRawHeader("anthropic-version", "2023-06-01");
-        req.setRawHeader("anthropic-beta", "prompt-caching-2024-07-31");
+        // no "anthropic-beta: prompt-caching-..." header: prompt caching is part of the standard API now
     }
     else if (!m_apiKey.isEmpty())
     {
@@ -8164,6 +8220,22 @@ void AiAssistant::onReplyFinished(QNetworkReply *reply)
     const QJsonObject obj = doc.object();
 
     QString text;
+
+    // What the provider cached, when it says: Anthropic usage.cache_read_input_tokens / cache_creation_input_tokens,
+    // OpenAI usage.prompt_tokens_details.cached_tokens — printed so a run shows whether BIGMODEL's stable prefix hits.
+    if (const QJsonObject usage = obj.value("usage").toObject(); !usage.isEmpty() && m_host && m_bigModel)
+    {
+        const int read = usage.contains("cache_read_input_tokens")
+                             ? usage.value("cache_read_input_tokens").toInt()
+                             : usage.value("prompt_tokens_details").toObject().value("cached_tokens").toInt();
+        const int written = usage.value("cache_creation_input_tokens").toInt();
+        const int input = usage.contains("prompt_tokens") ? usage.value("prompt_tokens").toInt()
+                                                          : usage.value("input_tokens").toInt() + read + written;
+        m_host->print(QString("▸▸▸ AI cache: %1 of %2 prompt tokens read from the cache, %3 written")
+                          .arg(read)
+                          .arg(input)
+                          .arg(written));
+    }
 
     if (obj.contains("content"))
         text = parseAnthropicResponse(obj);
