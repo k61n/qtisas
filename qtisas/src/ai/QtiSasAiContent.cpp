@@ -2174,8 +2174,12 @@ QString QtiSasAiContent::compilerParamVariesRepair(const QString &code, const QS
                                             QRegularExpression::CaseInsensitiveOption);
     if (fixedRe.match(request).hasMatch()) // the request decides which parameters stay fixed
         return {};
-    static const QRegularExpression compileRe(R"(^([ \t]*)(?:\w+\s*=\s*)?(\w+)\.compile\s*\(\s*\))",
-                                              QRegularExpression::MultilineOption);
+    // A compile() inside a condition counts too: confirmed live (all-pyi BIGMODEL, ai-test-requests item 12), both
+    // functions were compiled as "if not c.compile(): raise ...", the repair saw no compile(), and fit() failed with
+    // "no adjustable parameters" — one more retry for a fix this repair exists to make.
+    static const QRegularExpression compileRe(
+        R"(^([ \t]*)(?:(?:if\s+not\s+|if\s+|assert\s+|\w+\s*=\s*))?(\w+)\.compile\s*\(\s*\))",
+        QRegularExpression::MultilineOption);
     static const QRegularExpression startRe(R"(\.(?:new|compile)\s*\(\s*\))");
     static const QRegularExpression namesRe(R"RX(setParamNamesAll\s*\(\s*\[([^\]]*)\])RX");
     static const QRegularExpression quotedRe(R"RX(["']([^"']+)["'])RX");
@@ -2629,8 +2633,11 @@ QString QtiSasAiContent::unrequestedAutoexecImmediateRun(const QString &code, co
         return {};
     // The request itself may explicitly want both — e.g. "set it up to auto-run AND run it now to
     // confirm it works" — in which case calling execute() here is authorized, not a violation.
+    // Also "run that tab once to test it": confirmed live (Codex, benchmark LIST 1 item 4), the request asked for the
+    // test run in exactly those words, the script did it, and it was blocked twice until the item was given up.
     static const QRegularExpression immediateRunAuthorizedRe(
-        R"(\b(run|execute|test|apply)\s+(it\s+)?(now|immediately|right away|right now)\b)",
+        R"(\b(run|execute|test|apply)\s+(it\s+)?(now|immediately|right away|right now)\b|)"
+        R"(\b(run|execute)\s+(it|that|this|the)?\s*(tab|note|script)?\s*once\b)",
         QRegularExpression::CaseInsensitiveOption);
     if (immediateRunAuthorizedRe.match(originalRequestText).hasMatch())
         return {};

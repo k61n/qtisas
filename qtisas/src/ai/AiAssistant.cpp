@@ -272,7 +272,15 @@ QString AiAssistant::normalizeErrorForDedup(const QString &err)
     // to detecting a genuine difference; only the timing figure is inherently non-reproducible
     // noise on an otherwise-identical run.
     static const QRegularExpression timingRe(R"(\b\d+\s*ms\b)");
+    // A run that ended in a Python exception is compared by that exception alone. Confirmed live (all-pyi BIGMODEL,
+    // ai-test-requests item 12): "'GraphWindow' object has no attribute 'newLegend'" four times, twice in a row, but
+    // each run first fitted freshly generated random data, so the printed chi2/R² before the exception never matched
+    // and the item looped for 30 minutes. The model still gets the whole output; only the repeat check ignores it.
+    static const QRegularExpression exceptionLineRe(R"(^\w+(?:Error|Exception): [^\n]*$)",
+                                                    QRegularExpression::MultilineOption);
     QString normalized = err;
+    for (auto it = exceptionLineRe.globalMatch(err); it.hasNext();)
+        normalized = it.next().captured(0);
     normalized.replace(lineRe, "at <script>:N");
     normalized.replace(timingRe, "N ms");
     return normalized;
@@ -5755,6 +5763,7 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
     QString blockedScript;
     bool blockedUnchanged = false;   // the script blocked just before, sent back as it was
     bool failedRunUnchanged = false; // the script that failed just before, sent back as it was
+    bool invalidResponse = false;    // not valid Python: says nothing about the last diagnosis
     if (!fabricated.isEmpty())
     {
         m_host->print("▸▸▸ AI code (blocked — script invents further conversation turns):\n\n" + code);
@@ -5772,6 +5781,7 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
         // the real SyntaxError text (from canCompile()'s errorOut) through the SAME retry path a
         // runtime error already uses below gives it a genuine chance at an automatic fix instead.
         m_host->print("▸▸▸ AI code (not runnable):\n\n" + code);
+        invalidResponse = true;
         errContext = "SyntaxError: " + (syntaxError.isEmpty()
                                             ? QString("the script did not compile as valid Python — check for stray "
                                                       "text (e.g. a leftover markdown code-fence marker), an "
@@ -6019,7 +6029,7 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
     // the model copied it. Once, it is asked from the request itself, without either; a second repeat stops below.
     // The same for a script that failed at run time and came back unchanged with the same error: confirmed live (LIST
     // 4 item 3, iteration 7), m.cell(4, 3) on a 3x4 matrix, "no row 4 ... takes the row first", the identical script.
-    if ((blockedUnchanged || failedRunUnchanged) && !m_freshRetryUsed &&
+    if ((blockedUnchanged || failedRunUnchanged) && !m_freshRetryUsed && !invalidResponse &&
         normalizeErrorForDedup(errContext) == normalizeErrorForDedup(lastRetryError))
     {
         m_freshRetryUsed = true;
@@ -6045,7 +6055,7 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
             freshPrompt);
         return;
     }
-    if (normalizeErrorForDedup(errContext) == normalizeErrorForDedup(lastRetryError))
+    if (!invalidResponse && normalizeErrorForDedup(errContext) == normalizeErrorForDedup(lastRetryError))
     {
         recordGiveUpInHistory("stopping — same diagnosis repeated, not corrected", errContext);
         QString msg = "▸▸▸ AI: stopping — the same corrective explanation was given twice in a row "
@@ -6059,7 +6069,11 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
         lastAvailableBlock.clear();
         return;
     }
-    lastRetryError = errContext;
+    // A "not runnable" turn keeps the diagnosis before it: confirmed live (same item 12), the newLegend error
+    // alternated with repetition-loop garbage, each garbage turn's SyntaxError replaced it, and the repeat was never
+    // seen.
+    if (!invalidResponse)
+        lastRetryError = errContext;
 
     // If the request named a specific dataset/function/column and it genuinely doesn't exist,
     // that IS the correct result of the request — not something to keep guessing past.
