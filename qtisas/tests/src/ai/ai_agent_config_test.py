@@ -13,8 +13,9 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspa
 from qtisas_testing import user_settings_kept  # noqa: E402
 
 app = qti.app
-KEYS = {"agent", "baseUrl", "model", "maxTokens", "docsMode", "maxUserRules", "maxAutoContinue", "splitByDefault",
-        "maxSplitParts", "splitRequestMerge", "selfReviewEnabled", "exploreEnabled", "requestTimeoutSec"}
+KEYS = {"agent", "baseUrl", "model", "maxTokens", "docsMode", "bigModel", "maxUserRules", "maxAutoContinue",
+        "splitByDefault", "maxSplitParts", "splitRequestMerge", "selfReviewEnabled", "exploreEnabled",
+        "requestTimeoutSec"}
 
 
 def refused(call):
@@ -44,6 +45,8 @@ with user_settings_kept():
     assert "True or False" in refused(lambda: app.setAiConfig("exploreEnabled", 1))
     assert "integer" in refused(lambda: app.setAiConfig("maxAutoContinue", True))
     assert "setAiAgent" in refused(lambda: app.setAiConfig("model", "x"))
+    assert "setAiAgent" in refused(lambda: app.setAiConfig("bigModel", True))  # a preset's switch, like the model
+    assert isinstance(config["bigModel"], bool), config
     assert "no setting" in refused(lambda: app.setAiConfig("nope", 1))
 
     # agents: the presets of the "ai" folder
