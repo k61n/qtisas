@@ -103,6 +103,7 @@ class QtiSasAiContent : public AiContentProvider
     QString compilerMissingGroupRepair(const QString &code) const override;
     static QString otherTabRunMistake(const QString &code, const QString &originalRequestText);
     static QString labeledResultLineMistake(const QString &code, const QString &originalRequestText);
+    static QString staleResultValueMistake(const QString &code, const QString &originalRequestText);
     static QString inventedDeletionCallHint(const QString &errContext);
     static QString matrixIndexFormulaMistake(const QString &code, const QString &originalRequestText);
     static QString newNoteExtraTabMistake(const QString &code, const QString &originalRequestText);

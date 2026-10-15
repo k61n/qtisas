@@ -4457,6 +4457,155 @@ QString QtiSasAiContent::newNoteExtraTabMistake(const QString &code, const QStri
         .arg(tabs - 1);
 }
 
+// The arguments of a call, from the text right after its "(": split at top-level commas, up to its closing ")".
+static QStringList topLevelArguments(const QString &afterParen)
+{
+    QStringList args;
+    QString current;
+    int depth = 0;
+    QChar quote;
+    for (const QChar ch : afterParen)
+    {
+        if (!quote.isNull())
+        {
+            current += ch;
+            if (ch == quote)
+                quote = QChar();
+            continue;
+        }
+        if (ch == '"' || ch == '\'')
+            quote = ch;
+        else if (ch == '(' || ch == '[' || ch == '{')
+            ++depth;
+        else if (ch == ')' || ch == ']' || ch == '}')
+        {
+            if (depth == 0)
+                break;
+            --depth;
+        }
+        else if (ch == ',' && depth == 0)
+        {
+            args << current.trimmed();
+            current.clear();
+            continue;
+        }
+        current += ch;
+    }
+    if (!current.trimmed().isEmpty())
+        args << current.trimmed();
+    return args;
+}
+
+QString QtiSasAiContent::staleResultValueMistake(const QString &code, const QString &originalRequestText)
+{
+    // Confirmed live three times (local LIST 1, items 3 and 11): has_legend = top_layer.legend() is not None, then
+    // top_layer.newLegend(), then scriptPrint("R11:", ..., has_legend) — the object was right, the result line printed
+    // the state before the work. The docs' read-after-work rule did not stop it. A dry run over every script that ran
+    // (6413, all benchmark logs and reference solutions) flagged exactly these cases and nothing correct.
+    // A value read and then changed by a later call on the SAME object; only object reads, never app-wide settings,
+    // and never when the request itself asks for a value before a change ("... now, and switch it back afterwards").
+    static const QList<QPair<QString, QStringList>> pairs = {
+        {"legend", {"newLegend", "removeLegend"}},
+        {"tabs", {"addTab", "removeTab"}},
+        {"autoexec", {"setAutoexec"}},
+        {"numCurves", {"insertCurve", "addCurve", "addCurves", "removeCurve", "deleteFitCurves", "plotResults"}},
+        {"numLayers", {"addLayer", "setNumLayers", "deleteLayer", "removeLayer"}},
+        {"numRows", {"setNumRows", "insertRows", "deleteRows", "addRows"}},
+        {"numCols", {"setNumCols", "addColumn", "addColumns", "insertColumns", "removeColumn", "deleteColumn"}}};
+    static const QRegularExpression beforeAskedRe(
+        R"(\b(?:before|afterwards?|initially|originally|at first|restore|switch(?:es|ed)?(?: it)? back|old value|)"
+        R"(previous value)\b)",
+        QRegularExpression::CaseInsensitiveOption);
+    const QString label = requestedResultLabel(originalRequestText);
+    if (label.isEmpty() || beforeAskedRe.match(originalRequestText).hasMatch())
+        return {};
+    QStringList readNames;
+    for (const auto &pair : pairs)
+        readNames << pair.first;
+    static const QRegularExpression assignRe(R"(^\s*(\w+)\s*=(?!=)\s*(.+)$)");
+    const QRegularExpression readRe(R"(\b(\w+)\s*\.\s*()" + readNames.join('|') + R"()\s*\()");
+    static const QRegularExpression printRe(R"(^\s*scriptPrint\s*\((.*)$)");
+    static const QRegularExpression fieldRe(R"(\{\s*(\w+)\s*(?:[:!][^}]*)?\})");
+    static const QRegularExpression identRe(R"(^\w+$)");
+    static const QRegularExpression wordRe(R"(\b(\w+)\b)");
+    const QStringList lines = code.split('\n');
+    // the read call in line `index`, or in the line that assigned one of its names (one step back)
+    const auto readIn = [&](int index) -> QRegularExpressionMatch {
+        const QString expr = assignRe.match(lines.at(index)).captured(2);
+        QRegularExpressionMatch direct = readRe.match(expr);
+        if (direct.hasMatch())
+            return direct;
+        for (auto w = wordRe.globalMatch(expr); w.hasNext();)
+        {
+            const QString ident = w.next().captured(1);
+            for (int j = index - 1; j >= 0; --j)
+            {
+                const QRegularExpressionMatch assign = assignRe.match(lines.at(j));
+                if (assign.hasMatch() && assign.captured(1) == ident)
+                {
+                    const QRegularExpressionMatch read = readRe.match(assign.captured(2));
+                    if (read.hasMatch())
+                        return read;
+                    break;
+                }
+            }
+        }
+        return {};
+    };
+    for (int p = 0; p < lines.size(); ++p)
+    {
+        const QRegularExpressionMatch print = printRe.match(lines.at(p));
+        if (!print.hasMatch())
+            continue;
+        const QStringList args = topLevelArguments(print.captured(1));
+        if (args.isEmpty() || !args.first().contains(label))
+            continue;
+        QStringList printed;
+        if (args.first().startsWith('f'))
+            for (auto f = fieldRe.globalMatch(args.first()); f.hasNext();)
+                printed << f.next().captured(1);
+        for (int a = 1; a < args.size(); ++a)
+            if (identRe.match(args.at(a)).hasMatch())
+                printed << args.at(a);
+        for (const QString &var : printed)
+        {
+            int assigned = -1;
+            for (int i = p - 1; i >= 0 && assigned < 0; --i)
+            {
+                const QRegularExpressionMatch assign = assignRe.match(lines.at(i));
+                if (assign.hasMatch() && assign.captured(1) == var)
+                    assigned = i;
+            }
+            if (assigned < 0)
+                continue;
+            const QRegularExpressionMatch read = readIn(assigned);
+            if (!read.hasMatch())
+                continue;
+            const QString object = read.captured(1);
+            const QString method = read.captured(2);
+            QStringList changes;
+            for (const auto &pair : pairs)
+                if (pair.first == method)
+                    changes = pair.second;
+            const QRegularExpression changeRe("\\b" + QRegularExpression::escape(object) + R"(\s*\.\s*()" +
+                                              changes.join('|') + R"()\s*\()");
+            for (int i = assigned + 1; i < p; ++i)
+            {
+                const QRegularExpressionMatch change = changeRe.match(lines.at(i));
+                if (!change.hasMatch())
+                    continue;
+                return "The result line prints " + var + ", read with " + object + "." + method + "() before " +
+                       object + "." + change.captured(1) +
+                       "() changes it later in this script — so it prints the state BEFORE the work, not the result. "
+                       "Read the value after the work, in the result line itself: replace " +
+                       var + " in scriptPrint(\"" + label + "\", ...) by a fresh " + object + "." + method +
+                       "() read (e.g. " + object + "." + method + "() is not None for whether it exists).";
+            }
+        }
+    }
+    return {};
+}
+
 QString QtiSasAiContent::labeledResultLineMistake(const QString &code, const QString &originalRequestText)
 {
     // Confirmed live (benchmark LIST 5, item 6): "R6: [] Peak5:missing Pipeline:missing" and "R6: [] Table 'Peak5'
@@ -4471,17 +4620,28 @@ QString QtiSasAiContent::labeledResultLineMistake(const QString &code, const QSt
     static const QRegularExpression literalRe(R"RX(f?("(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'))RX");
     static const QRegularExpression fieldRe(R"(\{[^{}]*\})");
     static const QRegularExpression innerLabelRe(R"((?:^|\s)([A-Za-z_][\w']*)\s*[:=](?!=))");
+    // Only a line that prints values can label them. Confirmed live (local LIST 1, item 7): the unreachable fallback
+    // branch scriptPrint("R7:", "Error calculating I at Q=0.1") was blocked for a label "Q:", the model kept the line
+    // it could not see wrong, and the item stopped on the same diagnosis twice — its computed line was correct.
+    static const QRegularExpression printCallRe(R"(^[ \t]*(?:scriptPrint|print)\s*\()");
+    static const QRegularExpression valueRe(R"([A-Za-z0-9_])");
     for (auto it = printRe.globalMatch(code); it.hasNext();)
     {
         const QString line = it.next().captured(0);
         QString fixedText;
+        bool printsValue = valueRe.match(QString(line).remove(printCallRe).remove(literalRe)).hasMatch();
         for (auto lit = literalRe.globalMatch(line); lit.hasNext();)
         {
-            QString text = lit.next().captured(1);
+            const QRegularExpressionMatch literal = lit.next();
+            QString text = literal.captured(1);
             text = text.mid(1, text.size() - 2);
+            if (literal.captured(0).startsWith('f') && fieldRe.match(text).hasMatch())
+                printsValue = true;
             text.replace(fieldRe, " ");
             fixedText += " " + text;
         }
+        if (!printsValue)
+            continue;
         fixedText.replace(label, " ");
         const QRegularExpressionMatch inner = innerLabelRe.match(fixedText);
         if (inner.hasMatch())
@@ -6927,6 +7087,9 @@ QList<AiKnownMistakeMatch> QtiSasAiContent::detectKnownMistakes(const QString &c
         explanation = labeledResultLineMistake(code, originalRequestText);
         if (!explanation.isEmpty())
             matches << AiKnownMistakeMatch{"the result line labels its values", explanation};
+        explanation = staleResultValueMistake(code, originalRequestText);
+        if (!explanation.isEmpty())
+            matches << AiKnownMistakeMatch{"the result line prints a value read before the work", explanation};
         explanation = resultLineTooFewValuesMistake(code, originalRequestText);
         if (!explanation.isEmpty())
             matches << AiKnownMistakeMatch{"the result line carries fewer values than asked", explanation};

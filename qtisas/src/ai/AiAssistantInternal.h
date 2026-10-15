@@ -176,4 +176,13 @@ QString truncateRepetitiveGarbage(const QString &s);
 QList<QPair<QString, QStringList>> splitPlanCreationNamesNeedingCheck(
     const QList<QPair<QString, QStringList>> &checkedNames, QStringList *skipped);
 
+// The one-line form of a block explanation for the "why it was blocked" list: its first sentence, with a long
+// quoted request ("This part's own job (\"...\")") shortened so the rule after it stays visible.
+// See AiAssistant.cpp for the full rationale.
+QString blockReasonSummary(const QString &explanation);
+
+// True when every statement of a script is a print()/scriptPrint() call — it does none of a request's work.
+// See AiAssistant.cpp for the full rationale.
+bool onlyPrintsResult(const QString &code);
+
 #endif

@@ -2556,6 +2556,64 @@ QList<int> splitPlanUnnecessaryDataTable(const QString &originalRequestText, con
     return unnecessary;
 }
 
+// The first sentence of each explanation is enough to recognize the rule. It ends at the first ". " that is not a list
+// marker: confirmed live, a cut at "1. " showed only "...asked for:\n1." and hid what was missing. A quoted request
+// at the start ("This part's own job (\"...\")") is skipped and, when long, shortened: confirmed live (all-pyi
+// BIGMODEL, a 4-sentence LIST item), the cut fell on the ". " after the item's first sentence, inside the quote, and
+// the line ended "...with 5% noise." — the rule that blocked the script never showed.
+// True when every statement of `code` is a print()/scriptPrint() call (imports and comments aside): the script reads
+// and changes nothing. Lines only, deliberately: a print spread over several lines or with a call inside it that does
+// work is not counted, so this never hides a real reason.
+bool onlyPrintsResult(const QString &code)
+{
+    static const QRegularExpression printRe(R"(^(?:scriptPrint|print)\s*\(.*\)\s*;?\s*$)");
+    static const QRegularExpression skipRe(R"(^(?:#|import\s|from\s+\S+\s+import\s))");
+    int prints = 0;
+    for (const QString &raw : code.split('\n'))
+    {
+        const QString line = raw.trimmed();
+        if (line.isEmpty() || skipRe.match(line).hasMatch())
+            continue;
+        if (!printRe.match(line).hasMatch())
+            return false;
+        ++prints;
+    }
+    return prints > 0;
+}
+
+QString blockReasonSummary(const QString &explanation)
+{
+    QString text = explanation;
+    qsizetype searchFrom = 0;
+    if (const qsizetype open = text.indexOf("(\""); open >= 0 && open < 60)
+    {
+        if (const qsizetype close = text.indexOf("\")", open + 2); close > open)
+        {
+            const qsizetype quoteStart = open + 2;
+            if (close - quoteStart > 80)
+            {
+                text = text.left(quoteStart) + text.mid(quoteStart, 60).trimmed() + " …" + text.mid(close);
+                searchFrom = quoteStart + text.mid(quoteStart).indexOf("\")") + 2;
+            }
+            else
+                searchFrom = close + 2;
+        }
+    }
+    qsizetype end = text.indexOf(". ", searchFrom);
+    while (end > 0)
+    {
+        const qsizetype lineStart = text.lastIndexOf('\n', end - 1) + 1;
+        bool listMarker = end > lineStart;
+        for (qsizetype k = lineStart; k < end && listMarker; ++k)
+            listMarker = text.at(k).isDigit();
+        if (!listMarker)
+            break;
+        end = text.indexOf(". ", end + 1);
+    }
+    const QString first = end > 0 && end < 400 ? text.left(end + 1) : text.left(400);
+    return first.simplified();
+}
+
 // True if `code`, after stripping comments and blank lines the same way
 // AiContentProvider::isGiveUpFallbackScript() does, has NO remaining lines at all — the script
 // does absolutely nothing. Confirmed live, severe: self-review's mandatory "ONLY executable
@@ -5707,12 +5765,26 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
         // reasoning detectKnownMistakes() already applies internally, extended one level up.
         QStringList headers;
         QStringList explanations;
-        if (!scopeViolation.isEmpty())
+        // A script that only prints — every reason below is then about work it never attempts, and the long list of
+        // them did not get through: confirmed live (benchmark LIST 1 item 10, local all-pyi BIGMODEL), "plot into
+        // FitResults … print the number of layers and curves" answered with scriptPrint("R10:", 2, 2, 1), values read
+        // off the request, blocked with two reasons, the same line back five times — through a fresh retry as well.
+        // One plain reason instead.
+        if (onlyPrintsResult(code) && (!scopeViolation.isEmpty() || !missingDeliverables.isEmpty()))
+        {
+            headers << "only the result line, none of the work";
+            explanations << "This script does none of the work the request asks for: it only prints the result line, "
+                            "with values taken from the request text — nothing the request creates or changes exists "
+                            "yet. Write the script that does the task first (create, compute, fit, plot — whatever the "
+                            "request says), then print the result line at its end, with the values read back from "
+                            "what the script made.";
+        }
+        else if (!scopeViolation.isEmpty())
         {
             headers << "out of scope for this part";
             explanations << scopeViolation;
         }
-        if (!missingDeliverables.isEmpty())
+        if (!missingDeliverables.isEmpty() && !headers.contains("only the result line, none of the work"))
         {
             headers << "requested deliverable missing";
             explanations << missingDeliverables;
@@ -5727,26 +5799,10 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
         blockedUnchanged = code.trimmed() == m_lastBlockedScript.trimmed();
         m_lastBlockedScript = code;
         // The reason, not only its header: confirmed live, a user saw "out of scope for this part" with no way to
-        // tell which rule fired or why. The first sentence of each explanation is enough to recognize it.
-        // The first sentence ends at the first ". " that is not a list marker: confirmed live, a cut at "1. " showed
-        // only "...asked for:\n1." and hid what was missing
+        // tell which rule fired or why. See blockReasonSummary().
         QStringList reasons;
         for (const QString &explanation : explanations)
-        {
-            qsizetype end = explanation.indexOf(". ");
-            while (end > 0)
-            {
-                const qsizetype lineStart = explanation.lastIndexOf('\n', end - 1) + 1;
-                bool listMarker = end > lineStart;
-                for (qsizetype k = lineStart; k < end && listMarker; ++k)
-                    listMarker = explanation.at(k).isDigit();
-                if (!listMarker)
-                    break;
-                end = explanation.indexOf(". ", end + 1);
-            }
-            const QString first = end > 0 && end < 300 ? explanation.left(end + 1) : explanation.left(300);
-            reasons << "  • " + first.simplified();
-        }
+            reasons << "  • " + blockReasonSummary(explanation);
         m_host->print("▸▸▸ AI: why it was blocked:\n" + reasons.join("\n"));
         // Blocked never ran, so it must not stay in history as this part's answer — same patch
         // (and same guaranteed-last-entry invariant) as the self-review/invalid-response ones above.
