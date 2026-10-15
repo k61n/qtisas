@@ -5652,6 +5652,25 @@ QString QtiSasAiContent::apiCallRepairs(const QString &code, const QString &requ
                  "stored as that number in a Numeric column.");
     }
 
+    // 9. A fit table name built from a function name with its folder cut off: "fitCurve-" + name.split("/")[1] or
+    //    "fitCurve-" + name.replace("ai/", ""). A fit's table is "fitCurve-" + the FULL name, folder included (the
+    //    docs say so); the lookup returns None, and a guarded script skips the plot silently. Confirmed live (local
+    //    LIST 1, item 12, two runs): "R12: ai/GPeak 1 0" with no fit curve plotted, and a stop on the same diagnosis.
+    {
+        static const QRegularExpression cutRe(
+            R"RX((["']fitCurve-["']\s*\+\s*)([A-Za-z_][\w.]*)\s*(?:\.split\(\s*["']/["']\s*\)\s*\[\s*-?1\s*\])RX"
+            R"RX(|\.replace\(\s*["'][\w-]+/["']\s*,\s*["']["']\s*\)))RX");
+        QList<QRegularExpressionMatch> cuts;
+        for (auto it = cutRe.globalMatch(repaired); it.hasNext();)
+            cuts.prepend(it.next());
+        for (const QRegularExpressionMatch &m : cuts)
+            repaired.replace(static_cast<int>(m.capturedStart()), static_cast<int>(m.capturedLength()),
+                             m.captured(1) + m.captured(2));
+        if (!cuts.isEmpty())
+            note("\"fitCurve-\" + the function name with its folder cut off became \"fitCurve-\" + the full name — a "
+                 "fit's table is named after the full function name, folder included.");
+    }
+
     const QString label = resultLine ? requestedResultLabel(requestText) : QString();
 
     // 5. int(<existence>) in the result line — a "whether" value is the boolean itself (BlaBlaDor, 2 runs: "0 0").

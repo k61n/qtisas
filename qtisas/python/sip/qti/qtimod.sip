@@ -2006,7 +2006,9 @@ public:
   // boundary, turns that silent no-op into an immediate, catchable Python error instead.
   if (a0 == 0) {
     sipIsErr = 1;
-    PyErr_Format(PyExc_ValueError, "Invalid table in insertCurve().");
+    PyErr_Format(PyExc_ValueError, "insertCurve(): the table is None - the table(\"...\") lookup before it found "
+                 "no table of that name (a fit's curve table is \"fitCurve-\" + the full function name, e.g. "
+                 "\"fitCurve-ai/GaussPeak\").");
   } else if (a0->colIndex(*a1) < 0) {
     sipIsErr = 1;
     PyErr_Format(PyExc_ValueError, "insertCurve(): column '%s' not found in table '%s'.",
@@ -2021,7 +2023,9 @@ public:
   // BOTH the X and Y column names here.
   if (a0 == 0) {
     sipIsErr = 1;
-    PyErr_Format(PyExc_ValueError, "Invalid table in insertCurve().");
+    PyErr_Format(PyExc_ValueError, "insertCurve(): the table is None - the table(\"...\") lookup before it found "
+                 "no table of that name (a fit's curve table is \"fitCurve-\" + the full function name, e.g. "
+                 "\"fitCurve-ai/GaussPeak\").");
   } else if (a0->colIndex(*a1) < 0) {
     sipIsErr = 1;
     PyErr_Format(PyExc_ValueError, "insertCurve(): X column '%s' not found in table '%s'.",
@@ -3381,6 +3385,15 @@ public:
                 if (PyErr_ExceptionMatches(PyExc_KeyboardInterrupt))
                     sipCpp->app()->scriptPrint("Fit interrupted");
                 PyErr_Clear();
+            } else if (std::isnan(sipRes) && sipCpp->lastFitRan) {
+                // The fit ran and diverged. Confirmed live (local LIST 1, item 12): a Gaussian with no initial
+                // values (width 0, a division by zero) ended "chi2/dof: NAN" after 100 iterations, the error below
+                // said "empty or invalid rows", and the retries looked for a data fault that was not there.
+                PyErr_SetString(PyExc_RuntimeError,
+                    "fit(): the fit ran but its chi2/dof is NaN — the function gives no number for the starting "
+                    "values: most likely a parameter starts at 0 where it divides (a width) or inside log()/sqrt(). "
+                    "Set nonzero initial values with setParamValue() before fit().");
+                sipIsErr = 1;
             } else if (std::isnan(sipRes)) {
                 // fit() now returns NaN (instead of a stale previous chi2) when the underlying data
                 // read failed (e.g. an empty/unreadable dataset) — see fittable18::fit(). Without

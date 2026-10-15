@@ -71,6 +71,8 @@ public:
     double lastDoF;
     double lastChi2;
     QString lastFitReport;
+    // Whether the last script fit() read its data and ran (its chi2 may still be NaN when the fit diverged).
+    bool lastFitRan = false;
 
     QString libPath;
     QStringList undoRedo, undoRedoErrorbars, undoRedoFittable, undoRedoShareble, undoRedoRange;

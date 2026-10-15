@@ -292,6 +292,7 @@ double fittable18::fit()
     int savedPlotAction = comboBoxPlotActions->currentIndex();
     comboBoxPlotActions->setCurrentIndex(3);
     bool ok = fitOrCalculate(false);
+    lastFitRan = ok;
     comboBoxPlotActions->setCurrentIndex(savedPlotAction);
     scriptModeYN = false;
     tabWidgetFit->setCurrentIndex(2);
