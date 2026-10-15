@@ -298,7 +298,8 @@ def main(argv=None):
                    help="the agent's BIGMODEL switch for this run (a copy of its preset, test home only)")
     p.add_argument("--set", action="append", default=[], metavar="KEY=VALUE",
                    help='an "Ask AI" setting for this run, e.g. exploreEnabled=False or maxAutoContinue=6')
-    p.add_argument("--timeout", type=float, default=900, help="seconds per run before the AI is stopped")
+    p.add_argument("--timeout", type=float, default=None,
+                   help="seconds per run before the AI is stopped (default 900; 1800 for a local backend)")
     p.add_argument("--reference", nargs="?", const="", metavar="DIR",
                    help="run the reference scripts instead of the AI (default DIR: reference/<benchmark name>)")
     p.add_argument("--instance", default="test", help="the test instance (one per agent to run them in parallel)")
@@ -361,6 +362,11 @@ def main(argv=None):
         print("qtisas_benchmark: the AI agent or settings could not be set:\n" + configured.get("error", ""))
         return 2
     ai_config = json.loads(configured["output"].strip().splitlines()[-1])
+    # A local backend gets twice the time: after a doc change it rebuilds its docs cache on the first call, and a
+    # LIST 1 on the local all-pyi lane took 900 s once and was cut off on its last item (2026-10-15).
+    if args.timeout is None:
+        local = re.match(r"https?://(127\.0\.0\.1|localhost)[:/]", ai_config.get("baseUrl", ""))
+        args.timeout = 1800 if local else 900
     # the server first: a busy or failing backend makes a run say nothing about the AI
     probed = {"probe_seconds": None, "probe_model": "", "probe_error": ""}
     if args.reference is None:

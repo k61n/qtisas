@@ -29,7 +29,7 @@
       "text": "Create a note \"Setup\" with an auto-executing script tab that disables automatic table-formula recalculation project-wide when the project file is opened; keep it as the active tab so it actually runs. Run that tab once to test it, then print whether \"Setup\" is set to autoexec and whether automatic recalculation is switched on now, and switch it back on afterwards.",
       "expected": "True False",
       "hint": "an invented API in the tab (the real one is setAutoUpdateTableValues(False)), the tab never run, or the state read before running it",
-      "verify": "n = note(\"Setup\")\ncheck(n.autoexec(), \"setAutoUpdateTableValues(False)\" in n.tab(1).toPlainText().replace(\" \", \"\"), autoUpdateTableValues())",
+      "verify": "n = note(\"Setup\")\ncheck(n.autoexec(), \"setAutoUpdateTableValues(False)\" in n.tab(n.tabs()).toPlainText().replace(\" \", \"\"), autoUpdateTableValues())",
       "verified": "True True True"
     },
     {
