@@ -303,6 +303,17 @@ public:
 
     QLabel *d_status_info;
     QLineEdit *terminal_line;
+    QLabel *m_terminalModeLabel = nullptr;
+    enum class TerminalMode
+    {
+        Script,
+        Ai,
+        AiRun
+    };
+    TerminalMode m_terminalMode = TerminalMode::Script;
+    TerminalMode effectiveTerminalMode(Qt::KeyboardModifiers modifiers) const;
+    void updateTerminalModeSuffix(Qt::KeyboardModifiers modifiers = Qt::NoModifier);
+    void submitTerminalLine(Qt::KeyboardModifiers modifiers);
     SmartCompleter *m_terminalCompleter = nullptr;
     QAction *actionCopyStatusBarText;
 

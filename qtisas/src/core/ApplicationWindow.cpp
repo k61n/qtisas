@@ -1780,14 +1780,26 @@ void ApplicationWindow::initToolBars()
     QPalette palette1;
     palette1.setColor(terminal_line->backgroundRole(), QColor(220, 235, 255));
     terminal_line->setPalette(palette1);
-    terminal_line->setPlaceholderText("type command here [ '?' = help | Ctrl+Enter = AI | Ctrl+Shift+Enter = AI+run ]");
+    terminal_line->setPlaceholderText("type command here [ '?' = help | /ai | /ai-run | /python | /muparser ]");
     terminal_line->setReadOnly(0);
     terminal_line->setMinimumWidth(250);
 
-    connect(terminal_line, &QLineEdit::returnPressed, this, [this]() {
-        terminal(terminal_line->text());
-        terminal_line->setFocus();
-    });
+    m_terminalModeLabel = new QLabel(scriptEnv->objectName().toLower(), terminal_line);
+    m_terminalModeLabel->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+    m_terminalModeLabel->setAttribute(Qt::WA_TransparentForMouseEvents);
+    m_terminalModeLabel->setStyleSheet("color: grey; background: transparent;");
+    const int suffixWidth = qMax(m_terminalModeLabel->fontMetrics().horizontalAdvance("muparser"),
+                                 qMax(m_terminalModeLabel->fontMetrics().horizontalAdvance("python"),
+                                      m_terminalModeLabel->fontMetrics().horizontalAdvance("ai-run")));
+    m_terminalModeLabel->setFixedWidth(suffixWidth);
+    auto *terminalLayout = new QHBoxLayout(terminal_line);
+    terminalLayout->setContentsMargins(0, 0, 6, 0);
+    terminalLayout->addStretch();
+    terminalLayout->addWidget(m_terminalModeLabel);
+    terminal_line->setTextMargins(0, 0, suffixWidth + 12, 0);
+
+    connect(terminal_line, &QLineEdit::returnPressed, this,
+            [this]() { submitTerminalLine(QApplication::keyboardModifiers()); });
 
     auto terminalPlus = new QSplitter(Qt::Horizontal, this);
 
@@ -6853,6 +6865,11 @@ bool ApplicationWindow::handleAiTextCommand(const QString &trimmed)
 
 void ApplicationWindow::askAi(const QString &text, bool autoRun, bool forceConsole)
 {
+    if (scriptEnv->objectName() != "Python")
+    {
+        d_status_info->setText(tr("AI requires Python. Select /python first."));
+        return;
+    }
     // Creates m_ai on first use (no-op if it already exists)
     ensureAiAssistant();
 
@@ -7211,34 +7228,127 @@ void ApplicationWindow::setFitFromScriptWindow(bool on)
     d_fitFromScriptWindow = on;
 }
 
+ApplicationWindow::TerminalMode ApplicationWindow::effectiveTerminalMode(Qt::KeyboardModifiers modifiers) const
+{
+#ifdef SCRIPTING_PYTHON
+    if (scriptEnv->objectName() != "Python")
+        return TerminalMode::Script;
+    const bool ctrl = modifiers & (Qt::ControlModifier | Qt::MetaModifier);
+    if (m_terminalMode == TerminalMode::AiRun)
+        return !ctrl ? TerminalMode::AiRun : (modifiers & Qt::ShiftModifier ? TerminalMode::Script : TerminalMode::Ai);
+    if (m_terminalMode == TerminalMode::Ai)
+        return !ctrl ? TerminalMode::Ai : (modifiers & Qt::ShiftModifier ? TerminalMode::AiRun : TerminalMode::Script);
+    if (ctrl)
+        return modifiers & Qt::ShiftModifier ? TerminalMode::AiRun : TerminalMode::Ai;
+#else
+    Q_UNUSED(modifiers);
+#endif
+    return TerminalMode::Script;
+}
+
+void ApplicationWindow::updateTerminalModeSuffix(Qt::KeyboardModifiers modifiers)
+{
+    if (!m_terminalModeLabel)
+        return;
+    const TerminalMode mode = effectiveTerminalMode(modifiers);
+    const QString label = mode == TerminalMode::Ai      ? "ai"
+                          : mode == TerminalMode::AiRun ? "ai-run"
+                                                        : scriptEnv->objectName().toLower();
+    m_terminalModeLabel->setText(label);
+}
+
+void ApplicationWindow::submitTerminalLine(Qt::KeyboardModifiers modifiers)
+{
+    const QString text = terminal_line->text();
+    const QString command = text.trimmed();
+    if (command == "/python" || command == "/muparser")
+    {
+        const QString language = command == "/python" ? "Python" : "muParser";
+        if (setScriptingLanguage(language))
+        {
+            m_terminalMode = TerminalMode::Script;
+            terminal_line->clear();
+        }
+        else
+            d_status_info->setText(tr("Could not select scripting language: %1").arg(language));
+    }
+    else if (command == "/ai" || command == "/ai-run")
+    {
+#ifdef SCRIPTING_PYTHON
+        if (scriptEnv->objectName() != "Python")
+            d_status_info->setText(tr("AI requires Python. Select /python first."));
+        else
+        {
+            m_terminalMode = command == "/ai" ? TerminalMode::Ai : TerminalMode::AiRun;
+            terminal_line->clear();
+        }
+#else
+        d_status_info->setText(tr("AI requires a build with Python support."));
+#endif
+    }
+    else if (command == "?")
+        terminal(command);
+    else if (!command.isEmpty())
+    {
+        const TerminalMode mode = effectiveTerminalMode(modifiers);
+        if (mode == TerminalMode::Script)
+            terminal(text);
+#ifdef SCRIPTING_PYTHON
+        else
+        {
+            const bool run = mode == TerminalMode::AiRun;
+            d_status_info->setText((run ? "▸▸▸ AI (running): " : "▸▸▸ AI: ") + command);
+            askAi(command, run, true);
+            terminal_line->clear();
+        }
+#endif
+    }
+    terminal_line->setFocus();
+    updateTerminalModeSuffix(modifiers);
+}
+
 bool ApplicationWindow::eventFilter(QObject *obj, QEvent *event)
 {
     if (obj == terminal_line)
     {
+        if (m_terminalModeLabel && (event->type() == QEvent::KeyPress || event->type() == QEvent::KeyRelease ||
+                                    event->type() == QEvent::FocusIn || event->type() == QEvent::FocusOut))
+        {
+            Qt::KeyboardModifiers modifiers = QApplication::keyboardModifiers();
+            if (event->type() == QEvent::KeyPress || event->type() == QEvent::KeyRelease)
+            {
+                auto *ke = dynamic_cast<QKeyEvent *>(event);
+                modifiers = ke->modifiers();
+                Qt::KeyboardModifier changed = Qt::NoModifier;
+                if (ke->key() == Qt::Key_Control)
+                    changed = Qt::ControlModifier;
+                else if (ke->key() == Qt::Key_Meta)
+                    changed = Qt::MetaModifier;
+                else if (ke->key() == Qt::Key_Shift)
+                    changed = Qt::ShiftModifier;
+                if (event->type() == QEvent::KeyPress)
+                    modifiers |= changed;
+                else
+                    modifiers &= ~Qt::KeyboardModifiers(changed);
+            }
+            if (event->type() == QEvent::FocusOut)
+                modifiers = Qt::NoModifier;
+            updateTerminalModeSuffix(modifiers);
+        }
         if (event->type() == QEvent::FocusIn)
             actionTableRecalculate->setShortcut(QKeySequence());
         else if (event->type() == QEvent::FocusOut)
             actionTableRecalculate->setShortcut(QKeySequence(tr("Ctrl+Return")));
-#ifdef SCRIPTING_PYTHON
         else if (event->type() == QEvent::KeyPress)
         {
             auto *ke = dynamic_cast<QKeyEvent *>(event);
-            const bool ctrl = ke->modifiers() & (Qt::ControlModifier | Qt::MetaModifier);
-            const bool shift = ke->modifiers() & Qt::ShiftModifier;
-            if ((ke->key() == Qt::Key_Return || ke->key() == Qt::Key_Enter) && ctrl)
+            if ((ke->key() == Qt::Key_Return || ke->key() == Qt::Key_Enter) &&
+                (ke->modifiers() & (Qt::ControlModifier | Qt::MetaModifier)))
             {
-                const QString q = terminal_line->text().trimmed();
-                if (!q.isEmpty())
-                {
-                    d_status_info->setText((shift ? "▸▸▸ AI (running): " : "▸▸▸ AI: ") + q);
-                    askAi(q, shift, true);
-                    terminal_line->clear();
-                }
-                terminal_line->setFocus();
+                submitTerminalLine(ke->modifiers());
                 return true;
             }
         }
-#endif
     }
 #ifdef SCRIPTING_PYTHON
     auto *se = qobject_cast<ScriptEdit *>(obj);
@@ -13411,8 +13521,15 @@ bool ApplicationWindow::openProjectInPlace(const QString &fn)
 
 void ApplicationWindow::customEvent(QEvent *e)
 {
-	if (e->type() == SCRIPTING_CHANGE_EVENT)
-		scriptingChangeEvent((ScriptingChangeEvent*)e);
+    if (e->type() == SCRIPTING_CHANGE_EVENT)
+    {
+        scriptingChangeEvent((ScriptingChangeEvent *)e);
+        if (scriptEnv->objectName() != "Python")
+            m_terminalMode = TerminalMode::Script;
+        // Refresh after the environment changes, including directly delivered language-change events.
+        if (m_terminalModeLabel)
+            updateTerminalModeSuffix(terminal_line->hasFocus() ? QApplication::keyboardModifiers() : Qt::NoModifier);
+    }
 }
 
 #ifdef Q_OS_MACOS
@@ -23455,9 +23572,16 @@ void ApplicationWindow::terminal(QString str)
     {
         QMessageBox::information(this, tr("QtiSAS :: Command Line"),
                                  "Keys:\n\n"
-                                 " Enter               — run as Python command\n"
-                                 " Ctrl+Enter          — send to AI (generate only)\n"
-                                 " Ctrl+Shift+Enter    — send to AI and auto-run result\n\n\n"
+                                 " /python or /muparser — select global language and script mode\n"
+                                 " /ai                 — select AI mode (generate only)\n"
+                                 " /ai-run             — select AI mode with auto-run\n"
+                                 " AI modes require Python; with muParser, all Enter shortcuts run muParser.\n"
+                                 " Modes remain selected until another mode command is entered.\n\n"
+                                 " Enter               — use the selected mode\n"
+                                 " In Python script mode: Ctrl+Enter = AI; Ctrl+Shift+Enter = AI+run\n"
+                                 " In AI mode: Ctrl+Enter = global script language; Ctrl+Shift+Enter = AI+run\n"
+                                 " In AI-run mode: Ctrl+Enter = AI; Ctrl+Shift+Enter = global script language\n"
+                                 " Hold modifiers to preview the mode in the suffix.\n\n\n"
                                  "AI meta commands (answered locally, no API call):\n\n"
                                  " status              — model, URL, docs mode, history turns\n"
                                  " model               — active model name\n"
