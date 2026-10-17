@@ -14,7 +14,7 @@ SmartCompleter::SmartCompleter(QLineEdit *edit, const QStringList &keywords, QOb
     Q_ASSERT(edit);
 
     m_keywordModel = new QStringListModel(keywords, this);
-    m_historyModel = new QStringListModel(this);
+    m_historyModel = new QStandardItemModel(this);
 
     // --- Keyword completer ---
     m_completer = new QCompleter(m_keywordModel, this);
@@ -29,6 +29,7 @@ SmartCompleter::SmartCompleter(QLineEdit *edit, const QStringList &keywords, QOb
     m_historyCompleter->setCaseSensitivity(Qt::CaseInsensitive);
     m_historyCompleter->setCompletionMode(QCompleter::PopupCompletion);
     m_historyCompleter->setFilterMode(Qt::MatchStartsWith);
+    m_historyCompleter->setCompletionRole(Qt::UserRole);
 
     // --- Event filters ---
     edit->installEventFilter(this);
@@ -50,25 +51,36 @@ SmartCompleter::SmartCompleter(QLineEdit *edit, const QStringList &keywords, QOb
 
     // Save history when Enter pressed (only if no popup is visible)
     connect(edit, &QLineEdit::returnPressed, this, [this]() {
-        if (!m_blockReturn)
-        {
-            QString text = m_lineEdit->text().trimmed();
-            if (text.isEmpty())
-                return;
-
-            QStringList hist = m_historyModel->stringList();
-            if (!hist.contains(text))
-            {
-                hist << text;
-                m_historyModel->setStringList(hist);
-            }
-        }
+        if (m_automaticHistory && !m_blockReturn)
+            addHistoryEntry(m_lineEdit->text());
     });
+}
+
+void SmartCompleter::addHistoryEntry(const QString &text, const QString &mode)
+{
+    const QString entry = text.trimmed();
+    if (entry.isEmpty())
+        return;
+    for (int row = 0; row < m_historyModel->rowCount(); ++row)
+        if (m_historyModel->item(row)->data(Qt::UserRole).toString() == entry &&
+            m_historyModel->item(row)->data(Qt::UserRole + 1).toString() == mode)
+            return;
+    auto *item = new QStandardItem(mode.isEmpty() ? entry : "[" + mode + "] " + entry);
+    item->setData(entry, Qt::UserRole);
+    item->setData(mode, Qt::UserRole + 1);
+    m_historyModel->appendRow(item);
+}
+
+void SmartCompleter::setKeywords(const QStringList &list)
+{
+    m_keywordModel->setStringList(list);
 }
 
 void SmartCompleter::setKeywordCompletionEnabled(bool enabled)
 {
     m_keywordEnabled = enabled;
+    if (!enabled && m_completer->popup()->isVisible())
+        m_completer->popup()->hide();
 }
 
 void SmartCompleter::addKeywords(const QStringList &list)
@@ -83,6 +95,27 @@ bool SmartCompleter::eventFilter(QObject *obj, QEvent *event)
 {
     if (!m_lineEdit)
         return QObject::eventFilter(obj, event);
+
+    const bool terminalTarget = obj == m_lineEdit || obj == m_completer->popup() || obj == m_historyCompleter->popup();
+    if (terminalTarget && (event->type() == QEvent::ShortcutOverride || event->type() == QEvent::KeyPress))
+    {
+        auto *keyEvent = dynamic_cast<QKeyEvent *>(event);
+        const bool ctrl = keyEvent->modifiers() & (Qt::ControlModifier | Qt::MetaModifier);
+        if (ctrl && (keyEvent->key() == Qt::Key_Return || keyEvent->key() == Qt::Key_Enter))
+        {
+            // Modified Enter submits the typed command, even while a completion popup owns focus.
+            // Claim ShortcutOverride too, before a window QAction can consume the shortcut.
+            event->accept();
+            if (event->type() == QEvent::KeyPress)
+            {
+                m_completer->popup()->hide();
+                m_historyCompleter->popup()->hide();
+                m_blockReturn = false;
+                emit modifiedReturnPressed(keyEvent->modifiers());
+            }
+            return true;
+        }
+    }
 
     // --- Popup show/hide detection ---
     if ((obj == m_completer->popup() || obj == m_historyCompleter->popup()) &&
@@ -109,7 +142,7 @@ bool SmartCompleter::eventFilter(QObject *obj, QEvent *event)
 
             if (active && active->popup()->currentIndex().isValid())
             {
-                QString completion = active->popup()->currentIndex().data().toString();
+                QString completion = active->popup()->currentIndex().data(active->completionRole()).toString();
                 selectCompletion(active, completion);
                 active->popup()->hide();
             }
@@ -119,7 +152,7 @@ bool SmartCompleter::eventFilter(QObject *obj, QEvent *event)
         }
 
         // Ctrl → hide popup if visible
-        if (key == Qt::Key_Control && m_lineEdit->hasFocus())
+        if ((key == Qt::Key_Control || key == Qt::Key_Meta) && terminalTarget)
         {
             if (m_completer->popup()->isVisible())
                 m_completer->popup()->hide();
@@ -141,7 +174,7 @@ bool SmartCompleter::eventFilter(QObject *obj, QEvent *event)
         }
 
         // TAB → show full history popup
-        if (key == Qt::Key_Tab && m_lineEdit->hasFocus() && !m_blockReturn && !m_historyModel->stringList().isEmpty())
+        if (key == Qt::Key_Tab && m_lineEdit->hasFocus() && !m_blockReturn && m_historyModel->rowCount() > 0)
         {
             QTimer::singleShot(0, [this]() {
                 m_historyCompleter->setCompletionPrefix("");
@@ -177,6 +210,8 @@ void SmartCompleter::updateCompletionPrefix()
 
     m_completer->setCompletionPrefix(lastSegment);
     m_completer->complete();
+    if (m_completer->completionCount() > 0)
+        m_completer->popup()->setCurrentIndex(m_completer->completionModel()->index(0, 0));
 }
 
 void SmartCompleter::selectCompletion(QCompleter *active, const QString &completion)
@@ -232,11 +267,6 @@ void SmartCompleter::selectCompletion(QCompleter *active, const QString &complet
 
 add_history: // Add to history
 
-    QStringList hist = m_historyModel->stringList();
-    if (!hist.contains(full))
-    {
-        hist << full;
-        m_historyModel->setStringList(hist);
-    }
+    if (m_automaticHistory)
+        addHistoryEntry(full);
 }
-

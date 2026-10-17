@@ -12,6 +12,7 @@ Description: Command completion and historization class for a QLineEdit Widget
 #include <QCompleter>
 #include <QLineEdit>
 #include <QStringListModel>
+#include <QStandardItemModel>
 #include <QKeyEvent>
 #include <QTimer>
 #include <QEvent>
@@ -25,7 +26,16 @@ class SmartCompleter : public QObject
   public:
     explicit SmartCompleter(QLineEdit *edit, const QStringList &keywords = {}, QObject *parent = nullptr);
     void addKeywords(const QStringList &list);
+    void addHistoryEntry(const QString &text, const QString &mode = QString());
+    void setAutomaticHistoryEnabled(bool enabled)
+    {
+        m_automaticHistory = enabled;
+    }
+    void setKeywords(const QStringList &list);
     void setKeywordCompletionEnabled(bool enabled);
+
+  signals:
+    void modifiedReturnPressed(Qt::KeyboardModifiers modifiers);
 
   protected:
     bool eventFilter(QObject *obj, QEvent *event) override;
@@ -37,12 +47,13 @@ class SmartCompleter : public QObject
   private:
     QLineEdit *m_lineEdit = nullptr;
     QStringListModel *m_keywordModel = nullptr;
-    QStringListModel *m_historyModel = nullptr;
+    QStandardItemModel *m_historyModel = nullptr;
     QCompleter *m_completer = nullptr;
     QCompleter *m_historyCompleter = nullptr;
 
     bool m_blockReturn = false;
     bool m_keywordEnabled = true;
+    bool m_automaticHistory = true;
 };
 
 #endif

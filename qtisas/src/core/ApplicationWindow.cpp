@@ -7251,6 +7251,8 @@ void ApplicationWindow::updateTerminalModeSuffix(Qt::KeyboardModifiers modifiers
     if (!m_terminalModeLabel)
         return;
     const TerminalMode mode = effectiveTerminalMode(modifiers);
+    if (m_terminalCompleter)
+        m_terminalCompleter->setKeywordCompletionEnabled(d_completion && mode == TerminalMode::Script);
     const QString label = mode == TerminalMode::Ai      ? "ai"
                           : mode == TerminalMode::AiRun ? "ai-run"
                                                         : scriptEnv->objectName().toLower();
@@ -7261,6 +7263,15 @@ void ApplicationWindow::submitTerminalLine(Qt::KeyboardModifiers modifiers)
 {
     const QString text = terminal_line->text();
     const QString command = text.trimmed();
+    // Modifier shortcuts bypass returnPressed, and AI dispatch clears the input.
+    if (m_terminalCompleter)
+    {
+        const TerminalMode mode = effectiveTerminalMode(modifiers);
+        const QString label = mode == TerminalMode::Ai      ? "ai"
+                              : mode == TerminalMode::AiRun ? "ai-run"
+                                                            : scriptEnv->objectName().toLower();
+        m_terminalCompleter->addHistoryEntry(text, label);
+    }
     if (command == "/python" || command == "/muparser")
     {
         const QString language = command == "/python" ? "Python" : "muParser";
@@ -7339,16 +7350,6 @@ bool ApplicationWindow::eventFilter(QObject *obj, QEvent *event)
             actionTableRecalculate->setShortcut(QKeySequence());
         else if (event->type() == QEvent::FocusOut)
             actionTableRecalculate->setShortcut(QKeySequence(tr("Ctrl+Return")));
-        else if (event->type() == QEvent::KeyPress)
-        {
-            auto *ke = dynamic_cast<QKeyEvent *>(event);
-            if ((ke->key() == Qt::Key_Return || ke->key() == Qt::Key_Enter) &&
-                (ke->modifiers() & (Qt::ControlModifier | Qt::MetaModifier)))
-            {
-                submitTerminalLine(ke->modifiers());
-                return true;
-            }
-        }
     }
 #ifdef SCRIPTING_PYTHON
     auto *se = qobject_cast<ScriptEdit *>(obj);
@@ -7423,11 +7424,6 @@ bool ApplicationWindow::setScriptingLanguage(const QString &lang, bool force)
 	actionCommentSelection->setEnabled(python);
 	actionUncommentSelection->setEnabled(python);
 #endif
-
-    delete m_terminalCompleter; // replaced below; avoids stacking stale event filters on terminal_line
-    m_terminalCompleter = new SmartCompleter(terminal_line, {}, this);
-    m_terminalCompleter->addKeywords(qobject_cast<QStringListModel *>(d_completer->model())->stringList());
-    m_terminalCompleter->setKeywordCompletionEnabled(d_completion);
 
 	return true;
 }
@@ -22316,6 +22312,17 @@ void ApplicationWindow::initCompleter()
 	}
 	d_completer->setModel(new QStringListModel(words, d_completer));
 
+    // Keep history across language changes; only the keyword vocabulary changes.
+    if (!m_terminalCompleter)
+    {
+        m_terminalCompleter = new SmartCompleter(terminal_line, {}, this);
+        connect(m_terminalCompleter, &SmartCompleter::modifiedReturnPressed, this,
+                &ApplicationWindow::submitTerminalLine);
+    }
+    m_terminalCompleter->setAutomaticHistoryEnabled(false);
+    m_terminalCompleter->setKeywords(words);
+    updateTerminalModeSuffix(terminal_line->hasFocus() ? QApplication::keyboardModifiers() : Qt::NoModifier);
+
 	QApplication::restoreOverrideCursor();
 }
 
@@ -22326,8 +22333,7 @@ void ApplicationWindow::enableCompletion(bool on)
 
     d_completion = on;
 
-    if (m_terminalCompleter)
-        m_terminalCompleter->setKeywordCompletionEnabled(on);
+    updateTerminalModeSuffix(terminal_line->hasFocus() ? QApplication::keyboardModifiers() : Qt::NoModifier);
 
     if (scriptWindow){
 		if (d_completion)

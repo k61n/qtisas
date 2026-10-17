@@ -56,3 +56,15 @@ target_include_directories(table_numeric_locale_tests PRIVATE ${CMAKE_SOURCE_DIR
 target_link_libraries(table_numeric_locale_tests PRIVATE Qt${V}::Core Qt${V}::Test)
 set_target_properties(table_numeric_locale_tests PROPERTIES AUTOMOC ON)
 add_test(NAME table_numeric_locale_tests COMMAND table_numeric_locale_tests)
+
+add_executable(smart_completer_tests src/scripting/smart_completer_tests.cpp
+    src/scripting/smart_completer_tests.h
+    ${CMAKE_SOURCE_DIR}/qtisas/src/scripting/SmartCompleter.cpp
+    ${CMAKE_SOURCE_DIR}/qtisas/src/scripting/SmartCompleter.h)
+target_include_directories(smart_completer_tests PRIVATE ${CMAKE_SOURCE_DIR}/qtisas/src/scripting)
+target_link_libraries(smart_completer_tests PRIVATE Qt${V}::Widgets Qt${V}::Test)
+set_target_properties(smart_completer_tests PROPERTIES AUTOMOC ON)
+add_test(NAME smart_completer_tests COMMAND smart_completer_tests)
+if (UNIX)
+    set_tests_properties(smart_completer_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+endif ()
