@@ -17,6 +17,7 @@ class AiContentTests : public QObject
 
   private slots:
     static void chat_isolatesPromptHistoryAndReplies();
+    static void chat_documentationModesAndFollowups();
     static void chat_preservesStreamedText();
     static void chat_retryKeepsChatRouting();
     static void chat_busyAndCancellationStayIsolated();

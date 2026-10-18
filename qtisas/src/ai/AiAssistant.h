@@ -87,6 +87,7 @@ class AiAssistant : public QObject
     void clearChatHistory()
     {
         m_chatHistory.clear();
+        m_chatDocTopics.clear();
     }
 
     // Needs setContentProvider() first — delegates to AiContentProvider::docTopicIndex().
@@ -1241,6 +1242,7 @@ class AiAssistant : public QObject
     // Extracted pieces of ask() — see that method's own body for how they're assembled. Kept as
     // private members (not free functions) since each touches instance state (m_cachedDocs,
     // m_history, m_lastCallMs, ...), not just its own parameters.
+    QString buildChatSystemPrompt(const QString &instructions, const QStringList &docTopics);
     QString buildSystemPrompt(const QString &systemPrompt, bool includeDocs, const QStringList &docTopics,
                               bool expectsCode = true, const QString &userText = QString());
     qsizetype windowedHistoryStart(bool includeHistory) const;
@@ -1307,6 +1309,7 @@ class AiAssistant : public QObject
     bool m_lastScriptUnrun = false;
     void deliverResponse(const QString &response);
     QList<QPair<QString, QString>> m_chatHistory;
+    QStringList m_chatDocTopics;
     bool m_pendingChat = false;
     QString m_pendingUserText;
     bool m_pendingAddToHistory = true;

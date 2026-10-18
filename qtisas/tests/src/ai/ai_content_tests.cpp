@@ -6660,7 +6660,7 @@ void AiContentTests::chat_isolatesPromptHistoryAndReplies()
     QVERIFY(system.contains("natural language"));
     QVERIFY(!system.contains("return ONLY the raw executable Python"));
     QVERIFY(!system.contains("API documentation"));
-    QVERIFY(messages.last().toObject().value("content").toString().endsWith("TOPICS: none"));
+    QVERIFY(messages.last().toObject().value("content").toString().contains("TOPICS: ai, app"));
     server.answer("A plain explanation.");
     assistant.askChat("Continue explaining");
     QTRY_COMPARE(chats.count(), 2);
@@ -6674,6 +6674,71 @@ void AiContentTests::chat_isolatesPromptHistoryAndReplies()
     assistant.ask("new script request", false);
     QTRY_COMPARE(scripts.count(), 2);
     QVERIFY(!QJsonDocument(server.requests.last()).toJson().contains("never execute"));
+}
+
+void AiContentTests::chat_documentationModesAndFollowups()
+{
+    class ChatDocs : public QtiSasAiContent
+    {
+      public:
+        mutable int loads = 0;
+        mutable bool full = false;
+        QString loadDocs(bool unlimited, QString *) const override
+        {
+            ++loads;
+            full = unlimited;
+            return "\n\n=== app-python-api.md ===\nAPP_REFERENCE"
+                   "\n\n=== graph-python-api.md ===\nGRAPH_REFERENCE"
+                   "\n\n=== matrix-python-api.md ===\nMATRIX_REFERENCE";
+        }
+    };
+    for (int variant = 0; variant < 4; ++variant)
+    {
+        ChatTestServer server;
+        QVERIFY(server.listen(QHostAddress::LocalHost));
+        server.answer("Explanation");
+        ChatDocs content;
+        AiAssistant assistant;
+        assistant.setContentProvider(&content);
+        assistant.configure({}, server.url(), "test", 1024,
+                            variant == 3   ? AiAssistant::DocsMode::Integrated
+                            : variant == 1 ? AiAssistant::DocsMode::Full
+                                           : AiAssistant::DocsMode::Compact);
+        assistant.setBigModel(variant == 2);
+        QSignalSpy chats(&assistant, &AiAssistant::chatResponseReady);
+        QSignalSpy scripts(&assistant, &AiAssistant::responseReady);
+        auto payload = [&server]() { return QString::fromUtf8(QJsonDocument(server.requests.last()).toJson()); };
+        assistant.askChat("Explain graph legends");
+        QTRY_COMPARE(chats.count(), 1);
+        QVERIFY(payload().contains("natural language"));
+        QVERIFY(!payload().contains("return ONLY the raw executable Python"));
+        if (variant == 3)
+        {
+            QCOMPARE(content.loads, 0);
+            QVERIFY(!payload().contains("GRAPH_REFERENCE"));
+            QVERIFY(payload().contains("TOPICS: ai, app, graph"));
+        }
+        else
+        {
+            QCOMPARE(content.loads, 1);
+            QCOMPARE(content.full, variant == 1);
+            QVERIFY(payload().contains("GRAPH_REFERENCE"));
+            QCOMPARE(payload().contains("MATRIX_REFERENCE"), variant == 2);
+        }
+        assistant.askChat("And their titles?");
+        QTRY_COMPARE(chats.count(), 2);
+        QVERIFY(payload().contains(variant == 3 ? "TOPICS: ai, app, graph" : "GRAPH_REFERENCE"));
+        assistant.clearChatHistory();
+        assistant.askChat("Hello");
+        QTRY_COMPARE(chats.count(), 3);
+        if (variant == 3)
+            QVERIFY(!payload().contains("app, graph"));
+        else if (variant != 2)
+            QVERIFY(!payload().contains("GRAPH_REFERENCE"));
+        QCOMPARE(scripts.count(), 0);
+        QCOMPARE(assistant.historySize(), 0);
+        QCOMPARE(content.loads, variant == 3 ? 0 : 1);
+    }
 }
 
 void AiContentTests::chat_preservesStreamedText()

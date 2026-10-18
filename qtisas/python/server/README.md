@@ -59,6 +59,9 @@ The default instance is `test` (or `$QTISAS_SERVER`); use `--instance main` for 
 - **ai-chat:** natural-language conversation, with separate chat history and no script execution.
   Uses the configured AI provider/model and requires Python as QtiSAS's global scripting language.
   Replies bypass compilation and execution; chat cannot inspect the live project.
+  QtiSAS reference docs follow the configured documentation mode: compact/full docs are selected by topic,
+  BIGMODEL includes all docs, and Integrated sends topic hints to the backend instead of local docs.
+  Topics are retained for follow-up questions and reset by `clear history`.
   JSON results include the answer in `reply` and the complete log in `transcript`.
 - **ai / ai-run:** the AI's lines are printed as they come. The run counts as finished once the AI has been
   idle for 1.5 s.
