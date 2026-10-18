@@ -45,6 +45,7 @@ qtisas_send.py -f myscript.py                           # a file (or: qtisas_sen
 qtisas_send.py --instance second -f myscript.py
 qtisas_send.py --mode ai -c 'Plot column y of table "Data"'       # the AI writes the script, nothing runs
 qtisas_send.py --mode ai-run -c 'Plot column y of table "Data"'   # the AI writes and runs it
+qtisas_send.py --mode ai-chat -c 'Explain weighted fitting'     # conversation, no scripts or execution
 qtisas_send.py --mode status
 qtisas_send.py --mode stop                              # cancel the running AI request
 qtisas_send.py --mode note -c 'use table "B", not "A"'  # correct the running AI request
@@ -55,6 +56,10 @@ The default instance is `test` (or `$QTISAS_SERVER`); use `--instance main` for 
 - **python:** the script's `print()`/`scriptPrint()` output goes to stdout, its error (with the script's
   own file and line) to stderr. Each request starts with fresh variables; `--keep` keeps them between
   requests.
+- **ai-chat:** natural-language conversation, with separate chat history and no script execution.
+  Uses the configured AI provider/model and requires Python as QtiSAS's global scripting language.
+  Replies bypass compilation and execution; chat cannot inspect the live project.
+  JSON results include the answer in `reply` and the complete log in `transcript`.
 - **ai / ai-run:** the AI's lines are printed as they come. The run counts as finished once the AI has been
   idle for 1.5 s.
 - A one-line summary goes to stderr: seconds, created/removed windows and `ai/` fit functions, closed
@@ -72,6 +77,25 @@ The default instance is `test` (or `$QTISAS_SERVER`); use `--instance main` for 
   While a correction is active, the scope and deliverable checks (which read the original request) are skipped.
 - `--mode quit` ends QtiSAS at once **without saving** — meant for the test instance.
 
+### Chat without scripts
+
+After updating from a version without server chat support, rebuild QtiSAS (including its Python bindings)
+and restart it with the updated server files. Updating `qtisas_send.py` alone is not enough.
+
+From the repository root, with QtiSAS started using `-s`:
+
+```bash
+python3 qtisas/python/server/qtisas_send.py --instance main --mode ai-chat -c 'Explain weighted fitting'
+python3 qtisas/python/server/qtisas_send.py --instance main --mode ai-chat -f question.txt --json
+python3 qtisas/python/server/qtisas_send.py --instance main --mode ai-chat -c 'clear history'
+python3 qtisas/python/server/qtisas_send.py --instance main --mode stop
+```
+
+Chat history belongs to the running QtiSAS instance and is shared with its terminal's `/ai-chat` mode;
+it is separate from `/ai` and `/ai-run` history. `clear history` clears only chat history.
+Use `--mode stop` (or interactive `:stop`) to cancel an in-flight request. `--mode note` is for script-AI
+corrections, not chat. Chat text such as `LIST` or “run it” does not start scripting workflows.
+
 ## The prompt
 
 Without code, in a terminal, `qtisas_send.py` opens a prompt for your QtiSAS:
@@ -85,22 +109,29 @@ py> t.numRows()
 py> :ai-run
 ai-run> plot column 2 of table "T"
   ... (the AI's lines as they come)
-py> :quit
+ai-run> :ai-chat
+ai-chat> What does chi2/dof mean?
+  ... (the AI's explanation)
+ai-chat> clear history
+ai-chat> :quit
 ```
 
 - **py** (the default): Python in the script server, variables kept from one input to the next. A bare
   expression prints its value, and a line opening a block (`if`/`for`/`def` ...) continues until an empty
   line, as in Python's own prompt.
+- **ai-chat:** switch with `:ai-chat`, or start with `--mode ai-chat`, for conversation without scripts.
+  `LIST` is ordinary chat text; each input is one message. Use `:file PATH` for a multiline question.
 - **ai / ai-run:** the text goes to QtiSAS's AI, which writes the script (`:ai`) or also runs it (`:ai-run`).
   A request starting with `LIST` (e.g. `LIST NOSPLIT`) continues until an empty line, so a whole numbered task
   list can be pasted.
 - `:file PATH` sends a file in the current mode: a Python script under `py>`, an AI request (e.g. a LIST) under
-  `ai>`/`ai-run>`.
+  `ai>`/`ai-run>`, or a chat message under `ai-chat>`.
 - **Ctrl+C while the AI works** gives the prompt back; the AI request goes on in QtiSAS. Meanwhile `py>` inputs
   run (between the AI's steps; a script of the AI's own that is running finishes first), `:follow` shows the
   request again from where you left it, up to its result, `:note TEXT` corrects it (`:note !TEXT` at once) and
   `:stop` cancels it. While a Python input runs,
   Ctrl+C only stops waiting: the script goes on.
+  Chat supports the same Ctrl+C, `:follow`, and `:stop` behavior; `:note` applies only to script-AI requests.
 - `:status`, `:instance NAME` (another QtiSAS), `:help`, `:quit` or Ctrl+D. History with the arrow keys, kept in `~/.config/qtisas/qtisas_send_history`.
 - Errors carry the same hints as QtiSAS's console, e.g. "'setDecimalSeparators' is not a global function but
   a method of Table".

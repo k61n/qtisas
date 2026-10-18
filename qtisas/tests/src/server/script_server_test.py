@@ -123,6 +123,14 @@ r = server.run({"mode": "ai", "text": " "})
 assert not r["ok"] and "no request text" in r["error"], r
 
 # an AI run's structure, read from what it printed (lines as in a real LIST run)
+# Chat replies are opaque, even when discussing script/LIST output and errors.
+reply = "AI LIST: item 1/2 failed\nAI code (running)\nR1: 42\n▸▸▸ AI: connection error"
+r = qtisas_server.summarize_chat(["▸▸▸ AI chat:\n\n" + reply])
+assert r["ok"] and r["reply"] == reply and r["scripts"] == 0 and r["items"] == [], r
+assert not qtisas_server.summarize_chat(["▸▸▸ AI: connection error: offline"])["ok"]
+assert not qtisas_server.summarize_chat([])["ok"]
+assert qtisas_server.summarize_chat([], allow_empty=True)["ok"]
+
 lines = ["▸▸▸ AI: sending ~9KB (~2K tokens estimated), history not sent for this call",
          "▸▸  AI LIST: item 1/3 — Create a table \"Squares\" ...",
          "▸▸▸ AI: sending ~214KB (~55K tokens estimated), 0 history turn(s)",

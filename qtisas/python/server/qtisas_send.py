@@ -8,12 +8,12 @@
 # **************************************************************************** #
 """Sends a request to a running QtiSAS script server and prints its result.
 
-    qtisas_send.py [--instance NAME | --socket PATH] [--mode python|ai|ai-run|status|stop|note|quit]
+    qtisas_send.py [--instance NAME | --socket PATH] [--mode python|ai|ai-run|ai-chat|status|stop|note|quit]
                    [-c CODE | -f FILE | -] [--json | --stream-json] [--keep] [--timeout S] [--dialogs auto|leave]
-    qtisas_send.py [--instance NAME] [--mode python|ai|ai-run]     # no code in a terminal: the interactive prompt
+    qtisas_send.py [--instance NAME] [--mode python|ai|ai-run|ai-chat]     # no code in a terminal: the interactive prompt
 
 python: the script's output goes to stdout, its error to stderr. ai / ai-run: the text is a request to the internal AI
-(ai generates only, ai-run also runs its scripts); its lines are printed as they come. A one-line summary goes to
+(ai generates only, ai-run also runs its scripts; ai-chat is conversation without scripts); its lines are printed as they come. A one-line summary goes to
 stderr; --json prints the whole result as JSON instead, --stream-json every event as one JSON line.
 Exit code: 0 ok, 1 the script or the AI run failed, 2 no server, busy or no reply in time.
 Without code in a terminal it opens a prompt: Python (variables kept between inputs) or the AI, see :help.
@@ -111,13 +111,13 @@ def summary(result):
     return " · ".join(parts)
 
 
-PROMPTS = {"python": "py> ", "ai": "ai> ", "ai-run": "ai-run> "}
+PROMPTS = {"python": "py> ", "ai": "ai> ", "ai-run": "ai-run> ", "ai-chat": "ai-chat> "}
 
 PROMPT_HELP = """Python runs in the QtiSAS script server, with its variables kept from one input to the next; a line
 that opens a block (if/for/def ...) continues until an empty line. ai: the text is a request to QtiSAS's AI, which only
-writes the script; ai-run: the AI also runs it. The AI's lines are printed as they come; a request starting
+writes the script; ai-run: the AI also runs it; ai-chat: conversation without scripts. The AI's lines are printed as they come; a request starting
 with LIST (a numbered task list) continues until an empty line, so a whole list can be pasted.
-  :py  :ai  :ai-run     switch the mode (the prompt shows it)
+  :py  :ai  :ai-run  :ai-chat  switch the mode (the prompt shows it)
   :file PATH            send a file in the current mode: a Python script, or an AI request such as a LIST
   :status               the server's state          :instance NAME   talk to another QtiSAS
   :help                 this text                   :quit or Ctrl+D  leave the prompt (QtiSAS keeps running)
@@ -143,7 +143,7 @@ def read_entry(mode):
     if mode == "python":
         while needs_more("\n".join(lines)):
             lines.append(input("... "))
-    elif lines[0].split()[:1] == ["LIST"]:  # "LIST", "LIST NOSPLIT ...": the items follow, one per line
+    elif mode != "ai-chat" and lines[0].split()[:1] == ["LIST"]:  # "LIST", "LIST NOSPLIT ...": the items follow, one per line
         while lines[-1].strip():
             lines.append(input("... "))
     return "\n".join(lines).rstrip()
@@ -198,13 +198,13 @@ def interactive(instance, path, mode="python", timeout=None):
         print(text, flush=True)
 
     def send(message):
-        if message.get("mode") in ("ai", "ai-run"):
+        if message.get("mode") in ("ai", "ai-run", "ai-chat"):
             seen["lines"] = 0
         try:
-            return request(message, path, timeout, show if message.get("mode") in ("ai", "ai-run", "follow") else
+            return request(message, path, timeout, show if message.get("mode") in ("ai", "ai-run", "ai-chat", "follow") else
                            lambda text: print(text, flush=True))
         except KeyboardInterrupt:
-            if message.get("mode") in ("ai", "ai-run", "follow"):
+            if message.get("mode") in ("ai", "ai-run", "ai-chat", "follow"):
                 print("\n(the AI request goes on in QtiSAS — :follow shows it again, :stop cancels it)",
                       file=sys.stderr)
             else:
@@ -243,7 +243,7 @@ def interactive(instance, path, mode="python", timeout=None):
                 continue
         elif text.startswith(":"):
             command, _, argument = text[1:].partition(" ")
-            if command in ("py", "python", "ai", "ai-run"):
+            if command in ("py", "python", "ai", "ai-run", "ai-chat"):
                 mode = "python" if command == "py" else command
             elif command == "stop":
                 stop()
@@ -295,7 +295,7 @@ def main(argv=None):
     p = argparse.ArgumentParser(description="Run Python in a running QtiSAS (script server).")
     p.add_argument("--instance", default=os.environ.get("QTISAS_SERVER", "test"))
     p.add_argument("--socket", help="socket path (default /tmp/qtisas-<uid>/<instance>.sock)")
-    p.add_argument("--mode", default="python", choices=["python", "ai", "ai-run", "status", "stop", "note", "quit"])
+    p.add_argument("--mode", default="python", choices=["python", "ai", "ai-run", "ai-chat", "status", "stop", "note", "quit"])
     source = p.add_mutually_exclusive_group()
     source.add_argument("-c", dest="code", help="code to run")
     source.add_argument("-f", dest="file", help="script file to run, '-' for stdin")
@@ -309,7 +309,7 @@ def main(argv=None):
     message = {"id": 1, "mode": args.mode}
     if args.mode == "note":  # qtisas_send.py --mode note -c "use table B instead"
         message["text"] = args.code if args.code is not None else (sys.stdin.read() if not sys.stdin.isatty() else "")
-    elif args.mode in ("python", "ai", "ai-run"):
+    elif args.mode in ("python", "ai", "ai-run", "ai-chat"):
         if args.code is not None:
             message["code"] = args.code
         elif args.file == "-" or (args.file is None and not sys.stdin.isatty()):
@@ -338,7 +338,7 @@ def main(argv=None):
 
     path = args.socket or default_socket_path(args.instance)
     # the client waits a little longer than an AI run's own timeout, which the server then reports itself
-    wait = args.timeout + 30 if args.timeout and args.mode in ("ai", "ai-run") else args.timeout
+    wait = args.timeout + 30 if args.timeout and args.mode in ("ai", "ai-run", "ai-chat") else args.timeout
     try:
         result = request(message, path, wait, on_line)
     except PermissionError as e:
@@ -368,7 +368,7 @@ def main(argv=None):
             print(result["error"], file=sys.stderr)
         if args.mode == "status":
             print(json.dumps({k: v for k, v in result.items() if k not in ("id", "event")}))
-        elif args.mode in ("python", "ai", "ai-run"):
+        elif args.mode in ("python", "ai", "ai-run", "ai-chat"):
             print(summary(result), file=sys.stderr)
     return 0 if result.get("ok") else 1
 

@@ -25,7 +25,7 @@ still run (between the AI's steps), "stop" cancels it (its result then has statu
 cannot be interrupted), "note" ({"mode": "note", "text": "..."}) adds a correction to it, from its next model
 call on or at once with a leading "!", and "follow" ({"mode": "follow", "from": N}) streams its lines from line N on
 and then its result, e.g. to a client that stopped waiting. Modes: "python", "status", "quit", "stop", "note",
-"follow", and the AI: "ai" (generates only, nothing runs) and "ai-run" (the full pipeline with execution), with
+"follow", "ai-chat" (conversation without scripts), and the AI: "ai" (generates only, nothing runs) and "ai-run" (the full pipeline with execution), with
 "text" instead of "code"; their lines are streamed as "line" events, and the result adds "transcript", "items" (one
 per LIST item), "r_lines", "scripts", "tokens".
 """
@@ -167,6 +167,16 @@ def summarize_ai(lines):
             "tokens": 1000 * sum(int(t) for t in _TOKENS_RE.findall(transcript))}
 
 
+def summarize_chat(lines, allow_empty=False):
+    """Chat text is opaque: never interpret quoted LIST, code, or result markers."""
+    replies = [line[len("▸▸▸ AI chat:\n\n"):] for line in lines if line.startswith("▸▸▸ AI chat:\n\n")]
+    errors = [line for line in lines if line.startswith("▸▸▸ AI: connection error")]
+    ok = bool(replies) or (allow_empty and not errors)
+    return {"ok": ok, "status": "done" if ok else "failed", "transcript": "\n".join(lines),
+            "reply": "\n".join(replies), "scripts": 0, "items": [], "r_lines": [],
+            "failed_items": [], "backend_errors": len(errors), "tokens": 0}
+
+
 def _window_kind(w):
     for kind in ("Table", "Matrix", "Note", "MultiLayer", "Graph3D"):
         if w.inherits(kind):
@@ -288,7 +298,7 @@ class ScriptServer:
             return
         # While the AI works, the event loop is mostly free (it waits for the model): Python and status get through.
         # A script of the AI's own that is running at that moment simply finishes first (one thread).
-        inside_ai = self.busy in ("ai", "ai-run") and mode in ("python", "status") and not self.inner_busy
+        inside_ai = self.busy in ("ai", "ai-run", "ai-chat") and mode in ("python", "status") and not self.inner_busy
         if self.busy and not inside_ai:  # e.g. a second request while a dialog of the first one runs its own loop
             self._send(socket, {"id": rid, "event": "busy"})
             return
@@ -325,7 +335,7 @@ class ScriptServer:
             return {"ok": True, "status": "done"}
         if mode == "python":
             return self.run_python(request)
-        if mode in ("ai", "ai-run"):
+        if mode in ("ai", "ai-run", "ai-chat"):
             return self.run_ai(request, emit)
         return {"ok": False, "status": "failed", "error": "unknown mode %r" % mode}
 
@@ -339,7 +349,7 @@ class ScriptServer:
                     "output": "nothing to stop: the AI is idle" + (" (a Python script is running)" if
                                                                       self.busy == "python" else "") + "\n"}
         self.stop_requested = True
-        app._askAi("stop", False)  # handled before the AI's own busy check, see handleAiTextCommand()
+        app._aiStop()
         return {"ok": True, "status": "done", "stopped": True, "output": "stop sent: the AI request is cancelled\n"}
 
     def note_ai(self, text):
@@ -348,6 +358,9 @@ class ScriptServer:
         app = qti.app
         if not text.strip():
             return {"ok": False, "status": "failed", "error": "no correction text"}
+        if self.busy == "ai-chat":
+            return {"ok": False, "status": "failed", "noted": False,
+                    "error": "corrections are unavailable during chat; send a follow-up message after it finishes"}
         if app._aiIdle():
             return {"ok": True, "status": "done", "noted": False,
                     "output": "nothing to correct: the AI is idle — send it as a new request\n"}
@@ -412,13 +425,20 @@ class ScriptServer:
         timer = QTimer()
         timer.timeout.connect(poll)
         with answerer if request.get("dialogs", self.dialogs) == "auto" else contextlib.nullcontext():
-            app._askAi(text, request.get("mode") == "ai-run")
+            if request.get("mode") == "ai-chat":
+                if not app._askAiChat(text):
+                    self.ai_run = None
+                    timer.timeout.disconnect(poll)
+                    return {"ok": False, "status": "failed", "error": "chat requires Python and an idle AI"}
+            else:
+                app._askAi(text, request.get("mode") == "ai-run")
             timer.start(100)
             loop.exec()
             timer.stop()
         timer.timeout.disconnect(poll)
         collect()
-        result = summarize_ai(lines)
+        result = (summarize_chat(lines, text.strip().lower() in ("clear history", "stop", "cancel"))
+                  if request.get("mode") == "ai-chat" else summarize_ai(lines))
         if state["timeout"]:
             result.update({"ok": False, "status": "timeout"})
         elif self.stop_requested:

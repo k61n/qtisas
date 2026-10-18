@@ -4318,6 +4318,7 @@ public:
 %MethodCode
     sipCpp->askAi(*a0, a1, false);
 %End
+  bool askAiChat(const QString &text) /PyName=_askAiChat/;
   bool aiIdle() const /PyName=_aiIdle/;
   void aiStop() /PyName=_aiStop/;
   int _aiTranscriptSize() const;
