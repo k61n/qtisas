@@ -1780,7 +1780,8 @@ void ApplicationWindow::initToolBars()
     QPalette palette1;
     palette1.setColor(terminal_line->backgroundRole(), QColor(220, 235, 255));
     terminal_line->setPalette(palette1);
-    terminal_line->setPlaceholderText("type command here [ '?' = help | /ai | /ai-run | /python | /muparser ]");
+    terminal_line->setPlaceholderText(
+        "type command here [ '?' = help | /ai | /ai-run | /ai-chat | /python | /muparser ]");
     terminal_line->setReadOnly(0);
     terminal_line->setMinimumWidth(250);
 
@@ -1790,7 +1791,7 @@ void ApplicationWindow::initToolBars()
     m_terminalModeLabel->setStyleSheet("color: grey; background: transparent;");
     const int suffixWidth = qMax(m_terminalModeLabel->fontMetrics().horizontalAdvance("muparser"),
                                  qMax(m_terminalModeLabel->fontMetrics().horizontalAdvance("python"),
-                                      m_terminalModeLabel->fontMetrics().horizontalAdvance("ai-run")));
+                                      m_terminalModeLabel->fontMetrics().horizontalAdvance("ai-chat")));
     m_terminalModeLabel->setFixedWidth(suffixWidth);
     auto *terminalLayout = new QHBoxLayout(terminal_line);
     terminalLayout->setContentsMargins(0, 0, 6, 0);
@@ -6608,6 +6609,8 @@ void ApplicationWindow::connectAiSignalsOnce()
     if (m_aiConnected)
         return;
     m_aiConnected = true;
+    connect(m_ai, &AiAssistant::chatResponseReady, this,
+            [this](const QString &text) { print("▸▸▸ AI chat:\n\n" + text); });
     connect(m_ai, &AiAssistant::responseReady, this, [this](const QString &code) {
         // "Existing X" verification script round-trip — see AiAssistant::beginRequest()'s doc
         // comment. Checked before EVERYTHING else below, including the continuation-check — this
@@ -6863,6 +6866,40 @@ bool ApplicationWindow::handleAiTextCommand(const QString &trimmed)
     return false;
 }
 
+bool ApplicationWindow::askAiChat(const QString &text, bool forceConsole)
+{
+    if (scriptEnv->objectName() != "Python")
+    {
+        d_status_info->setText(tr("AI requires Python. Select /python first."));
+        return false;
+    }
+    const QString command = text.trimmed();
+    if (command.isEmpty())
+        return false;
+    ensureAiAssistant();
+    connectAiSignalsOnce();
+    if (command.compare("stop", Qt::CaseInsensitive) == 0 || command.compare("cancel", Qt::CaseInsensitive) == 0)
+        m_ai->stop();
+    else if (!m_ai->isIdle())
+    {
+        d_status_info->setText(tr("Finish or stop the current AI request before chatting."));
+        return false;
+    }
+    else
+    {
+        m_aiForceConsole = forceConsole;
+        m_ai->setRequestTimeoutSec(aiSettings.requestTimeoutSec);
+        if (command.compare("clear history", Qt::CaseInsensitive) == 0)
+            m_ai->clearChatHistory();
+        else
+        {
+            print("▸▸▸ AI chat request:\n\n" + command);
+            m_ai->askChat(command);
+        }
+    }
+    return true;
+}
+
 void ApplicationWindow::askAi(const QString &text, bool autoRun, bool forceConsole)
 {
     if (scriptEnv->objectName() != "Python")
@@ -6872,6 +6909,16 @@ void ApplicationWindow::askAi(const QString &text, bool autoRun, bool forceConso
     }
     // Creates m_ai on first use (no-op if it already exists)
     ensureAiAssistant();
+
+    if (m_ai->isChatPending())
+    {
+        const QString command = text.trimmed().toLower();
+        if (command == "stop" || command == "cancel")
+            m_ai->stop();
+        else
+            d_status_info->setText(tr("Finish or stop the chat request before using script AI."));
+        return;
+    }
 
     // Answers the pending "new task or continuation?" question
     // Reuses handleContinuationCheckResponse()'s own dispatch logic.
@@ -7234,6 +7281,8 @@ ApplicationWindow::TerminalMode ApplicationWindow::effectiveTerminalMode(Qt::Key
     if (scriptEnv->objectName() != "Python")
         return TerminalMode::Script;
     const bool ctrl = modifiers & (Qt::ControlModifier | Qt::MetaModifier);
+    if (m_terminalMode == TerminalMode::AiChat)
+        return !ctrl ? TerminalMode::AiChat : (modifiers & Qt::ShiftModifier ? TerminalMode::AiRun : TerminalMode::Ai);
     if (m_terminalMode == TerminalMode::AiRun)
         return !ctrl ? TerminalMode::AiRun : (modifiers & Qt::ShiftModifier ? TerminalMode::Script : TerminalMode::Ai);
     if (m_terminalMode == TerminalMode::Ai)
@@ -7253,7 +7302,8 @@ void ApplicationWindow::updateTerminalModeSuffix(Qt::KeyboardModifiers modifiers
     const TerminalMode mode = effectiveTerminalMode(modifiers);
     if (m_terminalCompleter)
         m_terminalCompleter->setKeywordCompletionEnabled(d_completion && mode == TerminalMode::Script);
-    const QString label = mode == TerminalMode::Ai      ? "ai"
+    const QString label = mode == TerminalMode::AiChat  ? "ai-chat"
+                          : mode == TerminalMode::Ai    ? "ai"
                           : mode == TerminalMode::AiRun ? "ai-run"
                                                         : scriptEnv->objectName().toLower();
     m_terminalModeLabel->setText(label);
@@ -7267,7 +7317,8 @@ void ApplicationWindow::submitTerminalLine(Qt::KeyboardModifiers modifiers)
     if (m_terminalCompleter)
     {
         const TerminalMode mode = effectiveTerminalMode(modifiers);
-        const QString label = mode == TerminalMode::Ai      ? "ai"
+        const QString label = mode == TerminalMode::AiChat  ? "ai-chat"
+                              : mode == TerminalMode::Ai    ? "ai"
                               : mode == TerminalMode::AiRun ? "ai-run"
                                                             : scriptEnv->objectName().toLower();
         m_terminalCompleter->addHistoryEntry(text, label);
@@ -7283,14 +7334,16 @@ void ApplicationWindow::submitTerminalLine(Qt::KeyboardModifiers modifiers)
         else
             d_status_info->setText(tr("Could not select scripting language: %1").arg(language));
     }
-    else if (command == "/ai" || command == "/ai-run")
+    else if (command == "/ai" || command == "/ai-run" || command == "/ai-chat")
     {
 #ifdef SCRIPTING_PYTHON
         if (scriptEnv->objectName() != "Python")
             d_status_info->setText(tr("AI requires Python. Select /python first."));
         else
         {
-            m_terminalMode = command == "/ai" ? TerminalMode::Ai : TerminalMode::AiRun;
+            m_terminalMode = command == "/ai-chat" ? TerminalMode::AiChat
+                             : command == "/ai"    ? TerminalMode::Ai
+                                                   : TerminalMode::AiRun;
             terminal_line->clear();
         }
 #else
@@ -7305,6 +7358,12 @@ void ApplicationWindow::submitTerminalLine(Qt::KeyboardModifiers modifiers)
         if (mode == TerminalMode::Script)
             terminal(text);
 #ifdef SCRIPTING_PYTHON
+        else if (mode == TerminalMode::AiChat)
+        {
+            if (!askAiChat(command, true))
+                return;
+            terminal_line->clear();
+        }
         else
         {
             const bool run = mode == TerminalMode::AiRun;
@@ -23581,6 +23640,9 @@ void ApplicationWindow::terminal(QString str)
                                  " /python or /muparser — select global language and script mode\n"
                                  " /ai                 — select AI mode (generate only)\n"
                                  " /ai-run             — select AI mode with auto-run\n"
+                                 " /ai-chat            — conversation only; no scripts or execution\n"
+                                 " In AI-chat mode: Enter = chat; Ctrl+Enter = AI; Ctrl+Shift+Enter = AI+run\n"
+                                 " Chat commands: stop / cancel; clear history (chat only)\n"
                                  " AI modes require Python; with muParser, all Enter shortcuts run muParser.\n"
                                  " Modes remain selected until another mode command is entered.\n\n"
                                  " Enter               — use the selected mode\n"

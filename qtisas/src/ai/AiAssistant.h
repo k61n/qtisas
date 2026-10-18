@@ -78,7 +78,16 @@ class AiAssistant : public QObject
     // leak scaffolding into history; userText is still what's actually sent either way.
     void ask(const QString &userText, bool includeDocs = true, const QString &systemPrompt = QString(),
              const QStringList &docTopics = QStringList(), bool addToHistory = true, bool includeHistory = true,
-             bool expectsCode = true, const QString &historyText = QString());
+             bool expectsCode = true, const QString &historyText = QString(), bool chatOnly = false);
+    void askChat(const QString &text);
+    bool isChatPending() const
+    {
+        return m_pendingChat && m_busy;
+    }
+    void clearChatHistory()
+    {
+        m_chatHistory.clear();
+    }
 
     // Needs setContentProvider() first — delegates to AiContentProvider::docTopicIndex().
     QString docTopicIndex() const;
@@ -1124,6 +1133,7 @@ class AiAssistant : public QObject
 
   signals:
     void responseReady(const QString &text);
+    void chatResponseReady(const QString &text);
     void errorOccurred(const QString &error);
     void infoMessage(const QString &text);
     // Separate from infoMessage() specifically so its consecutive attempts can overwrite one
@@ -1295,6 +1305,9 @@ class AiAssistant : public QObject
     // unambiguously refer to. beginRequest() clears it unconditionally for any request that isn't
     // itself consumed as that fast path.
     bool m_lastScriptUnrun = false;
+    void deliverResponse(const QString &response);
+    QList<QPair<QString, QString>> m_chatHistory;
+    bool m_pendingChat = false;
     QString m_pendingUserText;
     bool m_pendingAddToHistory = true;
     QString m_cachedDocs; // loaded once; cleared by clearHistory() or configure()
@@ -1323,6 +1336,7 @@ class AiAssistant : public QObject
         bool includeHistory = true;
         bool expectsCode = true;
         QString historyText;
+        bool chatOnly = false;
     } m_lastAsk;
     bool m_redoWithCorrection = false;
     void redoLastAsk();

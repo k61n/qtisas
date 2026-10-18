@@ -20,6 +20,9 @@ Description: Unit tests for the pure, host-independent logic in src/ai —
 #include "AiAssistantInternal.h"
 #include "QtiSasAiContent.h"
 
+#include <memory>
+#include <QTcpServer>
+#include <QTcpSocket>
 #include <QFile>
 #include <QFileInfo>
 #include <QJsonArray>
@@ -6577,4 +6580,167 @@ void AiContentTests::realRequestsFixture_collectsAllEntriesCleanly()
     }
 }
 
-QTEST_APPLESS_MAIN(AiContentTests)
+namespace
+{
+class ChatTestServer : public QTcpServer
+{
+  public:
+    QList<QJsonObject> requests;
+    QByteArray response;
+    QList<int> statuses;
+    bool hold = false;
+    explicit ChatTestServer()
+    {
+        connect(this, &QTcpServer::newConnection, this, [this] {
+            auto *socket = nextPendingConnection();
+            auto buffer = std::make_shared<QByteArray>();
+            connect(socket, &QTcpSocket::readyRead, this, [this, socket, buffer] {
+                *buffer += socket->readAll();
+                const int end = static_cast<int>(buffer->indexOf("\r\n\r\n"));
+                if (end < 0)
+                    return;
+                int length = 0;
+                for (const QByteArray &line : buffer->left(end).split('\n'))
+                    if (line.toLower().startsWith("content-length:"))
+                        length = line.mid(line.indexOf(':') + 1).trimmed().toInt();
+                if (buffer->size() < end + 4 + length)
+                    return;
+                requests << QJsonDocument::fromJson(buffer->mid(end + 4, length)).object();
+                socket->disconnect(this);
+                if (!hold)
+                {
+                    const int status = statuses.isEmpty() ? 200 : statuses.takeFirst();
+                    socket->write("HTTP/1.1 " + QByteArray::number(status) +
+                                  " Test\r\nContent-Type: application/json\r\nContent-Length: " +
+                                  QByteArray::number(response.size()) + "\r\nConnection: close\r\n\r\n" + response);
+                    socket->disconnectFromHost();
+                }
+            });
+        });
+    }
+    void answer(const QString &text)
+    {
+        response = QJsonDocument(
+                       QJsonObject{{"choices", QJsonArray{QJsonObject{{"message", QJsonObject{{"content", text}}}}}}})
+                       .toJson(QJsonDocument::Compact);
+    }
+    QString url() const
+    {
+        return QString("http://127.0.0.1:%1").arg(serverPort());
+    }
+};
+} // namespace
+
+void AiContentTests::chat_isolatesPromptHistoryAndReplies()
+{
+    ChatTestServer server;
+    QVERIFY(server.listen(QHostAddress::LocalHost));
+    AiAssistant assistant;
+    QtiSasAiContent content;
+    assistant.setContentProvider(&content);
+    assistant.configure({}, server.url(), "test", 1024, AiAssistant::DocsMode::Integrated);
+    QSignalSpy scripts(&assistant, &AiAssistant::responseReady);
+    QSignalSpy chats(&assistant, &AiAssistant::chatResponseReady);
+    server.answer("print('old script')");
+    assistant.ask("old script request", false);
+    QTRY_COMPARE(scripts.count(), 1);
+    const QString history = assistant.historyText();
+    // Even unexpected executable-looking text must remain a chat reply, with its formatting intact.
+    const QString reply = "```python\nprint('never execute')\n```";
+    server.answer(reply);
+    assistant.askChat("LIST EXPLORE run it: explain uncertainty");
+    QTRY_COMPARE(chats.count(), 1);
+    QCOMPARE(chats.at(0).at(0).toString(), reply);
+    QCOMPARE(scripts.count(), 1);
+    QCOMPARE(assistant.historyText(), history);
+    QCOMPARE(assistant.historySize(), 1);
+    const auto messages = server.requests.at(1).value("messages").toArray();
+    QCOMPARE(messages.size(), 2);
+    const QString system = messages.at(0).toObject().value("content").toString();
+    QVERIFY(system.contains("natural language"));
+    QVERIFY(!system.contains("return ONLY the raw executable Python"));
+    QVERIFY(!system.contains("API documentation"));
+    QVERIFY(messages.last().toObject().value("content").toString().endsWith("TOPICS: none"));
+    server.answer("A plain explanation.");
+    assistant.askChat("Continue explaining");
+    QTRY_COMPARE(chats.count(), 2);
+    QCOMPARE(server.requests.at(2).value("messages").toArray().size(), 4);
+    assistant.clearChatHistory();
+    assistant.askChat("Fresh chat");
+    QTRY_COMPARE(chats.count(), 3);
+    QCOMPARE(server.requests.at(3).value("messages").toArray().size(), 2);
+    QCOMPARE(assistant.historyText(), history);
+    server.answer("print('next script')");
+    assistant.ask("new script request", false);
+    QTRY_COMPARE(scripts.count(), 2);
+    QVERIFY(!QJsonDocument(server.requests.last()).toJson().contains("never execute"));
+}
+
+void AiContentTests::chat_preservesStreamedText()
+{
+    ChatTestServer server;
+    QVERIFY(server.listen(QHostAddress::LocalHost));
+    AiAssistant assistant;
+    assistant.configure({}, server.url(), "test");
+    QSignalSpy scripts(&assistant, &AiAssistant::responseReady);
+    QSignalSpy chats(&assistant, &AiAssistant::chatResponseReady);
+    server.response = "data: {\"choices\":[{\"delta\":{\"content\":\"**Hello**\"}}]}\n\n"
+                      "data: [DONE]\n\n";
+    assistant.askChat("hello");
+    QTRY_COMPARE(chats.count(), 1);
+    QCOMPARE(chats.at(0).at(0).toString(), QString("**Hello**"));
+    QCOMPARE(scripts.count(), 0);
+    QCOMPARE(assistant.historySize(), 0);
+    server.response = "{\"message\":{\"content\":\"Second reply\"},\"done\":true}\n";
+    assistant.askChat("hello again");
+    QTRY_COMPARE(chats.count(), 2);
+    QCOMPARE(chats.at(1).at(0).toString(), QString("Second reply"));
+    QCOMPARE(scripts.count(), 0);
+}
+
+void AiContentTests::chat_busyAndCancellationStayIsolated()
+{
+    ChatTestServer server;
+    QVERIFY(server.listen(QHostAddress::LocalHost));
+    server.hold = true;
+    AiAssistant assistant;
+    assistant.configure({}, server.url(), "test");
+    QSignalSpy scripts(&assistant, &AiAssistant::responseReady);
+    QSignalSpy chats(&assistant, &AiAssistant::chatResponseReady);
+    QSignalSpy errors(&assistant, &AiAssistant::errorOccurred);
+    assistant.askChat("wait");
+    QTRY_COMPARE(server.requests.size(), 1);
+    assistant.ask("must not replace chat", false);
+    QCOMPARE(errors.count(), 1);
+    assistant.stop();
+    QTRY_VERIFY(assistant.isIdle());
+    QCOMPARE(scripts.count(), 0);
+    QCOMPARE(chats.count(), 0);
+    QCOMPARE(assistant.historySize(), 0);
+    server.hold = false;
+    server.answer("Recovered");
+    assistant.askChat("new chat");
+    QTRY_COMPARE(chats.count(), 1);
+    QCOMPARE(server.requests.last().value("messages").toArray().size(), 2);
+}
+
+void AiContentTests::chat_retryKeepsChatRouting()
+{
+    ChatTestServer server;
+    QVERIFY(server.listen(QHostAddress::LocalHost));
+    server.statuses = {503, 200};
+    server.answer("Retried chat reply");
+    AiAssistant assistant;
+    assistant.configure({}, server.url(), "test");
+    QSignalSpy scripts(&assistant, &AiAssistant::responseReady);
+    QSignalSpy chats(&assistant, &AiAssistant::chatResponseReady);
+    assistant.askChat("Explain this");
+    QTRY_COMPARE(chats.count(), 1);
+    QCOMPARE(server.requests.size(), 2);
+    QCOMPARE(server.requests.at(0), server.requests.at(1));
+    QCOMPARE(chats.at(0).at(0).toString(), QString("Retried chat reply"));
+    QCOMPARE(scripts.count(), 0);
+    QCOMPARE(assistant.historySize(), 0);
+}
+
+QTEST_GUILESS_MAIN(AiContentTests)

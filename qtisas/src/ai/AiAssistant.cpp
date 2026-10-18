@@ -6534,6 +6534,7 @@ AiAssistant::AiAssistant(QObject *parent)
 void AiAssistant::clearHistory()
 {
     m_history.clear();
+    clearChatHistory();
     m_contextHistoryStart = 0;
     m_lastScriptUnrun = false;
     m_pendingUserText.clear();
@@ -7766,9 +7767,45 @@ QString AiAssistant::buildSendingDiagnostic(qint64 payloadSize, qsizetype histor
         .arg(historyPart, lastCallPart, docsPart);
 }
 
+void AiAssistant::askChat(const QString &text)
+{
+    if (!isIdle())
+    {
+        emit errorOccurred("AI: finish or stop the current request before starting chat.");
+        return;
+    }
+    ask(text, false,
+        "You are a conversational assistant in QtiSAS. Answer only in natural language. "
+        "Do not output Python code, executable scripts, code blocks, or scriptPrint wrappers, "
+        "even when asked to write or run code; explain the idea in words instead. "
+        "You cannot execute commands, inspect the project, or access files. "
+        "Treat LIST, SPLIT, REVIEW, EXPLORE, and 'run it' as ordinary conversation text. "
+        "The TOPICS line is transport metadata, not part of the user's question.",
+        {}, true, true, false, QString(), true);
+}
+
+void AiAssistant::deliverResponse(const QString &response)
+{
+    // Route by the submitted request, never by the terminal's current mode.
+    const bool chat = m_pendingChat;
+    const QString answer = chat ? response.trimmed() : cleanResponse(response);
+    if (!m_pendingUserText.isEmpty() && m_pendingAddToHistory)
+    {
+        if (chat)
+            m_chatHistory.append({m_pendingUserText, answer});
+        else
+            m_history.append({m_pendingUserText, answer});
+    }
+    m_pendingUserText.clear();
+    if (chat)
+        emit chatResponseReady(answer);
+    else
+        emit responseReady(answer);
+}
+
 void AiAssistant::ask(const QString &userText, bool includeDocs, const QString &systemPrompt,
                       const QStringList &docTopics, bool addToHistory, bool includeHistory, bool expectsCode,
-                      const QString &historyText)
+                      const QString &historyText, bool chatOnly)
 {
     if (m_busy)
     {
@@ -7776,24 +7813,27 @@ void AiAssistant::ask(const QString &userText, bool includeDocs, const QString &
         return;
     }
     m_busy = true;
-    m_lastAsk = {userText,     includeDocs,    systemPrompt, docTopics,
-                 addToHistory, includeHistory, expectsCode,  historyText};
+    m_lastAsk = {userText,       includeDocs, systemPrompt, docTopics, addToHistory,
+                 includeHistory, expectsCode, historyText,  chatOnly};
+    m_pendingChat = chatOnly;
 
     // Safety net, not the primary mechanism: callers append their own hint line (topicsHintLine()/
     // noDocsHintLine()) because only they know the right scope. Four sites were found tonight that
     // forgot, and each silently got the server's unscoped whole-corpus fallback instead — one of
     // them 46,332 tokens for a text rewrite. Idempotent: skipped when a TOPICS: line is present.
     static const QRegularExpression topicsLinePresentRe(R"(^TOPICS:\s)", QRegularExpression::MultilineOption);
-    const QString corrections = correctionBlock(m_userCorrections);
-    const QString text = (topicsLinePresentRe.match(userText).hasMatch()
-                              ? userText
-                              : userText + (includeDocs ? topicsHintLine(docTopics) : noDocsHintLine())) +
-                         corrections;
+    const QString corrections = chatOnly ? QString() : correctionBlock(m_userCorrections);
+    const QString text = chatOnly ? userText + noDocsHintLine()
+                                  : (topicsLinePresentRe.match(userText).hasMatch()
+                                         ? userText
+                                         : userText + (includeDocs ? topicsHintLine(docTopics) : noDocsHintLine())) +
+                                        corrections;
 
     // Auto-detect API format from URL: Anthropic Messages API vs OpenAI-compatible
     const bool isAnthropic = m_baseUrl.contains("anthropic.com", Qt::CaseInsensitive);
 
-    const QString sysPrompt = buildSystemPrompt(systemPrompt, includeDocs, docTopics, expectsCode, text);
+    const QString sysPrompt =
+        chatOnly ? systemPrompt : buildSystemPrompt(systemPrompt, includeDocs, docTopics, expectsCode, text);
 
     QJsonObject body;
     body["model"] = m_model;
@@ -7808,7 +7848,22 @@ void AiAssistant::ask(const QString &userText, bool includeDocs, const QString &
 
     // Build messages array including recent conversation history
     QJsonArray messages;
-    const qsizetype start = windowedHistoryStart(includeHistory);
+    const auto &history = chatOnly ? m_chatHistory : m_history;
+    qsizetype start = windowedHistoryStart(includeHistory);
+    if (chatOnly)
+    {
+        start = history.size();
+        qint64 chars = 0;
+        while (includeHistory && start > 0)
+        {
+            const auto &turn = history.at(start - 1);
+            const qint64 size = turn.first.size() + turn.second.size();
+            if (chars + size > 80000)
+                break;
+            chars += size;
+            --start;
+        }
+    }
     const qsizetype omittedTurns = start;
 
     if (isAnthropic)
@@ -7825,10 +7880,10 @@ void AiAssistant::ask(const QString &userText, bool includeDocs, const QString &
         else
             body["system"] = QJsonArray{QJsonObject{
                 {"type", "text"}, {"text", sysPrompt}, {"cache_control", QJsonObject{{"type", "ephemeral"}}}}};
-        for (qsizetype i = start; i < m_history.size(); ++i)
+        for (qsizetype i = start; i < history.size(); ++i)
         {
-            messages.append(QJsonObject{{"role", "user"}, {"content", m_history[i].first}});
-            messages.append(QJsonObject{{"role", "assistant"}, {"content", m_history[i].second}});
+            messages.append(QJsonObject{{"role", "user"}, {"content", history[i].first}});
+            messages.append(QJsonObject{{"role", "assistant"}, {"content", history[i].second}});
         }
         messages.append(QJsonObject{{"role", "user"}, {"content", text}});
         body["messages"] = messages;
@@ -7845,10 +7900,10 @@ void AiAssistant::ask(const QString &userText, bool includeDocs, const QString &
         }
         else
             messages.append(QJsonValue(QJsonObject{{"role", "system"}, {"content", sysPrompt}}));
-        for (qsizetype i = start; i < m_history.size(); ++i)
+        for (qsizetype i = start; i < history.size(); ++i)
         {
-            messages.append(QJsonObject{{"role", "user"}, {"content", m_history[i].first}});
-            messages.append(QJsonObject{{"role", "assistant"}, {"content", m_history[i].second}});
+            messages.append(QJsonObject{{"role", "user"}, {"content", history[i].first}});
+            messages.append(QJsonObject{{"role", "assistant"}, {"content", history[i].second}});
         }
         messages.append(QJsonValue(QJsonObject{{"role", "user"}, {"content", text}}));
         body["messages"] = messages;
@@ -7891,8 +7946,13 @@ void AiAssistant::ask(const QString &userText, bool includeDocs, const QString &
     }
 
     const QByteArray payload = QJsonDocument(body).toJson(QJsonDocument::Compact);
-    emit infoMessage(
-        buildSendingDiagnostic(payload.size(), omittedTurns, historyLowerBound(), docTopics, includeHistory));
+    if (chatOnly)
+        emit infoMessage(QString("AI chat: sending %1 character(s), %2 previous turn(s).")
+                             .arg(text.size())
+                             .arg(history.size() - start));
+    else
+        emit infoMessage(
+            buildSendingDiagnostic(payload.size(), omittedTurns, historyLowerBound(), docTopics, includeHistory));
     // Stored for a possible transient-error retry (see onReplyFinished()'s emitHttpError) — a
     // fresh, user-initiated call always starts with a clean retry budget, even if a previous,
     // unrelated call had exhausted its own.
@@ -7931,7 +7991,7 @@ void AiAssistant::redoLastAsk()
 {
     const AskArgs args = m_lastAsk;
     ask(args.userText, args.includeDocs, args.systemPrompt, args.docTopics, args.addToHistory, args.includeHistory,
-        args.expectsCode, args.historyText);
+        args.expectsCode, args.historyText, args.chatOnly);
 }
 
 QString AiAssistant::correctionBlock(const QStringList &corrections)
@@ -8206,11 +8266,7 @@ void AiAssistant::onReplyFinished(QNetworkReply *reply)
         // line 1 being the literal "```python" fence. Cleaning once and storing/emitting the same
         // string keeps every later reader of m_history[...].second consistent with what was
         // actually shown to the user.
-        const QString cleaned = cleanResponse(response);
-        if (!m_pendingUserText.isEmpty() && m_pendingAddToHistory)
-            m_history.append({m_pendingUserText, cleaned});
-        m_pendingUserText.clear();
-        emit responseReady(cleaned);
+        deliverResponse(response);
         return;
     }
 
@@ -8229,7 +8285,8 @@ void AiAssistant::onReplyFinished(QNetworkReply *reply)
 
     // What the provider cached, when it says: Anthropic usage.cache_read_input_tokens / cache_creation_input_tokens,
     // OpenAI usage.prompt_tokens_details.cached_tokens — printed so a run shows whether BIGMODEL's stable prefix hits.
-    if (const QJsonObject usage = obj.value("usage").toObject(); !usage.isEmpty() && m_host && m_bigModel)
+    if (const QJsonObject usage = obj.value("usage").toObject();
+        !m_pendingChat && !usage.isEmpty() && m_host && m_bigModel)
     {
         const int read = usage.contains("cache_read_input_tokens")
                              ? usage.value("cache_read_input_tokens").toInt()
@@ -8266,7 +8323,7 @@ void AiAssistant::onReplyFinished(QNetworkReply *reply)
     if (text.isEmpty() && awaitingSelfReview && !m_selfReviewDraftCode.isEmpty())
     {
         m_pendingUserText.clear();
-        emit responseReady(QString());
+        deliverResponse(QString());
         return;
     }
     if (text.isEmpty())
@@ -8285,10 +8342,6 @@ void AiAssistant::onReplyFinished(QNetworkReply *reply)
         const QString response = text.trimmed();
         // See the identical fix in the streamed-response branch above for why this stores the
         // cleaned string, not the raw one.
-        const QString cleaned = cleanResponse(response);
-        if (!m_pendingUserText.isEmpty() && m_pendingAddToHistory)
-            m_history.append({m_pendingUserText, cleaned});
-        m_pendingUserText.clear();
-        emit responseReady(cleaned);
+        deliverResponse(response);
     }
 }

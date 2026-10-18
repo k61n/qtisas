@@ -125,7 +125,8 @@ void PythonSyntaxHighlighter::highlightBlock(const QString &text)
         charFmt.setBackground(aiColor);
         charFmt.setForeground(qApp->palette().color(QPalette::Text));
         setFormat(0, static_cast<int>(text.length()), charFmt);
-        const bool isProseHeader = text.startsWith("▸▸▸ AI answer:") || text.startsWith("▸▸▸ AI split-plan (") ||
+        const bool isProseHeader = text.startsWith("▸▸▸ AI answer:") || text.startsWith("▸▸▸ AI chat:") ||
+                                   text.startsWith("▸▸▸ AI chat request:") || text.startsWith("▸▸▸ AI split-plan (") ||
                                    text.startsWith("▸▸▸ AI: list ");
         setCurrentBlockState(isProseHeader ? aiAnswerBlockState : 0);
         return;

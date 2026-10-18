@@ -16,6 +16,10 @@ class AiContentTests : public QObject
     Q_OBJECT
 
   private slots:
+    static void chat_isolatesPromptHistoryAndReplies();
+    static void chat_preservesStreamedText();
+    static void chat_retryKeepsChatRouting();
+    static void chat_busyAndCancellationStayIsolated();
     // ---- Direction 1: graph overreach ----
     static void selfShadowBug_namesEverySelfShadowedVariable();
     static void scopeViolation_reportsEveryDirectionAtOnce();

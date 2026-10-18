@@ -308,7 +308,8 @@ public:
     {
         Script,
         Ai,
-        AiRun
+        AiRun,
+        AiChat
     };
     TerminalMode m_terminalMode = TerminalMode::Script;
     TerminalMode effectiveTerminalMode(Qt::KeyboardModifiers modifiers) const;
@@ -1213,6 +1214,7 @@ public slots:
     void scriptPrintHighlighted(const QString &text);
 #ifdef SCRIPTING_PYTHON
     void askAi(const QString &text, bool autoRun = false, bool forceConsole = false);
+    bool askAiChat(const QString &text, bool forceConsole = false);
     AiAssistant *aiAssistant() const
     {
         return m_ai;
