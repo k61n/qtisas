@@ -6319,7 +6319,7 @@ QList<QStringList> ApplicationWindow::entityKinds(const QStringList &names)
 {
     // Snapshot each registry ONCE, not per name: groupFunctions() rescans and re-reads every .fif
     // file on disk, so asking it per name would multiply that by the number of names checked.
-    QHash<QString, QString> windowKinds;
+    QHash<QString, QString> windowKinds, moduleKinds;
     const QList<MdiSubWindow *> windows = windowsList();
     for (MdiSubWindow *w : windows)
     {
@@ -6337,6 +6337,13 @@ QList<QStringList> ApplicationWindow::entityKinds(const QStringList &names)
         else if (w->inherits("Graph3D"))
             kind = "3D plot";
         windowKinds.insert(w->objectName(), kind);
+        // a table a module made is also that module's object: its kind routes a request naming it to the module's
+        // docs, and a script must not replace it with newTable()
+        static const QHash<QString, QString> moduleTables{
+            {"NSE Headers", "JNSE header table"}, {"NSE Dataset", "JNSE dataset table"}, {"SVD Table", "SVD table"}};
+        if (kind == "table")
+            if (const QString module = moduleTables.value(w->windowLabel()); !module.isEmpty())
+                moduleKinds.insert(w->objectName(), module);
     }
     // groupFunctions("ALL") rather than functionNames(): the latter calls selectCategory(), moving
     // the Compile widget's own list selection — a visible UI side effect for what must be a purely
@@ -6353,6 +6360,8 @@ QList<QStringList> ApplicationWindow::entityKinds(const QStringList &names)
         const auto it = windowKinds.constFind(name);
         if (it != windowKinds.constEnd())
             kinds << it.value();
+        if (moduleKinds.contains(name))
+            kinds << moduleKinds.value(name);
         if (compiled.contains(name))
             kinds << "compile";
         if (fitFuncs.contains(name))

@@ -5501,8 +5501,16 @@ static bool fixedTextValue(const QString &value, QString *text)
 QString QtiSasAiContent::docTopicForKind(const QString &kind) const
 {
     // liveObjects()'s kinds (ApplicationWindow::liveObjects()) -> the python/doc file topics
-    static const QHash<QString, QString> topics{{"table", "table"}, {"matrix", "matrix"},   {"note", "note"},
-                                                {"graph", "graph"}, {"3D plot", "graph3d"}, {"function", "compile"}};
+    // (and entityKinds()'s module kinds of a table a module made)
+    static const QHash<QString, QString> topics{{"table", "table"},
+                                                {"matrix", "matrix"},
+                                                {"note", "note"},
+                                                {"graph", "graph"},
+                                                {"3D plot", "graph3d"},
+                                                {"function", "compile"},
+                                                {"JNSE header table", "jnse"},
+                                                {"JNSE dataset table", "jnse"},
+                                                {"SVD table", "svd"}};
     return topics.value(kind);
 }
 

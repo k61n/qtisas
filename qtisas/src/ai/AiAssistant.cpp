@@ -684,6 +684,28 @@ QStringList AiAssistant::docTopicsFromRequestText(const QString &text) const
     for (const QString &topic : (m_content ? m_content->knownDocTopics() : QStringList()))
         if (topicSynonymMatch(topic, requestText))
             topics << topic;
+    // A request naming a module's object needs that module's docs, whatever its words: confirmed live (benchmark JNSE
+    // holdout, local pyi) — "Fit all q of psInfo together with simpleDiffusion" went to fittable only, psInfo was taken
+    // for a plain table, and the model replaced the imported header table with invented SANS data
+    if (m_host && m_content)
+    {
+        QStringList named;
+        for (const QString &object : m_host->liveObjects())
+        {
+            const QString name = object.section(':', 1);
+            if (object.section(':', 0, 0) == "table" && name.size() > 1 &&
+                QRegularExpression("(?<![\\w-])" + QRegularExpression::escape(name) + "(?![\\w-])")
+                    .match(requestText)
+                    .hasMatch())
+                named << name;
+        }
+        const QList<QStringList> kinds = named.isEmpty() ? QList<QStringList>() : m_host->entityKinds(named);
+        for (const QStringList &nameKinds : kinds)
+            for (const QString &kind : nameKinds)
+                if (const QString topic = m_content->docTopicForKind(kind);
+                    kind != "table" && !topic.isEmpty() && !topics.contains(topic))
+                    topics << topic;
+    }
     return topics;
 }
 
@@ -5747,6 +5769,32 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
                             ". Do not send it again — write a different body that fixes exactly that."};
                     break;
                 }
+    // newTable() over a table a module made would replace it: confirmed live (benchmark JNSE holdout, local pyi),
+    // newTable("psInfo", 100, 3) wiped the imported header table for invented data
+    if (compilable && m_host)
+    {
+        static const QRegularExpression newTableRe(R"RX(\bnewTable\s*\(\s*["']([^"'\n]+)["'])RX");
+        QStringList names;
+        for (auto it = newTableRe.globalMatch(code); it.hasNext();)
+            names << it.next().captured(1);
+        const QList<QStringList> kinds = names.isEmpty() ? QList<QStringList>() : m_host->entityKinds(names);
+        static const QHash<QString, QString> uses{
+            {"JNSE header table", "Jnse.header(), Jnse.datasets(), Jnse.fit()"},
+            {"JNSE dataset table", "table(name) and Jnse.fit() through its header table"},
+            {"SVD table", "Svd.value(), Svd.qValues(), Svd.readTable()"}};
+        for (int i = 0; i < kinds.size(); ++i)
+            for (const QString &kind : kinds[i])
+                if (uses.contains(kind))
+                {
+                    knownMistakes << AiKnownMistakeMatch{
+                        "newTable() over a module's table",
+                        QString("\"%1\" is a %2 of the project: newTable(\"%1\", ...) would replace it with an empty "
+                                "table and destroy what the module made. Use it as it is (%3), or give a new table "
+                                "another name.")
+                            .arg(names[i], kind, uses.value(kind))};
+                    break;
+                }
+    }
     if (compilable)
         if (const QString moved = guardedCreationRepair(code, m_objectsAtRequestStart); !moved.isEmpty())
         {
