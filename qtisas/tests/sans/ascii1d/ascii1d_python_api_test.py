@@ -117,11 +117,23 @@ try:
     raises(lambda: a.setBinning(0), "1 (off)")
     raises(lambda: a.setBinning(1, 3.0), "ratio")
     raises(lambda: a.setResolutionGeometry(0, 400), "> 0")
+    raises(lambda: a.setResolutionGeometry(8, 4), "cm, not m", "800")  # metres given
+    assert a.setResolutionGeometry(800, 400, pixelCm=0.525, lambdaA=6)  # optional ones by their unit-carrying names
+    assert a.setHeader(5) and a.header() == "5"  # a number of lines as an int
     raises(lambda: a.importFiles("nope.dat"), "no such file", "nope.dat")
     raises(lambda: a.importFiles(folder), "a folder")
     raises(lambda: a.exportTables("NoSuch*"), "no table matches")
+    raises(lambda: a.importFiles("ApiGiven"), "is a table of the project", 'convertTables("ApiGiven")')  # a table
+    raises(lambda: a.convertTables("a.dat"), "is a file, not a table", 'importFiles("a.dat")')  # a file
     raises(lambda: a.importFiles(["a.dat"], ["x", "y"]), "at most one name per source")
     raises(lambda: a.loadFormat("NoSuchFormat"), "no format")
+    with open(os.path.join(folder, "c.xml"), "w", encoding="utf-8") as f:
+        f.write('<?xml version="1.0"?>\n<SASroot><SASentry><SASdata>\n<Idata><Q>0.1</Q><I>5</I></Idata>\n'
+                '</SASdata></SASentry></SASroot>\n')
+    raises(lambda: a.importFiles("c.xml"), "canSAS XML", 'setFormat("cansas")')  # an XML file read as ASCII
+    a.setFormat("cansas")
+    assert a.importFiles("c.xml", "ApiXml") == ["ApiXml"] and table("ApiXml").numRows() == 1
+    a.reset()
     raises(lambda: a.convertTables("ApiGiven"), "its source", "setIndexing(True)")  # would refill ApiGiven itself
     try:
         a.importFiles(5)
