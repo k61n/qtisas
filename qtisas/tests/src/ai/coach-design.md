@@ -200,8 +200,10 @@ anything is tuned.
   request says" was not.
 - **A choice table when calls look alike** (source × destination → the call), with the one wrong use spelled out ("a
   table is never a file").
-- **One example per variant of the main task**, each one call with its options — the local model chained import and
-  export, so the options ran twice.
+- **Keep the doc's top short, and measure every addition on the weak model with ≥ 2 runs.** A block of one-call
+  examples per variant (v6), added because the local model chained import and export, lowered it from 10.7 to 7.3
+  of 16 (3 runs each) while Codex stayed at 16/16 — more patterns at the top confused the small model more than they
+  guided it; the block was removed. One run per doc version cannot tell 9 from 11 apart.
 - **When to give a name and when to take the returned one**, with the request's own wording as the example; never
   invented names.
 - **Facts of the language around the API:** Python's `open()` does not expand `~`; use the returned absolute paths.
@@ -237,7 +239,9 @@ anything is tuned.
 | C2 | lost-item dossier in the report JSON; failure-signature store + query — **done 2026-10-19** (`benchmark_dossier.py`, `failures.jsonl`, `benchmark_stats.py --failures`) | harness (Python) | "seen before?" is a lookup |
 | C3 | MCP tools `qtisas_run`, `qtisas_wait`, `qtisas_summary`, `qtisas_failures`, `qtisas_stats`, `qtisas_probe`, `qtisas_instance`, `qtisas_environment` — **done 2026-10-19** (`python/server/qtisas_coach.py`; runs go through the harness as a subprocess instead of new script-server modes: one run engine for harness, terminal and MCP; offered only in the source tree) | MCP (Python) | a series runs from the IDE in ~2 calls per run |
 | C4 | `qtisas_last_prompt` (ring buffer, server mode) | small C++ + server | two runs' prompts compared in one call |
-| M1 | ascii1d, pipeline steps 0–8 — **stage 1 done** (Codex 16/16 at η 1.0, holdout 4/4, LIST 1–5 unchanged), **stage 2 running** (local 11/16 at docs v5) | C++, SIP, docs, benchmarks | strongest model 100% on module list and holdout; weakest at its own maximum |
+| M1 | ascii1d, pipeline steps 0–8 — **stage 1 done** (Codex 16/16 at η 1.0, holdout 4/4, LIST 1–5 unchanged), **stage 2 done** (local maximum ≈ 10.7/16 at docs v5: 11, 12, 9 in three runs; v6 removed after an A/B, v7 canSAS detection no
+measurable gain — stopped by the rule). Final holdout: Codex 4/4 at η 1.0, local 1/4 — the local model solves the
+import direction (import items 1–5 and 8–12 nearly always), not yet export and conversion | C++, SIP, docs, benchmarks | strongest model 100% on module list and holdout; weakest at its own maximum |
 | M2, M3 | dan (after doc sets), jnse | | |
 | later | section 8, on evidence | | |
 
