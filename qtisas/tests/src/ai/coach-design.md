@@ -1,4 +1,4 @@
-# Coach — design (updated 2026-10-19, SVD)
+# Coach — design (updated 2026-10-20, SVD and JNSE)
 
 Coach = an IDE AI (e.g. Claude Code through the MCP server) that supervises QtiSAS's built-in AI: it runs
 benchmark lists, reads the results, turns failures into doc changes, API fixes or rules, verifies API claims on a
@@ -16,6 +16,8 @@ REVIEW and LIST SPLIT series (2026-10-15) and the all-md lanes (2026-10-19).
      and docs make the task solvable; its failures are API, doc or QtiSAS bugs.
   2. **Then the weakest** (local qwen3-coder all-pyi), **iterating docs and code from its score to its own
      maximum** — not to a fixed score. Its failures show where the docs are easy to misread.
+  **No stage-2 run before stage 1 is at its maximum, its holdout included** (JNSE: a local run beside Codex's first
+  docs run used stale docs, slowed both and taught nothing).
   Only general fixes (docs first, then an API that is harder to misuse; never a guard shaped to one item); every
   change re-run on the strongest model (score and η must not drop); the holdout at the end on both. A QtiSAS bug is
   fixed whichever model reveals it. ascii1d (2026-10-19): Codex 10 → 16/16 (η 0.8 → 1.0), local 0 → 4 → 7 → 9 → 11
@@ -170,12 +172,12 @@ anything is tuned.
 | # | Step | Output | Done when |
 |---|---|---|---|
 | 0 | **Task inventory** with the user: GUI actions, files, typical analyses, existing user scripts; **the method's limits checked numerically** (SVD: one H/D series fixes at most 3 combinations, so N ≥ 3 is never fully determined — found by a two-minute rank check, it decided which items are fair and what the API reports) | task list with inputs/outputs and limits | the user agrees on the list |
-| 1 | **Benchmark items** from the tasks (before code), computable expected values, `verify` scripts; a **holdout list** kept aside; an answer that depends on a modelling choice states it in the item (SVD plans: the dI model — the best plan flips with it) | `benchmarks/<module>.json` + holdout | every task has ≥ 1 item |
+| 1 | **Benchmark items** from the tasks (before code), computable expected values, `verify` scripts; a **holdout list** kept aside; an answer that depends on a modelling choice states it in the item (SVD plans: the dI model — the best plan flips with it); **synthetic data modelled on a real file** asked for in step 0 (JNSE: CR-only line ends, Fortran numbers, a title line inside the data); **once a list makes two objects of one kind, every later item names which one** (JNSE: two header tables, items read fairly as the other); **items that name only the module's object, no module words** (they alone show a routing gap — JNSE's holdout did) | `benchmarks/<module>.json` + holdout | every task has ≥ 1 item |
 | 2 | **C++ preparation**: the existing code tested with synthetic data of known answers first (SVD: the reconstructed intensities read wrong columns, the error bars were a heuristic, matrices leaked — all silent for years); then the API surface the items need, checked against the AI-ready rules below | C++ fixes + methods | items are expressible |
 | 3 | **SIP bindings + contract tests** (normal path, error path, empty/None, repeated calls) | `qtimod.sip`, `<module>_contract.py` | contract tests pass on a probe instance |
 | 4 | **Reference scripts** by the strongest model, no QtiSAS checks | `benchmarks/reference/<module>/` | 100% — otherwise back to 2–3 |
 | 5 | **Docs**: skeleton from the SIP, curated notes in marked sections; md + pyi; **audited line by line against the code before the first AI run, and again after each round of patches** (SVD: two audits found 3 wrong statements, 6 gaps and 2 silent API behaviours that runs find one at a time, mixed with model noise) | `<module>-python-api.md/.pyi` | the audit finds nothing; regeneration keeps the curated parts |
-| 6 | **AI structure**: doc topic + keywords, host facts for PROJECT STATE (`entityKinds`, shapes), benchmark cleanup; a large doc gets a doc-set tier (on demand) | C++ host + topic table | a request naming a module object gets its doc |
+| 6 | **AI structure**: doc topic + keywords; **the module's tables by kind**: a window label per table, reported by `entityKinds()` as the module's kind (SVD table, JNSE header/dataset table), mapped to the topic in `docTopicForKind()`, and protected from `newTable()` (skipped for SVD and JNSE at first: the JNSE holdout's local score went 1/4 → 4/4 once added); host facts for PROJECT STATE (shapes), benchmark cleanup; a large doc gets a doc-set tier (on demand) | C++ host + topic table | an item naming only a module object shows the module's topic in the log's "AI doc topics" |
 | 7 | **Benchmark iterations** with the reference model (BIGMODEL): docs first, signatures, one build per series | doc fixes, API fixes, rules | reference model 100% on the module list; holdout within ~5 points |
 | 8 | **Regression**: LISTs 1–5 after a module series; C++ changes re-run the contract tests and regenerate the doc skeleton | | no drop on LISTs 1–5 |
 
@@ -201,6 +203,12 @@ anything is tuned.
 - **Every output table gets a read call by label** (SVD `value(table, column, q)`, `qValues()`): reading by row or
   column number was the weak model's most frequent failure, worst in a table whose rows mean two things (Q points
   in some columns, contrasts in others); the call refuses the columns it cannot read that way.
+- **A module that drives another module's state registers its wrapper calls with that module's checks:**
+  `Jnse.initFit()` sets up Fittable, but the "fit() before configure()" check did not know it — a right script was
+  blocked, the forced `Fittable.configure()` reset every q, D came out 0.01. The docs also name the other module's
+  calls that undo the hand-off (`Fittable.configure()` after `initFit()`).
+- **Defaults come from what was used, not from the first input:** `importFiles("*.dtr")` named the header table
+  after a file that held nothing.
 - **Getters return what setters take back:** `contrasts()` dropped the measured solvent SLDs, so the documented
   rerun `setContrasts(s.contrasts() …)` silently changed the result. The audit includes a set → get → set round trip.
 
@@ -228,6 +236,10 @@ anything is tuned.
   called on its class.)
 - **Every iteration re-run on the strongest model:** a doc change that helps the weak one must not cost the strong
   one calls (η is the measure, not only the score).
+
+**Benchmark configuration is pinned** (`--docs compact` for the all-pyi baseline): without it a run copies the user's
+own "API docs sent" setting — SVD stage 1 and the first JNSE runs went out all-md (~120K tokens per call instead of
+~50K) without anyone choosing it.
 
 **Order:** ascii1d first (smallest, ~2.9K lines, no Python API — the cleanest test of the pipeline), then SVD
 (~0.9K lines, a numerical method with physics limits — the second test of the pipeline, 2026-10-19), then dan
@@ -263,7 +275,8 @@ anything is tuned.
 measurable gain — stopped by the rule). Final holdout: Codex 4/4 at η 1.0, local 1/4 — the local model solves the
 import direction (import items 1–5 and 8–12 nearly always), not yet export and conversion | C++, SIP, docs, benchmarks | strongest model 100% on module list and holdout; weakest at its own maximum |
 | M2 | SVD, pipeline steps 0–8 — **done 2026-10-19:** C++ fixes first (Icon columns, propagated errors, solvent terms for any N, rank truncation, no dialogs), `Svd` API, docs audited twice; Codex 5/13 without docs → 13/13 (η 1.0), holdout 4/4; local 4 → 9/13 twice (η 0.59), holdout 3/4 — the rest is the local model (written-in values, reading the old table instead of a new decomposition) | C++, SIP, docs, AI checks, benchmarks | strongest model 100% on module list and holdout; weakest at its own maximum |
-| M3, M4 | dan (after doc sets), jnse | | |
+| M4 | JNSE (before dan, 2026-10-19/20) — **done:** C++ first (one import core for GUI and Python, no dialogs, header tables only for datasets read, the multi-fit through `initFit()` with errors instead of silent returns), `Jnse` API with the `fit()` alias (shared, start, fixed; results to the results log), synthetic files from a real report; Codex all-pyi 0/11 without docs → 11/11 (η up to 1.0), holdout 4/4; local 6/11 three times, holdout 1/4 — the local model re-imports instead of using the header table, and prints values of earlier fits | C++, SIP, docs, AI checks, benchmarks | strongest model 100% on module list and holdout; weakest at its own maximum |
+| M3 | dan (after doc sets) | | |
 | later | section 8, on evidence | | |
 
 ## 10. Decisions
