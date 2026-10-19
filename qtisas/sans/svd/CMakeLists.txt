@@ -1,6 +1,7 @@
 
 set(SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/svd.cpp)
+    ${CMAKE_CURRENT_SOURCE_DIR}/svd.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/svd-python.cpp)
 
 set(HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/svd.h)

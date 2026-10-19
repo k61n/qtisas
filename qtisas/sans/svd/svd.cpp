@@ -7,8 +7,12 @@ Copyright (C) by the authors:
 Description: Singular value decomposition interface (SANS)
  ******************************************************************************/
 
+#include <algorithm>
+#include <memory>
 
 #include <QDockWidget>
+#include <QInputDialog>
+#include <QMessageBox>
 #include <QSettings>
 #include <QShowEvent>
 #include <QString>
@@ -278,7 +282,7 @@ void svd::changeEvent(QEvent *event)
     d_widgetLocale = to;
 }
 //+++ app(this): connection to QtiPlot
-ApplicationWindow *app(QWidget *widget)
+static ApplicationWindow *app(QWidget *widget)
 {
     ApplicationWindow *appM;
 
@@ -291,16 +295,6 @@ ApplicationWindow *app(QWidget *widget)
 
     return appM;
 }
-//+++ Text-To-Results Log-Window
-void toResLogAll(const QString &interfaceName, const QString &text, QWidget *widget)
-{
-    QDateTime dt = QDateTime::currentDateTime();
-    QString info = dt.toString("dd.MM | hh:mm ->>" + interfaceName + ">> ");
-    info += text;
-    info += "\n";
-    app(widget)->results->setText(app(widget)->results->toPlainText() + text);
-}
-
 void svd::on_spinBoxMsvd_valueChanged(int value)
 {
     tableMsvd->setRowCount(value);
@@ -314,17 +308,15 @@ void svd::on_spinBoxNsvd_valueChanged(int value)
 void svd::slotReadSvdData(QString tableName)
 {
     Table *t;
-    QString ss;
 
     if (!app(this)->checkTableExistence(std::move(tableName), t))
         return;
 
-    ss = t->name();
+    // the components: the rows of hSLDcomponent after the solvent's (their names may be empty)
     int nn = 0;
-    while (t->text(nn, 0) != "")
+    while (!t->text(nn + 1, 1).isEmpty())
         nn++;
 
-    nn--;
     lineEditRhoH->setText(tableToUi(t, 0, 1));
     lineEditRhoD->setText(tableToUi(t, 0, 2));
 
@@ -344,12 +336,21 @@ void svd::slotReadSvdData(QString tableName)
         tableNsvd->setItem(ii, 2, _item3);
     }
 
-    nn = 0;
-    while (t->text(nn, 3) != "")
-        nn++;
+    // the Q points: the rows of Q1, after the SLD, a, u and V columns and S
+    const int q1 = 6 + nn + 3 * (nn * (nn + 1) / 2) + 1;
+    int kk = 0;
+    while (!t->text(kk, q1).isEmpty())
+        kk++;
+    if (kk > 0)
+        spinBoxKsvd->setValue(kk);
 
-    spinBoxMsvd->setValue(nn);
-    for (int ii = 0; ii < nn; ii++)
+    // the contrasts: the rows of HDcomposition
+    int mm = 0;
+    while (!t->text(mm, 4).isEmpty())
+        mm++;
+
+    spinBoxMsvd->setValue(mm);
+    for (int ii = 0; ii < mm; ii++)
     {
         auto *_item1 = new QTableWidgetItem();
         _item1->setText(tableToUi(t, ii, 4));
@@ -364,45 +365,158 @@ void svd::slotReadSvdData(QString tableName)
         tableMsvd->setItem(ii, 2, _item3);
     }
 }
-//+++ Data Transfer
-void svd::slotSVD1dataTransfer(const QString &Name, int Nsvd, QStringList TexT, gsl_matrix *SLDcomponent, int Msvd,
-                               QStringList Dcomposition, QStringList FileNames, gsl_vector *SLDsolvent, int Ksvd)
+//+++ SVD of a contrast series: the SVD table, its name returned. Nothing is created when the input cannot be
+//+++ decomposed: then the name is empty and m_lastError tells why. Warnings of a made table are in m_messages.
+QString svd::decompose(const QString &Name, int Nsvd, const QStringList &TexT, const gsl_matrix *SLDcomponent, int Msvd,
+                       const QStringList &Dcomposition, const QStringList &FileNames, const gsl_vector *SLDsolvent,
+                       int Ksvd)
 {
-
-    // Temp variables
-    int KN, coln;
-    double gslTemp, rhoHD, rho1, rho2, Bk, error;
-    QString ss;
+    m_lastError.clear();
+    m_messages.clear();
 
     // definition of variables...
-    int M = Msvd;                         // Number of H/D Concentrations
-    int N = Nsvd * (Nsvd - 1) / 2 + Nsvd; // Number of independent Partial structure factors
-    int K = Ksvd;                         // Number of Q-points
+    const int M = Msvd;                  // Number of H/D Concentrations
+    const int N = Nsvd * (Nsvd + 1) / 2; // Number of independent Partial structure factors
+    const int K = Ksvd;                  // Number of Q-points
 
-    int NM;
-    if (Nsvd > Msvd)
-        NM = Nsvd;
-    else
-        NM = Msvd;
-    if (K > NM)
-        NM = K; // Table Dimension
+    if (Nsvd < 1 || K < 1 || TexT.size() < Nsvd || Dcomposition.size() < M || FileNames.size() < M)
+    {
+        m_lastError = tr("SVD: %1 components, %2 contrasts and %3 Q points need a name per component and an H/D "
+                         "fraction and a data table per contrast")
+                          .arg(Nsvd)
+                          .arg(M)
+                          .arg(K);
+        return {};
+    }
+    // gsl_linalg_SV_decomp needs at least as many rows (contrasts) as unknowns (partial structure factors)
+    if (M < N)
+    {
+        m_lastError = tr("SVD: %1 components have %2 partial structure factors, so at least %2 H/D contrasts are "
+                         "needed (%3 given); add contrasts or reduce the number of components")
+                          .arg(Nsvd)
+                          .arg(N)
+                          .arg(M);
+        return {};
+    }
 
-    Table *t; // Table-Pointer to Transfer Data
+    // the data tables: all exist, with K points each
+    QList<Table *> tables;
+    for (int mm = 0; mm < M; mm++)
+    {
+        Table *t = nullptr;
+        if (!app(this)->checkTableExistence(FileNames[mm], t))
+        {
+            m_lastError = tr("SVD: the data table \"%1\" of contrast %2 does not exist").arg(FileNames[mm]).arg(mm + 1);
+            return {};
+        }
+        int rows = 0;
+        while (rows < K && !t->text(rows, 0).isEmpty())
+            rows++;
+        if (rows < K)
+        {
+            m_lastError = tr("SVD: the data table \"%1\" has %2 Q points, fewer than the %3 used; set the number of "
+                             "Q points to at most %2")
+                              .arg(t->name())
+                              .arg(rows)
+                              .arg(K);
+            return {};
+        }
+        tables << t;
+    }
 
-    // A-matrix SVD-on
-    gsl_matrix *A = gsl_matrix_calloc(M, N); // Contrast-matrix A
-    gsl_matrix *U = gsl_matrix_calloc(M, N); // A = USV ^ T
-    gsl_matrix *V = gsl_matrix_calloc(N, N); //
-    gsl_vector *S = gsl_vector_calloc(N);    // Diagonal of S-matrix
-    gsl_vector *work = gsl_vector_calloc(N); // temp ...
+    // the same Q points in all tables: the SVD solves one Q point of all contrasts at once
+    for (int mm = 1; mm < M; mm++)
+        for (int kk = 0; kk < K; kk++)
+        {
+            const double q0 = tables[0]->cell(kk, 0);
+            const double q = tables[mm]->cell(kk, 0);
+            if (fabs(q - q0) > 1e-3 * fabs(q0))
+            {
+                m_messages << tr("SVD: the Q points of \"%1\" differ from \"%2\" (row %3: %4 vs %5); the SVD needs the "
+                                 "same Q points in all data tables")
+                                  .arg(tables[mm]->name(), tables[0]->name())
+                                  .arg(kk + 1)
+                                  .arg(q)
+                                  .arg(q0);
+                break;
+            }
+        }
 
-    gsl_matrix *Idata = gsl_matrix_calloc(K, M);  // Matrix of Scattering Intensity
-    gsl_matrix *dIdata = gsl_matrix_calloc(K, M); // Matrix of errorbars of Scattering Intensity
-    gsl_vector *b = gsl_vector_calloc(M);         // b = Idata(0..K, M)
-    gsl_vector *x = gsl_vector_calloc(N);         //
+    // SLD of the components vs. H/D composition
+    QVector<double> fraction(M);
+    for (int mm = 0; mm < M; mm++)
+        fraction[mm] = Dcomposition[mm].toDouble(); // C
+    auto componentSLD = [&](int nn, int mm) {
+        const double h = gsl_matrix_get(SLDcomponent, nn, 0);
+        return h + fraction[mm] * (gsl_matrix_get(SLDcomponent, nn, 1) - h);
+    };
 
-    // Make Result Table
-    Table *tableRho = app(this)->newTable(Name, NM, 6 + Nsvd + N + N + N + N + 1 + M + M + N + M + M);
+    // the gsl objects are freed on every return
+    auto freeMatrix = [](gsl_matrix *m) { gsl_matrix_free(m); };
+    auto freeVector = [](gsl_vector *v) { gsl_vector_free(v); };
+    std::unique_ptr<gsl_matrix, decltype(freeMatrix)> A(gsl_matrix_calloc(M, N), freeMatrix); // Contrast-matrix A
+    std::unique_ptr<gsl_matrix, decltype(freeMatrix)> U(gsl_matrix_calloc(M, N), freeMatrix); // A = USV ^ T
+    std::unique_ptr<gsl_matrix, decltype(freeMatrix)> V(gsl_matrix_calloc(N, N), freeMatrix);
+    std::unique_ptr<gsl_vector, decltype(freeVector)> S(gsl_vector_calloc(N), freeVector); // Diagonal of S-matrix
+    std::unique_ptr<gsl_vector, decltype(freeVector)> work(gsl_vector_calloc(N), freeVector);
+    std::unique_ptr<gsl_vector, decltype(freeVector)> b(gsl_vector_calloc(M), freeVector); // intensities of a Q
+    std::unique_ptr<gsl_vector, decltype(freeVector)> x(gsl_vector_calloc(N), freeVector);
+    std::unique_ptr<gsl_matrix, decltype(freeMatrix)> X(gsl_matrix_calloc(K, N), freeMatrix); // S_ij vs Q
+
+    // Making Rho-matrix: a11, a12, ..., a22, ... (twice the cross terms)
+    for (int mm = 0; mm < M; mm++)
+    {
+        const double rhoHD = gsl_vector_get(SLDsolvent, mm);
+        int col = 0;
+        for (int nn = 0; nn < Nsvd; nn++)
+            for (int ll = nn; ll < Nsvd; ll++)
+            {
+                double a = (componentSLD(nn, mm) - rhoHD) * (componentSLD(ll, mm) - rhoHD);
+                if (nn != ll)
+                    a *= 2;
+                gsl_matrix_set(A.get(), mm, col++, a);
+            }
+    }
+
+    // GSL- error handler is of !!!!
+    gsl_set_error_handler_off();
+
+    // SVD of A to U V and S
+    gsl_matrix_memcpy(U.get(), A.get());
+    int status = gsl_linalg_SV_decomp(U.get(), V.get(), S.get(), work.get());
+    if (status != 0)
+    {
+        m_lastError = tr("SVD: GSL error %1 in the decomposition of the contrast matrix").arg(status);
+        return {};
+    }
+
+    // the partial structure factors of every Q point; the relative error of all intensities of the Q
+    QVector<double> error(K);
+    for (int kk = 0; kk < K; kk++)
+    {
+        double sum = 0;
+        for (int mm = 0; mm < M; mm++)
+        {
+            const double I = tables[mm]->cell(kk, 1);
+            const double dI = tables[mm]->cell(kk, 2);
+            gsl_vector_set(b.get(), mm, I);
+            sum += dI / I * dI / I;
+        }
+        error[kk] = sqrt(sum);
+
+        status = gsl_linalg_SV_solve(U.get(), V.get(), S.get(), b.get(), x.get());
+        if (status != 0)
+        {
+            m_lastError = tr("SVD: GSL error %1 in the solution at Q point %2").arg(status).arg(kk + 1);
+            return {};
+        }
+        gsl_matrix_set_row(X.get(), kk, x.get());
+    }
+
+    // Make Result Table: rows for the solvent and components, the contrasts, V and S, and the Q points
+    const int NM = std::max({Nsvd + 1, M, N, K});
+    const int babinet = Nsvd == 2 ? 6 : 0; // S13, S23, S33 of the solvent as the third component
+    Table *tableRho = app(this)->newTable(Name, NM, 6 + Nsvd + 3 * N + 1 + 3 * M + 2 * N + babinet + M);
     tableRho->setWindowLabel("SVD Table");
 
     // Col-Names
@@ -430,7 +544,7 @@ void svd::slotSVD1dataTransfer(const QString &Name, int Nsvd, QStringList TexT, 
     tableRho->setCell(0, 1, uiToDouble(lineEditRhoH->text()));
     tableRho->setCell(0, 2, uiToDouble(lineEditRhoD->text()));
 
-    // Transfer of Data: from SLDcomponent-Matrix and TexT-QStringList to tableRho
+    // the components: names and SLD in H and D
     for (int nn = 0; nn < Nsvd; nn++)
     {
         tableRho->setText(nn + 1, 0, TexT[nn]);
@@ -438,283 +552,115 @@ void svd::slotSVD1dataTransfer(const QString &Name, int Nsvd, QStringList TexT, 
         tableRho->setCell(nn + 1, 2, gsl_matrix_get(SLDcomponent, nn, 1));
     }
 
-    // Transfer of Data: from Dcomposition-QStringList, SLDsolvent-Vector and FileNames-QStringList to tableRho
-    for (int mm = 0; mm < Msvd; mm++)
+    // the contrasts: data table, H/D composition and solvent SLD
+    for (int mm = 0; mm < M; mm++)
     {
         tableRho->setText(mm, 3, FileNames[mm]);
-        tableRho->setCell(mm, 4, Dcomposition[mm].toDouble()); // C
+        tableRho->setCell(mm, 4, fraction[mm]);
         tableRho->setCell(mm, 5, gsl_vector_get(SLDsolvent, mm));
     }
 
     // Number of active column
-    coln = 6;
+    int coln = 6;
 
-    // Calculation of Real SLD vs. DHcomposition
+    // Real SLD vs. DHcomposition: SLD<name>, or SLD<number> for an empty or repeated name (a column name is unique)
+    QStringList labels;
     for (int nn = 0; nn < Nsvd; nn++)
     {
-        ss = "SLD";
-        ss += TexT[nn];
-        tableRho->setColName(coln, ss);
+        const QString label = TexT[nn].trimmed();
+        labels << (label.isEmpty() || labels.contains(label) ? QString::number(nn + 1) : label);
+        tableRho->setColName(coln, "SLD" + labels.last());
         tableRho->setColNumericFormat(2, 12, coln, true);
-        for (int mm = 0; mm < Msvd; mm++)
-        {
-            ss = Dcomposition[mm];
-            gslTemp = ss.toDouble();
-            rhoHD = gsl_matrix_get(SLDcomponent, nn, 0) +
-                    gslTemp * (gsl_matrix_get(SLDcomponent, nn, 1) - gsl_matrix_get(SLDcomponent, nn, 0));
-            tableRho->setCell(mm, coln, rhoHD);
-        }
+        for (int mm = 0; mm < M; mm++)
+            tableRho->setCell(mm, coln, componentSLD(nn, mm));
         coln++;
     }
-    KN = coln;
 
-    // Making Rho-matrix
+    // the indices of the partial structure factors: 11, 12, ..., 22, ...
+    QStringList indices;
     for (int nn = 1; nn < Nsvd + 1; nn++)
         for (int mm = nn; mm < Nsvd + 1; mm++)
-        {
-            ss = ss.setNum(10 * nn + mm);                     // Indexing. For-example 11,12,13,22,23,33.
-            tableRho->setColName(coln, ss.prepend('a'));      // Set col-names like a11,a12,a13...
-            tableRho->setColNumericFormat(2, 12, coln, true); // Format
-            for (int ll = 0; ll < Msvd; ll++)
-            {
-                rho1 = tableRho->cell(ll, 6 + nn - 1);
-                rho2 = tableRho->cell(ll, 6 + mm - 1);
-                rhoHD = tableRho->cell(ll, 5);
+            indices << QString::number(10 * nn + mm);
 
-                gslTemp = (rho1 - rhoHD) * (rho2 - rhoHD);
-                if (nn != mm)
-                    gslTemp *= 2;
-                tableRho->setCell(ll, coln, gslTemp);
-                gsl_matrix_set(A, ll, coln - KN, gslTemp);
-            }
-            coln++;
-        }
-
-    // A initial matrix and U result of SVD
-    gsl_matrix_memcpy(U, A);
-
-    // GSL- error handler is of !!!!
-    gsl_set_error_handler_off();
-
-    // SVD of A to U V and S
-    int status = gsl_linalg_SV_decomp(U, V, S, work);
-
-    // Handling of errors in GSL-functions by hand :)
-    if (status)
-        if (status != 0)
-        {
-            ss = ss.setNum(status);
-            QMessageBox::critical(this, tr("QtiSAS - Error"), tr("<b> %1 </b>: GSL error - SVD").arg(ss));
-            goto NoTableLabel;
-        }
-
-    // current column number
-    KN = coln;
-
-    // Print of U-matrix to tableRho (u11,u12....)
-    for (int nn = 1; nn < Nsvd + 1; nn++)
-        for (int mm = nn; mm < Nsvd + 1; mm++)
-        {
-            ss = ss.setNum(10 * nn + mm);
-            tableRho->setColName(coln, ss.prepend('u'));
-            tableRho->setColNumericFormat(2, 12, coln, true);
-            for (int ll = 0; ll < Msvd; ll++)
-            {
-                tableRho->setCell(ll, coln, gsl_matrix_get(U, ll, coln - KN));
-            }
-            coln++;
-        }
-
-    // current column number
-    KN = coln;
-
-    // Print of V-matrix to tableRho (v11,v12....)
-    for (int nn = 1; nn < Nsvd + 1; nn++)
-        for (int mm = nn; mm < Nsvd + 1; mm++)
-        {
-            ss = ss.setNum(10 * nn + mm);
-            tableRho->setColName(coln, ss.prepend('V'));
-            tableRho->setColNumericFormat(2, 12, coln, true);
-            for (int ll = 0; ll < N; ll++)
-            {
-                tableRho->setCell(ll, coln, gsl_matrix_get(V, ll, coln - KN));
-            }
-            coln++;
-        }
-
-    //
-    tableRho->setColName(coln, "S");
-    tableRho->setColNumericFormat(2, 12, coln, true);
-
-    // Print of S-vector to tableRho (s1,s2...sN)
-    for (int ll = 0; ll < N; ll++)
-    {
-        tableRho->setCell(ll, coln, gsl_vector_get(S, ll));
-    }
-    coln++;
-
-    // Current column number
-    KN = coln;
-
-    // Transfet data from individual tables to tableRho (I and Q); making MxN Idata matrix
-    for (int mm = 0; mm < M; mm++)
-    {
-        ss = ss.setNum(mm + 1);
-        tableRho->setColName(coln + mm * 3, 'Q' + ss);
-        tableRho->setColName(coln + mm * 3 + 1, 'I' + ss);
-        tableRho->setColName(coln + mm * 3 + 2, "dI" + ss);
-        tableRho->setColPlotDesignation(coln + mm * 3, Table::X);        // Set first Q-column as X
-        tableRho->setColPlotDesignation(coln + mm * 3 + 2, Table::yErr); // Set first Q-column as dY
-        tableRho->setColNumericFormat(2, 12, coln + mm * 3, true);
-        tableRho->setColNumericFormat(2, 12, coln + mm * 3 + 1, true);
-        tableRho->setColNumericFormat(2, 12, coln + mm * 3 + 2, true);
-        ss = tableRho->text(mm, 3);
-
-        // Checking of existance of individual tables
-        if (!app(this)->checkTableExistence(ss, t))
-        {
-            QMessageBox::critical(this, tr("QtiSAS - Error"), tr("<b> %1 </b>: Table Does Not Exist").arg(ss));
-            goto NoTableLabel;
-        }
-
-        //
-        for (int kk = 0; kk < K; kk++)
-        {
-            for (int col = 0; col < 3; col++)
-                tableRho->setCellOrText(kk, coln + mm * 3 + col, t->text(kk, col), t->cellLocale(col));
-
-            gsl_matrix_set(Idata, kk, mm, t->cell(kk, 1));
-            gsl_matrix_set(dIdata, kk, mm, t->cell(kk, 2));
-        }
-    }
-
-    coln += 3 * M;
-
-    //
-    for (int nn = 1; nn < Nsvd + 1; nn++)
-        for (int mm = nn; mm < Nsvd + 1; mm++)
-        {
-            ss = ss.setNum(10 * nn + mm);
-            tableRho->setColName(coln, ss.prepend('S'));
-            tableRho->setColNumericFormat(2, 12, coln, true);
-            coln++;
-            tableRho->setColName(coln, ss.prepend('d'));
-            tableRho->setColPlotDesignation(coln, Table::yErr);
-            tableRho->setColNumericFormat(2, 12, coln, true);
-            coln++;
-        }
-
-    //
-    if (Nsvd == 2)
-    {
-        tableRho->addColumns(6);
-        tableRho->setColName(coln, "S13");
-        tableRho->setColNumericFormat(2, 12, coln, true);
-        tableRho->setColName(coln + 1, "dS13");
-        tableRho->setColPlotDesignation(coln + 1, Table::yErr);
-        tableRho->setColNumericFormat(2, 12, coln + 1, true);
-
-        tableRho->setColName(coln + 2, "S23");
-        tableRho->setColNumericFormat(2, 12, coln + 2, true);
-        tableRho->setColName(coln + 3, "dS23");
-        tableRho->setColPlotDesignation(coln + 3, Table::yErr);
-        tableRho->setColNumericFormat(2, 12, coln + 3, true);
-
-        tableRho->setColName(coln + 4, "S33");
-        tableRho->setColNumericFormat(2, 12, coln + 4, true);
-        tableRho->setColName(coln + 5, "dS33");
-        tableRho->setColPlotDesignation(coln + 5, Table::yErr);
-        tableRho->setColNumericFormat(2, 12, coln + 5, true);
-    }
-
-    //+++
-    coln = coln - 2 * N;
-
-    //+++
-    KN = coln;
-
-    //+++
-    double S11, S12, S22, S13, S23, S33;
-
-    //+++
-    for (int kk = 0; kk < K; kk++)
-    {
-        error = 0;
-        for (int mm = 0; mm < M; mm++)
-        {
-            gsl_vector_set(b, mm, gsl_matrix_get(Idata, kk, mm));
-            error += gsl_matrix_get(dIdata, kk, mm) / gsl_matrix_get(Idata, kk, mm) * gsl_matrix_get(dIdata, kk, mm) /
-                     gsl_matrix_get(Idata, kk, mm);
-        }
-        error = sqrt(error);
-        //+++
-        status = gsl_linalg_SV_solve(U, V, S, b, x);
-
-        //+++
-        if (status)
-            if (status != 0)
-            {
-                ss = ss.setNum(status);
-                QMessageBox::critical(this, tr("QtiSAS - Error"), tr("<b> %1 </b>: GSL error - Solve").arg(ss));
-                goto NoTableLabel;
-            }
-
-        //+++
+    // a matrix A (rows: contrasts), U (rows: contrasts), V (rows: partial structure factors)
+    const QList<QPair<QString, const gsl_matrix *>> matrices = {{"a", A.get()}, {"u", U.get()}, {"V", V.get()}};
+    for (const auto &matrix : matrices)
         for (int nn = 0; nn < N; nn++)
         {
-            gslTemp = gsl_vector_get(x, nn);
-
-            tableRho->setCell(kk, coln + 2 * nn, gslTemp);
-            tableRho->setCell(kk, coln + 2 * nn + 1, fabs(gslTemp * error));
-            if (Nsvd == 2)
-            {
-                if (nn == 0)
-                    S11 = gslTemp;
-                if (nn == 1)
-                    S12 = gslTemp;
-                if (nn == 2)
-                    S22 = gslTemp;
-            }
+            tableRho->setColName(coln, matrix.first + indices[nn]);
+            tableRho->setColNumericFormat(2, 12, coln, true);
+            for (int ll = 0; ll < int(matrix.second->size1); ll++)
+                tableRho->setCell(ll, coln, gsl_matrix_get(matrix.second, ll, nn));
+            coln++;
         }
-        if (Nsvd == 2)
-        {
-            S33 = 2 * S12 + S11 + S22;
-            S23 = 0.5 * (S11 - S22 - S33);
-            S13 = 0.5 * (-S11 + S22 - S33);
-            tableRho->setCell(kk, coln + 6, S13);
-            tableRho->setCell(kk, coln + 7, fabs(S13 * error));
-            tableRho->setCell(kk, coln + 8, S23);
-            tableRho->setCell(kk, coln + 9, fabs(S23 * error));
-            tableRho->setCell(kk, coln + 10, S33);
-            tableRho->setCell(kk, coln + 11, fabs(S33 * error));
-        }
-    }
 
-    coln += 2 * N;
-    if (Nsvd == 2)
-        coln += 6;
+    // S-vector (s1,s2...sN)
+    tableRho->setColName(coln, "S");
+    tableRho->setColNumericFormat(2, 12, coln, true);
+    for (int ll = 0; ll < N; ll++)
+        tableRho->setCell(ll, coln, gsl_vector_get(S.get(), ll));
+    coln++;
 
-    //
+    // the data tables (Q, I, dI)
     for (int mm = 0; mm < M; mm++)
     {
-        ss = ss.setNum(mm + 1);
-        tableRho->setColName(coln + mm, ss.prepend("Icon"));
-        tableRho->setColNumericFormat(2, 12, coln + mm, true);
+        const QString index = QString::number(mm + 1);
+        tableRho->setColName(coln, "Q" + index);
+        tableRho->setColName(coln + 1, "I" + index);
+        tableRho->setColName(coln + 2, "dI" + index);
+        tableRho->setColPlotDesignation(coln, Table::X);
+        tableRho->setColPlotDesignation(coln + 2, Table::yErr);
+        for (int col = 0; col < 3; col++)
+        {
+            tableRho->setColNumericFormat(2, 12, coln + col, true);
+            for (int kk = 0; kk < K; kk++)
+                tableRho->setCellOrText(kk, coln + col, tables[mm]->text(kk, col), tables[mm]->cellLocale(col));
+        }
+        coln += 3;
     }
 
-    KN = coln;
-
-    for (int mm = 0; mm < Msvd; mm++)
+    // the partial structure factors S11, dS11, S12, dS12, ...; for 2 components with the solvent's S13, S23, S33
+    QStringList names = indices;
+    QVector<double> values(N);
+    if (Nsvd == 2)
+        names << "13" << "23" << "33";
+    for (int nn = 0; nn < names.size(); nn++)
     {
-        for (int kk = 0; kk < Ksvd; kk++)
+        tableRho->setColName(coln + 2 * nn, "S" + names[nn]);
+        tableRho->setColNumericFormat(2, 12, coln + 2 * nn, true);
+        tableRho->setColName(coln + 2 * nn + 1, "dS" + names[nn]);
+        tableRho->setColPlotDesignation(coln + 2 * nn + 1, Table::yErr);
+        tableRho->setColNumericFormat(2, 12, coln + 2 * nn + 1, true);
+    }
+    for (int kk = 0; kk < K; kk++)
+    {
+        for (int nn = 0; nn < N; nn++)
+            values[nn] = gsl_matrix_get(X.get(), kk, nn);
+        if (Nsvd == 2)
         {
-            Bk = 0;
+            const double S11 = values[0], S12 = values[1], S22 = values[2];
+            const double S33 = 2 * S12 + S11 + S22;
+            values << -S11 - S12 << -S22 - S12 << S33; // S13, S23, S33
+        }
+        for (int nn = 0; nn < values.size(); nn++)
+        {
+            tableRho->setCell(kk, coln + 2 * nn, values[nn]);
+            tableRho->setCell(kk, coln + 2 * nn + 1, fabs(values[nn] * error[kk]));
+        }
+        values.resize(N);
+    }
+    coln += 2 * static_cast<int>(names.size());
+
+    // the intensities of the contrasts reconstructed from the partial structure factors: Icon = A S
+    for (int mm = 0; mm < M; mm++)
+    {
+        tableRho->setColName(coln, "Icon" + QString::number(mm + 1));
+        tableRho->setColNumericFormat(2, 12, coln, true);
+        for (int kk = 0; kk < K; kk++)
+        {
+            double Bk = 0;
             for (int nn = 0; nn < N; nn++)
-            {
-                gslTemp = tableRho->cell(kk, KN - N + nn);
-                Bk += gsl_matrix_get(A, mm, nn) * gslTemp;
-                gslTemp = gsl_matrix_get(A, mm, nn);
-            }
+                Bk += gsl_matrix_get(A.get(), mm, nn) * gsl_matrix_get(X.get(), kk, nn);
             tableRho->setCell(kk, coln, Bk);
         }
         coln++;
@@ -724,11 +670,10 @@ void svd::slotSVD1dataTransfer(const QString &Name, int Nsvd, QStringList TexT, 
     tableRho->notifyChanges();
     app(this)->modifiedProject(tableRho);
 
-NoTableLabel:;
-
     findSvdTables();
-    comboBoxSVDtables->setCurrentIndex(comboBoxSVDtables->findText(Name));
+    comboBoxSVDtables->setCurrentIndex(comboBoxSVDtables->findText(tableRho->name()));
     tableRho->setMaximized();
+    return tableRho->name();
 }
 //+++ Chech rhoHD
 void svd::slotCheckRhoHD()
@@ -789,7 +734,7 @@ void svd::showEvent(QShowEvent *event)
     QWidget::showEvent(event);
     updateTableNameColors();
 }
-//+++ Check rhoHD
+//+++ SVD of the interface's input, to a table named in a dialog
 void svd::slotSVD1dataTransfer()
 {
     QString tableName;
@@ -842,7 +787,15 @@ void svd::slotSVD1dataTransfer()
         TexT.append(text);
     }
 
-    slotSVD1dataTransfer(tableName, Nsvd, TexT, SLDcomponent, Msvd, Dcomposition, FileNames, SLDsolvent, Ksvd);
+    const QString made =
+        decompose(tableName, Nsvd, TexT, SLDcomponent, Msvd, Dcomposition, FileNames, SLDsolvent, Ksvd);
+    gsl_vector_free(SLDsolvent);
+    gsl_matrix_free(SLDcomponent);
+
+    if (made.isEmpty())
+        QMessageBox::critical(this, tr("QtiSAS - Error"), m_lastError);
+    else if (!m_messages.isEmpty())
+        QMessageBox::warning(this, tr("QtiSAS - Warning"), m_messages.join("\n"));
 }
 //+++ Chech Nsvd
 void svd::slotTableNsvdChanged(int row, int col)
@@ -860,21 +813,6 @@ void svd::slotTableNsvdChanged(int row, int col)
         double textD = uiToDouble(text);
         _item->setText(uiNumber(textD));
     }
-}
-//+++ Read data from a table to the interface
-void svd::slotReadDataFromTable()
-{
-    QString tableName;
-    bool ok;
-    do
-    {
-        tableName = QInputDialog::getText(this, "Creation of SVD-Table",
-                                          "Enter name of a new SVD-Table:", QLineEdit::Normal, "SVD", &ok);
-        if (!ok)
-            return;
-    } while (tableName != "" && !app(this)->checkTableExistence(tableName));
-
-    slotReadSvdData(tableName);
 }
 void svd::setFont(QFont fonts)
 {

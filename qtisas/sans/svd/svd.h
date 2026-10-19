@@ -10,8 +10,6 @@ Description: Singular value decomposition interface (SANS)
 #ifndef SVD_H
 #define SVD_H
 
-#include <QInputDialog>
-
 #include <gsl/gsl_linalg.h>
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_vector.h>
@@ -34,16 +32,22 @@ private slots:
     void readSettings();
     void writeSettings();
 
-public slots:
+  public:
+    // the SVD of a contrast series to a new table; its name, or empty with lastError() when nothing could be made
+    QString decompose(const QString &Name, int Nsvd, const QStringList &TexT, const gsl_matrix *SLDcomponent, int Msvd,
+                      const QStringList &Dcomposition, const QStringList &FileNames, const gsl_vector *SLDsolvent,
+                      int Ksvd);
+    // Python interface (svd-python.cpp)
+    QString lastError() const;
+    QStringList lastMessages() const;
+
+  public slots:
     void setFont(QFont fonts);
     void slotReadSvdData(QString tableName);
-    void slotSVD1dataTransfer(const QString &Name, int Nsvd, QStringList TexT, gsl_matrix *SLDcomponent, int Msvd,
-                              QStringList Dcomposition, QStringList FileNames, gsl_vector *SLDsolvent, int Ksvd);
     void slotTableMsvdChanged(int raw, int col);
     void slotCheckRhoHD();
     void slotSVD1dataTransfer();
     void slotTableNsvdChanged(int row, int col);
-    void slotReadDataFromTable();
     void findSvdTables();
 
   protected:
@@ -59,6 +63,8 @@ public slots:
     QString tableToUi(Table *t, int row, int col) const;
     void updateTableNameColors();
     QLocale d_widgetLocale;
+    QString m_lastError;    // why the last decompose() made no table
+    QStringList m_messages; // the warnings of the last decompose()
 };
 
 #endif
