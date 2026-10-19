@@ -7,6 +7,8 @@
 """Statistics of qtisas_benchmark.py runs, compared label by label.
 
     benchmark_stats.py LABEL [LABEL ...] [--reports DIR] [--cached-price 0.1] [--items]
+    benchmark_stats.py --failures [TEXT] [--item KEY] [--since YYYYMMDD]   # seen before? (failures.jsonl)
+    benchmark_stats.py --rebuild-failures                                  # failures.jsonl from every report
 
 A LABEL selects the runs whose --label starts with it (e.g. "BIGMODEL fixes 2026-10-15"). Runs are grouped by
 label and lane (the agent preset; the copies --docs/--bigmodel make count as their preset). A round is one exact
@@ -26,6 +28,10 @@ import re
 import statistics
 import sys
 from collections import defaultdict
+
+sys.dont_write_bytecode = True
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import benchmark_dossier  # noqa: E402
 
 DEFAULT_REPORTS = os.path.join(os.path.expanduser("~"), ".qtisas-test", "reports")
 CACHE_RE = re.compile(r"AI cache: (\d+) of (\d+) prompt tokens read from the cache")
@@ -94,12 +100,23 @@ def fmt_m(n):
 
 def main(argv=None):
     p = argparse.ArgumentParser(description="Statistics of qtisas_benchmark.py runs, compared label by label.")
-    p.add_argument("labels", nargs="+", help="label prefixes, one group each")
+    p.add_argument("labels", nargs="*", help="label prefixes, one group each")
+    p.add_argument("--failures", nargs="?", const="", help="failure signatures (containing TEXT), with counts")
+    p.add_argument("--item", help='with --failures: one item, e.g. "L2·5" or "ASCII1D·3"')
+    p.add_argument("--since", default="", help="with --failures: runs from this date on (YYYYMMDD)")
+    p.add_argument("--rebuild-failures", action="store_true", help="rebuild failures.jsonl from every report")
     p.add_argument("--reports", default=DEFAULT_REPORTS)
     p.add_argument("--cached-price", type=float, default=0.1,
                    help="price of a cached prompt token relative to an uncached one (default 0.1)")
     p.add_argument("--items", action="store_true", help="also list every failed item of every run")
     args = p.parse_args(argv)
+    if args.rebuild_failures:
+        print("failures.jsonl: %d lost items" % benchmark_dossier.rebuild_failures(args.reports))
+        return 0
+    if args.failures is not None:
+        return failures_table(args)
+    if not args.labels:
+        p.error("give label prefixes, --failures or --rebuild-failures")
 
     groups = load_runs(args.reports, args.labels)
     rows = []  # (label, lane, rounds)
@@ -201,6 +218,37 @@ def main(argv=None):
         print("\n## Warnings\n")
         for w in warnings:
             print("- " + w)
+    return 0
+
+
+def model_name(record):
+    """A short name for who answered: "01 - MiniMax-M2.7 - our best ..." -> "MiniMax-M2.7"; else the preset."""
+    parts = [p.strip() for p in (record.get("model") or "").split(" - ") if p.strip()]
+    if len(parts) > 1:
+        return parts[1][:28]
+    return (parts[0] if parts else preset_base(record.get("preset")))[:28]
+
+
+def failures_table(args):
+    """Each failure signature with how often, where and with which models it occurred."""
+    records = [r for r in benchmark_dossier.load_failures(args.reports)
+               if args.failures.lower() in (r["signature"] + " " + r["key"]).lower()
+               and (not args.item or r["key"] == args.item) and (r.get("date") or "") >= args.since]
+    if not records:
+        print("no failure matches")
+        return 1
+    groups = defaultdict(list)
+    for r in records:
+        groups[r["signature"]].append(r)
+    print("| Signature | Times | Items | Models | First | Last |")
+    print("|---|---|---|---|---|---|")
+    for sig, rs in sorted(groups.items(), key=lambda kv: -len(kv[1])):
+        items = sorted({r["key"] for r in rs})
+        models = sorted({model_name(r) for r in rs})
+        dates = sorted(r.get("date") or "" for r in rs)
+        print("| %s | %d | %s | %s | %s | %s |" % (sig.replace("|", "/"), len(rs), ", ".join(items[:6]) +
+                                                 (" …" if len(items) > 6 else ""), ", ".join(models),
+                                                 dates[0][:8], dates[-1][:8]))
     return 0
 
 

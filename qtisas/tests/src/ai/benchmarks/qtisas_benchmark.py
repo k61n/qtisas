@@ -47,6 +47,9 @@ sys.dont_write_bytecode = True  # no __pycache__ next to the scripts
 sys.path.insert(0, os.path.join(QTISAS, "python", "server"))
 import qtisas_send  # noqa: E402
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import benchmark_dossier  # noqa: E402
+
 INSTANCE = os.path.join(QTISAS, "tests", "src", "server", "qtisas_test_instance.py")
 DEFAULT_REPORTS = os.path.join(os.path.expanduser("~"), ".qtisas-test", "reports")
 R_LINE_RE = re.compile(r"^R\d+:.*$", re.MULTILINE)  # as qtisas_server.py finds them
@@ -502,9 +505,14 @@ def main(argv=None):
                "calls": ai_calls, "callEfficiency": call_efficiency,
                "label": args.label, "visible": args.visible, **probed,
                **run_identity(args.app, args.reports, preset, probed["probe_model"])}
+    # the story of every lost item, from the log: last script, errors, blocks, repairs, doc topics, calls
+    lost = {str(n): d for n, d in benchmark_dossier.dossiers(base + ".log", rows).items()}
     with open(base + ".json", "w", encoding="utf-8") as f:
-        json.dump({"summary": summary, "ai_config": ai_config, "items": rows, "result": result}, f, indent=1,
-                  ensure_ascii=False)
+        json.dump({"summary": summary, "ai_config": ai_config, "items": rows, "dossiers": lost, "result": result}, f,
+                  indent=1, ensure_ascii=False)
+    with open(os.path.join(args.reports, "failures.jsonl.lock"), "w") as lock:  # lanes append one at a time
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        benchmark_dossier.append_failures(args.reports, base + ".json")
     history = os.path.join(args.reports, "history.csv")
     with open(history + ".lock", "w") as lock:  # read and rewritten as a whole: one lane at a time
         fcntl.flock(lock, fcntl.LOCK_EX)
@@ -524,8 +532,17 @@ def main(argv=None):
              (" · server check %s s%s" % (probed["probe_seconds"], ", answered by " + probed["probe_model"]
                                           if probed["probe_model"] and probed["probe_model"] != model else "")
               if probed["probe_seconds"] is not None else "")))
+    # "seen before?": the same failure signature in other runs (failures.jsonl)
+    seen, this = {}, {}
+    for rec in benchmark_dossier.load_failures(args.reports):
+        if rec.get("report") == os.path.basename(base + ".json"):
+            this[rec["item"]] = rec["signature"]
+        else:
+            seen[rec["signature"]] = seen.get(rec["signature"], 0) + 1
     for r in rows:
         note = "" if r["verdict"] == "ok" else "expected %s; %s" % (r["expected"], r["hint"])
+        if r["item"] in this:
+            note += " [%s — seen %d× before]" % (this[r["item"]][:60], seen.get(this[r["item"]], 0))
         if r["verdict"].startswith("unverified"):
             note = "the state after the list: %s" % (r["verified"] or "nothing reported")
         print("  %2d %-22s %-24s %s" % (r["item"], r["verdict"], r["got"][:24] or "—", note))
