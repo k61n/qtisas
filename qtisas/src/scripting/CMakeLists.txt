@@ -36,6 +36,7 @@ if(WITH_PYTHON)
         ${CMAKE_BINARY_DIR}/sip/qti/sipqtiAnova.cpp
         ${CMAKE_BINARY_DIR}/sip/qti/sipqtiApplicationWindow.cpp
         ${CMAKE_BINARY_DIR}/sip/qti/sipqtiArrowMarker.cpp
+        ${CMAKE_BINARY_DIR}/sip/qti/sipqtiascii1d18.cpp
         ${CMAKE_BINARY_DIR}/sip/qti/sipqtiBoxCurve.cpp
         ${CMAKE_BINARY_DIR}/sip/qti/sipqtiChiSquareTest.cpp
         ${CMAKE_BINARY_DIR}/sip/qti/sipqticmodule.cpp

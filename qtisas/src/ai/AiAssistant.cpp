@@ -604,6 +604,12 @@ static const QHash<QString, QRegularExpression> topicSynonymRe = {
     // own regex deliberately excludes "fit function" (see above).
     {"compile", QRegularExpression(R"(\bcompil(?:e|ed|ing|er)\b|\bfit\s+functions?\b)",
                                    QRegularExpression::CaseInsensitiveOption)},
+    // 1D SAS data in or out (the user's routing rule, 2026-10-19): ASCII.SANS.1D and the words a request names such
+    // data by — and the processing only that tool has (presentations, resolution sigma)
+    {"ascii1d", QRegularExpression(R"(\bascii(?:1d)?\b|\b(?:ascii\.)?sans\.1d\b|\bsans\b|\bsaxs\b|\bsals\b|\bsas\b|)"
+                                   R"(\b1d\b|\bradial(?:ly)?\s+averag|\bcansas\b|\bnist\b|\bgrasp\b|\.rad\b|)"
+                                   R"(\bkratky\b|\bguinier\b|\bporod\b|\bresolution\s+sigma\b)",
+                                   QRegularExpression::CaseInsensitiveOption)},
 };
 
 // The user's request without requestSuffix()'s transport guidance (either mode's), for everything that inspects what
@@ -757,6 +763,14 @@ static bool inCreationClause(const QString &text, qsizetype nameStart, qsizetype
         boundaryEnd = boundaryIt.next().capturedEnd(0);
     const QString lookback = before.mid(boundaryEnd); // whole clause when there is no boundary
     if (creationVerbRe.match(lookback).hasMatch())
+        return true;
+    // The name a result is given: "Import the ascii file header.dat ... as the table \"HeaderData\"", "save it as
+    // \"Out\"". Confirmed live (benchmark ASCII1D, item 2): HeaderData was checked as an existing input, came back
+    // missing, and the item was refused although the request named what to make.
+    static const QRegularExpression asTargetRe(
+        R"(\bas\s+(?:(?:the|a|an|new)\s+)*(?:(?:table|file|matrix|graph|note)\s+)?"?$)",
+        QRegularExpression::CaseInsensitiveOption);
+    if (asTargetRe.match(lookback).hasMatch())
         return true;
     // A conditional creation AFTER the name, in the same clause, makes it no input either.
     // Confirmed live: `write that line into table "Results": create it if it does not exist`

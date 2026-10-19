@@ -1,6 +1,7 @@
 
 set(SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/ascii1d18.cpp)
+    ${CMAKE_CURRENT_SOURCE_DIR}/ascii1d18.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ascii1d-python.cpp)
 
 set(HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/ascii1d18.h)

@@ -56,7 +56,7 @@ def import_to_global(modname, attrs=None, math=False):
 if __name__ == '__main__':
     # import selected methods of ApplicationWindow into the global namespace
     appImports = [
-        'activateWindow', 'activeFolder', 'addCustomAction', 'addFolder',
+        'activateWindow', 'activeFolder', 'addCustomAction', 'addFolder', 'Ascii1d',
         'appendProject', 'autoArrangeLayers',
         'autoUpdateTableValues', 'changeFolder', 'clone', 'closeProject', 'closeWindow',
         'colorIndex', 'colorNames', 'columnsList', 'Compiler', 'copyFolder',

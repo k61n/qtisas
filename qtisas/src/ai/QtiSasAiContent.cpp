@@ -598,7 +598,10 @@ QString QtiSasAiContent::selfReviewChecklist(const QStringList &docTopics, bool 
 
 QString QtiSasAiContent::docTopicIndex() const
 {
-    return "compile — create, edit, or modify fit functions, new OR existing (Compiler class: c = Compiler). FIF "
+    return "ascii1d — import/export of 1D SAS data (Ascii1d: ASCII.SANS.1D): SANS/SAXS/SALS curves, radially "
+           "averaged datasets, ascii/.dat/.RAD/canSAS/NIST/GRASP files; file to table, table to file, file to file, "
+           "table to table; removing points, SAS presentations (Kratky, Guinier...), resolution sigma, binning.\n"
+           "compile — create, edit, or modify fit functions, new OR existing (Compiler class: c = Compiler). FIF "
            "files, C++ code generation, parameters/limits, after-fit hooks.\n"
            "fittable — for EXISTING compiled functions ONLY, never compiles new ones: CONFIGURE first, then "
            "RUN the fit (Fittable class: f = Fittable). Parameters, weighting, resolution, polydispersity, "
@@ -631,7 +634,7 @@ QString QtiSasAiContent::docTopicIndex() const
 
 QStringList QtiSasAiContent::knownDocTopics() const
 {
-    return {"table", "matrix", "graph", "graph3d", "note", "compile", "fittable"};
+    return {"table", "matrix", "graph", "graph3d", "note", "compile", "fittable", "ascii1d"};
 }
 
 QStringList QtiSasAiContent::baselineDocTopics() const
@@ -4354,11 +4357,21 @@ QStringList QtiSasAiContent::requestedResultValues(const QString &requestText)
                                                  QRegularExpression::CaseInsensitiveOption);
     static const QRegularExpression hasCoordinateRe(R"(\b(?:row|column|col)\s+\d)",
                                                     QRegularExpression::CaseInsensitiveOption);
+    // "the first and last Q" is two values of one noun: "the first" alone named none (and read as an order, "the
+    // ... first"), so the model printed only one Q — confirmed live, benchmark ASCII1D items 3 and 8: "R3: 15 0.075"
+    // for the rows, the first and the last Q
+    static const QRegularExpression bareOrdinalRe(
+        R"(^(?:the\s+)?(?:first|last|smallest|largest|lowest|highest|minimum|maximum|min|max)$)",
+        QRegularExpression::CaseInsensitiveOption);
+    static const QRegularExpression leadingOrdinalRe(
+        R"(^(?:the\s+)?(?:first|last|smallest|largest|lowest|highest|minimum|maximum|min|max)\s+)",
+        QRegularExpression::CaseInsensitiveOption);
     QStringList parts;
     for (QString part : cut.split(splitRe))
     {
         part = part.simplified();
-        if (part.isEmpty() || eachRe.match(part).hasMatch() || orderRe.match(part).hasMatch())
+        if (part.isEmpty() || eachRe.match(part).hasMatch() ||
+            (orderRe.match(part).hasMatch() && !bareOrdinalRe.match(part).hasMatch()))
             continue;
         if (!parts.isEmpty() && coordinateRe.match(part).hasMatch() && hasCoordinateRe.match(parts.last()).hasMatch())
         {
@@ -4367,6 +4380,13 @@ QStringList QtiSasAiContent::requestedResultValues(const QString &requestText)
         }
         parts << part;
     }
+    for (qsizetype i = parts.size() - 2; i >= 0; --i)
+        if (bareOrdinalRe.match(parts.at(i)).hasMatch())
+        {
+            const QString noun = QString(parts.at(i + 1)).remove(leadingOrdinalRe);
+            if (noun != parts.at(i + 1))
+                parts[i] += " " + noun;
+        }
     return parts;
 }
 

@@ -81,9 +81,49 @@ public:
     bool plotTable(Graph *g,Table *table, QString tableName);
     QString generateTableName(QString fn);
     QString generateTableName(QString fn,   QString prefix,  int findNumberIndex, bool indexing, bool tableOutput);
-    
- public slots:
-    
+
+    //+++ Python API (ascii1d-python.cpp): the same processing as "Process Data", driven by a script
+    void reset();
+    bool setFormat(const QString &format);
+    QString format() const;
+    bool setHeader(const QString &linesOrMarker);
+    QString header() const;
+    bool setColumns(int n);
+    int columns() const;
+    void setInputFolder(const QString &folder);
+    QString inputFolder() const;
+    void setOutputFolder(const QString &folder);
+    QString outputFolder() const;
+    void setExtension(const QString &extension);
+    QString extension() const;
+    void setIndexing(bool on);
+    void setAutoPrefix(bool on);
+    bool setNameNumber(int index);
+    bool setRemovePoints(int first, int last, int from, int to, bool negative);
+    bool setPresentation(const QString &to, const QString &from);
+    QStringList presentations() const;
+    bool setMath(const QString &op, double factor, const QString &op2, double factor2);
+    bool setCalculator(const QString &op, const QString &column);
+    bool setBinning(int every, double ratio);
+    void setResolution(bool on);
+    bool setResolutionGeometry(double collimation, double detector, double pixel, double sampleApertureW,
+                               double sampleApertureH, double collimationApertureW, double collimationApertureH,
+                               double lambda, double deltaLambda);
+    void setResolutionLenses(bool on, double focus);
+    double resolutionSigma(double q);
+    void setPlot(bool on, bool xError, bool yError);
+    QStringList importFiles(const QStringList &files, const QStringList &names);
+    QStringList convertFiles(const QStringList &files, const QStringList &names);
+    QStringList exportTables(const QStringList &tables, const QStringList &names);
+    QStringList convertTables(const QStringList &tables, const QStringList &names);
+    QStringList formats() const;
+    bool loadFormat(const QString &name);
+    bool saveFormat(const QString &name);
+    QString lastError() const;
+    QStringList lastMessages() const;
+
+  public slots:
+
     void loadASCIIall();
     
     //+++ path
@@ -121,6 +161,18 @@ public:
     void fastPlot();
 
   private:
+    // a warning: a message box in the GUI, collected for the caller in a scripted run (no modal dialog)
+    void warn(const QString &text);
+    QStringList runScripted(int source, int destination, const QStringList &sources, const QStringList &names);
+    void updateActions();
+
+    bool m_scripted = false;   // a Python API run: warnings are collected, not shown
+    QStringList m_messages;    // the warnings of the last scripted run
+    QStringList m_outputNames; // names a script gave the outputs, by source index ("" = the default name)
+    QStringList m_madeNames;   // the tables or files the last run made
+    int m_currentSource = -1;  // the source being saved, for m_outputNames
+    QString m_lastError;
+
     double uiToDouble(const QString &text) const;
     QString uiToC(const QString &text) const;
     QString cToUi(const QString &text) const;

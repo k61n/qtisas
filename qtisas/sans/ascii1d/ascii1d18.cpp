@@ -598,7 +598,7 @@ void ascii1d18::readCurrentASCII1D()
     if ( !f.open( QIODevice::ReadOnly ) )
     {
         //*************************************Log Window Output
-        QMessageBox::warning(this,"Could not read file", tr("QtiSAS::ASCII.SANS.1D"));
+        warn("Could not read the format file " + f.fileName());
         //*************************************Log Window Output
         return;
     }
@@ -832,7 +832,7 @@ void ascii1d18::saveCurrentASCII1D(QString fileName)
     if ( !f.open( QIODevice::WriteOnly ) )
     {
         //*************************************Log Window Output
-        QMessageBox::warning(this,"Could not write to file", tr("QtiSAS::ASCII.SANS.1D"));
+        warn("Could not write the format file " + f.fileName());
         //*************************************Log Window Output
         return;
     }
@@ -1110,6 +1110,8 @@ void ascii1d18::loadASCIIfromFiles(QStringList fileNames, bool fastPlotYN)
     if (plotData)
     {
         plotData=app()->findActiveGraph(g);
+        if (!plotData && m_scripted) // the GUI keeps its quiet behaviour
+            warn("Plot [in active Graph]: no active graph — nothing was plotted");
         bool maximaizedYN=false;
         MdiSubWindow *ww;
         
@@ -1142,8 +1144,7 @@ void ascii1d18::loadASCIIfromFiles(QStringList fileNames, bool fastPlotYN)
                 if (Nfinal == 0)
                 {
                     // only this file is skipped: the remaining ones are still processed
-                    QMessageBox::warning(this, tr("QtiSAS::ASCII.SANS.1D"),
-                                         "File " + fileNames[i] + " contains no data, and is skipped");
+                    warn("File " + fileNames[i] + " contains no data, and is skipped");
                     gsl_matrix_free(data);
                     continue;
                 }
@@ -1172,7 +1173,8 @@ void ascii1d18::loadASCIIfromFiles(QStringList fileNames, bool fastPlotYN)
             // save ascii as ..
             currentName=fileNames[i];
             if (fastPlotYN && checkBoxFastPlot->isChecked()) currentName="Table-Active";
-            
+
+            m_currentSource = i;
             dataMatrixSave(currentName,data,N,Nfinal, sigmaExist,w );
             
             if (plotData)
@@ -1244,6 +1246,8 @@ void ascii1d18::loadASCIIfromTables(QStringList tableNames, bool fastPlotYN)
     if (plotData)
     {
         plotData=app()->findActiveGraph(g);
+        if (!plotData && m_scripted) // the GUI keeps its quiet behaviour
+            warn("Plot [in active Graph]: no active graph — nothing was plotted");
         bool maximaizedYN=false;
         MdiSubWindow *ww;
         
@@ -1281,8 +1285,7 @@ void ascii1d18::loadASCIIfromTables(QStringList tableNames, bool fastPlotYN)
                 if (Nfinal == 0)
                 {
                     // only this table is skipped: the remaining ones are still processed
-                    QMessageBox::warning(this, tr("QtiSAS::ASCII.SANS.1D"),
-                                         "Table " + tableNames[i] + " contains no data, and is skipped");
+                    warn("Table " + tableNames[i] + " contains no data, and is skipped");
                     gsl_matrix_free(data);
                     continue;
                 }
@@ -1311,7 +1314,8 @@ void ascii1d18::loadASCIIfromTables(QStringList tableNames, bool fastPlotYN)
             // save ascii as ...
             currentName=tableNames[i];
             if (fastPlotYN && checkBoxFastPlot->isChecked()) currentName="Table-Active";
-            
+
+            m_currentSource = i;
             dataMatrixSave(currentName,data,N,Nfinal, sigmaExist,w );
             
             if (plotData)
@@ -1392,7 +1396,7 @@ bool ascii1d18::loadASCIIfromFile(const QString fn, gsl_matrix* &data, int &N, b
     
     if (!f.open(QIODevice::ReadOnly))
     {
-        QMessageBox::warning(this,"File "+fn+" could not be opened, and was skipped", tr("QtiSAS::ASCII.SANS.1D"));
+        warn("File " + fn + " could not be opened, and was skipped");
         return false;
     }
     
@@ -1515,7 +1519,7 @@ bool ascii1d18::loadASCIIfromFile(const QString fn, gsl_matrix* &data, int &N, b
     
     if (N==0)
     {
-        QMessageBox::warning(this,"File "+fn+" contains no data, and is skipped", tr("QtiSAS::ASCii.SANS.1D"));
+        warn("File " + fn + " contains no data, and is skipped");
         return false;
     }
     
@@ -2261,8 +2265,15 @@ void ascii1d18::columnCalculation(gsl_matrix *&data, int N, int Nfinal, const QS
         int colIndex=w->colIndex(colShortName);
         int rowNumber=w->numRows();
         if (Nfinal != rowNumber)
+        {
+            // the dataset is kept, not calculated: say so (a script got the unchanged I without a word)
+            warn(QString("1D calculator not applied: %1 has %2 rows, the dataset %3 points")
+                     .arg(columnName)
+                     .arg(rowNumber)
+                     .arg(Nfinal));
             return;
-        
+        }
+
         double n1, n2;
         int j=0;
         for (int i = 0; i < N; i++)
@@ -2451,7 +2462,12 @@ void ascii1d18::dataMatrixSave(QString &fn, gsl_matrix* data, int N, int Nfinal,
     QFileInfo fi( fn );
     static const QRegularExpression re("[^a-zA-Z\\d\\s]");
     QString name = generateTableName(fi.baseName().replace(re, "-").remove(" "));
-    
+    // a name the script gave this output replaces the GUI's name structure (prefix, number, indexing, extension)
+    const bool givenName = m_currentSource >= 0 && m_currentSource < m_outputNames.size() &&
+                           !m_outputNames.at(m_currentSource).trimmed().isEmpty();
+    if (givenName)
+        name = m_outputNames.at(m_currentSource).trimmed();
+
     bool calculateReso=checkBoxReso->isChecked();
     
     QString label="QI";
@@ -2462,8 +2478,8 @@ void ascii1d18::dataMatrixSave(QString &fn, gsl_matrix* data, int N, int Nfinal,
     if (comboBoxDestination->currentText()=="Table")
     {
         //+++ create table
-        
-        bool indexing=checkBoxIndexing->isChecked();
+
+        bool indexing = checkBoxIndexing->isChecked() && !givenName;
         if(fn=="Table-Active")
         {
             name="Table-Active";
@@ -2536,16 +2552,30 @@ void ascii1d18::dataMatrixSave(QString &fn, gsl_matrix* data, int N, int Nfinal,
         w->adjustColumnsWidth(false);
         w->blockSignals(false);
         w->notifyChanges();
+        if (m_scripted)
+            m_madeNames << w->name();
     }
     else
     {
-        QFile f( lineEditPathOut->text()+"/"+name);
-        
-        
+        // a given name without an extension gets the extension setting (as a default name does); a given name with a
+        // folder is used as it is, otherwise the file goes to the output folder. Confirmed live (benchmark ASCII1D
+        // item 6): exportTables("plain", ["plain"]) with extension RAD wrote a file "plain" with no extension.
+        if (givenName && QFileInfo(name).suffix().isEmpty())
+        {
+            QString ext = lineEditExt->text().trimmed().remove(" ");
+            if (ext.startsWith("."))
+                ext = ext.mid(1);
+            name += "." + (ext.isEmpty() ? QString("RAD") : ext);
+        }
+        QString path = name.contains('/') ? name : lineEditPathOut->text() + "/" + name;
+        if (path.startsWith("~/"))
+            path = QDir::homePath() + path.mid(1);
+        QFile f(path);
+
         if ( !f.open( QIODevice::WriteOnly ) )
         {
             //*************************************Log Window Output
-            QMessageBox::warning(this,"Could not write to file::" +  fn, tr("QtiSAS::ASCII.SANS.1D"));
+            warn("Could not write to file " + f.fileName());
             //*************************************Log Window Output
             return;
         }
@@ -2582,7 +2612,8 @@ void ascii1d18::dataMatrixSave(QString &fn, gsl_matrix* data, int N, int Nfinal,
                 stream << "\n";
             }
         f.close();
-        
+        if (m_scripted)
+            m_madeNames << QFileInfo(f.fileName()).absoluteFilePath();
     }
     fn=name;
 }
@@ -2755,8 +2786,9 @@ QString ascii1d18::generateTableName(QString fn,   QString prefix,  int findNumb
         {
             int fff=0;
             bool fileExist=true;
-            QString path=lineEditPath->text();
-            
+            // the files are written to the output folder: an existing one there gets the next index
+            QString path = lineEditPathOut->text() + "/";
+
             while (fileExist)
             {
                 if ( QFile::exists(path+format+QString::number(fff)+ext) ) fff++;
@@ -2814,7 +2846,7 @@ bool ascii1d18::loadASCIIfromTable(const QString table, gsl_matrix* &data, int &
     
     if (N==0)
     {
-        QMessageBox::warning(this, tr("QtiSAS::ASCII.SANS.1D") ,"File "+table+" contains no data, and is skipped");
+        warn("Table " + table + " contains no data, and is skipped");
         return false;
     }
     

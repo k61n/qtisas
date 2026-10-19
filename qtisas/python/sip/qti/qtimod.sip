@@ -3651,6 +3651,229 @@ public:
     ) /PyName=infoExtractor/;
 };
 
+// ASCII.SANS.1D: import and export of radially averaged 1D SAS data (Q, I, dI, sigma) — the "Process Data" button in
+// four directions, the interface's options as setters. Options stay set until changed or reset(). A run returns what
+// it made (table names, or file paths); it raises ValueError when it made nothing, and prints the datasets it skipped.
+class ascii1d18 : public QWidget
+{
+%TypeHeaderCode
+#include "ascii1d18.h"
+%End
+
+%TypeCode
+// one name or a list of names: "a.dat", ["a.dat", "b.dat"], ("a.dat",) — None for none
+static bool ascii1dStrings(PyObject *obj, QStringList *out, const char *call, const char *what)
+{
+    if (!obj || obj == Py_None)
+        return true;
+    if (PyUnicode_Check(obj)) {
+        *out << QString::fromUtf8(PyUnicode_AsUTF8(obj));
+        return true;
+    }
+    PyObject *seq = PySequence_Check(obj) ? PySequence_Fast(obj, "") : nullptr;
+    if (!seq) {
+        PyErr_Format(PyExc_TypeError, "%s: %s must be a string or a list of strings", call, what);
+        return false;
+    }
+    const Py_ssize_t n = PySequence_Fast_GET_SIZE(seq);
+    for (Py_ssize_t i = 0; i < n; i++) {
+        PyObject *item = PySequence_Fast_GET_ITEM(seq, i);
+        if (!PyUnicode_Check(item)) {
+            Py_DECREF(seq);
+            PyErr_Format(PyExc_TypeError, "%s: %s must be a string or a list of strings", call, what);
+            return false;
+        }
+        *out << QString::fromUtf8(PyUnicode_AsUTF8(item));
+    }
+    Py_DECREF(seq);
+    return true;
+}
+%End
+
+public:
+    ascii1d18(QWidget *parent = 0);
+
+    void reset();
+    bool setFormat(const QString &format);
+%MethodCode
+    sipRes = sipCpp->setFormat(*a0);
+    if (!sipRes) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
+    QString format() const;
+    bool setHeader(const QString &linesOrMarker);
+%MethodCode
+    sipRes = sipCpp->setHeader(*a0);
+    if (!sipRes) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
+    QString header() const;
+    bool setColumns(int n);
+%MethodCode
+    sipRes = sipCpp->setColumns(a0);
+    if (!sipRes) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
+    int columns() const;
+    void setInputFolder(const QString &folder);
+    QString inputFolder() const;
+    void setOutputFolder(const QString &folder);
+    QString outputFolder() const;
+    void setExtension(const QString &extension);
+    QString extension() const;
+    void setIndexing(bool on);
+    void setAutoPrefix(bool on);
+    bool setNameNumber(int index);
+%MethodCode
+    sipRes = sipCpp->setNameNumber(a0);
+    if (!sipRes) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
+    bool setRemovePoints(int first = 0, int last = 0, int from = 0, int to = 0, bool negative = false);
+%MethodCode
+    sipRes = sipCpp->setRemovePoints(a0, a1, a2, a3, a4);
+    if (!sipRes) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
+    bool setPresentation(const QString &to, const QString &from = "QI");
+%MethodCode
+    sipRes = sipCpp->setPresentation(*a0, *a1);
+    if (!sipRes) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
+    QStringList presentations() const;
+    bool setMath(const QString &op, double factor = 1, const QString &op2 = QString(), double factor2 = 1);
+%MethodCode
+    sipRes = sipCpp->setMath(*a0, a1, *a2, a3);
+    if (!sipRes) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
+    bool setCalculator(const QString &op, const QString &column = QString());
+%MethodCode
+    sipRes = sipCpp->setCalculator(*a0, *a1);
+    if (!sipRes) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
+    bool setBinning(int every = 1, double ratio = 1);
+%MethodCode
+    sipRes = sipCpp->setBinning(a0, a1);
+    if (!sipRes) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
+    void setResolution(bool on);
+    bool setResolutionGeometry(double collimation, double detector, double pixel = 0.525, double sampleApertureW = 10, double sampleApertureH = 10, double collimationApertureW = 30, double collimationApertureH = 30, double lambda = 6, double deltaLambda = 0.1);
+%MethodCode
+    sipRes = sipCpp->setResolutionGeometry(a0, a1, a2, a3, a4, a5, a6, a7, a8);
+    if (!sipRes) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
+    void setResolutionLenses(bool on, double focus = 0);
+    double resolutionSigma(double q);
+    void setPlot(bool on, bool xError = false, bool yError = true);
+    QStringList importFiles(SIP_PYOBJECT sources, SIP_PYOBJECT names = Py_None);
+%MethodCode
+    QStringList sources, names;
+    if (!ascii1dStrings(a0, &sources, "importFiles", "sources") || !ascii1dStrings(a1, &names, "importFiles", "names")) {
+        sipError = sipErrorFail;
+    } else {
+        sipRes = new QStringList(sipCpp->importFiles(sources, names));
+        if (sipRes->isEmpty()) {
+            PyErr_SetString(PyExc_ValueError, ("importFiles: " + sipCpp->lastError()).toUtf8().constData());
+            sipError = sipErrorFail;
+        } else {
+            for (const QString &m : sipCpp->lastMessages())
+                PySys_WriteStdout("%s\n", ("importFiles: " + m).toUtf8().constData());
+        }
+    }
+%End
+    QStringList convertFiles(SIP_PYOBJECT sources, SIP_PYOBJECT names = Py_None);
+%MethodCode
+    QStringList sources, names;
+    if (!ascii1dStrings(a0, &sources, "convertFiles", "sources") || !ascii1dStrings(a1, &names, "convertFiles", "names")) {
+        sipError = sipErrorFail;
+    } else {
+        sipRes = new QStringList(sipCpp->convertFiles(sources, names));
+        if (sipRes->isEmpty()) {
+            PyErr_SetString(PyExc_ValueError, ("convertFiles: " + sipCpp->lastError()).toUtf8().constData());
+            sipError = sipErrorFail;
+        } else {
+            for (const QString &m : sipCpp->lastMessages())
+                PySys_WriteStdout("%s\n", ("convertFiles: " + m).toUtf8().constData());
+        }
+    }
+%End
+    QStringList exportTables(SIP_PYOBJECT sources, SIP_PYOBJECT names = Py_None);
+%MethodCode
+    QStringList sources, names;
+    if (!ascii1dStrings(a0, &sources, "exportTables", "sources") || !ascii1dStrings(a1, &names, "exportTables", "names")) {
+        sipError = sipErrorFail;
+    } else {
+        sipRes = new QStringList(sipCpp->exportTables(sources, names));
+        if (sipRes->isEmpty()) {
+            PyErr_SetString(PyExc_ValueError, ("exportTables: " + sipCpp->lastError()).toUtf8().constData());
+            sipError = sipErrorFail;
+        } else {
+            for (const QString &m : sipCpp->lastMessages())
+                PySys_WriteStdout("%s\n", ("exportTables: " + m).toUtf8().constData());
+        }
+    }
+%End
+    QStringList convertTables(SIP_PYOBJECT sources, SIP_PYOBJECT names = Py_None);
+%MethodCode
+    QStringList sources, names;
+    if (!ascii1dStrings(a0, &sources, "convertTables", "sources") || !ascii1dStrings(a1, &names, "convertTables", "names")) {
+        sipError = sipErrorFail;
+    } else {
+        sipRes = new QStringList(sipCpp->convertTables(sources, names));
+        if (sipRes->isEmpty()) {
+            PyErr_SetString(PyExc_ValueError, ("convertTables: " + sipCpp->lastError()).toUtf8().constData());
+            sipError = sipErrorFail;
+        } else {
+            for (const QString &m : sipCpp->lastMessages())
+                PySys_WriteStdout("%s\n", ("convertTables: " + m).toUtf8().constData());
+        }
+    }
+%End
+    QStringList formats() const;
+    bool loadFormat(const QString &name);
+%MethodCode
+    sipRes = sipCpp->loadFormat(*a0);
+    if (!sipRes) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
+    bool saveFormat(const QString &name);
+%MethodCode
+    sipRes = sipCpp->saveFormat(*a0);
+    if (!sipRes) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
+    QStringList lastMessages() const;
+};
+
 
 class ApplicationWindow: QMainWindow
 {
@@ -3675,6 +3898,7 @@ public:
   compile18	*compileWidget /PyName=Compiler/;
   fittable18	*fittableWidget /PyName=Fittable/;
   dan18 *danWidget /PyName=Dan/;
+  ascii1d18 *ascii1dWidget /PyName=Ascii1d/;
 
   Table* newTable();
   Table* currentTable();
