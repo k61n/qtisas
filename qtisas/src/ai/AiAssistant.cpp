@@ -618,6 +618,18 @@ QString withoutRequestSuffix(const QString &text)
     return text;
 }
 
+static const QString listInstructionMarker = QStringLiteral("\n\nInstruction for every item of this list: ");
+
+// Only what the request itself asks: withoutRequestSuffix() and, for a LIST item, without the list's instruction
+// line. Confirmed live (LIST SPLIT): the plan checks read the instruction's "fit setup" as a requested fit and the
+// suffix's "write/run a script" as scripts to write into note tabs, on items asking neither.
+QString requestOwnText(const QString &text)
+{
+    const QString request = withoutRequestSuffix(text);
+    const qsizetype pos = request.indexOf(listInstructionMarker);
+    return pos >= 0 ? request.left(pos) : request;
+}
+
 static QString topicAnalysisText(const QString &text)
 {
     return withoutRequestSuffix(text);
@@ -3060,13 +3072,14 @@ void AiAssistant::handleSplitPlanResponse(const QString &code)
                           " part(s) needing no docs beyond the part before into that part — \"" +
                           mergedSameDocs.join("\", \"") + "\".");
     }
+    const QString requestText = requestOwnText(originalRequestText);
     const QList<int> missingNames = splitPartsMissingCreationName(splitPlan);
-    const QStringList missingActions = splitPlanMissingRequestedActions(originalRequestText, splitPlan);
+    const QStringList missingActions = splitPlanMissingRequestedActions(requestText, splitPlan);
     const QList<int> unnecessaryFragments = splitPlanUnnecessaryFragments(splitPlan);
-    const QList<int> unrequestedActions = splitPlanUnrequestedActions(originalRequestText, splitPlan);
+    const QList<int> unrequestedActions = splitPlanUnrequestedActions(requestText, splitPlan);
     const QList<int> adjacentSameDocs = splitPlanAdjacentSameDocs(splitPlan);
-    const QList<int> unnecessaryDataTables = splitPlanUnnecessaryDataTable(originalRequestText, splitPlan);
-    const QStringList droppedDetails = splitPlanDroppedParentheticalDetail(originalRequestText, splitPlan);
+    const QList<int> unnecessaryDataTables = splitPlanUnnecessaryDataTable(requestText, splitPlan);
+    const QStringList droppedDetails = splitPlanDroppedParentheticalDetail(requestText, splitPlan);
     const QList<int> compileOnlyFittable = splitPlanCompileOnlyHasFittable(splitPlan);
     const QList<int> compareOnlyForward = splitPlanCompareOnlyMergesForward(splitPlan);
     const bool planHasFixableIssues =
@@ -3793,7 +3806,7 @@ QStringList AiAssistant::itemsWithInstruction(const QStringList &items, const QS
         return items;
     QStringList result;
     for (const QString &item : items)
-        result << item + "\n\nInstruction for every item of this list: " + instruction.trimmed();
+        result << item + listInstructionMarker + instruction.trimmed();
     return result;
 }
 

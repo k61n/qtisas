@@ -132,6 +132,7 @@ QList<QPair<QString, QString>> extractExistingEntityNames(const QString &request
 // names it treats as inputs, whatever its wording. See AiAssistant::existingInputNamesNote().
 QStringList inputNamesInRequest(const QString &requestText);
 QString withoutRequestSuffix(const QString &text);
+QString requestOwnText(const QString &text);
 
 // Returns the subset of `checkedNames` (name, knownKind-or-empty pairs) found missing — trusting
 // only the relevant labeled line when the kind is known, falling back to the VERDICT+safety-net
