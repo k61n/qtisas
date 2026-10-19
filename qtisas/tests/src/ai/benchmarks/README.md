@@ -119,7 +119,11 @@ each `(reported)` when the assistant itself said the item failed, `(silent)` whe
 seconds) and one line in `history.csv` (markers, preset, model, score, silent, reported, seconds,
 scripts, tokens, calls, callEfficiency, `--label`). `calls` counts the model calls (one "AI: sending" line each);
 `callEfficiency` is the fewest calls the list could take (one per item) divided by `calls` — 1 means no extra call,
-and it tells two runs with the same score apart. The harness reads the `R<n>:` lines itself, so the items do not write a
+and it tells two runs with the same score apart. What the run ran with: `build` (git hash, `+` a hash of the
+uncommitted diff, the binary's time), `docs` (a hash of the app's doc copy; `docs_stale` when it differs from the
+source docs — `cmake .` missing), `model_changed` (the model that answered differs from the preset's last run, e.g.
+a provider alias moved to another model) and `lanes` (other harness runs at the same time — times are then not
+comparable); a model change or stale docs are also printed after the run. The harness reads the `R<n>:` lines itself, so the items do not write a
 results table (an earlier "Results" table instruction added an error-prone task to every item and was
 the main source of retries in one run).
 

@@ -276,6 +276,59 @@ def probe(ai_config, api_key, timeout):
         return time.monotonic() - start, "", "%s: %s" % (type(e).__name__, e)
 
 
+def files_hash(folder, patterns=("*.md", "*.pyi")):
+    """A short hash of the doc files in a folder (names and contents), "" when there are none."""
+    import hashlib
+    h = hashlib.sha1()
+    files = sorted(f for pattern in patterns for f in glob.glob(os.path.join(folder, pattern)))
+    for f in files:
+        h.update(os.path.basename(f).encode())
+        h.update(open(f, "rb").read())
+    return h.hexdigest()[:10] if files else ""
+
+
+def run_identity(app, reports, preset, answered):
+    """What this run ran with, for comparing runs: the build (git hash, a hash of the uncommitted diff, the binary's
+    time), the docs the app reads vs the source docs, a model change since this preset's last run, and the other lanes
+    running at the same time. Confirmed need (2026-10-19): BlaBlaDor's alias moved to another model between two runs
+    of one preset, and fixes landed mid-series so that one series mixed builds — both found only by hand."""
+    import hashlib
+    repo = os.path.dirname(QTISAS)
+
+    def git(*args):
+        r = subprocess.run(["git", "-C", repo, *args], capture_output=True, text=True)
+        return r.stdout if r.returncode == 0 else ""
+
+    build = git("rev-parse", "--short", "HEAD").strip()
+    diff = git("diff", "HEAD")
+    if diff:
+        build += "+" + hashlib.sha1(diff.encode()).hexdigest()[:6]
+    binary = app or os.path.join(repo, "bin", "qtisas.app", "Contents", "MacOS", "qtisas")
+    if os.path.exists(binary):
+        build += " " + datetime.datetime.fromtimestamp(os.path.getmtime(binary)).strftime("%Y-%m-%d %H:%M")
+    bundle = os.path.join(os.path.dirname(os.path.dirname(binary)), "Resources", "python", "doc")
+    docs, source = files_hash(bundle), files_hash(os.path.join(QTISAS, "python", "doc"))
+    model_changed = ""
+    history = os.path.join(reports, "history.csv")
+    base_preset = re.sub(r"(-docs-\w+|-bigmodel-\w+)+$", "", preset)  # the copies --docs/--bigmodel make
+    if answered and os.path.exists(history):
+        earlier = [row for row in csv.DictReader(open(history, encoding="utf-8"))
+                   if re.sub(r"(-docs-\w+|-bigmodel-\w+)+$", "", row.get("preset", "")) == base_preset
+                   and row.get("probe_model")]
+        if earlier and earlier[-1]["probe_model"] != answered:
+            model_changed = earlier[-1]["probe_model"] + " -> " + answered
+    ps = subprocess.run(["ps", "-ax", "-o", "pid=,command="], capture_output=True, text=True).stdout
+    lanes = 0  # other harness processes: a python whose script argument is this file (not a shell quoting it)
+    for line in ps.splitlines():
+        pid, _, command = line.strip().partition(" ")
+        argv = command.split()
+        if (int(pid) != os.getpid() and argv and os.path.basename(argv[0]).lower().startswith("python")
+                and any(a.endswith("qtisas_benchmark.py") for a in argv[1:3])):
+            lanes += 1
+    return {"build": build, "docs": docs, "docs_stale": bool(docs and source and docs != source),
+            "model_changed": model_changed, "lanes": lanes}
+
+
 LANE = []  # --instance/--home of this run, passed to every qtisas_test_instance.py call
 
 
@@ -447,7 +500,8 @@ def main(argv=None):
                "seconds": result.get("seconds"), "scripts": result.get("scripts"), "tokens": result.get("tokens"),
                "status": result.get("status"), "settings": " ".join(args.set), "app": args.app or "",
                "calls": ai_calls, "callEfficiency": call_efficiency,
-               "label": args.label, "visible": args.visible, **probed}
+               "label": args.label, "visible": args.visible, **probed,
+               **run_identity(args.app, args.reports, preset, probed["probe_model"])}
     with open(base + ".json", "w", encoding="utf-8") as f:
         json.dump({"summary": summary, "ai_config": ai_config, "items": rows, "result": result}, f, indent=1,
                   ensure_ascii=False)
@@ -475,6 +529,10 @@ def main(argv=None):
         if r["verdict"].startswith("unverified"):
             note = "the state after the list: %s" % (r["verified"] or "nothing reported")
         print("  %2d %-22s %-24s %s" % (r["item"], r["verdict"], r["got"][:24] or "—", note))
+    if summary["model_changed"]:
+        print("NOTE: the model behind %s changed since its last run: %s" % (preset, summary["model_changed"]))
+    if summary["docs_stale"]:
+        print("NOTE: the app's doc copy differs from the source docs — run `cmake .` and build")
     print("report: %s.json, log: %s.log" % (base, base))
     return 0 if ok == len(rows) else 1
 
