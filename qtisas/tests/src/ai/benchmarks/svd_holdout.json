@@ -1,0 +1,30 @@
+{
+  "name": "SVD HOLDOUT",
+  "description": "SVD holdout (coach M2), never used to design fixes: another two-component system, six mixtures, a repeated fraction.",
+  "instruction": "Use exactly the object names given. End the item by printing exactly ONE line: the result label the item gives, then only the values asked for, in the order asked, separated by spaces.",
+  "setup": "import math\nH, D = -5.61e9, 6.335e10\ncomps = [(2.0e10, 2.9e10), (3.6e10, 4.2e10)]\nq = [0.006 * k for k in range(1, 31)]\nS = [[math.exp(-((40 * v) ** 2)) for v in q], [0.2 / (1 + (30 * v) ** 2) for v in q],\n     [0.8 * math.exp(-((15 * v) ** 2)) for v in q]]\ndef curve(x):\n    s = H + x * (D - H)\n    a, b = (h + x * (d - h) - s for h, d in comps)\n    return [a * a * S[0][k] + 2 * a * b * S[1][k] + b * b * S[2][k] for k in range(len(q))]\nfor label, x in ((\"0\", 0.0), (\"20\", 0.2), (\"60\", 0.6), (\"80\", 0.8), (\"90\", 0.9), (\"100\", 1.0), (\"50a\", 0.5),\n                 (\"50b\", 0.5)):\n    I = curve(x)\n    t = newTable(\"pn\" + label, len(q), 3)\n    t.setColData(1, q)\n    t.setColData(2, I)\n    t.setColData(3, [0.02 * v for v in I])\n",
+  "items": [
+    {
+      "text": "Separate the scattering of the complex of p and n (the H2O SLD is -5.61e9 cm^-2 and the D2O SLD 6.335e10 cm^-2; component p has the SLD 2.0e10 cm^-2 in H2O and 2.9e10 cm^-2 in D2O, component n 3.6e10 cm^-2 in H2O and 4.2e10 cm^-2 in D2O) into partial structure factors by SVD, from the SANS tables pn0, pn20, pn60, pn80, pn90 and pn100 (Q, I, dI) measured at the D2O fractions 0, 0.2, 0.6, 0.8, 0.9 and 1. Name the result svdPN. Print the number of mixtures used and S12 at Q = 0.06, rounded to 4 decimals.",
+      "expected": "6 0.0472",
+      "hint": "",
+      "verify": "t = table(\"svdPN\")\ncheck(round(t.cell(t.colNames().index(\"S12\") + 1, 10), 4))",
+      "verified": "0.0472"
+    },
+    {
+      "text": "At which D2O fraction does component n (SLD 3.6e10 cm^-2 in H2O, 4.2e10 cm^-2 in D2O; H2O -5.61e9 cm^-2, D2O 6.335e10 cm^-2) vanish in contrast? Print it rounded to 3 decimals.",
+      "expected": "0.661",
+      "hint": ""
+    },
+    {
+      "text": "The tables pn0, pn50a and pn50b were measured at the D2O fractions 0, 0.5 and 0.5 (the H2O SLD is -5.61e9 cm^-2 and the D2O SLD 6.335e10 cm^-2; component p has the SLD 2.0e10 cm^-2 in H2O and 2.9e10 cm^-2 in D2O, component n 3.6e10 cm^-2 in H2O and 4.2e10 cm^-2 in D2O). Print how many partial structure factors the two components have and how many of their combinations these three measurements determine.",
+      "expected": "3 2",
+      "hint": "two curves at the same fraction add no information"
+    },
+    {
+      "text": "From svdPN, print the error of S22 at Q = 0.06, rounded to 4 decimals.",
+      "expected": "0.0138",
+      "hint": ""
+    }
+  ]
+}

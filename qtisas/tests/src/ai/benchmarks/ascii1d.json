@@ -5,100 +5,100 @@
   "setup": "import os, shutil\nbase = os.path.expanduser(\"~/benchdata\")\nshutil.rmtree(base, ignore_errors=True)\nfor sub in (\"in\", \"multi\", \"out\", \"converted\"):\n    os.makedirs(os.path.join(base, sub))\ndef write(path, lines):\n    with open(os.path.join(base, path), \"w\") as f:\n        f.write(\"\\n\".join(lines) + \"\\n\")\n# plain: 20 points, Q = 0.01 k, I = 2 k, dI = 0.1, sigma = 0.001\nwrite(\"in/plain.dat\", [\"%.4f %.4f 0.1 0.001\" % (0.01 * k, 2.0 * k) for k in range(1, 21)])\n# opt: the same data, for the items with options (their tables do not replace item 1's)\nwrite(\"in/opt.dat\", [\"%.4f %.4f 0.1 0.001\" % (0.01 * k, 2.0 * k) for k in range(1, 21)])\n# header: 5 text lines, then 10 points Q = 0.02 k, I = 10 + k, dI = 0.5\nwrite(\"in/header.dat\", [\"# sample: header test\", \"# instrument: synthetic\", \"# date: 2026-10-19\",\n                        \"# columns: Q I dI\", \"# end of header\"] +\n                       [\"%.4f %.4f 0.5\" % (0.02 * k, 10.0 + k) for k in range(1, 11)])\n# GRASP-like: a header with numeric lines, data after \"***** Data *****\": 15 points Q = 0.005 k, I = 50 - k\nwrite(\"in/grasp.dat\", [\"GRASP_Variant V.10.24c    Instrument:  SYNTHETIC\", \"\",\n                       \"Beam Centre1 :  Cx = 64.4493  Cy = 64.1428\",\n                       \"Transmissions:  Ts = 0.94823 +/- 0.0015088\",\n                       \"Sample-Det1 Dist (m): 1.1115\", \"Wavelength: 4.5, Delta Wav: 0.1\", \"\",\n                       \"***** Data *****\", \"Mod_Q\\tI\\tErr_I\\tSigma_Q\", \"\"] +\n                      [\"%.5f\\t%.4f\\t0.2\\t0.0008\" % (0.005 * k, 50.0 - k) for k in range(1, 16)])\n# canSAS 1D XML: 8 points Q = 0.01 k, I = 5 k, Idev = 0.5, Qdev = 0.001\npoints = \"\".join('<Idata><Q unit=\"1/A\">%.3f</Q><I unit=\"1/cm\">%.1f</I><Idev unit=\"1/cm\">0.5</Idev>'\n                 '<Qdev unit=\"1/A\">0.001</Qdev></Idata>\\n' % (0.01 * k, 5.0 * k) for k in range(1, 9))\nwrite(\"in/cansas.xml\", ['<?xml version=\"1.0\"?>', '<SASroot version=\"1.0\" xmlns=\"urn:cansas1d:1.0\">',\n                        \"<SASentry><Title>synthetic</Title><SASdata>\", points + \"</SASdata></SASentry></SASroot>\"])\n# a folder of three runs: 10 points each, Q = 0.01 k, I = run * k\nfor run in (101, 102, 103):\n    write(\"multi/run_%d.dat\" % run, [\"%.4f %.4f 0.1\" % (0.01 * k, run * k) for k in range(1, 11)])\n# two tables for table -> table: QI-alpha (I = k), QI-beta (I = 3 k), 10 rows, Q = 0.01 k\nfor name, f in ((\"QI-alpha\", 1.0), (\"QI-beta\", 3.0)):\n    t = newTable(name, 10, 3)\n    t.setColData(1, [0.01 * k for k in range(1, 11)])\n    t.setColData(2, [f * k for k in range(1, 11)])\n    t.setColData(3, [0.1] * 10)\n",
   "items": [
     {
-      "text": "Import the SANS curve plain.dat from the folder benchdata/in in the home directory into the project. Print the name of the table made, its number of rows, the first Q and the sum of I. The result label is \"R1:\".",
+      "text": "Import the SANS curve plain.dat from the folder benchdata/in in the home directory into the project. Print the name of the table made, its number of rows, the first Q and the sum of I.",
       "expected": "plain 20 0.01 420",
       "hint": "the default table name comes from the module's name structure (reference script decides)",
       "verify": "made = [table(n) for n in tableNames() if \"plain\" in n]\ncheck(any(t.numRows() == 20 and abs(sum(t.colData(2)) - 420) < 1e-9 for t in made))",
       "verified": "True"
     },
     {
-      "text": "Import the ascii file header.dat from the folder benchdata/in in the home directory as the table \"HeaderData\"; it starts with a 5-line text header. Print the number of rows and the first Q of \"HeaderData\". The result label is \"R2:\".",
+      "text": "Import the ascii file header.dat from the folder benchdata/in in the home directory as the table \"HeaderData\"; it starts with a 5-line text header. Print the number of rows and the first Q of \"HeaderData\".",
       "expected": "10 0.02",
       "hint": "header lines taken as data",
       "verify": "t = table(\"HeaderData\")\ncheck(t.numRows(), t.cell(1, 1))",
       "verified": "10 0.02"
     },
     {
-      "text": "Import the radially averaged dataset grasp.dat from the folder benchdata/in in the home directory, a GRASP output whose data start after the line \"***** Data *****\". Print the number of rows and the first and last Q. The result label is \"R3:\".",
+      "text": "Import the radially averaged dataset grasp.dat from the folder benchdata/in in the home directory, a GRASP output whose data start after the line \"***** Data *****\". Print the number of rows and the first and last Q.",
       "expected": "15 0.005 0.075",
       "hint": "a header line with two numbers (Cx/Cy, Wavelength) read as a data point",
       "verify": "t = table([n for n in tableNames() if \"grasp\" in n][0])\ncheck(t.numRows(), t.cell(1, 1), t.cell(1, t.numRows()))",
       "verified": "15 0.005 0.075"
     },
     {
-      "text": "Import the SAS data file cansas.xml (canSAS 1D XML) from the folder benchdata/in in the home directory. Print the number of rows, the sum of I and the dI of the first point. The result label is \"R4:\".",
+      "text": "Import the SAS data file cansas.xml (canSAS 1D XML) from the folder benchdata/in in the home directory. Print the number of rows, the sum of I and the dI of the first point.",
       "expected": "8 180 0.5",
       "hint": "the XML read as plain ASCII",
       "verify": "t = table([n for n in tableNames() if \"cansas\" in n][0])\ncheck(t.numRows(), sum(t.colData(2)))",
       "verified": "8 180"
     },
     {
-      "text": "Import all 1D SANS files (.dat) of the folder benchdata/multi in the home directory, one table each. Print how many tables were made and the sum of I of the one made from run_102.dat. The result label is \"R5:\".",
+      "text": "Import all 1D SANS files (.dat) of the folder benchdata/multi in the home directory, one table each. Print how many tables were made and the sum of I of the one made from run_102.dat.",
       "expected": "3 5610",
       "hint": "only one file imported, or the files merged",
       "verify": "check(len([n for n in tableNames() if \"run\" in n and \"101\" in n or \"run\" in n and \"102\" in n or \"run\" in n and \"103\" in n]) >= 3)",
       "verified": "True"
     },
     {
-      "text": "Export the SANS table made from plain.dat in item 1 as an ascii file to the folder benchdata/out in the home directory, with the file extension RAD. Print the name of the file written (without its folder) and its number of data lines. The result label is \"R6:\".",
+      "text": "Export the SANS table made from plain.dat in item 1 as an ascii file to the folder benchdata/out in the home directory, with the file extension RAD. Print the name of the file written (without its folder) and its number of data lines.",
       "expected": "plain.RAD 20",
       "hint": "the file name printed with its folder, or a header line written",
       "verify": "import glob, os\nfiles = glob.glob(os.path.expanduser(\"~/benchdata/out/*.RAD\"))\ncheck(len(files))",
       "verified": "1"
     },
     {
-      "text": "Export the SAS dataset QI-alpha to the folder benchdata/out in the home directory as the file alpha3.dat, with 3 columns only (Q, I, dI — no sigma). Print the number of numbers on its first data line. The result label is \"R7:\".",
+      "text": "Export the SAS dataset QI-alpha to the folder benchdata/out in the home directory as the file alpha3.dat, with 3 columns only (Q, I, dI — no sigma). Print the number of numbers on its first data line.",
       "expected": "3",
       "hint": "4 columns written",
       "verify": "import os\nf = os.path.expanduser(\"~/benchdata/out/alpha3.dat\")\nline = [l for l in open(f) if l.strip() and not l.lstrip().startswith(\"#\")][0]\ncheck(len(line.split()))",
       "verified": "3"
     },
     {
-      "text": "Import opt.dat from the folder benchdata/in in the home directory as a new table, this time removing the first 2 and the last 5 points. Print the number of rows and the first and last Q of the new table. The result label is \"R8:\".",
+      "text": "Import opt.dat from the folder benchdata/in in the home directory as a new table, this time removing the first 2 and the last 5 points. Print the number of rows and the first and last Q of the new table.",
       "expected": "13 0.03 0.15",
       "hint": "points removed after the import instead of by the module, or the wrong ends cut"
     },
     {
-      "text": "Import opt.dat from the folder benchdata/in in the home directory and convert it to the Kratky presentation (I·Q² vs Q) with the module's automatic name prefix. Print the name of the Kratky table and its value at the third point. The result label is \"R9:\".",
+      "text": "Import opt.dat from the folder benchdata/in in the home directory and convert it to the Kratky presentation (I·Q² vs Q) with the module's automatic name prefix. Print the name of the Kratky table and its value at the third point.",
       "expected": "Kratky-opt 0.0054",
       "hint": "Guinier or Porod chosen instead of Kratky",
       "verify": "ks = [n for n in tableNames() if n.startswith(\"Kratky\")]\ncheck(len(ks) > 0, round(table(ks[0]).cell(2, 3), 6))",
       "verified": "True 0.0054"
     },
     {
-      "text": "Import opt.dat from the folder benchdata/in in the home directory and add the SANS resolution sigma for collimation 8 m, detector distance 4 m, pixel size 0.525 cm, sample aperture 10 x 10 mm, collimation aperture 30 x 30 mm, wavelength 6 Å and Δλ/λ = 0.1. Print sigma at the first point with 6 significant digits. The result label is \"R10:\".",
+      "text": "Import opt.dat from the folder benchdata/in in the home directory and add the SANS resolution sigma for collimation 8 m, detector distance 4 m, pixel size 0.525 cm, sample aperture 10 x 10 mm, collimation aperture 30 x 30 mm, wavelength 6 Å and Δλ/λ = 0.1. Print sigma at the first point with 6 significant digits.",
       "expected": "0.00154565",
       "hint": "units mixed up (m vs cm, mm vs cm)"
     },
     {
-      "text": "Import opt.dat from the folder benchdata/in in the home directory with I multiplied by 2 and then a background of 0.01 subtracted. Print the sum of the new I with 2 decimals. The result label is \"R11:\".",
+      "text": "Import opt.dat from the folder benchdata/in in the home directory with I multiplied by 2 and then a background of 0.01 subtracted. Print the sum of the new I with 2 decimals.",
       "expected": "839.80",
       "hint": "background subtracted before the scaling"
     },
     {
-      "text": "Import opt.dat from the folder benchdata/in in the home directory with linear binning of every 3 points. Print the number of rows and the first Q and first I of the binned table. The result label is \"R12:\".",
+      "text": "Import opt.dat from the folder benchdata/in in the home directory with linear binning of every 3 points. Print the number of rows and the first Q and first I of the binned table.",
       "expected": "6 0.02 4",
       "hint": "the binning applied to Q only, or every 3rd point kept instead of averaged"
     },
     {
-      "text": "Convert every .dat file of benchdata/multi in the home directory into benchdata/converted, with the extension RAD and the SANS resolution sigma added for collimation 8 m, detector distance 4 m, pixel size 0.525 cm, sample aperture 10 x 10 mm, collimation aperture 30 x 30 mm, wavelength 6 Å and Δλ/λ = 0.1. Print the number of files written and the number of numbers on the first data line of one of them. The result label is \"R13:\".",
+      "text": "Convert every .dat file of benchdata/multi in the home directory into benchdata/converted, with the extension RAD and the SANS resolution sigma added for collimation 8 m, detector distance 4 m, pixel size 0.525 cm, sample aperture 10 x 10 mm, collimation aperture 30 x 30 mm, wavelength 6 Å and Δλ/λ = 0.1. Print the number of files written and the number of numbers on the first data line of one of them.",
       "expected": "3 4",
       "hint": "tables made in the project instead of files, or sigma missing",
       "verify": "import glob, os\nfiles = glob.glob(os.path.expanduser(\"~/benchdata/converted/*.RAD\"))\ncheck(len(files))",
       "verified": "3"
     },
     {
-      "text": "With ascii1d, cut the first 3 points of every .dat file in benchdata/multi in the home directory and write the results into benchdata/out with the extension cut. Print the number of files written, then the data-line count of each written file in file-name order — three numbers, not a list. The result label is \"R14:\".",
+      "text": "With ascii1d, cut the first 3 points of every .dat file in benchdata/multi in the home directory and write the results into benchdata/out with the extension cut. Print the number of files written, then the data-line count of each written file in file-name order — three numbers, not a list.",
       "expected": "3 7 7 7",
       "hint": "the source files overwritten, or the last points cut"
     },
     {
-      "text": "Make Kratky tables from the SANS tables QI-alpha and QI-beta, both in one run (table to table). Print the number of Kratky tables made and the Kratky value of QI-beta at the second point. The result label is \"R15:\".",
+      "text": "Make Kratky tables from the SANS tables QI-alpha and QI-beta, both in one run (table to table). Print the number of Kratky tables made and the Kratky value of QI-beta at the second point.",
       "expected": "2 0.0024",
       "hint": "only one table converted, or the original tables changed"
     },
     {
-      "text": "Add the SANS resolution sigma for collimation 8 m, detector distance 4 m, pixel size 0.525 cm, sample aperture 10 x 10 mm, collimation aperture 30 x 30 mm, wavelength 6 Å and Δλ/λ = 0.1 to the SANS table QI-alpha, as a new table. Print the number of columns of the new table and sigma at its first row with 6 significant digits. The result label is \"R16:\".",
+      "text": "Add the SANS resolution sigma for collimation 8 m, detector distance 4 m, pixel size 0.525 cm, sample aperture 10 x 10 mm, collimation aperture 30 x 30 mm, wavelength 6 Å and Δλ/λ = 0.1 to the SANS table QI-alpha, as a new table. Print the number of columns of the new table and sigma at its first row with 6 significant digits.",
       "expected": "4 0.00154565",
       "hint": "sigma written into QI-alpha itself, or the dI column replaced"
     }

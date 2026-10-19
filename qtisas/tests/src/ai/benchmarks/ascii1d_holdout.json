@@ -5,22 +5,22 @@
   "setup": "import os, shutil\nbase = os.path.expanduser(\"~/benchdata\")\nshutil.rmtree(base, ignore_errors=True)\nfor sub in (\"in\", \"multi\", \"out\", \"converted\"):\n    os.makedirs(os.path.join(base, sub))\ndef write(path, lines):\n    with open(os.path.join(base, path), \"w\") as f:\n        f.write(\"\\n\".join(lines) + \"\\n\")\n# plain: 20 points, Q = 0.01 k, I = 2 k, dI = 0.1, sigma = 0.001\nwrite(\"in/plain.dat\", [\"%.4f %.4f 0.1 0.001\" % (0.01 * k, 2.0 * k) for k in range(1, 21)])\n# opt: the same data, for the items with options (their tables do not replace item 1's)\nwrite(\"in/opt.dat\", [\"%.4f %.4f 0.1 0.001\" % (0.01 * k, 2.0 * k) for k in range(1, 21)])\n# header: 5 text lines, then 10 points Q = 0.02 k, I = 10 + k, dI = 0.5\nwrite(\"in/header.dat\", [\"# sample: header test\", \"# instrument: synthetic\", \"# date: 2026-10-19\",\n                        \"# columns: Q I dI\", \"# end of header\"] +\n                       [\"%.4f %.4f 0.5\" % (0.02 * k, 10.0 + k) for k in range(1, 11)])\n# GRASP-like: a header with numeric lines, data after \"***** Data *****\": 15 points Q = 0.005 k, I = 50 - k\nwrite(\"in/grasp.dat\", [\"GRASP_Variant V.10.24c    Instrument:  SYNTHETIC\", \"\",\n                       \"Beam Centre1 :  Cx = 64.4493  Cy = 64.1428\",\n                       \"Transmissions:  Ts = 0.94823 +/- 0.0015088\",\n                       \"Sample-Det1 Dist (m): 1.1115\", \"Wavelength: 4.5, Delta Wav: 0.1\", \"\",\n                       \"***** Data *****\", \"Mod_Q\\tI\\tErr_I\\tSigma_Q\", \"\"] +\n                      [\"%.5f\\t%.4f\\t0.2\\t0.0008\" % (0.005 * k, 50.0 - k) for k in range(1, 16)])\n# canSAS 1D XML: 8 points Q = 0.01 k, I = 5 k, Idev = 0.5, Qdev = 0.001\npoints = \"\".join('<Idata><Q unit=\"1/A\">%.3f</Q><I unit=\"1/cm\">%.1f</I><Idev unit=\"1/cm\">0.5</Idev>'\n                 '<Qdev unit=\"1/A\">0.001</Qdev></Idata>\\n' % (0.01 * k, 5.0 * k) for k in range(1, 9))\nwrite(\"in/cansas.xml\", ['<?xml version=\"1.0\"?>', '<SASroot version=\"1.0\" xmlns=\"urn:cansas1d:1.0\">',\n                        \"<SASentry><Title>synthetic</Title><SASdata>\", points + \"</SASdata></SASentry></SASroot>\"])\n# a folder of three runs: 10 points each, Q = 0.01 k, I = run * k\nfor run in (101, 102, 103):\n    write(\"multi/run_%d.dat\" % run, [\"%.4f %.4f 0.1\" % (0.01 * k, run * k) for k in range(1, 11)])\n# two tables for table -> table: QI-alpha (I = k), QI-beta (I = 3 k), 10 rows, Q = 0.01 k\nfor name, f in ((\"QI-alpha\", 1.0), (\"QI-beta\", 3.0)):\n    t = newTable(name, 10, 3)\n    t.setColData(1, [0.01 * k for k in range(1, 11)])\n    t.setColData(2, [f * k for k in range(1, 11)])\n    t.setColData(3, [0.1] * 10)\nwrite(\"in/nist.txt\", [\"NIST SANS data\", \"Sample: synthetic\", \"The 6 columns are | Q (1/A) | I(Q) (1/cm) | std. dev. I(Q) (1/cm) | sigmaQ | meanQ | ShadowFactor|\"] +\n                    [\"%.4f %.4f 0.3 0.001 %.4f 1.0\" % (0.01 * k, 7.0 * k, 0.01 * k) for k in range(1, 13)])\n",
   "items": [
     {
-      "text": "Read the NIST-format SANS file nist.txt from the folder benchdata/in in the home directory into the project. Print the number of points and the largest I. The result label is \"R1:\".",
+      "text": "Read the NIST-format SANS file nist.txt from the folder benchdata/in in the home directory into the project. Print the number of points and the largest I.",
       "expected": "12 84",
       "hint": ""
     },
     {
-      "text": "Save the 1D dataset QI-beta into the folder benchdata/out in the home directory as a file with the extension dat. Print the number of data lines in the file. The result label is \"R2:\".",
+      "text": "Save the 1D dataset QI-beta into the folder benchdata/out in the home directory as a file with the extension dat. Print the number of data lines in the file.",
       "expected": "10",
       "hint": ""
     },
     {
-      "text": "Turn every SAXS curve (.dat) of benchdata/multi in the home directory into a Guinier file (ln I vs Q²) in benchdata/converted there. Print how many files you wrote. The result label is \"R3:\".",
+      "text": "Turn every SAXS curve (.dat) of benchdata/multi in the home directory into a Guinier file (ln I vs Q²) in benchdata/converted there. Print how many files you wrote.",
       "expected": "3",
       "hint": ""
     },
     {
-      "text": "Bin the table QI-alpha logarithmically with a common ratio of 1.2 into a new table. Print the number of rows of the new table. The result label is \"R4:\".",
+      "text": "Bin the table QI-alpha logarithmically with a common ratio of 1.2 into a new table. Print the number of rows of the new table.",
       "expected": "7",
       "hint": ""
     }
