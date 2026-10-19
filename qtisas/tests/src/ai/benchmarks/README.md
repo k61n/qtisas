@@ -131,6 +131,13 @@ comparable); a model change or stale docs are also printed after the run. The ha
 results table (an earlier "Results" table instruction added an error-prone task to every item and was
 the main source of retries in one run).
 
+**Statistics:** `benchmark_stats.py LABEL [LABEL …]` compares runs by `--label` prefix, per label and lane (the
+agent preset): only complete rounds (one exact label with every list of the group) count. Markdown tables: score
+(mean, min–max, silent / reported / backend errors per round), time and calls with call efficiency, tokens as the
+provider reported them (prompt, read from the cache, not cached, billable equivalent with `--cached-price`, default
+0.1), the failed items with their verdicts (`--items`: every one), and warnings for mixed binaries, more than one
+answering model, a model change, stale docs and runs beside other lanes.
+
 **By hand:** `qtisas_benchmark.py … --print --markers "…"` prints the LIST text to paste into QtiSAS.
 
 | Mode | `--markers` |
