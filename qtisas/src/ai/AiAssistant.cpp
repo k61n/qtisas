@@ -611,6 +611,10 @@ static const QHash<QString, QRegularExpression> topicSynonymRe = {
                                    R"(\bkratky\b|\bguinier\b|\bporod\b|\bresolution\s+sigma\b)",
                                    QRegularExpression::CaseInsensitiveOption)},
     // contrast variation (coach M2, 2026-10-19): the SVD module's words — and the H/D solvent series it plans
+    // neutron spin echo (coach M4, 2026-10-19): the J-NSE module's words
+    {"jnse", QRegularExpression(R"(\bj-?nse\b|\bnse\b|\bneutron\s+spin[\s-]+echo\b|\bspin[\s-]+echo\b|\.dtr\b|)"
+                                R"(\bdtr\b|\bs\(q,\s*t\)|\bintermediate\s+scattering\b|\bfourier\s+times?\b)",
+                                QRegularExpression::CaseInsensitiveOption)},
     {"svd", QRegularExpression(
                 R"(\bsvd\b|\bsingular\s+value|\bdecompos(?:e|ed|es|ing|ition)\b|\bcontrast[\s-]+(?:variation|match)|)"
                 R"(\bpartial\s+structure\s+factors?\b|\bmatch(?:ing)?\s+points?\b|\bh/d\b|\bd2o\b)",

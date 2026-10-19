@@ -614,6 +614,9 @@ QString QtiSasAiContent::docTopicIndex() const
            "unnecessary here: graph3d's own docs warn that graphWindow(\"name\") (the 2D lookup) "
            "returns None for a real Graph3D window (use plot3D(\"name\") instead) — a confirmed-"
            "live footgun that pulling in the graph topic risks reinforcing rather than avoiding.\n"
+           "jnse — neutron spin echo data (Jnse: J-NSE): .dtr files into a header table (one row per q) and one "
+           "dataset table per q (S(q,t)/S(q) vs Fourier time); multi-q fits of the datasets in Fittable "
+           "(simpleDiffusion, shared D), relaxation rates.\n"
            "matrix — the Matrix class: 2D numeric grids/image-like data. Its (row, col) cell order "
            "is the OPPOSITE of Table's (col, row), but that distinction is documented within "
            "matrix's own docs — a part that only creates/fills/reads a Matrix does not need the "
@@ -637,7 +640,7 @@ QString QtiSasAiContent::docTopicIndex() const
 
 QStringList QtiSasAiContent::knownDocTopics() const
 {
-    return {"table", "matrix", "graph", "graph3d", "note", "compile", "fittable", "ascii1d", "svd"};
+    return {"table", "matrix", "graph", "graph3d", "note", "compile", "fittable", "ascii1d", "svd", "jnse"};
 }
 
 QStringList QtiSasAiContent::baselineDocTopics() const
@@ -967,6 +970,11 @@ const RequestedDeliverable kRequestedDeliverables[] = {
     {R"(\bautoexec\b|\beach time the project loads\b|\bwhen the project (?:file )?is opened\b)", R"(\bsetAutoexec\b)",
      "auto-execution on project load (no setAutoexec() call)"},
     {R"(\bsimulate\b)", R"(\bsimulateCurve\b)", "the simulated curve (no simulateCurve() call)"},
+    // A fit the request orders — "Fit ...", "... and fit ...", "from fits of ..." — not one it only mentions ("the fit
+    // curve", "chi2 of the fit"): confirmed live (benchmark JNSE, local pyi, items 6 and 11), "Fit only the four
+    // smallest q ... Print D" answered with scriptPrint("R6:", Fittable.paramValue("D")) — the D of an earlier fit
+    {R"((?:^|[.;:!?]\s+|\b(?:and|then)\s+)(?:re)?fit\b(?!\s+(?:functions?|curves?|models?|results?)\b)|\bfits\s+of\b)",
+     R"(\bfit\s*\()", "the fit (no fit() call — the request asks to fit, a value of an earlier fit is not it)"},
     {R"(\bcompile\b)", R"(\.compile\()", "the compile step (no compile() call)"},
     // Not as a criterion: "the function with the smaller chi2/dof" or "compare chi2/dof" asks to CHOOSE by it, not to
     // print it — confirmed live (benchmark LIST 5, item 2), a correct "R2: <name> <A> <w>" was blocked twice and the
@@ -6878,7 +6886,10 @@ QString QtiSasAiContent::fittableFitBeforeConfigureMistake(const QString &code)
     // "fit(): call setFunction() and selectDataset() first (stage must be \"fit\")" — one wasted
     // round-trip for a precondition the docs state outright.
     static const QRegularExpression fitRe(R"((?<![.\w])\w+\s*\.\s*fit\s*\(\s*\))");
-    static const QRegularExpression functionSelectRe(R"(\b(?:configure|setFunction)\s*\()");
+    // Jnse.initFit() configures Fittable too: confirmed live (benchmark JNSE holdout, Codex) — Jnse.initFit(...) then
+    // Fittable.fit() was blocked, the model added Fittable.configure(), which reset the q of every dataset to the
+    // function's default, and the fit printed D = 0.01 instead of 1.20
+    static const QRegularExpression functionSelectRe(R"(\b(?:configure|setFunction|initFit)\s*\()");
     // Calls only, never text: confirmed live (BIGMODEL, ai-test-requests item 10) — scriptPrint("... run a fit first
     // (e.g. f.fit() ...)") was blocked as a fit() call without configure().
     const QString calls = codeWithLiteralsBlanked(code);
@@ -7022,7 +7033,10 @@ QString QtiSasAiContent::fittableSelectStageBeforeFunctionMistake(const QString 
     // selectStage("simulate") called before configure(), failing at runtime with exactly that
     // error, both documented worked examples show configure()/setFunction() called first.
     static const QRegularExpression selectStageRe(R"(\bselectStage\s*\(\s*(['"])([^'"]*)\1\s*\))");
-    static const QRegularExpression functionSelectRe(R"(\b(?:configure|setFunction)\s*\()");
+    // Jnse.initFit() configures Fittable too: confirmed live (benchmark JNSE holdout, Codex) — Jnse.initFit(...) then
+    // Fittable.fit() was blocked, the model added Fittable.configure(), which reset the q of every dataset to the
+    // function's default, and the fit printed D = 0.01 instead of 1.20
+    static const QRegularExpression functionSelectRe(R"(\b(?:configure|setFunction|initFit)\s*\()");
     QRegularExpressionMatch stageMatch;
     const QString calls = codeWithLiteralsBlanked(code); // a call inside a string literal is text, not a call
     QRegularExpressionMatchIterator it = selectStageRe.globalMatch(code);
