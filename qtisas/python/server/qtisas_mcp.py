@@ -36,6 +36,7 @@ import time
 sys.dont_write_bytecode = True
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import qtisas_send  # noqa: E402  the same folder: socket path, its privacy check, the request itself
+import qtisas_coach  # noqa: E402  the coach tools (benchmark runs), offered where the source tree's tests are
 
 PROTOCOL = "2025-06-18"
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -49,6 +50,12 @@ saved by itself: save with saveProjectAs("/path/file.qti") when asked. ask_qtisa
 numbered tasks) to QtiSAS's own built-in AI instead of writing the code yourself; while it runs, correct_qtisas_ai
 steers it and stop cancels it. To supervise a long request, start it with wait=false and watch it with
 qtisas_ai_progress (wait_seconds avoids tight polling); correct it when it goes wrong."""
+
+COACH_INSTRUCTIONS = """
+Coach tools (source tree only): qtisas_run starts a benchmark list in a test instance and returns at once;
+qtisas_wait returns when it is done (call again on timeout); qtisas_summary gives the score and every lost item's
+dossier; qtisas_failures says whether a failure was seen before; qtisas_stats compares runs by label; qtisas_probe
+checks an API call on a side instance; qtisas_environment shows the build, the docs and the local backends."""
 
 TOOLS = [
     {"name": "run_python",
@@ -151,6 +158,7 @@ class Server:
         self.start_offscreen = start_offscreen
         self.qtisas = qtisas
         self.rid = 0
+        self.coach = qtisas_coach.Coach(self.text) if qtisas_coach.available() else None
 
     # ---- QtiSAS side ----
 
@@ -317,6 +325,8 @@ class Server:
         return self.text((r.get("output") or r.get("error") or "").rstrip(), error=not r.get("ok"))
 
     def call(self, name, args):
+        if self.coach and name in {t["name"] for t in qtisas_coach.TOOLS}:
+            return self.coach.call(name, args)
         if name == "run_python":
             return self.run_python(args["code"], args.get("timeout") or 600)
         if name == "ask_qtisas_ai":
@@ -367,11 +377,12 @@ class Server:
         if method == "initialize":
             return {"protocolVersion": params.get("protocolVersion") or PROTOCOL,
                     "capabilities": {"tools": {}, "resources": {}},
-                    "serverInfo": {"name": "qtisas", "version": "1"}, "instructions": INSTRUCTIONS}
+                    "serverInfo": {"name": "qtisas", "version": "1"},
+                    "instructions": INSTRUCTIONS + (COACH_INSTRUCTIONS if self.coach else "")}
         if method == "ping":
             return {}
         if method == "tools/list":
-            return {"tools": TOOLS}
+            return {"tools": TOOLS + (qtisas_coach.TOOLS if self.coach else [])}
         if method == "tools/call":
             try:
                 return self.call(params.get("name"), params.get("arguments") or {})

@@ -157,6 +157,20 @@ gets tools for a running QtiSAS, and the chat's own model writes the code from t
 
 The API docs (`*-python-api.md`, `.pyi`) are offered as resources `qtisas-doc://...`.
 
+**Coach tools** (`qtisas_coach.py`; offered only from the source tree, where `tests/src/ai/benchmarks` is): an IDE AI
+coaching QtiSAS's AI runs the benchmark lists through the same harness as `qtisas_benchmark.py`, in test instances.
+
+| Tool | |
+|------|---|
+| `qtisas_run(benchmark, agent, instance, docs, bigmodel, markers, label, reference)` | starts a list (`"list2"`, `"ascii1d"`) in a fresh test instance (default `coach`); returns a run id at once |
+| `qtisas_wait(run_id, timeout)` | waits (at most 1500 s, below the clients' limit): the summary when done, else `timeout` — call again |
+| `qtisas_summary(run_id or report)` | score, calls, run identity, and each lost item's dossier: signature (seen N× before), doc topics, errors, blocks, why it stopped, last script |
+| `qtisas_failures(text, item, since)` | failure signatures of all runs (`failures.jsonl`) with counts, items, models, dates |
+| `qtisas_stats(labels)` | runs compared by label prefix: score, time and calls, tokens, failed items, warnings |
+| `qtisas_probe(code, instance)` | Python on a side test instance (default `probe`, started if needed) — to check an API call before documenting it |
+| `qtisas_instance(action, name)` | start, stop or show a test instance |
+| `qtisas_environment()` | the build, the app's doc copy vs the source docs, the local AI backends and llama-server, the runs going on |
+
 **Supervising QtiSAS's AI.** For a long or complicated request, the chat can hand it to QtiSAS's AI with
 `wait=false`, watch it with `qtisas_ai_progress` and step in with `correct_qtisas_ai` (or `stop`) when it goes wrong —
 e.g. in Claude Code: "Give this LIST to QtiSAS's AI, watch it, and correct it if a step goes wrong".
