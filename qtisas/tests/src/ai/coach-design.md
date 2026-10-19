@@ -11,10 +11,20 @@ REVIEW and LIST SPLIT series (2026-10-15) and the all-md lanes (2026-10-19).
 
 ## 0. Strategy (changed since the first draft)
 
-- **The strongest model is the reference** (2026-10-15): the AI is tuned only where Codex
-  (QtiSAS-Codex-Bridge-BIGMODEL) fails; a QtiSAS bug is fixed whichever model reveals it (a silent failure, an API
-  that reports success while doing nothing, a misleading error, a check blocking correct code). A weaker model's own
-  misreading is model-dependent and gets no guard. This replaces "tune against the weakest model".
+- **Two stages per module or list** (2026-10-19; replaces "tune only where Codex fails" of 2026-10-15):
+  1. **The strongest, fastest model first** (Codex all-pyi BIGMODEL) **to its maximum** — it shows whether the API
+     and docs make the task solvable; its failures are API, doc or QtiSAS bugs.
+  2. **Then the weakest** (local qwen3-coder all-pyi), **iterating docs and code from its score to its own
+     maximum** — not to a fixed score. Its failures show where the docs are easy to misread.
+  Only general fixes (docs first, then an API that is harder to misuse; never a guard shaped to one item); every
+  change re-run on the strongest model (score and η must not drop); the holdout at the end on both. A QtiSAS bug is
+  fixed whichever model reveals it. ascii1d (2026-10-19): Codex 10 → 16/16 (η 0.8 → 1.0), local 0 → 4 → 7 → 9 → 11
+  of 16 over five doc/API iterations.
+- **When stage 2 stops:** each remaining failure is sorted — a general doc/API lever exists (a misread choice
+  between similar calls, a copied example value, a unit trap, an error that names no fix) → another iteration; the
+  model's own limit (its coding errors, the "same explanation twice" loop, made-up result lines) → no change. Stop
+  when only the second kind is left and two iterations bring no gain beyond run-to-run noise; a score called the
+  maximum is confirmed by a second round on the same docs.
 - **BIGMODEL is the baseline configuration:** all docs first and cacheable, split plan, self-review and EXPLORE off.
   Codex BIGMODEL all-pyi: 99.5% over 5 rounds (lists 1–5, 43 items), 48 calls, η 0.89, 5.8 min per round. SPLIT
   costs Codex 2.4× the calls and twice the time for no gain (41.7/43); REVIEW doubled the calls for no gain.
@@ -28,9 +38,10 @@ REVIEW and LIST SPLIT series (2026-10-15) and the all-md lanes (2026-10-19).
 | Layer | Pieces |
 |---|---|
 | Script server (`python/server/qtisas_server.py`) | modes `python`, `ai`, `ai-run`, `ai-chat`, `follow`, `note`, `stop`, `status`, `quit` |
-| MCP server (`python/server/qtisas_mcp.py`) | `run_python`, `ask_qtisas_ai` (wait or not), `qtisas_ai_progress` (`wait_seconds` ≤ 120), `correct_qtisas_ai`, `stop`, `status`, `list_objects`, `show_graph`, `get_file` |
+| MCP server (`python/server/qtisas_mcp.py`) | `run_python`, `ask_qtisas_ai` (wait or not), `qtisas_ai_progress` (`wait_seconds` ≤ 120), `correct_qtisas_ai`, `stop`, `status`, `list_objects`, `show_graph`, `get_file`; in the source tree also the coach tools (`qtisas_coach.py`, section 3) |
 | Benchmark harness (`tests/src/ai/benchmarks/qtisas_benchmark.py`) | fresh test instance per run (`--instance`), setup, markers, `--agent`, `--docs compact\|full\|integrated`, `--bigmodel`, `--set`, `--timeout` (1800 s local, 900 s otherwise), scoring with `verify` scripts (verdicts ok / wrong / missing / unverified, silent or reported), calls and call efficiency η, server probe with the model that answered, `--reference`, `--rescore`, `history.csv` |
-| Benchmark lists | `list1..5.json` (43 items); `verify` scripts for LIST 1 and 2 only; reference scripts for every item (`benchmarks/reference/`) |
+| Benchmark lists | `list1..5.json` (43 items) and `ascii1d.json` + holdout (20); `verify` scripts for 40 of 43 LIST items and the ASCII1D ones; reference scripts for every item (`benchmarks/reference/`) |
+| Run records | run identity per report and `history.csv` (build, docs, model change, lanes); lost-item dossiers per report; `failures.jsonl` with signatures; `benchmark_stats.py` (labels, `--failures`) |
 | Test instances (`tests/src/server/qtisas_test_instance.py`) | `start/stop/status/reset --instance NAME` |
 | Local backend (`ai-models/qtisas-ai-backend`) | hybrid-rag-server modes md / pyi / md-pyi / all-pyi / all-md / no-doc, one llama-server slot shared, slot snapshots keyed by a docs fingerprint, `CONTEXT_TOKENS` checked against llama-server at startup |
 | Give-up points (`AiAssistant.cpp`) | all through `recordGiveUpInHistory()`: blocked-attempts cap, same diagnosis twice, same alternatives twice, retry budget, EXPLORE refusal |
@@ -66,6 +77,9 @@ Confirmed again 2026-10-15..19:
 - **A false check found only by reading logs:** the split-plan checks read the list instruction and the run-mode
   suffix as part of the request (35 of 39 re-plans false) — visible only after counting "issue(s) detected" lines.
 - **Stale cache found by hand:** 27 slot snapshots (65 GB) whose docs fingerprint no longer matched.
+- **Stage 2 waits for a person:** the local backend builds its doc block once at startup, so every doc iteration of
+  the weak model needs a restart of the all-pyi server by hand (six times for ascii1d). Open: let the coach restart
+  it, or have the server reload when the doc files change.
 
 ## 3. Tools
 
@@ -120,8 +134,8 @@ Fields are parsed from the lines a run already prints (`AI LIST: item`, `R<n>:`,
 ## 6. Coach workflow (between runs)
 
 1. `qtisas_run` per configuration (lanes in parallel: one instance per lane); `qtisas_wait` until `done`.
-2. Sort every failure: **Codex fails** / **QtiSAS bug** (any model) / **model-dependent** — act only on the first
-   two.
+2. Sort every failure: **QtiSAS bug** (any model: fix it) / **strongest model fails** (stage 1) / **weak model
+   misreads where a general doc or API lever exists** (stage 2) / **the model's own limit** (no change).
 3. Docs first: a missing or unclear doc → doc proposal (md + pyi), applied after the series, `cmake .`, re-index.
 4. Doc correct and demonstrably ignored → mechanical check or repair, general (never shaped to one item).
 5. A check that never fires, or fires without helping, over a full series is removed with its test.
@@ -165,6 +179,34 @@ anything is tuned.
 - **Methods written with their receiver in docs** (`c.functionExists(...)`), never readable as globals.
 - **Plain Python return values**; a yes/no is a `bool`.
 - **Reuse vs create explicit** (`newNote()` reuses, `newTable()` wipes).
+- **Units in the parameter names** (`collimationCm`, `sampleApertureWmm`, `lambdaA`), and an error for a value in the
+  wrong unit (a distance below 50 "cm" was given in metres) — ascii1d: the local model passed 8 for 8 m.
+- **Accept the types models pass:** a number as int or string (`setHeader(5)`), one source or a list, one name or a
+  list, in any combination.
+- **A script never meets a modal dialog:** warnings of a scripted run are collected and printed, not shown.
+- **A run returns what it made** (names, absolute paths), so later steps use them instead of guessing names.
+- **Say which call fits when a similar one was used:** "QI-alpha is a table of the project, not a file: … with
+  convertTables(\"QI-alpha\")" — a bare "no such file" was retried with .dat and .RAD until the item was lost.
+- **Refuse what silently destroys:** a result whose default name is its own source is refused with the ways out.
+
+**AI-ready doc rules (step 5, from the ascii1d iterations: local model 0 → 4 → 7 → 9 → 11 of 16, Codex 16/16 at
+η 1.0):**
+- **The routing rule first:** which requests this module serves — by the words users use (SANS curve, ascii file,
+  radially averaged dataset …) and by the operations only it has, not only by its own name.
+- **"Global object, no import"** when the module is a global (`from Ascii1d import Ascii1d` cost Codex a call in
+  most runs until said).
+- **A recipe with placeholders, never example values.** `a.setHeader(5)` in a recipe was copied into every script by
+  the local model (plain files lost their first 5 points); `setHeader(<number of header lines>)` with "ONLY what the
+  request says" was not.
+- **A choice table when calls look alike** (source × destination → the call), with the one wrong use spelled out ("a
+  table is never a file").
+- **One example per variant of the main task**, each one call with its options — the local model chained import and
+  export, so the options ran twice.
+- **When to give a name and when to take the returned one**, with the request's own wording as the example; never
+  invented names.
+- **Facts of the language around the API:** Python's `open()` does not expand `~`; use the returned absolute paths.
+- **Every iteration re-run on the strongest model:** a doc change that helps the weak one must not cost the strong
+  one calls (η is the measure, not only the score).
 
 **Order:** ascii1d first (smallest, ~2.9K lines, no Python API — the cleanest test of the pipeline), then dan
 (~27.6K lines; needs doc sets first, since BIGMODEL sends every doc on every call), then jnse (~0.5K lines).
@@ -190,18 +232,20 @@ anything is tuned.
 
 | Phase | Content | Touches | Done when |
 |---|---|---|---|
-| C0 | this document | docs | approved |
-| C1 | run identity (build, docs hash, model + change flag, lanes) in reports and `history.csv`; `verify` scripts for LIST 3–5 from the reference scripts; statistics tool in the repo | harness (Python) | a series comparison is one command; model/build changes are flagged |
-| C2 | lost-item dossier in the report JSON; failure-signature store + query | harness (Python) | "seen before?" is a lookup |
-| C3 | script-server modes `run`/`wait`/`summary`/`probe`/`environment`; MCP tools `qtisas_run`, `qtisas_wait`, `qtisas_summary`, `qtisas_instance`, `qtisas_probe`, `qtisas_failures`, `qtisas_environment` | script server + MCP (Python) | a series runs from the IDE in ~2 calls per run |
+| C0 | this document — **done 2026-10-19** | docs | approved |
+| C1 | **done 2026-10-19:** run identity (build, docs hash, model + change flag, lanes) in reports and `history.csv`; `verify` scripts for LIST 3–5 from the reference scripts; statistics tool in the repo | harness (Python) | a series comparison is one command; model/build changes are flagged |
+| C2 | lost-item dossier in the report JSON; failure-signature store + query — **done 2026-10-19** (`benchmark_dossier.py`, `failures.jsonl`, `benchmark_stats.py --failures`) | harness (Python) | "seen before?" is a lookup |
+| C3 | MCP tools `qtisas_run`, `qtisas_wait`, `qtisas_summary`, `qtisas_failures`, `qtisas_stats`, `qtisas_probe`, `qtisas_instance`, `qtisas_environment` — **done 2026-10-19** (`python/server/qtisas_coach.py`; runs go through the harness as a subprocess instead of new script-server modes: one run engine for harness, terminal and MCP; offered only in the source tree) | MCP (Python) | a series runs from the IDE in ~2 calls per run |
 | C4 | `qtisas_last_prompt` (ring buffer, server mode) | small C++ + server | two runs' prompts compared in one call |
-| M1 | ascii1d, pipeline steps 0–8 | C++, SIP, docs, benchmarks | reference model 100% on module list and holdout |
+| M1 | ascii1d, pipeline steps 0–8 — **stage 1 done** (Codex 16/16 at η 1.0, holdout 4/4, LIST 1–5 unchanged), **stage 2 running** (local 11/16 at docs v5) | C++, SIP, docs, benchmarks | strongest model 100% on module list and holdout; weakest at its own maximum |
 | M2, M3 | dan (after doc sets), jnse | | |
 | later | section 8, on evidence | | |
 
 ## 10. Decisions
 
-1. Run, wait and summary live in the script server; MCP wraps them (a terminal coach gets the same).
+1. Runs go through the benchmark harness (`qtisas_benchmark.py`); the MCP coach tools start it as a subprocess, a
+   terminal coach runs it directly — one run engine, the same reports, dossiers and failure store. (First planned
+   as script-server modes; changed 2026-10-19.)
 2. One build per series; build, docs and model recorded per run.
 3. Escalation, if ever built: ≤ 2 per item (loop guard), a per-run cap only for a paid cloud coach; hints checked
    mechanically (> ~3 lines of code rejected); escalated items scored `assisted`, outside `score`.
