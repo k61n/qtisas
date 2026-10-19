@@ -1,4 +1,4 @@
-# Coach — design (updated 2026-10-19)
+# Coach — design (updated 2026-10-19, SVD)
 
 Coach = an IDE AI (e.g. Claude Code through the MCP server) that supervises QtiSAS's built-in AI: it runs
 benchmark lists, reads the results, turns failures into doc changes, API fixes or rules, verifies API claims on a
@@ -19,12 +19,15 @@ REVIEW and LIST SPLIT series (2026-10-15) and the all-md lanes (2026-10-19).
   Only general fixes (docs first, then an API that is harder to misuse; never a guard shaped to one item); every
   change re-run on the strongest model (score and η must not drop); the holdout at the end on both. A QtiSAS bug is
   fixed whichever model reveals it. ascii1d (2026-10-19): Codex 10 → 16/16 (η 0.8 → 1.0), local 0 → 4 → 7 → 9 → 11
-  of 16 over five doc/API iterations.
+  of 16 over five doc/API iterations. SVD (2026-10-19): Codex 5/13 without module docs → 13/13 (η 1.0), local
+  4 → 9/13 (η 0.59) over eight iterations; three of the local gains were QtiSAS checks that blocked right lines.
 - **When stage 2 stops:** each remaining failure is sorted — a general doc/API lever exists (a misread choice
   between similar calls, a copied example value, a unit trap, an error that names no fix) → another iteration; the
   model's own limit (its coding errors, the "same explanation twice" loop, made-up result lines) → no change. Stop
   when only the second kind is left and two iterations bring no gain beyond run-to-run noise; a score called the
-  maximum is confirmed by a second round on the same docs.
+  maximum is confirmed by a second round on the same docs. **Silent and reported failures are counted besides the
+  score:** a change that turns silent wrong answers into reported ones is a gain even at the same score (SVD: the
+  block of print-only written-in values, 5 silent → 3 at 7/13).
 - **BIGMODEL is the baseline configuration:** all docs first and cacheable, split plan, self-review and EXPLORE off.
   Codex BIGMODEL all-pyi: 99.5% over 5 rounds (lists 1–5, 43 items), 48 calls, η 0.89, 5.8 min per round. SPLIT
   costs Codex 2.4× the calls and twice the time for no gain (41.7/43); REVIEW doubled the calls for no gain.
@@ -135,7 +138,14 @@ Fields are parsed from the lines a run already prints (`AI LIST: item`, `R<n>:`,
 
 1. `qtisas_run` per configuration (lanes in parallel: one instance per lane); `qtisas_wait` until `done`.
 2. Sort every failure: **QtiSAS bug** (any model: fix it) / **strongest model fails** (stage 1) / **weak model
-   misreads where a general doc or API lever exists** (stage 2) / **the model's own limit** (no change).
+   misreads where a general doc or API lever exists** (stage 2) / **the model's own limit** (no change). **A
+   failing item with a QtiSAS block is checked for a wrong block first:** SVD found three — "rounded to 4 decimals"
+   counted as a value, `f"{a} {b}"` as one value, a failure report ("R1: Missing tables: …") as a labelled result;
+   each blocked a right line until the item was given up. Every new module list joins the result-line counting
+   regression test (`requestedResultValues_neverMoreThanTheAnswerHas`).
+   **An item the strongest model answers by a fair second reading is reworded, not tuned for** (SVD items 9 and 10:
+   "the error for the fractions 0, 0.5 and 1" read as one value per fraction; "the partial structure factors to
+   find" counted with the solvent's); the rewording is recorded in the list's README section.
 3. Docs first: a missing or unclear doc → doc proposal (md + pyi), applied after the series, `cmake .`, re-index.
 4. Doc correct and demonstrably ignored → mechanical check or repair, general (never shaped to one item).
 5. A check that never fires, or fires without helping, over a full series is removed with its test.
@@ -152,19 +162,19 @@ line normalised (names → placeholders), the check header, the call it points a
 `history.csv`) answers "seen before?" across items, lists, models and configurations: signature seen twice →
 propose a doc fix, then a rule.
 
-## 7. Module integration pipeline (ascii1d → dan → jnse)
+## 7. Module integration pipeline (ascii1d → svd → dan → jnse)
 
 Tasks and their benchmark items come first and act as acceptance tests; the strongest model validates the API before
 anything is tuned.
 
 | # | Step | Output | Done when |
 |---|---|---|---|
-| 0 | **Task inventory** with the user: GUI actions, files, typical analyses, existing user scripts | task list with inputs/outputs | the user agrees on the list |
-| 1 | **Benchmark items** from the tasks (before code), computable expected values, `verify` scripts; a **holdout list** kept aside | `benchmarks/<module>.json` + holdout | every task has ≥ 1 item |
-| 2 | **C++ preparation**: the API surface the items need, checked against the AI-ready rules below | C++ methods | items are expressible |
+| 0 | **Task inventory** with the user: GUI actions, files, typical analyses, existing user scripts; **the method's limits checked numerically** (SVD: one H/D series fixes at most 3 combinations, so N ≥ 3 is never fully determined — found by a two-minute rank check, it decided which items are fair and what the API reports) | task list with inputs/outputs and limits | the user agrees on the list |
+| 1 | **Benchmark items** from the tasks (before code), computable expected values, `verify` scripts; a **holdout list** kept aside; an answer that depends on a modelling choice states it in the item (SVD plans: the dI model — the best plan flips with it) | `benchmarks/<module>.json` + holdout | every task has ≥ 1 item |
+| 2 | **C++ preparation**: the existing code tested with synthetic data of known answers first (SVD: the reconstructed intensities read wrong columns, the error bars were a heuristic, matrices leaked — all silent for years); then the API surface the items need, checked against the AI-ready rules below | C++ fixes + methods | items are expressible |
 | 3 | **SIP bindings + contract tests** (normal path, error path, empty/None, repeated calls) | `qtimod.sip`, `<module>_contract.py` | contract tests pass on a probe instance |
 | 4 | **Reference scripts** by the strongest model, no QtiSAS checks | `benchmarks/reference/<module>/` | 100% — otherwise back to 2–3 |
-| 5 | **Docs**: skeleton from the SIP, curated notes in marked sections; md + pyi | `<module>-python-api.md/.pyi` | regeneration keeps the curated parts |
+| 5 | **Docs**: skeleton from the SIP, curated notes in marked sections; md + pyi; **audited line by line against the code before the first AI run, and again after each round of patches** (SVD: two audits found 3 wrong statements, 6 gaps and 2 silent API behaviours that runs find one at a time, mixed with model noise) | `<module>-python-api.md/.pyi` | the audit finds nothing; regeneration keeps the curated parts |
 | 6 | **AI structure**: doc topic + keywords, host facts for PROJECT STATE (`entityKinds`, shapes), benchmark cleanup; a large doc gets a doc-set tier (on demand) | C++ host + topic table | a request naming a module object gets its doc |
 | 7 | **Benchmark iterations** with the reference model (BIGMODEL): docs first, signatures, one build per series | doc fixes, API fixes, rules | reference model 100% on the module list; holdout within ~5 points |
 | 8 | **Regression**: LISTs 1–5 after a module series; C++ changes re-run the contract tests and regenerate the doc skeleton | | no drop on LISTs 1–5 |
@@ -188,9 +198,14 @@ anything is tuned.
 - **Say which call fits when a similar one was used:** "QI-alpha is a table of the project, not a file: … with
   convertTables(\"QI-alpha\")" — a bare "no such file" was retried with .dat and .RAD until the item was lost.
 - **Refuse what silently destroys:** a result whose default name is its own source is refused with the ways out.
+- **Every output table gets a read call by label** (SVD `value(table, column, q)`, `qValues()`): reading by row or
+  column number was the weak model's most frequent failure, worst in a table whose rows mean two things (Q points
+  in some columns, contrasts in others); the call refuses the columns it cannot read that way.
+- **Getters return what setters take back:** `contrasts()` dropped the measured solvent SLDs, so the documented
+  rerun `setContrasts(s.contrasts() …)` silently changed the result. The audit includes a set → get → set round trip.
 
 **AI-ready doc rules (step 5, from the ascii1d iterations: local model 0 → 4 → 7 → 9 → 11 of 16, Codex 16/16 at
-η 1.0):**
+η 1.0; and SVD):**
 - **The routing rule first:** which requests this module serves — by the words users use (SANS curve, ascii file,
   radially averaged dataset …) and by the operations only it has, not only by its own name.
 - **"Global object, no import"** when the module is a global (`from Ascii1d import Ascii1d` cost Codex a call in
@@ -207,10 +222,15 @@ anything is tuned.
 - **When to give a name and when to take the returned one**, with the request's own wording as the example; never
   invented names.
 - **Facts of the language around the API:** Python's `open()` does not expand `~`; use the returned absolute paths.
+- **Placeholders are no names of the script's namespace:** `value(svd, …)`, meant as "an SVD table", was copied as
+  `svd.value(…)` — `svd` is the SIP class of `Svd`. Every `<…>` and example name is checked against `dir()` of the
+  script namespace; placeholders are spelled `"<svd table>"`. (QtiSAS now also names the object when a method is
+  called on its class.)
 - **Every iteration re-run on the strongest model:** a doc change that helps the weak one must not cost the strong
   one calls (η is the measure, not only the score).
 
-**Order:** ascii1d first (smallest, ~2.9K lines, no Python API — the cleanest test of the pipeline), then dan
+**Order:** ascii1d first (smallest, ~2.9K lines, no Python API — the cleanest test of the pipeline), then SVD
+(~0.9K lines, a numerical method with physics limits — the second test of the pipeline, 2026-10-19), then dan
 (~27.6K lines; needs doc sets first, since BIGMODEL sends every doc on every call), then jnse (~0.5K lines).
 
 ## 8. Deferred until evidence asks for it
@@ -242,7 +262,8 @@ anything is tuned.
 | M1 | ascii1d, pipeline steps 0–8 — **stage 1 done** (Codex 16/16 at η 1.0, holdout 4/4, LIST 1–5 unchanged), **stage 2 done** (local maximum ≈ 10.7/16 at docs v5: 11, 12, 9 in three runs; v6 removed after an A/B, v7 canSAS detection no
 measurable gain — stopped by the rule). Final holdout: Codex 4/4 at η 1.0, local 1/4 — the local model solves the
 import direction (import items 1–5 and 8–12 nearly always), not yet export and conversion | C++, SIP, docs, benchmarks | strongest model 100% on module list and holdout; weakest at its own maximum |
-| M2, M3 | dan (after doc sets), jnse | | |
+| M2 | SVD, pipeline steps 0–8 — **done 2026-10-19:** C++ fixes first (Icon columns, propagated errors, solvent terms for any N, rank truncation, no dialogs), `Svd` API, docs audited twice; Codex 5/13 without docs → 13/13 (η 1.0), holdout 4/4; local 4 → 9/13 twice (η 0.59), holdout 3/4 — the rest is the local model (written-in values, reading the old table instead of a new decomposition) | C++, SIP, docs, AI checks, benchmarks | strongest model 100% on module list and holdout; weakest at its own maximum |
+| M3, M4 | dan (after doc sets), jnse | | |
 | later | section 8, on evidence | | |
 
 ## 10. Decisions
