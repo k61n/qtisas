@@ -4098,6 +4098,132 @@ public:
 };
 
 
+class jnse18 : public QWidget
+{
+%TypeHeaderCode
+#include "jnse18.h"
+%End
+
+%TypeCode
+// one string or a list of strings — None for none
+static bool jnseStrings(PyObject *obj, QStringList *out, const char *message)
+{
+    if (!obj || obj == Py_None)
+        return true;
+    if (PyUnicode_Check(obj)) {
+        *out << QString::fromUtf8(PyUnicode_AsUTF8(obj));
+        return true;
+    }
+    PyObject *seq = PySequence_Check(obj) ? PySequence_Fast(obj, "") : nullptr;
+    bool ok = seq != nullptr;
+    for (Py_ssize_t i = 0; ok && i < PySequence_Fast_GET_SIZE(seq); i++) {
+        PyObject *item = PySequence_Fast_GET_ITEM(seq, i);
+        ok = PyUnicode_Check(item);
+        if (ok)
+            *out << QString::fromUtf8(PyUnicode_AsUTF8(item));
+    }
+    Py_XDECREF(seq);
+    if (!ok)
+        PyErr_SetString(PyExc_TypeError, message);
+    return ok;
+}
+%End
+
+public:
+    void reset();
+    bool setInputFolder(const QString &folder);
+%MethodCode
+    sipRes = sipCpp->setInputFolder(*a0);
+    if (!sipRes) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
+    QString inputFolder() const;
+    QString importFiles(SIP_PYOBJECT files, const QString &headerTable = QString());
+%MethodCode
+    QStringList files;
+    if (!jnseStrings(a0, &files, "importFiles: files must be a string or a list of strings")) {
+        sipError = sipErrorFail;
+    } else {
+        sipRes = new QString(sipCpp->importFiles(files, *a1));
+        if (sipRes->isEmpty()) {
+            PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+            sipError = sipErrorFail;
+        } else {
+            for (const QString &m : sipCpp->lastMessages())
+                PySys_WriteStdout("%s\n", ("importFiles: " + m).toUtf8().constData());
+        }
+    }
+%End
+    QStringList datasets(const QString &headerTable);
+%MethodCode
+    sipRes = new QStringList(sipCpp->datasets(*a0));
+    if (!sipCpp->lastError().isEmpty()) {
+        PyErr_SetString(PyExc_ValueError, ("datasets: " + sipCpp->lastError()).toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
+    // a column of a header table, row by row: numbers for a number column, else texts
+    SIP_PYLIST header(const QString &headerTable, const QString &column);
+%MethodCode
+    bool numeric = false;
+    const QStringList values = sipCpp->headerColumn(*a0, *a1, &numeric);
+    if (!sipCpp->lastError().isEmpty()) {
+        PyErr_SetString(PyExc_ValueError, ("header: " + sipCpp->lastError()).toUtf8().constData());
+        sipError = sipErrorFail;
+    } else {
+        sipRes = PyList_New(values.size());
+        for (int i = 0; i < values.size(); i++)
+            PyList_SET_ITEM(sipRes, i, numeric ? PyFloat_FromDouble(values[i].toDouble())
+                                               : PyUnicode_FromString(values[i].toUtf8().constData()));
+    }
+%End
+    QStringList initFit(const QString &headerTable, const QString &function, int fromRow = 1, int toRow = 0);
+%MethodCode
+    sipRes = new QStringList(sipCpp->initFit(*a0, *a1, a2, a3));
+    if (sipRes->isEmpty()) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
+    double fit(const QString &headerTable, const QString &function, int fromRow = 1, int toRow = 0,
+               SIP_PYOBJECT shared = Py_None, SIP_PYOBJECT start = Py_None, SIP_PYOBJECT fixed = Py_None);
+%MethodCode
+    QStringList shared;
+    QMap<QString, double> start, fixed;
+    bool ok = jnseStrings(a4, &shared, "fit: shared must be a parameter name or a list of them");
+    for (int k = 0; ok && k < 2; k++) {
+        PyObject *values = k == 0 ? a5 : a6;
+        QMap<QString, double> *out = k == 0 ? &start : &fixed;
+        if (!values || values == Py_None)
+            continue;
+        ok = PyDict_Check(values);
+        PyObject *key, *value;
+        Py_ssize_t pos = 0;
+        while (ok && PyDict_Next(values, &pos, &key, &value)) {
+            ok = PyUnicode_Check(key) && PyNumber_Check(value);
+            if (ok)
+                out->insert(QString::fromUtf8(PyUnicode_AsUTF8(key)), PyFloat_AsDouble(value));
+        }
+        if (!ok)
+            PyErr_SetString(PyExc_TypeError, k == 0 ? "fit: start must be a dict {parameter: value}"
+                                                    : "fit: fixed must be a dict {parameter: value}");
+    }
+    if (!ok) {
+        sipError = sipErrorFail;
+    } else {
+        sipRes = sipCpp->fit(*a0, *a1, a2, a3, shared, start, fixed);
+        if (!sipCpp->lastError().isEmpty()) {
+            PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+            sipError = sipErrorFail;
+        }
+    }
+%End
+    QStringList lastMessages() const;
+};
+
+
 class ApplicationWindow: QMainWindow
 {
 %TypeHeaderCode
@@ -4123,6 +4249,7 @@ public:
   dan18 *danWidget /PyName=Dan/;
   ascii1d18 *ascii1dWidget /PyName=Ascii1d/;
   svd *svdWidget /PyName=Svd/;
+  jnse18 *jnseWidget /PyName=Jnse/;
 
   Table* newTable();
   Table* currentTable();

@@ -67,6 +67,7 @@ if(WITH_PYTHON)
         ${CMAKE_BINARY_DIR}/sip/qti/sipqtiImageWidget.cpp
         ${CMAKE_BINARY_DIR}/sip/qti/sipqtiIntegration.cpp
         ${CMAKE_BINARY_DIR}/sip/qti/sipqtiInterpolation.cpp
+        ${CMAKE_BINARY_DIR}/sip/qti/sipqtijnse18.cpp
         ${CMAKE_BINARY_DIR}/sip/qti/sipqtiLegendWidget.cpp
         ${CMAKE_BINARY_DIR}/sip/qti/sipqtiLinearColorMap.cpp
         ${CMAKE_BINARY_DIR}/sip/qti/sipqtiLinearFit.cpp

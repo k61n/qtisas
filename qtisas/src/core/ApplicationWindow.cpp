@@ -560,7 +560,6 @@ void ApplicationWindow::init(bool factorySettings)
     tabifyDockWidget(jnseWindow,ascii1dWindow);
     ascii1dWindow->hide();
 
-    connect(jnseWidget, &jnse18::signalJnseFit, fittableWidget, &fittable18::multiNSEfit);
 #endif
     
 	actionSaveProject = nullptr;

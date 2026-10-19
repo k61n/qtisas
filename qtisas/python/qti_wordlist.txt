@@ -1276,3 +1276,5 @@ contrasts
 components
 value
 qValues
+Jnse
+initFit

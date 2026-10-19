@@ -8,6 +8,10 @@ Description: JNSE data reading interface
  ******************************************************************************/
 
 #include <QDockWidget>
+#include <QFileDialog>
+#include <QInputDialog>
+#include <QMessageBox>
+#include <QRegularExpression>
 
 #include "Folder.h"
 #include "fittable18.h"
@@ -239,43 +243,110 @@ DtrRead readDtrDataset(const QStringList &data, int &lineNum, DtrDataset &d)
 }
 } // namespace
 
-//+++ read of NSE(*.dtr) files and make table(s)
-void jnse18::readNseData()
+//+++ a warning: a message box in the GUI, collected for the caller in a scripted run (no modal dialog)
+void jnse18::warn(const QString &text)
 {
-    bool ok;
-    QString TableName = QInputDialog::getText(this, "Table's Generation: all header info",
-                                              "Enter name of Table:", QLineEdit::Normal, lineEditFileName->text(), &ok);
-    if (!ok || TableName.isEmpty())
-        return;
+    if (m_scripted)
+        m_messages << text;
+    else
+        QMessageBox::warning(this, "QtiSAS - JNSE", text);
+}
 
-    QFileDialog fd(this, "NSE - File Import", lineEditPathDAT->text(), "NSE - dtr files (*.dtr)");
-    fd.setFileMode(QFileDialog::ExistingFiles);
-    fd.setNameFilters({QStringLiteral("NSE - dtr files (*.dtr)"), QStringLiteral("All Files (*)")});
-    if (fd.exec() == QDialog::Rejected)
-        return;
-    const QStringList selectedDat = fd.selectedFiles();
+//+++ a JNSE header table: the table made by importDtr() (its 4th column "run-number", 20 columns)
+Table *jnse18::headerTable(const QString &name)
+{
+    Table *t = nullptr;
+    if (!app()->checkTableExistence(name, t) || t->numCols() < 20 || t->colLabel(3) != "run-number")
+        return nullptr;
+    return t;
+}
 
-    lineEditFileName->setText(TableName);
-
-    // the tables go into this folder, created only once files are chosen
-    app()->changeFolder("JNSE :: *.dtr files");
-    app()->folders->setFocus();
+//+++ read of NSE(*.dtr) files and make table(s): the header table's name, or empty with m_lastError when nothing was
+//+++ read. A header table of that name is appended to (no name: "<first file read>-info"); problems of single files
+//+++ are warnings (warn()).
+QString jnse18::importDtr(const QStringList &files, const QString &headerName)
+{
+    m_lastError.clear();
 
     Table *tableDat = nullptr;
-    foreach (MdiSubWindow *w, app()->tableList())
-        if (w->name() == TableName)
+    if (!headerName.isEmpty() && app()->checkTableExistence(headerName))
+    {
+        tableDat = headerTable(headerName);
+        if (!tableDat)
         {
-            tableDat = (Table *)w;
-            if (tableDat->numCols() < 20)
-            {
-                QMessageBox::critical(nullptr, "QtiSAS", "Create new table (# cols)");
-                return;
-            }
-            break;
-        };
+            m_lastError =
+                tr("%1 is a table but not a JNSE header table; give another name for the header table").arg(headerName);
+            return {};
+        }
+    }
+
+    // every file read first: the tables are made only for datasets that were read
+    struct FileDatasets
+    {
+        QString code;
+        QList<DtrDataset> datasets;
+    };
+    QList<FileDatasets> read;
+    for (const QString &file : files)
+    {
+        QFile f(file);
+        if (!f.open(QIODevice::ReadOnly))
+        {
+            warn(tr("%1 cannot be opened, and is skipped").arg(file));
+            continue;
+        }
+        QString content = QString::fromUtf8(f.readAll());
+        f.close();
+        content.replace("\r\n", "\n").replace("\r", "\n");
+        const QStringList data = content.split("\n", Qt::KeepEmptyParts);
+
+        FileDatasets fd;
+        fd.code = QFileInfo(file).fileName();
+        fd.code.remove(".dtr").remove(".DTR");
+
+        int lineNum = 0;
+        DtrDataset d;
+        DtrRead result;
+        while ((result = readDtrDataset(data, lineNum, d)) == DtrRead::Dataset)
+            fd.datasets << d;
+        // the rest of a file that does not fit the format is not read: its datasets would be misaligned
+        if (result == DtrRead::Error)
+            warn(
+                tr("Check Format of File: %1; line # %2 does not fit the .dtr format (the datasets before it are read)")
+                    .arg(file)
+                    .arg(lineNum));
+        if (fd.datasets.isEmpty())
+            warn(tr("%1 holds no .dtr dataset, and is skipped").arg(file));
+        else
+            read << fd;
+    }
+    if (read.isEmpty())
+    {
+        m_lastError = tr("no .dtr dataset read from %1").arg(files.join(", "));
+        return {};
+    }
+    // no name given: the first file that was read names the header table ("report19971_1-2-info")
+    QString name = headerName;
+    if (name.isEmpty())
+    {
+        name = read.first().code + "-info";
+        name.replace(QRegularExpression("[.,;:]"), "-");
+        tableDat = headerTable(name);
+        if (!tableDat && app()->checkTableExistence(name))
+        {
+            m_lastError = tr("%1 is a table but not a JNSE header table; give a name for the header table").arg(name);
+            return {};
+        }
+    }
+
+    // the tables go into this folder
+    Folder *before = app()->currentFolder();
+    app()->changeFolder("JNSE :: *.dtr files");
+    if (!m_scripted)
+        app()->folders->setFocus();
 
     if (tableDat == nullptr)
-        tableDat = app()->newTable(TableName, 0, 20);
+        tableDat = app()->newTable(name, 0, 20);
 
     //+++ Cols Names
     const QStringList textColumns = {"sample-code", "sample-info", "mode", "run-number"};
@@ -299,36 +370,20 @@ void jnse18::readNseData()
     const Table::PlotDesignation datasetDesignations[] = {Table::X,    Table::Y, Table::yErr, Table::yErr,
                                                           Table::xErr, Table::Y, Table::Y};
 
-    for (const QString &file : selectedDat)
-    {
-        QFile f(file);
-        if (!f.open(QIODevice::ReadOnly))
-            continue;
-
-        QString content = QString::fromUtf8(f.readAll());
-        f.close();
-        content.replace("\r\n", "\n").replace("\r", "\n");
-        const QStringList data = content.split("\n", Qt::KeepEmptyParts);
-
-        QString fileCode = QFileInfo(file).fileName();
-        fileCode.remove(".dtr").remove(".DTR");
-
-        int lineNum = 0;
-        DtrDataset d;
-        DtrRead read;
-        while ((read = readDtrDataset(data, lineNum, d)) == DtrRead::Dataset)
+    for (const FileDatasets &fd : read)
+        for (const DtrDataset &d : fd.datasets)
         {
             const int row = tableDat->numRows();
             tableDat->setNumRows(row + 1);
 
-            tableDat->setText(row, 0, d.sample + "  " + fileCode);
+            tableDat->setText(row, 0, d.sample + "  " + fd.code);
             tableDat->setText(row, 1, d.info);
             tableDat->setText(row, 2, d.mode);
             tableDat->setText(row, 3, d.run);
             for (int k = 0; k < dtrHeaderCount; k++) // .dtr numbers are C
                 tableDat->setCellOrText(row, dtrFirstHeaderColumn + k, d.header[k], QLocale::c());
 
-            QString matrixName = fileCode + "-" + d.run + "-v-";
+            QString matrixName = fd.code + "-" + d.run + "-v-";
             matrixName.replace(QRegularExpression("[.,;:]"), "-");
             matrixName = app()->generateUniqueName(matrixName);
             tableDat->setText(row, 19, matrixName);
@@ -348,11 +403,6 @@ void jnse18::readNseData()
             tableResults->adjustColumnsWidth(false);
             app()->setListViewLabel(tableResults->name(), "NSE Dataset");
         }
-
-        // the rest of a file that does not fit the format is not read: its datasets would be misaligned
-        if (read == DtrRead::Error)
-            QMessageBox::critical(nullptr, "QtiSAS", tr("Check Format of File: %1; line # %2").arg(file).arg(lineNum));
-    }
     tableDat->adjustColumnsWidth(false);
 
     tableDat->setWindowLabel("NSE Headers");
@@ -362,6 +412,31 @@ void jnse18::readNseData()
     app()->maximizeWindow(tableDat);
 
     findHeaderTables();
+    // a script's current folder stays the one it was in
+    if (m_scripted && before)
+        app()->changeFolder(before, true);
+    return tableDat->name();
+}
+
+//+++ read of NSE(*.dtr) files chosen in dialogs
+void jnse18::readNseData()
+{
+    bool ok;
+    QString TableName = QInputDialog::getText(this, "Table's Generation: all header info",
+                                              "Enter name of Table:", QLineEdit::Normal, lineEditFileName->text(), &ok);
+    if (!ok || TableName.isEmpty())
+        return;
+
+    QFileDialog fd(this, "NSE - File Import", lineEditPathDAT->text(), "NSE - dtr files (*.dtr)");
+    fd.setFileMode(QFileDialog::ExistingFiles);
+    fd.setNameFilters({QStringLiteral("NSE - dtr files (*.dtr)"), QStringLiteral("All Files (*)")});
+    if (fd.exec() == QDialog::Rejected)
+        return;
+
+    lineEditFileName->setText(TableName);
+    m_messages.clear();
+    if (importDtr(fd.selectedFiles(), TableName).isEmpty())
+        QMessageBox::critical(this, "QtiSAS - JNSE", m_lastError);
 }
 //+++ Search of  Header tables
 void jnse18::findHeaderTables()
@@ -414,14 +489,19 @@ void jnse18::headerTableSeleted()
     }
     
 }
-//+++ startNseFit
+//+++ startNseFit: the multi-fit of the selected rows, set up in FitTable
 void jnse18::startNseFit()
 {
-    if (comboBoxHeaderTables->count() > 0)
-        emit signalJnseFit(comboBoxHeaderTables->currentText(), comboBoxFitFunctions->currentText(),
-                           spinBoxFrom->value(), spinBoxTo->value());
-    else
+    if (comboBoxHeaderTables->count() == 0)
+    {
         QMessageBox::warning(this, "QtiSAS", "Select Header's Table first!");
+        return;
+    }
+    m_messages.clear();
+    if (initFit(comboBoxHeaderTables->currentText(), comboBoxFitFunctions->currentText(), spinBoxFrom->value(),
+                spinBoxTo->value())
+            .isEmpty())
+        QMessageBox::critical(this, "QtiSAS - JNSE", m_lastError);
 }
 //+++ filterFitFunctions
 void jnse18::filterFitFunctions(const QStringList &inputList, bool local)

@@ -64,7 +64,7 @@ if __name__ == '__main__':
         'currentTable', 'customActionNames', 'customActionsPath', 'Dan', 'deleteFolder',
         'displayInfo', 'existGraph', 'existMatrix', 'existNote', 'existPlot3D', 'existTable',
         'existWindow', 'Fittable',
-        'graphWindow', 'graphs', 'hideWindow', 'importWaveFile', 'infoLineEdit',
+        'graphWindow', 'graphs', 'hideWindow', 'importWaveFile', 'infoLineEdit', 'Jnse',
         'addRule', 'matrices', 'matrix', 'matrixNames', 'matrixToTable', 'maximizeWindow',
         'newGraph', 'newMatrix', 'newNote', 'newPlot3D', 'newProject', 'newTable',
         'openProject',

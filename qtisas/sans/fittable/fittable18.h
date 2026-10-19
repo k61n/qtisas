@@ -355,7 +355,6 @@ public:
 
 public slots:
 
-    void multiNSEfit(QString tableName, QString fitFunction, int from,int to);
 // fittable-init
     void initFITTABLE();
     void connectSlot();

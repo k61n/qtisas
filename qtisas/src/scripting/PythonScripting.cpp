@@ -121,7 +121,8 @@ static QString methodOwnerHint(PyObject *value)
                                    {"builtins", "Fittable", "Fittable"},
                                    {"builtins", "Dan", "Dan"},
                                    {"builtins", "Ascii1d", "Ascii1d"},
-                                   {"builtins", "Svd", "Svd"}};
+                                   {"builtins", "Svd", "Svd"},
+                                   {"builtins", "Jnse", "Jnse"}};
     QStringList types;
     QString example;
     for (const Owner &o : owners)
@@ -162,6 +163,7 @@ static QString unboundMethodHint(PyObject *value)
                                                  {"compile18", "Compiler"},
                                                  {"fittable18", "Fittable"},
                                                  {"dan18", "Dan"},
+                                                 {"jnse18", "Jnse"},
                                                  {"Table", "t = table(\"<name>\"); t"},
                                                  {"Matrix", "m = matrix(\"<name>\"); m"},
                                                  {"Note", "n = note(\"<name>\"); n"}};

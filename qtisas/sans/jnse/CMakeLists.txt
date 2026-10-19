@@ -1,6 +1,7 @@
 
 set(SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/jnse18.cpp)
+    ${CMAKE_CURRENT_SOURCE_DIR}/jnse18.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/jnse-python.cpp)
 
 set(HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/jnse18.h)

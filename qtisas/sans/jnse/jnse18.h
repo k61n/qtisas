@@ -36,10 +36,28 @@ class jnse18 : public QWidget, private Ui::jnse
     void filterFitFunctions(const QStringList &lst = {}, bool local = true);
     void applyFunctionsFilter();
 
-  signals:
-    void signalJnseFit(const QString &tableName, const QString &function, int from, int to);
+  public:
+    // Python interface (jnse-python.cpp)
+    void reset();
+    bool setInputFolder(const QString &folder);
+    QString inputFolder() const;
+    QString importFiles(const QStringList &files, const QString &headerTable);
+    QStringList datasets(const QString &headerTable);
+    QStringList headerColumn(const QString &headerTable, const QString &column, bool *numeric);
+    QStringList initFit(const QString &headerTable, const QString &function, int fromRow, int toRow);
+    double fit(const QString &headerTable, const QString &function, int fromRow, int toRow, const QStringList &shared,
+               const QMap<QString, double> &start, const QMap<QString, double> &fixed);
+    QString lastError() const;
+    QStringList lastMessages() const;
 
   private:
+    QString importDtr(const QStringList &files, const QString &headerName);
+    Table *headerTable(const QString &name);
+    void warn(const QString &text);
+    bool m_scripted = false; // a Python API run: warnings are collected, not shown
+    QStringList m_messages;  // the warnings of the last call
+    QString m_lastError;     // why the last call made nothing
+    QString m_inputFolder;   // relative file names of importFiles() start here
 };
 
 #endif
