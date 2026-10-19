@@ -269,6 +269,7 @@ class AiContentTests : public QObject
     static void matrixTransposedCell_swappedWhenOnlyThatFits();
     static void requestedResultValues_orderPhraseIsNoValue();
     static void requestedResultValues_formatPhraseIsNoValue();
+    static void missingDeliverables_fitOrderedButNotRun();
     static void requestCreatesName_onlyForACreation();
     static void textIntoNumericColumn_tableLookedUpAfterCreation();
     static void namesSomethingNew_onlyForAResolvedName();
@@ -449,6 +450,8 @@ class AiContentTests : public QObject
     static void splitPartTopics_fittableSynonymCatchesSimulate();
     static void splitPartTopics_ascii1dForSasDataInOrOut();
     static void splitPartTopics_svdForContrastVariation();
+    static void splitPartTopics_jnseForSpinEcho();
+    static void docTopicForKind_moduleTables();
     static void splitPartsMissingCreationName_catchesPlotWithoutName();
     static void splitPartsMissingCreationName_acceptsQuotedTableName();
     static void splitPartsMissingCreationName_catchesSurfaceWithoutName();

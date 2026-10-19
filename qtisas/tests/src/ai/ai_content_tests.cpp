@@ -225,7 +225,10 @@ void AiContentTests::knownMistakes_fitBeforeConfigureIsCaught()
     QVERIFY(!QtiSasAiContent::fittableFitBeforeConfigureMistake("t = table(\"RawScan\")\nchi2 = f.fit()\n").isEmpty());
     QVERIFY(
         QtiSasAiContent::fittableFitBeforeConfigureMistake("f.configure(\"ai/M\", [\"RawScan_y\"])\nchi2 = f.fit()\n")
-            .isEmpty());
+            .isEmpty()); // benchmark JNSE holdout: Jnse.initFit() configures Fittable
+    QVERIFY(QtiSasAiContent::fittableFitBeforeConfigureMistake(
+                "Jnse.initFit(\"psInfo\", \"simpleDiffusion\", 1, 0)\nFittable.fit()\n")
+                .isEmpty());
 }
 
 void AiContentTests::knownMistakes_noteTabPrintIsCaught()
@@ -451,7 +454,8 @@ void AiContentTests::deliverables_chi2AsCriterionIsNoReport()
     // Confirmed live (benchmark LIST 5, item 2): "the function with the smaller chi2/dof" chooses by it; the correct
     // script was blocked twice for "never printing chi2"
     QtiSasAiContent content;
-    const QString code = "best = min(results, key=lambda n: results[n][0])\nscriptPrint(\"R2:\", best, a, w)\n";
+    const QString code = "for n in names:\n    f.configure(n, sets)\n    results[n] = (f.fit(), f.results())\n"
+                         "best = min(results, key=lambda n: results[n][0])\nscriptPrint(\"R2:\", best, a, w)\n";
     QVERIFY(content
                 .missingRequestedDeliverables(
                     code, "Fit both. Print the name of the function with the smaller chi2/dof, then its A and w.")
@@ -2876,6 +2880,25 @@ void AiContentTests::requestedResultValues_formatPhraseIsNoValue()
              qsizetype(2));
 }
 
+void AiContentTests::missingDeliverables_fitOrderedButNotRun()
+{
+    // benchmark JNSE, local pyi, items 6 and 11: "Fit ... Print D" answered with an earlier fit's D
+    QtiSasAiContent content;
+    const QString fit = "Fit only the four smallest q of the 350 K series together with simpleDiffusion. Print D.";
+    QVERIFY(content.missingRequestedDeliverables("scriptPrint(\"R6:\", Fittable.paramValue(\"D\"))\n", fit)
+                .contains("the fit"));
+    QVERIFY(content.missingRequestedDeliverables("Jnse.fit(\"pepInfo\", \"simpleDiffusion\", 7, 10)\n", fit).isEmpty());
+    QVERIFY(
+        content.missingRequestedDeliverables("Fittable.configure(\"m\", [\"t_y\"])\nFittable.fit()\n", fit).isEmpty());
+    const QString ratio = "Print the ratio D(350 K) / D(300 K) from fits of all six q of each series.";
+    QVERIFY(!content.missingRequestedDeliverables("scriptPrint(\"R11:\", 1.0)\n", ratio).isEmpty());
+    // a fit only mentioned is not ordered
+    QVERIFY(!content.missingRequestedDeliverables("print(1)\n", "Print the A of the fit made before.")
+                 .contains("the fit ("));
+    QVERIFY(
+        !content.missingRequestedDeliverables("print(1)\n", "Print the fit results of item 5.").contains("the fit ("));
+}
+
 void AiContentTests::requestCreatesName_onlyForACreation()
 {
     // LIST 3, items 2 and 3 in split mode: "In \"Squares\", ..." was planned as a creation and stopped as a collision.
@@ -5035,6 +5058,31 @@ void AiContentTests::splitPartTopics_svdForContrastVariation()
           QStringLiteral("Repeat the decomposition of svdAB without mix34")})
         QVERIFY2(splitPartTopicsFromAnswer("none", request, known).contains("svd"), qPrintable(request));
     QVERIFY(!splitPartTopicsFromAnswer("none", "import the SANS curve plain.dat", known).contains("svd"));
+}
+
+void AiContentTests::splitPartTopics_jnseForSpinEcho()
+{
+    // neutron spin echo — named by any of its usual words — needs the Jnse docs
+    QtiSasAiContent content;
+    const QStringList known = content.knownDocTopics();
+    QVERIFY(known.contains("jnse"));
+    for (const QString &request :
+         {QStringLiteral("Import the neutron spin echo data file report90001_1.2.dtr"),
+          QStringLiteral("Read the NSE measurement into a header table"), QStringLiteral("plot S(q,t)/S(q) of the q"),
+          QStringLiteral("fit the intermediate scattering function"), QStringLiteral("the number of Fourier times"),
+          QStringLiteral("load the J-NSE files")})
+        QVERIFY2(splitPartTopicsFromAnswer("none", request, known).contains("jnse"), qPrintable(request));
+    QVERIFY(!splitPartTopicsFromAnswer("none", "import the SANS curve plain.dat", known).contains("jnse"));
+}
+
+void AiContentTests::docTopicForKind_moduleTables()
+{
+    // a table a module made (entityKinds(): its window label) routes to that module's docs; a plain table to table
+    QtiSasAiContent content;
+    QCOMPARE(content.docTopicForKind("JNSE header table"), QString("jnse"));
+    QCOMPARE(content.docTopicForKind("JNSE dataset table"), QString("jnse"));
+    QCOMPARE(content.docTopicForKind("SVD table"), QString("svd"));
+    QCOMPARE(content.docTopicForKind("table"), QString("table"));
 }
 
 void AiContentTests::splitPartTopics_fittableSynonymCatchesSimulate()
