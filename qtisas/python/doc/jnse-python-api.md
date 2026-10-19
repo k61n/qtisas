@@ -30,7 +30,7 @@ First choose the call:
 | a value of every q (q, temperature, …) | `header(headerTable, column)` |
 | the data of one q | `table(datasets(headerTable)[row - 1])` — its columns by label |
 | a fit of some or all q together, in one call | `fit(...)` — its results also go to the results log |
-| set up the fit, then tune it in Fittable | `initFit(...)`, then `Fittable.setParam…()` and `Fittable.fit()` |
+| set up the fit, then tune it in Fittable | `initFit(...)`, then `Fittable.setParam…()` and `Fittable.fit()` — never `Fittable.configure()` after `initFit()`: it sets Fittable up anew and resets each row's fixed q |
 | the fit function is missing | compile it with `Compiler` (e.g. `simpleDiffusion` of qtisas.com/jnse) |
 
 Then every task, in this order:

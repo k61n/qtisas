@@ -21,6 +21,7 @@
 #   the data of one q                    -> table(datasets(headerTable)[row - 1]) — columns below, by label
 #   fit some/all q together, in one call -> fit(...)        (its results also go to the results log)
 #   set up the fit, then tune Fittable   -> initFit(...), Fittable.setParam...(), Fittable.fit()
+#     NEVER Fittable.configure() after initFit(): it sets Fittable up anew and resets each row's fixed q
 #   the fit function is missing          -> compile it (Compiler) — e.g. simpleDiffusion of qtisas.com/jnse
 reset()
 setInputFolder(folder)  inputFolder()->str
