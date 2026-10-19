@@ -5769,32 +5769,6 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
                             ". Do not send it again — write a different body that fixes exactly that."};
                     break;
                 }
-    // newTable() over a table a module made would replace it: confirmed live (benchmark JNSE holdout, local pyi),
-    // newTable("psInfo", 100, 3) wiped the imported header table for invented data
-    if (compilable && m_host)
-    {
-        static const QRegularExpression newTableRe(R"RX(\bnewTable\s*\(\s*["']([^"'\n]+)["'])RX");
-        QStringList names;
-        for (auto it = newTableRe.globalMatch(code); it.hasNext();)
-            names << it.next().captured(1);
-        const QList<QStringList> kinds = names.isEmpty() ? QList<QStringList>() : m_host->entityKinds(names);
-        static const QHash<QString, QString> uses{
-            {"JNSE header table", "Jnse.header(), Jnse.datasets(), Jnse.fit()"},
-            {"JNSE dataset table", "table(name) and Jnse.fit() through its header table"},
-            {"SVD table", "Svd.value(), Svd.qValues(), Svd.readTable()"}};
-        for (int i = 0; i < kinds.size(); ++i)
-            for (const QString &kind : kinds[i])
-                if (uses.contains(kind))
-                {
-                    knownMistakes << AiKnownMistakeMatch{
-                        "newTable() over a module's table",
-                        QString("\"%1\" is a %2 of the project: newTable(\"%1\", ...) would replace it with an empty "
-                                "table and destroy what the module made. Use it as it is (%3), or give a new table "
-                                "another name.")
-                            .arg(names[i], kind, uses.value(kind))};
-                    break;
-                }
-    }
     if (compilable)
         if (const QString moved = guardedCreationRepair(code, m_objectsAtRequestStart); !moved.isEmpty())
         {
