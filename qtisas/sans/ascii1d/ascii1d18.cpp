@@ -1399,7 +1399,21 @@ bool ascii1d18::loadASCIIfromFile(const QString fn, gsl_matrix* &data, int &N, b
         warn("File " + fn + " could not be opened, and was skipped");
         return false;
     }
-    
+
+    // a canSAS XML file read as ASCII gave numbers of its XML lines as points (confirmed live, benchmark ASCII1D item
+    // 4: 10 rows from an 8-point file, without a word): the format is named instead
+    if (!comboBoxFormat->currentText().contains("cansas1d"))
+    {
+        const QByteArray head = f.peek(512);
+        if (head.contains("<SASroot") || head.contains("<SASentry") || head.contains("<SASdata"))
+        {
+            warn("File " + fn +
+                 " is a canSAS XML file, not ASCII — choose the format cansas1d-xml "
+                 "(Python: setFormat(\"cansas\")); the file is skipped");
+            return false;
+        }
+    }
+
     QTextStream t( &f );
     int pos,NN;
     double Q,I,dI,sigma;

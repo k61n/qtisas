@@ -3711,6 +3711,15 @@ public:
         sipError = sipErrorFail;
     }
 %End
+    // a number of header lines as an int too: setHeader(5)
+    bool setHeader(int lines);
+%MethodCode
+    sipRes = sipCpp->setHeader(QString::number(a0));
+    if (!sipRes) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
     QString header() const;
     bool setColumns(int n);
 %MethodCode
@@ -3779,7 +3788,11 @@ public:
     }
 %End
     void setResolution(bool on);
-    bool setResolutionGeometry(double collimation, double detector, double pixel = 0.525, double sampleApertureW = 10, double sampleApertureH = 10, double collimationApertureW = 30, double collimationApertureH = 30, double lambda = 6, double deltaLambda = 0.1);
+    // the tool's units, in the names: collimation, detector distance, pixel size in cm; apertures in mm; lambda in Å
+    bool setResolutionGeometry(double collimationCm, double detectorCm, double pixelCm = 0.525,
+                               double sampleApertureWmm = 10, double sampleApertureHmm = 10,
+                               double collimationApertureWmm = 30, double collimationApertureHmm = 30,
+                               double lambdaA = 6, double deltaLambda = 0.1);
 %MethodCode
     sipRes = sipCpp->setResolutionGeometry(a0, a1, a2, a3, a4, a5, a6, a7, a8);
     if (!sipRes) {

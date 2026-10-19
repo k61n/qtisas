@@ -357,6 +357,16 @@ bool ascii1d18::setResolutionGeometry(double collimation, double detector, doubl
             m_lastError = "setResolutionGeometry: every length and the wavelength must be > 0 (cm, mm, Å)";
             return false;
         }
+    // a value in metres where the tool takes cm: confirmed live (benchmark ASCII1D, local model), 8 m collimation and
+    // 4 m detector distance given as 8 and 4 — no real SANS distance is below 50 cm
+    if (collimation < 50.0 || detector < 50.0)
+    {
+        m_lastError = QString("setResolutionGeometry: collimation %1 cm, detector %2 cm? The distances are in cm, not "
+                              "m: 8 m is 800")
+                          .arg(collimation)
+                          .arg(detector);
+        return false;
+    }
     if (deltaLambda < 0.0)
     {
         m_lastError = "setResolutionGeometry: deltaLambda (Δλ/λ) must be 0 or more";
@@ -483,13 +493,48 @@ static QStringList expandTables(ApplicationWindow *app, const QStringList &table
     return out;
 }
 
+// A missing file that is the name of a table of the project: the call for a table, named. Confirmed live (benchmark
+// ASCII1D, local model): importFiles("QI-alpha") for a table, retried with "QI-alpha.dat" and "QI-alpha.RAD" until the
+// item was given up — "no such file" said nothing about the table that was there.
+static QString tableNotFileHint(ApplicationWindow *app, const QStringList &entries, const QString &toTable,
+                                const QString &toFile)
+{
+    QStringList tables;
+    for (const QString &entry : entries)
+    {
+        QString name = QFileInfo(entry.trimmed()).completeBaseName();
+        if (app->checkTableExistence(entry.trimmed()))
+            tables << entry.trimmed();
+        else if (!name.isEmpty() && app->checkTableExistence(name))
+            tables << name;
+    }
+    if (tables.isEmpty())
+        return {};
+    return QString(" — %1 %2 a table of the project, not a file: a table goes to a table with %3(\"%4\") and to a "
+                   "file with %5(\"%4\")")
+        .arg(tables.join(", "), tables.size() == 1 ? "is" : "are", toTable, tables.first(), toFile);
+}
+
+// A missing table that is a file on disk: the call for a file, named
+static QString fileNotTableHint(const QStringList &entries, const QString &inputFolder)
+{
+    QStringList missing;
+    const QStringList files = expandFiles(entries, inputFolder, missing);
+    if (files.isEmpty())
+        return {};
+    return QString(" — %1 is a file, not a table: a file goes to a table with importFiles(\"%1\") and to a file "
+                   "with convertFiles(\"%1\")")
+        .arg(QFileInfo(files.first()).fileName());
+}
+
 QStringList ascii1d18::importFiles(const QStringList &files, const QStringList &names)
 {
     QStringList missing;
     const QStringList sources = expandFiles(files, lineEditPath->text(), missing);
     if (!missing.isEmpty())
     {
-        m_lastError = "no such file: " + missing.join(", ");
+        m_lastError =
+            "no such file: " + missing.join(", ") + tableNotFileHint(app(), files, "convertTables", "exportTables");
         return {};
     }
     return runScripted(0, 0, sources, names);
@@ -501,7 +546,8 @@ QStringList ascii1d18::convertFiles(const QStringList &files, const QStringList 
     const QStringList sources = expandFiles(files, lineEditPath->text(), missing);
     if (!missing.isEmpty())
     {
-        m_lastError = "no such file: " + missing.join(", ");
+        m_lastError =
+            "no such file: " + missing.join(", ") + tableNotFileHint(app(), files, "convertTables", "exportTables");
         return {};
     }
     QDir().mkpath(lineEditPathOut->text());
@@ -514,7 +560,7 @@ QStringList ascii1d18::exportTables(const QStringList &tables, const QStringList
     const QStringList sources = expandTables(app(), tables, missing);
     if (!missing.isEmpty())
     {
-        m_lastError = "no table matches " + missing.join(", ");
+        m_lastError = "no table matches " + missing.join(", ") + fileNotTableHint(missing, lineEditPath->text());
         return {};
     }
     QDir().mkpath(lineEditPathOut->text());
@@ -527,7 +573,7 @@ QStringList ascii1d18::convertTables(const QStringList &tables, const QStringLis
     const QStringList sources = expandTables(app(), tables, missing);
     if (!missing.isEmpty())
     {
-        m_lastError = "no table matches " + missing.join(", ");
+        m_lastError = "no table matches " + missing.join(", ") + fileNotTableHint(missing, lineEditPath->text());
         return {};
     }
     // a default name equal to the source would refill the source with its own processed data
