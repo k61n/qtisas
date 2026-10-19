@@ -295,6 +295,11 @@ static ApplicationWindow *app(QWidget *widget)
 
     return appM;
 }
+ApplicationWindow *svd::appWindow()
+{
+    return app(this);
+}
+
 void svd::on_spinBoxMsvd_valueChanged(int value)
 {
     tableMsvd->setRowCount(value);
@@ -369,7 +374,7 @@ void svd::slotReadSvdData(QString tableName)
 //+++ decomposed: then the name is empty and m_lastError tells why. Warnings of a made table are in m_messages.
 QString svd::decompose(const QString &Name, int Nsvd, const QStringList &TexT, const gsl_matrix *SLDcomponent, int Msvd,
                        const QStringList &Dcomposition, const QStringList &FileNames, const gsl_vector *SLDsolvent,
-                       int Ksvd)
+                       int Ksvd, double rhoH, double rhoD)
 {
     m_lastError.clear();
     m_messages.clear();
@@ -499,7 +504,7 @@ QString svd::decompose(const QString &Name, int Nsvd, const QStringList &TexT, c
     for (int ll = 0; ll < N; ll++)
     {
         singular[ll] = gsl_vector_get(S.get(), ll);
-        if (singular[ll] > 1e-12 * singular[0])
+        if (singular[ll] > singularThreshold * singular[0])
             rank++;
         else
             gsl_vector_set(S.get(), ll, 0.0);
@@ -625,8 +630,8 @@ QString svd::decompose(const QString &Name, int Nsvd, const QStringList &TexT, c
 
     // Solvent Parameters
     tableRho->setText(0, 0, "Solvent SLD");
-    tableRho->setCell(0, 1, uiToDouble(lineEditRhoH->text()));
-    tableRho->setCell(0, 2, uiToDouble(lineEditRhoD->text()));
+    tableRho->setCell(0, 1, rhoH);
+    tableRho->setCell(0, 2, rhoD);
 
     // the components: names and SLD in H and D
     for (int nn = 0; nn < Nsvd; nn++)
@@ -849,8 +854,8 @@ void svd::slotSVD1dataTransfer()
         TexT.append(text);
     }
 
-    const QString made =
-        decompose(tableName, Nsvd, TexT, SLDcomponent, Msvd, Dcomposition, FileNames, SLDsolvent, Ksvd);
+    const QString made = decompose(tableName, Nsvd, TexT, SLDcomponent, Msvd, Dcomposition, FileNames, SLDsolvent, Ksvd,
+                                   uiToDouble(lineEditRhoH->text()), uiToDouble(lineEditRhoD->text()));
     gsl_vector_free(SLDsolvent);
     gsl_matrix_free(SLDcomponent);
 

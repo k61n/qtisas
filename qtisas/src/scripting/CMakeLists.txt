@@ -103,6 +103,7 @@ if(WITH_PYTHON)
         ${CMAKE_BINARY_DIR}/sip/qti/sipqtiSpectrogram.cpp
         ${CMAKE_BINARY_DIR}/sip/qti/sipqtiStatistics.cpp
         ${CMAKE_BINARY_DIR}/sip/qti/sipqtiStatisticTest.cpp
+        ${CMAKE_BINARY_DIR}/sip/qti/sipqtisvd.cpp
         ${CMAKE_BINARY_DIR}/sip/qti/sipqtiTable.cpp
         ${CMAKE_BINARY_DIR}/sip/qti/sipqtiThreeExpFit.cpp
         ${CMAKE_BINARY_DIR}/sip/qti/sipqtitTest.cpp

@@ -1263,3 +1263,16 @@ symbolNames
 symbolIndex
 pow
 ln
+Svd
+setSolvent
+setComponents
+setContrasts
+decompose
+matchPoint
+rank
+plan
+readTable
+contrasts
+components
+value
+qValues

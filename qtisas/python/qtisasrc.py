@@ -74,7 +74,7 @@ if __name__ == '__main__':
         'updateCustomActionIcon', 'updateCustomActionMenu', 'saveAsTemplate',
         'saveFolder', 'saveGraphAsProject',
         'saveProject', 'saveProjectAs', 'scriptPrint', 'scriptPrintReplace', 'setAutoUpdateTableValues',
-        'setPreferences', 'setWindowName', 'showRules', 'stemPlot', 'symbolIndex', 'symbolNames',
+        'setPreferences', 'setWindowName', 'showRules', 'stemPlot', 'Svd', 'symbolIndex', 'symbolNames',
         'table', 'tableNames', 'tables',
         'tableToMatrix', 'tableToMatrixRegularXYZ', 'waterfallPlot', 'windows', 'workspace',
     ]

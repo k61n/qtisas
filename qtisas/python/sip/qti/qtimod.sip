@@ -3888,6 +3888,216 @@ public:
 };
 
 
+class svd : public QWidget
+{
+%TypeHeaderCode
+#include "svd.h"
+%End
+
+%TypeCode
+// a sequence of tuples (str, number, number), the last number optional when optional = 1 (NaN then)
+static bool svdTuples(PyObject *obj, int optional, QStringList *names, QVector<double> *a, QVector<double> *b,
+                      const char *message)
+{
+    PyObject *seq = obj && PySequence_Check(obj) && !PyUnicode_Check(obj) ? PySequence_Fast(obj, "") : nullptr;
+    bool ok = seq != nullptr;
+    for (Py_ssize_t i = 0; ok && i < PySequence_Fast_GET_SIZE(seq); i++) {
+        PyObject *item = PySequence_Fast_GET_ITEM(seq, i);
+        const Py_ssize_t n = PySequence_Check(item) && !PyUnicode_Check(item) ? PySequence_Size(item) : -1;
+        ok = n >= 3 - optional && n <= 3;
+        if (!ok)
+            break;
+        PyObject *name = PySequence_GetItem(item, 0);
+        ok = PyUnicode_Check(name);
+        if (ok)
+            *names << QString::fromUtf8(PyUnicode_AsUTF8(name));
+        Py_DECREF(name);
+        QVector<double> *fields[] = {a, b};
+        for (Py_ssize_t k = 1; ok && k <= 2; k++) {
+            if (k >= n) {
+                *fields[k - 1] << qQNaN();
+                continue;
+            }
+            PyObject *v = PySequence_GetItem(item, k);
+            ok = PyNumber_Check(v) && !PyUnicode_Check(v);
+            if (ok)
+                *fields[k - 1] << PyFloat_AsDouble(v);
+            Py_DECREF(v);
+        }
+    }
+    Py_XDECREF(seq);
+    if (!ok)
+        PyErr_SetString(PyExc_TypeError, message);
+    return ok;
+}
+
+// a number or a sequence of numbers
+static bool svdNumbers(PyObject *obj, QVector<double> *out, const char *message)
+{
+    if (obj && PyNumber_Check(obj) && !PySequence_Check(obj)) {
+        *out << PyFloat_AsDouble(obj);
+        return true;
+    }
+    PyObject *seq = obj && PySequence_Check(obj) && !PyUnicode_Check(obj) ? PySequence_Fast(obj, "") : nullptr;
+    bool ok = seq != nullptr;
+    for (Py_ssize_t i = 0; ok && i < PySequence_Fast_GET_SIZE(seq); i++) {
+        PyObject *v = PySequence_Fast_GET_ITEM(seq, i);
+        ok = PyNumber_Check(v) && !PyUnicode_Check(v);
+        if (ok)
+            *out << PyFloat_AsDouble(v);
+    }
+    Py_XDECREF(seq);
+    if (!ok)
+        PyErr_SetString(PyExc_TypeError, message);
+    return ok;
+}
+%End
+
+public:
+    void reset();
+    bool setSolvent(double sldH2Ocm2, double sldD2Ocm2);
+%MethodCode
+    sipRes = sipCpp->setSolvent(a0, a1);
+    if (!sipRes) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
+    // [(name, sldH2Ocm2, sldD2Ocm2), ...]
+    bool setComponents(SIP_PYOBJECT components);
+%MethodCode
+    QStringList names;
+    QVector<double> h, d;
+    if (!svdTuples(a0, 0, &names, &h, &d,
+                   "setComponents: give a list of (name, sldH2Ocm2, sldD2Ocm2), e.g. [(\"a\", 1.48e10, 2.374e10)]")) {
+        sipError = sipErrorFail;
+    } else {
+        sipRes = sipCpp->setComponents(names, h, d);
+        if (!sipRes) {
+            PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+            sipError = sipErrorFail;
+        }
+    }
+%End
+    // [(table, d2oFraction), ...] or [(table, d2oFraction, solventSldCm2), ...]
+    bool setContrasts(SIP_PYOBJECT contrasts);
+%MethodCode
+    QStringList tables;
+    QVector<double> fractions, sld;
+    if (!svdTuples(a0, 1, &tables, &fractions, &sld,
+                   "setContrasts: give a list of (table, d2oFraction) or (table, d2oFraction, solventSldCm2), "
+                   "e.g. [(\"mix0\", 0.0), (\"mix34\", 0.34)]")) {
+        sipError = sipErrorFail;
+    } else {
+        sipRes = sipCpp->setContrasts(tables, fractions, sld);
+        if (!sipRes) {
+            PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+            sipError = sipErrorFail;
+        }
+    }
+%End
+    QString decompose(const QString &name = QString(), int qPoints = 0);
+%MethodCode
+    sipRes = new QString(sipCpp->decompose(*a0, a1));
+    if (sipRes->isEmpty()) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    } else {
+        for (const QString &m : sipCpp->lastMessages())
+            PySys_WriteStdout("%s\n", ("decompose: " + m).toUtf8().constData());
+    }
+%End
+    double value(const QString &svdTable, const QString &column, double q);
+%MethodCode
+    sipRes = sipCpp->value(*a0, *a1, a2);
+    if (!sipCpp->lastError().isEmpty()) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
+    bool readTable(const QString &svdTable);
+%MethodCode
+    sipRes = sipCpp->readTable(*a0);
+    if (!sipRes) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
+    // [(table, d2oFraction, solventSldCm2), ...] as set: setContrasts() takes it back as it is
+    SIP_PYLIST contrasts() const;
+%MethodCode
+    const QStringList tables = sipCpp->contrastTables();
+    const QVector<double> fractions = sipCpp->contrastFractions();
+    const QVector<double> solvent = sipCpp->contrastSolventSlds();
+    sipRes = PyList_New(tables.size());
+    for (int i = 0; i < tables.size(); i++)
+        PyList_SET_ITEM(sipRes, i, Py_BuildValue("(sdd)", tables[i].toUtf8().constData(), fractions[i], solvent[i]));
+%End
+    // the Q points of an SVD table: len() is the number of Q points
+    SIP_PYLIST qValues(const QString &svdTable);
+%MethodCode
+    const QVector<double> q = sipCpp->qValues(*a0);
+    if (!sipCpp->lastError().isEmpty()) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    } else {
+        sipRes = PyList_New(q.size());
+        for (int i = 0; i < q.size(); i++)
+            PyList_SET_ITEM(sipRes, i, PyFloat_FromDouble(q[i]));
+    }
+%End
+    QStringList components() const;
+%MethodCode
+    sipRes = new QStringList(sipCpp->componentNames());
+%End
+    double matchPoint(double sldH2Ocm2, double sldD2Ocm2);
+%MethodCode
+    sipRes = sipCpp->matchPoint(a0, a1);
+    if (!sipCpp->lastError().isEmpty()) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    } else {
+        for (const QString &m : sipCpp->lastMessages())
+            PySys_WriteStdout("%s\n", m.toUtf8().constData());
+    }
+%End
+    int rank(SIP_PYOBJECT d2oFractions);
+%MethodCode
+    QVector<double> fractions;
+    if (!svdNumbers(a0, &fractions, "rank: give the D2O fractions as a list of numbers, e.g. [0, 0.5, 1]")) {
+        sipError = sipErrorFail;
+    } else {
+        sipRes = sipCpp->rank(fractions);
+        if (sipRes < 0) {
+            PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+            sipError = sipErrorFail;
+        }
+    }
+%End
+    SIP_PYLIST plan(SIP_PYOBJECT d2oFractions, SIP_PYOBJECT partials, double relError = 0.01, double background = 0);
+%MethodCode
+    QVector<double> fractions, values;
+    if (!svdNumbers(a0, &fractions, "plan: give the D2O fractions as a list of numbers, e.g. [0, 0.5, 1]") ||
+        !svdNumbers(a1, &values, "plan: give the partial structure factors S11, S12, ... at one Q as a list")) {
+        sipError = sipErrorFail;
+    } else {
+        const QVector<double> errors = sipCpp->plan(fractions, values, a2, a3);
+        if (errors.isEmpty()) {
+            PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+            sipError = sipErrorFail;
+        } else {
+            for (const QString &m : sipCpp->lastMessages())
+                PySys_WriteStdout("%s\n", m.toUtf8().constData());
+            sipRes = PyList_New(errors.size());
+            for (int i = 0; i < errors.size(); i++)
+                PyList_SET_ITEM(sipRes, i, PyFloat_FromDouble(errors[i]));
+        }
+    }
+%End
+    QStringList lastMessages() const;
+};
+
+
 class ApplicationWindow: QMainWindow
 {
 %TypeHeaderCode
@@ -3912,6 +4122,7 @@ public:
   fittable18	*fittableWidget /PyName=Fittable/;
   dan18 *danWidget /PyName=Dan/;
   ascii1d18 *ascii1dWidget /PyName=Ascii1d/;
+  svd *svdWidget /PyName=Svd/;
 
   Table* newTable();
   Table* currentTable();

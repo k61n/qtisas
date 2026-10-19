@@ -117,7 +117,8 @@ static QString methodOwnerHint(PyObject *value)
                                    {"builtins", "Compiler", "Compiler"},
                                    {"builtins", "Fittable", "Fittable"},
                                    {"builtins", "Dan", "Dan"},
-                                   {"builtins", "Ascii1d", "Ascii1d"}};
+                                   {"builtins", "Ascii1d", "Ascii1d"},
+                                   {"builtins", "Svd", "Svd"}};
     QStringList types;
     QString example;
     for (const Owner &o : owners)
