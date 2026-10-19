@@ -10,12 +10,6 @@
 #   a TABLE in the project (QI-alpha, "QI-*")  -> table: convertTables(...)   -> file: exportTables(...)
 #   a FILE on disk (sample.dat, "*.dat")         -> table: importFiles(...)     -> file: convertFiles(...)
 #   a table is NEVER a file: importFiles("QI-alpha") is wrong for a table; exportTables() always writes files
-# ONE CALL does the whole move with its options — never import then export (options stay set: a 2nd run applies
-#   them again, e.g. removes the points twice). <...> = the request's values:
-#   a.reset(); a.setInputFolder("~/<in>");  made = a.importFiles("<file>.dat")                 # file -> table
-#   a.reset(); a.setOutputFolder("~/<out>"); a.setExtension("<ext>"); a.exportTables("<table>")  # table -> file
-#   a.reset(); a.setOutputFolder("~/<out>"); a.setRemovePoints(first=3); a.convertFiles("~/<in>/*.dat")  # file->file
-#   a.reset(); a.setResolution(True); a.setResolutionGeometry(...); a.convertTables("<table>", "<new>")  # tbl->tbl
 # THE RECIPE — every task, in this order; <...> = the request's values:
 #   a = Ascii1d
 #   a.reset()                              # 1. ALWAYS first: options stay set between calls (also from the GUI)

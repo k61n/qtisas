@@ -30,28 +30,6 @@ First choose the call by where the data are and where they go:
 A table is never a file: `importFiles("QI-alpha")` is wrong when `QI-alpha` is a table of the project, and
 `exportTables()` always writes files — a new *table* from a table is `convertTables()`.
 
-**One call does the whole move, with its options.** Do not import and then export: the options stay set, so a
-second run applies them again (removed points are removed twice). The four moves, `< >` = the request's values:
-
-```python
-a = Ascii1d
-a.reset(); a.setInputFolder("~/<in>")                    # file on disk -> table
-made = a.importFiles("<file>.dat")                       # ["<file>"]
-
-a.reset(); a.setOutputFolder("~/<out>"); a.setExtension("<ext>")   # table -> file
-written = a.exportTables("<table>")                     # ["/abs/path/<out>/<table>.<ext>"]
-
-a.reset(); a.setOutputFolder("~/<out>"); a.setExtension("<ext>")   # files -> files, nothing in the project
-written = a.convertFiles("~/<in>/*.dat")                # one file per source file
-
-a.reset(); a.setPresentation("Kratky"); a.setAutoPrefix(True)      # table -> new table
-made = a.convertTables(["<table1>", "<table2>"])         # ["Kratky-<table1>", "Kratky-<table2>"]
-```
-
-Options go between `reset()` and the run, for any move: `a.setRemovePoints(first=3)` before `convertFiles(...)`
-cuts 3 points of every file it writes; `a.setResolution(True)` and `a.setResolutionGeometry(...)` before
-`convertTables("<table>", "<new name>")` add the sigma column to the new table.
-
 Then every task, in this order:
 
 ```python
