@@ -46,6 +46,8 @@ class AiContentTests : public QObject
     static void unprintedOutputLine_flaggedOnlyWhenNotPrinted();
     static void labeledLastPrint_repairsOnlyALastTopLevelPrint();
     static void requestSuffix_strippedInBothModes();
+    static void requestOwnText_dropsListInstructionAndSuffix();
+    static void splitPlanChecks_ignoreListInstructionAndSuffix();
     static void pureTextAnswer_onlyLiteralPrints();
     static void shortQuestion_withoutActionVerb();
     static void trailingAnnotationOutput_strippedButRealAnnotationsKept();

@@ -326,6 +326,39 @@ void AiContentTests::requestSuffix_strippedInBothModes()
     QCOMPARE(withoutRequestSuffix(request), request);
 }
 
+void AiContentTests::requestOwnText_dropsListInstructionAndSuffix()
+{
+    QtiSasAiContent content;
+    const QString item = R"(Create a table "Baseline" with 30 rows. The result label is "R1:".)";
+    const QString listed =
+        AiAssistant::itemsWithInstruction({item}, "Verify the underlying logic (formulas, fit setup).").value(0);
+    QCOMPARE(requestOwnText(listed + content.requestSuffix(true)), item);
+    QCOMPARE(requestOwnText(item + content.requestSuffix(false)), item);
+    QCOMPARE(requestOwnText(item), item);
+}
+
+void AiContentTests::splitPlanChecks_ignoreListInstructionAndSuffix()
+{
+    // Confirmed live (LIST SPLIT): "fit setup" in the list instruction demanded a fit part, the run-mode suffix's
+    // "write/run a script" demanded scripts in note tabs — on items asking for neither.
+    QtiSasAiContent content;
+    const QString tableItem = R"(Create a table "Baseline" with 30 rows. The result label is "R1:".)";
+    const QString listed = AiAssistant::itemsWithInstruction(
+                               {tableItem}, "Verify the underlying logic (formulas, fit setup, column roles).")
+                               .value(0) +
+                           content.requestSuffix(true);
+    const QList<AiAssistant::SplitPart> tablePlan = {
+        {R"(Create table "Baseline" with 30 rows and print "R1:".)", {"table"}}};
+    QVERIFY(splitPlanMissingRequestedActions(listed, tablePlan).contains("fit"));
+    QVERIFY(splitPlanMissingRequestedActions(requestOwnText(listed), tablePlan).isEmpty());
+
+    const QString noteItem = R"(Create a note "Batch" with no content yet. Print its number of tabs.)";
+    const QList<AiAssistant::SplitPart> notePlan = {{R"(Create note "Batch" and print its number of tabs.)", {"note"}}};
+    const QString withSuffix = noteItem + content.requestSuffix(true);
+    QVERIFY(splitPlanMissingRequestedActions(withSuffix, notePlan).contains("write the scripts into the note's tabs"));
+    QVERIFY(splitPlanMissingRequestedActions(requestOwnText(withSuffix), notePlan).isEmpty());
+}
+
 void AiContentTests::pureTextAnswer_onlyLiteralPrints()
 {
     // Confirmed live: self-review turned a right text answer into "Unable to determine ...".
@@ -3300,8 +3333,8 @@ void AiContentTests::currentEditorAfterAddTab_blocksRunningNewTab()
     // LIST 5, item 5: "Run only the make tab" — addTab() then currentEditor().execute() ran the "check" tab.
     const QString code = "n = newNote(\"Pipeline\")\nn.renameTab(0, \"make\")\nn.addTab()\nn.renameTab(1, \"check\")\n"
                          "n.currentEditor().execute()\n";
-    const QString request = R"(Create a note "Pipeline" with two tabs named "make" and "check". Run only the "make)"
-                            " tab.";
+    const QString request = "Create a note \"Pipeline\" with two tabs named \"make\" and \"check\". "
+                            "Run only the \"make\" tab.";
     QVERIFY(!QtiSasAiContent::currentEditorAfterAddTabMistake(code, request).isEmpty());
     QVERIFY(
         QtiSasAiContent::currentEditorAfterAddTabMistake("n.addTab()\nn.tab(\"make\").execute()\n", request).isEmpty());
