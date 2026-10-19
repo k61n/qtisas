@@ -611,9 +611,12 @@ void ascii1d18::readCurrentASCII1D()
         
         if (s.contains("{Data-Source-From} Table")) comboBoxSource->setCurrentIndex(1);
         if (s.contains("{Data-Source-From} File")) comboBoxSource->setCurrentIndex(0);
-        if (s.contains("{Data-Destination-To} Table")) comboBoxSource->setCurrentIndex(0);
-        if (s.contains("{Data-Destination-To} File")) comboBoxSource->setCurrentIndex(1);
-        if (s.contains("{Data-Number-Columns} ")) spinBoxForceNumCols->setValue(s.remove("Data-Number-Columns} ").trimmed().toInt());
+        if (s.contains("{Data-Destination-To} Table"))
+            comboBoxDestination->setCurrentIndex(0);
+        if (s.contains("{Data-Destination-To} File"))
+            comboBoxDestination->setCurrentIndex(1);
+        if (s.contains("{Data-Number-Columns} "))
+            spinBoxForceNumCols->setValue(s.remove("{Data-Number-Columns} ").trimmed().toInt());
         if (s.contains("{Data-Format} ")) comboBoxFormat->setCurrentIndex(s.remove("{Data-Format} ").trimmed().toInt());
         if (s.contains("{Data-Skip-Header} ")) lineEditSkipHeader->setText(s.remove("{Data-Skip-Header} "));
         if (s.contains("{Name-Structure} ")) spinBoxFindIndex->setCurrentIndex(s.remove("{Name-Structure} ").trimmed().toInt());
@@ -1136,11 +1139,13 @@ void ascii1d18::loadASCIIfromFiles(QStringList fileNames, bool fastPlotYN)
             {
                 // remove points
                 Nfinal=removePoints(data,N);
-                if (Nfinal==0)
+                if (Nfinal == 0)
                 {
-                    QMessageBox::warning(this,tr("QtiSAS::ASCII.SANS.1D"),
-                                         "File "+fileNames[i]+" contains no data, and is skipped");
-                    break;
+                    // only this file is skipped: the remaining ones are still processed
+                    QMessageBox::warning(this, tr("QtiSAS::ASCII.SANS.1D"),
+                                         "File " + fileNames[i] + " contains no data, and is skipped");
+                    gsl_matrix_free(data);
+                    continue;
                 }
                 // convert from
                 convertFromQI(data, N, Nfinal);
@@ -1263,17 +1268,23 @@ void ascii1d18::loadASCIIfromTables(QStringList tableNames, bool fastPlotYN)
         
         if ( loadASCIIfromTable(tableNames[i], data, N, sigmaExist) )
         {
-            if (N==0) continue;
+            if (N == 0)
+            {
+                gsl_matrix_free(data);
+                continue;
+            }
             Nfinal=N;
             if (checkBoxActions->isChecked())
             {
                 // remove points
                 Nfinal=removePoints(data,N);
-                if (Nfinal==0)
+                if (Nfinal == 0)
                 {
-                    QMessageBox::warning(this,tr("QtiSAS::ASCII.SANS.1D"),
-                                         "File "+tableNames[i]+" contains no data, and is skipped");
-                    break;
+                    // only this table is skipped: the remaining ones are still processed
+                    QMessageBox::warning(this, tr("QtiSAS::ASCII.SANS.1D"),
+                                         "Table " + tableNames[i] + " contains no data, and is skipped");
+                    gsl_matrix_free(data);
+                    continue;
                 }
                 // convert from
                 convertFromQI(data, N, Nfinal);
