@@ -208,6 +208,24 @@ the module's default names, items 2 and 7 names given by the request. Reference 
 `reference/ascii1d_holdout` — 16/16 and 4/4 with verification (2026-10-19). Codex BIGMODEL: 16/16 in 19 calls and
 4/4 in 4 calls (2026-10-19, after fixes found by the first runs: 10/16 and 12/16).
 
+## SVD and SVD HOLDOUT — the SVD module (coach M2)
+
+`svd.json` (13 items) and `svd_holdout.json` (4 items, never used to design fixes) test the contrast-variation API
+(`Svd`, see `python/doc/svd-python-api.md`): decomposing an H/D solvent series into partial structure factors and
+reading the SVD table (items 1-5: S12, the solvent terms S13/S33, Icon/I, dS11, a subset of contrasts), too few
+contrasts (6), planning (7-10: a match point, the better of three plans with and without background, the expected
+dS/S of a plan, the rank of a 3-component series), a rerun without one contrast (11), a plot with error bars (12)
+and the chain with ASCII.SANS.1D (13). The setup makes the tables `mix0` ... `mix100` (the qtisas.com/svd series:
+components a and b, D2O fractions 0, 0.34, 0.46, 0.8, 1; 40 Q points; dI = 1% I) from known S11, S12, S22, and the
+same curves as files in `~/benchdata/svd`; the holdout has another pair (p, n), six fractions and a repeated one.
+Reference scripts: `reference/svd`, `reference/svd_holdout` — 13/13 and 4/4 with verification (2026-10-19). Codex
+BIGMODEL: 5/13 without SVD docs, 13/13 (η 0.87-1.0) and holdout 4/4 after the docs and fixes of five runs; local
+all-pyi (stage 2): 4 → 5 → 6 → 7/8 → 9 and 9/13 (η 0.59), holdout 3/4 (2026-10-19). QtiSAS bugs among the fixes:
+"rounded to 4 decimals" was counted as a value of the result line, an f-string argument f"{a} {b}" as one value,
+and a failure report ("R1: Missing tables: ...") as a labelled result. Items 9 and
+10 were reworded where both readings were fair ("for the fractions 0, 0.5 and 1": one series, not one value each;
+the unknowns without the solvent's terms).
+
 ## Multi-AI baseline — the status of the AI integration
 
 The reference value for the AI integration as a whole: LIST 3 and LIST 4 (`list4.json`, six tasks whose

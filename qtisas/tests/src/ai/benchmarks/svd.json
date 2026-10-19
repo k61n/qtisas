@@ -1,0 +1,79 @@
+{
+  "name": "SVD",
+  "description": "SVD module list (coach M2): contrast variation of two components from H/D solvent series — decomposition into partial structure factors, reading the SVD table, match points and contrast planning; synthetic tables (and files) with known S11, S12, S22 made by the setup.",
+  "instruction": "Use exactly the object names given. End the item by printing exactly ONE line: the result label the item gives, then only the values asked for, in the order asked, separated by spaces.",
+  "setup": "import math, os, shutil\nH, D = -5.61e9, 6.335e10\ncomps = [(1.48e10, 2.374e10), (2.11e10, 3.199e10)]\nq = [0.005 * k for k in range(1, 41)]\nS = [[1 / (1 + (50 * v) ** 2) for v in q], [0.3 * math.exp(-((20 * v) ** 2)) for v in q],\n     [math.exp(-((30 * v) ** 2)) for v in q]]\ndef curve(x):\n    s = H + x * (D - H)\n    a, b = (h + x * (d - h) - s for h, d in comps)\n    return [a * a * S[0][k] + 2 * a * b * S[1][k] + b * b * S[2][k] for k in range(len(q))]\nbase = os.path.expanduser(\"~/benchdata/svd\")\nshutil.rmtree(base, ignore_errors=True)\nos.makedirs(base)\nfor label, x in ((\"0\", 0.0), (\"34\", 0.34), (\"46\", 0.46), (\"80\", 0.8), (\"100\", 1.0)):\n    I = curve(x)\n    t = newTable(\"mix\" + label, len(q), 3)\n    t.setColData(1, q)\n    t.setColData(2, I)\n    t.setColData(3, [0.01 * v for v in I])\n    with open(os.path.join(base, \"run\" + label + \".dat\"), \"w\") as f:\n        f.write(\"\".join(\"%.6e %.6e %.6e\\n\" % (v, i, 0.01 * i) for v, i in zip(q, I)))\n",
+  "items": [
+    {
+      "text": "Contrast variation: decompose the SANS curves (tables with Q, I, dI) mix0, mix34, mix46, mix80 and mix100 measured in solvents with the D2O fractions 0, 0.34, 0.46, 0.8 and 1 into the partial structure factors of two components (the H2O SLD is -5.61e9 cm^-2 and the D2O SLD 6.335e10 cm^-2; component a has the SLD 1.48e10 cm^-2 in H2O and 2.374e10 cm^-2 in D2O, component b 2.11e10 cm^-2 in H2O and 3.199e10 cm^-2 in D2O). Name the result table svdAB. Print the number of Q points and S12 at Q = 0.05, rounded to 4 decimals.",
+      "expected": "40 0.1104",
+      "hint": "the SVD result table must be named svdAB",
+      "verify": "t = table(\"svdAB\")\ncheck(round(t.cell(t.colNames().index(\"S12\") + 1, 10), 4))",
+      "verified": "0.1104"
+    },
+    {
+      "text": "From the SVD table svdAB, print the solvent terms S13 and S33 (the solvent as the third component) at Q = 0.1, rounded to 4 decimals.",
+      "expected": "-0.0440 0.0496",
+      "hint": "read from svdAB; S13 = -S11 - S12, S33 = S11 + S22 + 2 S12"
+    },
+    {
+      "text": "From the SVD table svdAB, print the intensity of mix46 reconstructed from the partial structure factors divided by the measured intensity of mix46 at Q = 0.05, rounded to 4 decimals.",
+      "expected": "1.0000",
+      "hint": "Icon3 of svdAB / I of mix46"
+    },
+    {
+      "text": "From the SVD table svdAB, print the error of S11 at Q = 0.05, rounded to 4 decimals.",
+      "expected": "0.0172",
+      "hint": "the dS11 column, propagated from dI"
+    },
+    {
+      "text": "Decompose only the three curves mix0, mix80 and mix100 (D2O fractions 0, 0.8 and 1) of the same two components (the H2O SLD is -5.61e9 cm^-2 and the D2O SLD 6.335e10 cm^-2; component a has the SLD 1.48e10 cm^-2 in H2O and 2.374e10 cm^-2 in D2O, component b 2.11e10 cm^-2 in H2O and 3.199e10 cm^-2 in D2O) into partial structure factors. Print S22 and its error at Q = 0.05, rounded to 4 decimals.",
+      "expected": "0.1054 0.1246",
+      "hint": "a decomposition of 3 mixtures; the error is larger than with 5"
+    },
+    {
+      "text": "Try to decompose only mix0 and mix100 (D2O fractions 0 and 1) of the two components (the H2O SLD is -5.61e9 cm^-2 and the D2O SLD 6.335e10 cm^-2; component a has the SLD 1.48e10 cm^-2 in H2O and 2.374e10 cm^-2 in D2O, component b 2.11e10 cm^-2 in H2O and 3.199e10 cm^-2 in D2O) into partial structure factors. If it cannot be done, make no table and print the minimum number of mixtures that two components need.",
+      "expected": "3",
+      "hint": "N(N+1)/2 = 3 unknowns; nothing must be made"
+    },
+    {
+      "text": "At which D2O fraction of the solvent is component a (SLD 1.48e10 cm^-2 in H2O, 2.374e10 cm^-2 in D2O; H2O -5.61e9 cm^-2, D2O 6.335e10 cm^-2) contrast matched? Print it rounded to 3 decimals.",
+      "expected": "0.340",
+      "hint": "the SLD of a, which exchanges with the solvent, equals the solvent SLD"
+    },
+    {
+      "text": "Plan an H/D contrast-variation experiment for the two components (the H2O SLD is -5.61e9 cm^-2 and the D2O SLD 6.335e10 cm^-2; component a has the SLD 1.48e10 cm^-2 in H2O and 2.374e10 cm^-2 in D2O, component b 2.11e10 cm^-2 in H2O and 3.199e10 cm^-2 in D2O), using the partial structure factors of svdAB at Q = 0.05 as the expected ones. Which of the plans A (D2O fractions 0, 0.25, 0.5, 0.75, 1), B (0, 0.34, 0.46, 0.8, 1) and C (0.2, 0.3, 0.4, 0.5, 0.6) gives the smallest relative error of S12 at that Q, first assuming intensity errors of 1% plus a background of 1% of the intensity in pure D2O, then assuming only the 1% errors? Print the two letters.",
+      "expected": "B C",
+      "hint": "dI = 0.01 I + 0.01 I(D2O); the second case without background"
+    },
+    {
+      "text": "For the same two components and the partial structure factors of svdAB at Q = 0.05, print the expected relative error of S12 at that Q for one series measured at the three D2O fractions 0, 0.5 and 1 together, assuming intensity errors of 1% plus a background of 1% of the intensity in pure D2O, rounded to 3 decimals.",
+      "expected": "1.109",
+      "hint": "dI = 0.01 I + 0.01 I(D2O), propagated to S12"
+    },
+    {
+      "text": "A contrast-variation series of three components a, b, c (the H2O SLD is -5.61e9 cm^-2 and the D2O SLD 6.335e10 cm^-2; component a has the SLD 1.48e10 cm^-2 in H2O and 2.374e10 cm^-2 in D2O, component b 2.11e10 cm^-2 in H2O and 3.199e10 cm^-2 in D2O, and c 4.0e10 cm^-2 in both H2O and D2O) is measured in nine solvents with the D2O fractions 0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875 and 1. Print the number of unknown partial structure factors S_ij of the three components (the solvent's terms follow from them) and the number of their combinations these measurements determine.",
+      "expected": "6 3",
+      "hint": "rank of the contrast matrix: 3 for any number of H/D solvents"
+    },
+    {
+      "text": "Repeat the decomposition of svdAB without mix34 (so mix0, mix46, mix80 and mix100) and name the new table svdAB4. Print S12 at Q = 0.05 rounded to 4 decimals and the number of mixtures used.",
+      "expected": "0.1104 4",
+      "hint": "svdAB holds the input of the first decomposition",
+      "verify": "t = table(\"svdAB4\")\ncheck(round(t.cell(t.colNames().index(\"S12\") + 1, 10), 4))",
+      "verified": "0.1104"
+    },
+    {
+      "text": "Plot S11, S12 and S22 of svdAB against Q with their error bars in a new graph named gSVD. Print the number of the plotted partial structure factors.",
+      "expected": "3",
+      "hint": "three curves with error bars",
+      "verify": "check(existGraph(\"gSVD\"))",
+      "verified": "True"
+    },
+    {
+      "text": "The folder benchdata/svd in the home directory holds the SANS curves run0.dat, run34.dat, run46.dat, run80.dat and run100.dat (Q, I, dI) of the same two components (the H2O SLD is -5.61e9 cm^-2 and the D2O SLD 6.335e10 cm^-2; component a has the SLD 1.48e10 cm^-2 in H2O and 2.374e10 cm^-2 in D2O, component b 2.11e10 cm^-2 in H2O and 3.199e10 cm^-2 in D2O), measured with the D2O fractions 0, 0.34, 0.46, 0.8 and 1. Import them, decompose them into partial structure factors and print S22 at Q = 0.05, rounded to 4 decimals.",
+      "expected": "0.1054",
+      "hint": "ASCII.SANS.1D import, then the SVD"
+    }
+  ]
+}
