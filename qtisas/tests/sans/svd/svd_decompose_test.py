@@ -2,8 +2,9 @@
 read-back.
 
 The contrast series of qtisas.com/svd (2 components, 5 H/D mixtures) with known S11, S12, S22: the SVD table holds
-them, the solvent terms S13, S23, S33 and the intensities Icon = A S of every mixture. Input that cannot be
-decomposed makes no table and says why; Q points that differ between the data tables give a warning. Reading the
+them, the solvent terms S13, S23, S33, the intensities Icon = A S of every mixture, and the errors propagated from
+dI through the pseudo-inverse of A - large for mixtures near the match points. Input that cannot be decomposed makes
+no table and says why; Q points that differ between the data tables give a warning. Reading the
 table back restores the numbers of components, mixtures and Q points, also with unnamed components.
 """
 
@@ -52,7 +53,7 @@ set_app_locale(locale_c())
 intensities = [contrast("SVDweb%d" % m, x) for m, x in enumerate(fractions)]
 
 
-def fill(names=("SVDweb0", "SVDweb1", "SVDweb2", "SVDweb3", "SVDweb4"), labels=("a", "b"), k=len(q)):
+def fill(names=("SVDweb0", "SVDweb1", "SVDweb2", "SVDweb3", "SVDweb4"), labels=("a", "b"), k=len(q), xs=fractions):
     child(QLineEdit, "lineEditRhoH").setText("%.5e" % H)
     child(QLineEdit, "lineEditRhoD").setText("%.5e" % D)
     spinN.setValue(2)
@@ -61,7 +62,7 @@ def fill(names=("SVDweb0", "SVDweb1", "SVDweb2", "SVDweb3", "SVDweb4"), labels=(
     for row, (label, (_, h, d)) in enumerate(zip(labels, components)):
         for col, text in enumerate((label, "%.5e" % h, "%.5e" % d)):
             tableN.setItem(row, col, QTableWidgetItem(text))
-    for row, (name, x) in enumerate(zip(names, fractions)):
+    for row, (name, x) in enumerate(zip(names, xs)):
         tableM.setItem(row, 2, QTableWidgetItem(name))
         tableM.setItem(row, 0, QTableWidgetItem("%.5e" % x))  # cellChanged fills the solvent SLD
 
@@ -75,6 +76,38 @@ def transfer(name):
 
 def column(t, name):
     return [t.cellOrNone(t.colNames().index(name) + 1, row + 1) for row in range(len(q))]
+
+
+def expected_errors(xs, intensities):
+    """dS11, dS12, dS22, dS13, dS23, dS33 of every Q: Cov = P diag(dI^2) P^T with P = (A^T A)^-1 A^T, dI = 0.01 I."""
+    rows = []
+    for x in xs:
+        solvent = H + x * (D - H)
+        a, b = (h + x * (d - h) - solvent for _, h, d in components)
+        rows.append([a * a, 2 * a * b, b * b])
+    n = [[sum(r[i] * r[j] for r in rows) for j in range(3)] for i in range(3)]  # A^T A
+    det = (n[0][0] * (n[1][1] * n[2][2] - n[1][2] * n[2][1]) - n[0][1] * (n[1][0] * n[2][2] - n[1][2] * n[2][0])
+           + n[0][2] * (n[1][0] * n[2][1] - n[1][1] * n[2][0]))
+    inv = [[(n[(j + 1) % 3][(i + 1) % 3] * n[(j + 2) % 3][(i + 2) % 3]
+             - n[(j + 1) % 3][(i + 2) % 3] * n[(j + 2) % 3][(i + 1) % 3]) / det for j in range(3)] for i in range(3)]
+    pinv = [[sum(inv[i][j] * r[j] for j in range(3)) for r in rows] for i in range(3)]
+    terms = [(1, 0, 0), (0, 1, 0), (0, 0, 1), (-1, -1, 0), (0, -1, -1), (1, 2, 1)]  # S11..S22, S13, S23, S33
+    errors = []
+    for k in range(len(q)):
+        dI2 = [(0.01 * intensity[k]) ** 2 for intensity in intensities]
+        cov = [[sum(pinv[i][m] * pinv[j][m] * dI2[m] for m in range(len(xs))) for j in range(3)] for i in range(3)]
+        errors.append([math.sqrt(sum(g[i] * g[j] * cov[i][j] for i in range(3) for j in range(3))) for g in terms])
+    return errors
+
+
+def check_errors(t, xs, intensities):
+    expected = expected_errors(xs, intensities)
+    for nn, name in enumerate(("S11", "S12", "S22", "S13", "S23", "S33")):
+        got = column(t, "d" + name)
+        for row in range(len(q)):
+            e = expected[row][nn]
+            assert got[row] is not None and abs(got[row] - e) <= 1e-4 * e, ("d" + name, row, got[row], e)
+    return expected
 
 
 def close(got, expected, what):
@@ -95,6 +128,17 @@ close(column(t, "S33"), [a + b + 2 * c for a, b, c in zip(S11, S22, S12)], "S33"
 for m, intensity in enumerate(intensities):
     close(column(t, "Icon%d" % (m + 1)), intensity, "Icon%d" % (m + 1))
 assert child(QComboBox, "comboBoxSVDtables").currentText() == "SVDweb"
+check_errors(t, fractions, intensities)
+
+# mixtures near the match points of both components: the same S_ij, but errors larger than the values
+near = [0.6, 0.62, 0.64, 0.66, 0.68]
+near_intensities = [contrast("SVDnear%d" % m, x) for m, x in enumerate(near)]
+fill(names=["SVDnear%d" % m for m in range(5)], xs=near)
+assert transfer("SVDnear") == []
+t = table("SVDnear")
+close(column(t, "S11"), S11, "S11 near")
+errors = check_errors(t, near, near_intensities)
+assert errors[0][0] > S11[0] and errors[0][2] > S22[0], errors[0]
 
 # input that cannot be decomposed: no table, the reason shown
 fill(names=("SVDweb0", "SVDweb1"))  # 2 mixtures for 3 partial structure factors
