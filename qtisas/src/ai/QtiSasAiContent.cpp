@@ -629,12 +629,15 @@ QString QtiSasAiContent::docTopicIndex() const
            "plot/window vs. an explicit 3D surface) — don't default to one without checking "
            "which is meant.\n"
            "note — the Note class: text/script notes and tabs.\n"
+           "svd — contrast variation (Svd): partial structure factors S_ij of components from SANS curves in "
+           "H2O/D2O solvent mixtures by singular value decomposition; match points, the rank of an H/D series, "
+           "planning D2O fractions.\n"
            "table — the Table class: spreadsheet-like data tables, columns, import/export.\n";
 }
 
 QStringList QtiSasAiContent::knownDocTopics() const
 {
-    return {"table", "matrix", "graph", "graph3d", "note", "compile", "fittable", "ascii1d"};
+    return {"table", "matrix", "graph", "graph3d", "note", "compile", "fittable", "ascii1d", "svd"};
 }
 
 QStringList QtiSasAiContent::baselineDocTopics() const
@@ -4353,6 +4356,13 @@ QStringList QtiSasAiContent::requestedResultValues(const QString &requestText)
     // 6) became the values "whether each still exists afterwards" and "table first"
     static const QRegularExpression orderRe(R"(^(?:the\s+)?\S+\s+first$|^(?:in\s+)?(?:that|this|the\s+same)\s+order$)",
                                             QRegularExpression::CaseInsensitiveOption);
+    // a format for the values, no value of its own: "S22 and its error at Q = 0.05, rounded to 4 decimals" asks for
+    // two values — confirmed live (benchmark SVD items 1 and 5, Codex): counted as a third, the right line was
+    // blocked and the model added the unrounded value to fill it
+    static const QRegularExpression formatRe(
+        R"(^(?:(?:each|all|both)\s+)?(?:rounded\s+)?(?:to|with|in)\s+(?:\d+|an?|one|two|three|four|five|six)\s+)"
+        R"((?:decimals?|decimal\s+places?|(?:significant\s+)?(?:digits?|figures?)|integers?)$|^rounded$)",
+        QRegularExpression::CaseInsensitiveOption);
     static const QRegularExpression coordinateRe(R"(^(?:row|column|col)\s+\d)",
                                                  QRegularExpression::CaseInsensitiveOption);
     static const QRegularExpression hasCoordinateRe(R"(\b(?:row|column|col)\s+\d)",
@@ -4370,7 +4380,7 @@ QStringList QtiSasAiContent::requestedResultValues(const QString &requestText)
     for (QString part : cut.split(splitRe))
     {
         part = part.simplified();
-        if (part.isEmpty() || eachRe.match(part).hasMatch() ||
+        if (part.isEmpty() || eachRe.match(part).hasMatch() || formatRe.match(part).hasMatch() ||
             (orderRe.match(part).hasMatch() && !bareOrdinalRe.match(part).hasMatch()))
             continue;
         if (!parts.isEmpty() && coordinateRe.match(part).hasMatch() && hasCoordinateRe.match(parts.last()).hasMatch())
@@ -4670,6 +4680,15 @@ QString QtiSasAiContent::labeledResultLineMistake(const QString &code, const QSt
         if (!printsValue)
             continue;
         fixedText.replace(label, " ");
+        // a failure report, its text starting with the failure, is no result line: confirmed live (benchmark SVD, local
+        // pyi, item 1) — the guard branch scriptPrint(f"R1: Missing tables: {...}") was blocked for "tables:" until
+        // the item was given up; the computed line beside it was right. "Peak5:missing" still labels a value
+        static const QRegularExpression failureRe(
+            R"(^\s*(?:error|missing|failed|cannot|could\s*not|unable|unavailable|)"
+            R"(no\s+such|not\s+found|\w+\s+not\s+found))",
+            QRegularExpression::CaseInsensitiveOption);
+        if (failureRe.match(fixedText).hasMatch())
+            continue;
         const QRegularExpressionMatch inner = innerLabelRe.match(fixedText);
         if (inner.hasMatch())
             return "The result line " + line.trimmed() + " labels its values (\"" + inner.captured(1) +
@@ -5078,6 +5097,41 @@ QString QtiSasAiContent::nonFinalResultLineRepair(const QString &code, const QSt
 // The values a one-line result print carries after its label, as Python expressions — scriptPrint(f"R1: {a:.4f} {b}",
 // c) gives format(a, ".4f"), b, c — or false when the line is no such print: fixed text after the label ("R1: 5"), an
 // unbalanced bracket, a nested field.
+// The fields of an f-string's text, one value each ("{a:.4f}" -> format(a, ".4f")); the text without them in *rest.
+// False for a field that cannot be read off (empty, or with a "!" conversion).
+static bool fStringFields(QString text, QStringList *values, QString *rest)
+{
+    static const QRegularExpression fieldRe(R"(\{([^{}]*)\})");
+    for (auto it = fieldRe.globalMatch(text); it.hasNext();)
+    {
+        QString field = it.next().captured(1).trimmed();
+        // a format spec after the last ':' outside quotes and brackets
+        int depth = 0;
+        QChar quote;
+        qsizetype specAt = -1;
+        for (qsizetype i = 0; i < field.size(); ++i)
+        {
+            const QChar ch = field.at(i);
+            if (!quote.isNull())
+                quote = ch == quote ? QChar() : quote;
+            else if (ch == QLatin1Char('"') || ch == QLatin1Char('\''))
+                quote = ch;
+            else if (ch == QLatin1Char('(') || ch == QLatin1Char('[') || ch == QLatin1Char('{'))
+                ++depth;
+            else if (ch == QLatin1Char(')') || ch == QLatin1Char(']') || ch == QLatin1Char('}'))
+                --depth;
+            else if (ch == QLatin1Char(':') && depth == 0)
+                specAt = i;
+        }
+        if (field.isEmpty() || field.contains(QLatin1Char('!')))
+            return false;
+        *values << (specAt < 0 ? field
+                               : "format(" + field.left(specAt).trimmed() + ", \"" + field.mid(specAt + 1) + "\")");
+    }
+    *rest = text.replace(fieldRe, QStringLiteral(" "));
+    return true;
+}
+
 static bool resultLineValues(const QString &line, const QString &label, QStringList *values)
 {
     static const QRegularExpression literalRe(R"RX(\(\s*(f?)("(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'))RX");
@@ -5089,37 +5143,8 @@ static bool resultLineValues(const QString &line, const QString &label, QStringL
     if (labelAt < 0)
         return false;
     text = text.mid(labelAt + label.size());
-    if (literal.captured(1) == QLatin1String("f"))
-    {
-        static const QRegularExpression fieldRe(R"(\{([^{}]*)\})");
-        for (auto it = fieldRe.globalMatch(text); it.hasNext();)
-        {
-            QString field = it.next().captured(1).trimmed();
-            // a format spec after the last ':' outside quotes and brackets
-            int depth = 0;
-            QChar quote;
-            qsizetype specAt = -1;
-            for (qsizetype i = 0; i < field.size(); ++i)
-            {
-                const QChar ch = field.at(i);
-                if (!quote.isNull())
-                    quote = ch == quote ? QChar() : quote;
-                else if (ch == QLatin1Char('"') || ch == QLatin1Char('\''))
-                    quote = ch;
-                else if (ch == QLatin1Char('(') || ch == QLatin1Char('[') || ch == QLatin1Char('{'))
-                    ++depth;
-                else if (ch == QLatin1Char(')') || ch == QLatin1Char(']') || ch == QLatin1Char('}'))
-                    --depth;
-                else if (ch == QLatin1Char(':') && depth == 0)
-                    specAt = i;
-            }
-            if (field.isEmpty() || field.contains(QLatin1Char('!')))
-                return false;
-            *values << (specAt < 0 ? field
-                                   : "format(" + field.left(specAt).trimmed() + ", \"" + field.mid(specAt + 1) + "\")");
-        }
-        text.replace(fieldRe, QStringLiteral(" "));
-    }
+    if (literal.captured(1) == QLatin1String("f") && !fStringFields(text, values, &text))
+        return false;
     if (!text.trimmed().isEmpty())
         return false;
     // the arguments after the literal, split at the commas outside brackets and quotes — only arguments: a literal
@@ -5166,6 +5191,22 @@ static bool resultLineValues(const QString &line, const QString &label, QStringL
         return false;
     if (!argument.trimmed().isEmpty())
         *values << argument.trimmed();
+    // an f-string argument of fields only prints each field as a value: f"{a:.4f} {b:.4f}" is two — confirmed live
+    // (benchmark SVD item 5, local pyi): counted as one, the right line was blocked until the item was given up
+    static const QRegularExpression fArgumentRe(R"RX(^f("(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*')$)RX");
+    QStringList expanded;
+    for (const QString &value : *values)
+    {
+        const QRegularExpressionMatch f = fArgumentRe.match(value);
+        QStringList fields;
+        QString rest;
+        if (f.hasMatch() && fStringFields(f.captured(1).mid(1, f.captured(1).size() - 2), &fields, &rest) &&
+            rest.trimmed().isEmpty() && !fields.isEmpty())
+            expanded << fields;
+        else
+            expanded << value;
+    }
+    *values = expanded;
     // a keyword argument (sep=" ") is no value
     static const QRegularExpression keywordRe(R"(^[A-Za-z_]\w*\s*=(?!=))");
     values->erase(
@@ -6178,15 +6219,39 @@ QString QtiSasAiContent::noWorkFailureResultMistake(const QString &code, const Q
             continue;
         bool allFixed = true;
         bool failure = false;
+        bool fromRequest = false;
         static const QRegularExpression constantRe(R"(^(?:[-+]?\d+(?:\.\d*)?(?:[eE][-+]?\d+)?|True|False|None|\[\])$)");
+        // arithmetic of number literals only, rounded or not: round(0.01 + 0.01, 3) computes nothing of the item
+        static const QRegularExpression literalArithmeticRe(
+            R"(^(?:round\s*\()?[-+*/%()\s\d.eE,]*\d[-+*/%()\s\d.eE,]*\)?$)");
         for (const QString &value : values)
         {
             QString text;
+            const QString v = value.trimmed();
             if (fixedTextValue(value, &text))
+            {
                 failure = failure || failureTextRe.match(text).hasMatch();
+                text = text.trimmed();
+            }
+            else if (constantRe.match(v).hasMatch() || literalArithmeticRe.match(v).hasMatch())
+                text = v;
             else
-                allFixed = allFixed && constantRe.match(value.trimmed()).hasMatch();
+                allFixed = false;
+            // a value the request itself gives ("Squares") may be printed as it is
+            if (!text.isEmpty() && QRegularExpression("(?<![\\w.])" + QRegularExpression::escape(text) + "(?![\\w.])",
+                                                      QRegularExpression::CaseInsensitiveOption)
+                                       .match(originalRequestText)
+                                       .hasMatch())
+                fromRequest = true;
         }
+        // Confirmed live (benchmark SVD, local pyi, items 6, 9, 10 in every run): only scriptPrint("R10:", 3, 45),
+        // scriptPrint("R9:", round(0.01 + 0.01, 3)), scriptPrint("R6:", "decomposition successful") — values written
+        // in, none of them the request's, nothing computed
+        if (allFixed && !failure && !fromRequest)
+            return "This script does no work: it only prints " + line +
+                   " — values written into the script, not computed, and none of them given by the request. Do the "
+                   "item's work in this script with the documented calls (the recipe of its topic) and print the "
+                   "variables that work produces.";
         if (allFixed && failure)
             return "This script does no work: it only prints " + line +
                    " — fixed values and a failure that no lookup in it found. Nothing reported the objects missing: "
@@ -7152,7 +7217,7 @@ QList<AiKnownMistakeMatch> QtiSasAiContent::detectKnownMistakes(const QString &c
             matches << AiKnownMistakeMatch{"fixed text in place of a result value", explanation};
         explanation = noWorkFailureResultMistake(code, originalRequestText);
         if (!explanation.isEmpty())
-            matches << AiKnownMistakeMatch{"a made-up failure printed instead of the work", explanation};
+            matches << AiKnownMistakeMatch{"only written-in values printed instead of the work", explanation};
     }
     explanation = rowRangeEndsOneShortMistake(code);
     if (!explanation.isEmpty())

@@ -22,6 +22,9 @@ Description: Execute Python code from within QtiSAS
 #include <atomic>
 #include <chrono>
 
+#include <QHash>
+#include <QRegularExpression>
+
 #include "ApplicationWindow.h"
 #include "PythonScript.h"
 #include "PythonScripting.h"
@@ -141,6 +144,35 @@ static QString methodOwnerHint(PyObject *value)
         .arg(name, types.join(", "), example);
 }
 
+// For a TypeError of a method called on its class instead of its object: the object to call it on. Confirmed live
+// (benchmark SVD, local pyi): svd.value(...) — "svd" is the SIP class of the global Svd; "first argument of unbound
+// method must have type 'svd'" was retried as is until the item was given up
+static QString unboundMethodHint(PyObject *value)
+{
+    PyObject *text = PyObject_Str(value);
+    const QString message = text && PyUnicode_Check(text) ? QString::fromUtf8(PyUnicode_AsUTF8(text)) : QString();
+    Py_XDECREF(text);
+    PyErr_Clear();
+    static const QRegularExpression unboundRe(R"(^(\w+)\(self\b.*unbound method must have type '(\w+)')");
+    const QRegularExpressionMatch m = unboundRe.match(message);
+    if (!m.hasMatch())
+        return {};
+    static const QHash<QString, QString> objects{{"svd", "Svd"},
+                                                 {"ascii1d18", "Ascii1d"},
+                                                 {"compile18", "Compiler"},
+                                                 {"fittable18", "Fittable"},
+                                                 {"dan18", "Dan"},
+                                                 {"Table", "t = table(\"<name>\"); t"},
+                                                 {"Matrix", "m = matrix(\"<name>\"); m"},
+                                                 {"Note", "n = note(\"<name>\"); n"}};
+    const QString object = objects.value(m.captured(2));
+    if (object.isEmpty())
+        return QString("'%1' is a class, not an object: call %2() on an object of it\n")
+            .arg(m.captured(2), m.captured(1));
+    return QString("'%1' is the class, not the object: call %2() on %3, e.g. %3.%2(...)\n")
+        .arg(m.captured(2), m.captured(1), object);
+}
+
 // For an AttributeError: the object's methods whose names contain the missing one ("text" → toPlainText, setText),
 // or, on None, that the lookup before it found nothing. Confirmed live: n.tab("C").text() was retried as is, and
 // n.tab("Main").setText() on a tab that never existed sent the retries hunting setText(). Python's own "Did you
@@ -221,6 +253,8 @@ QString PythonScripting::errorMsg(const QString &sourceCode, const QString &sour
             hint = methodOwnerHint(value);
         else if (PyErr_GivenExceptionMatches(exception, PyExc_AttributeError))
             hint = attributeHint(value);
+        else if (PyErr_GivenExceptionMatches(exception, PyExc_TypeError))
+            hint = unboundMethodHint(value);
         PyObject *nameAttr = PyObject_GetAttrString(exception, "__name__");
         if (nameAttr)
         {

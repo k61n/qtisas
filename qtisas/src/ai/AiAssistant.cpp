@@ -610,6 +610,11 @@ static const QHash<QString, QRegularExpression> topicSynonymRe = {
                                    R"(\b1d\b|\bradial(?:ly)?\s+averag|\bcansas\b|\bnist\b|\bgrasp\b|\.rad\b|)"
                                    R"(\bkratky\b|\bguinier\b|\bporod\b|\bresolution\s+sigma\b)",
                                    QRegularExpression::CaseInsensitiveOption)},
+    // contrast variation (coach M2, 2026-10-19): the SVD module's words — and the H/D solvent series it plans
+    {"svd", QRegularExpression(
+                R"(\bsvd\b|\bsingular\s+value|\bdecompos(?:e|ed|es|ing|ition)\b|\bcontrast[\s-]+(?:variation|match)|)"
+                R"(\bpartial\s+structure\s+factors?\b|\bmatch(?:ing)?\s+points?\b|\bh/d\b|\bd2o\b)",
+                QRegularExpression::CaseInsensitiveOption)},
 };
 
 // The user's request without requestSuffix()'s transport guidance (either mode's), for everything that inspects what
