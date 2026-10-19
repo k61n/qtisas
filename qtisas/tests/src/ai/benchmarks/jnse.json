@@ -1,0 +1,71 @@
+{
+  "name": "JNSE",
+  "description": "JNSE module list (coach M4): J-NSE .dtr import (header table + one dataset table per q), reading it, multi-q fits with simpleDiffusion, relaxation rates, a plot, a broken file; synthetic files like report19971_1.2.dtr (CR line ends) with S(q,t)/S(q) = 0.95 exp(-D q^2 t), D = 3.0 (300 K) and 4.5 (350 K) A^2/ns.",
+  "instruction": "Use exactly the object names given. End the item by printing exactly ONE line: the result label the item gives, then only the values asked for, in the order asked, separated by spaces.",
+  "setup": "import math, os, shutil\ndef write_dtr(path, sample, info, run, temp, D, A=0.95, qs=(0.03893043, 0.05502866, 0.07045429, 0.08793830,\n              0.1034360, 0.1196200), taus=(0.5005917, 2.003166, 4.006066, 6.008912, 10.01473, 20.02899, 30.04368,\n              40.05837, 50.07301, 60.08769, 70.10233, 80.11702)):\n    \"\"\"A J-NSE .dtr file like report19971_1.2.dtr (CR line ends, one dataset per q): S(q,t)/S(q) = A exp(-D q^2 t),\n    err = 0.01 + 0.0002 t, q in 1/A, t in ns, D in A^2/ns.\"\"\"\n    def e(v):  # Fortran E15.7: 0.3893043E-01\n        if v == 0:\n            return \"0.0000000E+00\".rjust(15)\n        m, x = (\"%.6E\" % abs(v)).split(\"E\")\n        digits = m.replace(\".\", \"\")\n        return ((\"-\" if v < 0 else \"\") + \"0.\" + digits + \"E%+03d\" % (int(x) + 1)).rjust(15)\n    lines = []\n    for k, q in enumerate(qs):\n        lines += ['%s \"%s\"' % (sample, info), \"%s W  fqt   vs   t/ns  %d%02d\" % (sample, run, k + 1), \"\", \"parameter\"]\n        header = [(\"q\", e(q)), (\"q_var\", e(0.0002)), (\"q_unit_SI\", e(1e10)), (\"t_unit_SI\", e(1e-9)),\n                  (\"temp\", e(temp)), (\"numor1\", \"%d\" % run), (\"ref1\", \"%d\" % (run - 1)), (\"bgr1\", \"%d\" % (run + 5)),\n                  (\"withbgr\", \"1\"), (\"tfac_bgr\", e(0.9)), (\"volfrac\", e(1.0)), (\"qbins\", \"%d\" % len(qs)),\n                  (\"tbins\", \"%d\" % len(taus)), (\"oor_cnt\", \"226\"), (\"upd_cnt\", \"3760\")]\n        lines += [\"%-10s %s\" % (key, value.strip() if \"E\" in value else value.rjust(8)) for key, value in header]\n        lines += [\"\", \"values\",\n                  \"        tau/ns    S(q,t)/S(q)    err(sqt/sq)    var(sqt/sq)    var(tau)/ns   nupdates   Qeff/A**-1  \"]\n        for t in taus:\n            s = A * math.exp(-D * q * q * t)\n            lines.append(\"  %s%s%s%s%s%10d%s\" % (e(t), e(s), e(0.01 + 0.0002 * t), e(0.1), e(0.0), 36, e(q)))\n        lines += [\"\", \"#nxt\"]\n    with open(os.path.expanduser(path), \"w\", newline=\"\") as f:\n        f.write(\"\\r\".join(lines) + \"\\r\")\n\nbase = os.path.expanduser(\"~/benchdata/jnse\")\nshutil.rmtree(base, ignore_errors=True)\nos.makedirs(base)\nwrite_dtr(os.path.join(base, 'report90001_1.2.dtr'), 'PEP100', 'PEP 100k in d decane 4mm', 90001, 300.0, 3.0)\nwrite_dtr(os.path.join(base, 'report90002_1.2.dtr'), 'PEP100', 'PEP 100k in d decane 4mm', 90002, 350.0, 4.5)\nopen(os.path.join(base, 'broken.dtr'), 'w').write('PEP100 \"x\"\\nnot a dtr file\\n')\n# the NSE fit function of qtisas.com/jnse, compiled when the library does not have it\nif 'simpleDiffusion' not in Fittable.fitFunctions():\n    c = Compiler\n    open(os.path.join(c.path, 'simpleDiffusion.fif'), 'w').write('[group] [Weight] 1 [Algorithm] 1 \\nNSE\\n\\n[name]\\nsimpleDiffusion\\n\\n[number parameters]\\n4,\\n\\n[description]\\n<html><head><meta name=\"qrichtext\" content=\"1\" /></head><body style=\"font-size:8pt;font-family:MS Shell Dlg 2\">\\n<p dir=\"ltr\">simpleDiffusion:</p>\\n<p dir=\"ltr\">Intermediate scattering function for diffusing particles.</p>\\n<p dir=\"ltr\">.. math:: I(q,t)=Ae^{-q^2 (Dt + 0.5w^2t^2)}</p>\\n<p dir=\"ltr\"></p>\\n</body></html>\\n\\n\\n[x]\\nt\\n\\n[y]\\nIqt\\n\\n[parameter names]\\nq,A,D,w,\\n\\n[initial values]\\n1[0..inf],1[0..inf],0[0..inf],0[0..inf]\\n\\n[adjustibility]\\n0,1,1,0\\n\\n[parameter description]\\nWavevector,Prefactor,Diffusion coefficient in units [ [q]**-2/[t] ],Width of diffusion coefficient distribution in D units.,\\n\\n[h-headers]\\n\\n[included functions]\\n\\n\\n[code]\\n// --->  Iqt = f ( t, {P1, ...} );\\nIqt= A*exp(-pow(q,2.0)*(D*t+0.5*fabs(w)*w*t*t));\\n\\n[fortran]\\n0,\\n\\n\\n\\n[end]')\n    c.scanGroups()\n    c.open('simpleDiffusion')\n    c.compile()\n",
+  "items": [
+    {
+      "text": "Import the neutron spin echo data file report90001_1.2.dtr (J-NSE .dtr) from the folder benchdata/jnse in the home directory. Print the name of the header table made, the number of q values (datasets) and the largest q, rounded to 4 decimals.",
+      "expected": "report90001_1-2-info 6 0.1196",
+      "hint": "the default header table name comes from the file name",
+      "verify": "check(existTable(\"report90001_1-2-info\"))",
+      "verified": "True"
+    },
+    {
+      "text": "From that import, print the temperature and the number of Fourier times (tau points) of the third q.",
+      "expected": "300 12",
+      "hint": "header column temp; the dataset table of row 3"
+    },
+    {
+      "text": "From that import, print S(q,t)/S(q) at the first Fourier time of the dataset with q = 0.0705, rounded to 4 decimals.",
+      "expected": "0.9429",
+      "hint": "the dataset of row 3, column Sqt-To-Sq"
+    },
+    {
+      "text": "Import both NSE files report90001_1.2.dtr and report90002_1.2.dtr from benchdata/jnse into one header table named pepInfo. Print the number of datasets and the two different temperatures of the series, lowest first.",
+      "expected": "12 300 350",
+      "hint": "importFiles with a list and the header name",
+      "verify": "check(table(\"pepInfo\").numRows())",
+      "verified": "12"
+    },
+    {
+      "text": "Fit all six datasets of report90001_1.2.dtr (the first six rows of pepInfo) together with the NSE fit function simpleDiffusion, with A and D shared by all q and w fixed at 0. Print the diffusion coefficient D rounded to 2 decimals.",
+      "expected": "3.00",
+      "hint": "initFit/fit with shared A, D; w fixed"
+    },
+    {
+      "text": "Fit only the four smallest q of the 350 K series (rows 7 to 10 of pepInfo) together with simpleDiffusion, A and D shared, w fixed at 0. Print D rounded to 2 decimals.",
+      "expected": "4.50",
+      "hint": "rows 7..10"
+    },
+    {
+      "text": "Fit all six q of the 350 K series in pepInfo together with simpleDiffusion (A and D shared, w fixed at 0) and print the relaxation rate D q^2 at q = 0.1 1/A in 1/ns, rounded to 4 decimals.",
+      "expected": "0.0450",
+      "hint": "Gamma = D q^2"
+    },
+    {
+      "text": "Fit the dataset with q = 0.1034 of the 300 K series alone with simpleDiffusion (w fixed at 0). Print D rounded to 2 decimals.",
+      "expected": "3.00",
+      "hint": "one row: rows 5..5"
+    },
+    {
+      "text": "Plot S(q,t)/S(q) against the Fourier time with error bars for the three smallest q of the 300 K series in a new graph named gNSE. Print the number of datasets plotted.",
+      "expected": "3",
+      "hint": "dataset tables tau-ns / Sqt-To-Sq / d-Sqt-To-Sq",
+      "verify": "check(existGraph(\"gNSE\"))",
+      "verified": "True"
+    },
+    {
+      "text": "Try to import the file broken.dtr from benchdata/jnse. If nothing can be read, make no table and print the number of datasets read.",
+      "expected": "0",
+      "hint": "importFiles raises: nothing read",
+      "verify": "check(existTable(\"broken-info\"))",
+      "verified": "False"
+    },
+    {
+      "text": "Print the ratio of the diffusion coefficients D(350 K) / D(300 K) from fits of all six q of each series in pepInfo with simpleDiffusion (A and D shared, w fixed at 0), rounded to 2 decimals.",
+      "expected": "1.50",
+      "hint": "two fits"
+    }
+  ]
+}

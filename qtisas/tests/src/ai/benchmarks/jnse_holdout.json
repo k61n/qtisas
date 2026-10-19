@@ -1,0 +1,30 @@
+{
+  "name": "JNSE HOLDOUT",
+  "description": "JNSE holdout (coach M4), never used to design fixes: another sample (PS50, D = 1.2 A^2/ns at 320 K).",
+  "instruction": "Use exactly the object names given. End the item by printing exactly ONE line: the result label the item gives, then only the values asked for, in the order asked, separated by spaces.",
+  "setup": "import math, os, shutil\ndef write_dtr(path, sample, info, run, temp, D, A=0.95, qs=(0.03893043, 0.05502866, 0.07045429, 0.08793830,\n              0.1034360, 0.1196200), taus=(0.5005917, 2.003166, 4.006066, 6.008912, 10.01473, 20.02899, 30.04368,\n              40.05837, 50.07301, 60.08769, 70.10233, 80.11702)):\n    \"\"\"A J-NSE .dtr file like report19971_1.2.dtr (CR line ends, one dataset per q): S(q,t)/S(q) = A exp(-D q^2 t),\n    err = 0.01 + 0.0002 t, q in 1/A, t in ns, D in A^2/ns.\"\"\"\n    def e(v):  # Fortran E15.7: 0.3893043E-01\n        if v == 0:\n            return \"0.0000000E+00\".rjust(15)\n        m, x = (\"%.6E\" % abs(v)).split(\"E\")\n        digits = m.replace(\".\", \"\")\n        return ((\"-\" if v < 0 else \"\") + \"0.\" + digits + \"E%+03d\" % (int(x) + 1)).rjust(15)\n    lines = []\n    for k, q in enumerate(qs):\n        lines += ['%s \"%s\"' % (sample, info), \"%s W  fqt   vs   t/ns  %d%02d\" % (sample, run, k + 1), \"\", \"parameter\"]\n        header = [(\"q\", e(q)), (\"q_var\", e(0.0002)), (\"q_unit_SI\", e(1e10)), (\"t_unit_SI\", e(1e-9)),\n                  (\"temp\", e(temp)), (\"numor1\", \"%d\" % run), (\"ref1\", \"%d\" % (run - 1)), (\"bgr1\", \"%d\" % (run + 5)),\n                  (\"withbgr\", \"1\"), (\"tfac_bgr\", e(0.9)), (\"volfrac\", e(1.0)), (\"qbins\", \"%d\" % len(qs)),\n                  (\"tbins\", \"%d\" % len(taus)), (\"oor_cnt\", \"226\"), (\"upd_cnt\", \"3760\")]\n        lines += [\"%-10s %s\" % (key, value.strip() if \"E\" in value else value.rjust(8)) for key, value in header]\n        lines += [\"\", \"values\",\n                  \"        tau/ns    S(q,t)/S(q)    err(sqt/sq)    var(sqt/sq)    var(tau)/ns   nupdates   Qeff/A**-1  \"]\n        for t in taus:\n            s = A * math.exp(-D * q * q * t)\n            lines.append(\"  %s%s%s%s%s%10d%s\" % (e(t), e(s), e(0.01 + 0.0002 * t), e(0.1), e(0.0), 36, e(q)))\n        lines += [\"\", \"#nxt\"]\n    with open(os.path.expanduser(path), \"w\", newline=\"\") as f:\n        f.write(\"\\r\".join(lines) + \"\\r\")\n\nbase = os.path.expanduser(\"~/benchdata/jnse\")\nshutil.rmtree(base, ignore_errors=True)\nos.makedirs(base)\nwrite_dtr(os.path.join(base, 'report95001_2.5.dtr'), 'PS50', 'PS 50k in d toluene', 95001, 320.0, 1.2)\n# the NSE fit function of qtisas.com/jnse, compiled when the library does not have it\nif 'simpleDiffusion' not in Fittable.fitFunctions():\n    c = Compiler\n    open(os.path.join(c.path, 'simpleDiffusion.fif'), 'w').write('[group] [Weight] 1 [Algorithm] 1 \\nNSE\\n\\n[name]\\nsimpleDiffusion\\n\\n[number parameters]\\n4,\\n\\n[description]\\n<html><head><meta name=\"qrichtext\" content=\"1\" /></head><body style=\"font-size:8pt;font-family:MS Shell Dlg 2\">\\n<p dir=\"ltr\">simpleDiffusion:</p>\\n<p dir=\"ltr\">Intermediate scattering function for diffusing particles.</p>\\n<p dir=\"ltr\">.. math:: I(q,t)=Ae^{-q^2 (Dt + 0.5w^2t^2)}</p>\\n<p dir=\"ltr\"></p>\\n</body></html>\\n\\n\\n[x]\\nt\\n\\n[y]\\nIqt\\n\\n[parameter names]\\nq,A,D,w,\\n\\n[initial values]\\n1[0..inf],1[0..inf],0[0..inf],0[0..inf]\\n\\n[adjustibility]\\n0,1,1,0\\n\\n[parameter description]\\nWavevector,Prefactor,Diffusion coefficient in units [ [q]**-2/[t] ],Width of diffusion coefficient distribution in D units.,\\n\\n[h-headers]\\n\\n[included functions]\\n\\n\\n[code]\\n// --->  Iqt = f ( t, {P1, ...} );\\nIqt= A*exp(-pow(q,2.0)*(D*t+0.5*fabs(w)*w*t*t));\\n\\n[fortran]\\n0,\\n\\n\\n\\n[end]')\n    c.scanGroups()\n    c.open('simpleDiffusion')\n    c.compile()\n",
+  "items": [
+    {
+      "text": "Read the NSE measurement report95001_2.5.dtr from benchdata/jnse in the home directory into a header table named psInfo. Print the number of q values and the smallest q, rounded to 4 decimals.",
+      "expected": "6 0.0389",
+      "hint": "",
+      "verify": "check(table(\"psInfo\").numRows())",
+      "verified": "6"
+    },
+    {
+      "text": "Fit all q of psInfo together with simpleDiffusion, A and D shared, w fixed at 0. Print D rounded to 2 decimals.",
+      "expected": "1.20",
+      "hint": ""
+    },
+    {
+      "text": "With that D, print the relaxation rate D q^2 at the largest q of psInfo in 1/ns, rounded to 4 decimals.",
+      "expected": "0.0172",
+      "hint": ""
+    },
+    {
+      "text": "Print S(q,t)/S(q) at the last Fourier time of the smallest q of psInfo, rounded to 4 decimals.",
+      "expected": "0.8212",
+      "hint": ""
+    }
+  ]
+}

@@ -222,9 +222,27 @@ Reference scripts: `reference/svd`, `reference/svd_holdout` — 13/13 and 4/4 wi
 BIGMODEL: 5/13 without SVD docs, 13/13 (η 0.87-1.0) and holdout 4/4 after the docs and fixes of five runs; local
 all-pyi (stage 2): 4 → 5 → 6 → 7/8 → 9 and 9/13 (η 0.59), holdout 3/4 (2026-10-19). QtiSAS bugs among the fixes:
 "rounded to 4 decimals" was counted as a value of the result line, an f-string argument f"{a} {b}" as one value,
-and a failure report ("R1: Missing tables: ...") as a labelled result. Items 9 and
+and a failure report ("R1: Missing tables: ...") as a labelled result. Rerun with the docs pinned to all-pyi (`--docs compact`,
+2026-10-20; the runs above had gone out all-md by accident): Codex 13/13 (η 0.87, 0.81M tokens instead of ~1.6M)
+and holdout 4/4; local 6/13 and holdout 3/4. Items 9 and
 10 were reworded where both readings were fair ("for the fractions 0, 0.5 and 1": one series, not one value each;
 the unknowns without the solvent's terms).
+
+## JNSE and JNSE HOLDOUT — the J-NSE module (coach M4)
+
+`jnse.json` (11 items) and `jnse_holdout.json` (4 items, never used to design doc fixes) test the neutron-spin-echo
+API (`Jnse`, see `python/doc/jnse-python-api.md`): .dtr import into a header table and one dataset table per q
+(items 1-3), two files into one header table (4), multi-q fits with simpleDiffusion and shared A, D (5, 6, 8), a
+relaxation rate D q² (7), a plot with error bars (9), a broken file (10) and the ratio of two fits (11). The setup
+writes synthetic files like a real J-NSE report (report19971_1.2.dtr: CR line ends, six q 0.039-0.120 1/A, Fortran
+numbers) with S(q,t)/S(q) = 0.95 exp(-D q² t), D = 3.0 (300 K) and 4.5 (350 K) A²/ns, and compiles simpleDiffusion
+(qtisas.com/jnse) when the library has none; the holdout is another sample (PS50, D = 1.2 at 320 K). Reference
+scripts: `reference/jnse`, `reference/jnse_holdout` — 11/11 and 4/4 (2026-10-19). Codex BIGMODEL all-pyi
+(`--docs compact`): 0/11 without JNSE docs, 11/11 (η 0.85-1.0) and holdout 4/4 after three doc versions; local
+all-pyi: 6/11 in four runs (v3-v6), holdout 1/4 — 4/4 once a request naming a module's table is routed to the
+module's docs (QtiSAS reports such tables by their module kind). A QtiSAS bug found by the holdout: the fit-before-configure
+check did not count `Jnse.initFit()`, and the forced `Fittable.configure()` reset every dataset's q. Items 4, 7
+and 11 were reworded where both readings were fair (two *different* temperatures; the header table named).
 
 ## Multi-AI baseline — the status of the AI integration
 
