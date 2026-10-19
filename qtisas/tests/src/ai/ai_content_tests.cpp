@@ -2649,8 +2649,8 @@ void AiContentTests::requestedResultValues_neverMoreThanTheAnswerHas()
     // item, it must never exceed the number of values of the item's expected answer.
     const QString benchmarks = QFileInfo(QString::fromUtf8(__FILE__)).absolutePath() + "/benchmarks";
     int counted = 0;
-    for (const QString &list :
-         {QStringLiteral("list3"), QStringLiteral("list4"), QStringLiteral("list5"), QStringLiteral("ascii1d")})
+    for (const QString &list : {QStringLiteral("list3"), QStringLiteral("list4"), QStringLiteral("list5"),
+                                QStringLiteral("ascii1d"), QStringLiteral("svd"), QStringLiteral("svd_holdout")})
     {
         QFile file(benchmarks + "/" + list + ".json");
         QVERIFY(file.open(QIODevice::ReadOnly));
@@ -2713,6 +2713,11 @@ void AiContentTests::resultLineTooFewValues_blocksShortLineOnly()
     QVERIFY(QtiSasAiContent::resultLineTooFewValuesMistake(
                 "if t is None:\n    scriptPrint(\"R5: -1\")\nelse:\n    scriptPrint(\"R5:\", n, e, s)\n", request)
                 .isEmpty());
+    // an f-string argument of fields only is one value per field (benchmark SVD item 5, local pyi)
+    QVERIFY(QtiSasAiContent::resultLineTooFewValuesMistake("scriptPrint(\"R5:\", n, f\"{e} {s:.4f}\")\n", request)
+                .isEmpty());
+    QVERIFY(
+        !QtiSasAiContent::resultLineTooFewValuesMistake("scriptPrint(\"R5:\", n, f\"e={e}\")\n", request).isEmpty());
 }
 
 void AiContentTests::hardcodedResultLine_allowsFallbackBranch()
@@ -2852,6 +2857,25 @@ void AiContentTests::requestedResultValues_orderPhraseIsNoValue()
              QStringList({"whether each still exists afterwards"}));
 }
 
+void AiContentTests::requestedResultValues_formatPhraseIsNoValue()
+{
+    // benchmark SVD items 1 and 5: "rounded to 4 decimals" counted as a value blocked the right line
+    const QString label = " The result label is \"R1:\".";
+    QCOMPARE(QtiSasAiContent::requestedResultValues("Print the number of Q points and S12 at Q = 0.05, rounded to 4 "
+                                                    "decimals." +
+                                                    label),
+             QStringList({"the number of Q points", "S12 at Q = 0.05"}));
+    QCOMPARE(
+        QtiSasAiContent::requestedResultValues("Print S22 and its error, with 3 significant digits." + label).size(),
+        qsizetype(2));
+    QCOMPARE(
+        QtiSasAiContent::requestedResultValues("Print the radius, rounded to an integer, and chi2." + label).size(),
+        qsizetype(2));
+    // a value that only mentions decimals stays one
+    QCOMPARE(QtiSasAiContent::requestedResultValues("Print the number of decimals and the sum." + label).size(),
+             qsizetype(2));
+}
+
 void AiContentTests::requestCreatesName_onlyForACreation()
 {
     // LIST 3, items 2 and 3 in split mode: "In \"Squares\", ..." was planned as a creation and stopped as a collision.
@@ -2933,7 +2957,18 @@ void AiContentTests::noWorkFailureResult_blocksMadeUpNotFound()
                 .isEmpty());
     QVERIFY(
         QtiSasAiContent::noWorkFailureResultMistake("scriptPrint(\"R3:\", n, \"TableNotFound\")\n", request).isEmpty());
-    QVERIFY(QtiSasAiContent::noWorkFailureResultMistake("scriptPrint(\"R3:\", 1, \"Squares\")\n", request).isEmpty());
+    QVERIFY(QtiSasAiContent::noWorkFailureResultMistake("scriptPrint(\"R3:\", 1, \"Squares\")\n", request)
+                .isEmpty()); // values written in, none the request's (benchmark SVD, local pyi): blocked; a value the
+                             // request gives: not
+    const QString svd =
+        "Print the number of unknowns and of the determined combinations. The result label is \"R10:\".";
+    QVERIFY(!QtiSasAiContent::noWorkFailureResultMistake("scriptPrint(\"R10:\", 3, 45)\n", svd).isEmpty());
+    QVERIFY(
+        !QtiSasAiContent::noWorkFailureResultMistake("scriptPrint(\"R10:\", round(0.01 + 0.01, 3))\n", svd).isEmpty());
+    QVERIFY(!QtiSasAiContent::noWorkFailureResultMistake("scriptPrint(\"R10:\", \"decomposition successful\")\n", svd)
+                 .isEmpty());
+    QVERIFY(QtiSasAiContent::noWorkFailureResultMistake("s = Svd\nscriptPrint(\"R10:\", 3, 45)\n", svd).isEmpty());
+    QVERIFY(QtiSasAiContent::noWorkFailureResultMistake("scriptPrint(\"R10:\", 3, s.rank([0, 1]))\n", svd).isEmpty());
 }
 
 void AiContentTests::noteAutoexecReceiver_movedToTheNote()
@@ -3439,7 +3474,12 @@ void AiContentTests::labeledResultLine_blocksLabelsBetweenValues()
     // local LIST 1, item 7: a fallback line with no value has nothing to label ("Q=0.1" is prose)
     QVERIFY(
         QtiSasAiContent::labeledResultLineMistake("scriptPrint(\"R6:\", \"Error calculating I at Q=0.1\")\n", request)
-            .isEmpty());
+            .isEmpty()); // benchmark SVD, local pyi, item 1: a failure report that names what is missing is no result
+                         // line
+    QVERIFY(QtiSasAiContent::labeledResultLineMistake("scriptPrint(f\"R6: Missing tables: {', '.join(m)}\")\n", request)
+                .isEmpty());
+    QVERIFY(
+        !QtiSasAiContent::labeledResultLineMistake("scriptPrint(f\"R6: {left} Peak5:missing\")\n", request).isEmpty());
 }
 
 void AiContentTests::inventedDeletionCall_hintsTheRealCall()
@@ -4978,6 +5018,23 @@ void AiContentTests::splitPartTopics_ascii1dForSasDataInOrOut()
         QVERIFY2(splitPartTopicsFromAnswer("none", request, known).contains("ascii1d"), qPrintable(request));
     // a name with SAS letters inside it is no such word
     QVERIFY(!splitPartTopicsFromAnswer("none", "fit the table SAXS_data with QtiSAS", known).contains("ascii1d"));
+}
+
+void AiContentTests::splitPartTopics_svdForContrastVariation()
+{
+    // contrast variation — named by any of its usual words — needs the Svd docs
+    QtiSasAiContent content;
+    const QStringList known = content.knownDocTopics();
+    QVERIFY(known.contains("svd"));
+    for (const QString &request :
+         {QStringLiteral("Contrast variation: decompose mix0 and mix34"), QStringLiteral("make the SVD of the series"),
+          QStringLiteral("print the partial structure factors at Q = 0.05"),
+          QStringLiteral("At which D2O fraction is component a contrast matched?"),
+          QStringLiteral("find the match point of the protein"), QStringLiteral("plan an H/D series"),
+          QStringLiteral("singular value decomposition of the contrast matrix"),
+          QStringLiteral("Repeat the decomposition of svdAB without mix34")})
+        QVERIFY2(splitPartTopicsFromAnswer("none", request, known).contains("svd"), qPrintable(request));
+    QVERIFY(!splitPartTopicsFromAnswer("none", "import the SANS curve plain.dat", known).contains("svd"));
 }
 
 void AiContentTests::splitPartTopics_fittableSynonymCatchesSimulate()
