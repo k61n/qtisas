@@ -79,6 +79,10 @@ whole list, so a snippet checks what later items leave unchanged (LIST 1 item 1:
 item 3's). A negative test (item 10 and 11 replaced by the bare lines) scored both `unverified`. Reports from before
 verification have no state and keep their scores on `--rescore`.
 
+LIST 3–5 carry verify snippets too (2026-10-19, 21 of 24 items; reference scripts 12/12, 6/6, 6/6 with them). Three
+items have none: LIST 3 item 4 (the column made writable again — there is no read-only getter) and LIST 4 items 3
+and 5 check nothing of their own after item 6 deletes "Grid" and "Names" (item 6's snippet checks that).
+
 ## LIST 3 request — mode comparison benchmark with checkable results
 
 Purpose: ONE fixed task list to run unchanged under every
