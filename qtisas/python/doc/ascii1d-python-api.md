@@ -2,11 +2,14 @@
 
 Python interface of the **ASCII.SANS.1D** tool (the "ASCII 1D SANS" dock): import and export of radially averaged
 1D small-angle scattering data — columns **Q, I, dI, sigma** — with optional processing on the way.
-The global object is `Ascii1d`.
+The global object is `Ascii1d` — already defined, like `Fittable` and `Compiler`: use it without any import
+(`from Ascii1d import Ascii1d` raises ModuleNotFoundError).
 
 > **Use `Ascii1d` for every import or export of 1D SAS data** — whenever a request reads or writes a SANS, SAXS,
 > SALS or SAS curve, a radially averaged dataset, a 1D / ascii / `.dat` / `.RAD` / canSAS / NIST / GRASP data file,
-> or names ASCII.SANS.1D, SANS.1D or ascii1d. Do not read such a file with your own Python code (`open()`,
+> or names ASCII.SANS.1D, SANS.1D or ascii1d — and also for a file whose columns are Q, I (dI, sigma), and for any
+> task with an option only this tool has: removing points, a SAS presentation (Kratky, Guinier, ...), the resolution
+> sigma, binning. Do not read such a file with your own Python code (`open()`,
 > `split()`) or with `Table.importASCII()`: their headers hold lines with numbers that are not data, and the
 > options below (removed points, presentations, resolution) exist only here.
 
@@ -15,16 +18,65 @@ The global object is `Ascii1d`.
 
 ---
 
-## Quick Start
+## Quick Start — the recipe
+
+First choose the call by where the data are and where they go:
+
+| The source is … | to a table | to a file |
+|---|---|---|
+| a **table** in the project (`QI-alpha`, `QI-*`) | `convertTables(...)` | `exportTables(...)` |
+| a **file** on disk (`sample.dat`, `*.dat`) | `importFiles(...)` | `convertFiles(...)` |
+
+A table is never a file: `importFiles("QI-alpha")` is wrong when `QI-alpha` is a table of the project, and
+`exportTables()` always writes files — a new *table* from a table is `convertTables()`.
+
+**One call does the whole move, with its options.** Do not import and then export: the options stay set, so a
+second run applies them again (removed points are removed twice). The four moves, `< >` = the request's values:
 
 ```python
 a = Ascii1d
-a.reset()                                   # every option back to the default: plain ASCII, nothing modified
-a.setInputFolder("~/data/sans")             # relative file names are read from here
-made = a.importFiles("sample.dat")          # file -> table; returns the table names made: ["sample"]
-t = table(made[0])                          # columns Q [X], I [Y], dI [yErr] (and Sigma [xErr])
-scriptPrint(t.numRows(), t.cell(1, 1))
+a.reset(); a.setInputFolder("~/<in>")                    # file on disk -> table
+made = a.importFiles("<file>.dat")                       # ["<file>"]
+
+a.reset(); a.setOutputFolder("~/<out>"); a.setExtension("<ext>")   # table -> file
+written = a.exportTables("<table>")                     # ["/abs/path/<out>/<table>.<ext>"]
+
+a.reset(); a.setOutputFolder("~/<out>"); a.setExtension("<ext>")   # files -> files, nothing in the project
+written = a.convertFiles("~/<in>/*.dat")                # one file per source file
+
+a.reset(); a.setPresentation("Kratky"); a.setAutoPrefix(True)      # table -> new table
+made = a.convertTables(["<table1>", "<table2>"])         # ["Kratky-<table1>", "Kratky-<table2>"]
 ```
+
+Options go between `reset()` and the run, for any move: `a.setRemovePoints(first=3)` before `convertFiles(...)`
+cuts 3 points of every file it writes; `a.setResolution(True)` and `a.setResolutionGeometry(...)` before
+`convertTables("<table>", "<new name>")` add the sigma column to the new table.
+
+Then every task, in this order:
+
+```python
+a = Ascii1d
+a.reset()                                  # 1. always first: options stay set between calls
+a.setInputFolder("~/<folder>")             # 2. the request's folder: "~/..." or absolute, never relative
+# 3. ONLY what the request says about the file — nothing for a plain file of numbers:
+#    a.setFormat("cansas") / a.setFormat("nist")              a canSAS XML (.xml) or a NIST file
+#    a.setHeader(<number of header lines>)                     "starts with a 5-line header" -> a.setHeader(5)
+#    a.setHeader("<text of the last header line>")             "data after the line X" -> a.setHeader("X")
+# 4. ONLY the options the request asks for: a.setRemovePoints(...), a.setPresentation(...), a.setResolution(True)...
+made = a.importFiles("<file>")             # 5. run: no name unless the request names the result
+t = table(made[0])                         #    use the name the run returned ("sample" for sample.dat)
+```
+
+The lines in `< >` are the request's values; an option the request does not ask for is not set — `setHeader()` on
+a file without a header drops its first data points.
+
+> **Names:** give `names` only when the request names the result — "import header.dat as the table
+> \"HeaderData\"" is `importFiles("header.dat", "HeaderData")`. Otherwise use the default name: take it from what
+> the run returned (`t = table(made[0])`), never from the file name (`table("opt.dat")` does not exist), and never
+> invent one such as "Data".
+>
+> **Paths:** a run returns absolute file paths — use them. Python's own `open()` does not expand `~`: write
+> `open(os.path.expanduser("~/x/a.RAD"))` or use the returned path.
 
 ```python
 a = Ascii1d
@@ -88,7 +140,7 @@ task asks. Each setter raises `ValueError` for an invalid value, naming the vali
 | Call | Notes |
 |------|-------|
 | `setFormat(format)` / `format()` | `"ascii"` (numbers on every line), `"ascii+header"` (the default after `reset()`, with 0 header lines), `"cansas"` (canSAS 1D XML), `"nist"` (6-column NIST, header up to "The 6 columns are"). Changing the format resets the header: call `setHeader()` after `setFormat()` |
-| `setHeader(linesOrMarker)` / `header()` | `"12"`: skip 12 header lines; any other text: skip up to and including the line containing it — `setHeader("***** Data *****")` for a GRASP file. Switches the format to `"ascii+header"` |
+| `setHeader(linesOrMarker)` / `header()` | a number (`setHeader(5)` or `"5"`): skip that many header lines — a file that "starts with a 5-line text header"; any other text: skip up to and including the line containing it — `setHeader("***** Data *****")` for a GRASP file. Switches the format to `"ascii+header"` |
 | `setColumns(n)` / `columns()` | 2–4: the columns written (Q, I, dI, sigma); default 4 |
 | `setInputFolder(folder)` / `inputFolder()` | where relative file names are read |
 
@@ -112,7 +164,7 @@ task asks. Each setter raises `ValueError` for an invalid value, naming the vali
 | `setRemovePoints(first=0, last=0, from=0, to=0, negative=False)` | drop `first` points at the start, `last` at the end, points `from`..`to` (1-based, both > 0), and with `negative` every point with I ≤ 0 |
 | `setPresentation(to, from="QI")` / `presentations()` | write another SAS presentation: `"Guinier"` (ln I vs Q²), `"Zimm"`, `"Porod"`, `"Porod2"`, `"logQ"`, `"logI"`, `"Debye"`, `"1Moment"`, `"2Moment"`, `"GuinierRod"`, `"GuinierPlate"`, `"Kratky"` (I·Q² vs Q); `to == from` switches it off |
 | `setResolution(on)` | add the instrument resolution sigma(Q) as column 4 (Sigma, role xErr) |
-| `setResolutionGeometry(collimation, detector, pixel=0.525, sampleApertureW=10, sampleApertureH=10, collimationApertureW=30, collimationApertureH=30, lambda=6, deltaLambda=0.1)` | SANS geometry in the tool's units: **collimation and detector distance and pixel size in cm, apertures in mm, the wavelength in Å, deltaLambda as Δλ/λ** — 8 m collimation is `800` |
+| `setResolutionGeometry(collimationCm, detectorCm, pixelCm=0.525, sampleApertureWmm=10, sampleApertureHmm=10, collimationApertureWmm=30, collimationApertureHmm=30, lambdaA=6, deltaLambda=0.1)` | SANS geometry in the tool's units: **centimetres and millimetres, not metres** — collimation and detector distance and pixel size in cm, apertures in mm, the wavelength in Å, deltaLambda as Δλ/λ. 8 m collimation and 4 m detector distance are `setResolutionGeometry(800, 400, ...)`; a distance below 50 raises ValueError (it was given in metres) |
 | `setResolutionLenses(on, focus=0)` | lenses, focus in cm |
 | `resolutionSigma(q)` | sigma at one Q with the current geometry |
 | `setMath(op, factor=1, op2="", factor2=1)` | I op factor, then I op2 factor2 (`"+"`, `"-"`, `"*"`, `"/"`; `""` = off): "scale by 2, then subtract 0.01" is `setMath("*", 2, "-", 0.01)` |
@@ -136,7 +188,7 @@ task asks. Each setter raises `ValueError` for an invalid value, naming the vali
 a = Ascii1d
 a.reset()
 a.setHeader("***** Data *****")
-t = table(a.importFiles("~/data/sample_grasp.dat", "Sample")[0])
+t = table(a.importFiles("~/data/sample_grasp.dat")[0])    # table "sample-grasp"
 ```
 
 ```python
