@@ -5,7 +5,8 @@ The contrast series of qtisas.com/svd (2 components, 5 H/D mixtures) with known 
 them, the solvent terms S13, S23, S33, the intensities Icon = A S of every mixture, and the errors propagated from
 dI through the pseudo-inverse of A - large for mixtures near the match points. Input that cannot be decomposed makes
 no table and says why; Q points that differ between the data tables give a warning. Reading the
-table back restores the numbers of components, mixtures and Q points, also with unnamed components.
+table back restores the numbers of components, mixtures and Q points, also with unnamed components. 3 components of
+one H/D series are determined only in part: a warning, the minimum-norm solution, and Icon equal to the data.
 """
 
 import math
@@ -173,3 +174,37 @@ spinK.setValue(7)
 QMetaObject.invokeMethod(w, "slotReadSvdData", DIRECT, Q_ARG(str, "SVDunnamed"))
 restored = (spinN.value(), spinM.value(), spinK.value(), tableN.item(1, 2).text(), tableM.item(4, 2).text())
 assert restored == (2, 5, 20, "3.19900e+10", "SVDweb4"), restored
+
+# 3 components of one H/D series: the contrasts are quadratic in the D fraction, so 9 mixtures determine only 3 of
+# the 6 combinations of S_ij - the table is made with the minimum-norm solution and a warning, and Icon still
+# reproduces every mixture
+components3 = components + [("c", 4.0e10, 4.0e10)]
+S3 = {(0, 0): S11, (0, 1): S12, (1, 1): S22, (0, 2): [0.1 * math.exp(-((25 * v) ** 2)) for v in q],
+      (1, 2): [-0.05 / (1 + (40 * v) ** 2) for v in q], (2, 2): [0.5 * math.exp(-((10 * v) ** 2)) for v in q]}
+xs3 = [m / 8 for m in range(9)]
+intensities3 = []
+for m, x in enumerate(xs3):
+    solvent = H + x * (D - H)
+    rho = [h + x * (d - h) - solvent for _, h, d in components3]
+    intensity = [sum((1 if i == j else 2) * rho[i] * rho[j] * S3[i, j][k] for i, j in S3) for k in range(len(q))]
+    intensities3.append(intensity)
+    t = newTable("SVD3data%d" % m, len(q), 3)
+    t.setColData(1, q)
+    t.setColData(2, intensity)
+    t.setColData(3, [0.01 * i for i in intensity])
+spinN.setValue(3)
+spinM.setValue(len(xs3))
+spinK.setValue(len(q))
+for row, (label, h, d) in enumerate(components3):
+    for col, text in enumerate((label, "%.5e" % h, "%.5e" % d)):
+        tableN.setItem(row, col, QTableWidgetItem(text))
+for row, x in enumerate(xs3):
+    tableM.setItem(row, 2, QTableWidgetItem("SVD3data%d" % row))
+    tableM.setItem(row, 0, QTableWidgetItem("%.5e" % x))
+messages = transfer("SVD3")
+assert len(messages) == 1 and "determine 3 of the 6 combinations" in messages[0], messages
+t = table("SVD3")
+for m, intensity in enumerate(intensities3):
+    close(column(t, "Icon%d" % (m + 1)), intensity, "Icon%d of 3 components" % (m + 1))
+for name in ("S11", "S44", "dS11", "dS14", "dS44"):
+    assert all(v is not None and math.isfinite(v) for v in column(t, name)), (name, column(t, name))
