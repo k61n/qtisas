@@ -138,6 +138,13 @@ provider reported them (prompt, read from the cache, not cached, billable equiva
 0.1), the failed items with their verdicts (`--items`: every one), and warnings for mixed binaries, more than one
 answering model, a model change, stale docs and runs beside other lanes.
 
+**Lost items:** every report carries a dossier per lost item (`"dossiers"`: last script, errors, the checks that
+blocked it, repairs, doc topics, calls, plan parts, re-plans, why it stopped), and the run adds its lost items to
+`failures.jsonl` with a signature — the give-up, the last error or the first block, names and numbers replaced; a
+silent wrong value is keyed by its item. After a run each lost item shows how often its signature was seen before.
+`benchmark_stats.py --failures [TEXT] [--item L2·5] [--since YYYYMMDD]` lists signatures with their counts, items,
+models and first/last date; `--rebuild-failures` makes the store again from every saved report.
+
 **By hand:** `qtisas_benchmark.py … --print --markers "…"` prints the LIST text to paste into QtiSAS.
 
 | Mode | `--markers` |

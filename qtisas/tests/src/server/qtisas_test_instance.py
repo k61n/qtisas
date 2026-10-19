@@ -176,8 +176,10 @@ def start(args):
     env = dict(os.environ, HOME=args.home, QTISAS_SERVER_SOCKET=args.socket, QTISAS_SERVER_DIALOGS="auto")
     option = ("-s=" if args.visible else "-S=") + args.instance
     log = open(os.path.join(args.home, "qtisas.log"), "w")
+    # the test home as working directory: a script writing to a relative path writes into the test home, not into
+    # the folder the harness was started from (confirmed: a model's "benchdata/out" landed in the source tree)
     process = subprocess.Popen([args.app, option], env=env, stdout=log, stderr=subprocess.STDOUT,
-                               stdin=subprocess.DEVNULL, start_new_session=True)
+                               stdin=subprocess.DEVNULL, start_new_session=True, cwd=args.home)
     with open(pid_file(args), "w") as f:  # for stop, when the server cannot answer (busy with a long AI run)
         f.write(str(process.pid))
     deadline = time.monotonic() + args.wait
