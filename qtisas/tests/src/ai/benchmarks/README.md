@@ -186,6 +186,21 @@ happens is blocked — preset QtiSAS-Codex-Bridge (gpt-5.6-luna), so not compara
 | 3 | not valid: the local backend closed the connection from item 8 on | — | — | 182 | 7 | ~707K |
 
 
+## ASCII1D and ASCII1D HOLDOUT — the ASCII.SANS.1D module (coach M1)
+
+`ascii1d.json` (16 items) and `ascii1d_holdout.json` (4 items, never used to design fixes) test the module's Python
+API (`Ascii1d`, see `python/doc/ascii1d-python-api.md`) in its four directions: file to table (items 1-5), table to
+file (6-7), options on the way (8-12: removed points, Kratky, resolution sigma, math, binning), file to file (13-14),
+table to table (15-16). The setup writes synthetic files into `~/benchdata` of the test home (each lane its own):
+plain 4-column data, a 5-line text header with a numeric date line, a GRASP-like header with numeric lines before
+`***** Data *****`, canSAS 1D XML, three runs for a folder import, and the tables `QI-alpha`/`QI-beta`; the holdout
+adds a NIST file. Requests name the data by the words users use (SANS curve, ascii file, radially averaged
+dataset, SAS data file, 1D SANS files, SAXS curve, ascii1d) instead of the module, so the AI has to route them to
+ASCII.SANS.1D itself; items 8-12 name no such word, only an option that exists only there. Items 1, 6 and 9 check
+the module's default names, items 2 and 7 names given by the request. Reference scripts: `reference/ascii1d`,
+`reference/ascii1d_holdout` — 16/16 and 4/4 with verification (2026-10-19). Codex BIGMODEL: 16/16 in 19 calls and
+4/4 in 4 calls (2026-10-19, after fixes found by the first runs: 10/16 and 12/16).
+
 ## Multi-AI baseline — the status of the AI integration
 
 The reference value for the AI integration as a whole: LIST 3 and LIST 4 (`list4.json`, six tasks whose
