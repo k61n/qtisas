@@ -490,19 +490,31 @@ QString svd::decompose(const QString &Name, int Nsvd, const QStringList &TexT, c
         return {};
     }
 
-    // the partial structure factors of every Q point; the relative error of all intensities of the Q
-    QVector<double> error(K);
-    for (int kk = 0; kk < K; kk++)
-    {
-        double sum = 0;
+    // the pseudo-inverse A+ = V S^-1 U^T (S = A+ I), without the zero singular values as gsl_linalg_SV_solve
+    std::unique_ptr<gsl_matrix, decltype(freeMatrix)> P(gsl_matrix_calloc(N, M), freeMatrix);
+    for (int nn = 0; nn < N; nn++)
         for (int mm = 0; mm < M; mm++)
         {
-            const double I = tables[mm]->cell(kk, 1);
-            const double dI = tables[mm]->cell(kk, 2);
-            gsl_vector_set(b.get(), mm, I);
-            sum += dI / I * dI / I;
+            double p = 0;
+            for (int ll = 0; ll < N; ll++)
+                if (gsl_vector_get(S.get(), ll) != 0)
+                    p +=
+                        gsl_matrix_get(V.get(), nn, ll) / gsl_vector_get(S.get(), ll) * gsl_matrix_get(U.get(), mm, ll);
+            gsl_matrix_set(P.get(), nn, mm, p);
         }
-        error[kk] = sqrt(sum);
+
+    // the partial structure factors of every Q point and their errors: Cov = A+ diag(dI^2) A+^T, the intensities
+    // of the contrasts independent; for 2 components also of the solvent's S13, S23, S33 (linear in S11, S12, S22)
+    QVector<QVector<double>> errors(K);
+    for (int kk = 0; kk < K; kk++)
+    {
+        QVector<double> dI2(M);
+        for (int mm = 0; mm < M; mm++)
+        {
+            gsl_vector_set(b.get(), mm, tables[mm]->cell(kk, 1));
+            const double dI = tables[mm]->cell(kk, 2);
+            dI2[mm] = dI * dI;
+        }
 
         status = gsl_linalg_SV_solve(U.get(), V.get(), S.get(), b.get(), x.get());
         if (status != 0)
@@ -511,6 +523,23 @@ QString svd::decompose(const QString &Name, int Nsvd, const QStringList &TexT, c
             return {};
         }
         gsl_matrix_set_row(X.get(), kk, x.get());
+
+        auto cov = [&](int n, int l) {
+            double c = 0;
+            for (int mm = 0; mm < M; mm++)
+                c += gsl_matrix_get(P.get(), n, mm) * gsl_matrix_get(P.get(), l, mm) * dI2[mm];
+            return c;
+        };
+        for (int nn = 0; nn < N; nn++)
+            errors[kk] << sqrt(cov(nn, nn));
+        if (Nsvd == 2)
+        {
+            const double v11 = cov(0, 0), v12 = cov(1, 1), v22 = cov(2, 2);
+            const double c11c12 = cov(0, 1), c11c22 = cov(0, 2), c12c22 = cov(1, 2);
+            errors[kk] << sqrt(fabs(v11 + v12 + 2 * c11c12));                                     // S13 = -S11 - S12
+            errors[kk] << sqrt(fabs(v22 + v12 + 2 * c12c22));                                     // S23 = -S22 - S12
+            errors[kk] << sqrt(fabs(v11 + v22 + 4 * v12 + 2 * c11c22 + 4 * c11c12 + 4 * c12c22)); // S33
+        }
     }
 
     // Make Result Table: rows for the solvent and components, the contrasts, V and S, and the Q points
@@ -645,7 +674,7 @@ QString svd::decompose(const QString &Name, int Nsvd, const QStringList &TexT, c
         for (int nn = 0; nn < values.size(); nn++)
         {
             tableRho->setCell(kk, coln + 2 * nn, values[nn]);
-            tableRho->setCell(kk, coln + 2 * nn + 1, fabs(values[nn] * error[kk]));
+            tableRho->setCell(kk, coln + 2 * nn + 1, errors[kk][nn]);
         }
         values.resize(N);
     }
