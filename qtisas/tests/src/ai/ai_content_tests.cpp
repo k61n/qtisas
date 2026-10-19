@@ -399,6 +399,12 @@ void AiContentTests::inputNamesInRequest_skipsNamesBeingCreated()
     QCOMPARE(inputNamesInRequest(R"(Create a graph "Report5" with two stacked layers: the top one with the "Calib" y )"
                                  R"(data as points and the fitted curve from table "fitCurve-ai/Quad" as a line.)"),
              QStringList({"Calib", "fitCurve-ai/Quad"}));
+    // benchmark ASCII1D item 2: the name a result is given after "as" is made, not read
+    QVERIFY(inputNamesInRequest(R"(Import the ascii file header.dat as the table "HeaderData"; it has a header.)")
+                .isEmpty());
+    QVERIFY(inputNamesInRequest(R"(Save the dataset as "Out".)").isEmpty());
+    QCOMPARE(inputNamesInRequest(R"(Export the SAS dataset "QI-alpha" as the file "alpha3.dat".)"),
+             QStringList({"QI-alpha"}));
 }
 
 void AiContentTests::existingEntityNames_skipNameTheRequestCreatesElsewhere()
@@ -2643,7 +2649,8 @@ void AiContentTests::requestedResultValues_neverMoreThanTheAnswerHas()
     // item, it must never exceed the number of values of the item's expected answer.
     const QString benchmarks = QFileInfo(QString::fromUtf8(__FILE__)).absolutePath() + "/benchmarks";
     int counted = 0;
-    for (const QString &list : {QStringLiteral("list3"), QStringLiteral("list4"), QStringLiteral("list5")})
+    for (const QString &list :
+         {QStringLiteral("list3"), QStringLiteral("list4"), QStringLiteral("list5"), QStringLiteral("ascii1d")})
     {
         QFile file(benchmarks + "/" + list + ".json");
         QVERIFY(file.open(QIODevice::ReadOnly));
@@ -2680,6 +2687,9 @@ void AiContentTests::requestedResultValues_neverMoreThanTheAnswerHas()
                                                     label)
                  .size(),
              qsizetype(3));
+    // benchmark ASCII1D items 3 and 8: "the first and last Q" is two values of one noun
+    QCOMPARE(QtiSasAiContent::requestedResultValues("Print the number of rows and the first and last Q." + label),
+             QStringList({"the number of rows", "the first Q", "last Q"}));
     QCOMPARE(QtiSasAiContent::requestedResultValues("Print the value in row 3, column 4, and the sum of row 3." + label)
                  .size(),
              qsizetype(2));
@@ -4951,6 +4961,23 @@ void AiContentTests::splitPartTopics_graph3dSynonymOverridesNone()
     const QStringList known = {"table", "matrix", "graph", "graph3d", "note", "compile", "fittable"};
     const QStringList topics = splitPartTopicsFromAnswer("none", "plot a 3D surface of sin(x)*cos(y)", known);
     QVERIFY(topics.contains("graph3d"));
+}
+
+void AiContentTests::splitPartTopics_ascii1dForSasDataInOrOut()
+{
+    // The routing rule: importing or exporting 1D SAS data — named by any of its usual words — needs the Ascii1d docs
+    QtiSasAiContent content;
+    const QStringList known = content.knownDocTopics();
+    QVERIFY(known.contains("ascii1d"));
+    for (const QString &request :
+         {QStringLiteral("Import the SANS curve plain.dat into the project"),
+          QStringLiteral("Import the radially averaged dataset grasp.dat"),
+          QStringLiteral("export it as an ascii file"), QStringLiteral("read the canSAS file"),
+          QStringLiteral("With ascii1d, cut the first 3 points"),
+          QStringLiteral("convert it to the Kratky presentation"), QStringLiteral("save the SAXS curves as .RAD")})
+        QVERIFY2(splitPartTopicsFromAnswer("none", request, known).contains("ascii1d"), qPrintable(request));
+    // a name with SAS letters inside it is no such word
+    QVERIFY(!splitPartTopicsFromAnswer("none", "fit the table SAXS_data with QtiSAS", known).contains("ascii1d"));
 }
 
 void AiContentTests::splitPartTopics_fittableSynonymCatchesSimulate()

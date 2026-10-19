@@ -446,6 +446,7 @@ class AiContentTests : public QObject
     static void splitPartTopics_fittableSynonymOverridesNone();
     static void splitPartTopics_graph3dSynonymOverridesNone();
     static void splitPartTopics_fittableSynonymCatchesSimulate();
+    static void splitPartTopics_ascii1dForSasDataInOrOut();
     static void splitPartsMissingCreationName_catchesPlotWithoutName();
     static void splitPartsMissingCreationName_acceptsQuotedTableName();
     static void splitPartsMissingCreationName_catchesSurfaceWithoutName();
