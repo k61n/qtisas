@@ -240,6 +240,7 @@ AiConfig::AiConfig(ApplicationWindow *app, QWidget *parent) : QWidget(parent), m
            "request that needs it — its words, or an object of the module it names.\nOff: never "
            "sent."));
     lay->addWidget(docTiersLabel, 16, 0, Qt::AlignTop);
+    m_docTiersLabel = docTiersLabel;
     m_docTiers = new QTableWidget(0, 3);
     m_docTiers->setHorizontalHeaderLabels({tr("Docs"), tr("Size"), tr("Sent")});
     m_docTiers->verticalHeader()->hide();
@@ -433,6 +434,10 @@ void AiConfig::showBigModelState()
     // split's own settings mean nothing while split is off (a SPLIT request still uses them)
     m_splitRequestMerge->setEnabled(!big);
     m_maxSplitParts->setEnabled(!big);
+    // doc sets decide what BIGMODEL sends on every call; without it only the request's topics are sent anyway (the
+    // tiers stay saved and apply again once BIGMODEL is on)
+    m_docTiers->setVisible(big);
+    m_docTiersLabel->setVisible(big);
 }
 
 void AiConfig::apply()
