@@ -43,6 +43,15 @@ def preset_base(preset):
     return re.sub(r"(-docs-\w+|-bigmodel-\w+)+$", "", preset or "")
 
 
+def lane_of(summary):
+    """The preset, then the docs a call got when the run recorded them: "(pyi)"/"(md)" and the doc sets' tiers — runs
+    whose docs differ are separate lanes, not rounds of one."""
+    docs = {"compact": "pyi", "full": "md"}.get(summary.get("docs_mode") or "", summary.get("docs_mode") or "")
+    tiers = summary.get("doc_tiers") or ""
+    extra = ", ".join(x for x in (docs, tiers) if x)
+    return preset_base(summary.get("preset")) + (" (%s)" % extra if extra else "")
+
+
 def log_tokens(log_path):
     """(prompt, cached, reported) summed over a run's "AI cache:" lines; reported is False when no line had figures."""
     prompt = cached = 0
@@ -77,7 +86,7 @@ def load_runs(reports, prefixes):
             continue
         prompt, cached, reported = log_tokens(path[:-5] + ".log")
         runs[max(matching, key=len)].append({
-            "label": label, "lane": preset_base(summary.get("preset")), "list": summary.get("benchmark"),
+            "label": label, "lane": lane_of(summary), "list": summary.get("benchmark"),
             "summary": summary, "items": data.get("items", []),
             "prompt": prompt, "cached": cached, "cache_reported": reported})
     return runs

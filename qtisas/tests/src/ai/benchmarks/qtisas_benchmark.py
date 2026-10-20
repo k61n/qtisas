@@ -498,12 +498,19 @@ def main(argv=None):
     preset, model = ai_config.get("agent", ""), ai_config.get("model", "")
     if args.reference is not None:
         preset, model = "reference", os.path.relpath(args.reference, os.path.dirname(os.path.abspath(args.benchmark)))
+    # the docs a call gets: the agent's docs mode and the doc sets' tiers (only what is not "always"), so two runs that
+    # differ in them are told apart — SVD stage 1 went out all-md for an hour without a column to show it
+    tiers = ai_config.get("docTiers") or {}
+    doc_tiers = "; ".join("%s: %s" % (tier, ",".join(sorted(t for t, v in tiers.items() if v == tier)))
+                          for tier in ("on demand", "off") if any(v == tier for v in tiers.values()))
     summary = {"date": stamp, "benchmark": bench["name"], "markers": args.markers, "preset": preset, "model": model,
                "score": ok, "of": len(rows), "silent": silent, "reported": reported, "backend_errors": backend,
                "seconds": result.get("seconds"), "scripts": result.get("scripts"), "tokens": result.get("tokens"),
                "status": result.get("status"), "settings": " ".join(args.set), "app": args.app or "",
                "calls": ai_calls, "callEfficiency": call_efficiency,
-               "label": args.label, "visible": args.visible, **probed,
+               "label": args.label, "visible": args.visible,
+               "docs_mode": ai_config.get("docsMode", "") if args.reference is None else "",
+               "doc_tiers": doc_tiers if args.reference is None else "", **probed,
                **run_identity(args.app, args.reports, preset, probed["probe_model"])}
     # the story of every lost item, from the log: last script, errors, blocks, repairs, doc topics, calls
     lost = {str(n): d for n, d in benchmark_dossier.dossiers(base + ".log", rows).items()}
