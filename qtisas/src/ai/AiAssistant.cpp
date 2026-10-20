@@ -682,7 +682,7 @@ QStringList AiAssistant::docTopicsFromRequestText(const QString &text) const
     const QString requestText = topicAnalysisText(text);
     QStringList topics;
     for (const QString &topic : (m_content ? m_content->knownDocTopics() : QStringList()))
-        if (topicSynonymMatch(topic, requestText))
+        if (docTier(topic) != "off" && topicSynonymMatch(topic, requestText))
             topics << topic;
     // A request naming a module's object needs that module's docs, whatever its words: confirmed live (benchmark JNSE
     // holdout, local pyi) — "Fit all q of psInfo together with simpleDiffusion" went to fittable only, psInfo was taken
@@ -703,17 +703,38 @@ QStringList AiAssistant::docTopicsFromRequestText(const QString &text) const
         for (const QStringList &nameKinds : kinds)
             for (const QString &kind : nameKinds)
                 if (const QString topic = m_content->docTopicForKind(kind);
-                    kind != "table" && !topic.isEmpty() && !topics.contains(topic))
+                    kind != "table" && !topic.isEmpty() && !topics.contains(topic) && docTier(topic) != "off")
                     topics << topic;
     }
     return topics;
 }
 
 // Shared tail of both topic-selection paths: report, prepend the baseline, dispatch.
-void AiAssistant::startRequestWithSelectedTopics(const QStringList &selected, const QString &label)
+void AiAssistant::startRequestWithSelectedTopics(const QStringList &selectedTopics, const QString &label)
 {
+    // An on-demand doc once needed stays for the rest of the LIST / conversation: its objects are still the ones later
+    // requests work on, whatever their words. Confirmed live (doc sets, benchmark JNSE item 8, Codex): "Fit the dataset
+    // with q = 0.1034 of the 300 K series alone" named no JNSE word and no table, got fittable only, matched q exactly
+    // instead of the nearest row the JNSE docs prescribe, and the item was given up.
+    QStringList selected = selectedTopics;
+    for (const QString &topic : selected)
+        if (docTier(topic) == "on demand" && !m_stickyOnDemandTopics.contains(topic))
+            m_stickyOnDemandTopics << topic;
+    for (const QString &topic : m_stickyOnDemandTopics)
+        if (!selected.contains(topic) && docTier(topic) == "on demand")
+            selected << topic;
     if (m_host)
         m_host->print("▸▸▸ " + label + ": " + (selected.isEmpty() ? QString("all") : selected.join(", ")));
+    // BIGMODEL sends the always-docs and, of the on-demand ones, those of the selected topics
+    if (m_host && m_bigModel && m_docsMode != DocsMode::Integrated)
+    {
+        QStringList onDemand;
+        for (const QString &topic : selected)
+            if (docTier(topic) == "on demand")
+                onDemand << topic;
+        m_host->print("▸▸▸ AI docs sent: the always-docs" +
+                      (onDemand.isEmpty() ? QString() : " + on demand: " + onDemand.join(", ")));
+    }
 
     // Baseline topics are PREPENDED so task-specific ones land closest to the request
     // (avoids "lost in the middle" — see filterDocsByTopic()). Guarded on non-empty: an
@@ -3871,6 +3892,7 @@ void AiAssistant::startListItems(const QStringList &items, bool forceSplit, bool
     listItemIndex = -1;
     m_listObjectsAtStart = m_host ? m_host->liveObjects() : QStringList();
     m_earlierItems.clear();
+    m_stickyOnDemandTopics.clear();
     listItemForceSplit = forceSplit;
     listItemForceNoSplit = forceNoSplit;
     listItemForceReview = forceReview;
@@ -6373,6 +6395,95 @@ static const QString kDocsIntro = "QtiSAS Python API documentation is provided b
 // e.g. "compile" matches "compile-python-api.md"). Empty `topics`, or a filter that matches
 // nothing, returns `allDocs` unchanged — this is a cost optimization, never a hard gate, so a
 // bad/empty topic list must fail open to the full doc set rather than starving the model.
+// The (file name, section text) pairs of loadDocs()'s output, in file order
+static QList<QPair<QString, QString>> docSections(const QString &allDocs)
+{
+    QList<QPair<QString, QString>> sections;
+    const QString &marker = kDocSectionMarkerPrefix;
+    qsizetype pos = allDocs.indexOf(marker);
+    while (pos >= 0)
+    {
+        const qsizetype headerEnd = allDocs.indexOf(kDocSectionMarkerSuffix, pos + marker.length());
+        if (headerEnd < 0)
+            break;
+        const QString fname = allDocs.mid(pos + marker.length(), headerEnd - (pos + marker.length()));
+        const qsizetype nextPos = allDocs.indexOf(marker, headerEnd);
+        sections.append({fname, allDocs.mid(pos, (nextPos >= 0 ? nextPos : allDocs.length()) - pos)});
+        pos = nextPos;
+    }
+    return sections;
+}
+
+// the topic of a doc file: "jnse-python-api.pyi" -> "jnse"
+static QString docFileTopic(const QString &fname)
+{
+    return fname.section("-python-api", 0, 0);
+}
+
+void AiAssistant::setDocTiers(const QStringList &entries)
+{
+    m_docTiers.clear();
+    for (const QString &entry : entries)
+    {
+        const QString topic = entry.section('=', 0, 0).trimmed();
+        const QString tier = entry.section('=', 1).trimmed();
+        if (!topic.isEmpty() && (tier == "always" || tier == "on demand" || tier == "off"))
+            m_docTiers.insert(topic, tier);
+    }
+}
+
+QString AiAssistant::docTier(const QString &topic) const
+{
+    if (const auto it = m_docTiers.constFind(topic); it != m_docTiers.constEnd())
+        return it.value();
+    return m_content && m_content->onDemandDocTopics().contains(topic) ? QStringLiteral("on demand")
+                                                                       : QStringLiteral("always");
+}
+
+QList<QPair<QString, int>> AiAssistant::docTopicSizes()
+{
+    // every docs mode lists the doc files: an "integrated" agent (a local backend) sends none itself, but the tiers
+    // still matter for the other agents — the .pyi then, the files the local all-pyi server uses
+    QString docs = m_docsMode == DocsMode::Integrated ? QString() : m_cachedDocs;
+    if (docs.isEmpty() && m_content)
+    {
+        QString status;
+        docs = m_content->loadDocs(m_docsMode == DocsMode::Full, &status);
+        if (m_docsMode != DocsMode::Integrated)
+            m_cachedDocs = docs;
+    }
+    QList<QPair<QString, int>> sizes;
+    for (const auto &s : docSections(docs))
+        sizes << qMakePair(docFileTopic(s.first), int(s.second.size()));
+    return sizes;
+}
+
+// BIGMODEL's docs: the always-docs first, in file order — the same bytes on every call, so they stay the cached prefix
+// — then the on-demand docs this request needs, in the order of its topics. Confirmed (LIST 1-5, 2026-10-20): the
+// three module docs, sent on every call, made every prompt ~10% larger for lists that never touch a module.
+QString AiAssistant::tieredDocs(const QString &allDocs, const QStringList &topics) const
+{
+    const QList<QPair<QString, QString>> sections = docSections(allDocs);
+    QString result;
+    for (const auto &s : sections)
+        if (docTier(docFileTopic(s.first)) == "always")
+            result += s.second;
+    for (const QString &topic : topics)
+        for (const auto &s : sections)
+            if (docFileTopic(s.first) == topic && docTier(topic) == "on demand")
+                result += s.second;
+    return result;
+}
+
+QString AiAssistant::docsWithoutOff(const QString &allDocs) const
+{
+    QString result;
+    for (const auto &s : docSections(allDocs))
+        if (docTier(docFileTopic(s.first)) != "off")
+            result += s.second;
+    return result;
+}
+
 QString filterDocsByTopic(const QString &allDocs, const QStringList &topics)
 {
     // Explicit "zero docs" request — see kNoDocsSentinel's declaration for why this must be
@@ -6591,6 +6702,7 @@ AiAssistant::AiAssistant(QObject *parent)
 
 void AiAssistant::clearHistory()
 {
+    m_stickyOnDemandTopics.clear();
     m_history.clear();
     clearChatHistory();
     m_contextHistoryStart = 0;
@@ -7632,7 +7744,7 @@ QString AiAssistant::buildSystemPrompt(const QString &systemPrompt, bool include
                 for (const QString &r : userRuleList)
                     rules += "- " + r + "\n";
             }
-            return kDocsIntro + m_cachedDocs + kStablePrefixEnd + rules;
+            return kDocsIntro + tieredDocs(m_cachedDocs, docTopics) + kStablePrefixEnd + rules;
         }
     }
 
@@ -7677,7 +7789,7 @@ QString AiAssistant::buildSystemPrompt(const QString &systemPrompt, bool include
             // (ai/app) is a cheaper, still-safe fallback for an unrecognized/topic-less request.
             const QStringList effectiveTopics =
                 docTopics.isEmpty() && m_content ? m_content->baselineDocTopics() : docTopics;
-            sysPrompt += kDocsIntro + filterDocsByTopic(m_cachedDocs, effectiveTopics);
+            sysPrompt += kDocsIntro + filterDocsByTopic(docsWithoutOff(m_cachedDocs), effectiveTopics);
         }
     }
 
@@ -7840,8 +7952,8 @@ QString AiAssistant::buildChatSystemPrompt(const QString &instructions, const QS
     if (m_cachedDocs.isEmpty())
         return instructions;
     if (m_bigModel)
-        return kDocsIntro + m_cachedDocs + kStablePrefixEnd + instructions;
-    return instructions + "\n\n" + kDocsIntro + filterDocsByTopic(m_cachedDocs, docTopics);
+        return kDocsIntro + tieredDocs(m_cachedDocs, docTopics) + kStablePrefixEnd + instructions;
+    return instructions + "\n\n" + kDocsIntro + filterDocsByTopic(docsWithoutOff(m_cachedDocs), docTopics);
 }
 
 void AiAssistant::askChat(const QString &text)

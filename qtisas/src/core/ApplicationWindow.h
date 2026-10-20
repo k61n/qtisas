@@ -1219,6 +1219,12 @@ public slots:
     {
         return m_ai;
     }
+    // the AI assistant, created (with the selected preset) when none exists yet — e.g. for the "Ask AI" preferences
+    AiAssistant *ensuredAiAssistant()
+    {
+        ensureAiAssistant();
+        return m_ai;
+    }
     void askAiConfigure(const QString &apiKey, const QString &baseUrl, const QString &model, int maxTokens,
                         AiAssistant::DocsMode docsMode = AiAssistant::DocsMode::Compact);
 

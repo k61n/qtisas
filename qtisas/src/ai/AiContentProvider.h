@@ -70,6 +70,14 @@ class AiContentProvider
     // selects itself, only something always added alongside its selection.
     virtual QStringList baselineDocTopics() const = 0;
 
+    // Doc sets: the topics whose docs are sent only to a request that needs them (its words or an object it names)
+    // unless the user's settings tier them otherwise — a module's docs, which BIGMODEL would otherwise send on every
+    // call. Every other topic is "always".
+    virtual QStringList onDemandDocTopics() const
+    {
+        return {};
+    }
+
     // Loads this host's full API documentation content, ready for AiAssistant's own topic
     // filtering (see filterDocsByTopic() in AiAssistant.cpp — that splitting logic is generic and
     // stays there; only the raw loading is host-specific). `unlimited`: true for the large/.md

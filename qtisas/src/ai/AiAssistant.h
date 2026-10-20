@@ -14,6 +14,7 @@ Description: AI assistant — sends script/note text to an external or local LLM
 #define AIASSISTANT_H
 
 #include <QElapsedTimer>
+#include <QHash>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
@@ -627,6 +628,13 @@ class AiAssistant : public QObject
     {
         return m_maxUserRules;
     }
+    // Doc sets: "topic=tier" entries from AiSettings::docTiers (always / on demand / off); unlisted topics take
+    // their default tier (onDemandDocTopics(), else always)
+    void setDocTiers(const QStringList &entries);
+    // the tier of a doc topic: "always", "on demand" or "off"
+    QString docTier(const QString &topic) const;
+    // every doc file's topic and size in characters, in file order (the docs are loaded if not yet)
+    QList<QPair<QString, int>> docTopicSizes();
     void setMaxAutoContinue(int n)
     {
         m_maxAutoContinue = n;
@@ -1222,7 +1230,7 @@ class AiAssistant : public QObject
 
     // Reports the chosen topics under `label`, prepends the content provider's baseline topics,
     // and dispatches. Shared by beginNonSplitRequest() and the failed-split-plan fallback.
-    void startRequestWithSelectedTopics(const QStringList &selected, const QString &label);
+    void startRequestWithSelectedTopics(const QStringList &selectedTopics, const QString &label);
 
     void resetErrorRetryState();
 
@@ -1314,6 +1322,13 @@ class AiAssistant : public QObject
     QString m_pendingUserText;
     bool m_pendingAddToHistory = true;
     QString m_cachedDocs; // loaded once; cleared by clearHistory() or configure()
+    QHash<QString, QString> m_docTiers; // topic -> tier, only the entries that differ from the defaults
+    // the on-demand topics this LIST / conversation has needed so far: sent with every later request of it
+    QStringList m_stickyOnDemandTopics;
+    // the docs of the tiers: the always-docs in file order, then the on-demand docs of `topics` in that order
+    QString tieredDocs(const QString &allDocs, const QStringList &topics) const;
+    // allDocs without the "off" docs
+    QString docsWithoutOff(const QString &allDocs) const;
     bool m_busy = false;
     QNetworkReply *m_currentReply = nullptr;
     QElapsedTimer m_requestTimer; // started right before post(); read in onReplyFinished()

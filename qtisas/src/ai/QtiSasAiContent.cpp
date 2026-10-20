@@ -643,6 +643,12 @@ QStringList QtiSasAiContent::knownDocTopics() const
     return {"table", "matrix", "graph", "graph3d", "note", "compile", "fittable", "ascii1d", "svd", "jnse"};
 }
 
+// the modules' docs (ASCII.SANS.1D, SVD, JNSE): sent when a request needs them — by its words or an object it names
+QStringList QtiSasAiContent::onDemandDocTopics() const
+{
+    return {"ascii1d", "svd", "jnse"};
+}
+
 QStringList QtiSasAiContent::baselineDocTopics() const
 {
     // "ai" — assistant workflow rules. "app" — newTable/newGraph/newMatrix/newNote/scriptPrint/

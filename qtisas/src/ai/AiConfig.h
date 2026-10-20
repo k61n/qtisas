@@ -51,6 +51,7 @@ class AiConfig : public QWidget
     QCheckBox *m_exploreEnabled;
     QSpinBox *m_requestTimeoutSec;
     QCheckBox *m_bigModel;
+    class QTableWidget *m_docTiers;
 
     // BIGMODEL look of the global switches it overrides: split / self-review / EXPLORE shown off and greyed while the
     // preset has it, the user's own (global) values shown and editable otherwise — the values themselves never change.

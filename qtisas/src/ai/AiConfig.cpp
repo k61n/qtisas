@@ -15,6 +15,7 @@ Description: See AiConfig.h.
 #include <QFile>
 #include <QFileInfo>
 #include <QGridLayout>
+#include <QHeaderView>
 #include <QIcon>
 #include <QInputDialog>
 #include <QLabel>
@@ -22,6 +23,7 @@ Description: See AiConfig.h.
 #include <QPushButton>
 #include <QSettings>
 #include <QSpinBox>
+#include <QTableWidget>
 #include <QToolButton>
 
 #include "AiAssistant.h"
@@ -229,6 +231,53 @@ AiConfig::AiConfig(ApplicationWindow *app, QWidget *parent) : QWidget(parent), m
     lay->addWidget(m_requestTimeoutSec, 15, 1);
     connect(m_requestTimeoutSec, QOverload<int>::of(&QSpinBox::valueChanged), app,
             [app](int v) { app->aiSettings.requestTimeoutSec = v; });
+
+    // Doc sets: per doc file, always sent, sent on demand (a request that needs it: its words or an object it names),
+    // or never — BIGMODEL sends the always-docs on every call, so a module's large docs cost tokens on each one
+    auto *docTiersLabel = new QLabel(tr("API doc sets:"));
+    docTiersLabel->setToolTip(
+        tr("Always: sent with every request (BIGMODEL: on every call).\nOn demand: sent only to a "
+           "request that needs it — its words, or an object of the module it names.\nOff: never "
+           "sent."));
+    lay->addWidget(docTiersLabel, 16, 0, Qt::AlignTop);
+    m_docTiers = new QTableWidget(0, 3);
+    m_docTiers->setHorizontalHeaderLabels({tr("Docs"), tr("Size"), tr("Sent")});
+    m_docTiers->verticalHeader()->hide();
+    m_docTiers->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
+    m_docTiers->horizontalHeader()->setStretchLastSection(true);
+    if (AiAssistant *ai = app->ensuredAiAssistant())
+    {
+        ai->setDocTiers(app->aiSettings.docTiers);
+        const QList<QPair<QString, int>> sizes = ai->docTopicSizes();
+        m_docTiers->setRowCount(int(sizes.size()));
+        for (int row = 0; row < sizes.size(); ++row)
+        {
+            const QString topic = sizes[row].first;
+            auto *name = new QTableWidgetItem(topic);
+            name->setFlags(name->flags() & ~Qt::ItemIsEditable);
+            m_docTiers->setItem(row, 0, name);
+            auto *size = new QTableWidgetItem(QString("%1 K").arg(sizes[row].second / 1000));
+            size->setFlags(size->flags() & ~Qt::ItemIsEditable);
+            m_docTiers->setItem(row, 1, size);
+            auto *tier = new QComboBox();
+            tier->addItems({"always", "on demand", "off"});
+            tier->setCurrentText(ai->docTier(topic));
+            m_docTiers->setCellWidget(row, 2, tier);
+            // only the tiers that differ from the defaults are stored
+            connect(tier, &QComboBox::currentTextChanged, app, [app, ai, topic](const QString &value) {
+                QStringList entries;
+                for (const QString &e : app->aiSettings.docTiers)
+                    if (e.section('=', 0, 0) != topic)
+                        entries << e;
+                ai->setDocTiers(entries);
+                if (ai->docTier(topic) != value)
+                    entries << topic + "=" + value;
+                app->aiSettings.docTiers = entries;
+                ai->setDocTiers(entries);
+            });
+        }
+    }
+    lay->addWidget(m_docTiers, 16, 1); // the column of the fields above, not their buttons
 
     // Fill fields when preset changes — loads from .ai file
     auto fillPreset = [=, this](int idx) mutable {

@@ -6897,6 +6897,7 @@ bool ApplicationWindow::askAiChat(const QString &text, bool forceConsole)
     {
         m_aiForceConsole = forceConsole;
         m_ai->setRequestTimeoutSec(aiSettings.requestTimeoutSec);
+        m_ai->setDocTiers(aiSettings.docTiers);
         if (command.compare("clear history", Qt::CaseInsensitive) == 0)
             m_ai->clearChatHistory();
         else
@@ -7014,6 +7015,7 @@ void ApplicationWindow::askAi(const QString &text, bool autoRun, bool forceConso
     const bool exploreDefault = aiSettings.exploreEnabled && !bigModel;
     m_ai->setSelfReviewEnabled(reviewDefault);
     m_ai->setRequestTimeoutSec(aiSettings.requestTimeoutSec);
+    m_ai->setDocTiers(aiSettings.docTiers);
 
     m_aiForceConsole = forceConsole;
 

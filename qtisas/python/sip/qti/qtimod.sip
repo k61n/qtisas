@@ -4845,6 +4845,15 @@ public:
   put("selfReviewEnabled", PyBool_FromLong(st.selfReviewEnabled));
   put("exploreEnabled", PyBool_FromLong(st.exploreEnabled));
   put("requestTimeoutSec", PyLong_FromLong(st.requestTimeoutSec));
+  // doc sets: the tier of every doc topic (the settings' entries over the defaults)
+  PyObject *tiers = PyDict_New();
+  if (ai)
+    for (const auto &entry : ai->docTopicSizes()) {
+      PyObject *tier = PyUnicode_FromString(ai->docTier(entry.first).toUtf8().constData());
+      PyDict_SetItemString(tiers, entry.first.toUtf8().constData(), tier);
+      Py_DECREF(tier);
+    }
+  put("docTiers", tiers);
 %End
   void setAiConfig(const QString &key, SIP_PYOBJECT value);
 %MethodCode
@@ -4876,6 +4885,27 @@ public:
       else
         *f.field = a1 == Py_True;
     }
+  // doc sets: {"topic": "always" | "on demand" | "off", ...}, stored as the entries that differ from the defaults
+  if (*a0 == "docTiers") {
+    done = true;
+    QStringList entries;
+    PyObject *key, *value;
+    Py_ssize_t pos = 0;
+    bool ok = PyDict_Check(a1);
+    while (ok && PyDict_Next(a1, &pos, &key, &value)) {
+      const QString tier = PyUnicode_Check(value) ? QString::fromUtf8(PyUnicode_AsUTF8(value)) : QString();
+      ok = PyUnicode_Check(key) && (tier == "always" || tier == "on demand" || tier == "off");
+      if (ok)
+        entries << QString::fromUtf8(PyUnicode_AsUTF8(key)) + "=" + tier;
+    }
+    if (!ok)
+      error = "setAiConfig: docTiers must be a dict {topic: \"always\" | \"on demand\" | \"off\"}";
+    else {
+      st.docTiers = entries;
+      if (AiAssistant *ai = sipCpp->aiAssistant())
+        ai->setDocTiers(entries);
+    }
+  }
   if (!done) {
     const QStringList agentKeys = {"agent", "baseUrl", "model", "maxTokens", "docsMode", "bigModel"};
     error = agentKeys.contains(*a0) ? QString("setAiConfig: %1 belongs to the agent: use setAiAgent(name)").arg(*a0)

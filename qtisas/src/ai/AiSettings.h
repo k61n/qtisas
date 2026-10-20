@@ -62,6 +62,10 @@ struct AiSettings
     // one (60 s before the docs are cached). Confirmed live: slower BlaBlaDor models (Kimi, GLM, DeepSeek on JUWELS)
     // need more than 120 s for a ~55K-token docs prompt and failed every item with "Operation timed out".
     int requestTimeoutSec = 0;
+
+    // Doc sets: "topic=tier" entries (tier: always, on demand, off) that differ from the defaults — a module's docs are
+    // "on demand" (sent only to a request that needs them), the others "always"; an "off" doc is never sent.
+    QStringList docTiers;
 };
 
 // Keeps the "/AI" group name and its key strings colocated with the struct they belong to,
@@ -81,6 +85,7 @@ inline void AiReadSettings(QSettings *settings, AiSettings &s)
     // the former loopback-only "/LocalTimeoutSec": its old default 600 means automatic, any other value is kept
     const int localTimeoutSec = settings->value("/LocalTimeoutSec", 600).toInt();
     s.requestTimeoutSec = settings->value("/RequestTimeoutSec", localTimeoutSec == 600 ? 0 : localTimeoutSec).toInt();
+    s.docTiers = settings->value("/DocTiers", s.docTiers).toStringList();
     settings->endGroup();
 }
 
@@ -95,6 +100,7 @@ inline void AiWriteSettings(QSettings *settings, const AiSettings &s)
     settings->setValue("/SelfReviewEnabled", s.selfReviewEnabled);
     settings->setValue("/ExploreEnabled", s.exploreEnabled);
     settings->setValue("/RequestTimeoutSec", s.requestTimeoutSec);
+    settings->setValue("/DocTiers", s.docTiers);
     settings->remove("/LocalTimeoutSec");
     settings->endGroup();
 }
