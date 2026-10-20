@@ -5085,6 +5085,22 @@ void AiContentTests::docTopicForKind_moduleTables()
     QCOMPARE(content.docTopicForKind("table"), QString("table"));
 }
 
+void AiContentTests::docTiers_modulesOnDemandByDefault()
+{
+    // doc sets: a module's docs are on demand, the others always; the settings' entries override, unknown tiers
+    // are ignored
+    QtiSasAiContent content;
+    AiAssistant assistant;
+    assistant.setContentProvider(&content);
+    QCOMPARE(assistant.docTier("jnse"), QString("on demand"));
+    QCOMPARE(assistant.docTier("svd"), QString("on demand"));
+    QCOMPARE(assistant.docTier("fittable"), QString("always"));
+    assistant.setDocTiers({"jnse=always", "graph3d=off", "table=sometimes"});
+    QCOMPARE(assistant.docTier("jnse"), QString("always"));
+    QCOMPARE(assistant.docTier("graph3d"), QString("off"));
+    QCOMPARE(assistant.docTier("table"), QString("always"));
+}
+
 void AiContentTests::splitPartTopics_fittableSynonymCatchesSimulate()
 {
     // Confirmed live: "plot simulated 'ai/PorodPowerLaw' curve with log-log axes and proper

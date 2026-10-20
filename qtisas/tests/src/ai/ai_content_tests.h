@@ -452,6 +452,7 @@ class AiContentTests : public QObject
     static void splitPartTopics_svdForContrastVariation();
     static void splitPartTopics_jnseForSpinEcho();
     static void docTopicForKind_moduleTables();
+    static void docTiers_modulesOnDemandByDefault();
     static void splitPartsMissingCreationName_catchesPlotWithoutName();
     static void splitPartsMissingCreationName_acceptsQuotedTableName();
     static void splitPartsMissingCreationName_catchesSurfaceWithoutName();
