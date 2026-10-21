@@ -2654,7 +2654,8 @@ void AiContentTests::requestedResultValues_neverMoreThanTheAnswerHas()
     const QString benchmarks = QFileInfo(QString::fromUtf8(__FILE__)).absolutePath() + "/benchmarks";
     int counted = 0;
     for (const QString &list : {QStringLiteral("list3"), QStringLiteral("list4"), QStringLiteral("list5"),
-                                QStringLiteral("ascii1d"), QStringLiteral("svd"), QStringLiteral("svd_holdout")})
+                                QStringLiteral("ascii1d"), QStringLiteral("svd"), QStringLiteral("svd_holdout"),
+                                QStringLiteral("jnse"), QStringLiteral("dan"), QStringLiteral("dan_holdout")})
     {
         QFile file(benchmarks + "/" + list + ".json");
         QVERIFY(file.open(QIODevice::ReadOnly));
@@ -2697,6 +2698,15 @@ void AiContentTests::requestedResultValues_neverMoreThanTheAnswerHas()
     QCOMPARE(QtiSasAiContent::requestedResultValues("Print the value in row 3, column 4, and the sum of row 3." + label)
                  .size(),
              qsizetype(2));
+    // benchmark DAN items 14 and 15: an order and the other answer of a value are no values of their own
+    QCOMPARE(QtiSasAiContent::requestedResultValues("Print the number of files written and their file names, sorted." +
+                                                    label),
+             QStringList({"the number of files written", "their file names"}));
+    QCOMPARE(
+        QtiSasAiContent::requestedResultValues("Print yes if it exists, no otherwise, and the name of the instrument "
+                                               "selected after the attempt." +
+                                               label),
+        QStringList({"yes if it exists", "the name of the instrument selected after the attempt"}));
 }
 
 void AiContentTests::resultLineTooFewValues_blocksShortLineOnly()
@@ -5075,6 +5085,39 @@ void AiContentTests::splitPartTopics_jnseForSpinEcho()
     QVERIFY(!splitPartTopicsFromAnswer("none", "import the SANS curve plain.dat", known).contains("jnse"));
 }
 
+void AiContentTests::splitPartTopics_danForReduction()
+{
+    // SANS data reduction — named by its usual words — needs the Dan docs; a 1D curve to import does not
+    QtiSasAiContent content;
+    const QStringList known = content.knownDocTopics();
+    QVERIFY(known.contains("dan"));
+    for (const QString &request :
+         {QStringLiteral("Reduce the KWS-1 runs in ~/kws1 to merged ascii files"),
+          QStringLiteral("data reduction of the SANS-1 measurement"), QStringLiteral("make a beam-stop mask"),
+          QStringLiteral("calculate the detector sensitivity from the H2O run"),
+          QStringLiteral("the absolute calibration factor of configuration 2"),
+          QStringLiteral("the transmissions of the samples"),
+          QStringLiteral("radial averaging I[Q] of the script table"),
+          QStringLiteral("subtract the empty beam and the dark current")})
+        QVERIFY2(splitPartTopicsFromAnswer("none", request, known).contains("dan"), qPrintable(request));
+    QVERIFY(!splitPartTopicsFromAnswer("none", "import the SANS curve plain.dat", known).contains("dan"));
+}
+
+void AiContentTests::unrequestedDanSession_onlyWhenNotAsked()
+{
+    // benchmark DAN, local all-pyi: every step began a new session with a guessed instrument and folder
+    const QString code = "o = Dan.Options\no.newSession()\no.selectInstrument(\"KWS-1\")\nDan.Mask.newMask()\n";
+    QVERIFY(!QtiSasAiContent::unrequestedDanSessionMistake(code, "Create the standard detector mask.").isEmpty());
+    QVERIFY(QtiSasAiContent::unrequestedDanSessionMistake(
+                code, "Start a new session with the instrument KWS1-2020 and the folder kws1.")
+                .isEmpty());
+    // selecting an instrument the request names, without a new session
+    QVERIFY(QtiSasAiContent::unrequestedDanSessionMistake("Dan.Options.selectInstrument(\"KWS9\")\n",
+                                                          "Try to select the DAN-SANS instrument KWS9.")
+                .isEmpty());
+    QVERIFY(QtiSasAiContent::unrequestedDanSessionMistake("Dan.Mask.newMask()\n", "Create the mask.").isEmpty());
+}
+
 void AiContentTests::docTopicForKind_moduleTables()
 {
     // a table a module made (entityKinds(): its window label) routes to that module's docs; a plain table to table
@@ -5082,6 +5125,8 @@ void AiContentTests::docTopicForKind_moduleTables()
     QCOMPARE(content.docTopicForKind("JNSE header table"), QString("jnse"));
     QCOMPARE(content.docTopicForKind("JNSE dataset table"), QString("jnse"));
     QCOMPARE(content.docTopicForKind("SVD table"), QString("svd"));
+    QCOMPARE(content.docTopicForKind("DAN script table"), QString("dan"));
+    QCOMPARE(content.docTopicForKind("DAN merging template"), QString("dan"));
     QCOMPARE(content.docTopicForKind("table"), QString("table"));
 }
 

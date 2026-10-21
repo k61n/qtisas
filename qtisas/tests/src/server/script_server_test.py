@@ -89,6 +89,10 @@ assert "a method of Table" in r["error"] and "t.setDecimalSeparators(...)" in r[
 r = run('n = newNote("ServerTestN")\nn.tab(1).text()')
 assert "toPlainText()" in r["error"] and "contextMenu" not in r["error"], r["error"]
 assert "The object is None" in run('note("ServerTestN").tab("nope").setText("x")')["error"]
+# a method of one of its parts (Dan.newHeaderTable is Dan.Rawdata.newHeaderTable), two levels down too
+assert "Dan.Rawdata.newHeaderTable()" in run('Dan.newHeaderTable("x", ["D"])')["error"]
+assert "Dan.Options.Config.setCenterMethod()" in run('Dan.setCenterMethod("hf")')["error"]
+assert "Dan.Rawdata.newHeaderTable()" in run('Dan.Processing.newHeaderTable("x", ["D"])')["error"]
 closeWindow(note("ServerTestN"))
 
 # "stop" with nothing running: answered, nothing cancelled (while an AI request runs it cancels it, even when busy)

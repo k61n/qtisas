@@ -451,6 +451,8 @@ class AiContentTests : public QObject
     static void splitPartTopics_ascii1dForSasDataInOrOut();
     static void splitPartTopics_svdForContrastVariation();
     static void splitPartTopics_jnseForSpinEcho();
+    static void splitPartTopics_danForReduction();
+    static void unrequestedDanSession_onlyWhenNotAsked();
     static void docTopicForKind_moduleTables();
     static void docTiers_modulesOnDemandByDefault();
     static void splitPartsMissingCreationName_catchesPlotWithoutName();

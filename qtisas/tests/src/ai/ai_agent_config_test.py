@@ -15,7 +15,7 @@ from qtisas_testing import user_settings_kept  # noqa: E402
 app = qti.app
 KEYS = {"agent", "baseUrl", "model", "maxTokens", "docsMode", "bigModel", "maxUserRules", "maxAutoContinue",
         "splitByDefault", "maxSplitParts", "splitRequestMerge", "selfReviewEnabled", "exploreEnabled",
-        "requestTimeoutSec"}
+        "requestTimeoutSec", "docTiers"}
 
 
 def refused(call):

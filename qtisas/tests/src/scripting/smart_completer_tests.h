@@ -66,9 +66,7 @@ class SmartCompleterTests : public QObject
         QCompleter *active = nullptr;
         if (popupKind)
         {
-            for (auto *candidate : completer.findChildren<QCompleter *>())
-                if ((candidate->completionRole() == Qt::UserRole) == (popupKind == 2))
-                    active = candidate;
+            active = completer.findChild<QCompleter *>(popupKind == 2 ? "history" : "keywords");
             QVERIFY(active);
             active->setCompletionPrefix("");
             active->complete();
@@ -101,10 +99,7 @@ class SmartCompleterTests : public QObject
         line.show();
         line.setFocus();
         QCoreApplication::processEvents();
-        QCompleter *history = nullptr;
-        for (auto *candidate : completer.findChildren<QCompleter *>())
-            if (candidate->completionRole() == Qt::UserRole)
-                history = candidate;
+        auto *history = completer.findChild<QCompleter *>("history");
         QVERIFY(history);
         history->complete();
         history->popup()->setCurrentIndex(history->completionModel()->index(0, 0));
@@ -123,13 +118,8 @@ class SmartCompleterTests : public QObject
         line.show();
         line.setFocus();
         QCoreApplication::processEvents();
-        QCompleter *keywords = nullptr;
-        QCompleter *history = nullptr;
-        for (auto *candidate : completer.findChildren<QCompleter *>())
-            if (candidate->completionRole() == Qt::UserRole)
-                history = candidate;
-            else
-                keywords = candidate;
+        auto *keywords = completer.findChild<QCompleter *>("keywords");
+        auto *history = completer.findChild<QCompleter *>("history");
         QVERIFY(keywords);
         QVERIFY(history);
         QTest::keyClicks(&line, "newT");
@@ -160,16 +150,53 @@ class SmartCompleterTests : public QObject
         line.setFocus();
         QCoreApplication::processEvents();
         QTest::keyClicks(&line, "newT");
-        QCompleter *keywords = nullptr;
-        for (auto *candidate : completer.findChildren<QCompleter *>())
-            if (candidate->completionRole() != Qt::UserRole)
-                keywords = candidate;
+        auto *keywords = completer.findChild<QCompleter *>("keywords");
         QVERIFY(keywords);
         QVERIFY(keywords->popup()->isVisible());
         QCOMPARE(keywords->completionCount(), 1);
         QTest::keyClick(&line, Qt::Key_Return);
         QCOMPARE(line.text(), QString("newTable()"));
         QCOMPARE(submitted.count(), 0);
+    }
+
+    // after "Name." only that object's members, not every keyword with the same start (Dan.M -> Mask, Merge)
+    static void memberCompletionOffersOnlyTheObjectsMembers()
+    {
+        QLineEdit line;
+        SmartCompleter completer(&line, {"Mask", "Merge", "matrix", "max", "Matrix"});
+        completer.setMemberProvider([](const QString &owner) {
+            if (owner == "Dan")
+                return QStringList{"Mask", "Merge", "Options"};
+            if (owner == "Dan.Mask")
+                return QStringList{"masks", "newMask"};
+            return QStringList();
+        });
+        line.show();
+        line.setFocus();
+        QCoreApplication::processEvents();
+        auto *members = completer.findChild<QCompleter *>("members");
+        auto *keywords = completer.findChild<QCompleter *>("keywords");
+        QVERIFY(members && keywords);
+
+        QTest::keyClicks(&line, "Dan.M");
+        QVERIFY(members->popup()->isVisible());
+        QVERIFY(!keywords->popup()->isVisible());
+        QCOMPARE(qobject_cast<QStringListModel *>(members->model())->stringList(), QStringList({"Mask", "Merge"}));
+        QTest::keyClick(&line, Qt::Key_Return);
+        QCOMPARE(line.text(), QString("Dan.Mask."));
+        QCoreApplication::processEvents();
+        QVERIFY(members->popup()->isVisible());
+        QCOMPARE(qobject_cast<QStringListModel *>(members->model())->stringList(), QStringList({"masks", "newMask"}));
+        QTest::keyClicks(&line, "n");
+        QCOMPARE(qobject_cast<QStringListModel *>(members->model())->stringList(), QStringList({"newMask"}));
+        QTest::keyClick(&line, Qt::Key_Return);
+        QCOMPARE(line.text(), QString("Dan.Mask.newMask()"));
+
+        // no object of that name: the keyword list as before
+        line.clear();
+        QTest::keyClicks(&line, "x.Ma");
+        QVERIFY(!members->popup()->isVisible());
+        QVERIFY(keywords->popup()->isVisible());
     }
 };
 
