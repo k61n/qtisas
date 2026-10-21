@@ -762,7 +762,8 @@ class AiAssistant : public QObject
     // retry starts from the state the first attempt saw; named in failedRunObjectsNote(). Cleared with
     // m_failedRunObjects.
     QStringList m_closedFailedObjects;
-    // The live objects when the current LIST started (createdByEarlierItemsNote()), and that note for the current item.
+    // The live objects when the current LIST started (createdByEarlierItemsNote()), and that note for the current item
+    // (with moduleStatesNote(): the fresh retry, sent without the conversation, gets both).
     QStringList m_listObjectsAtStart;
     QString m_earlierItemsNote;
     // Per finished LIST item: what it made (new objects, functions its successful scripts compiled) — see
@@ -1179,6 +1180,8 @@ class AiAssistant : public QObject
     void finishExistenceCheck(const QString &aiText, const QStringList &missing);
     // What the earlier items of the current LIST created, read from the host — empty outside a LIST or on item 1.
     QString createdByEarlierItemsNote() const;
+    // The modules' state a script continues (AiScriptHost::moduleStates()), as a prompt note, or empty.
+    QString moduleStatesNote() const;
     void recordFinishedListItem();
     // The project's objects as the host knows them (recent ones with table shapes) — given with a refused EXPLORE
     // probe.

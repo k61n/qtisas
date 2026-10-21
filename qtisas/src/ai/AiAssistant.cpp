@@ -384,6 +384,21 @@ void AiAssistant::recordFinishedListItem()
         m_earlierItems << item;
 }
 
+QString AiAssistant::moduleStatesNote() const
+{
+    // Confirmed live (DAN local v8-v10, items 4 and 10): the fresh retry, without the conversation, wrote the whole
+    // reduction anew — newSession(), an invented instrument "KWS-1" and folder "~/data" — and was blocked as a session
+    // the request never asked for; the item was given up. Nothing told it a session with masks and a sensitivity was
+    // already set up.
+    const QStringList states = m_host ? m_host->moduleStates() : QStringList();
+    if (states.isEmpty())
+        return {};
+    m_host->print("▸▸▸ AI: module state — " + states.join(" | "));
+    return "\n\nMODULE STATE (read from QtiSAS now; it stays between scripts):\n- " + states.join("\n- ") +
+           "\nA request that does not ask for a new session continues this one: use it as it is (its instrument, "
+           "folders and the names above) and do not start the session anew.";
+}
+
 QString AiAssistant::createdByEarlierItemsNote() const
 {
     // What the earlier items of this LIST made, item by item, from the host's live state — a LIST item gets no
@@ -615,6 +630,15 @@ static const QHash<QString, QRegularExpression> topicSynonymRe = {
     {"jnse", QRegularExpression(R"(\bj-?nse\b|\bnse\b|\bneutron\s+spin[\s-]+echo\b|\bspin[\s-]+echo\b|\.dtr\b|)"
                                 R"(\bdtr\b|\bs\(q,\s*t\)|\bintermediate\s+scattering\b|\bfourier\s+times?\b)",
                                 QRegularExpression::CaseInsensitiveOption)},
+    // SANS data reduction (coach M3, 2026-10-20): DAN-SANS and the steps only it does
+    {"dan", QRegularExpression(
+                R"(\bdan(?:-sans)?\b|\bdata\s+reduction\b|\breduc(?:e|ed|ing|tion)\s+(?:of\s+)?(?:the\s+)?)"
+                R"((?:data|runs?|measurements?)\b|\braw\s+(?:data|runs?|files?)\b|\bbeam[\s-]+(?:cent(?:er|re)|)"
+                R"(stop)\b|\bsensitivity\b|\babsolute(?:ly)?\s+calibrat|\btransmissions?\b|)"
+                R"(\bempty\s+(?:beam|cell)\b|\bdark\s+current\b|\bb4c\b|\bplexi(?:glas)?\b|\bmasks?\b|)"
+                R"(\bscript\s+table\b|\btable\s+of\s+configurations\b|\bdetector\s+distances?\b|)"
+                R"(\bkws-?[123]\b|\bsans-?1\b|\bi\[q\])",
+                QRegularExpression::CaseInsensitiveOption)},
     {"svd", QRegularExpression(
                 R"(\bsvd\b|\bsingular\s+value|\bdecompos(?:e|ed|es|ing|ition)\b|\bcontrast[\s-]+(?:variation|match)|)"
                 R"(\bpartial\s+structure\s+factors?\b|\bmatch(?:ing)?\s+points?\b|\bh/d\b|\bd2o\b)",
@@ -1201,7 +1225,7 @@ void AiAssistant::beginRequest(const QString &aiText, bool autoRunValue, bool wa
             existingInputNamesNote(withoutRequestSuffix(aiText), &m_existingInputTables, &factsSummary);
         if (!factsSummary.isEmpty() && m_host)
             m_host->print("▸▸▸ AI: " + factsSummary);
-        m_earlierItemsNote = createdByEarlierItemsNote();
+        m_earlierItemsNote = createdByEarlierItemsNote() + moduleStatesNote();
         pendingLiveFactsNote += m_earlierItemsNote;
     }
     else

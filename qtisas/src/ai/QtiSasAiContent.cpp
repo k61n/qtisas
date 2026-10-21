@@ -606,6 +606,10 @@ QString QtiSasAiContent::docTopicIndex() const
            "fittable — for EXISTING compiled functions ONLY, never compiles new ones: CONFIGURE first, then "
            "RUN the fit (Fittable class: f = Fittable). Parameters, weighting, resolution, polydispersity, "
            "global/batch fits.\n"
+           "dan — SANS data reduction (Dan: DAN-SANS) from the raw detector runs of an instrument (KWS-1, KWS-3, "
+           "SANS-1, ...): masks, detector sensitivity, the table of configurations (empty beam, dark current, absolute "
+           "calibration, beam center), transmissions, script tables, radial averaging I[Q], merging the detector "
+           "distances of a sample or the curves of two instruments.\n"
            "graph — 2D plots (GraphWindow/Graph/MultiLayer): curves, axes, layers, styling.\n"
            "graph3d — 3D surface/scatter plots (Graph3D/Qti3D). Fully self-contained: legend "
            "(showLegend()), title (setTitle()), and axis labels (setXAxisLabel()/setYAxisLabel()/"
@@ -640,13 +644,14 @@ QString QtiSasAiContent::docTopicIndex() const
 
 QStringList QtiSasAiContent::knownDocTopics() const
 {
-    return {"table", "matrix", "graph", "graph3d", "note", "compile", "fittable", "ascii1d", "svd", "jnse"};
+    return {"table", "matrix", "graph", "graph3d", "note", "compile", "fittable", "ascii1d", "svd", "jnse", "dan"};
 }
 
-// the modules' docs (ASCII.SANS.1D, SVD, JNSE): sent when a request needs them — by its words or an object it names
+// the modules' docs (ASCII.SANS.1D, SVD, JNSE, DAN-SANS): sent when a request needs them — by its words or an
+// object it names
 QStringList QtiSasAiContent::onDemandDocTopics() const
 {
-    return {"ascii1d", "svd", "jnse"};
+    return {"ascii1d", "svd", "jnse", "dan"};
 }
 
 QStringList QtiSasAiContent::baselineDocTopics() const
@@ -4265,6 +4270,29 @@ QString QtiSasAiContent::unrequestedRandomDataMistake(const QString &code, const
            "noise changes every result computed from them.";
 }
 
+QString QtiSasAiContent::unrequestedDanSessionMistake(const QString &code, const QString &originalRequestText)
+{
+    // Confirmed live (benchmark DAN, local all-pyi, two runs, even with the docs' "ONCE, when the request starts a
+    // session"): every step of a reduction began with Dan.Options.newSession() and selectInstrument() of a guessed
+    // name ("KWS-1") and folder ("~/data") — the masks, configurations and script tables of the earlier requests were
+    // gone and every later step failed. A new session only when the request starts one (or names the instrument).
+    static const QRegularExpression newSessionRe(R"(\bnewSession\s*\()");
+    static const QRegularExpression selectRe(R"(\bselectInstrument\s*\()");
+    static const QRegularExpression sessionAskedRe(R"(\bsession\b)", QRegularExpression::CaseInsensitiveOption);
+    static const QRegularExpression instrumentAskedRe(R"(\binstrument\b)", QRegularExpression::CaseInsensitiveOption);
+    const QString stripped = codeWithoutStringLiterals(code);
+    const bool newSession =
+        newSessionRe.match(stripped).hasMatch() && !sessionAskedRe.match(originalRequestText).hasMatch();
+    const bool select = selectRe.match(stripped).hasMatch() && !sessionAskedRe.match(originalRequestText).hasMatch() &&
+                        !instrumentAskedRe.match(originalRequestText).hasMatch();
+    if (!newSession && !select)
+        return {};
+    return "This request does not start a DAN-SANS session, but the script begins one (Dan.Options.newSession() / "
+           "selectInstrument()): that clears the masks, configurations and script tables the earlier requests made. "
+           "Continue in the current session — its instrument is Dan.Options.instrument(), its folder "
+           "Dan.Options.inputPath() — and use what the earlier requests made.";
+}
+
 QString QtiSasAiContent::columnListInsteadOfAggregateMistake(const QString &code, const QString &originalRequestText)
 {
     // Confirmed live (supervised LIST 3, item 1, local model): "Print the sum of column 2" was printed as
@@ -4368,8 +4396,16 @@ QStringList QtiSasAiContent::requestedResultValues(const QString &requestText)
     static const QRegularExpression eachRe(R"(^each\b)", QRegularExpression::CaseInsensitiveOption);
     // an order for the values, no value of its own: "whether each still exists afterwards, table first" (LIST 4, item
     // 6) became the values "whether each still exists afterwards" and "table first"
-    static const QRegularExpression orderRe(R"(^(?:the\s+)?\S+\s+first$|^(?:in\s+)?(?:that|this|the\s+same)\s+order$)",
-                                            QRegularExpression::CaseInsensitiveOption);
+    // — and "their file names, sorted" (benchmark DAN items 8 and 14, Codex): "sorted" counted as a value, the right
+    // line was blocked and the model added a value to fill it
+    static const QRegularExpression orderRe(
+        R"(^(?:the\s+)?\S+\s+first$|^(?:in\s+)?(?:that|this|the\s+same)\s+order$|^(?:sorted|alphabetically)$|)"
+        R"(^(?:in\s+)?(?:alphabetical|ascending|descending|increasing|decreasing)\s+order$)",
+        QRegularExpression::CaseInsensitiveOption);
+    // the other answer of the same value: "yes if it exists, no otherwise" is one value (benchmark DAN item 15, Codex:
+    // counted as two, the right line was blocked)
+    static const QRegularExpression alternativeRe(R"(^(?:\S+\s+)?(?:otherwise|else)$|^(?:otherwise|else)\b)",
+                                                  QRegularExpression::CaseInsensitiveOption);
     // a format for the values, no value of its own: "S22 and its error at Q = 0.05, rounded to 4 decimals" asks for
     // two values — confirmed live (benchmark SVD items 1 and 5, Codex): counted as a third, the right line was
     // blocked and the model added the unrounded value to fill it
@@ -4395,7 +4431,8 @@ QStringList QtiSasAiContent::requestedResultValues(const QString &requestText)
     {
         part = part.simplified();
         if (part.isEmpty() || eachRe.match(part).hasMatch() || formatRe.match(part).hasMatch() ||
-            (orderRe.match(part).hasMatch() && !bareOrdinalRe.match(part).hasMatch()))
+            (orderRe.match(part).hasMatch() && !bareOrdinalRe.match(part).hasMatch()) ||
+            (!parts.isEmpty() && alternativeRe.match(part).hasMatch()))
             continue;
         if (!parts.isEmpty() && coordinateRe.match(part).hasMatch() && hasCoordinateRe.match(parts.last()).hasMatch())
         {
@@ -5516,7 +5553,11 @@ QString QtiSasAiContent::docTopicForKind(const QString &kind) const
                                                 {"function", "compile"},
                                                 {"JNSE header table", "jnse"},
                                                 {"JNSE dataset table", "jnse"},
-                                                {"SVD table", "svd"}};
+                                                {"SVD table", "svd"},
+                                                {"DAN script table", "dan"},
+                                                {"DAN merging template", "dan"},
+                                                {"DAN settings table", "dan"},
+                                                {"DAN header table", "dan"}};
     return topics.value(kind);
 }
 
@@ -7216,6 +7257,9 @@ QList<AiKnownMistakeMatch> QtiSasAiContent::detectKnownMistakes(const QString &c
     explanation = unrequestedRandomDataMistake(code, originalRequestText);
     if (!explanation.isEmpty())
         matches << AiKnownMistakeMatch{"random values the request never asked for", explanation};
+    explanation = unrequestedDanSessionMistake(code, originalRequestText);
+    if (!explanation.isEmpty())
+        matches << AiKnownMistakeMatch{"a DAN-SANS session started the request never asked for", explanation};
     explanation = columnListInsteadOfAggregateMistake(code, originalRequestText);
     if (!explanation.isEmpty())
         matches << AiKnownMistakeMatch{"a whole column printed instead of the requested value", explanation};

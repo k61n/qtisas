@@ -174,6 +174,7 @@ class QtiSasAiContent : public AiContentProvider
     static QString missingPyQtImportMistake(const QString &code);
     static QString missingRandomImportMistake(const QString &code);
     static QString unrequestedRandomDataMistake(const QString &code, const QString &originalRequestText);
+    static QString unrequestedDanSessionMistake(const QString &code, const QString &originalRequestText);
     static QString columnListInsteadOfAggregateMistake(const QString &code, const QString &originalRequestText);
     static QString requestedResultLabel(const QString &originalRequestText);
     static QString resultLineDutyOf(const QString &requestText);

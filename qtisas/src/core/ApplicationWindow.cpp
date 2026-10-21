@@ -177,6 +177,7 @@ Description: QtiSAS's main window
 #include "jnse18.h"
 #include "svd.h"
 #include "dan18.h"
+#include "dan-python.h"
 #include "compile18.h"
 #include "fittable18.h"
 #endif
@@ -6339,8 +6340,13 @@ QList<QStringList> ApplicationWindow::entityKinds(const QStringList &names)
         windowKinds.insert(w->objectName(), kind);
         // a table a module made is also that module's object: its kind routes a request naming it to the module's
         // docs, and a script must not replace it with newTable()
-        static const QHash<QString, QString> moduleTables{
-            {"NSE Headers", "JNSE header table"}, {"NSE Dataset", "JNSE dataset table"}, {"SVD Table", "SVD table"}};
+        static const QHash<QString, QString> moduleTables{{"NSE Headers", "JNSE header table"},
+                                                          {"NSE Dataset", "JNSE dataset table"},
+                                                          {"SVD Table", "SVD table"},
+                                                          {"DAN::Script::Table", "DAN script table"},
+                                                          {"DAN::Merging::Template", "DAN merging template"},
+                                                          {"DAN::Settings::Table", "DAN settings table"},
+                                                          {"Info::Extractor", "DAN header table"}};
         if (kind == "table")
             if (const QString module = moduleTables.value(w->windowLabel()); !module.isEmpty())
                 moduleKinds.insert(w->objectName(), module);
@@ -6424,6 +6430,15 @@ QStringList ApplicationWindow::liveObjects()
         for (const QFileInfo &fif : QDir(compileWidget->pathFIF + "/ai").entryInfoList({"*.fif"}, QDir::Files))
             objects << "function:ai/" + fif.completeBaseName();
     return objects;
+}
+
+QStringList ApplicationWindow::moduleStates()
+{
+    QStringList states;
+    if (danWidget && danWidget->danOptions)
+        if (const QString dan = danWidget->danOptions->state(); !dan.isEmpty())
+            states << "DAN-SANS session (Dan): " + dan;
+    return states;
 }
 
 QStringList ApplicationWindow::closeObjects(const QStringList &objects)

@@ -98,6 +98,13 @@ class AiScriptHost
         return {};
     }
 
+    // The state the host's modules keep between scripts, which a later script continues instead of starting anew — one
+    // line per module ("DAN-SANS session (Dan): instrument ..., masks: ...") — or empty when no module holds any.
+    virtual QStringList moduleStates()
+    {
+        return {};
+    }
+
     // Closes and deletes the windows among `objects` ("kind:name", as liveObjects() lists them: tables, matrices,
     // notes, graphs, 3D plots — never functions) and returns the ones it closed. Used to give a retry the state the
     // failed attempt started from; a host that cannot close returns an empty list and the retry is told instead.
