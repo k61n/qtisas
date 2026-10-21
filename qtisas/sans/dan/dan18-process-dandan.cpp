@@ -8,6 +8,7 @@ Description: SANS data reduction tools
  ******************************************************************************/
 
 #include <cmath>
+#include <limits>
 
 #include <QElapsedTimer>
 
@@ -183,7 +184,7 @@ void dan18::danDanMultiButton(QString button)
     //+++ check existence of script table w
     if (!app()->checkTableExistence(tableName))
     {
-        QMessageBox::critical(nullptr, "qtiSAS", "Table ~" + tableName + "~ does not exist!!! <br><h4>");
+        danMessage("Table ~" + tableName + "~ does not exist!!! <br><h4>", true);
         return;
     }
 
@@ -199,14 +200,13 @@ void dan18::danDanMultiButton(QString button)
     //+++ again check existence of table
     if (!w)
     {
-        QMessageBox::critical(nullptr, "qtiSAS", "Table ~" + tableName + "~ does not exist!!! <br><h4>");
+        danMessage("Table ~" + tableName + "~ does not exist!!! <br><h4>", true);
         return;
     }
 
     if (!scriptTableManager->update(w))
     {
-        QMessageBox::critical(nullptr, "qtiSAS",
-                              "Table ~" + tableName + " has wrong format. <br> Check table or  generate new one.<h4>");
+        danMessage("Table ~" + tableName + " has wrong format. <br> Check table or  generate new one.<h4>", true);
         return;
     }
 
@@ -301,8 +301,11 @@ void dan18::danDanMultiButton(QString button)
     progress.setMinimumWidth(400);
     progress.setMaximumWidth(4000);
     progress.setLabelText("Data Processing Started...");
-    progress.show();
-    
+    if (m_scriptRun)
+        progress.setMinimumDuration(std::numeric_limits<int>::max()); // no window while a script runs it
+    else
+        progress.show();
+
     app()->workspace()->blockSignals ( true );//+++ test 2019
     
     //+++
@@ -569,7 +572,7 @@ void dan18::danDanMultiButton(QString button)
         if (trans<=0.0 || trans>2.0)
         {
             scriptTableManager->transmissionWrite(iRow, "Check!!!");
-            QMessageBox::warning(this,tr("qtiSAS"), tr(QString("Line # "+QString::number(iRow+1)+": check transmission!").toLocal8Bit().constData()));
+            danMessage("Line # " + QString::number(iRow + 1) + ": check transmission!");
             mergedTemplate << "-0-";
 
             //+++ Progress +++
@@ -603,9 +606,7 @@ void dan18::danDanMultiButton(QString button)
             if (transBuffer <= 0.0 || transBuffer > 2.0)
             {
                 scriptTableManager->transmissionBufferWrite(iRow, "Check!!!");
-                QMessageBox::warning(
-                    this, tr("qtiSAS"),
-                    tr(QString("Line # " + QString::number(iRow + 1) + ": check Buffer!").toLocal8Bit().constData()));
+                danMessage("Line # " + QString::number(iRow + 1) + ": check Buffer!");
                 mergedTemplate << "-0-";
 
                 //+++ Progress +++
@@ -631,7 +632,7 @@ void dan18::danDanMultiButton(QString button)
         {
             thickness = 0.1;
             scriptTableManager->thicknessWrite(iRow, "Check!!!");
-            QMessageBox::warning(this,tr("qtiSAS"), tr(QString("Line # "+QString::number(iRow+1)+": check Thickness!").toLocal8Bit().constData()));
+            danMessage("Line # " + QString::number(iRow + 1) + ": check Thickness!");
             mergedTemplate << "-0-";
 
             //+++ Progress
@@ -649,7 +650,7 @@ void dan18::danDanMultiButton(QString button)
         if (abs0<=0)
         {
             scriptTableManager->absoluteFactorWrite(iRow, "check!!!");
-            QMessageBox::warning(this,tr("qtiSAS"), tr(QString("Line # "+QString::number(iRow+1)+": check Abs.Factor!").toLocal8Bit().constData()));
+            danMessage("Line # " + QString::number(iRow + 1) + ": check Abs.Factor!");
             mergedTemplate << "-0-";
 
             //+++ Progress +++
@@ -4188,7 +4189,7 @@ void dan18::calcCenterNew(QString sampleFile, int col, double &Xc, double &Yc, d
 
     if (!existCorund)
     {
-        QMessageBox::warning(this,tr("qtiSAS"), tr(QString("C-D-Lambda condition # "+QString::number(col+1)+":: corund-file does not exist!").toLocal8Bit().constData()));
+        danMessage("C-D-Lambda condition # " + QString::number(col + 1) + ":: corund-file does not exist!");
         toResLog("DAN :: C-D-Lambda condition # "+QString::number(col+1)+":: corund-file does not exist!"+"\n");
         gsl_matrix_free(mask);
         gsl_matrix_free(sens);

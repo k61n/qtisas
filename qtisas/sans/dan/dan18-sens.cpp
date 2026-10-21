@@ -36,7 +36,7 @@ void dan18::createSens()
 {
     if (!filesManager->checkFileNumber(lineEditPlexiAnyD->text()) && buttonGroupSensanyD->isChecked())
     {
-        QMessageBox::critical(nullptr, "DAN::SANS", "<b>check sensitivity fields!</b>");
+        danMessage("<b>check sensitivity fields!</b>", true);
         return;
     }
 
@@ -63,6 +63,11 @@ void dan18::createSens()
 //+++ Save mask as
 void dan18::saveSensAs(QString sensName)
 {
+    if (sensName.isEmpty() && m_scriptRun)
+    {
+        danMessage("no sensitivity name given", true);
+        return;
+    }
     if (sensName.isEmpty())
     {
         bool ok;
@@ -84,7 +89,7 @@ void dan18::saveSensAs(QString sensName)
     // see saveMaskAs(): a sensitivity of another detector size is made anew
     if (exist && !app()->findMatrixListByLabel("DAN::Sensitivity::").contains(sensName))
     {
-        QMessageBox::critical(nullptr, "QtiSAS", "Selected matrix is NOT CORRECT SENSITIVITY (size, label...)");
+        danMessage("Selected matrix is NOT CORRECT SENSITIVITY (size, label...)", true);
         return;
     }
 
@@ -124,6 +129,11 @@ void dan18::loadSensFull()
 {
     QString Dir = filesManager->pathInString();
     QString sensName = comboBoxSensFor->currentText();
+    if (m_scriptRun)
+    {
+        danMessage("no sensitivity file given", true);
+        return;
+    }
     QString sensFileName =
         QFileDialog::getOpenFileName(this, "open file dialog - Choose a Sensitivity file", Dir, "*.sens");
 
@@ -579,7 +589,7 @@ bool dan18::neededSensExists(int MD, const QString &sensName, bool showErrorMess
     if (!lst.contains(sensName))
     {
         if (showErrorMessage)
-            QMessageBox::critical(nullptr, "QtiSAS", "<b>" + sensName + "</b> does not exist!");
+            danMessage("<b>" + sensName + "</b> does not exist!", true);
         return false;
     }
     return true;

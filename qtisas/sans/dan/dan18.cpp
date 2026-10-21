@@ -8,6 +8,7 @@ Description: SANS data analysis interface
  ******************************************************************************/
 
 #include <QDockWidget>
+#include <QTextDocument>
 #include <QUrl>
 
 #include "dan18.h"
@@ -59,6 +60,35 @@ ApplicationWindow *dan18::app()
 // *******************************************
 // *** Log-output
 // *******************************************
+void dan18::danMessage(const QString &text, bool critical)
+{
+    if (!m_scriptRun)
+    {
+        if (critical)
+            QMessageBox::critical(this, "QtiSAS", text);
+        else
+            QMessageBox::warning(this, "QtiSAS", text);
+        return;
+    }
+    QTextDocument plain;
+    plain.setHtml(text);
+    const QString line = plain.toPlainText().simplified();
+    m_scriptMessages << line;
+    toResLog("DAN :: " + line + "\n");
+}
+
+void dan18::beginScriptRun()
+{
+    m_scriptRun = true;
+    m_scriptMessages.clear();
+}
+
+QStringList dan18::endScriptRun()
+{
+    m_scriptRun = false;
+    return m_scriptMessages;
+}
+
 void dan18::toResLog(QString text)
 {
     QString info =text;

@@ -7,6 +7,8 @@ Copyright (C) by the authors:
 Description: SANS ascii merging tools
  ******************************************************************************/
 
+#include <limits>
+
 #include "dan18.h"
 #include "Folder.h"
 #include "globals.h"
@@ -1071,12 +1073,12 @@ void dan18::mergeMethod(bool asciiYN)
     {
         if (activeTableName == "")
         {
-            QMessageBox::warning(this, tr("QtiSAS"), tr("<h4>Select active merging table...</h4>"));
+            danMessage(tr("<h4>Select active merging table...</h4>"));
             return;
         }
         if (!app()->checkTableExistence(activeTableName, activeTable))
         {
-            QMessageBox::warning(this, tr("QtiSAS"), tr("<h4>Select active merging table...</h4>"));
+            danMessage(tr("<h4>Select active merging table...</h4>"));
             return;
         }
         if (velticalYN)
@@ -1094,7 +1096,7 @@ void dan18::mergeMethod(bool asciiYN)
 
     if (M < 2 || N < 1)
     {
-        QMessageBox::warning(this, tr("QtiSAS"), tr("<h4>There are nothing to do...</h4>"));
+        danMessage(tr("<h4>There are nothing to do...</h4>"));
         return;
     }
 
@@ -1111,7 +1113,10 @@ void dan18::mergeMethod(bool asciiYN)
     progress.setMinimumWidth(400);
     progress.setMaximumWidth(4000);
     progress.setLabelText("Data Merging Processing Started...");
-    progress.show();
+    if (m_scriptRun)
+        progress.setMinimumDuration(std::numeric_limits<int>::max()); // no window while a script runs it
+    else
+        progress.show();
 
     QString textProgress;
     //+++ time steps
@@ -1371,8 +1376,7 @@ void dan18::saveMergedMatrixAscii(QString name, gsl_matrix *data, int N, bool dI
 
     if (!f.open(QIODevice::WriteOnly))
     {
-        QMessageBox::warning(this,tr("QtiSAS"),
-                             tr("<h4>... could not write file ...</h4>"));
+        danMessage(tr("<h4>... could not write file ...</h4>"));
         return;
     }
 

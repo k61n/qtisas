@@ -50,6 +50,11 @@ void dan18::saveMaskAs(QString maskName)
 
     bool ok;
 
+    if (maskName.isEmpty() && m_scriptRun)
+    {
+        danMessage("no mask name given", true);
+        return;
+    }
     if (maskName.isEmpty())
     {
         maskName = comboBoxMaskFor->currentText();
@@ -66,7 +71,7 @@ void dan18::saveMaskAs(QString maskName)
     // a mask of another detector size (another instrument) is made anew; a matrix that is no mask is kept
     if (exist && !app()->findMatrixListByLabel("DAN::Mask::").contains(maskName))
     {
-        QMessageBox::critical(nullptr, "QtiSAS", "Selected matrix is NOT CORRECT MASK (size, label...)");
+        danMessage("Selected matrix is NOT CORRECT MASK (size, label...)", true);
         return;
     }
 
@@ -110,6 +115,11 @@ void dan18::loadMaskFull()
 {
     QString Dir = filesManager->pathInString();
     QString maskName = comboBoxMaskFor->currentText();
+    if (m_scriptRun)
+    {
+        danMessage("no mask file given", true);
+        return;
+    }
     QString maskFileName = QFileDialog::getOpenFileName(this, "open file dialog - Choose a Mask file", Dir, "*.mask");
 
     if (!maskFileName.isEmpty())
@@ -718,7 +728,7 @@ bool dan18::neededMaskExists(int MD, const QString &maskName, bool showErrorMess
     if (!lst.contains(maskName))
     {
         if (showErrorMessage)
-            QMessageBox::critical(nullptr, "QtiSAS", "<b>" + maskName + "</b> does not exist!");
+            danMessage("<b>" + maskName + "</b> does not exist!", true);
         return false;
     }
     return true;

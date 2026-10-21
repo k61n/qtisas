@@ -62,6 +62,16 @@ public:
 
     ApplicationWindow* app();
     void toResLog( QString text );
+
+    // the reduction's messages: a message box in the interface; while a script runs it (beginScriptRun ..
+    // endScriptRun) nothing modal opens: messages are collected, and a missing name or file is a message too
+    void danMessage(const QString &text, bool critical = false);
+    void beginScriptRun();
+    QStringList endScriptRun();
+    bool scriptRun() const
+    {
+        return m_scriptRun;
+    }
     bool setPathIn(const QString &path) const
     {
         return filesManager->pushedPathIn(path);
@@ -660,6 +670,8 @@ public:
     void selectActiveTable();
     void updateListOfTables();
 private:
+    bool m_scriptRun = false;
+    QStringList m_scriptMessages;
 
 };
 

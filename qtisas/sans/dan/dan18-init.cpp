@@ -426,7 +426,7 @@ void dan18::tabSelected()
     {
         sansTab->setCurrentIndex(0);
         index = 0;
-        QMessageBox::warning(this, "QtiSAS", "Select correct \"Input Folder\"!");
+        danMessage("Select correct \"Input Folder\"!");
     }  
 
     if (index == 1)
@@ -778,7 +778,7 @@ void dan18::instrumentSelected(QString instrName)
 
         if (!f.open(QIODevice::ReadOnly))
         {
-            QMessageBox::warning(this, "Could not read file:: " + instrName + ".SANS", "QtiSAS::DAN");
+            danMessage("Could not read file:: " + instrName + ".SANS");
             return;
         }
 

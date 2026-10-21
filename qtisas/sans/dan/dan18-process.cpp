@@ -176,6 +176,11 @@ void dan18::findSettingTables()
 //*******************************************
 void dan18::newScriptTable(QString tableName)
 {
+    if (tableName == "" && m_scriptRun)
+    {
+        danMessage("no script table name given", true);
+        return;
+    }
     if (tableName == "")
     {
         tableName = comboBoxMakeScriptTable->currentText();
@@ -208,7 +213,7 @@ void dan18::newScriptTable(QString tableName)
 
     if (app()->checkTableExistence(tableName))
     {
-        QMessageBox::critical(nullptr, "qtiSAS", "Table " + tableName + " is already exists");
+        danMessage("Table " + tableName + " is already exists", true);
         return;
     }
     
@@ -236,6 +241,11 @@ void dan18::makeScriptTable(QStringList selectedDat)
     QString Dir = filesManager->pathInString();
     bool dirsInDir = filesManager->subFoldersYN();
 
+    if (selectedDat.isEmpty() && m_scriptRun)
+    {
+        danMessage("no files given", true);
+        return;
+    }
     if (selectedDat.isEmpty())
     {
         //+++ select files
@@ -257,7 +267,7 @@ void dan18::makeScriptTable(QStringList selectedDat)
 
     if (comboBoxMakeScriptTable->count() == 0)
     {
-        QMessageBox::critical(nullptr, "qtiSAS", "Create first Script-Table");
+        danMessage("Create first Script-Table", true);
         return;
     }
 
@@ -271,7 +281,7 @@ void dan18::makeScriptTable(QStringList selectedDat)
 
     if (filesNumber == 0)
     {
-        QMessageBox::critical( 0, "qtiSAS", "Nothing was selected");
+        danMessage("Nothing was selected", true);
         return;
     }
 
@@ -281,18 +291,18 @@ void dan18::makeScriptTable(QStringList selectedDat)
         test = test.remove(Dir);
         if (!dirsInDir && test.contains("/"))
         {
-            QMessageBox::critical(nullptr, "qtiSAS", "Selected data not in ::Input Folder::");
+            danMessage("Selected data not in ::Input Folder::", true);
             return;
         }
         else if (dirsInDir && test.count("/") > 1)
         {
-            QMessageBox::critical(nullptr, "qtiSAS", "Selected data not in ::Input Folder:: + sub-folders");
+            danMessage("Selected data not in ::Input Folder:: + sub-folders", true);
             return;
         }
     }
     else
     {
-        QMessageBox::critical(nullptr, "qtiSAS", "Selected data not in ::Input Folder::");
+        danMessage("Selected data not in ::Input Folder::", true);
         return;
     }
 
@@ -308,13 +318,13 @@ void dan18::makeScriptTable(QStringList selectedDat)
 
         if (w->windowLabel() != "DAN::Script::Table")
         {
-            QMessageBox::critical(nullptr, "qtiSAS", "Table ~" + tableName + " is not script");
+            danMessage("Table ~" + tableName + " is not script", true);
             return;
         }
 
         if (w->numCols() < 24)
         {
-            QMessageBox::critical( 0, "qtiSAS", "Better, create new table (# col)");
+            danMessage("Better, create new table (# col)", true);
             return;
         }
 
@@ -322,9 +332,7 @@ void dan18::makeScriptTable(QStringList selectedDat)
 
         if (!scriptTableManager->update(w))
         {
-            QMessageBox::critical(nullptr, "qtiSAS",
-                                  "Table ~" + tableName +
-                                      " has wrong format. <br> Check table or  generate new one.<h4>");
+            danMessage("Table ~" + tableName + " has wrong format. <br> Check table or  generate new one.<h4>", true);
             return;
         }
     }
@@ -3091,8 +3099,7 @@ void dan18::calculateTransmission(int startRow)
 
     if (!scriptTableManager->update(w))
     {
-        QMessageBox::critical(nullptr, "qtiSAS",
-                              "Table ~" + tableName + " has wrong format. <br> Check table or  generate new one.<h4>");
+        danMessage("Table ~" + tableName + " has wrong format. <br> Check table or  generate new one.<h4>", true);
         return;
     }
 
@@ -3292,7 +3299,7 @@ bool dan18::calcAbsCalTrFs( int col )
 
     if (!existPlexi)
     {
-        QMessageBox::warning(this,tr("qtiSAS"), tr(QString("C-D-Lambda condition # " + QString::number(col+1) + ":: plexi-file does not exist!").toLocal8Bit().constData()));
+        danMessage("C-D-Lambda condition # " + QString::number(col + 1) + ":: plexi-file does not exist!");
         toResLog("DAN :: C-D-Lambda condition # "+QString::number(col+1)+":: plexi-file does not exist!"+"\n");
         
         tableEC->item(dptACFS,col)->setText("0");
@@ -3562,7 +3569,7 @@ bool dan18::calcAbsCalDB( int col )
 
     if (!existEB)
     {
-        QMessageBox::warning(this,tr("qtiSAS"), tr(QString("C-D-Lambda condition # " + QString::number(col+1) + " :: EB-file does not exist!").toLocal8Bit().constData()));
+        danMessage("C-D-Lambda condition # " + QString::number(col + 1) + " :: EB-file does not exist!");
         toResLog("DAN :: C-D-Lambda condition # "+QString::number(col+1)+" :: EB-file does not exist!"+"\n");
         
         tableEC->item(dptACEB,col)->setText("0");
@@ -3707,11 +3714,7 @@ bool dan18::calcAbsCalDBM3(int col)
 
     if (!filesManager->checkFileNumber(EBNumber))
     {
-        QMessageBox::warning(
-            this, tr("QtiSAS"),
-            tr(QString("C-D-Lambda condition # " + QString::number(col + 1) + " :: EB-file does not exist!")
-                   .toLocal8Bit()
-                   .constData()));
+        danMessage("C-D-Lambda condition # " + QString::number(col + 1) + " :: EB-file does not exist!");
         toResLog("DAN :: C-D-Lambda condition # " + QString::number(col + 1) + " :: EB-file does not exist!\n");
         tableEC->item(dptACEB, col)->setText("0");
         tableEC->item(dptACFAC, col)->setText(QString::number(1.0, 'E', 1));
@@ -3722,11 +3725,8 @@ bool dan18::calcAbsCalDBM3(int col)
     double M3 = monitors->readMonitor3Normalized(EBNumber);
     if (M3 <= 0.0)
     {
-        QMessageBox::warning(this, tr("QtiSAS"),
-                             tr(QString("C-D-Lambda condition # " + QString::number(col + 1) +
-                                        " :: Monitor-3 is zero or missing in EB header!")
-                                    .toLocal8Bit()
-                                    .constData()));
+        danMessage("C-D-Lambda condition # " + QString::number(col + 1) +
+                   " :: Monitor-3 is zero or missing in EB header!");
         toResLog("DAN :: C-D-Lambda condition # " + QString::number(col + 1) + " :: Monitor-3 <= 0 in EB header!\n");
         tableEC->item(dptACFAC, col)->setText(QString::number(1.0, 'E', 1));
         return false;
@@ -3877,7 +3877,7 @@ bool dan18::calcAbsCalNew( int col )
     if (!existPlexi)
     {
         if (checkBoxSkiptransmisionConfigurations->isChecked())
-            QMessageBox::warning(this,tr("qtiSAS"), tr(QString("C-D-Lambda condition # "+QString::number(col+1)+":: plexi-file does not exist!").toLocal8Bit().constData()));
+            danMessage("C-D-Lambda condition # " + QString::number(col + 1) + ":: plexi-file does not exist!");
 
         toResLog("DAN :: C-D-Lambda condition # "+QString::number(col+1)+":: plexi-file does not exist!"+"\n");
 
@@ -4181,8 +4181,7 @@ void dan18::updateCenter(int startRow)
 
     if (!scriptTableManager->update(w))
     {
-        QMessageBox::critical(nullptr, "qtiSAS",
-                              "Table ~" + tableName + " has wrong format. <br> Check table or  generate new one.<h4>");
+        danMessage("Table ~" + tableName + " has wrong format. <br> Check table or  generate new one.<h4>", true);
         return;
     }
 
@@ -4252,8 +4251,7 @@ void dan18::copyCorrespondentTransmissions(int startRow)
     //+++ scriptTableManager
     if (!scriptTableManager->update(w))
     {
-        QMessageBox::critical(nullptr, "qtiSAS",
-                              "Table ~" + tableName + " has wrong format. <br> Check table or  generate new one.<h4>");
+        danMessage("Table ~" + tableName + " has wrong format. <br> Check table or  generate new one.<h4>", true);
         return;
     }
 
@@ -4389,8 +4387,7 @@ void dan18::updateMaskNamesInScript(int startRow, QString headerName)
     //+++
     if (!scriptTableManager->update(w))
     {
-        QMessageBox::critical(nullptr, "qtiSAS",
-                              "Table ~" + tableName + " has wrong format. <br> Check table or  generate new one.<h4>");
+        danMessage("Table ~" + tableName + " has wrong format. <br> Check table or  generate new one.<h4>", true);
         return;
     }
 
@@ -4458,8 +4455,7 @@ void dan18::updateColInScript(const QString &colName, int rowIndex, int startRow
 
     if (!scriptTableManager->update(w))
     {
-        QMessageBox::critical(nullptr, "qtiSAS",
-                              "Table ~" + tableName + " has wrong format. <br> Check table or  generate new one.<h4>");
+        danMessage("Table ~" + tableName + " has wrong format. <br> Check table or  generate new one.<h4>", true);
         return;
     }
 
@@ -4622,8 +4618,7 @@ void dan18::calculateCentersInScript(int startRow)
 
     if (!scriptTableManager->update(w))
     {
-        QMessageBox::critical(nullptr, "qtiSAS",
-                              "Table ~" + tableName + " has wrong format. <br> Check table or  generate new one.<h4>");
+        danMessage("Table ~" + tableName + " has wrong format. <br> Check table or  generate new one.<h4>", true);
         return;
     }
 
@@ -4829,8 +4824,7 @@ void dan18::calculateAbsFactorInScript(int startRow)
 
     if (!scriptTableManager->update(w))
     {
-        QMessageBox::critical(nullptr, "qtiSAS",
-                              "Table ~" + tableName + " has wrong format. <br> Check table or  generate new one.<h4>");
+        danMessage("Table ~" + tableName + " has wrong format. <br> Check table or  generate new one.<h4>", true);
         return;
     }
 
