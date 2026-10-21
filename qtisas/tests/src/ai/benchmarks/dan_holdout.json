@@ -1,0 +1,28 @@
+{
+ "name": "DAN HOLDOUT",
+ "description": "DAN-SANS holdout (coach M3): the SANS-1 example of qtisas.com/dan-sans — masks, the water transmission and sensitivity, one configuration with water calibration, a script table with thickness and transmissions set, I[Q]. Not used to design doc fixes.",
+ "instruction": "Use exactly the object names given. End the item by printing exactly ONE line: the result label the item gives, then only the values asked for, in the order asked, separated by spaces.",
+ "setup": "import io, os, shutil, urllib.request, zipfile\n# the example data of qtisas.com/dan-sans, downloaded once into ~/benchdata/dan/kws1, kws3, sans1\nbase = os.path.expanduser(\"~/benchdata/dan\")\nfor name, top in ((\"kws1\", \"data-kws1\"), (\"kws3\", \"data-kws3\"), (\"sans1\", \"rawdata\")):\n    folder = os.path.join(base, name)\n    if os.path.isdir(folder) and os.listdir(folder):\n        continue\n    data = urllib.request.urlopen(\"https://www.qtisas.com/_media/qtisas/dan/data-%s.zip\" % name, timeout=300).read()\n    os.makedirs(folder, exist_ok=True)\n    with zipfile.ZipFile(io.BytesIO(data)) as z:\n        for member in z.namelist():\n            if member.startswith(top + \"/\") and not member.endswith(\"/\"):\n                open(os.path.join(folder, os.path.basename(member)), \"wb\").write(z.read(member))\nshutil.rmtree(os.path.join(base, \"out\"), ignore_errors=True)\n",
+ "items": [
+  {
+   "text": "In DAN-SANS start a new session with the instrument SANS1 and the raw-data folder benchdata/dan/sans1 in the home directory. Create the mask mask-4m (detector edge x 1..128, y 4..127; rectangular beam stop x 57..71, y 58..71, no triangles) and the transmission mask mask-tr of the same edge and beam-stop box. Print the transmission of the water run 497866 against the empty cell 497864 through mask-tr, rounded to 4 decimals.",
+   "expected": "0.5191",
+   "hint": "newMask(..., transmission=True) for mask-tr; Dan.Sensitivity.transmission(run, emptyBeam, mask)"
+  },
+  {
+   "text": "Create the detector sensitivity sens from the water run 497846 with its empty cell 497844, the dark current (B4C) 497847, the water transmission 0.5191 and the mask mask-4m. Print the mean, the minimum and the maximum sensitivity over the unmasked pixels of mask-4m, rounded to 4 decimals.",
+   "expected": "1.0007 0.9008 1.1418",
+   "hint": "newSensitivity(\"497846\", emptyBeam=, darkCurrent=, transmission=, mask=)"
+  },
+  {
+   "text": "Set up one configuration (C = 4 m, D = 4 m, 6 A): empty cell 497844, dark current 497847, absolute calibration with the water run 497846 (its empty cell 497844, dark current 497847), the beam center from the strongly scattering run 497842, mask mask-4m and sensitivity sens. Calculate and print the absolute factor rounded to 3 decimals and the X and Y center rounded to 2 decimals.",
+   "expected": "11.787 63.94 64.24",
+   "hint": "calibrant = the water run; SANS1 centers by X-Y symmetrization"
+  },
+  {
+   "text": "Make the script table sans1 of the runs 497839 (HC) and 497842 (PC); their thickness is 0.01 cm, their transmissions 0.9115 (HC) and 0.9102 (PC). Radially average it into the project and print the number of points of the I[Q] of run 497842, and its Q and intensity at the 20th point rounded to 4 decimals.",
+   "expected": "84 0.0544 2.1848",
+   "hint": "set Thickness and Transmission-Sample in the script table by the table API; table QI-SM-497842-PC"
+  }
+ ]
+}

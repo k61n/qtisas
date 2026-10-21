@@ -1,0 +1,94 @@
+{
+  "name": "DAN",
+  "description": "DAN-SANS module list (coach M3): the KWS-1 and KWS-3 reductions of qtisas.com/dan-sans through Dan.Options/Rawdata/Mask/Sensitivity/Processing/Merge — runs, header table, masks, sensitivity, table of configurations (Plexiglas and direct-beam calibration), script tables, transmissions, I[Q], merging, the join of two instruments, ASCII output, an unknown instrument, the center method. Data: data-kws1.zip, data-kws3.zip (downloaded once).",
+  "instruction": "Use exactly the object names given. End the item by printing exactly ONE line: the result label the item gives, then only the values asked for, in the order asked, separated by spaces.",
+  "setup": "import io, os, shutil, urllib.request, zipfile\n# the example data of qtisas.com/dan-sans, downloaded once into ~/benchdata/dan/kws1, kws3, sans1\nbase = os.path.expanduser(\"~/benchdata/dan\")\nfor name, top in ((\"kws1\", \"data-kws1\"), (\"kws3\", \"data-kws3\"), (\"sans1\", \"rawdata\")):\n    folder = os.path.join(base, name)\n    if os.path.isdir(folder) and os.listdir(folder):\n        continue\n    data = urllib.request.urlopen(\"https://www.qtisas.com/_media/qtisas/dan/data-%s.zip\" % name, timeout=300).read()\n    os.makedirs(folder, exist_ok=True)\n    with zipfile.ZipFile(io.BytesIO(data)) as z:\n        for member in z.namelist():\n            if member.startswith(top + \"/\") and not member.endswith(\"/\"):\n                open(os.path.join(folder, os.path.basename(member)), \"wb\").write(z.read(member))\nshutil.rmtree(os.path.join(base, \"out\"), ignore_errors=True)\n",
+  "items": [
+    {
+      "text": "In DAN-SANS start a new session with the instrument KWS1-2020 and the raw-data folder benchdata/dan/kws1 in the home directory. Print the number of runs in the folder, the first and the last run number.",
+      "expected": "16 48462 53230",
+      "hint": "Dan.Options: newSession, selectInstrument, setInputPath; Dan.Rawdata.runs()"
+    },
+    {
+      "text": "Make a header table named kws1info of all runs with the sample name, the detector distance D and the wavelength. Print its number of rows and the detector distance of run 53226 rounded to 2 decimals.",
+      "expected": "16 1.98",
+      "hint": "Dan.Rawdata.newHeaderTable with the items Sample, D, lambda; rows in run order",
+      "verify": "check(existTable(\"kws1info\"))",
+      "verified": "True"
+    },
+    {
+      "text": "Create the standard detector mask of the instrument (named mask) and load the sensitivity file sens-20200117.sens of the raw-data folder (named sens). Print the number of unmasked pixels of the mask and the mean sensitivity over the unmasked pixels, rounded to 3 decimals.",
+      "expected": "12059 1.003",
+      "hint": "Dan.Mask.newMask(); Dan.Sensitivity.loadSensitivity(file); the mask is 1 where unmasked"
+    },
+    {
+      "text": "Set up three configurations: configuration 1 (C20D20): empty beam 53216, Plexiglas 53229 with its empty beam 53230, center from run 53218; configuration 2 (C8D8): empty beam 53220, Plexiglas 53224 with its empty beam 53225, center from 53222, the sample transmissions are measured in this configuration; configuration 3 (C8D2): empty beam 53225, Plexiglas 53224 with its empty beam 53225, center from 53227. The dark current (B4C) of all is run 48462; the empty beam of each configuration is also the empty cell for its Tr(EC -> EB). Calculate the table of configurations and print the three absolute calibration factors rounded to integers, then the three X centers rounded to 2 decimals.",
+      "expected": "53390 1765 117 73.25 73.25 73.13",
+      "hint": "setConfigurations(3), setConfiguration(i, ...) with calibrant = Plexiglas, then calculate(); configuration(i)[\"factor\"], [\"xCenter\"]"
+    },
+    {
+      "text": "Make a script table named script of the sample runs 53217, 53218, 53219, 53221, 53222, 53223, 53226, 53227 and 53228 and calculate their transmissions. Print the number of rows and the transmission of run 53222 with 4 decimals.",
+      "expected": "9 0.8981",
+      "hint": "newScriptTable, calculateTransmissions; column Transmission-Sample (\"0.8981 [ ±0.0012 ]\")"
+    },
+    {
+      "text": "Radially average all runs of the script table into the project. Print the number of I[Q] tables made and the number of points of the table of run 53227.",
+      "expected": "9 74",
+      "hint": "Dan.Processing.run(\"script\"): tables QI-SM-<run>-<sample> plus script-mergingTemplate (not an I[Q] table)"
+    },
+    {
+      "text": "Merge the three configurations of each sample with the merging template of the script table. Print the number of merged tables, the number of points of the merged H-L, its first Q rounded to 4 decimals and its first intensity rounded to 1 decimal.",
+      "expected": "3 164 0.0032 711.1",
+      "hint": "Dan.Merge.run(\"script-mergingTemplate\") -> H-J, H-L, H-M"
+    },
+    {
+      "text": "Rename the three merged KWS-1 tables to KWS1-H-J, KWS1-H-L and KWS1-H-M. Print the names of all tables starting with KWS1-, sorted.",
+      "expected": "KWS1-H-J KWS1-H-L KWS1-H-M",
+      "hint": "setWindowName(table(name), newName)",
+      "verify": "check(existTable(\"KWS1-H-L\"), existTable(\"H-J\"))",
+      "verified": "True True"
+    },
+    {
+      "text": "Start a new DAN-SANS session with the instrument KWS3-2020 and the raw-data folder benchdata/dan/kws3. Create the masks: the standard mask (named mask), the beam-stop masks mask-bs-9m with the beam stop x 114..126, y 134..147 and mask-bs-1m with x 110..131, y 119..142, and the transmission masks mask-tr-9m (x 117..123, y 137..144) and mask-tr-1m (x 117..123, y 127..135). Then create the sensitivity from run 00000001, which is already a pure detector sensitivity (no empty beam, no dark current). Print the size of the sensitivity matrix (rows) and its mean over the unmasked pixels of mask rounded to 3 decimals.",
+      "expected": "256 1.019",
+      "hint": "Dan.Mask.newMask() and newMask(name, beamstop=(x1, x2, y1, y2), transmission=True for mask-tr); Dan.Sensitivity.newSensitivity(\"00000001\") with nothing else"
+    },
+    {
+      "text": "Set up two configurations calibrated with the direct beam: configuration 1 (D = 9.2 m) with the empty beam 00082558 and the masks mask-bs-9m and mask-tr-9m, configuration 2 (D = 1.2 m) with the empty beam 00082645 and the masks mask-bs-1m and mask-tr-1m; the dark current of both is 00000002, the empty beam is also the calibration run and the center run of its configuration and the empty cell for Tr(EC -> EB), and the sample transmissions are measured in both. Calculate and print the two absolute factors rounded to integers, then X and Y center of configuration 1 and of configuration 2, rounded to 2 decimals.",
+      "expected": "280100 2816 120.04 140.66 119.97 130.85",
+      "hint": "no calibrant (flat scatterer): calibrantEmptyBeam and calibrantDarkCurrent only; mask=, transmissionMask=, transmission=True in setConfiguration, then calculate()"
+    },
+    {
+      "text": "Make the script table script3 of the runs 00082557, 00082559, 00082561, 00082646, 00082647 and 00082648. Calculate the transmissions and print those of H-L in configuration 1 and in configuration 2 with 4 decimals.",
+      "expected": "0.4829 0.7811",
+      "hint": "newScriptTable, calculateTransmissions; column Transmission-Sample"
+    },
+    {
+      "text": "Scale the 1.2 m rows of script3 to the 9.2 m transmission of the same sample: add a column Scale with 1 for configuration 1 and Tr(configuration 2) / Tr(configuration 1) of the same sample for configuration 2. Remove the last 5 points of every I[Q], radially average script3 into the project and merge with its merging template. Print the number of points of the merged H-M, its first intensity rounded to an integer and its last intensity rounded to 3 decimals.",
+      "expected": "229 11716934 2.517",
+      "hint": "Dan.Processing.Options.setRemovePoints(0, 5); Scale column by the table API; Dan.Merge.run(\"script3-mergingTemplate\")"
+    },
+    {
+      "text": "Compare the merged KWS-3 curve H-J with the merged KWS-1 curve KWS1-H-J where they overlap, then join them into one table named H-J-both. Print the number of KWS1-H-J points in the overlap, the mean intensity ratio KWS1-H-J / H-J there rounded to 2 decimals, and the number of points of H-J-both.",
+      "expected": "28 0.42 345",
+      "hint": "Dan.Merge.overlap(\"H-J\", \"KWS1-H-J\") -> (qMin, qMax, points, ratio); Dan.Merge.join"
+    },
+    {
+      "text": "Write the merged KWS-3 curves as ASCII files into the folder benchdata/dan/out in the home directory (merging template of script3). Print the number of files written and their file names, sorted.",
+      "expected": "3 QI-MERGED-H-J.DAT QI-MERGED-H-L.DAT QI-MERGED-H-M.DAT",
+      "hint": "Dan.Options.setOutputPath; Dan.Merge.run(template, output=\"files\") -> the paths",
+      "verify": "import os\ncheck(len(os.listdir(os.path.expanduser(\"~/benchdata/dan/out/ASCII-QI-MERGED\"))))",
+      "verified": "3"
+    },
+    {
+      "text": "Try to select the DAN-SANS instrument KWS9. Print yes if it exists, no otherwise, and the name of the instrument selected after the attempt.",
+      "expected": "no KWS3-2020",
+      "hint": "selectInstrument raises ValueError for an unknown name; nothing changes"
+    },
+    {
+      "text": "Start a new KWS1-2020 session again (folder benchdata/dan/kws1, standard mask, sensitivity file sens-20200117.sens, the same three configurations as before: configuration 1 (C20D20): empty beam 53216, Plexiglas 53229 with its empty beam 53230, center from run 53218; configuration 2 (C8D8): empty beam 53220, Plexiglas 53224 with its empty beam 53225, center from 53222, the sample transmissions are measured in this configuration; configuration 3 (C8D2): empty beam 53225, Plexiglas 53224 with its empty beam 53225, center from 53227. The dark current (B4C) of all is run 48462; the empty beam of each configuration is also the empty cell for its Tr(EC -> EB)), but determine the beam centers by X-Y symmetrization. Print X and Y center of configuration 3 rounded to 2 decimals.",
+      "expected": "73.78 85.61",
+      "hint": "Dan.Options.Config.setCenterMethod(\"symmetry\") after selectInstrument, before calculate()"
+    }
+  ]
+}
