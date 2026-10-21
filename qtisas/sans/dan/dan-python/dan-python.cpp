@@ -1,0 +1,927 @@
+/******************************************************************************
+Project: QtiSAS
+License: GNU GPL Version 3 (see LICENSE)
+Copyright (C) by the authors:
+    2026 Vitaliy Pipich <v.pipich@gmail.com>
+Description: DAN-SANS Python interface: one object per tab (Dan.Options, Dan.Rawdata, Dan.Mask, Dan.Sensitivity,
+             Dan.Processing, Dan.Merge)
+ ******************************************************************************/
+
+#include <cmath>
+
+#include <QDirIterator>
+#include <QFileInfo>
+#include <QSet>
+
+#include "Table.h"
+#include "dan-python.h"
+#include "dan18.h"
+#include "naturalsort.h"
+
+// "~/..." as the user's home folder (as everywhere in QtiSAS's Python API)
+static QString expandHome(const QString &path)
+{
+    if (path == "~" || path.startsWith("~/"))
+        return QDir::homePath() + path.mid(1);
+    return path;
+}
+
+// a file as given ("~/..." expanded), or a relative name in DAN's input folder
+static QString resolveFile(const QString &file, const QString &inputFolder)
+{
+    QString path = expandHome(file);
+    if (QFileInfo(path).isRelative() && !QFileInfo::exists(path) && !inputFolder.isEmpty())
+        return QDir(inputFolder).filePath(path);
+    return path;
+}
+
+//+++ DanPart
+void DanPart::begin()
+{
+    m_lastError.clear();
+    m_lastMessages.clear();
+    d->beginScriptRun();
+    // Confirmed: the tab open in the GUI changed the result — on the Rawdata tab radial averaging names its tables
+    // "raw-..." (dan18-process-dandan.cpp); and the tab's own list refresh ran only on a click
+    // Leaving the Mask step (all its masks made) activates the full mask "mask", as after the Mask tab in the GUI: the
+    // sensitivity is calculated with it, and the mask parameters shown are its own again
+    if (d->sansTab->currentIndex() == 2 && tab() > 2 && isMask("mask"))
+    {
+        d->comboBoxMaskFor->setCurrentIndex(d->comboBoxMaskFor->findText("mask"));
+        d->readMaskParaFromMaskMatrix("mask");
+    }
+    if (d->sansTab->currentIndex() != tab())
+        d->sansTab->setCurrentIndex(tab());
+}
+
+bool DanPart::end(bool ok, const QString &reason)
+{
+    m_lastMessages = d->endScriptRun();
+    if (!ok)
+        m_lastError = !reason.isEmpty() ? reason : m_lastMessages.join("; ");
+    if (!ok && m_lastError.isEmpty())
+        m_lastError = "nothing was made";
+    return ok;
+}
+
+QString DanPart::fail(const QString &reason)
+{
+    m_lastError = reason;
+    return {};
+}
+
+bool DanPart::isMask(const QString &name) const
+{
+    return d->app()->existWindow(name) &&
+           d->app()->findMatrixListByLabel("DAN::Mask::" + d->lineEditMD->text()).contains(name);
+}
+
+bool DanPart::isSens(const QString &name) const
+{
+    return d->app()->existWindow(name) &&
+           d->app()->findMatrixListByLabel("DAN::Sensitivity::" + d->lineEditMD->text()).contains(name);
+}
+
+// "no file ..." with what the name is instead: a run (a mask or sensitivity is made from it, not loaded)
+QString DanPart::noFile(const QString &file, const QString &given, bool mask) const
+{
+    QString reason = "no file " + file;
+    // "00000001.sens": the run with an extension guessed
+    QString run = QFileInfo(given).completeBaseName();
+    if (d->filesManager->checkFileNumber(given))
+        run = given;
+    else if (run.isEmpty() || run == given || !d->filesManager->checkFileNumber(run))
+        run.clear();
+    if (!run.isEmpty())
+        reason += QString(": \"%1\" is a run; %2")
+                      .arg(run, mask ? "a mask is made by Dan.Mask.newMask()"
+                                     : "Dan.Sensitivity.newSensitivity(run) makes it");
+    return reason;
+}
+
+//+++ DanOptions
+void DanOptions::newSession()
+{
+    begin();
+    d->newSession();
+    end(true);
+}
+
+bool DanOptions::openSession(const QString &scriptTable)
+{
+    begin();
+    d->updateScriptTables();
+    if (d->comboBoxMakeScriptTable->findText(scriptTable) < 0)
+        return end(false, "no saved session (script table) " + scriptTable);
+    d->openSession(scriptTable);
+    return end(d->comboBoxMakeScriptTable->currentText() == scriptTable);
+}
+
+QString DanOptions::state() const
+{
+    const QString mode = d->lineEditMD->text();
+    const QStringList masks = d->app()->findMatrixListByLabel("DAN::Mask::" + mode);
+    const QStringList sens = d->app()->findMatrixListByLabel("DAN::Sensitivity::" + mode);
+    const QStringList scripts = d->app()->findTableListByLabel("DAN::Script::Table");
+    if (masks.isEmpty() && sens.isEmpty() && scripts.isEmpty())
+        return {};
+    QStringList configured; // configurations with an empty beam set
+    for (int col = 0; col < d->tableEC->columnCount(); col++)
+        if (d->tableEC->item(dan18::dptEC, col) && !d->tableEC->item(dan18::dptEC, col)->text().trimmed().isEmpty())
+            configured << QString::number(col + 1);
+    auto list = [](const QStringList &names) { return names.isEmpty() ? QString("none") : names.join(", "); };
+    return QString("instrument %1, input folder %2, output folder %3, %4 configuration(s) (empty beam set in: %5), "
+                   "masks: %6, sensitivities: %7, script tables: %8")
+        .arg(instrument(), inputPath(), outputPath().isEmpty() ? QString("none") : outputPath())
+        .arg(d->tableEC->columnCount())
+        .arg(list(configured), list(masks), list(sens), list(scripts));
+}
+
+QStringList DanOptions::instruments() const
+{
+    QStringList names;
+    for (int i = 0; i < d->comboBoxInstrument->count(); i++)
+        names << d->comboBoxInstrument->itemText(i);
+    return names;
+}
+
+QString DanOptions::instrument() const
+{
+    return d->comboBoxInstrument->currentText();
+}
+
+bool DanOptions::selectInstrument(const QString &name)
+{
+    if (d->comboBoxInstrument->findText(name) < 0)
+    {
+        m_lastError = "no instrument " + name + "; instruments(): " + instruments().join(", ");
+        return false;
+    }
+    begin();
+    d->instrumentSelected(name);
+    return end(d->comboBoxInstrument->currentText() == name);
+}
+
+QStringList DanOptions::modes() const
+{
+    QStringList names;
+    for (int i = 0; i < d->comboBoxMode->count(); i++)
+        names << d->comboBoxMode->itemText(i);
+    return names;
+}
+
+bool DanOptions::selectMode(const QString &mode)
+{
+    if (d->comboBoxMode->findText(mode) < 0)
+    {
+        m_lastError = "no mode " + mode + "; modes(): " + modes().join(", ");
+        return false;
+    }
+    begin();
+    d->experimentalModeSelected(mode);
+    return end(true);
+}
+
+bool DanOptions::setInputPath(const QString &pathGiven)
+{
+    const QString path = expandHome(pathGiven);
+    begin();
+    return end(d->setPathIn(path), "no folder " + path);
+}
+
+QString DanOptions::inputPath() const
+{
+    return d->filesManager->pathInString();
+}
+
+bool DanOptions::setOutputPath(const QString &pathGiven)
+{
+    const QString path = expandHome(pathGiven);
+    if (!path.isEmpty())
+        QDir().mkpath(path); // asking for files in a new folder is normal
+    begin();
+    return end(d->setPathOut(path), "no folder " + path);
+}
+
+QString DanOptions::outputPath() const
+{
+    return d->filesManager->pathOutString();
+}
+
+QStringList DanOptionsConfig::centerMethods()
+{
+    return {"hf", "symmetry", "header"};
+}
+
+bool DanOptionsConfig::setCenterMethod(const QString &method)
+{
+    QRadioButton *buttons[] = {d->radioButtonCenterHF, d->radioButtonRadStdSymm, d->radioButtonCenterReadFromHeader};
+    const auto index = centerMethods().indexOf(method);
+    if (index < 0)
+    {
+        m_lastError = "no center method " + method + "; centerMethods(): " + centerMethods().join(", ");
+        return false;
+    }
+    begin();
+    buttons[index]->setChecked(true);
+    return end(true);
+}
+
+QStringList DanOptionsConfig::transmissionMethods() const
+{
+    QStringList names;
+    for (int i = 0; i < d->comboBoxTransmMethod->count(); i++)
+        names << d->comboBoxTransmMethod->itemText(i);
+    return names;
+}
+
+QString DanOptionsConfig::centerMethod() const
+{
+    if (d->radioButtonCenterHF->isChecked())
+        return "hf";
+    return d->radioButtonRadStdSymm->isChecked() ? "symmetry" : "header";
+}
+
+QString DanOptionsConfig::transmissionMethod() const
+{
+    return d->comboBoxTransmMethod->currentText();
+}
+
+bool DanOptionsConfig::setTransmissionMethod(const QString &method)
+{
+    const int index = d->comboBoxTransmMethod->findText(method);
+    if (index < 0)
+    {
+        m_lastError =
+            "no transmission method " + method + "; transmissionMethods(): " + transmissionMethods().join(" | ");
+        return false;
+    }
+    begin();
+    d->comboBoxTransmMethod->setCurrentIndex(index);
+    return end(true);
+}
+
+//+++ DanRawdata
+QStringList DanRawdata::runs() const
+{
+    QStringList files;
+    QDirIterator it(d->filesManager->pathInString(), QStringList() << d->filesManager->wildCardInString(), QDir::Files,
+                    d->filesManager->subFoldersYN() ? QDirIterator::Subdirectories : QDirIterator::NoIteratorFlags);
+    while (it.hasNext())
+        files << it.next();
+    QStringList numbers;
+    QSet<QString> seen;
+    for (const QString &file : files)
+    {
+        const QString number =
+            FilesManager::findFileNumberInFileName(d->filesManager->wildCardHeader(), QFileInfo(file).fileName());
+        if (!number.isEmpty() && !seen.contains(number))
+        {
+            seen.insert(number);
+            numbers << number;
+        }
+    }
+    NaturalSort::sort(numbers);
+    return numbers;
+}
+
+QStringList DanRawdata::headerItems() const
+{
+    QStringList names;
+    for (int i = 0; i < d->comboBoxInfoExtractorCol->count(); i++)
+        names << d->comboBoxInfoExtractorCol->itemText(i);
+    return names;
+}
+
+QString DanRawdata::newHeaderTable(const QString &name, const QStringList &items, const QString &runs)
+{
+    const QStringList all = headerItems();
+    QStringList indices;
+    for (const QString &item : items)
+    {
+        const auto index = all.indexOf(item);
+        if (index < 0)
+            return fail("no header item " + item + "; headerItems(): " + all.join(", "));
+        indices << QString::number(index + 1);
+    }
+    QString tableName = name;
+    tableName.remove(QRegularExpression("[^A-Za-z0-9_-]"));
+    if (tableName.isEmpty())
+        return fail("no table name");
+    begin();
+    const bool ok = d->infoExtractorScript(tableName, indices.join(","), runs.isEmpty() ? "*" : runs);
+    if (!end(ok && d->app()->checkTableExistence(tableName),
+             "no runs " + runs + " in " + d->filesManager->pathInString()))
+        return {};
+    return tableName;
+}
+
+//+++ DanMask
+QString DanMask::newMask(const QString &name, const QList<int> &edge, const QList<int> &beamstop, const QString &shape,
+                         const QString &polygons, bool transmission)
+{
+    if (name.isEmpty())
+        return fail("no mask name");
+    QSpinBox *edgeBoxes[] = {d->spinBoxLTx, d->spinBoxRBx, d->spinBoxLTy, d->spinBoxRBy};
+    QSpinBox *bsBoxes[] = {d->spinBoxLTxBS, d->spinBoxRBxBS, d->spinBoxLTyBS, d->spinBoxRByBS};
+    for (const QList<int> *box : {&edge, &beamstop})
+        if (!box->isEmpty() && !(box->count() == 1 && box->first() == 0) && box->count() != 4)
+            return fail("a mask box is x1, x2, y1, y2 (pixels), or 0 for none");
+    if (!shape.isEmpty() && shape != "rectangle" && shape != "ellipse")
+        return fail("beam-stop shape: rectangle or ellipse");
+
+    if (edge.count() == 4)
+    {
+        d->groupBoxMask->setChecked(true);
+        for (int i = 0; i < 4; i++)
+            edgeBoxes[i]->setValue(edge[i]);
+    }
+    else if (edge.count() == 1)
+        d->groupBoxMask->setChecked(false);
+    if (beamstop.count() == 4)
+    {
+        d->groupBoxMaskBS->setChecked(true);
+        for (int i = 0; i < 4; i++)
+            bsBoxes[i]->setValue(beamstop[i]);
+    }
+    else if (beamstop.count() == 1)
+        d->groupBoxMaskBS->setChecked(false);
+    if (!shape.isEmpty())
+        d->comboBoxMaskBeamstopShape->setCurrentIndex(shape == "ellipse" ? 1 : 0);
+    if (!polygons.isNull())
+        d->lineEditMaskPolygons->setText(polygons);
+
+    begin();
+    d->saveMaskAs(name);
+    if (transmission && d->app()->existWindow(name))
+        d->createMaskFullTr(name);
+    d->updateMaskList();
+    if (!end(isMask(name)))
+        return {};
+    return name;
+}
+
+QString DanMask::loadMask(const QString &name, const QString &fileGiven)
+{
+    const QString file = resolveFile(fileGiven, d->filesManager->pathInString());
+    if (!QFileInfo(file).isFile())
+        return fail(noFile(file, fileGiven, true));
+    begin();
+    d->loadMaskFull(name, file);
+    d->updateMaskList();
+    if (!end(isMask(name)))
+        return {};
+    return name;
+}
+
+QStringList DanMask::masks() const
+{
+    return d->app()->findMatrixListByLabel("DAN::Mask::" + d->lineEditMD->text());
+}
+
+//+++ DanSensitivity
+QString DanSensitivity::newSensitivity(const QString &name, const QString &run, const QString &emptyBeam,
+                                       const QString &darkCurrent, double transmission, const QString &mask)
+{
+    if (name.isEmpty())
+        return fail("no sensitivity name");
+    if (!d->filesManager->checkFileNumber(run))
+        return fail("no run " + run + " in " + d->filesManager->pathInString());
+    for (const QString &other : {emptyBeam, darkCurrent})
+        if (!other.isEmpty() && !d->filesManager->checkFileNumber(other))
+            return fail("no run " + other + " in " + d->filesManager->pathInString());
+    if (!isMask(mask))
+        return fail("no mask " + mask);
+    d->lineEditPlexiAnyD->setText(run);
+    d->lineEditEBAnyD->setText(emptyBeam);
+    d->lineEditBcAnyD->setText(darkCurrent);
+    d->lineEditTransAnyD->setText(QString::number(transmission, 'f', 4));
+    d->SensitivityLineEditCheck();
+    d->buttonGroupSensanyD->setChecked(true);
+    d->comboBoxMaskFor->setCurrentIndex(d->comboBoxMaskFor->findText(mask));
+
+    begin();
+    d->saveSensAs(name);
+    d->updateSensList();
+    if (!end(isSens(name)))
+        return {};
+    return name;
+}
+
+QString DanSensitivity::loadSensitivity(const QString &name, const QString &fileGiven)
+{
+    const QString file = resolveFile(fileGiven, d->filesManager->pathInString());
+    if (!QFileInfo(file).isFile())
+        return fail(noFile(file, fileGiven, false));
+    begin();
+    d->loadSensFull(name, file);
+    d->updateSensList();
+    if (!end(isSens(name)))
+        return {};
+    return name;
+}
+
+QStringList DanSensitivity::sensitivities() const
+{
+    return d->app()->findMatrixListByLabel("DAN::Sensitivity::" + d->lineEditMD->text());
+}
+
+bool DanSensitivity::transmission(const QString &run, const QString &emptyBeam, const QString &mask, double &tr,
+                                  double &dTr)
+{
+    for (const QString &number : {run, emptyBeam})
+        if (!d->filesManager->checkFileNumber(number))
+        {
+            m_lastError = "no run " + number + " in " + d->filesManager->pathInString();
+            return false;
+        }
+    if (!isMask(mask))
+    {
+        m_lastError = "no mask " + mask;
+        return false;
+    }
+    begin();
+    double sigma = 0.0;
+    tr = d->readTransmission(run, emptyBeam, mask, 0, 0, sigma);
+    dTr = tr * sigma;
+    return end(tr > 0.0 && tr <= 2.0, "no transmission of " + run + " against " + emptyBeam);
+}
+
+//+++ DanProcessing
+bool DanProcessing::setConfigurations(int number)
+{
+    if (number < 1 || number > d->sliderConfigurations->maximum())
+    {
+        m_lastError = QString("1 to %1 configurations").arg(d->sliderConfigurations->maximum());
+        return false;
+    }
+    begin();
+    d->sliderConfigurations->setValue(number);
+    return end(d->tableEC->columnCount() == number);
+}
+
+int DanProcessing::configurations() const
+{
+    return d->tableEC->columnCount();
+}
+
+bool DanProcessing::setConfiguration(int index, const QString &emptyBeam, const QString &darkCurrent,
+                                     const QString &calibrant, const QString &calibrantEmptyBeam,
+                                     const QString &calibrantDarkCurrent, const QString &center, const QString &mask,
+                                     const QString &sens, const QString &transmissionMask, const QString &cellEmptyBeam,
+                                     int transmission)
+{
+    if (index < 1 || index > configurations())
+    {
+        m_lastError = QString("configuration %1 of 1..%2").arg(index).arg(configurations());
+        return false;
+    }
+    const int col = index - 1;
+    const struct
+    {
+        int row;
+        const QString &run;
+    } runs[] = {{dan18::dptEC, emptyBeam},
+                {dan18::dptBC, darkCurrent},
+                {dan18::dptACFS, calibrant},
+                {dan18::dptACEB, calibrantEmptyBeam},
+                {dan18::dptACBC, calibrantDarkCurrent},
+                {dan18::dptCENTER, center},
+                {dan18::dptEB, cellEmptyBeam}};
+    for (const auto &r : runs)
+        if (!r.run.isEmpty() && !d->filesManager->checkFileNumber(r.run))
+        {
+            m_lastError = "no run " + r.run + " in " + d->filesManager->pathInString();
+            return false;
+        }
+    const struct
+    {
+        int row;
+        const QString &name;
+    } matrices[] = {{dan18::dptMASK, mask}, {dan18::dptSENS, sens}, {dan18::dptMASKTR, transmissionMask}};
+    d->updateMaskList();
+    d->updateSensList();
+    for (const auto &m : matrices)
+        if (!m.name.isEmpty() &&
+            ((QComboBox *)d->tableEC->cellWidget(m.row, col))->findText(m.name, Qt::MatchExactly) < 0)
+        {
+            m_lastError = "no " + QString(m.row == dan18::dptSENS ? "sensitivity " : "mask ") + m.name;
+            return false;
+        }
+
+    begin();
+    for (const auto &r : runs)
+        if (!r.run.isEmpty())
+        {
+            if (!d->tableEC->item(r.row, col))
+                d->tableEC->setItem(r.row, col, new QTableWidgetItem);
+            d->tableEC->item(r.row, col)->setText(r.run);
+        }
+    for (const auto &m : matrices)
+        if (!m.name.isEmpty())
+        {
+            auto *box = (QComboBox *)d->tableEC->cellWidget(m.row, col);
+            box->setCurrentIndex(box->findText(m.name, Qt::MatchExactly));
+        }
+    // the calibration runs' dark current is the configuration's unless given: one B4C run serves both (without it
+    // none was subtracted from the calibrant and the factor came out slightly off)
+    auto cellText = [this, col](int row) {
+        return d->tableEC->item(row, col) ? d->tableEC->item(row, col)->text().trimmed() : QString();
+    };
+    if (cellText(dan18::dptACBC).isEmpty() && !cellText(dan18::dptBC).isEmpty() &&
+        (!cellText(dan18::dptACFS).isEmpty() || !cellText(dan18::dptACEB).isEmpty()))
+    {
+        if (!d->tableEC->item(dan18::dptACBC, col))
+            d->tableEC->setItem(dan18::dptACBC, col, new QTableWidgetItem);
+        d->tableEC->item(dan18::dptACBC, col)->setText(cellText(dan18::dptBC));
+    }
+    if (transmission >= 0 && d->tableEC->item(dan18::dptECTR, col))
+        d->tableEC->item(dan18::dptECTR, col)->setCheckState(transmission ? Qt::Checked : Qt::Unchecked);
+    return end(true);
+}
+
+QVariantMap DanProcessing::configuration(int index)
+{
+    QVariantMap values;
+    if (index < 1 || index > configurations())
+    {
+        m_lastError = QString("configuration %1 of 1..%2").arg(index).arg(configurations());
+        return values;
+    }
+    const int col = index - 1;
+    auto text = [this, col](int row) {
+        if (auto *box = qobject_cast<QComboBox *>(d->tableEC->cellWidget(row, col)))
+            return box->currentText();
+        return d->tableEC->item(row, col) ? d->tableEC->item(row, col)->text() : QString();
+    };
+    auto number = [&text](int row) { return text(row).split(QChar(177)).first().trimmed().toDouble(); };
+    auto error = [&text](int row) {
+        const QStringList parts = text(row).split(QChar(177));
+        return parts.count() > 1 ? parts[1].trimmed().toDouble() : 0.0;
+    };
+    values["emptyBeam"] = text(dan18::dptEC);
+    values["darkCurrent"] = text(dan18::dptBC);
+    values["C"] = number(dan18::dptC);
+    values["D"] = number(dan18::dptD);
+    values["lambda"] = number(dan18::dptWL);
+    values["beamSize"] = text(dan18::dptBSIZE);
+    values["calibrant"] = text(dan18::dptACFS);
+    values["calibrantEmptyBeam"] = text(dan18::dptACEB);
+    values["calibrantDarkCurrent"] = text(dan18::dptACBC);
+    values["calibrantD"] = number(dan18::dptDAC);
+    values["mu"] = number(dan18::dptACMU);
+    values["calibrantTransmission"] = number(dan18::dptACTR);
+    values["factor"] = number(dan18::dptACFAC);
+    values["center"] = text(dan18::dptCENTER);
+    values["xCenter"] = number(dan18::dptCENTERX);
+    values["xCenterError"] = error(dan18::dptCENTERX);
+    values["yCenter"] = number(dan18::dptCENTERY);
+    values["yCenterError"] = error(dan18::dptCENTERY);
+    values["mask"] = text(dan18::dptMASK);
+    values["sens"] = text(dan18::dptSENS);
+    values["cellEmptyBeam"] = text(dan18::dptEB);
+    values["cellTransmission"] = number(dan18::dptECTR);
+    values["transmission"] =
+        d->tableEC->item(dan18::dptECTR, col) && d->tableEC->item(dan18::dptECTR, col)->checkState() == Qt::Checked;
+    values["transmissionMask"] = text(dan18::dptMASKTR);
+    return values;
+}
+
+bool DanProcessing::calculate()
+{
+    begin();
+    // A configuration calibrated with the direct beam (no calibrant: KWS-3) gets its absolute factor and its center
+    // through the full mask "mask": its beam-stop mask hides the beam both are calculated from. Its own mask is set
+    // back for I[Q] and the transmissions.
+    QStringList ownMasks;
+    const bool fullMask = isMask("mask");
+    for (int col = 0; col < configurations(); col++)
+    {
+        auto *box = qobject_cast<QComboBox *>(d->tableEC->cellWidget(dan18::dptMASK, col));
+        ownMasks << (box ? box->currentText() : QString());
+        const bool directBeam =
+            !d->tableEC->item(dan18::dptACFS, col) || d->tableEC->item(dan18::dptACFS, col)->text().trimmed().isEmpty();
+        if (box && fullMask && directBeam)
+            box->setCurrentIndex(box->findText("mask", Qt::MatchExactly));
+    }
+    for (int row : {dan18::dptC, dan18::dptD, dan18::dptWL, dan18::dptBSIZE, dan18::dptDAC, dan18::dptACMU,
+                    dan18::dptACTR, dan18::dptACFAC, dan18::dptCENTERX, dan18::dptECTR})
+        d->vertHeaderTableECPressed(row, true);
+    for (int col = 0; col < configurations() && col < ownMasks.count(); col++)
+        if (auto *box = qobject_cast<QComboBox *>(d->tableEC->cellWidget(dan18::dptMASK, col)))
+            box->setCurrentIndex(box->findText(ownMasks[col], Qt::MatchExactly));
+    return end(true); // a configuration without calibrant or center run is not an error: lastMessages() says so
+}
+
+bool DanProcessing::selectScriptTable(const QString &name)
+{
+    d->updateScriptTables();
+    const int index = d->comboBoxMakeScriptTable->findText(name);
+    if (index < 0)
+    {
+        m_lastError = "no script table " + name;
+        return false;
+    }
+    d->comboBoxMakeScriptTable->setCurrentIndex(index);
+    return true;
+}
+
+QString DanProcessing::newScriptTable(const QString &name, const QStringList &runs)
+{
+    if (name.isEmpty())
+        return fail("no script table name");
+    if (d->app()->checkTableExistence(name))
+        return fail("a table " + name + " exists already");
+    QStringList files;
+    for (QString run : runs)
+    {
+        if (const QString path = resolveFile(run, d->filesManager->pathInString()); QFileInfo(path).isFile())
+        {
+            files << QFileInfo(path).absoluteFilePath();
+            continue;
+        }
+        const QString file = d->filesManager->fileNameFullHeader(run);
+        if (file.isEmpty() || !QFileInfo(file).isFile())
+            return fail("no run " + run + " in " + d->filesManager->pathInString());
+        files << file;
+    }
+    if (files.isEmpty())
+        return fail("no runs");
+    begin();
+    d->newScriptTable(name);
+    if (d->comboBoxMakeScriptTable->currentText() == name)
+        d->makeScriptTable(files);
+    Table *t = nullptr;
+    if (!end(d->app()->checkTableExistence(name, t) && t->numRows() > 0))
+        return {};
+    return name;
+}
+
+bool DanProcessing::calculateTransmissions(const QString &scriptTable)
+{
+    if (!selectScriptTable(scriptTable))
+        return false;
+    begin();
+    d->calculateTransmissionAll();
+    // nothing calculated (every row "check transmission" or "Not active configuration"): say why, not later
+    Table *t = nullptr;
+    int calculated = 0;
+    if (d->app()->checkTableExistence(scriptTable, t))
+    {
+        const int col = static_cast<int>(t->colNames().indexOf("Transmission-Sample"));
+        double tr = 0.0;
+        bool ok = false;
+        for (int row = 0; col >= 0 && row < t->numRows(); row++)
+            if (tr = t->text(row, col).section('[', 0, 0).trimmed().toDouble(&ok); ok && tr > 0.0)
+                calculated++;
+    }
+    bool measured = false;
+    for (int i = 0; i < d->tableEC->columnCount(); i++)
+        measured = measured || (d->tableEC->item(dan18::dptECTR, i) &&
+                                d->tableEC->item(dan18::dptECTR, i)->checkState() == Qt::Checked);
+    return end(calculated > 0, measured ? "no transmission could be calculated in " + scriptTable
+                                        : "no configuration measures transmissions: setConfiguration(i, "
+                                          "transmission=True) for the configurations they are measured in");
+}
+
+bool DanProcessingOptions::setRemovePoints(int first, int last)
+{
+    if (first < 0 || last < 0)
+    {
+        m_lastError = "the points to remove are 0 or more";
+        return false;
+    }
+    begin();
+    d->spinBoxRemoveFirst->setValue(first);
+    d->spinBoxRemoveLast->setValue(last);
+    return end(true);
+}
+
+QList<int> DanProcessingOptions::removePoints() const
+{
+    return {d->spinBoxRemoveFirst->value(), d->spinBoxRemoveLast->value()};
+}
+
+static QStringList tableNames(ApplicationWindow *app)
+{
+    QStringList names;
+    for (MdiSubWindow *w : app->tableList())
+        names << w->name();
+    return names;
+}
+
+static QStringList filesIn(const QString &folder)
+{
+    QStringList files;
+    QDirIterator it(folder, QDir::Files, QDirIterator::Subdirectories);
+    while (it.hasNext())
+        files << it.next() + "|" + QFileInfo(it.filePath()).lastModified().toString(Qt::ISODateWithMs);
+    return files;
+}
+
+QStringList DanProcessing::run(const QString &scriptTable, const QString &kind, const QString &output)
+{
+    static const QStringList kinds = {"I-Q",       "I-x-y", "dI-x-y", "I-Qx",   "I-Qy",
+                                      "Sigma-x-y", "Q-x-y", "dQ-x-y", "I-Polar"};
+    if (!kinds.contains(kind))
+    {
+        m_lastError = "no processing " + kind + "; one of " + kinds.join(", ");
+        return {};
+    }
+    if (output != "project" && output != "files")
+    {
+        m_lastError = "output: project or files";
+        return {};
+    }
+    if (!selectScriptTable(scriptTable))
+        return {};
+    (output == "project" ? d->radioButtonOpenInProject : d->radioButtonFile)->setChecked(true);
+
+    const QStringList tablesBefore = tableNames(d->app());
+    const QString folder = d->filesManager->pathOutString();
+    const QStringList filesBefore = output == "files" ? filesIn(folder) : QStringList();
+    begin();
+    d->danDanMultiButton(kind);
+    QStringList made;
+    if (output == "project")
+    {
+        for (const QString &name : tableNames(d->app()))
+            if (!tablesBefore.contains(name))
+                made << name;
+    }
+    else
+        for (const QString &file : filesIn(folder))
+            if (!filesBefore.contains(file))
+                made << file.section('|', 0, 0);
+    NaturalSort::sort(made);
+    if (!end(!made.isEmpty()))
+        return {};
+    return made;
+}
+
+//+++ DanMerge
+QString DanMerge::mergeOne(const QString &name, const QStringList &tables, bool join, bool ascii)
+{
+    gsl_matrix *data = nullptr;
+    int n = 0;
+    bool dIExist, dQExist, sigmaExist, anisotropyExist;
+    QString labelList;
+    const bool ok =
+        join ? d->singleSampleMergeJoin(name, tables, labelList, data, n, dIExist, dQExist, sigmaExist, anisotropyExist)
+             : d->singleSampleMergeRebin(name, tables, labelList, data, n, dIExist, dQExist, sigmaExist,
+                                         anisotropyExist);
+    if (!ok)
+        return {};
+    const QString made =
+        d->saveMergedMatrix(name, labelList, data, n, dIExist, dQExist, sigmaExist, anisotropyExist, ascii);
+    gsl_matrix_free(data);
+    return made;
+}
+
+QStringList DanMerge::run(const QString &templateTable, const QString &method, int overlap, int removeFirst,
+                          int removeLast, const QString &output)
+{
+    Table *t = nullptr;
+    if (!d->app()->checkTableExistence(templateTable, t))
+    {
+        m_lastError = "no merging template " + templateTable;
+        return {};
+    }
+    if (method != "join" && method != "rebin")
+    {
+        m_lastError = "method: join or rebin";
+        return {};
+    }
+    if (output != "project" && output != "files")
+    {
+        m_lastError = "output: project or files";
+        return {};
+    }
+    if (overlap < 0 || overlap > 100 || removeFirst < 0 || removeLast < 0)
+    {
+        m_lastError = "overlap 0..100 %, points to remove 0 or more";
+        return {};
+    }
+    d->spinBoxOverlap->setValue(overlap);
+    d->spinBoxRemoveFirstMerging->setValue(removeFirst);
+    d->spinBoxRemoveLastMerging->setValue(removeLast);
+    d->toolBoxMerge->setCurrentIndex(method == "join" ? 0 : 1);
+    const bool ascii = output == "files";
+
+    begin();
+    auto *folder = d->app()->current_folder;
+    if (ascii)
+    {
+        QDir dir(d->filesManager->pathOutString());
+        if (!dir.exists("ASCII-QI-MERGED"))
+            dir.mkdir("ASCII-QI-MERGED");
+    }
+    else
+        d->app()->changeFolder("DAN :: Merge.1D");
+    QStringList made;
+    for (int row = 0; row < t->numRows(); row++)
+    {
+        QString name = t->text(row, 0).simplified();
+        name = name.replace(" ", "-").replace("/", "-").replace("_", "-").replace(",", "-").replace(".", "-");
+        name.remove("%");
+        if (name.isEmpty())
+            name = "merged-" + QString::number(row + 1);
+        QStringList tables;
+        for (int col = 1; col < t->numCols(); col++)
+            if (!t->text(row, col).trimmed().isEmpty() && d->app()->checkTableExistence(t->text(row, col).trimmed()))
+                tables << t->text(row, col).trimmed();
+        if (tables.isEmpty())
+            continue;
+        const QString one = mergeOne(name, tables, method == "join", ascii);
+        if (!one.isEmpty())
+            made << one;
+    }
+    if (!ascii)
+        d->app()->changeFolder(folder, true);
+    if (!end(!made.isEmpty(), "nothing to merge in " + templateTable))
+        return {};
+    return made;
+}
+
+QString DanMerge::join(const QString &name, const QStringList &tables, int overlap)
+{
+    if (name.isEmpty())
+        return fail("no name");
+    if (tables.count() < 2)
+        return fail("two tables or more");
+    for (const QString &table : tables)
+        if (!d->app()->checkTableExistence(table))
+            return fail("no table " + table);
+    if (overlap < 0 || overlap > 100)
+        return fail("overlap 0..100 %");
+    d->spinBoxOverlap->setValue(overlap);
+    d->spinBoxRemoveFirstMerging->setValue(0);
+    d->spinBoxRemoveLastMerging->setValue(0);
+    begin();
+    auto *folder = d->app()->current_folder;
+    d->app()->changeFolder("DAN :: Merge.1D");
+    QString made = mergeOne(name, tables, true, false);
+    d->app()->changeFolder(folder, true);
+    if (!end(!made.isEmpty()))
+        return {};
+    return made;
+}
+
+// (Q, I) of a table's rows with both numeric and I > 0, sorted by Q
+static QList<QPair<double, double>> curve(Table *t)
+{
+    QList<QPair<double, double>> points;
+    double q, i;
+    for (int row = 0; row < t->numRows(); row++)
+        if (t->tryNumericCell(row, 0, q) && t->tryNumericCell(row, 1, i) && q > 0.0 && i > 0.0)
+            points << qMakePair(q, i);
+    std::sort(points.begin(), points.end());
+    return points;
+}
+
+bool DanMerge::overlap(const QString &first, const QString &second, double &qMin, double &qMax, int &points,
+                       double &ratio)
+{
+    Table *a = nullptr;
+    Table *b = nullptr;
+    if (!d->app()->checkTableExistence(first, a) || !d->app()->checkTableExistence(second, b))
+    {
+        m_lastError = "no table " + (a ? second : first);
+        return false;
+    }
+    begin();
+    end(true);
+    const auto ca = curve(a);
+    const auto cb = curve(b);
+    if (ca.count() < 2 || cb.isEmpty())
+    {
+        m_lastError = "no (Q, I > 0) points";
+        return false;
+    }
+    qMin = std::max(ca.first().first, cb.first().first);
+    qMax = std::min(ca.last().first, cb.last().first);
+    double sum = 0.0;
+    points = 0;
+    for (const auto &p : cb)
+    {
+        if (p.first < qMin || p.first > qMax)
+            continue;
+        for (int k = 0; k + 1 < ca.count(); k++)
+            if (ca[k].first <= p.first && p.first <= ca[k + 1].first)
+            {
+                // log-log interpolation of the first curve at the second's Q
+                const double x = std::log(p.first / ca[k].first) / std::log(ca[k + 1].first / ca[k].first);
+                const double i = ca[k].second * std::pow(ca[k + 1].second / ca[k].second, x);
+                sum += p.second / i;
+                points++;
+                break;
+            }
+    }
+    if (points == 0)
+    {
+        m_lastError = first + " and " + second + " do not overlap";
+        return false;
+    }
+    ratio = sum / points;
+    return true;
+}

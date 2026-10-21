@@ -17,6 +17,16 @@ dan18::dan18(QWidget *parent)
 : QWidget(parent)
 {
     setupUi(this);
+    danOptions = new DanOptions(this);
+    danRawdata = new DanRawdata(this);
+    danMask = new DanMask(this);
+    danOptionsConfig = new DanOptionsConfig(this);
+    danSensitivity = new DanSensitivity(this);
+    danProcessingOptions = new DanProcessingOptions(this);
+    danProcessing = new DanProcessing(this);
+    danMerge = new DanMerge(this);
+    danOptions->config = danOptionsConfig;
+    danProcessing->options = danProcessingOptions;
     // DAN's own fields, tables and spin boxes stay C like its instrument and configuration files; only the QtiSAS
     // tables and matrices it writes follow the application's numerical format
     setLocale(QLocale::c());
@@ -45,6 +55,14 @@ dan18::dan18(QWidget *parent)
 dan18::~dan18()
 {
     writeSettings();
+    delete danOptions;
+    delete danRawdata;
+    delete danMask;
+    delete danOptionsConfig;
+    delete danSensitivity;
+    delete danProcessingOptions;
+    delete danProcessing;
+    delete danMerge;
 }
 
 // *******************************************

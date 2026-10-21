@@ -1184,8 +1184,8 @@ void dan18::mergeMethod(bool asciiYN)
 }
 
 //+++ saveMergedMatrix
-void dan18::saveMergedMatrix(QString name, const QString &labelList, gsl_matrix *data, int N, bool dIExist,
-                             bool dQExist, bool sigmaExist, bool anisotropyExist, bool asciiYN)
+QString dan18::saveMergedMatrix(QString name, const QString &labelList, gsl_matrix *data, int N, bool dIExist,
+                                bool dQExist, bool sigmaExist, bool anisotropyExist, bool asciiYN)
 {
     int numberCols = 2 + int(dIExist) + int(dQExist) + int(sigmaExist) + int(anisotropyExist);
 
@@ -1337,11 +1337,12 @@ void dan18::saveMergedMatrix(QString name, const QString &labelList, gsl_matrix 
     t->notifyChanges();
     app()->modifiedProject(t);
     app()->showFullRangeAllPlots(name);
+    return name;
 }
 
 //+++ saveMergedMatrixAscii
-void dan18::saveMergedMatrixAscii(QString name, gsl_matrix *data, int N, bool dIExist, bool dQExist, bool sigmaExist,
-                                  bool anisotropyExist)
+QString dan18::saveMergedMatrixAscii(QString name, gsl_matrix *data, int N, bool dIExist, bool dQExist, bool sigmaExist,
+                                     bool anisotropyExist)
 {
     int removeFirst = spinBoxRemoveFirstMerging->value();
     int removeLast = spinBoxRemoveLastMerging->value();
@@ -1377,7 +1378,7 @@ void dan18::saveMergedMatrixAscii(QString name, gsl_matrix *data, int N, bool dI
     if (!f.open(QIODevice::WriteOnly))
     {
         danMessage(tr("<h4>... could not write file ...</h4>"));
-        return;
+        return {};
     }
 
     QTextStream stream(&f);
@@ -1437,4 +1438,5 @@ void dan18::saveMergedMatrixAscii(QString name, gsl_matrix *data, int N, bool dI
             stream << "\n";
         }
     f.close();
+    return QDir::cleanPath(path + name);
 }

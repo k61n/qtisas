@@ -3629,6 +3629,345 @@ public:
 %End
 };
 
+// DAN-SANS: one object per tab (Dan.Options, Dan.Rawdata, Dan.Mask, Dan.Sensitivity, Dan.Processing, Dan.Merge).
+// A call runs DAN without dialogs; one that makes nothing raises ValueError with DAN's reason. lastMessages(): DAN's
+// messages during the last call (warnings too when it succeeded).
+class DanPart /NoDefaultCtors/
+{
+%TypeHeaderCode
+#include "dan-python.h"
+%End
+public:
+    QString lastError() const;
+    QStringList lastMessages() const;
+};
+
+class DanOptionsConfig : DanPart /NoDefaultCtors/
+{
+%TypeHeaderCode
+#include "dan-python.h"
+%End
+public:
+    static QStringList centerMethods();
+    QString centerMethod() const;
+    void setCenterMethod(const QString &method);
+%MethodCode
+    if (!(sipCpp->setCenterMethod(*a0))) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
+    QStringList transmissionMethods() const;
+    QString transmissionMethod() const;
+    void setTransmissionMethod(const QString &method);
+%MethodCode
+    if (!(sipCpp->setTransmissionMethod(*a0))) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
+};
+
+class DanOptions : DanPart /NoDefaultCtors/
+{
+%TypeHeaderCode
+#include "dan-python.h"
+%End
+public:
+    DanOptionsConfig *config /PyName=Config/;
+    void newSession();
+    void openSession(const QString &scriptTable);
+%MethodCode
+    if (!(sipCpp->openSession(*a0))) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
+    QStringList instruments() const;
+    QString instrument() const;
+    void selectInstrument(const QString &name);
+%MethodCode
+    if (!(sipCpp->selectInstrument(*a0))) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
+    QStringList modes() const;
+    void selectMode(const QString &mode);
+%MethodCode
+    if (!(sipCpp->selectMode(*a0))) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
+    void setInputPath(const QString &path);
+%MethodCode
+    if (!(sipCpp->setInputPath(*a0))) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
+    QString inputPath() const;
+    void setOutputPath(const QString &path);
+%MethodCode
+    if (!(sipCpp->setOutputPath(*a0))) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
+    QString outputPath() const;
+};
+
+class DanRawdata : DanPart /NoDefaultCtors/
+{
+%TypeHeaderCode
+#include "dan-python.h"
+%End
+public:
+    QStringList runs() const;
+    QStringList headerItems() const;
+    QString newHeaderTable(const QString &name, SIP_PYOBJECT items, const QString &runs = "*");
+%MethodCode
+    QStringList items;
+    if (!sipqti_strings(a1, &items, "items: header item names (headerItems())"))
+        sipError = sipErrorFail;
+    else {
+        sipRes = new QString(sipCpp->newHeaderTable(*a0, items, *a2));
+        if (!(!sipRes->isEmpty())) {
+            PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+            sipError = sipErrorFail;
+        }
+    }
+%End
+};
+
+class DanMask : DanPart /NoDefaultCtors/
+{
+%TypeHeaderCode
+#include "dan-python.h"
+%End
+public:
+    // edge, beamstop: (x1, x2, y1, y2) in pixels; None: as set (the instrument's default); 0: none
+    QString newMask(const QString &name = "mask", SIP_PYOBJECT edge = Py_None, SIP_PYOBJECT beamstop = Py_None,
+                    const QString &shape = QString(), SIP_PYOBJECT polygons = Py_None, bool transmission = false);
+%MethodCode
+    QList<int> edge, beamstop;
+    QString polygons;
+    if (!sipqti_box(a1, &edge, "edge") || !sipqti_box(a2, &beamstop, "beamstop"))
+        sipError = sipErrorFail;
+    else if (a4 != Py_None && !PyUnicode_Check(a4)) {
+        PyErr_SetString(PyExc_TypeError, "polygons: a string like \"x1-y1,x2-y2,x3-y3;...\" or None");
+        sipError = sipErrorFail;
+    }
+    else {
+        if (a4 != Py_None)
+            polygons = QString::fromUtf8(PyUnicode_AsUTF8(a4));
+        sipRes = new QString(sipCpp->newMask(*a0, edge, beamstop, *a3, polygons, a5));
+        if (!(!sipRes->isEmpty())) {
+            PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+            sipError = sipErrorFail;
+        }
+    }
+%End
+    QString loadMask(const QString &file, const QString &name = "mask");
+%MethodCode
+    sipRes = new QString(sipCpp->loadMask(*a1, *a0));
+    if (!(!sipRes->isEmpty())) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
+    QStringList masks() const;
+};
+
+class DanSensitivity : DanPart /NoDefaultCtors/
+{
+%TypeHeaderCode
+#include "dan-python.h"
+%End
+public:
+    QString newSensitivity(const QString &run, const QString &name = "sens", const QString &emptyBeam = QString(), const QString &darkCurrent = QString(), double transmission = 1.0, const QString &mask = "mask");
+%MethodCode
+    sipRes = new QString(sipCpp->newSensitivity(*a1, *a0, *a2, *a3, a4, *a5));
+    if (!(!sipRes->isEmpty())) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
+    QString loadSensitivity(const QString &file, const QString &name = "sens");
+%MethodCode
+    sipRes = new QString(sipCpp->loadSensitivity(*a1, *a0));
+    if (!(!sipRes->isEmpty())) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
+    QStringList sensitivities() const;
+    // (Tr, dTr) of a run against an empty beam, counted through a (transmission) mask
+    SIP_PYTUPLE transmission(const QString &run, const QString &emptyBeam, const QString &mask = "mask");
+%MethodCode
+    double tr = 0, dTr = 0;
+    if (!sipCpp->transmission(*a0, *a1, *a2, tr, dTr)) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+    else
+        sipRes = Py_BuildValue("(dd)", tr, dTr);
+%End
+};
+
+class DanProcessingOptions : DanPart /NoDefaultCtors/
+{
+%TypeHeaderCode
+#include "dan-python.h"
+%End
+public:
+    void setRemovePoints(int first, int last);
+%MethodCode
+    if (!(sipCpp->setRemovePoints(a0, a1))) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
+    SIP_PYTUPLE removePoints() const;
+%MethodCode
+    const QList<int> p = sipCpp->removePoints();
+    sipRes = Py_BuildValue("(ii)", p[0], p[1]);
+%End
+};
+
+class DanProcessing : DanPart /NoDefaultCtors/
+{
+%TypeHeaderCode
+#include "dan-python.h"
+%End
+public:
+    DanProcessingOptions *options /PyName=Options/;
+    void setConfigurations(int number);
+%MethodCode
+    if (!(sipCpp->setConfigurations(a0))) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
+    int configurations() const;
+    // configuration 1..n; only the given fields change; runs as numbers or names of the input folder
+    void setConfiguration(int index, const QString &emptyBeam = QString(), const QString &darkCurrent = QString(),
+                          const QString &calibrant = QString(), const QString &calibrantEmptyBeam = QString(),
+                          const QString &calibrantDarkCurrent = QString(), const QString &center = QString(),
+                          const QString &mask = QString(), const QString &sens = QString(),
+                          const QString &transmissionMask = QString(), const QString &cellEmptyBeam = QString(),
+                          SIP_PYOBJECT transmission = Py_None);
+%MethodCode
+    const int transmission = a11 == Py_None ? -1 : (PyObject_IsTrue(a11) ? 1 : 0);
+    if (!(sipCpp->setConfiguration(a0, *a1, *a2, *a3, *a4, *a5, *a6, *a7, *a8, *a9, *a10, transmission))) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
+    QVariantMap configuration(int index);
+%MethodCode
+    sipRes = new QVariantMap(sipCpp->configuration(a0));
+    if (!(!sipRes->isEmpty())) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
+    void calculate();
+%MethodCode
+    if (!(sipCpp->calculate())) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
+    QString newScriptTable(const QString &name, SIP_PYOBJECT runs);
+%MethodCode
+    QStringList runs;
+    if (!sipqti_strings(a1, &runs, "runs: run numbers or file names"))
+        sipError = sipErrorFail;
+    else {
+        sipRes = new QString(sipCpp->newScriptTable(*a0, runs));
+        if (!(!sipRes->isEmpty())) {
+            PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+            sipError = sipErrorFail;
+        }
+    }
+%End
+    // tables by name (a Table object stands for its name)
+    void calculateTransmissions(SIP_PYOBJECT scriptTable);
+%MethodCode
+    QString name;
+    if (!sipqti_name(a0, &name, "scriptTable: the script table's name"))
+        sipError = sipErrorFail;
+    else if (!sipCpp->calculateTransmissions(name)) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
+    QStringList run(SIP_PYOBJECT scriptTable, const QString &kind = "I-Q", const QString &output = "project");
+%MethodCode
+    QString name;
+    if (!sipqti_name(a0, &name, "scriptTable: the script table's name"))
+        sipError = sipErrorFail;
+    else {
+        sipRes = new QStringList(sipCpp->run(name, *a1, *a2));
+        if (sipRes->isEmpty() && !sipCpp->lastError().isEmpty()) {
+            PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+            sipError = sipErrorFail;
+        }
+    }
+%End
+};
+
+class DanMerge : DanPart /NoDefaultCtors/
+{
+%TypeHeaderCode
+#include "dan-python.h"
+%End
+public:
+    QStringList run(SIP_PYOBJECT templateTable, const QString &method = "join", int overlap = 30, int removeFirst = 0, int removeLast = 0, const QString &output = "project");
+%MethodCode
+    QString name;
+    if (!sipqti_name(a0, &name, "templateTable: the merging template's name"))
+        sipError = sipErrorFail;
+    else {
+        sipRes = new QStringList(sipCpp->run(name, *a1, a2, a3, a4, *a5));
+        if (sipRes->isEmpty() && !sipCpp->lastError().isEmpty()) {
+            PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+            sipError = sipErrorFail;
+        }
+    }
+%End
+    QString join(const QString &name, SIP_PYOBJECT tables, int overlap = 30);
+%MethodCode
+    QStringList tables;
+    if (!sipqti_strings(a1, &tables, "tables: table names"))
+        sipError = sipErrorFail;
+    else {
+        sipRes = new QString(sipCpp->join(*a0, tables, a2));
+        if (!(!sipRes->isEmpty())) {
+            PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+            sipError = sipErrorFail;
+        }
+    }
+%End
+    // where two curves overlap: (qMin, qMax, points of the second inside, mean ratio second/first)
+    SIP_PYTUPLE overlap(SIP_PYOBJECT first, SIP_PYOBJECT second);
+%MethodCode
+    double qMin = 0, qMax = 0, ratio = 0;
+    int points = 0;
+    QString one, two;
+    if (!sipqti_name(a0, &one, "first: a table's name") || !sipqti_name(a1, &two, "second: a table's name"))
+        sipError = sipErrorFail;
+    else if (!sipCpp->overlap(one, two, qMin, qMax, points, ratio)) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+    else
+        sipRes = Py_BuildValue("(ddid)", qMin, qMax, points, ratio);
+%End
+};
+
 class dan18 : public QWidget
 {
 %TypeHeaderCode
@@ -3638,17 +3977,12 @@ class dan18 : public QWidget
 public:
     explicit dan18(QWidget *parent = nullptr);
 
-    void newSession();
-    void openSession(QString scriptName);
-    void instrumentSelected(QString instrumentName) /PyName=selectInstrument/;
-    void experimentalModeSelected(QString mode) /PyName=selectMode/;
-    bool setPathIn(QString path);
-    bool setPathOut(QString path);
-    bool infoExtractorScript(
-        QString tableName,
-        QString columnNumberList,
-        QString runsRange = QString()
-    ) /PyName=infoExtractor/;
+    DanOptions *danOptions /PyName=Options/;
+    DanRawdata *danRawdata /PyName=Rawdata/;
+    DanMask *danMask /PyName=Mask/;
+    DanSensitivity *danSensitivity /PyName=Sensitivity/;
+    DanProcessing *danProcessing /PyName=Processing/;
+    DanMerge *danMerge /PyName=Merge/;
 };
 
 // ASCII.SANS.1D: import and export of radially averaged 1D SAS data (Q, I, dI, sigma) — the "Process Data" button in
@@ -5156,6 +5490,77 @@ if(sipRes)
 };
 
 %ModuleCode
+// None, a string or a sequence of strings and numbers (run numbers) as strings; TypeError otherwise
+bool sipqti_strings(PyObject *obj, QStringList *out, const char *message)
+{
+  if (!obj || obj == Py_None)
+    return true;
+  if (PyUnicode_Check(obj)) {
+    *out << QString::fromUtf8(PyUnicode_AsUTF8(obj));
+    return true;
+  }
+  if (!PyList_Check(obj) && !PyTuple_Check(obj) && sipqti_windowName(obj, out))
+    return true;
+  PyObject *seq = PySequence_Check(obj) ? PySequence_Fast(obj, "") : nullptr;
+  bool ok = seq != nullptr;
+  for (Py_ssize_t i = 0; ok && i < PySequence_Fast_GET_SIZE(seq); i++) {
+    PyObject *item = PySequence_Fast_GET_ITEM(seq, i);
+    if (PyUnicode_Check(item))
+      *out << QString::fromUtf8(PyUnicode_AsUTF8(item));
+    else if (PyLong_Check(item) && !PyBool_Check(item))
+      *out << QString::number(PyLong_AsLongLong(item));
+    else
+      ok = sipqti_windowName(item, out);
+  }
+  Py_XDECREF(seq);
+  if (!ok)
+    PyErr_SetString(PyExc_TypeError, message);
+  return ok;
+}
+// a window (Table, Matrix, ...) where its name is asked: its objectName()
+bool sipqti_windowName(PyObject *obj, QStringList *out)
+{
+  PyObject *name = PyObject_CallMethod(obj, "objectName", nullptr);
+  const bool ok = name && PyUnicode_Check(name);
+  if (ok)
+    *out << QString::fromUtf8(PyUnicode_AsUTF8(name));
+  Py_XDECREF(name);
+  PyErr_Clear();
+  return ok;
+}
+// one name: a string, or a window (its objectName()); TypeError otherwise
+bool sipqti_name(PyObject *obj, QString *out, const char *message)
+{
+  QStringList names;
+  const bool ok = obj && obj != Py_None && sipqti_strings(obj, &names, message) && names.size() == 1;
+  if (ok)
+    *out = names.first();
+  else if (!PyErr_Occurred())
+    PyErr_SetString(PyExc_TypeError, message);
+  return ok;
+}
+// a mask box: None (as set), 0 or False (none), or (x1, x2, y1, y2) of integers; TypeError otherwise
+bool sipqti_box(PyObject *obj, QList<int> *out, const char *name)
+{
+  if (!obj || obj == Py_None)
+    return true;
+  if ((PyLong_Check(obj) && PyLong_AsLong(obj) == 0) || obj == Py_False) {
+    *out << 0;
+    return true;
+  }
+  PyObject *seq = PySequence_Check(obj) && !PyUnicode_Check(obj) ? PySequence_Fast(obj, "") : nullptr;
+  bool ok = seq != nullptr && PySequence_Fast_GET_SIZE(seq) == 4;
+  for (Py_ssize_t i = 0; ok && i < 4; i++) {
+    PyObject *item = PySequence_Fast_GET_ITEM(seq, i);
+    ok = PyLong_Check(item) && !PyBool_Check(item);
+    if (ok)
+      *out << int(PyLong_AsLong(item));
+  }
+  Py_XDECREF(seq);
+  if (!ok)
+    PyErr_Format(PyExc_TypeError, "%s: (x1, x2, y1, y2) in pixels, 0 for none, or None", name);
+  return ok;
+}
 // save=None / False / True of closeProject(), newProject(), openProject(): -1 ask, 0 discard, 1 save first
 int sipqti_savePolicy(PyObject *save)
 {
@@ -5214,6 +5619,10 @@ QString sipqti_caseInsensitiveCollision(compile18 *c, const QString &stem)
 %End
 %ModuleHeaderCode
 class ApplicationWindow;
+bool sipqti_strings(PyObject *obj, QStringList *out, const char *message);
+bool sipqti_windowName(PyObject *obj, QStringList *out);
+bool sipqti_name(PyObject *obj, QString *out, const char *message);
+bool sipqti_box(PyObject *obj, QList<int> *out, const char *name);
 ApplicationWindow *sipqti_app();
 #define SIPQTI_APP(sipcppexpr)\
 ApplicationWindow *app = sipqti_app();\

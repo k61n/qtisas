@@ -44,6 +44,15 @@ if(WITH_PYTHON)
         ${CMAKE_BINARY_DIR}/sip/qti/sipqtiCorrelation.cpp
         ${CMAKE_BINARY_DIR}/sip/qti/sipqticompile18.cpp
         ${CMAKE_BINARY_DIR}/sip/qti/sipqtidan18.cpp
+        ${CMAKE_BINARY_DIR}/sip/qti/sipqtiDanMask.cpp
+        ${CMAKE_BINARY_DIR}/sip/qti/sipqtiDanMerge.cpp
+        ${CMAKE_BINARY_DIR}/sip/qti/sipqtiDanOptions.cpp
+        ${CMAKE_BINARY_DIR}/sip/qti/sipqtiDanOptionsConfig.cpp
+        ${CMAKE_BINARY_DIR}/sip/qti/sipqtiDanPart.cpp
+        ${CMAKE_BINARY_DIR}/sip/qti/sipqtiDanProcessing.cpp
+        ${CMAKE_BINARY_DIR}/sip/qti/sipqtiDanProcessingOptions.cpp
+        ${CMAKE_BINARY_DIR}/sip/qti/sipqtiDanRawdata.cpp
+        ${CMAKE_BINARY_DIR}/sip/qti/sipqtiDanSensitivity.cpp
         ${CMAKE_BINARY_DIR}/sip/qti/sipqtiDataCurve.cpp
         ${CMAKE_BINARY_DIR}/sip/qti/sipqtiDeconvolution.cpp
         ${CMAKE_BINARY_DIR}/sip/qti/sipqtiDifferentiation.cpp

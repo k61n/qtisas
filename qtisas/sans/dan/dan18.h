@@ -41,6 +41,7 @@ Description: SANS data analysis interface
 #include "dan-files-manager.h"
 #include "dan-header-devices.h"
 #include "dan-parser-header.h"
+#include "dan-python.h"
 #include "dan-script-table-manager.h"
 #include "Matrix.h"
 #include "PlotCurve.h"
@@ -56,6 +57,16 @@ inline QString tableTextC(Table *t, int row, int col)
 class dan18 : public QWidget, private Ui::dan
 {
     Q_OBJECT
+    // the Python interface (dan-python/): one object per tab, it uses the tabs' widgets
+    friend class DanPart;
+    friend class DanOptions;
+    friend class DanRawdata;
+    friend class DanMask;
+    friend class DanOptionsConfig;
+    friend class DanSensitivity;
+    friend class DanProcessingOptions;
+    friend class DanProcessing;
+    friend class DanMerge;
 public:
     dan18(QWidget *parent = 0);
     ~dan18();
@@ -72,6 +83,15 @@ public:
     {
         return m_scriptRun;
     }
+    // the Python objects of the tabs (Dan.Options, ...)
+    DanOptions *danOptions;
+    DanRawdata *danRawdata;
+    DanMask *danMask;
+    DanOptionsConfig *danOptionsConfig;
+    DanSensitivity *danSensitivity;
+    DanProcessingOptions *danProcessingOptions;
+    DanProcessing *danProcessing;
+    DanMerge *danMerge;
     bool setPathIn(const QString &path) const
     {
         return filesManager->pushedPathIn(path);
@@ -374,10 +394,10 @@ public:
     bool checkTableRange(const QString &tName, int &Rows, int &Cols, double &Qmin, double &Qmax);
     bool addTable(const QString &table, gsl_matrix *&data, int &N, int Rows, int overlap, int &firstPosition,
                   bool &dIExist, bool &dQExist, bool &sigmaExist, bool &anisotropyExist);
-    void saveMergedMatrix(QString name, const QString &labelList, gsl_matrix *data, int N, bool dIExist, bool dQExist,
-                          bool sigmaExist, bool anisotropyExist, bool asciiYN);
-    void saveMergedMatrixAscii(QString name, gsl_matrix *data, int N, bool dIExist, bool dQExist, bool sigmaExist,
-                               bool anisotropyExist);
+    QString saveMergedMatrix(QString name, const QString &labelList, gsl_matrix *data, int N, bool dIExist,
+                             bool dQExist, bool sigmaExist, bool anisotropyExist, bool asciiYN);
+    QString saveMergedMatrixAscii(QString name, gsl_matrix *data, int N, bool dIExist, bool dQExist, bool sigmaExist,
+                                  bool anisotropyExist);
     bool collectTableNamesSingleSample(QString &nameMerged, QStringList &tablesToMerge, int M, int nn,
                                        Table *activeTable);
     bool singleSampleMergeJoin(const QString &nameMerged, QStringList tablesToMerge, QString &labelList,
