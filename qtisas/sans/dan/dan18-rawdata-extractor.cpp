@@ -155,7 +155,8 @@ bool dan18::infoExtractorScript(QString tableName, const QString &columnNumberLi
     if (!tableName.isEmpty())
     {
         int tableIndex = comboBoxInfoExtractor->findText(tableName);
-        if (tableIndex >= 0)
+        // only while that table exists: a closed one stayed in the list and was "reused", so nothing was read
+        if (tableIndex >= 0 && app()->checkTableExistence(tableName))
             comboBoxInfoExtractor->setCurrentIndex(tableIndex);
         else
             newInfoExtractor(tableName);

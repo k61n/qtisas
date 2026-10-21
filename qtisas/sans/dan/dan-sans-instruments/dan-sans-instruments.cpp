@@ -3091,7 +3091,7 @@ const QStringList &InstrumentSANS::SANS1()
         "[Detector-Dead-Time] 1.0e-6",
         "[Detector-Dead-Time-DB] 1.0e-6",
         "[Options-2D-DeadTimeModel-NonPara] Yes",
-        "[Options-2D-CenterMethod] HF",
+        "[Options-2D-CenterMethod] SYM",
         "[Calibrant-Type] Flat Scatter [FS]",
         "[Calibrant] H2O[SANS-1]",
         "[Use-Active-Mask-and-Sensitivity-Matrixes] No",

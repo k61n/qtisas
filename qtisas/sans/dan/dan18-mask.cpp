@@ -63,7 +63,8 @@ void dan18::saveMaskAs(QString maskName)
 
     bool exist = app()->existWindow(maskName);
 
-    if (exist && !neededMaskExists(MD, maskName))
+    // a mask of another detector size (another instrument) is made anew; a matrix that is no mask is kept
+    if (exist && !app()->findMatrixListByLabel("DAN::Mask::").contains(maskName))
     {
         QMessageBox::critical(nullptr, "QtiSAS", "Selected matrix is NOT CORRECT MASK (size, label...)");
         return;
@@ -737,6 +738,26 @@ void dan18::updateMaskList()
     comboBoxMaskFor->addItems(lst);
     if (lst.contains(currentMask))
         comboBoxMaskFor->setCurrentIndex(lst.indexOf(currentMask));
+
+    // the configurations' mask lists too: a new mask could be selected there only after their header was pressed
+    updateMatrixListInConfigurations(dptMASK, lst);
+    updateMatrixListInConfigurations(dptMASKTR, lst);
+}
+//+++ the list of a configuration-table row of matrices (masks or sensitivities), the selections kept
+void dan18::updateMatrixListInConfigurations(int row, const QStringList &names)
+{
+    for (int i = 0; i < tableEC->columnCount(); i++)
+    {
+        auto *box = qobject_cast<QComboBox *>(tableEC->cellWidget(row, i));
+        if (!box)
+            continue;
+        const QString current = box->currentText();
+        box->blockSignals(true);
+        box->clear();
+        box->addItems(names);
+        box->setCurrentIndex(static_cast<int>(names.indexOf(current)));
+        box->blockSignals(false);
+    }
 }
 //+++ Mask Tools
 void dan18::readCoorMaskTools()

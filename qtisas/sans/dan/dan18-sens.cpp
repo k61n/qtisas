@@ -34,7 +34,7 @@ void dan18::sensConnectSlot()
 //+++ create standart senssitivity
 void dan18::createSens()
 {
-    if (lineEditPlexiAnyD->palette().color(QPalette::Window) != QColor(128, 255, 7) && buttonGroupSensanyD->isChecked())
+    if (!filesManager->checkFileNumber(lineEditPlexiAnyD->text()) && buttonGroupSensanyD->isChecked())
     {
         QMessageBox::critical(nullptr, "DAN::SANS", "<b>check sensitivity fields!</b>");
         return;
@@ -81,7 +81,8 @@ void dan18::saveSensAs(QString sensName)
         return;
 
     bool exist = app()->existWindow(sensName);
-    if (exist && !neededSensExists(MD, sensName))
+    // see saveMaskAs(): a sensitivity of another detector size is made anew
+    if (exist && !app()->findMatrixListByLabel("DAN::Sensitivity::").contains(sensName))
     {
         QMessageBox::critical(nullptr, "QtiSAS", "Selected matrix is NOT CORRECT SENSITIVITY (size, label...)");
         return;
@@ -162,8 +163,8 @@ void dan18::selectAnyBC()
 
 void dan18::calculateTrHidden()
 {
-    if (lineEditPlexiAnyD->palette().color(QPalette::Window) != QColor(128, 255, 7) ||
-        lineEditEBAnyD->palette().color(QPalette::Window) != QColor(128, 255, 7))
+    if (!filesManager->checkFileNumber(lineEditPlexiAnyD->text()) ||
+        !filesManager->checkFileNumber(lineEditEBAnyD->text()))
     {
         lineEditTransAnyD->setText("0.0000");
         return;
@@ -177,7 +178,7 @@ void dan18::calculateTrHidden()
 
 void dan18::calculateAnyTr()
 {
-    if (lineEditPlexiAnyD->palette().color(QPalette::Window) == QColor(128, 255, 7) && checkBoxSensTr->isChecked())
+    if (filesManager->checkFileNumber(lineEditPlexiAnyD->text()) && checkBoxSensTr->isChecked())
     {
         QString Number = lineEditPlexiAnyD->text();
         double lambda = selector->readLambda(Number, monitors->readDuration(Number));
@@ -185,8 +186,8 @@ void dan18::calculateAnyTr()
         return;
     }
 
-    if (lineEditPlexiAnyD->palette().color(QPalette::Window) != QColor(128, 255, 7) ||
-        lineEditEBAnyD->palette().color(QPalette::Window) != QColor(128, 255, 7))
+    if (!filesManager->checkFileNumber(lineEditPlexiAnyD->text()) ||
+        !filesManager->checkFileNumber(lineEditEBAnyD->text()))
     {
         lineEditTransAnyD->setText("0.0000");
         return;
@@ -229,8 +230,7 @@ void dan18::createSensFull(const QString &sensName)
     make_GSL_Matrix_Symmetric(maskName, mask, MD);
     gsl_matrix_memcpy(sens, mask);
 
-    if (!buttonGroupSensanyD->isChecked() ||
-        lineEditPlexiAnyD->palette().color(QPalette::Window) != QColor(128, 255, 7))
+    if (!buttonGroupSensanyD->isChecked() || !filesManager->checkFileNumber(lineEditPlexiAnyD->text()))
     {
         
         QString label = "DAN::Sensitivity::" + QString::number(MD) + "::Plexi::No";
@@ -255,7 +255,7 @@ void dan18::createSensFull(const QString &sensName)
         return;
     }
 
-    if (lineEditPlexiAnyD->palette().color(QPalette::Window) == QColor(128, 255, 7))
+    if (filesManager->checkFileNumber(lineEditPlexiAnyD->text()))
     {
         double Nmask = 0;
         double sum = 0.0;
@@ -598,6 +598,8 @@ void dan18::updateSensList()
     comboBoxSensFor->addItems(lst);
     if (lst.contains(currentSens))
         comboBoxSensFor->setCurrentIndex(lst.indexOf(currentSens));
+
+    updateMatrixListInConfigurations(dptSENS, lst); // see updateMaskList()
 }
 //+++  get-Sensitivity-Number
 QString dan18::getSensitivityNumber(const QString &sensName)

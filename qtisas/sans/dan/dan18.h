@@ -176,6 +176,7 @@ public:
     bool readDisplay(double &x, double &y);
     bool neededMaskExists(int MD, const QString &maskName, bool showErrorMessage = false);
     void updateMaskList();
+    void updateMatrixListInConfigurations(int row, const QStringList &names);
     
     // sens
     void createSensFull(const QString &sensName);
