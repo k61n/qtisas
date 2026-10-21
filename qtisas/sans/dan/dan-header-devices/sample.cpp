@@ -26,7 +26,7 @@ double Sample::unitsConverterThicknessToCM(double thickness)
 //+++ read  Info / Sample / Sample Title
 QString Sample::readName(const QString &Number, const QStringList &lst)
 {
-    return parserHeader->readNumberString(Number, "[Sample-Title]", lst);
+    return parserHeader->readNumberString(Number, "[Sample-Title]", lst).trimmed(); // KWS-1 writes "H-J "
 }
 //+++ read Sample Position Number
 QString Sample::readPositionNumber(const QString &Number, const QStringList &lst)

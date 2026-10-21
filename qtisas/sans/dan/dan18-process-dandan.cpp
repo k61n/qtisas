@@ -7,6 +7,8 @@ Copyright (C) by the authors:
 Description: SANS data reduction tools
  ******************************************************************************/
 
+#include <cmath>
+
 #include <QElapsedTimer>
 
 #include <gsl/gsl_fit.h>
@@ -2132,17 +2134,22 @@ void dan18::radAvStd
     
     
     if (angleCurrent < angleMin ) angleMin=0;
-    
-    double angleStep = 2.0*asin(minPixel*detelem/2.0/detdist);
 
-    if (!(angleStep > 0.0))
+    // one ring per pixel: ring n holds the pixels whose scattering angle 2θ puts them at the radius
+    // detdist*tan(2θ) = rMin + n pixels on a detector perpendicular to the beam (for a rotated detector the rings
+    // stay rings of equal angle); rings of equal angle width gave fewer, wider rings far from the beam
+    const double rStep = minPixel * detelem;
+    const double rMin = detdist * tan(angleMin);
+    const double rMax = detdist * tan(GSL_MIN(angleMax, 0.5 * M_PI - 1e-6));
+
+    if (!(rStep > 0.0) || !(detdist > 0.0))
     {
         nTotal = 0;
         QQ = II = dII = IIcos2phi = nn = nullptr;
         return;
     }
 
-    nTotal=int((angleMax-angleMin)/angleStep+0.5)+1;
+    nTotal = int(std::lround((rMax - rMin) / rStep)) + 1;
 
     QQ=new double[nTotal];
     II=new double[nTotal];
@@ -2154,7 +2161,7 @@ void dan18::radAvStd
     //+++ Step "0": all 0
     for(int ir=0;ir<nTotal;ir++)
     {
-        QQ[ir]  = 4.0*M_PI/lambda*sin (0.5 * ( angleMin+angleStep*ir ) );
+        QQ[ir] = 4.0 * M_PI / lambda * sin(0.5 * atan((rMin + rStep * ir) / detdist));
         II[ir] = 0;
         dII[ir]= 0;
         IIcos2phi[ir]= 0;
@@ -2176,11 +2183,11 @@ void dan18::radAvStd
             rR+=detdist*zcRotated;
             
             acosTh=acos(rR/R/R0);
-            
-            currentPos=int((acosTh-angleMin)/angleStep +0.5);
-            
-            if (currentPos>=nTotal) continue;
-            
+
+                currentPos = int(std::lround((detdist * tan(acosTh) - rMin) / rStep));
+                if (currentPos < 0 || currentPos >= nTotal)
+                    continue;
+
             II[currentPos]+=gsl_matrix_get(Sample,iii,jjj);
         dII[currentPos]+=gsl_matrix_get(SampleErr,iii,jjj)*gsl_matrix_get(Sample,iii,jjj)*gsl_matrix_get(Sample,iii,jjj);
             nn[currentPos]+=1;
@@ -4135,7 +4142,16 @@ void dan18::calcCenterNew(int col)
         {
             sensName=((QComboBoxInTable*)tableEC->cellWidget(dptSENS,col))->currentText();
         }
-        
+
+        // HF starts from the center of the mask's beam stop, where the beam is: with a flat-scattering sample
+        // several centers can be stable, and the previous value (or the detector center) picked one of them
+        if (radioButtonCenterHF->isChecked())
+        {
+            readCenterfromMaskName(maskName, Xc, Yc, MD);
+            Xc += 1.0;
+            Yc += 1.0;
+        }
+
         calcCenterNew(sampleFile, col, Xc, Yc, XcErr, YcErr, maskName, sensName);
     }
     
@@ -4473,8 +4489,17 @@ void dan18::calcCenterUniHF(int md, gsl_matrix *corund,
     
     double MinStep=0.001;       // Constant, smallest step when loop ends
     int ix,iy;
-    
-    while(totStep<=50 && (fabs(Xstep)>=MinStep || fabs(Ystep)>=MinStep))
+
+    // the symmetric region (pixels whose mirror is not masked) moves with the center, so for weak scattering the
+    // plain iteration can jump between two centers forever: the result then depended on the start value and on
+    // which of them the 50th step hit. A step that reverses the previous one halves its coordinate's step factor,
+    // which brackets the center like a bisection.
+    double relaxX = 1.0;
+    double relaxY = 1.0;
+    double prevXstep = 0.0;
+    double prevYstep = 0.0;
+
+    while (totStep <= 200 && (fabs(Xstep) >= MinStep || fabs(Ystep) >= MinStep))
     {
         double MomX=0.0;
         double MomY=0.0;
@@ -4515,7 +4540,16 @@ void dan18::calcCenterUniHF(int md, gsl_matrix *corund,
             Xstep = 0.0;
             Ystep = 0.0;
         }
-        
+
+        if (Xstep * prevXstep < 0.0)
+            relaxX *= 0.5;
+        if (Ystep * prevYstep < 0.0)
+            relaxY *= 0.5;
+        Xstep *= relaxX;
+        Ystep *= relaxY;
+        prevXstep = Xstep;
+        prevYstep = Ystep;
+
         if ((Xcenter+Xstep)>MaxX)
         {
             Xstep  = MaxX - Xcenter;

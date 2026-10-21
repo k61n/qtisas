@@ -414,8 +414,13 @@ void dan18::makeScriptTable(QStringList selectedDat)
                 bool condSample = sample->compareSamplePositions(Number, tableEC->item(dptEC, iC)->text());
                 bool attenuatorCompare = collimation->compareAttenuators(Number, tableEC->item(dptEC, iC)->text());
                 bool beamPosCompare = detector->compareBeamPosition(Number, tableEC->item(dptEC, iC)->text());
-                bool polarizationCompare = collimation->comparePolarization(
-                    Number, ((QComboBoxInTable *)tableEC->cellWidget(dptPOL, iC))->currentText());
+                // the run's polarization against the configuration's (its combo box holds a value, not a run number:
+                // comparePolarization(Number, value) read the header of a run named "out", so with "polarization as
+                // parameter" on no run matched any configuration and every condition came out 0)
+                const bool polarizationCompare =
+                    !checkBoxPolarizationAsPara->isChecked() ||
+                    scriptTableManager->polarization(iter) ==
+                        ((QComboBoxInTable *)tableEC->cellWidget(dptPOL, iC))->currentText();
                 bool detAngleCompare = detector->compareDetRotationPosition(Number, tableEC->item(dptEC, iC)->text());
 
                 if (C == tableEC->item(dptC, iC)->text().toInt() && condD && condLambda && condSample &&
@@ -2778,10 +2783,9 @@ void dan18::vertHeaderTableECPressed(int raw,  bool headerReallyPressed )
             }
             else
             {
-                QString mask=comboBoxMaskFor->currentText();
-                
-                mask=tableEC->item(dptMASKTR,i)->text();
-                
+                // the configuration's transmission mask: a combo box in that cell (its item() is not set)
+                const QString mask = ((QComboBoxInTable *)tableEC->cellWidget(dptMASKTR, i))->currentText();
+
                 double sigmaTr=0;
                 double Tr=readTransmission( tableEC->item(dptACFS,i)->text(), tableEC->item(dptACEB,i)->text(), mask,0,0,sigmaTr);
                 if (Tr<=0 || Tr>1)
@@ -4188,12 +4192,12 @@ void dan18::updateCenter(int startRow)
     for(int iter=startRow; iter<rowNumber;iter++)
     {
         cond = scriptTableManager->condition(iter).toInt();
-        if (cond > 0)
+        // a condition beyond the current configurations has no column in tableEC (see updateColInScript)
+        if (cond > 0 && cond <= tableEC->columnCount() && tableEC->item(dptCENTERX, cond - 1) &&
+            tableEC->item(dptCENTERY, cond - 1))
         {
-            scriptTableManager->centerXWrite(iter,
-                                             tableEC->item(dptCENTERX, int(fabs(double(cond))) - 1)->text().left(6));
-            scriptTableManager->centerYWrite(iter,
-                                             tableEC->item(dptCENTERY, int(fabs(double(cond))) - 1)->text().left(6));
+            scriptTableManager->centerXWrite(iter, tableEC->item(dptCENTERX, cond - 1)->text().left(6));
+            scriptTableManager->centerYWrite(iter, tableEC->item(dptCENTERY, cond - 1)->text().left(6));
         }
     }
 }
@@ -4472,10 +4476,12 @@ void dan18::updateColInScript(const QString &colName, int rowIndex, int startRow
     for(int iter=startRow; iter<rowNumber;iter++)
     {
         cond = scriptTableManager->condition(iter).toInt();
-        if (cond>0)
+        // a condition beyond the current configurations (the script table was made with more of them) has no
+        // column in tableEC: skip it instead of reading a missing item
+        if (cond > 0 && cond <= tableEC->columnCount() && tableEC->item(rowIndex, cond - 1))
         {
             // tableEC is C; a Numeric script column shows the value in the table's locale (like ScriptTableManager)
-            const QString text = tableEC->item(rowIndex, int(fabs(double(cond))) - 1)->text();
+            const QString text = tableEC->item(rowIndex, cond - 1)->text();
             w->setText(iter, index,
                        w->columnType(index) == Table::Numeric ? NumericLocale::convert(text, QLocale::c(), w->locale())
                                                               : text);

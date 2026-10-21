@@ -1170,9 +1170,10 @@ void dan18::instrumentSelected(QString instrName)
             lineEditSensMaskedPixels->setText(line);
             break;
         case InstrumentSANS::Parameter::Transmission_Method:
+            // read simplified: "Direct Beam [dead-time +]" (the calibrant's is "Direct Beam [DB]")
             if (line.contains("9.5A: ROI in Header;"))
                 comboBoxTransmMethod->setCurrentIndex(4);
-            else if (line.contains("Direct Beam [DB]"))
+            else if (line.contains("Direct Beam [dead-time +]"))
                 comboBoxTransmMethod->setCurrentIndex(1);
             else if (line.contains("Monitor-3"))
                 comboBoxTransmMethod->setCurrentIndex(0);

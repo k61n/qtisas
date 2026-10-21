@@ -1607,7 +1607,7 @@ const QStringList &InstrumentSANS::KWS3()
         "[Detector-Dead-Time-DB] 4.0e-6",
         "[Options-2D-DeadTimeModel-NonPara] Yes",
         "[Options-2D-CenterMethod] HF",
-        "[Calibrant-Type] Direct Beam",
+        "[Calibrant-Type] Direct Beam [DB]",
         "[Calibrant] DirectBeam[KWS-3]",
         "[Use-Active-Mask-and-Sensitivity-Matrixes] No",
         "[Calculate-Calibrant-Transmission-by-Equation] Yes",
