@@ -20,6 +20,7 @@ Description: Editor widget for scripting code
 #include <QMessageBox>
 #include <QPrintDialog>
 #include <QPrinter>
+#include <QRegularExpression>
 #include <QScrollBar>
 #include <QShortcut>
 #include <QStringListModel>
@@ -65,7 +66,15 @@ ScriptEdit::ScriptEdit(ScriptingEnv *env, QWidget *parent, const char *name)
 	completer->setModel(new QStringListModel(functions, completer));
 	setCompleter(completer);
 
-	printCursor = textCursor();
+    d_memberCompleter = new QCompleter(this);
+    d_memberCompleter->setCaseSensitivity(Qt::CaseSensitive);
+    d_memberCompleter->setCompletionMode(QCompleter::PopupCompletion);
+    d_memberCompleter->setModel(new QStringListModel(d_memberCompleter));
+    d_memberCompleter->setWidget(this);
+    connect(d_memberCompleter, QOverload<const QString &>::of(&QCompleter::activated), this,
+            &ScriptEdit::insertMemberCompletion);
+
+    printCursor = textCursor();
 	scriptsDirPath = qApp->applicationDirPath();
 
 	actionExecute = new QAction(tr("E&xecute"), this);
@@ -186,8 +195,9 @@ void ScriptEdit::keyPressEvent(QKeyEvent *e)
 		return;
 	}
 
-	if (d_completer && d_completer->popup()->isVisible()){
-         // The following keys are forwarded by the completer to the widget
+    if ((d_completer && d_completer->popup()->isVisible()) || d_memberCompleter->popup()->isVisible())
+    {
+        // The following keys are forwarded by the completer to the widget
 		switch (e->key()) {
 			case Qt::Key_Enter:
 			case Qt::Key_Return:
@@ -199,7 +209,7 @@ void ScriptEdit::keyPressEvent(QKeyEvent *e)
 			default:
 				break;
 		}
-	 }
+    }
 
     QTextEdit::keyPressEvent(e);
     if (d_completer && !d_completer->popup()->isVisible() && e->key() == Qt::Key_Return)
@@ -213,16 +223,25 @@ void ScriptEdit::keyPressEvent(QKeyEvent *e)
             d_completer->popup()->hide();
          return;
     }
-    
-	 static QString eow("~!@#$%^&*()+{}|:\"<>?,./;'[]\\-="); // end of word
-     bool hasModifier = (e->modifiers() != Qt::NoModifier) && !ctrlOrShift;
-     QString completionPrefix = textUnderCursor();
 
-	 if (!isShortcut && (hasModifier || e->text().isEmpty()|| completionPrefix.length() < 2
-		 || eow.contains(e->text().right(1)))){
-         d_completer->popup()->hide();
-         return;
-	 }
+    if (!(e->modifiers() & (Qt::ControlModifier | Qt::AltModifier | Qt::MetaModifier)) && !e->text().isEmpty() &&
+        memberCompletion())
+    {
+        d_completer->popup()->hide();
+        return;
+    }
+    d_memberCompleter->popup()->hide();
+
+    static QString eow("~!@#$%^&*()+{}|:\"<>?,./;'[]\\-="); // end of word
+    bool hasModifier = (e->modifiers() != Qt::NoModifier) && !ctrlOrShift;
+    QString completionPrefix = textUnderCursor();
+
+    if (!isShortcut &&
+        (hasModifier || e->text().isEmpty() || completionPrefix.length() < 2 || eow.contains(e->text().right(1))))
+    {
+        d_completer->popup()->hide();
+        return;
+    }
 
      if (completionPrefix != d_completer->completionPrefix()){
          d_completer->setCompletionPrefix(completionPrefix);
@@ -769,6 +788,57 @@ void ScriptEdit::setDirPath(const QString& path)
 
 	setTextCursor(tc);
  }
+
+// after "Name." or "Name.Sub.pre": the public members of that object starting with "pre" (Dan.M -> Mask, Merge);
+// false when the text before the cursor is no such chain or names no object (then the keyword list completes)
+bool ScriptEdit::memberCompletion()
+{
+    static const QRegularExpression chain(R"(([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)\.(\w*)$)");
+    QTextCursor tc = textCursor();
+    tc.movePosition(QTextCursor::StartOfBlock, QTextCursor::KeepAnchor);
+    const QRegularExpressionMatch m = chain.match(tc.selectedText());
+    if (!m.hasMatch() || !scriptEnv)
+        return false;
+    const QStringList members = scriptEnv->memberNames(m.captured(1));
+    if (members.isEmpty())
+        return false;
+    const QString prefix = m.captured(2);
+    QStringList matching;
+    for (const QString &name : members)
+        if (name.startsWith(prefix) && name != prefix)
+            matching << name;
+    if (matching.isEmpty())
+    {
+        d_memberCompleter->popup()->hide();
+        return true;
+    }
+    auto *model = qobject_cast<QStringListModel *>(d_memberCompleter->model());
+    model->setStringList(matching);
+    d_memberCompleter->setCompletionPrefix(QString());
+    d_memberCompleter->popup()->setCurrentIndex(d_memberCompleter->completionModel()->index(0, 0));
+    QRect cr = cursorRect();
+    cr.setWidth(d_memberCompleter->popup()->sizeHintForColumn(0) +
+                d_memberCompleter->popup()->verticalScrollBar()->sizeHint().width());
+    d_memberCompleter->complete(cr);
+    return true;
+}
+
+void ScriptEdit::insertMemberCompletion(const QString &completion)
+{
+    static const QRegularExpression typed(R"((\w*)$)");
+    QTextCursor tc = textCursor();
+    QTextCursor line = tc;
+    line.movePosition(QTextCursor::StartOfBlock, QTextCursor::KeepAnchor);
+    const qsizetype done = typed.match(line.selectedText()).captured(1).length();
+    tc.insertText(completion.mid(done));
+    // a lower-case member is a method here (Dan.Mask.newMask); an upper-case one an object (Dan.Mask)
+    if (!completion.isEmpty() && completion[0].isLower())
+    {
+        tc.insertText("()");
+        tc.movePosition(QTextCursor::PreviousCharacter);
+    }
+    setTextCursor(tc);
+}
 
  QString ScriptEdit::textUnderCursor() const
  {

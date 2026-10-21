@@ -6,6 +6,8 @@ Copyright (C) by the authors:
 Description: Command completion and historization class for a QLineEdit Widget
  ******************************************************************************/
 
+#include <QRegularExpression>
+
 #include "SmartCompleter.h"
 
 SmartCompleter::SmartCompleter(QLineEdit *edit, const QStringList &keywords, QObject *parent)
@@ -18,6 +20,7 @@ SmartCompleter::SmartCompleter(QLineEdit *edit, const QStringList &keywords, QOb
 
     // --- Keyword completer ---
     m_completer = new QCompleter(m_keywordModel, this);
+    m_completer->setObjectName("keywords");
     m_completer->setWidget(edit);
     m_completer->setCaseSensitivity(Qt::CaseSensitive);
     m_completer->setCompletionMode(QCompleter::PopupCompletion);
@@ -25,14 +28,24 @@ SmartCompleter::SmartCompleter(QLineEdit *edit, const QStringList &keywords, QOb
 
     // --- History completer ---
     m_historyCompleter = new QCompleter(m_historyModel, this);
+    m_historyCompleter->setObjectName("history");
     m_historyCompleter->setWidget(edit);
     m_historyCompleter->setCaseSensitivity(Qt::CaseInsensitive);
     m_historyCompleter->setCompletionMode(QCompleter::PopupCompletion);
     m_historyCompleter->setFilterMode(Qt::MatchStartsWith);
     m_historyCompleter->setCompletionRole(Qt::UserRole);
 
+    // --- Member completer (after "Name.") ---
+    m_memberCompleter = new QCompleter(new QStringListModel(this), this);
+    m_memberCompleter->setObjectName("members");
+    m_memberCompleter->setWidget(edit);
+    m_memberCompleter->setCaseSensitivity(Qt::CaseSensitive);
+    m_memberCompleter->setCompletionMode(QCompleter::PopupCompletion);
+    m_memberCompleter->setFilterMode(Qt::MatchStartsWith);
+
     // --- Event filters ---
     edit->installEventFilter(this);
+    m_memberCompleter->popup()->installEventFilter(this);
     if (m_completer && m_completer->popup())
         m_completer->popup()->installEventFilter(this);
     if (m_historyCompleter && m_historyCompleter->popup())
@@ -46,6 +59,8 @@ SmartCompleter::SmartCompleter(QLineEdit *edit, const QStringList &keywords, QOb
             [this](const QString &s) { selectCompletion(m_completer, s); });
     connect(m_historyCompleter, QOverload<const QString &>::of(&QCompleter::activated), this,
             [this](const QString &s) { selectCompletion(m_historyCompleter, s); });
+    connect(m_memberCompleter, QOverload<const QString &>::of(&QCompleter::activated), this,
+            [this](const QString &s) { selectCompletion(m_memberCompleter, s); });
 
     connect(edit, &QLineEdit::textEdited, this, &SmartCompleter::updateCompletionPrefix);
 
@@ -96,7 +111,8 @@ bool SmartCompleter::eventFilter(QObject *obj, QEvent *event)
     if (!m_lineEdit)
         return QObject::eventFilter(obj, event);
 
-    const bool terminalTarget = obj == m_lineEdit || obj == m_completer->popup() || obj == m_historyCompleter->popup();
+    const bool terminalTarget = obj == m_lineEdit || obj == m_completer->popup() ||
+                                obj == m_historyCompleter->popup() || obj == m_memberCompleter->popup();
     if (terminalTarget && (event->type() == QEvent::ShortcutOverride || event->type() == QEvent::KeyPress))
     {
         auto *keyEvent = dynamic_cast<QKeyEvent *>(event);
@@ -110,6 +126,7 @@ bool SmartCompleter::eventFilter(QObject *obj, QEvent *event)
             {
                 m_completer->popup()->hide();
                 m_historyCompleter->popup()->hide();
+                m_memberCompleter->popup()->hide();
                 m_blockReturn = false;
                 emit modifiedReturnPressed(keyEvent->modifiers());
             }
@@ -118,7 +135,7 @@ bool SmartCompleter::eventFilter(QObject *obj, QEvent *event)
     }
 
     // --- Popup show/hide detection ---
-    if ((obj == m_completer->popup() || obj == m_historyCompleter->popup()) &&
+    if ((obj == m_completer->popup() || obj == m_historyCompleter->popup() || obj == m_memberCompleter->popup()) &&
         (event->type() == QEvent::Show || event->type() == QEvent::Hide))
     {
         m_blockReturn = (event->type() == QEvent::Show);
@@ -135,7 +152,9 @@ bool SmartCompleter::eventFilter(QObject *obj, QEvent *event)
         if ((key == Qt::Key_Return || key == Qt::Key_Enter) && m_lineEdit->hasFocus() && m_blockReturn)
         {
             QCompleter *active = nullptr;
-            if (m_completer->popup()->isVisible())
+            if (m_memberCompleter->popup()->isVisible())
+                active = m_memberCompleter;
+            else if (m_completer->popup()->isVisible())
                 active = m_completer;
             else if (m_historyCompleter->popup()->isVisible())
                 active = m_historyCompleter;
@@ -154,6 +173,7 @@ bool SmartCompleter::eventFilter(QObject *obj, QEvent *event)
         // Ctrl → hide popup if visible
         if ((key == Qt::Key_Control || key == Qt::Key_Meta) && terminalTarget)
         {
+            m_memberCompleter->popup()->hide();
             if (m_completer->popup()->isVisible())
                 m_completer->popup()->hide();
             else if (m_historyCompleter->popup()->isVisible())
@@ -163,7 +183,9 @@ bool SmartCompleter::eventFilter(QObject *obj, QEvent *event)
         // ESC → hide popup if visible, else clear line
         if (key == Qt::Key_Escape && m_lineEdit->hasFocus())
         {
-            if (m_completer->popup()->isVisible())
+            if (m_memberCompleter->popup()->isVisible())
+                m_memberCompleter->popup()->hide();
+            else if (m_completer->popup()->isVisible())
                 m_completer->popup()->hide();
             else if (m_historyCompleter->popup()->isVisible())
                 m_historyCompleter->popup()->hide();
@@ -199,6 +221,13 @@ void SmartCompleter::updateCompletionPrefix()
     if (beforeCursor.isEmpty())
         return;
 
+    if (memberCompletion(beforeCursor))
+    {
+        m_completer->popup()->hide();
+        return;
+    }
+    m_memberCompleter->popup()->hide();
+
     int lastDot = static_cast<int>(beforeCursor.lastIndexOf('.'));
     int lastSpace = static_cast<int>(beforeCursor.lastIndexOf(' '));
     int sepPos = qMax(lastDot, lastSpace);
@@ -214,6 +243,33 @@ void SmartCompleter::updateCompletionPrefix()
         m_completer->popup()->setCurrentIndex(m_completer->completionModel()->index(0, 0));
 }
 
+// after "Name." or "Name.Sub.pre": the members of that object starting with "pre" (Dan.M -> Mask, Merge); false
+// when there is no such chain or it names no object (then the keyword list completes)
+bool SmartCompleter::memberCompletion(const QString &beforeCursor)
+{
+    static const QRegularExpression chain(R"(([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)\.(\w*)$)");
+    const QRegularExpressionMatch m = chain.match(beforeCursor);
+    if (!m_memberProvider || !m.hasMatch())
+        return false;
+    const QStringList members = m_memberProvider(m.captured(1));
+    if (members.isEmpty())
+        return false;
+    QStringList matching;
+    for (const QString &name : members)
+        if (name.startsWith(m.captured(2)) && name != m.captured(2))
+            matching << name;
+    if (matching.isEmpty())
+    {
+        m_memberCompleter->popup()->hide();
+        return true;
+    }
+    qobject_cast<QStringListModel *>(m_memberCompleter->model())->setStringList(matching);
+    m_memberCompleter->setCompletionPrefix(QString());
+    m_memberCompleter->complete();
+    m_memberCompleter->popup()->setCurrentIndex(m_memberCompleter->completionModel()->index(0, 0));
+    return true;
+}
+
 void SmartCompleter::selectCompletion(QCompleter *active, const QString &completion)
 {
     if (!m_lineEdit || !active)
@@ -221,9 +277,9 @@ void SmartCompleter::selectCompletion(QCompleter *active, const QString &complet
 
     QString full;
 
-    if (active == m_completer)
+    if (active == m_completer || active == m_memberCompleter)
     {
-        // --- keyword completer behavior (replace last segment) ---
+        // --- keyword and member completer behavior (replace last segment) ---
         QString text = m_lineEdit->text();
         int cursorPos = m_lineEdit->cursorPosition();
         QString before = text.left(cursorPos);
@@ -246,13 +302,11 @@ void SmartCompleter::selectCompletion(QCompleter *active, const QString &complet
                 full += "()";
                 m_lineEdit->setText(full);
                 m_lineEdit->setCursorPosition(static_cast<int>(full.length()) - 1);
-                if (m_completer->popup())
-                    m_completer->popup()->hide();
+                active->popup()->hide();
                 goto add_history;
             }
         }
-        if (m_completer->popup())
-            m_completer->popup()->hide();
+        active->popup()->hide();
     }
     else if (active == m_historyCompleter)
     {
@@ -264,6 +318,8 @@ void SmartCompleter::selectCompletion(QCompleter *active, const QString &complet
 
     m_lineEdit->setText(full);
     m_lineEdit->setCursorPosition(static_cast<int>(full.length()));
+    if (full.endsWith('.')) // "Dan.Mask.": its members at once
+        QTimer::singleShot(0, this, &SmartCompleter::updateCompletionPrefix);
 
 add_history: // Add to history
 

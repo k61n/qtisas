@@ -22387,6 +22387,8 @@ void ApplicationWindow::initCompleter()
         m_terminalCompleter = new SmartCompleter(terminal_line, {}, this);
         connect(m_terminalCompleter, &SmartCompleter::modifiedReturnPressed, this,
                 &ApplicationWindow::submitTerminalLine);
+        m_terminalCompleter->setMemberProvider(
+            [this](const QString &owner) { return scriptEnv ? scriptEnv->memberNames(owner) : QStringList(); });
     }
     m_terminalCompleter->setAutomaticHistoryEnabled(false);
     m_terminalCompleter->setKeywords(words);

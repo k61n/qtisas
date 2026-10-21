@@ -131,6 +131,8 @@ class ScriptEdit : public QTextEdit, public scripted
     bool d_last_run_failed = false;
 
 	QCompleter *d_completer;
+    //! After "Name." the members of that object only (memberCompletion()), not every keyword
+    QCompleter *d_memberCompleter = nullptr;
 	SyntaxHighlighter *d_highlighter;
 	QString d_file_name;
 	QString d_search_string;
@@ -145,6 +147,7 @@ class ScriptEdit : public QTextEdit, public scripted
 		*/
     void insertErrorMsg(const QString &message);
 	void insertCompletion(const QString &completion);
+    void insertMemberCompletion(const QString &completion);
 	void matchParentheses();
 
   public:
@@ -154,6 +157,7 @@ class ScriptEdit : public QTextEdit, public scripted
 
   private:
     QString textUnderCursor() const;
+    bool memberCompletion();
 	bool matchLeftParenthesis(QTextBlock currentBlock, int index, int numRightParentheses);
     bool matchRightParenthesis(QTextBlock currentBlock, int index, int numLeftParentheses);
     void createParenthesisSelection(int pos);

@@ -19,6 +19,8 @@ Description: Command completion and historization class for a QLineEdit Widget
 #include <QAbstractItemView>
 #include <QApplication>
 
+#include <functional>
+
 class SmartCompleter : public QObject
 {
     Q_OBJECT
@@ -33,6 +35,11 @@ class SmartCompleter : public QObject
     }
     void setKeywords(const QStringList &list);
     void setKeywordCompletionEnabled(bool enabled);
+    // the members of an object named by a chain ("Dan", "Dan.Mask"); after "Name." only they are offered
+    void setMemberProvider(std::function<QStringList(const QString &)> provider)
+    {
+        m_memberProvider = std::move(provider);
+    }
 
   signals:
     void modifiedReturnPressed(Qt::KeyboardModifiers modifiers);
@@ -50,6 +57,10 @@ class SmartCompleter : public QObject
     QStandardItemModel *m_historyModel = nullptr;
     QCompleter *m_completer = nullptr;
     QCompleter *m_historyCompleter = nullptr;
+    QCompleter *m_memberCompleter = nullptr;
+    std::function<QStringList(const QString &)> m_memberProvider;
+
+    bool memberCompletion(const QString &beforeCursor);
 
     bool m_blockReturn = false;
     bool m_keywordEnabled = true;

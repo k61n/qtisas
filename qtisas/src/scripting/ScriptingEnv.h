@@ -62,6 +62,12 @@ class ScriptingEnv : public QObject
     }
     //! Return a list of file extensions commonly used for this language.
     virtual const QStringList fileExtensions() const { return QStringList(); };
+    //! The public members of a global object or of an attribute chain ("Dan", "Dan.Mask"); empty when none
+    virtual QStringList memberNames(const QString &owner) const
+    {
+        Q_UNUSED(owner);
+        return {};
+    }
     //! Construct a filter expression from fileExtension(), suitable for QFileDialog.
     const QString fileFilter() const;
 

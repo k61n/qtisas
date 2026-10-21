@@ -542,7 +542,35 @@ class ScriptServer:
                 if similar:
                     return "'%s' has no '%s'; its methods with a similar name: %s()" % (
                         type(e.obj).__name__, name, "(), ".join(similar))
+                parts, root = ScriptServer._part_methods(e.obj, name), e.obj
+                if not parts and type(e.obj).__name__.startswith("Dan") and hasattr(builtins, "Dan"):
+                    root = builtins.Dan  # a sibling part: Dan.Processing.newHeaderTable is Dan.Rawdata's
+                    parts = ScriptServer._part_methods(root, name)
+                if parts:
+                    owner = "Dan" if type(root).__name__ == "dan18" else type(root).__name__
+                    return "'%s' has no '%s': it is %s" % (owner, name, " or ".join(
+                        owner + p + "." + name + "()" for p in parts))
         return ""
+
+    @staticmethod
+    def _part_methods(obj, name, depth=1):
+        """The parts of an object (attributes named with a capital, like Dan.Rawdata) that have `name`, down to two
+        levels: [".Rawdata"], [".Options.Config"] (PythonScripting.cpp: partMethodHint())."""
+        found = []
+        for part in dir(obj):
+            if not part[:1].isupper():
+                continue
+            try:
+                sub = getattr(obj, part)
+            except Exception:
+                continue
+            if isinstance(sub, type) or callable(sub):
+                continue
+            if hasattr(sub, name):
+                found.append("." + part)
+            elif depth < 2:
+                found += ["." + part + p for p in ScriptServer._part_methods(sub, name, depth + 1)]
+        return found
 
     @staticmethod
     def _has_word(candidate, name):

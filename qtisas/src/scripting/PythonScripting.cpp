@@ -21,6 +21,7 @@ Description: Execute Python code from within QtiSAS
 #include <algorithm>
 #include <atomic>
 #include <chrono>
+#include <functional>
 
 #include <QHash>
 #include <QRegularExpression>
@@ -175,6 +176,46 @@ static QString unboundMethodHint(PyObject *value)
         .arg(m.captured(2), m.captured(1), object);
 }
 
+// The parts of an object (its public attributes named with a capital, like Dan.Rawdata) that have `name`, down to
+// two levels: "Dan.Rawdata.newHeaderTable()"; empty when none has it
+static QString partMethodHint(PyObject *obj, const QString &name)
+{
+    static const QHash<QString, QString> globals{{"dan18", "Dan"}};
+    const QString owner =
+        globals.value(QString::fromUtf8(Py_TYPE(obj)->tp_name), QString::fromUtf8(Py_TYPE(obj)->tp_name));
+    QStringList found;
+    std::function<void(PyObject *, const QString &, int)> search = [&](PyObject *o, const QString &path, int depth) {
+        PyObject *names = PyObject_Dir(o);
+        for (Py_ssize_t i = 0; names && i < PyList_Size(names); i++)
+        {
+            PyObject *item = PyList_GetItem(names, i);
+            const QString part = PyUnicode_Check(item) ? QString::fromUtf8(PyUnicode_AsUTF8(item)) : QString();
+            if (part.isEmpty() || !part.at(0).isUpper())
+                continue;
+            PyObject *sub = PyObject_GetAttrString(o, part.toUtf8().constData());
+            if (!sub)
+            {
+                PyErr_Clear();
+                continue;
+            }
+            if (!PyType_Check(sub) && !PyCallable_Check(sub))
+            {
+                if (PyObject_HasAttrString(sub, name.toUtf8().constData()))
+                    found << path + "." + part + "." + name + "()";
+                else if (depth < 2)
+                    search(sub, path + "." + part, depth + 1);
+            }
+            Py_DECREF(sub);
+        }
+        Py_XDECREF(names);
+        PyErr_Clear();
+    };
+    search(obj, owner, 1);
+    if (found.isEmpty())
+        return {};
+    return QString("'%1' has no '%2': it is %3\n").arg(owner, name, found.join(" or "));
+}
+
 // For an AttributeError: the object's methods whose names contain the missing one ("text" → toPlainText, setText),
 // or, on None, that the lookup before it found nothing. Confirmed live: n.tab("C").text() was retried as is, and
 // n.tab("Main").setText() on a tab that never existed sent the retries hunting setText(). Python's own "Did you
@@ -210,6 +251,15 @@ static QString attributeHint(PyObject *value)
         if (!similar.isEmpty())
             hint = QString("'%1' has no '%2'; its methods with a similar name: %3()\n")
                        .arg(QString::fromUtf8(Py_TYPE(obj)->tp_name), name, similar.mid(0, 6).join("(), "));
+        // a method of one of its parts (two levels: Dan.Rawdata, Dan.Options.Config): Dan.newHeaderTable() is
+        // Dan.Rawdata.newHeaderTable(). Confirmed live (benchmark DAN, local pyi): Dan.newHeaderTable() and
+        // Dan.setInputPath() were retried as they were
+        if (hint.isEmpty())
+            hint = partMethodHint(obj, name);
+        // a method of a sibling part: Dan.Processing.newHeaderTable() is Dan.Rawdata.newHeaderTable()
+        if (hint.isEmpty() && QString::fromUtf8(Py_TYPE(obj)->tp_name).startsWith("Dan"))
+            if (PyObject *dan = PyDict_GetItemString(PyEval_GetBuiltins(), "Dan"))
+                hint = partMethodHint(dan, name);
     }
     Py_XDECREF(obj);
     return hint;
@@ -619,6 +669,39 @@ bool PythonScripting::setDouble(double val, const char *name, PyObject *dict)
 	}
 	PyGILState_Release(state);
 	return (bool) pyobj;
+}
+
+QStringList PythonScripting::memberNames(const QString &owner) const
+{
+    // a chain of names only: getattr along it, never a call, so completing has no side effects
+    static const QRegularExpression chain(R"(^[A-Za-z_]\w*(\.[A-Za-z_]\w*)*$)");
+    if (!chain.match(owner).hasMatch() || !isRunning())
+        return {};
+    const QStringList parts = owner.split('.');
+    QStringList names;
+    PyGILState_STATE state = PyGILState_Ensure();
+    PyObject *obj = PyDict_GetItemString(globals, parts[0].toUtf8().constData()); // borrowed
+    if (!obj)
+        obj = PyDict_GetItemString(PyEval_GetBuiltins(), parts[0].toUtf8().constData());
+    Py_XINCREF(obj);
+    for (int i = 1; obj && i < parts.count(); i++)
+    {
+        PyObject *next = PyObject_GetAttrString(obj, parts[i].toUtf8().constData());
+        Py_DECREF(obj);
+        obj = next;
+    }
+    PyObject *dir = obj ? PyObject_Dir(obj) : nullptr;
+    for (Py_ssize_t i = 0; dir && i < PyList_Size(dir); i++)
+    {
+        const QString name = QString::fromUtf8(PyUnicode_AsUTF8(PyList_GetItem(dir, i)));
+        if (!name.startsWith('_'))
+            names << name;
+    }
+    Py_XDECREF(dir);
+    Py_XDECREF(obj);
+    PyErr_Clear();
+    PyGILState_Release(state);
+    return names;
 }
 
 const QStringList PythonScripting::mathFunctions() const
