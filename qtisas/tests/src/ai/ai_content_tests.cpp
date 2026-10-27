@@ -5116,6 +5116,17 @@ void AiContentTests::unrequestedDanSession_onlyWhenNotAsked()
                                                           "Try to select the DAN-SANS instrument KWS9.")
                 .isEmpty());
     QVERIFY(QtiSasAiContent::unrequestedDanSessionMistake("Dan.Mask.newMask()\n", "Create the mask.").isEmpty());
+    // the instrument or the data folder named: a session starts (main QtiSAS: blocked, the retry reduced nothing)
+    QVERIFY(QtiSasAiContent::unrequestedDanSessionMistake(
+                code, "Generate the merged tables of the data measured at the instrument KWS1-2020 and located in "
+                      "the folder /data/kws1.")
+                .isEmpty());
+    QVERIFY(QtiSasAiContent::unrequestedDanSessionMistake(code, "Reduce the runs of the directory ~/kws3.").isEmpty());
+    QVERIFY(!QtiSasAiContent::unrequestedDanSessionMistake(code, "Set up the three configurations.").isEmpty());
+    // the message names the calls the script makes, only them
+    const QString onlyNew =
+        QtiSasAiContent::unrequestedDanSessionMistake("Dan.Options.newSession()\n", "Set up the configurations.");
+    QVERIFY(onlyNew.contains("Dan.Options.newSession()") && !onlyNew.contains("selectInstrument"));
 }
 
 void AiContentTests::docTopicForKind_moduleTables()

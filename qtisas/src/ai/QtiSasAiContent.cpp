@@ -4280,16 +4280,25 @@ QString QtiSasAiContent::unrequestedDanSessionMistake(const QString &code, const
     static const QRegularExpression selectRe(R"(\bselectInstrument\s*\()");
     static const QRegularExpression sessionAskedRe(R"(\bsession\b)", QRegularExpression::CaseInsensitiveOption);
     static const QRegularExpression instrumentAskedRe(R"(\binstrument\b)", QRegularExpression::CaseInsensitiveOption);
+    static const QRegularExpression folderAskedRe(R"(\b(?:folder|directory)\b)",
+                                                  QRegularExpression::CaseInsensitiveOption);
+    const bool asked = sessionAskedRe.match(originalRequestText).hasMatch() ||
+                       instrumentAskedRe.match(originalRequestText).hasMatch() ||
+                       folderAskedRe.match(originalRequestText).hasMatch();
     const QString stripped = codeWithoutStringLiterals(code);
-    const bool newSession =
-        newSessionRe.match(stripped).hasMatch() && !sessionAskedRe.match(originalRequestText).hasMatch();
-    const bool select = selectRe.match(stripped).hasMatch() && !sessionAskedRe.match(originalRequestText).hasMatch() &&
-                        !instrumentAskedRe.match(originalRequestText).hasMatch();
+    const bool newSession = newSessionRe.match(stripped).hasMatch() && !asked;
+    const bool select = selectRe.match(stripped).hasMatch() && !asked;
     if (!newSession && !select)
         return {};
-    return "This request does not start a DAN-SANS session, but the script begins one (Dan.Options.newSession() / "
-           "selectInstrument()): that clears the masks, configurations and script tables the earlier requests made. "
-           "Continue in the current session — its instrument is Dan.Options.instrument(), its folder "
+    QStringList calls;
+    if (newSession)
+        calls << "Dan.Options.newSession()";
+    if (select)
+        calls << "Dan.Options.selectInstrument()";
+    return "This request does not start a DAN-SANS session, but the script calls " + calls.join(" and ") +
+           ": that clears the masks, configurations and script tables the earlier requests made. Leave " +
+           (calls.count() > 1 ? "them" : "it") +
+           " out and continue in the current session — its instrument is Dan.Options.instrument(), its folder "
            "Dan.Options.inputPath() — and use what the earlier requests made.";
 }
 
