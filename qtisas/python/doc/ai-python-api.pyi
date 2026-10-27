@@ -10,23 +10,23 @@
 # NEVER import QApplication — crashes the app.
 
 # scriptPrint() works like print(): any values, converted with str() and joined by spaces —
-#   scriptPrint("R1:", t.cell(2, 3)) → "R1: 1.5". sep="..." sets the separator; there is no end=.
+#   scriptPrint("Result:", t.cell(2, 3)) → "Result: 1.5". sep="..." sets the separator; there is no end=.
 # A requested result line holds EVERY value the request lists, in its order, in ONE call — a value printed on
 #   another line does not count; a "whether ..." value is the boolean itself (True/False), not a sentence —
 #   the state the question names, True when it holds, never its negation: "whether recalculation is switched
 #   on" prints autoUpdateTableValues(), not `not autoUpdateTableValues()`;
 #   "which of ... (a list)" is ONE value, the list itself: [n for n in names if ...] — [] when none.
-# The label goes in that same call — scriptPrint("R1:", a, b), never scriptPrint("R1:") on a line of its own.
+# The label goes in that same call — scriptPrint("Result:", a, b), never scriptPrint("Result:") on a line of its own.
 #   Every value is computed: never fixed text ("not used", "N/A", -1) in place of a value you could not get.
-#   Never wrap the work in try/except that prints a fixed line on failure ("R9: fit failed") — let the error raise.
+#   Never wrap the work in try/except that prints a fixed line on failure ("Fit: failed") — let the error raise.
 #   A value the request calls noise-free, exact or theoretical is computed from the formula, never read from a cell
 #   the script added noise to.
 # Do all the work first, then read every printed value after it: an existence value by name after the
 #   creating/deleting call (existPlot3D("X")), never a lookup made before it, never an action call
 #   (closeWindow(), delete(), new…()) inside scriptPrint() — it returns None. Every value is read AFTER the work
 #   that changes it — a count or state read before is the state before the task:
-#   WRONG: n_tabs = n.tabs(); n.addTab(); n.setAutoexec(True); scriptPrint("R3:", n_tabs, auto_on)
-#   RIGHT: n.addTab(); n.setAutoexec(True); scriptPrint("R3:", n.tabs(), n.autoexec())
+#   WRONG: n_tabs = n.tabs(); n.addTab(); n.setAutoexec(True); scriptPrint("Tabs:", n_tabs, auto_on)
+#   RIGHT: n.addTab(); n.setAutoexec(True); scriptPrint("Tabs:", n.tabs(), n.autoexec())
 
 # MATH FUNCTIONS ARE GLOBAL — sin cos exp log sqrt pi e floor ceil abs are in the global namespace.
 #   Do NOT write "import math" — use bare names directly. No import needed.
