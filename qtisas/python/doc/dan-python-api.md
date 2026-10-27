@@ -44,6 +44,7 @@ First choose the call:
 | remove points at the ends of the curves | `Dan.Processing.Options.setRemovePoints(first, last)` (I[Q]); `Dan.Merge.run(..., removeFirst=, removeLast=)` (merged) |
 | ASCII files instead of tables | `Dan.Processing.run(s, output="files")`, `Dan.Merge.run(t, output="files")` |
 | join curves of two instruments | `Dan.Merge.join(name, [table1, table2])`; how well they agree: `Dan.Merge.overlap(t1, t2)` |
+| any instrument setting, e.g. points always removed | `Dan.Options.Config.setParameters({...})`; keep it: `Dan.Options.saveInstrument("<name>")` |
 
 The request's words for `setConfiguration(i, ...)` (i = the configuration's number; the runs as the request gives
 them), then ONE `calculate()` and `configuration(i)["factor"]`, `["xCenter"]`, `["yCenter"]`:
@@ -94,6 +95,7 @@ merged = Dan.Merge.run(s + "-mergingTemplate")        # 7. ["H-J", "H-L", "H-M"]
 | `modes()` → list, `selectMode(mode)` | e.g. "(SM) Standard Mode", "(BS) Buffer Subtraction [2D]" |
 | `setInputPath(path)`, `inputPath()` | the folder of the raw runs (`~/...` or absolute) |
 | `setOutputPath(path)`, `outputPath()` | where `output="files"` writes (`ASCII-QI/`, `ASCII-QI-MERGED/`); a folder that does not exist yet is made |
+| `saveInstrument(name)` | the current instrument with its changes (e.g. `Config.setParameters()`) under a name of its own, then selected; a built-in name is refused |
 
 ### Dan.Options.Config — the instrument's methods
 
@@ -103,6 +105,7 @@ merged = Dan.Merge.run(s + "-mergingTemplate")        # 7. ["H-J", "H-L", "H-M"]
 |---|---|
 | `centerMethods()` → `["hf", "symmetry", "header"]`, `centerMethod()`, `setCenterMethod(method)` | **hf**: moments around the beam stop's center — for a sample scattering strongly near the beam stop; **symmetry**: X and Y symmetrization — stable for weakly scattering data; **header**: the center written in the run's header |
 | `transmissionMethods()`, `transmissionMethod()`, `setTransmissionMethod(method)` | the texts of DAN's list, e.g. "Direct Beam  [dead-time +]" (counts through the transmission mask) |
+| `parameters()` → dict, `setParameters({key: value, ...})` | the instrument's whole configuration as its `.SANS` file holds it: `"Options-1D-RemoveLast": "5"`, `"Options-2D-CenterMethod": "SYM"`, ... (the keys: `parameters()`); set as selecting the instrument does — a value the interface does not take raises `ValueError` |
 
 ## Dan.Rawdata
 

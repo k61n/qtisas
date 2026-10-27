@@ -81,6 +81,8 @@ class DanOptions : public DanPart
     // The session as a script continues it — instrument, folders, configurations, masks, sensitivities, script tables —
     // or empty when the project holds nothing of DAN (no mask, sensitivity or script table)
     QString state() const;
+    // the current instrument saved under a name of its own (its .SANS file and .cpp), as "Save instrument" does
+    bool saveInstrument(const QString &name);
 };
 
 // Options tab, its instrument configuration (Dan.Options.Config): the methods the examples change
@@ -100,6 +102,10 @@ class DanOptionsConfig : public DanPart
     QStringList transmissionMethods() const;
     QString transmissionMethod() const;
     bool setTransmissionMethod(const QString &method);
+    // the instrument's whole configuration, as its .SANS file holds it: "Options-1D-RemoveLast" -> "5", ...
+    QVariantMap parameters();
+    // some of them set, as selecting the instrument sets them (checked: a value the interface does not take fails)
+    bool setParameters(const QVariantMap &values);
 };
 
 // Rawdata Tools tab: the runs of the input folder and header (info) tables

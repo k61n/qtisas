@@ -3666,6 +3666,15 @@ public:
         sipError = sipErrorFail;
     }
 %End
+    // the instrument's whole configuration as its .SANS file holds it ({"Options-1D-RemoveLast": "5", ...}); set some
+    QVariantMap parameters();
+    void setParameters(const QVariantMap &values);
+%MethodCode
+    if (!(sipCpp->setParameters(*a0))) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
 };
 
 class DanOptions : DanPart /NoDefaultCtors/
@@ -3716,6 +3725,14 @@ public:
     }
 %End
     QString outputPath() const;
+    // the current instrument (with the changes made) saved under a name of its own, then selected
+    void saveInstrument(const QString &name);
+%MethodCode
+    if (!(sipCpp->saveInstrument(*a0))) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
 };
 
 class DanRawdata : DanPart /NoDefaultCtors/

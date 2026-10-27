@@ -789,6 +789,13 @@ void dan18::instrumentSelected(QString instrName)
         f.close();
     }
 
+    applyInstrumentLines(lst, inFocus);
+}
+
+//+++ an instrument's "[Key] value" lines applied to the interface (selecting an instrument, a Python setting); the
+//+++ keys an older file names otherwise renamed first
+void dan18::applyInstrumentLines(QStringList lst, bool inFocus)
+{
     for (int i = 0; i < lst.count(); i++)
     {
         if (lst[i].contains("[Info]"))
@@ -1722,36 +1729,9 @@ void dan18::saveInstrumentAsCpp(QString instrPath, QString instrName  )
     f.close();
 }
 
-void dan18::saveInstrumentAs()
+//+++ the instrument as its .SANS file holds it: one "[Key] value" line per setting of the interface
+QString dan18::instrumentText(const QString &fileName)
 {
-    QString instrPath;
-    if (!QDir(app()->sasPath + "/SANSinstruments/").exists())
-        QDir().mkdir(app()->sasPath + "/SANSinstruments/");
-    instrPath = app()->sasPath + "/SANSinstruments/";
-    instrPath = instrPath.replace("//", "/");
-
-    bool ok = false;
-
-    QString fileName = comboBoxInstrument->currentText();
-
-    if (comboBoxInstrument->currentIndex() < 19)
-        fileName = "Create Your SAS-Instrument: Input instrument Name";
-
-    while (ok == false)
-    {
-        fileName = QInputDialog::getText(this, "QtiSAS", "Create a SAS Instrument", QLineEdit::Normal, fileName, &ok);
-        if (!ok || fileName.isEmpty())
-            return;
-
-        if (InstrumentSANS::defaultInstruments.contains(fileName))
-        {
-            ok = false;
-            fileName = "Please do not use STANDARD instrument names";
-        }
-    }
-
-    saveInstrumentAsCpp(instrPath,fileName);
-
     QString s;
     //+++ instrument
     s += "[Instrument] " + fileName + "\n";
@@ -1956,17 +1936,17 @@ void dan18::saveInstrumentAs()
     s += "[Options-1D-QI-Presentation] " + QString::number(comboBoxSelectPresentation->currentIndex()) + "\n";
 
     //+++ script table options
-    s += QString("[Sample-Position-As-Condition] %1").arg(checkBoxRecalculateUseNumber->isChecked() ? "Yes" : "No");
-    s += QString("[Attenuator-as-Condition] %1").arg(checkBoxAttenuatorAsPara->isChecked() ? "Yes" : "No");
-    s += QString("[Beam-Center-as-Condition] %1").arg(checkBoxBeamcenterAsPara->isChecked() ? "Yes" : "No");
-    s += QString("[Polarization-as-Condition] %1").arg(checkBoxPolarizationAsPara->isChecked() ? "Yes" : "No");
-    s += QString("[DetectorAngle-as-Condition] %1").arg(checkBoxDetRotAsPara->isChecked() ? "Yes" : "No");
-    s += QString("[Reread-Existing-Runs] %1").arg(checkBoxRecalculate->isChecked() ? "Yes" : "No");
-    s += QString("[Find-Center-For-EveryFile] %1").arg(checkBoxFindCenter->isChecked() ? "Yes" : "No");
-    s += QString("[Tr-Force-Copy-Paste] %1").arg(checkBoxForceCopyPaste->isChecked() ? "Yes" : "No");
-    s += QString("[Sampe-Name-As-RunTableName] %1").arg(checkBoxNameAsTableName->isChecked() ? "Yes" : "No");
-    s += QString("[Generate-MergingTable] %1").arg(checkBoxMergingTable->isChecked() ? "Yes" : "No");
-    s += QString("[Auto-Merging] %1").arg(checkBoxAutoMerging->isChecked() ? "Yes" : "No");
+    s += QString("[Sample-Position-As-Condition] %1\n").arg(checkBoxRecalculateUseNumber->isChecked() ? "Yes" : "No");
+    s += QString("[Attenuator-as-Condition] %1\n").arg(checkBoxAttenuatorAsPara->isChecked() ? "Yes" : "No");
+    s += QString("[Beam-Center-as-Condition] %1\n").arg(checkBoxBeamcenterAsPara->isChecked() ? "Yes" : "No");
+    s += QString("[Polarization-as-Condition] %1\n").arg(checkBoxPolarizationAsPara->isChecked() ? "Yes" : "No");
+    s += QString("[DetectorAngle-as-Condition] %1\n").arg(checkBoxDetRotAsPara->isChecked() ? "Yes" : "No");
+    s += QString("[Reread-Existing-Runs] %1\n").arg(checkBoxRecalculate->isChecked() ? "Yes" : "No");
+    s += QString("[Find-Center-For-EveryFile] %1\n").arg(checkBoxFindCenter->isChecked() ? "Yes" : "No");
+    s += QString("[Tr-Force-Copy-Paste] %1\n").arg(checkBoxForceCopyPaste->isChecked() ? "Yes" : "No");
+    s += QString("[Sampe-Name-As-RunTableName] %1\n").arg(checkBoxNameAsTableName->isChecked() ? "Yes" : "No");
+    s += QString("[Generate-MergingTable] %1\n").arg(checkBoxMergingTable->isChecked() ? "Yes" : "No");
+    s += QString("[Auto-Merging] %1\n").arg(checkBoxAutoMerging->isChecked() ? "Yes" : "No");
 
     s += "[Overlap-Merging] " + QString::number(spinBoxOverlap->value()) + "\n";
 
@@ -1994,6 +1974,41 @@ void dan18::saveInstrumentAs()
 
     s += "[ANALYZER-TRANSMISSION] " + analyzerTransmissionSelector->writeSettingsString() + "\n";
     s += "[ANALYZER-EFFICIENCY] " + analyzerEfficiencySelector->writeSettingsString() + "\n";
+
+    return s;
+}
+
+void dan18::saveInstrumentAs()
+{
+    QString instrPath;
+    if (!QDir(app()->sasPath + "/SANSinstruments/").exists())
+        QDir().mkdir(app()->sasPath + "/SANSinstruments/");
+    instrPath = app()->sasPath + "/SANSinstruments/";
+    instrPath = instrPath.replace("//", "/");
+
+    bool ok = false;
+
+    QString fileName = comboBoxInstrument->currentText();
+
+    if (comboBoxInstrument->currentIndex() < 19)
+        fileName = "Create Your SAS-Instrument: Input instrument Name";
+
+    while (ok == false)
+    {
+        fileName = QInputDialog::getText(this, "QtiSAS", "Create a SAS Instrument", QLineEdit::Normal, fileName, &ok);
+        if (!ok || fileName.isEmpty())
+            return;
+
+        if (InstrumentSANS::defaultInstruments.contains(fileName))
+        {
+            ok = false;
+            fileName = "Please do not use STANDARD instrument names";
+        }
+    }
+
+    saveInstrumentAsCpp(instrPath, fileName);
+
+    const QString s = instrumentText(fileName);
 
     QFile f(instrPath + "/" + fileName + ".SANS");
 

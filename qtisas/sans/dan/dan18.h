@@ -211,6 +211,9 @@ public:
     bool neededMaskExists(int MD, const QString &maskName, bool showErrorMessage = false);
     void updateMaskList();
     void updateMatrixListInConfigurations(int row, const QStringList &names);
+    // an instrument's settings: its .SANS text, and "[Key] value" lines applied as selecting it does
+    QString instrumentText(const QString &fileName);
+    void applyInstrumentLines(QStringList lst, bool inFocus = false);
     
     // sens
     void createSensFull(const QString &sensName);

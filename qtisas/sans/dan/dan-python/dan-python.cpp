@@ -12,9 +12,11 @@ Description: DAN-SANS Python interface: one object per tab (Dan.Options, Dan.Raw
 #include <QDirIterator>
 #include <QFileInfo>
 #include <QSet>
+#include <QTextStream>
 
 #include "Table.h"
 #include "dan-python.h"
+#include "dan-sans-instruments.h"
 #include "dan18.h"
 #include "naturalsort.h"
 
@@ -924,4 +926,89 @@ bool DanMerge::overlap(const QString &first, const QString &second, double &qMin
     }
     ratio = sum / points;
     return true;
+}
+
+//+++ the instrument's configuration (Dan.Options.Config.parameters())
+namespace
+{
+// "[Key] value" lines -> key -> value (a key written twice: the last)
+QVariantMap instrumentMap(const QString &text)
+{
+    QVariantMap values;
+    for (const QString &line : text.split('\n'))
+    {
+        if (!line.startsWith('['))
+            continue;
+        const auto close = line.indexOf("]");
+        if (close < 0)
+            continue;
+        values[line.mid(1, close - 1)] = line.mid(close + 1).trimmed();
+    }
+    return values;
+}
+
+QString parameterText(const QVariant &value)
+{
+    if (value.userType() == QMetaType::Bool)
+        return value.toBool() ? "Yes" : "No";
+    return value.toString();
+}
+} // namespace
+
+QVariantMap DanOptionsConfig::parameters()
+{
+    return instrumentMap(d->instrumentText(d->comboBoxInstrument->currentText()));
+}
+
+bool DanOptionsConfig::setParameters(const QVariantMap &values)
+{
+    const QString name = d->comboBoxInstrument->currentText();
+    QStringList lines = d->instrumentText(name).split('\n');
+    const QVariantMap now = instrumentMap(lines.join('\n'));
+    for (auto it = values.begin(); it != values.end(); ++it)
+        if (!now.contains(it.key()))
+        {
+            fail("no parameter " + it.key() + " (parameters() has the names)");
+            return false;
+        }
+    for (QString &line : lines)
+        for (auto it = values.begin(); it != values.end(); ++it)
+            if (line.startsWith("[" + it.key() + "]"))
+                line = "[" + it.key() + "] " + parameterText(it.value());
+    begin();
+    d->applyInstrumentLines(lines);
+    const QVariantMap after = parameters();
+    QStringList refused;
+    for (auto it = values.begin(); it != values.end(); ++it)
+        if (after.value(it.key()).toString().simplified() != parameterText(it.value()).simplified())
+            refused << it.key() + " (now " + after.value(it.key()).toString() + ")";
+    return end(refused.isEmpty(), "not taken: " + refused.join(", "));
+}
+
+bool DanOptions::saveInstrument(const QString &name)
+{
+    if (name.trimmed().isEmpty() || name.contains('/'))
+    {
+        m_lastError = "no instrument name";
+        return false;
+    }
+    if (InstrumentSANS::defaultInstruments.contains(name))
+    {
+        m_lastError = name + " is a built-in instrument: save it under a name of its own";
+        return false;
+    }
+    const QString folder = QDir(d->app()->sasPath).filePath("SANSinstruments");
+    QDir().mkpath(folder);
+    begin();
+    d->saveInstrumentAsCpp(folder, name);
+    QFile f(QDir(folder).filePath(name + ".SANS"));
+    if (!f.open(QIODevice::WriteOnly))
+        return end(false, "could not write " + f.fileName());
+    QTextStream(&f) << d->instrumentText(name);
+    f.close();
+    d->findSANSinstruments();
+    if (d->comboBoxInstrument->findText(name) >= 0)
+        d->comboBoxInstrument->setCurrentIndex(d->comboBoxInstrument->findText(name));
+    d->instrumentSelected();
+    return end(d->comboBoxInstrument->currentText() == name, "the instrument " + name + " was not found again");
 }

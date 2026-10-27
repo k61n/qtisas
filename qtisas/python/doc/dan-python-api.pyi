@@ -45,17 +45,23 @@
 #                                            Dan.Merge.run(..., removeFirst=, removeLast=)          (merged)
 #   ASCII files instead of tables         -> p.run(s, output="files"), Dan.Merge.run(t, output="files")
 #   join curves of two instruments        -> Dan.Merge.join(name, [table1, table2]); agreement: overlap(t1, t2)
+#   any instrument setting, e.g. points always removed -> Dan.Options.Config.setParameters({...});
+#                                            keep it: Dan.Options.saveInstrument("<name>")
 
 # --- Dan.Options
 newSession()   openSession(scriptTable)   # a saved session = its script table
 instruments()->list   instrument()->str   selectInstrument(name)   modes()->list   selectMode(mode)
 setInputPath(path)  inputPath()->str   setOutputPath(path)  outputPath()->str   # raw runs in, ASCII files out
 #   (an output folder that does not exist yet is made)
+saveInstrument(name)             # the current instrument with its changes, under a name of its own (then selected)
 # Dan.Options.Config — the instrument's methods (selectInstrument() sets them; set after it):
 centerMethods()->list ("hf", "symmetry", "header")  centerMethod()->str  setCenterMethod(method)
 #   hf: moments around the beam stop's center (strong scattering near the beam stop); symmetry: X and Y
 #   symmetrization (stable for weak scattering); header: the center written in the run's header
 transmissionMethods()->list  transmissionMethod()->str  setTransmissionMethod(method)
+parameters()->dict  setParameters({key: value, ...})   # the instrument's whole configuration as its .SANS file
+#   holds it: "Options-1D-RemoveLast": "5", "Options-2D-CenterMethod": "SYM", ... (the keys: parameters());
+#   set as selecting the instrument does; a value the interface does not take: ValueError
 
 # --- Dan.Rawdata
 runs()->list                     # the run numbers of the input folder, sorted
