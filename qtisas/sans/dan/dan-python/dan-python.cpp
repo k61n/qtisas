@@ -320,6 +320,205 @@ QString DanRawdata::newHeaderTable(const QString &name, const QStringList &items
     return tableName;
 }
 
+// the files of the input and output folders with their time and size: what an action wrote is what changed
+static QMap<QString, QString> folderState(const QStringList &folders)
+{
+    QMap<QString, QString> state;
+    for (const QString &folder : folders)
+        for (const QFileInfo &f : QDir(folder).entryInfoList(QDir::Files))
+            state[f.absoluteFilePath()] =
+                QString::number(f.lastModified().toMSecsSinceEpoch()) + "/" + QString::number(f.size());
+    return state;
+}
+
+static QStringList written(const QMap<QString, QString> &before, const QMap<QString, QString> &after)
+{
+    QStringList files;
+    for (auto it = after.constBegin(); it != after.constEnd(); ++it)
+        if (before.value(it.key()) != it.value())
+            files << it.key();
+    return files;
+}
+
+QStringList DanRawdata::runFiles(const QStringList &runs)
+{
+    QStringList files;
+    for (const QString &run : runs)
+    {
+        if (!d->filesManager->checkFileNumber(run))
+        {
+            fail("no run " + run + " in " + d->filesManager->pathInString());
+            return {};
+        }
+        files << d->filesManager->fileNameFull(run, d->filesManager->wildCardDetector());
+    }
+    return files;
+}
+
+QStringList DanRawdata::addRuns(const QStringList &runs, const QString &runGiven)
+{
+    if (runs.count() < 2)
+    {
+        fail("at least two runs to add");
+        return {};
+    }
+    if (runFiles(runs).isEmpty())
+        return {};
+    // the name the interface proposes: the first run's number + the count, 5 digits
+    QString run = runGiven;
+    if (run.isEmpty())
+        run = runs.first() + QString("%1").arg(runs.count(), 5, 10, QChar('0'));
+    if (run.contains(QRegularExpression(R"([/\\\s])")))
+    {
+        fail("run: a name without spaces and slashes");
+        return {};
+    }
+    const QStringList folders = {d->filesManager->pathInString(), d->lineEditPathRAD->text()};
+    begin();
+    const auto before = folderState(folders);
+    d->addSeveralFilesUniSingleFrame(runs, run);
+    QStringList files = written(before, folderState(folders));
+    if (!end(!files.isEmpty(), "nothing was written (the instrument's file format?)"))
+        return {};
+    return files;
+}
+
+QStringList DanRawdata::addRunsFromTable(const QString &table, const QString &by)
+{
+    if (by != "columns" && by != "rows")
+    {
+        fail(R"(by: "columns" or "rows")");
+        return {};
+    }
+    Table *t = d->app()->table(table);
+    if (!t || t->name() != table)
+    {
+        fail("no table " + table);
+        return {};
+    }
+    const QStringList folders = {d->filesManager->pathInString(), d->lineEditPathRAD->text()};
+    begin();
+    d->toolBoxAdv->setCurrentIndex(0); // "Conventional": the columns' Add of the RT and TOF pages adds otherwise
+    const auto before = folderState(folders);
+    if (by == "columns")
+        d->addFilesInTableCols(t);
+    else
+        d->addFilesInTableRows(t);
+    QStringList files = written(before, folderState(folders));
+    if (!end(!files.isEmpty(), "nothing was written: no run of " + table + " found"))
+        return {};
+    return files;
+}
+
+QString DanRawdata::newInfoTable(const QString &name, const QStringList &runs, int compact, int matrices,
+                                 int detectorSum)
+{
+    if (name.isEmpty())
+        return fail("no table name");
+    const bool exists = d->app()->checkTableExistence(name);
+    if (exists && !d->app()->findTableListByLabel("Info::Table").contains(name))
+        return fail(name + " is no info table");
+    const QStringList files = runFiles(runs);
+    if (files.isEmpty())
+        return runs.isEmpty() ? fail("no runs") : QString();
+    begin();
+    if (compact >= 0)
+        d->checkBoxShortList->setChecked(compact == 1);
+    if (matrices >= 0)
+        d->checkBoxDatYesNo->setChecked(matrices == 1);
+    if (detectorSum >= 0)
+        d->checkBoxSumVsMask->setChecked(detectorSum == 1);
+    d->addToInfoTable(name, files);
+    // the list of info tables, this one active (as after the interface's dialog)
+    QStringList tables = d->app()->findTableListByLabel("Info::Table");
+    tables.sort();
+    d->comboBoxInfoTable->clear();
+    d->comboBoxInfoTable->addItems(tables);
+    d->comboBoxInfoTable->setCurrentIndex(static_cast<int>(tables.indexOf(name)));
+    if (!end(d->app()->checkTableExistence(name)))
+        return {};
+    return name;
+}
+
+QString DanRawdata::newInfoMatrix(const QString &nameGiven, const QStringList &runs, int columns, int mask, int sens,
+                                  int norm, int roi)
+{
+    if (nameGiven.isEmpty())
+        return fail("no matrix name");
+    QString name = nameGiven;
+    name.replace("_", "-").replace("/", "-").replace("\\", "-").replace("%", "-").replace(",", "-");
+    Matrix *existing = d->app()->matrix(name);
+    if (existing && !existing->windowLabel().startsWith("[1,1]"))
+        return fail(name + " is no info matrix");
+    if (mask == 1 && !isMask(d->comboBoxMaskFor->currentText()))
+        return fail("mask: no active mask");
+    if (sens == 1 && !isSens(d->comboBoxSensFor->currentText()))
+        return fail("sens: no active sensitivity");
+    const QStringList files = runFiles(runs);
+    if (files.isEmpty())
+        return runs.isEmpty() ? fail("no runs") : QString();
+
+    begin();
+    d->checkBoxBigMatrixASCII->setChecked(false); // the runs' raw data, not the ASCII I(Q) files
+    if (columns >= 1)
+        d->spinBoxBigMatrixCols->setValue(columns);
+    if (mask >= 0)
+        d->checkBoxBigMatrixMask->setChecked(mask == 1);
+    if (sens >= 0)
+        d->checkBoxBigMatrixSens->setChecked(sens == 1);
+    if (norm >= 0)
+        d->checkBoxBigMatrixNorm->setChecked(norm == 1);
+    if (roi >= 0)
+        d->checkBoxBigMatrixROI->setChecked(roi == 1);
+    if (existing)
+    {
+        // added to it: the same columns and image width (else DAN asks for a new matrix)
+        const int md = d->lineEditMD->text().toInt();
+        int width = md;
+        if (d->checkBoxBigMatrixROI->isChecked() && d->groupBoxMask->isChecked())
+            width = std::min(d->spinBoxRBx->value(), md) - std::max(d->spinBoxLTx->value(), 1) + 1;
+        if (d->spinBoxBigMatrixCols->value() * width != existing->numCols())
+        {
+            end(false,
+                QString("%1: %2 columns of images %3 pixels wide; add with the same columns and roi")
+                    .arg(name, QString::number(existing->numCols() / std::max(width, 1)), QString::number(width)));
+            return {};
+        }
+        if (d->comboBoxInfoMatrix->findText(name) < 0)
+            d->comboBoxInfoMatrix->addItem(name);
+        d->comboBoxInfoMatrix->setCurrentIndex(d->comboBoxInfoMatrix->findText(name));
+    }
+    else
+        name = d->newInfoMatrix(name);
+    d->slotMakeBigMatrix(files);
+    if (!end(d->app()->matrix(name) != nullptr))
+        return {};
+    return name;
+}
+
+QStringList DanRawdata::extractMatrices(const QStringList &runs, int asDouble)
+{
+    if (runs.isEmpty())
+    {
+        fail("no runs");
+        return {};
+    }
+    if (runFiles(runs).isEmpty())
+        return {};
+    begin();
+    if (asDouble >= 0)
+        d->checkBoxSaveMatrixDouble->setChecked(asDouble == 1);
+    QStringList files = d->extractRawData(runs);
+    for (const QString &f : files)
+        if (!QFileInfo(f).isFile())
+        {
+            end(false, "not written: " + f);
+            return {};
+        }
+    end(true);
+    return files;
+}
+
 //+++ DanMask
 // the dead rows (or columns) as createMaskFull() reads them: "a-b" (rows a..b) or "a-b-c-d" (rows a..b, columns
 // c..d; for columns the other way round), pixels 1..md, a <= b; empty: none

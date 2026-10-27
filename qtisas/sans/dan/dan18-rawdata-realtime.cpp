@@ -1445,10 +1445,12 @@ void dan18::addGZippedMatrixes(const QStringList &fileNumers, const QString &fil
     gzwrite(fdw,gz_buffer,dimSmallest*4);
     gzclose(fdw);
 
-    free(fd);
-    free(buf);
-    free(intbuf);
-    free(gz_buffer);
+    // each file's buffer (malloc/realloc), then the arrays of them (new[]); gz_buffer is the first buffer
+    for (int i = 0; i < fileNumers.count(); i++)
+        free(buf[i]);
+    delete[] fd;
+    delete[] buf;
+    delete[] intbuf;
 }
 //+++  Add  Headers: ASCII
 bool dan18::addHeadersAscii(const QStringList &files, const QStringList &fileNumers, QStringList &newHeader)
@@ -1480,28 +1482,38 @@ bool dan18::addHeadersAscii(const QStringList &files, const QStringList &fileNum
     double monitor1 = 0.0;
     double monitor2 = 0;
     double monitor3 = 0;
+    // the selector as the YAML headers add it: a count summed, a frequency averaged over the durations
+    bool selectorNumber = comboBoxUnitsSelector->currentIndex() == 0;
     for (int i = 0; i < N; i++)
     {
         duration += monitors->readDuration(fileNumers[i]);
         sum += monitors->readSum(fileNumers[i]);
-        selectorFrequency += selector->readFrequencylikeInHeader(fileNumers[i]);
+        if (selectorNumber)
+            selectorFrequency += selector->readFrequencylikeInHeader(fileNumers[i]);
+        else
+            selectorFrequency +=
+                selector->readFrequencylikeInHeader(fileNumers[i]) * monitors->readDuration(fileNumers[i]);
         monitor1 += monitors->readMonitor1(fileNumers[i], 0.0);
         monitor2 += monitors->readMonitor2(fileNumers[i], 0.0);
         monitor3 += monitors->readMonitor3(fileNumers[i], 0.0);
     }
+    if (!selectorNumber && duration > 0)
+        selectorFrequency /= duration;
     // +++ duration
     duration /= monitors->unitsConverterDurationToSec(1.0);
-    parserHeader->replaceHeaderValue(fileNumers[0], "[Duration]", newHeader, QString::number(duration));
+    parserHeader->replaceHeaderValue(fileNumers[0], "[Duration]", newHeader, QString::number(duration, 'g', 15));
     // +++ sum
-    parserHeader->replaceHeaderValue(fileNumers[0], "[Sum]", newHeader, QString::number(sum));
+    parserHeader->replaceHeaderValue(fileNumers[0], "[Sum]", newHeader, QString::number(sum, 'g', 15));
     // +++ selector
-    parserHeader->replaceHeaderValue(fileNumers[0], "[Selector]", newHeader, QString::number(selectorFrequency));
+    parserHeader->replaceHeaderValue(fileNumers[0], "[Selector]", newHeader,
+                                     QString::number(selectorFrequency, 'g', 15));
     // +++ Monitor1
-    parserHeader->replaceHeaderValue(fileNumers[0], "[Monitor-1]", newHeader, QString::number(monitor1));
+    parserHeader->replaceHeaderValue(fileNumers[0], "[Monitor-1]", newHeader, QString::number(monitor1, 'g', 15));
     // +++ Monitor2
-    parserHeader->replaceHeaderValue(fileNumers[0], "[Monitor-2]", newHeader, QString::number(monitor2));
+    parserHeader->replaceHeaderValue(fileNumers[0], "[Monitor-2]", newHeader, QString::number(monitor2, 'g', 15));
     // +++ Monitor3
-    parserHeader->replaceHeaderValue(fileNumers[0], "[Monitor-3|Tr|ROI]", newHeader, QString::number(monitor3));
+    parserHeader->replaceHeaderValue(fileNumers[0], "[Monitor-3|Tr|ROI]", newHeader,
+                                     QString::number(monitor3, 'g', 15));
 
     return true;
 }
@@ -1571,12 +1583,12 @@ bool dan18::addNheadersYaml(const QStringList &fileNumers, const QString &fileNa
     if (!selectorNumber)
         selectorFrequency /= duration;
 
-    parserHeader->replaceEntryYaml(fileName, "[Sum]", true, QString::number(sum));
-    parserHeader->replaceEntryYaml(fileName, "[Duration]", true, QString::number(duration));
-    parserHeader->replaceEntryYaml(fileName, "[Monitor-1]", true, QString::number(monitor1));
-    parserHeader->replaceEntryYaml(fileName, "[Monitor-2]", true, QString::number(monitor2));
-    parserHeader->replaceEntryYaml(fileName, "[Monitor-3|Tr|ROI]", true, QString::number(monitor3));
-    parserHeader->replaceEntryYaml(fileName, "[Selector]", true, QString::number(selectorFrequency));
+    parserHeader->replaceEntryYaml(fileName, "[Sum]", true, QString::number(sum, 'g', 15));
+    parserHeader->replaceEntryYaml(fileName, "[Duration]", true, QString::number(duration, 'g', 15));
+    parserHeader->replaceEntryYaml(fileName, "[Monitor-1]", true, QString::number(monitor1, 'g', 15));
+    parserHeader->replaceEntryYaml(fileName, "[Monitor-2]", true, QString::number(monitor2, 'g', 15));
+    parserHeader->replaceEntryYaml(fileName, "[Monitor-3|Tr|ROI]", true, QString::number(monitor3, 'g', 15));
+    parserHeader->replaceEntryYaml(fileName, "[Selector]", true, QString::number(selectorFrequency, 'g', 15));
 
     return true;
 }

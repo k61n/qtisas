@@ -125,6 +125,22 @@ class DanRawdata : public DanPart
     QStringList runs() const;
     QStringList headerItems() const;
     QString newHeaderTable(const QString &name, const QStringList &items, const QString &runs);
+    // "Add :: Raw Files": the runs summed into one new run (matrix and header: duration, counts, monitors);
+    // run empty: <first run>0000<N>; the files written (in the output folder)
+    QStringList addRuns(const QStringList &runs, const QString &run);
+    // the Add buttons on a table: by "columns" (Two Step Add) or by "rows" (Quick Add); the files written
+    QStringList addRunsFromTable(const QString &table, const QString &by);
+    // "Header(s) - to - Info-Table" (added to an info table of that name); the options: -1 as set, 0/1
+    QString newInfoTable(const QString &name, const QStringList &runs, int compact, int matrices, int detectorSum);
+    // "Image(s) - to - Info-Matrix" (added to an info matrix of that name); columns < 1 and the options -1: as set
+    QString newInfoMatrix(const QString &name, const QStringList &runs, int columns, int mask, int sens, int norm,
+                          int roi);
+    // "Extract :: Raw-matrixes": the files written; asDouble -1: as set
+    QStringList extractMatrices(const QStringList &runs, int asDouble);
+
+  private:
+    // the runs as files of the input folder; empty and lastError() set when one is missing
+    QStringList runFiles(const QStringList &runs);
 };
 
 // Mask tab

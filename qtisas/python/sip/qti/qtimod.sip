@@ -3756,6 +3756,76 @@ public:
         }
     }
 %End
+    // the runs summed into one new run; run None: <first run>0000<N>; the files written (output folder)
+    QStringList addRuns(SIP_PYOBJECT runs, const QString &run = QString());
+%MethodCode
+    QStringList runs;
+    if (!sipqti_strings(a0, &runs, "runs: run numbers"))
+        sipError = sipErrorFail;
+    else {
+        sipRes = new QStringList(sipCpp->addRuns(runs, *a1));
+        if (sipRes->isEmpty()) {
+            PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+            sipError = sipErrorFail;
+        }
+    }
+%End
+    // by "columns" or "rows"; the files written
+    QStringList addRunsFromTable(const QString &table, const QString &by = "columns");
+%MethodCode
+    sipRes = new QStringList(sipCpp->addRunsFromTable(*a0, *a1));
+    if (sipRes->isEmpty()) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
+    // the options: None as set
+    QString newInfoTable(const QString &name, SIP_PYOBJECT runs, SIP_PYOBJECT compact = Py_None,
+                         SIP_PYOBJECT matrices = Py_None, SIP_PYOBJECT detectorSum = Py_None);
+%MethodCode
+    QStringList runs;
+    if (!sipqti_strings(a1, &runs, "runs: run numbers"))
+        sipError = sipErrorFail;
+    else {
+        const int compact = (a2 == Py_None ? -1 : (PyObject_IsTrue(a2) ? 1 : 0)), matrices = (a3 == Py_None ? -1 : (PyObject_IsTrue(a3) ? 1 : 0));
+        const int detectorSum = (a4 == Py_None ? -1 : (PyObject_IsTrue(a4) ? 1 : 0));
+        sipRes = new QString(sipCpp->newInfoTable(*a0, runs, compact, matrices, detectorSum));
+        if (sipRes->isEmpty()) {
+            PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+            sipError = sipErrorFail;
+        }
+    }
+%End
+    QString newInfoMatrix(const QString &name, SIP_PYOBJECT runs, int columns = 0, SIP_PYOBJECT mask = Py_None,
+                          SIP_PYOBJECT sens = Py_None, SIP_PYOBJECT norm = Py_None, SIP_PYOBJECT roi = Py_None);
+%MethodCode
+    QStringList runs;
+    if (!sipqti_strings(a1, &runs, "runs: run numbers"))
+        sipError = sipErrorFail;
+    else {
+        const int mask = (a3 == Py_None ? -1 : (PyObject_IsTrue(a3) ? 1 : 0)), sens = (a4 == Py_None ? -1 : (PyObject_IsTrue(a4) ? 1 : 0));
+        const int norm = (a5 == Py_None ? -1 : (PyObject_IsTrue(a5) ? 1 : 0)), roi = (a6 == Py_None ? -1 : (PyObject_IsTrue(a6) ? 1 : 0));
+        sipRes = new QString(sipCpp->newInfoMatrix(*a0, runs, a2, mask, sens, norm, roi));
+        if (sipRes->isEmpty()) {
+            PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+            sipError = sipErrorFail;
+        }
+    }
+%End
+    // <output folder>/raw-matrix/only_<run>_rawdata.matrix; the files written
+    QStringList extractMatrices(SIP_PYOBJECT runs, SIP_PYOBJECT asDouble = Py_None);
+%MethodCode
+    QStringList runs;
+    if (!sipqti_strings(a0, &runs, "runs: run numbers"))
+        sipError = sipErrorFail;
+    else {
+        sipRes = new QStringList(sipCpp->extractMatrices(runs, (a1 == Py_None ? -1 : (PyObject_IsTrue(a1) ? 1 : 0))));
+        if (sipRes->isEmpty()) {
+            PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+            sipError = sipErrorFail;
+        }
+    }
+%End
 };
 
 class DanMask : DanPart /NoDefaultCtors/

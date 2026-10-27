@@ -205,10 +205,15 @@ public:
     // the label of a mask made from the Mask tab's fields
     QString maskLabel(bool transmission) const;
     bool saveSensToFile(const QString &sensName, const QString &file);
+    void addToInfoTable(const QString &TableName, QStringList selectedDat);
+    QString newInfoMatrix(QString TableName);
+    QStringList extractRawData(const QStringList &runs);
     // a progress window over QtiSAS, also while a script runs (non-modal then, its events not taken: a long reduction
     // looked frozen); none while QtiSAS itself is hidden (test instances)
     void startProgress(QProgressDialog &progress);
     static void stepProgress(QProgressDialog &progress, int value);
+    void addFilesInTableCols(Table *t);
+    void addFilesInTableRows(Table *t);
     bool maskTriangle(Matrix *m, int md, int x1, int y1, int x2, int y2, int x3, int y3);
     bool maskTriangles(Matrix *m, int md);
     bool readDisplay(double &x, double &y);

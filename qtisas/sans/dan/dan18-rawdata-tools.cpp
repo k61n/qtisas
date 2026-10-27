@@ -448,7 +448,20 @@ void dan18::addToInfoTable()
         QMessageBox::critical( 0, "qtiSAS", "Selected data not in ::Input Folder::");
         return;
     }
-    
+
+    addToInfoTable(TableName, selectedDat);
+}
+//+++ the files (of the input folder) added to the info table TableName, made when it does not exist
+void dan18::addToInfoTable(const QString &TableName, QStringList selectedDat)
+{
+    QString Dir = filesManager->pathInString();
+    QString wildCard = filesManager->wildCardDetector();
+    int MD = lineEditMD->text().toInt();
+    int filesNumber = static_cast<int>(selectedDat.count());
+    int i;
+    Table *tableDat;
+    QString wildCardLocal;
+
     int startRaw=0;
     
     wildCardLocal=wildCard;
@@ -1039,10 +1052,6 @@ void dan18::addToInfoTable()
 //++++++SLOT::newInfoMatrix +++
 void dan18::newInfoMatrix()
 {
-    int MD = lineEditMD->text().toInt();
-
-    QString activeMatrix=comboBoxInfoMatrix->currentText();
-    
     bool ok;
     QString TableName = QInputDialog::getText(this,
                                               "Big-Matrix's Generation: All-in-one", "Enter name of Matrix:",
@@ -1052,6 +1061,15 @@ void dan18::newInfoMatrix()
     {
         return;
     }
+    newInfoMatrix(TableName);
+}
+//+++ a new (empty) info-matrix, the active one; its name (made unique, "_/\\%," as "-")
+QString dan18::newInfoMatrix(QString TableName)
+{
+    int MD = lineEditMD->text().toInt();
+
+    // the name as the matrix gets it, so that the list selects the matrix made
+    TableName = TableName.replace("_", "-").replace("/", "-").replace("\\", "-").replace("%", "-").replace(",", "-");
 
     QStringList infoMatrixList = app()->findMatrixListByLabel("[1,1]");
 
@@ -1097,15 +1115,15 @@ void dan18::newInfoMatrix()
     
     
     
-    QString nameMatrix=TableName.replace("_","-").replace("/","-").replace("\\","-").replace("%","-").replace(",","-");
-    
-    
+    QString nameMatrix = TableName;
+
     // generate label
     QString label="[1,1]";
     
     makeMatrixUni(bigMatrix,nameMatrix, label, bigMatrix->size2, bigMatrix->size1,false, true);
     
     gsl_matrix_free(bigMatrix);
+    return nameMatrix;
 }
 
 //++++++SLOT::Make Table++
@@ -1234,7 +1252,7 @@ void dan18::slotMakeBigMatrix(QStringList selectedDat)
     }
 
     QString test = selectedDat[0];
-    if (test.contains(DirOut))
+    if (test.contains(DirLocal))
     {
         test=test.remove(DirLocal);
         if (!dirsInDir && test.contains("/") )
@@ -1412,7 +1430,6 @@ void dan18::slotMakeBigMatrixFromTable()
         for (int nn = 0; nn < N; nn++)
         {
             text = tableTextC(t, mm, nn).simplified();
-            qDebug() << text;
             if (text == "")
                 continue;
             if (!filesManager->checkFileNumber(text))
@@ -2046,7 +2063,6 @@ void dan18::extractRawData()
     QString Dir = filesManager->pathInString();
     QString wildCard = filesManager->wildCardDetector();
     bool dirsInDir = filesManager->subFoldersYN();
-    int MD = lineEditMD->text().toInt();
 
     QString filter = textEditPattern->text();
 
@@ -2092,12 +2108,16 @@ void dan18::extractRawData()
     }
     
     
-    //+++
-    QString fnameOnly;
+    QStringList runs;
+    for (int iter = 0; iter < filesNumber; iter++)
+        runs << FilesManager::findFileNumberInFileName(wildCard, selectedDat[iter].remove(Dir));
+    extractRawData(runs);
+}
+//+++ the runs' raw matrices as files <output folder>/raw-matrix/only_<run>_rawdata.matrix; the files written
+QStringList dan18::extractRawData(const QStringList &runs)
+{
+    int MD = lineEditMD->text().toInt();
     QString nameMatrix;
-    //
-    QString pos,num;
-    
     QString newName;
     QString DirOut 	= lineEditPathRAD->text();
     QDir dd;
@@ -2106,22 +2126,24 @@ void dan18::extractRawData()
         dd.mkdir(DirOut+"/raw-matrix");
     }
 
-    for (int iter = 0; iter < filesNumber; iter++)
+    QStringList written;
+    for (int iter = 0; iter < runs.count(); iter++)
     {
-        //+++ header
-        nameMatrix = FilesManager::findFileNumberInFileName(wildCard, selectedDat[iter].remove(Dir));
+        nameMatrix = runs[iter];
         gsl_matrix *data = gsl_matrix_alloc(MD, MD);
         gsl_matrix_set_all(data, 0.0);
         readMatrix(nameMatrix, data);
 
-        newName = DirOut + "raw-matrix/only_" + nameMatrix + "_rawdata.matrix";
+        newName = QDir(DirOut).filePath("raw-matrix/only_" + nameMatrix + "_rawdata.matrix");
 
         if (checkBoxSaveMatrixDouble->isChecked())
             saveMatrixToFile(newName, data, MD);
         else
             saveMatrixToFileInteger(newName, data, MD);
         gsl_matrix_free(data);
+        written << newName;
     }
+    return written;
 }
 
 
@@ -2171,9 +2193,8 @@ void dan18::asciiOrRawdata()
     }
 
     comboBoxCheck->addItems(lst);
-    if (lst.contains(whatToCheck))
-        comboBoxCheck->setItemText(comboBoxCheck->currentIndex(), whatToCheck);
-    else
-        comboBoxCheck->setItemText(comboBoxCheck->currentIndex(), "Plot Matrix [Plot-Active]");
+    // the action chosen before selected again (not the first entry renamed to it)
+    comboBoxCheck->setCurrentIndex(static_cast<int>(
+        lst.contains(whatToCheck) ? lst.indexOf(whatToCheck) : lst.indexOf("Plot Matrix [Plot-Active]")));
     comboBoxCheck->blockSignals(false);
 }

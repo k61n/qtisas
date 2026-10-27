@@ -126,6 +126,21 @@ void dan18::addSeveralFilesUniSingleFrame(QStringList selectedFileList, QStringL
         if (radioButtonDetectorFormatAscii->isChecked())
             addNfilesUniASCII(selectedFileList, selectedNumberList, fileName);
 
+        // the header file: the first run's, its number replaced by the new one, next to the new detector file
+        // (the patterns' difference appended "_HRD_standard" twice: "#_*.det" vs "#_*_HRD_standard.yaml")
+        const QString number0 = selectedNumberList[0];
+        const QString header0 = QFileInfo(filesManager->fileNameFullHeader(selectedNumberList[0])).fileName();
+        const QString detector0 = QFileInfo(selectedFileList[0]).fileName();
+        const QString detectorNew = QFileInfo(fileName).fileName();
+        if (header0.startsWith(number0) && detector0.startsWith(number0) &&
+            detectorNew.endsWith(detector0.mid(number0.length())))
+        {
+            const QString numberNew = detectorNew.left(detectorNew.length() - detector0.length() + number0.length());
+            addNheadersYaml(selectedNumberList,
+                            QFileInfo(fileName).dir().filePath(numberNew + header0.mid(number0.length())));
+            return;
+        }
+
         QString wcDetector = filesManager->wildCardDetector();
         QString wcHeader = filesManager->wildCardHeader();
 
@@ -200,13 +215,13 @@ void dan18::addSeveralFilesUniSingleFrame(QStringList selectedNumberList, QStrin
 //*******************************************
 void dan18::addFilesInActiveTableCols()
 {
-    if (!app()->activeWindow())
+    if (!app()->activeWindow() || QString(app()->activeWindow()->metaObject()->className()) != "Table")
         return;
-
-    auto *t = (Table *)app()->activeWindow();
-    if (!t)
-        return;
-
+    addFilesInTableCols((Table *)app()->activeWindow());
+}
+//+++ per column: the first row the new run's number, the rows below the runs added into it
+void dan18::addFilesInTableCols(Table *t)
+{
     QString wildCard = filesManager->wildCardDetector();
 
     int N = t->numCols();
@@ -251,15 +266,17 @@ void dan18::addFilesInActiveTableCols()
             addSeveralFilesUniSingleFrame(selectedNumberList, fileNumber);
         else if (toolBoxAdv->currentIndex() == 1)
         {
-            fileNumber = lineEditPathRAD->text();
-            fileNumber += "rt0_" + fileNumber + "_added-" + QString::number(selectedNumberList.count()) + ".DAT";
-            tofrtAddFiles(selectedFiles,fileNumber);
+            // the output folder + "rt0_<new number>_added-N.DAT" (the number was overwritten by the folder before)
+            QString file = lineEditPathRAD->text() + "rt0_" + fileNumber + "_added-" +
+                           QString::number(selectedNumberList.count()) + ".DAT";
+            tofrtAddFiles(selectedFiles, file);
         }
         else if (toolBoxAdv->currentIndex() == 2)
         {
-            fileNumber = lineEditPathRAD->text();
-            fileNumber += "tof0_" + fileNumber + "_added-" + QString::number(selectedFiles.count()) + ".DAT";
-            tofrtAddFiles(selectedNumberList,fileNumber);
+            // tofrtAddFiles() takes the files (it was given the run numbers)
+            QString file = lineEditPathRAD->text() + "tof0_" + fileNumber + "_added-" +
+                           QString::number(selectedFiles.count()) + ".DAT";
+            tofrtAddFiles(selectedFiles, file);
         }
     }
 }
@@ -270,9 +287,12 @@ void dan18::addFilesInActiveTableRows()
 {
     if (!app()->activeWindow() || QString(app()->activeWindow()->metaObject()->className()) != "Table")
         return;
-
-    auto t = (Table *)app()->activeWindow();
-
+    addFilesInTableRows((Table *)app()->activeWindow());
+}
+//+++ per row: the first column the new run's number, the columns right of it the runs added into it (a row with an
+//+++ empty first column continues the row above)
+void dan18::addFilesInTableRows(Table *t)
+{
     QString wildCard = filesManager->wildCardDetector();
 
     int R = t->numRows();
@@ -289,7 +309,6 @@ void dan18::addFilesInActiveTableRows()
         {
             fileNumber = tableTextC(t, rr, 0);
             fileNumber = fileNumber.simplified();
-            fileNumber = filesManager->newFileNameFull(fileNumber, wildCard);
 
             selectedNumberList.clear();
             selectedFiles.clear();
@@ -315,7 +334,9 @@ void dan18::addFilesInActiveTableRows()
         }
 
         if (rr == R - 1 || !t->text(rr + 1, 0).isEmpty())
-            addSeveralFilesUniSingleFrame(selectedFiles, selectedNumberList, fileNumber);
+            // named as by columns: the first run's file name, its number replaced (a pattern with "*" has no new
+            // file name of its own)
+            addSeveralFilesUniSingleFrame(selectedNumberList, fileNumber);
     }
 }
 //*******************************************
