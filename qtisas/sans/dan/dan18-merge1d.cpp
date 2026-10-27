@@ -1105,7 +1105,7 @@ void dan18::mergeMethod(bool asciiYN)
         checkSelection = true;
 
     //+++ Progress Dialog +++
-    QProgressDialog progress;
+    QProgressDialog progress(app());
     progress.setMinimumDuration(10);
     progress.setWindowModality(Qt::WindowModal);
     progress.setRange(0, N);
@@ -1113,10 +1113,7 @@ void dan18::mergeMethod(bool asciiYN)
     progress.setMinimumWidth(400);
     progress.setMaximumWidth(4000);
     progress.setLabelText("Data Merging Processing Started...");
-    if (m_scriptRun)
-        progress.setMinimumDuration(std::numeric_limits<int>::max()); // no window while a script runs it
-    else
-        progress.show();
+    startProgress(progress);
 
     QString textProgress;
     //+++ time steps
@@ -1174,7 +1171,7 @@ void dan18::mergeMethod(bool asciiYN)
             textProgress += "\nASCII file id saved in the folder: \n" + lineEditPathRAD->text() + "ASCII-QI-MERGED/";
 
         progress.setLabelText(textProgress);
-        progress.setValue(nn + 1);
+        stepProgress(progress, nn + 1);
         if (progress.wasCanceled())
             break;
     }

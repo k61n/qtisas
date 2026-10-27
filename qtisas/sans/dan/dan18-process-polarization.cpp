@@ -449,7 +449,7 @@ void dan18::danDanMultiButtonPN(const QString &button)
     pre_dt = dt.elapsed();
 
     //+++ Progress Dialog
-    QProgressDialog progress;
+    QProgressDialog progress(app());
     progress.setMinimumDuration(10);
     progress.setWindowModality(Qt::WindowModal);
     progress.setRange(0, allUniqueSamples.count() * allUniqueConfigurations.count());
@@ -457,7 +457,7 @@ void dan18::danDanMultiButtonPN(const QString &button)
     progress.setMinimumWidth(400);
     progress.setMaximumWidth(4000);
     progress.setLabelText("(PN) Data Processing Started...");
-    progress.show();
+    startProgress(progress);
 
     app()->workspace()->blockSignals(true);
 
@@ -1586,7 +1586,7 @@ void dan18::danDanMultiButtonPN(const QString &button)
                                         (allUniqueConfigurations.count() * iSample + iConf),
                                     'f', 2) +
                     " sec/run");
-                progress.setValue(allUniqueConfigurations.count() * iSample + iConf);
+                stepProgress(progress, static_cast<int>(allUniqueConfigurations.count() * iSample + iConf));
                 if (progress.wasCanceled())
                     goto theEnd;
             }

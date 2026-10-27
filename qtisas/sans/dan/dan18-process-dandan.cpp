@@ -293,7 +293,7 @@ void dan18::danDanMultiButton(QString button)
     if(selectedLines>0) lastLine=firstLine+selectedLines;
 
     //+++ Progress Dialog +++
-    QProgressDialog progress;
+    QProgressDialog progress(app());
     progress.setMinimumDuration(10);
     progress.setWindowModality(Qt::WindowModal);
     progress.setRange(0,lastLine-firstLine);
@@ -301,10 +301,7 @@ void dan18::danDanMultiButton(QString button)
     progress.setMinimumWidth(400);
     progress.setMaximumWidth(4000);
     progress.setLabelText("Data Processing Started...");
-    if (m_scriptRun)
-        progress.setMinimumDuration(std::numeric_limits<int>::max()); // no window while a script runs it
-    else
-        progress.show();
+    startProgress(progress);
 
     app()->workspace()->blockSignals ( true );//+++ test 2019
     
@@ -990,7 +987,7 @@ void dan18::danDanMultiButton(QString button)
                 progress.setLabelText("[left: "+QString::number(timeLeft/60.0,'f',0)+" min] Current row: "+QString::number(iRow)+" [last: "+QString::number(lastLine)+"]; av. speed: "+QString::number(time.elapsed()/1000.0/(iRow-firstLine+1),'f',2)+" sec/run");
             else
                     progress.setLabelText("[left: "+QString::number(timeLeft,'f',0)+" sec] Current row: "+QString::number(iRow)+" [last: "+QString::number(lastLine)+"]; av. speed: "+QString::number(time.elapsed()/1000.0/(iRow-firstLine+1),'f',2)+" sec/run");
-            progress.setValue( iRow-firstLine);
+            stepProgress(progress, iRow - firstLine);
             
             if (iRow-firstLine<10) progressUpdateSteps=1;
             else if (iRow-firstLine<50) progressUpdateSteps=2;

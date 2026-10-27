@@ -117,3 +117,28 @@ void dan18::toResLog(QString text)
     }
     else app()->showResults(text, true);
 }
+
+//+++ progress windows: shown also while a script runs DAN (before: hidden, a long reduction looked frozen)
+void dan18::startProgress(QProgressDialog &progress)
+{
+    if (!app()->isVisible())
+    {
+        progress.setMinimumDuration(std::numeric_limits<int>::max());
+        return;
+    }
+    // a script's run: not modal, so that nothing else (a click, the script server) runs in between
+    if (m_scriptRun)
+        progress.setWindowModality(Qt::NonModal);
+    progress.setMinimumDuration(0);
+    progress.show();
+    progress.raise();
+    QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents | QEventLoop::ExcludeSocketNotifiers);
+}
+
+void dan18::stepProgress(QProgressDialog &progress, int value)
+{
+    // a modal one draws itself in setValue(); a non-modal one only when the events are processed
+    progress.setValue(value);
+    if (progress.isVisible() && progress.windowModality() == Qt::NonModal)
+        QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents | QEventLoop::ExcludeSocketNotifiers);
+}

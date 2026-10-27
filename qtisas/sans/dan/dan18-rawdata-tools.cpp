@@ -757,7 +757,7 @@ void dan18::addToInfoTable()
     
 
     //+++ Progress Dialog +++
-    QProgressDialog progress;
+    QProgressDialog progress(app());
     progress.setMinimumDuration(10);
     progress.setWindowModality(Qt::WindowModal);
     progress.setRange(0,filesNumber);
@@ -765,14 +765,14 @@ void dan18::addToInfoTable()
     progress.setMinimumWidth(400);
     progress.setMaximumWidth(4000);
     progress.setLabelText("DAN - Getting File Information ...");
-    progress.show();
+    startProgress(progress);
 
     QLocale headerLocale = QLocale::c();
     headerLocale.setNumberOptions(QLocale::RejectGroupSeparator);
 
     for(iter=startRaw; iter<(startRaw+filesNumber);iter++)
     {
-        progress.setValue( iter-startRaw);
+        stepProgress(progress, iter - startRaw);
         if ( progress.wasCanceled() ) break;
         
 
