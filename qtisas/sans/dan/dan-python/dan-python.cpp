@@ -7,13 +7,20 @@ Description: DAN-SANS Python interface: one object per tab (Dan.Options, Dan.Raw
              Dan.Processing, Dan.Merge)
  ******************************************************************************/
 
+#include <algorithm>
 #include <cmath>
+#include <iostream>
 
+#include <QCheckBox>
+#include <QComboBox>
 #include <QDirIterator>
 #include <QDoubleSpinBox>
 #include <QFileInfo>
+#include <QLineEdit>
+#include <QRegularExpression>
 #include <QSet>
 #include <QSignalBlocker>
+#include <QSpinBox>
 #include <QTextStream>
 
 #include "Table.h"
@@ -101,6 +108,12 @@ QString DanPart::noFile(const QString &file, const QString &given, bool mask) co
                       .arg(run, mask ? "a mask is made by Dan.Mask.newMask()"
                                      : "Dan.Sensitivity.newSensitivity(run) makes it");
     return reason;
+}
+
+// to the terminal QtiSAS runs in (as qtikws's DAN-BlackBox printed its steps), not into QtiSAS's windows
+void DanPart::report(const QString &line)
+{
+    std::cout << "DAN auto: " << line.toStdString() << std::endl;
 }
 
 //+++ DanOptions
@@ -1058,26 +1071,12 @@ QVariantMap DanProcessing::configuration(int index)
 bool DanProcessing::calculate()
 {
     begin();
-    // A configuration calibrated with the direct beam (no calibrant: KWS-3) gets its absolute factor and its center
-    // through the full mask "mask": its beam-stop mask hides the beam both are calculated from. Its own mask is set
-    // back for I[Q] and the transmissions.
-    QStringList ownMasks;
-    const bool fullMask = isMask("mask");
-    for (int col = 0; col < configurations(); col++)
-    {
-        auto *box = qobject_cast<QComboBox *>(d->tableEC->cellWidget(dan18::dptMASK, col));
-        ownMasks << (box ? box->currentText() : QString());
-        const bool directBeam =
-            !d->tableEC->item(dan18::dptACFS, col) || d->tableEC->item(dan18::dptACFS, col)->text().trimmed().isEmpty();
-        if (box && fullMask && directBeam)
-            box->setCurrentIndex(box->findText("mask", Qt::MatchExactly));
-    }
+    // the headers pressed as in the interface; a direct-beam calibration through the active mask and sensitivity
+    // ("mask", "sens" after the Mask step) when the instrument says so ("Direct Beam:: Use Current Mask and
+    // Sensitivity Matrices", KWS-3)
     for (int row : {dan18::dptC, dan18::dptD, dan18::dptWL, dan18::dptBSIZE, dan18::dptDAC, dan18::dptACMU,
                     dan18::dptACTR, dan18::dptACFAC, dan18::dptCENTERX, dan18::dptECTR})
         d->vertHeaderTableECPressed(row, true);
-    for (int col = 0; col < configurations() && col < ownMasks.count(); col++)
-        if (auto *box = qobject_cast<QComboBox *>(d->tableEC->cellWidget(dan18::dptMASK, col)))
-            box->setCurrentIndex(box->findText(ownMasks[col], Qt::MatchExactly));
     return end(true); // a configuration without calibrant or center run is not an error: lastMessages() says so
 }
 
@@ -1380,6 +1379,1139 @@ bool DanMerge::overlap(const QString &first, const QString &second, double &qMin
     }
     ratio = sum / points;
     return true;
+}
+
+//+++ DanAuto: auto mode
+namespace
+{
+// one option of the Auto-Mode page: its Python name, the instrument file's key "[AutoMode-<key>]", its widget, the
+// value of an instrument without it, and the words a combo box's entries stand for (in their order)
+struct AutoOption
+{
+    const char *name;
+    const char *key;
+    const char *widget;
+    const char *value;
+    QStringList choices;
+};
+
+const QList<AutoOption> &autoOptionTable()
+{
+    static const QList<AutoOption> table = {
+        {"minDuration", "Min-Duration", "spinBoxAutoMinDuration", "30", {}},
+        {"minCounts", "Min-Counts", "spinBoxAutoMinCounts", "100", {}},
+        {"files", "Files", "lineEditAutoFilesAccept", "*", {}},
+        {"skipFiles", "Skip-Files", "lineEditAutoFilesSkip", "", {}},
+        {"samples", "Samples", "lineEditAutoSamplesAccept", "*", {}},
+        {"skipSamples", "Skip-Samples", "lineEditAutoSamplesSkip", "", {}},
+        {"nameField", "Name-Field", "lineEditAutoNameField", "", {}},
+        {"emptyBeam", "EB", "lineEditAutoEB", "*eb*||*ec*||*empty*cell*||*empty*beam*", {}},
+        {"darkCurrent", "BC", "lineEditAutoBC", "*bc*||*b4c*", {}},
+        {"singleDarkCurrent", "BC-Single", "checkBoxAutoBCSingle", "No", {}},
+        {"calibrant", "Calibrant", "lineEditAutoCalibrant", "*plex[i,y]*", {}},
+        {"flexibleDistance", "Calibrant-FlexD", "checkBoxAutoCalibrantFlexD", "Yes", {}},
+        {"calibrantEmptyBeam", "Calibrant-EB", "lineEditAutoCalibrantEB", "*eb*||*empty*beam*", {}},
+        {"calibrantDarkCurrent", "Calibrant-BC", "lineEditAutoCalibrantBC", "*bc*||*b4c*", {}},
+        {"singleCalibrantDarkCurrent", "Calibrant-BC-Single", "checkBoxAutoCalibrantBCSingle", "No", {}},
+        {"center", "Center-Mode", "comboBoxAutoCenter", "maxflux", {"maxflux", "emptybeam", "wildcard"}},
+        {"centerRuns", "Center", "lineEditAutoCenter", "", {}},
+        {"cellEmptyBeam", "Cell-EB", "lineEditAutoCellEB", "*eb*||*empty*beam*", {}},
+        {"transmission", "Transmission", "lineEditAutoTransmission", "*", {}},
+        {"skip", "Skip", "lineEditAutoSkip", "", {}},
+        {"masks", "Masks", "comboBoxAutoMasks", "none", {"none", "configuration", "wavelength", "files"}},
+        {"transmissionMargin", "TR-Margin", "spinBoxAutoTrMargin", "-2", {}},
+        {"beamSize", "Beam-Size", "spinBoxAutoBeamSize", "0", {}},
+        {"detectorX", "BS-X", "spinBoxAutoBSX", "0", {}},
+        {"detectorY", "BS-Y", "spinBoxAutoBSY", "0", {}},
+        {"sensitivity", "Sens-Mode", "comboBoxAutoSens", "flat", {"run", "files", "flat"}},
+        {"sensitivityRuns", "Sens", "lineEditAutoSens", "*sens*", {}},
+        {"scale", "Scale", "checkBoxAutoScale", "No", {}},
+        {"centerOffsets", "Center-Offsets", "checkBoxAutoCenterOffsets", "No", {}}};
+    return table;
+}
+
+// a widget's value as the instrument file writes it ("Yes"/"No", the choice's word, the number or the text)
+QString autoText(QWidget *w, const AutoOption &o)
+{
+    if (auto *line = qobject_cast<QLineEdit *>(w))
+        return line->text();
+    if (auto *spin = qobject_cast<QSpinBox *>(w))
+        return QString::number(spin->value());
+    if (auto *check = qobject_cast<QCheckBox *>(w))
+        return check->isChecked() ? "Yes" : "No";
+    if (auto *combo = qobject_cast<QComboBox *>(w))
+        return o.choices.value(combo->currentIndex());
+    return {};
+}
+
+// sets a widget from such a text; false when it is not a value of it
+bool setAutoText(QWidget *w, const AutoOption &o, const QString &text)
+{
+    if (auto *line = qobject_cast<QLineEdit *>(w))
+        line->setText(text.trimmed());
+    else if (auto *spin = qobject_cast<QSpinBox *>(w))
+    {
+        bool ok = false;
+        const int value = text.trimmed().toInt(&ok);
+        if (!ok)
+            return false;
+        spin->setValue(value);
+    }
+    else if (auto *check = qobject_cast<QCheckBox *>(w))
+        check->setChecked(text.contains("Yes", Qt::CaseInsensitive) || text.trimmed() == "1" ||
+                          text.trimmed().compare("true", Qt::CaseInsensitive) == 0);
+    else if (auto *combo = qobject_cast<QComboBox *>(w))
+    {
+        const auto index = o.choices.indexOf(text.trimmed().toLower());
+        if (index < 0)
+            return false;
+        combo->setCurrentIndex(static_cast<int>(index));
+    }
+    return true;
+}
+
+// the word of a combo box's current entry ("maxflux", "configuration", ...)
+QString autoChoice(const QComboBox *box, const QString &name)
+{
+    for (const AutoOption &o : autoOptionTable())
+        if (name == o.name)
+            return o.choices.value(box->currentIndex());
+    return {};
+}
+
+QString optionText(const QVariant &value)
+{
+    if (value.userType() == QMetaType::Bool)
+        return value.toBool() ? "Yes" : "No";
+    return value.toString();
+}
+
+QVariant optionValue(QWidget *w, const AutoOption &o)
+{
+    if (qobject_cast<QSpinBox *>(w))
+        return autoText(w, o).toInt();
+    if (qobject_cast<QCheckBox *>(w))
+        return autoText(w, o) == "Yes";
+    return autoText(w, o);
+}
+} // namespace
+
+QVariantMap DanAuto::options() const
+{
+    QVariantMap values;
+    for (const AutoOption &o : autoOptionTable())
+        if (auto *w = d->findChild<QWidget *>(o.widget))
+            values[o.name] = optionValue(w, o);
+    return values;
+}
+
+QString DanAuto::setOptions(const QVariantMap &values)
+{
+    QStringList names;
+    for (const AutoOption &o : autoOptionTable())
+        names << o.name;
+    for (auto it = values.begin(); it != values.end(); ++it)
+    {
+        const auto index = names.indexOf(it.key());
+        if (index < 0)
+            return "no auto option " + it.key() + "; autoOptions(): " + names.join(", ");
+        const AutoOption &o = autoOptionTable()[index];
+        if (!o.choices.isEmpty() && !o.choices.contains(it.value().toString().toLower()))
+            return it.key() + ": one of " + o.choices.join(", ");
+        if (!setAutoText(d->findChild<QWidget *>(o.widget), o, optionText(it.value())))
+            return it.key() + ": a whole number";
+    }
+    return {};
+}
+
+void DanAuto::resetOptions()
+{
+    for (const AutoOption &o : autoOptionTable())
+        if (auto *w = d->findChild<QWidget *>(o.widget))
+            setAutoText(w, o, o.value);
+}
+
+QStringList DanAuto::optionLines() const
+{
+    QStringList lines;
+    for (const AutoOption &o : autoOptionTable())
+        if (auto *w = d->findChild<QWidget *>(o.widget))
+            lines << QString("[AutoMode-%1] %2").arg(o.key, autoText(w, o));
+    return lines;
+}
+
+bool DanAuto::readOptionLine(const QString &key, const QString &value)
+{
+    const QList<AutoOption> &table = autoOptionTable();
+    const auto it = std::find_if(table.begin(), table.end(), [&key](const AutoOption &o) { return key == o.key; });
+    if (it == table.end())
+        return false;
+    if (auto *w = d->findChild<QWidget *>(it->widget))
+        setAutoText(w, *it, value);
+    return true;
+}
+
+// "s<separator><n>": the n-th part of the name split at the separator (BlackBox's "Samplename-InsidePosition")
+QString DanAuto::sampleName(const QString &name) const
+{
+    const QString field = d->lineEditAutoNameField->text().trimmed();
+    if (field.length() < 3 || !field.startsWith('s'))
+        return name;
+    const int n = field.mid(2).toInt();
+    const QStringList parts = name.split(field.at(1));
+    return n >= 1 && n <= parts.count() ? parts[n - 1] : name;
+}
+
+DanAuto::Run DanAuto::readRun(const QString &run, const QString &file) const
+{
+    Run r;
+    r.run = run;
+    r.file = file;
+    r.name = d->sample->readName(run).simplified();
+    r.duration = d->monitors->readDuration(run);
+    r.counts = d->monitors->readSum(run);
+    r.C = d->collimation->readC(run) / 100.0; // [m] (DAN reads cm)
+    r.D = d->detector->readD(run) / 100.0;
+    r.lambda = d->selector->readLambda(run, r.duration);
+    r.CA = d->collimation->readCA(run);
+    r.SA = d->collimation->readSA(run);
+    r.polarization = d->collimation->readPolarization(run);
+    r.attenuator = d->collimation->readAttenuator(run);
+    r.detectorX = d->detector->readDetectorX(run);
+    r.detectorY = d->detector->readDetectorY(run);
+    r.rotationX = d->detector->readDetRotationX(run);
+    r.rotationY = d->detector->readDetRotationY(run);
+    r.position = d->sample->readPositionNumber(run).toInt();
+    return r;
+}
+
+QList<DanAuto::Run> DanAuto::runs(bool filtered) const
+{
+    QMap<QString, QString> files; // run -> its first file (the path)
+    QDirIterator it(d->filesManager->pathInString(), QStringList() << d->filesManager->wildCardInString(), QDir::Files,
+                    d->filesManager->subFoldersYN() ? QDirIterator::Subdirectories : QDirIterator::NoIteratorFlags);
+    while (it.hasNext())
+    {
+        const QString path = it.next();
+        const QString number =
+            FilesManager::findFileNumberInFileName(d->filesManager->wildCardHeader(), QFileInfo(path).fileName());
+        if (!number.isEmpty() && !files.contains(number))
+            files[number] = path;
+    }
+    QStringList numbers = files.keys();
+    NaturalSort::sort(numbers);
+    // the headers read once: a folder of 500 runs took minutes when every auto call read them again. A run is read
+    // again when its file changed or another instrument (another header map) reads it
+    static QHash<QString, QPair<QString, Run>> cache;
+    const QString instrument = d->comboBoxInstrument->currentText() + "|" + d->comboBoxMode->currentText() + "|";
+    QList<Run> all;
+    for (const QString &number : numbers)
+    {
+        const QFileInfo info(files[number]);
+        const QString stamp = info.lastModified().toString(Qt::ISODateWithMs) + "|" + QString::number(info.size());
+        auto found = cache.constFind(instrument + info.absoluteFilePath());
+        Run r;
+        if (found != cache.constEnd() && found->first == stamp)
+            r = found->second;
+        else
+        {
+            r = readRun(number, info.fileName());
+            cache.insert(instrument + info.absoluteFilePath(), qMakePair(stamp, r));
+        }
+        r.sample = sampleName(r.name);
+        all << r;
+    }
+    if (!filtered)
+        return all;
+    return filter(all, d->spinBoxAutoMinDuration->value(), d->spinBoxAutoMinCounts->value(),
+                  d->lineEditAutoFilesAccept->text(), d->lineEditAutoFilesSkip->text(),
+                  d->lineEditAutoSamplesAccept->text(), d->lineEditAutoSamplesSkip->text());
+}
+
+QList<DanAuto::Run> DanAuto::filter(const QList<Run> &all, int minDuration, int minCounts, const QString &files,
+                                    const QString &skipFiles, const QString &samples, const QString &skipSamples)
+{
+    QList<Run> kept;
+    for (const Run &r : all)
+        if (r.duration > minDuration && r.counts > minCounts && (files.trimmed().isEmpty() || matches(r.file, files)) &&
+            (skipFiles.trimmed().isEmpty() || !matches(r.file, skipFiles)) &&
+            (samples.trimmed().isEmpty() || matches(r.sample, samples)) &&
+            (skipSamples.trimmed().isEmpty() || !matches(r.sample, skipSamples)))
+            kept << r;
+    return kept;
+}
+
+// wildcards "||"-separated, case ignored, the whole name: "*ec*" anywhere, "EB" exactly that name
+bool DanAuto::matches(const QString &name, const QString &wildcards)
+{
+    for (QString w : wildcards.split("||"))
+    {
+        w.remove(' ');
+        if (w.isEmpty())
+            continue;
+        const QRegularExpression re(
+            QRegularExpression::anchoredPattern(QRegularExpression::wildcardToRegularExpression(w)),
+            QRegularExpression::CaseInsensitiveOption);
+        if (re.match(name).hasMatch())
+            return true;
+    }
+    return false;
+}
+
+QString DanAuto::label(const Run &r) const
+{
+    QString text = "C" + QString::number(qRound(r.C)) + "D" + QString::number(r.D, 'f', 2) + "L" +
+                   QString::number(r.lambda, 'f', 1) + "BS" + r.CA + "|" + r.SA;
+    if (d->checkBoxPolarizationAsPara->isChecked())
+        text += "P" + r.polarization;
+    if (d->checkBoxAttenuatorAsPara->isChecked())
+        text += "A" + r.attenuator;
+    return text;
+}
+
+// the script table's rule (dan18::compareConfigurations); without D for a calibrant at another distance
+// dan18::compareConfigurations() (the script table's rule) on the headers read once; ignoreD: at any distance
+bool DanAuto::sameConfiguration(const Run &a, const Run &b, bool ignoreD) const
+{
+    const double range = 0.05;
+    auto close = [](double x, double y, double r) { return fabs(x - y) <= r * fabs(x + y) / 2.0; };
+    if (!close(a.lambda, b.lambda, range) || (!ignoreD && !close(a.D, b.D, range)) || !close(a.C, b.C, range) ||
+        a.CA != b.CA || a.SA != b.SA)
+        return false;
+    if (d->checkBoxBeamcenterAsPara->isChecked() &&
+        (!close(a.detectorX, b.detectorX, range / 5.0) || !close(a.detectorY, b.detectorY, range / 5.0)))
+        return false;
+    if (d->checkBoxRecalculateUseNumber->isChecked() && a.position != b.position)
+        return false;
+    if (d->checkBoxPolarizationAsPara->isChecked() && a.polarization != b.polarization)
+        return false;
+    if (d->checkBoxAttenuatorAsPara->isChecked() && a.attenuator != b.attenuator)
+        return false;
+    if (d->checkBoxDetRotAsPara->isChecked() &&
+        (!close(a.rotationX, b.rotationX, range / 5.0) || !close(a.rotationY, b.rotationY, range / 5.0)))
+        return false;
+    return true;
+}
+
+QList<QList<DanAuto::Run>> DanAuto::conditions(const QList<Run> &runs) const
+{
+    QList<QList<Run>> groups;
+    for (const Run &r : runs)
+    {
+        bool placed = false;
+        for (QList<Run> &g : groups)
+            if (sameConfiguration(g.first(), r))
+            {
+                g << r;
+                placed = true;
+                break;
+            }
+        if (!placed)
+            groups << QList<Run>{r};
+    }
+    return groups;
+}
+
+namespace
+{
+QList<DanAuto::Run> named(const QList<DanAuto::Run> &runs, const QString &wildcards)
+{
+    QList<DanAuto::Run> found;
+    if (!wildcards.trimmed().isEmpty())
+        for (const DanAuto::Run &r : runs)
+            if (DanAuto::matches(r.sample, wildcards))
+                found << r;
+    return found;
+}
+
+// the longest run (or the one with the most counts); first of equals
+const DanAuto::Run *best(const QList<const DanAuto::Run *> &runs, bool counts)
+{
+    const DanAuto::Run *found = nullptr;
+    for (const DanAuto::Run *r : runs)
+        if (!found || (counts ? r->counts > found->counts : r->duration > found->duration))
+            found = r;
+    return found;
+}
+
+bool contains(const QList<DanAuto::Run> &runs, const QString &run)
+{
+    return std::ranges::any_of(runs, [&run](const DanAuto::Run &r) { return r.run == run; });
+}
+} // namespace
+
+QList<DanAuto::Run> DanAuto::standardRuns(const QList<Run> &runs) const
+{
+    QList<Run> standard;
+    for (const QString &wildcards :
+         {d->lineEditAutoEB->text(), d->lineEditAutoBC->text(), d->lineEditAutoCalibrant->text(),
+          d->lineEditAutoCalibrantEB->text(), d->lineEditAutoCalibrantBC->text()})
+        for (const Run &r : named(runs, wildcards))
+            if (!contains(standard, r.run))
+                standard << r;
+    return standard;
+}
+
+QList<DanAuto::Run> DanAuto::sampleRuns(const QList<Run> &runs) const
+{
+    QList<Run> standard = standardRuns(runs);
+    QStringList more = {d->lineEditAutoCellEB->text()};
+    if (d->lineEditAutoSens->text().trimmed() != "*")
+        more << d->lineEditAutoSens->text();
+    for (const QString &wildcards : more)
+        standard << named(runs, wildcards);
+    QList<Run> samples;
+    for (const Run &r : runs)
+        if (!contains(standard, r.run))
+            samples << r;
+    return samples;
+}
+
+QList<DanAuto::Choice> DanAuto::configurations(const QList<Run> &runs, QStringList &dropped) const
+{
+    const QList<Run> emptyBeams = named(runs, d->lineEditAutoEB->text());
+    const QList<Run> darkCurrents = named(runs, d->lineEditAutoBC->text());
+    const QList<Run> calibrants = named(runs, d->lineEditAutoCalibrant->text());
+    const QList<Run> calibrantEBs = named(runs, d->lineEditAutoCalibrantEB->text());
+    const QList<Run> calibrantBCs = named(runs, d->lineEditAutoCalibrantBC->text());
+    const QList<Run> cellEBs = named(runs, d->lineEditAutoCellEB->text());
+    const QList<Run> standard = standardRuns(runs);
+    const QString centerMode = autoChoice(d->comboBoxAutoCenter, "center");
+
+    // the runs of a list in the configuration of a run (ignoreD: at any distance)
+    auto in = [this](const QList<Run> &list, const Run &of, bool ignoreD = false) {
+        QList<const Run *> found;
+        for (const Run &r : list)
+            if (sameConfiguration(of, r, ignoreD))
+                found << &r;
+        return found;
+    };
+    auto all = [](const QList<Run> &list) {
+        QList<const Run *> found;
+        for (const Run &r : list)
+            found << &r;
+        return found;
+    };
+    auto run = [](const Run *r) { return r ? r->run : QString(); };
+
+    QList<Choice> choices;
+    for (const QList<Run> &condition : conditions(emptyBeams))
+    {
+        Choice c;
+        c.emptyBeam = *best(all(condition), false);
+        const Run &eb = c.emptyBeam;
+        const QString name = label(eb);
+        if (matches(name, d->lineEditAutoSkip->text()))
+        {
+            dropped << name + ": skipped (auto option skip)";
+            continue;
+        }
+        c.darkCurrent =
+            run(best(d->checkBoxAutoBCSingle->isChecked() ? all(darkCurrents) : in(darkCurrents, eb), false));
+        // the calibrant: most counts in the configuration; "other D" (at 3.5 m and more): the nearest distance above
+        // 1.5 m, most counts among equals; no calibrant wildcard: the direct beam
+        const Run *calibrant = nullptr;
+        if (!calibrants.isEmpty())
+        {
+            calibrant = best(in(calibrants, eb), true);
+            if (d->checkBoxAutoCalibrantFlexD->isChecked() && eb.D >= 3.5)
+            {
+                const Run *nearest = nullptr;
+                for (const Run *r : in(calibrants, eb, true))
+                    if (r->D > 1.5 && (!nearest || fabs(r->D - eb.D) < fabs(nearest->D - eb.D) ||
+                                       (fabs(r->D - eb.D) == fabs(nearest->D - eb.D) && r->counts > nearest->counts)))
+                        nearest = r;
+                if (nearest)
+                    calibrant = nearest;
+            }
+        }
+        c.calibrant = run(calibrant);
+        const Run &calibration = calibrant ? *calibrant : eb;
+        c.calibrantEmptyBeam = run(best(in(calibrantEBs, calibration), false));
+        c.calibrantDarkCurrent = run(best(
+            d->checkBoxAutoCalibrantBCSingle->isChecked() ? all(calibrantBCs) : in(calibrantBCs, calibration), false));
+        if (centerMode == "emptybeam")
+            c.center = eb.run;
+        else
+        {
+            QList<Run> candidates;
+            for (const Run &r : centerMode == "wildcard" ? named(runs, d->lineEditAutoCenter->text()) : runs)
+                if (!contains(standard, r.run))
+                    candidates << r;
+            c.center = run(best(in(candidates, eb), true));
+            if (c.center.isEmpty() && centerMode == "maxflux")
+            {
+                dropped << name + ": no run for the center (only standard runs)";
+                continue;
+            }
+        }
+        c.cellEmptyBeam = run(best(in(cellEBs, eb), false));
+        c.transmission = matches(name, d->lineEditAutoTransmission->text());
+        choices << c;
+    }
+    return choices;
+}
+
+QList<DanAuto::Run> DanAuto::emptyBeams(const QList<Run> &runs) const
+{
+    QStringList dropped;
+    QList<Run> found;
+    for (const Choice &c : configurations(runs, dropped))
+        found << c.emptyBeam;
+    return found;
+}
+
+QString DanAuto::maskName(const Run &emptyBeam, bool transmission, const QList<Run> &emptyBeams)
+{
+    const QString distance = QString::number(emptyBeam.D, 'g', 4);
+    QString name = QString(transmission ? "mask-tr-" : "mask-bs-") + distance + "m";
+    for (const Run &other : emptyBeams)
+        if (other.run != emptyBeam.run && QString::number(other.D, 'g', 4) == distance)
+            return name + "-" + QString::number(emptyBeam.lambda, 'g', 3) + "A";
+    return name;
+}
+
+QVariantMap DanOptionsConfig::autoOptions() const
+{
+    return DanAuto(d).options();
+}
+
+bool DanOptionsConfig::setAutoOptions(const QVariantMap &values)
+{
+    const QString error = DanAuto(d).setOptions(values);
+    if (!error.isEmpty())
+    {
+        fail(error);
+        return false;
+    }
+    begin();
+    return end(true);
+}
+
+namespace
+{
+QVariantMap runInfo(const DanAuto::Run &r)
+{
+    return {{"run", r.run},
+            {"sample", r.sample},
+            {"duration", r.duration},
+            {"counts", r.counts},
+            {"C", r.C},
+            {"D", r.D},
+            {"lambda", r.lambda},
+            {"beamSize", r.CA + "|" + r.SA},
+            {"polarization", r.polarization},
+            {"attenuator", r.attenuator},
+            {"detectorX", r.detectorX},
+            {"detectorY", r.detectorY}};
+}
+
+// the runs given (all of the folder when none), in the folder's order
+QList<DanAuto::Run> selected(const DanAuto &a, const QStringList &runs, bool filtered)
+{
+    QList<DanAuto::Run> all = runs.isEmpty() ? a.runs(filtered) : a.runs(false);
+    if (runs.isEmpty())
+        return all;
+    QList<DanAuto::Run> found;
+    for (const DanAuto::Run &r : all)
+        if (runs.contains(r.run))
+            found << r;
+    return found;
+}
+
+QStringList numbers(const QList<DanAuto::Run> &runs)
+{
+    QStringList list;
+    for (const DanAuto::Run &r : runs)
+        list << r.run;
+    return list;
+}
+} // namespace
+
+QStringList DanRawdata::runs(int minDuration, int minCounts, const QString &files, const QString &skipFiles,
+                             const QString &samples, const QString &skipSamples)
+{
+    const DanAuto a(d);
+    return numbers(DanAuto::filter(a.runs(false), minDuration, minCounts, files, skipFiles, samples, skipSamples));
+}
+
+QVariantList DanRawdata::info(const QStringList &runs)
+{
+    QVariantList list;
+    for (const DanAuto::Run &r : selected(DanAuto(d), runs, false))
+        list << runInfo(r);
+    return list;
+}
+
+QVariantList DanRawdata::conditions(const QStringList &runs)
+{
+    const DanAuto a(d);
+    QVariantList list;
+    for (const QList<DanAuto::Run> &g : a.conditions(selected(a, runs, true)))
+    {
+        const DanAuto::Run &r = g.first();
+        list << QVariantMap{{"label", a.label(r)},           {"C", r.C},          {"D", r.D}, {"lambda", r.lambda},
+                            {"beamSize", r.CA + "|" + r.SA}, {"runs", numbers(g)}};
+    }
+    return list;
+}
+
+QStringList DanRawdata::sampleRuns(const QStringList &runs)
+{
+    const DanAuto a(d);
+    return numbers(a.sampleRuns(selected(a, runs, true)));
+}
+
+namespace
+{
+// the matrices of the input folder's files matching a pattern: "mask"/"sens" the one file or <name>.mask/.sens,
+// the others by their base names
+QStringList folderFiles(const QString &folder, const QString &pattern)
+{
+    QStringList files = QDir(folder).entryList(QStringList() << pattern, QDir::Files, QDir::Name);
+    return files;
+}
+
+QString matrixName(const QStringList &files, const QString &file, const QString &standard)
+{
+    QString base = QFileInfo(file).completeBaseName();
+    const bool standardFile = files.contains(standard + "." + QFileInfo(file).suffix(), Qt::CaseInsensitive);
+    if (files.count() == 1 || base.compare(standard, Qt::CaseInsensitive) == 0 ||
+        (!standardFile && file == files.first()))
+        return standard;
+    return base;
+}
+} // namespace
+
+QStringList DanMask::loadMasks(const QString &pattern)
+{
+    const QString folder = d->filesManager->pathInString();
+    const QStringList files = folderFiles(folder, pattern);
+    if (files.isEmpty())
+        return {fail("no " + pattern + " file in " + folder)};
+    QStringList made;
+    for (const QString &file : files)
+    {
+        const QString name = loadMask(matrixName(files, file, "mask"), QDir(folder).filePath(file));
+        if (name.isEmpty())
+            return {};
+        made << name;
+    }
+    return made;
+}
+
+QStringList DanMask::autoMasks()
+{
+    begin();
+    const DanAuto a(d);
+    const QString mode = autoChoice(d->comboBoxAutoMasks, "masks");
+    QStringList made;
+    if (mode == "files")
+    {
+        made = loadMasks("*.mask");
+        if (!made.contains("mask") && !newMask("mask", {}, {}, QString(), QString(), false).isEmpty())
+            made.prepend("mask");
+        report("masks: " + made.join(", ") + " (the *.mask files of the input folder)");
+        end(!made.isEmpty());
+        return made;
+    }
+    // centers from the empty beams, a beam-stop mask per configuration and a flat sensitivity: "mask" without the
+    // beam stop. The flat "sens" is made from it (= "mask"), the direct beam's center and the absolute factor
+    // (DirectBeam calibrant, "Use Current Mask and Sensitivity") then count the beam itself; the samples get the
+    // configurations' beam-stop masks
+    const bool beamOpen = mode == "configuration" && autoChoice(d->comboBoxAutoCenter, "center") == "emptybeam" &&
+                          autoChoice(d->comboBoxAutoSens, "sensitivity") == "flat";
+    const bool beamStopChecked = d->groupBoxMaskBS->isChecked();
+    if (newMask("mask", {}, beamOpen ? QList<int>{0} : QList<int>{}, QString(), QString(), false).isEmpty())
+    {
+        end(false);
+        return {};
+    }
+    made << "mask";
+    if (mode == "none")
+    {
+        report("masks: mask (the instrument's)");
+        end(true);
+        return made;
+    }
+    // the beam-stop masks need the center of each empty beam, calculated through "mask" and "sens" (made anew: one
+    // of an earlier folder or session is not this one's)
+    if (d->danSensitivity->autoSensitivity().isEmpty())
+    {
+        end(false, "no sensitivity for the centers of the masks: " + d->danSensitivity->lastError());
+        return {};
+    }
+    const QList<int> box = {d->spinBoxLTxBS->value(), d->spinBoxRBxBS->value(), d->spinBoxLTyBS->value(),
+                            d->spinBoxRByBS->value()};
+    const double dX = fabs(double(box[1] - box[0]));
+    const double dY = fabs(double(box[3] - box[2]));
+    const int margin = d->spinBoxAutoTrMargin->value();
+    const QList<DanAuto::Run> runs = a.runs(true);
+    const QList<DanAuto::Run> emptyBeams = a.emptyBeams(runs);
+    QStringList boxes;
+    // the center of an empty beam (1-based pixels), from the instrument's beam-stop center
+    auto center = [this, &box](const DanAuto::Run &eb, double &xc, double &yc) {
+        xc = (box[0] + box[1]) / 2.0;
+        yc = (box[2] + box[3]) / 2.0;
+        double xcErr = 0.0;
+        double ycErr = 0.0;
+        d->calcCenterNew(eb.run, -1, xc, yc, xcErr, ycErr, "mask", "sens");
+        xc += 1.0;
+        yc += 1.0;
+    };
+    for (const DanAuto::Run &eb : emptyBeams)
+    {
+        QList<int> bs;
+        QList<int> tr;
+        if (mode == "configuration")
+        {
+            // the box around the beam's center, scaled by the beam size (CA) / the reference beam size
+            double scale = 1.0;
+            const double reference = d->spinBoxAutoBeamSize->value();
+            const QStringList ca = eb.CA.split('x');
+            if (reference > 0 && ca.count() == 2)
+            {
+                scale = (ca[0].toDouble() + ca[1].toDouble()) / 2.0 / reference;
+                if (scale < 0.2 || scale > 5.0)
+                    scale = 1.0;
+            }
+            double xc = 0.0;
+            double yc = 0.0;
+            center(eb, xc, yc);
+            bs = {int(xc - dX * scale / 2.0), int(xc + dX * scale / 2.0), int(yc - dY * scale / 2.0),
+                  int(yc + dY * scale / 2.0)};
+            tr = bs;
+        }
+        else
+        {
+            // the instrument's box moved with the detector from its reference position (0: not moved)
+            const double binning = d->comboBoxBinning->currentText().toDouble();
+            const double pixelX = binning * d->lineEditResoPixelSize->text().toDouble();
+            const double pixelY = pixelX * d->lineEditAsymetry->text().toDouble();
+            const int x0 = d->spinBoxAutoBSX->value();
+            const int y0 = d->spinBoxAutoBSY->value();
+            const int dx = x0 != 0 && pixelX > 0 ? int(std::lround((eb.detectorX - x0) / pixelX / 10.0)) : 0;
+            const int dy = y0 != 0 && pixelY > 0 ? int(std::lround((eb.detectorY - y0) / pixelY / 10.0)) : 0;
+            bs = {box[0] + dx, box[1] + dx, box[2] + dy, box[3] + dy};
+            // the transmission window around the beam's own center
+            double xc = 0.0;
+            double yc = 0.0;
+            center(eb, xc, yc);
+            tr = {int(xc - dX / 2.0), int(xc + dX / 2.0), int(yc - dY / 2.0), int(yc + dY / 2.0)};
+        }
+        tr = {tr[0] - margin, tr[1] + margin, tr[2] - margin, tr[3] + margin};
+        for (const bool transmission : {false, true})
+        {
+            const QString name = DanAuto::maskName(eb, transmission, emptyBeams);
+            if (newMask(name, {}, transmission ? tr : bs, QString(), QString(), transmission).isEmpty())
+            {
+                end(false);
+                return {};
+            }
+            made << name;
+            const QList<int> &b = transmission ? tr : bs;
+            boxes << QString("%1 [x %2..%3, y %4..%5]").arg(name).arg(b[0]).arg(b[1]).arg(b[2]).arg(b[3]);
+        }
+    }
+    report(QString(beamOpen ? "masks: mask (no beam stop: flat sens, direct beam), " : "masks: mask, ") +
+           boxes.join(", "));
+    // the instrument's box again for the masks made later
+    QSpinBox *spins[] = {d->spinBoxLTxBS, d->spinBoxRBxBS, d->spinBoxLTyBS, d->spinBoxRByBS};
+    for (int i = 0; i < 4; i++)
+        spins[i]->setValue(box[i]);
+    d->groupBoxMaskBS->setChecked(beamStopChecked);
+    end(true);
+    return made;
+}
+
+QStringList DanSensitivity::loadSensitivities(const QString &pattern)
+{
+    const QString folder = d->filesManager->pathInString();
+    const QStringList files = folderFiles(folder, pattern);
+    if (files.isEmpty())
+        return {fail("no " + pattern + " file in " + folder)};
+    QStringList made;
+    for (const QString &file : files)
+    {
+        const QString name = loadSensitivity(matrixName(files, file, "sens"), QDir(folder).filePath(file));
+        if (name.isEmpty())
+            return {};
+        made << name;
+    }
+    return made;
+}
+
+QString DanSensitivity::autoSensitivity()
+{
+    begin();
+    if (!isMask("mask") && d->danMask->newMask("mask", {}, {}, QString(), QString(), false).isEmpty())
+    {
+        end(false, R"(no mask "mask": )" + d->danMask->lastError());
+        return {};
+    }
+    const QString mode = autoChoice(d->comboBoxAutoSens, "sensitivity");
+    if (mode == "files")
+    {
+        const QStringList made = loadSensitivities("*.sens");
+        if (!end(made.contains("sens"), lastError()))
+            return {};
+        report("sensitivity: " + made.join(", ") + " (the *.sens files of the input folder)");
+        return "sens";
+    }
+    if (mode == "run")
+    {
+        const DanAuto a(d);
+        const DanAuto::Run *found = nullptr;
+        const QList<DanAuto::Run> runs = a.runs(true);
+        for (const DanAuto::Run &r : runs)
+            if (DanAuto::matches(r.sample, d->lineEditAutoSens->text()) && (!found || r.counts > found->counts))
+                found = &r;
+        if (found)
+        {
+            QString name = newSensitivity("sens", found->run, QString(), QString(), 1.0, "mask");
+            if (!end(!name.isEmpty(), lastError()))
+                return {};
+            report("sensitivity: sens from run " + found->run + " (" + found->sample + ")");
+            return name;
+        }
+        d->danMessage("no sensitivity run (auto option sensitivityRuns: " + d->lineEditAutoSens->text() +
+                      "): a flat sensitivity");
+        report("sensitivity: no run named " + d->lineEditAutoSens->text() + " among the runs");
+    }
+    d->buttonGroupSensanyD->setChecked(false);
+    d->comboBoxMaskFor->setCurrentIndex(d->comboBoxMaskFor->findText("mask"));
+    d->saveSensAs("sens");
+    d->updateSensList();
+    if (!end(isSens("sens")))
+        return {};
+    report("sensitivity: sens flat");
+    return "sens";
+}
+
+QVariantList DanProcessing::autoConfigurations()
+{
+    begin();
+    const DanAuto a(d);
+    const QList<DanAuto::Run> runs = a.runs(true);
+    QStringList dropped;
+    const QList<DanAuto::Choice> choices = a.configurations(runs, dropped);
+    report(QString("%1 runs, %2 configuration(s)").arg(runs.count()).arg(choices.count()));
+    for (const QString &reason : dropped)
+    {
+        d->danMessage(reason);
+        report("  left out: " + reason);
+    }
+    if (choices.isEmpty())
+    {
+        end(false, "no configuration: no empty beam among the runs (auto option emptyBeam: " +
+                       d->lineEditAutoEB->text() + ")" + (dropped.isEmpty() ? QString() : "; " + dropped.join("; ")));
+        return {};
+    }
+    QList<DanAuto::Run> emptyBeams;
+    for (const DanAuto::Choice &c : choices)
+        emptyBeams << c.emptyBeam;
+    if (!setConfigurations(int(choices.count())))
+    {
+        end(false, lastError());
+        return {};
+    }
+    QVariantList list;
+    for (int i = 0; i < choices.count(); i++)
+    {
+        const DanAuto::Choice &c = choices[i];
+        const QString mask = DanAuto::maskName(c.emptyBeam, false, emptyBeams);
+        const QString trMask = DanAuto::maskName(c.emptyBeam, true, emptyBeams);
+        if (!setConfiguration(i + 1, c.emptyBeam.run, c.darkCurrent, c.calibrant, c.calibrantEmptyBeam,
+                              c.calibrantDarkCurrent, c.center, isMask(mask) ? mask : "mask",
+                              isSens("sens") ? "sens" : QString(), isMask(trMask) ? trMask : "mask", c.cellEmptyBeam,
+                              c.transmission ? 1 : 0))
+        {
+            end(false, lastError());
+            return {};
+        }
+        list << configuration(i + 1);
+        report(QString("  %1 %2: EB %3, B4C %4, %5, center %6, cell EB %7%8")
+                   .arg(i + 1)
+                   .arg(a.label(c.emptyBeam), c.emptyBeam.run, c.darkCurrent.isEmpty() ? "-" : c.darkCurrent,
+                        c.calibrant.isEmpty() ? "direct beam " + c.calibrantEmptyBeam
+                                              : "calibrant " + c.calibrant + " (EB " + c.calibrantEmptyBeam + ")",
+                        c.center, c.cellEmptyBeam.isEmpty() ? "-" : c.cellEmptyBeam,
+                        c.transmission ? ", transmissions measured" : ""));
+    }
+    end(true);
+    return list;
+}
+
+bool DanProcessing::runCenter(const QString &run, const QString &mask, const QString &sens, double &x, double &y)
+{
+    if (!d->filesManager->checkFileNumber(run))
+    {
+        fail("no run " + run + " in " + d->filesManager->pathInString());
+        return false;
+    }
+    if (!isMask(mask))
+    {
+        fail("no mask " + mask);
+        return false;
+    }
+    if (!isSens(sens))
+    {
+        fail("no sensitivity " + sens);
+        return false;
+    }
+    if (d->radioButtonCenterReadFromHeader->isChecked())
+    {
+        x = d->detector->readDetectorX(run);
+        y = d->detector->readDetectorY(run);
+        return true;
+    }
+    // as the configurations' centers: H.F. starts from the mask's beam-stop center (1-based)
+    const int md = d->lineEditMD->text().toInt();
+    d->readCenterfromMaskName(mask, x, y, md);
+    x += 1.0;
+    y += 1.0;
+    double xError = 0.0;
+    double yError = 0.0;
+    d->calcCenterNew(run, -1, x, y, xError, yError, mask, sens);
+    return true;
+}
+
+bool DanProcessing::centerOffset(const QString &run, double xCenter, double yCenter, const QString &mask,
+                                 const QString &sens, double &hShift, double &vShift)
+{
+    double x = 0.0;
+    double y = 0.0;
+    if (!runCenter(run, mask, sens, x, y))
+        return false;
+    hShift = xCenter - x;
+    vShift = yCenter - y;
+    return true;
+}
+
+int DanProcessing::addCenterOffsets(const QString &scriptTable, const QString &mask, const QString &sens)
+{
+    Table *t = nullptr;
+    if (!d->app()->checkTableExistence(scriptTable, t))
+    {
+        fail("no script table " + scriptTable);
+        return -1;
+    }
+    QStringList cn = t->colNames();
+    const int runCol = static_cast<int>(cn.indexOf("#-Run"));
+    const int xCol = static_cast<int>(cn.indexOf("X-center"));
+    const int yCol = static_cast<int>(cn.indexOf("Y-center"));
+    const int maskCol = static_cast<int>(cn.indexOf("Mask"));
+    const int sensCol = static_cast<int>(cn.indexOf("Sens"));
+    if (runCol < 0 || xCol < 0 || yCol < 0 || maskCol < 0 || sensCol < 0)
+    {
+        fail("script table " + scriptTable + " without #-Run, X-center, Y-center, Mask or Sens");
+        return -1;
+    }
+    for (const QString &m : {mask, sens})
+        if (!m.isEmpty() && !(m == mask ? isMask(m) : isSens(m)))
+        {
+            fail(QString(m == mask ? "no mask " : "no sensitivity ") + m);
+            return -1;
+        }
+    // the shifts first: a row without them fails the call before a column is made
+    auto number = [t](int row, int col) { return t->text(row, col).split(QChar(177)).first().trimmed().toDouble(); };
+    QList<QPair<double, double>> shifts;
+    for (int row = 0; row < t->numRows(); row++)
+    {
+        double h = 0.0;
+        double v = 0.0;
+        const QString run = t->text(row, runCol).trimmed();
+        // not given: as the configuration's center was found (calcCenterNew(col)): the row's mask and sensitivity,
+        // or the active ones with a direct-beam calibration through "Use Current Mask and Sensitivity"
+        const bool active = d->checkBoxACDBuseActive->isChecked() &&
+                            (d->comboBoxACmethod->currentIndex() == 1 || d->comboBoxACmethod->currentIndex() == 4);
+        const QString rowMask = !mask.isEmpty() ? mask
+                                : active        ? d->comboBoxMaskFor->currentText()
+                                                : t->text(row, maskCol).trimmed();
+        const QString rowSens = !sens.isEmpty() ? sens
+                                : active        ? d->comboBoxSensFor->currentText()
+                                                : t->text(row, sensCol).trimmed();
+        if (!centerOffset(run, number(row, xCol), number(row, yCol), rowMask, rowSens, h, v))
+        {
+            m_lastError = "row " + QString::number(row + 1) + " (" + run + "): " + m_lastError;
+            return -1;
+        }
+        shifts << qMakePair(h, v);
+    }
+    begin();
+    for (const QString &name : {QString("VShift"), QString("HShift")})
+        if (!cn.contains(name))
+        {
+            t->addColumns(1);
+            t->setColName(t->numCols() - 1, name, false, false);
+            t->setColumnType(t->numCols() - 1, Table::Text);
+            cn = t->colNames();
+        }
+    const int vCol = static_cast<int>(cn.indexOf("VShift"));
+    const int hCol = static_cast<int>(cn.indexOf("HShift"));
+    QStringList lines;
+    for (int row = 0; row < shifts.count(); row++)
+    {
+        t->setText(row, hCol, QString::number(shifts[row].first, 'f', 3));
+        t->setText(row, vCol, QString::number(shifts[row].second, 'f', 3));
+        lines << QString("%1 %2, %3")
+                     .arg(t->text(row, runCol).trimmed(), QString::number(shifts[row].first, 'f', 2),
+                          QString::number(shifts[row].second, 'f', 2));
+    }
+    report("center offsets (HShift, VShift) to the empty beams' centers: " + lines.join("; "));
+    end(true);
+    return static_cast<int>(shifts.count());
+}
+
+int DanProcessing::autoScale(const QString &scriptTable)
+{
+    Table *t = nullptr;
+    if (!d->app()->checkTableExistence(scriptTable, t))
+    {
+        fail("no script table " + scriptTable);
+        return -1;
+    }
+    // the configurations by wavelength; a wavelength counts when every one of its configurations measures its own
+    // transmissions; its reference: the longest distance
+    auto number = [this](int row, int col) {
+        return d->tableEC->item(row, col) ? d->tableEC->item(row, col)->text().split(QChar(177)).first().toDouble()
+                                          : 0.0;
+    };
+    const int n = configurations();
+    QMap<int, int> reference; // configuration (1..n) -> the configuration it is scaled to
+    for (int i = 0; i < n; i++)
+    {
+        QList<int> same;
+        for (int j = 0; j < n; j++)
+            if (fabs(number(dan18::dptWL, i) - number(dan18::dptWL, j)) <=
+                0.05 * fabs(number(dan18::dptWL, i) + number(dan18::dptWL, j)) / 2.0)
+                same << j;
+        bool own = same.count() > 1;
+        int longest = i;
+        for (int j : same)
+        {
+            own = own && d->tableEC->item(dan18::dptECTR, j) &&
+                  d->tableEC->item(dan18::dptECTR, j)->checkState() == Qt::Checked;
+            if (number(dan18::dptD, j) > number(dan18::dptD, longest))
+                longest = j;
+        }
+        if (own)
+            reference[i + 1] = longest + 1;
+    }
+    if (reference.isEmpty())
+        return 0;
+    const QStringList cn = t->colNames();
+    const int sampleCol = static_cast<int>(cn.indexOf("Run-info"));
+    const int conditionCol = static_cast<int>(cn.indexOf("#-Condition"));
+    const int trCol = static_cast<int>(cn.indexOf("Transmission-Sample"));
+    if (sampleCol < 0 || conditionCol < 0 || trCol < 0)
+    {
+        fail("script table " + scriptTable + " without Run-info, #-Condition or Transmission-Sample");
+        return -1;
+    }
+    auto tr = [t, trCol](int row) { return t->text(row, trCol).split("[").first().trimmed().toDouble(); };
+    int scaleCol = static_cast<int>(cn.indexOf("Scale"));
+    if (scaleCol < 0)
+    {
+        t->addColumns(1);
+        scaleCol = t->numCols() - 1;
+        t->setColName(scaleCol, "Scale", false, false);
+        t->setColumnType(scaleCol, Table::Text);
+    }
+    begin();
+    int scaled = 0;
+    QStringList scales;
+    for (int row = 0; row < t->numRows(); row++)
+    {
+        const int condition = t->text(row, conditionCol).toInt();
+        double scale = 1.0;
+        if (reference.contains(condition) && reference[condition] != condition)
+        {
+            int match = -1;
+            for (int other = 0; other < t->numRows(); other++)
+                if (t->text(other, conditionCol).toInt() == reference[condition] &&
+                    t->text(other, sampleCol).trimmed() == t->text(row, sampleCol).trimmed())
+                    match = other;
+            if (match >= 0 && tr(match) > 0.0 && tr(row) > 0.0)
+            {
+                scale = tr(row) / tr(match);
+                scaled++;
+            }
+            else
+                d->danMessage("row " + QString::number(row + 1) + " (" + t->text(row, sampleCol).trimmed() +
+                              "): no transmission of the same sample in configuration " +
+                              QString::number(reference[condition]) + ": Scale 1");
+        }
+        t->setText(row, scaleCol, QString::number(scale, 'g', 13));
+        if (scale != 1.0)
+            scales << QString("%1 %2").arg(t->text(row, sampleCol).trimmed(), QString::number(scale, 'f', 4));
+    }
+    report("Scale (to the longest distance of the wavelength): " + (scales.isEmpty() ? "none" : scales.join(", ")));
+    end(true);
+    return scaled;
+}
+
+QString DanProcessing::autoConfig(const QString &scriptTable)
+{
+    if (d->app()->checkTableExistence(scriptTable))
+        return fail("a table " + scriptTable + " exists already");
+    begin();
+    auto stop = [this](const QString &reason) {
+        end(false, reason);
+        return QString();
+    };
+    if (d->danMask->autoMasks().isEmpty())
+        return stop("masks: " + d->danMask->lastError());
+    // "sens" anew by the option (a "sens" of an earlier folder or session is not this one's); the beam-stop masks
+    // made it already, for their centers
+    const QString masks = autoChoice(d->comboBoxAutoMasks, "masks");
+    if ((masks == "none" || masks == "files") && d->danSensitivity->autoSensitivity().isEmpty())
+        return stop("sensitivity: " + d->danSensitivity->lastError());
+    // "mask" without the beam stop (centers from the empty beams, beam-stop masks per configuration, flat
+    // sensitivity): a direct-beam calibration takes the center and the factor through it, "Use Current Mask and
+    // Sensitivity" checked as one would (unchecked, the configuration's beam-stop mask hid the beam: KWSX-init-auto)
+    const int calibrant = d->comboBoxACmethod->currentIndex();
+    if (masks == "configuration" && autoChoice(d->comboBoxAutoCenter, "center") == "emptybeam" &&
+        autoChoice(d->comboBoxAutoSens, "sensitivity") == "flat" && (calibrant == 1 || calibrant == 4) &&
+        !d->checkBoxACDBuseActive->isChecked())
+    {
+        d->checkBoxACDBuseActive->setChecked(true);
+        report(R"(direct beam: "Use Current Mask and Sensitivity" checked (mask and sens without beam stop))");
+    }
+    if (autoConfigurations().isEmpty())
+        return stop(lastError());
+    if (!calculate())
+        return stop(lastError());
+    for (int i = 1; i <= configurations(); i++)
+    {
+        const QVariantMap c = configuration(i);
+        report(QString("  %1: factor %2, center %3, %4")
+                   .arg(i)
+                   .arg(c["factor"].toDouble(), 0, 'g', 6)
+                   .arg(c["xCenter"].toDouble(), 0, 'f', 2)
+                   .arg(c["yCenter"].toDouble(), 0, 'f', 2));
+    }
+    const QStringList samples = d->danRawdata->sampleRuns({});
+    if (samples.isEmpty())
+        return stop("no sample runs (every run is a standard run by the auto options)");
+    if (newScriptTable(scriptTable, samples).isEmpty())
+        return stop(lastError());
+    report(QString("script table %1: %2 sample runs").arg(scriptTable).arg(samples.count()));
+    if (!calculateTransmissions(scriptTable))
+        return stop(lastError());
+    // the samples' centers onto their empty beams' (HShift, VShift), through "mask" and "sens", when the option
+    // asks for it
+    if (d->checkBoxAutoCenterOffsets->isChecked() && addCenterOffsets(scriptTable, "mask", "sens") < 0)
+        return stop(lastError());
+    // the "Scale" column (normalized to the transmission at the longest distance) only when the option asks for it
+    if (d->checkBoxAutoScale->isChecked() && autoScale(scriptTable) < 0)
+        return stop(lastError());
+    if (!d->checkBoxAutoScale->isChecked())
+        report("no Scale column (auto option scale off)");
+    report(QString(R"(ready: %1 (processing: process("%1"); merging: Dan.Merge.join("%1-mergingTemplate")))")
+               .arg(scriptTable));
+    end(true);
+    return scriptTable;
 }
 
 //+++ the instrument's configuration (Dan.Options.Config.parameters())

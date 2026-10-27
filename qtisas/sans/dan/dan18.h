@@ -67,6 +67,7 @@ class dan18 : public QWidget, private Ui::dan
     friend class DanProcessingOptions;
     friend class DanProcessing;
     friend class DanMerge;
+    friend class DanAuto;
 public:
     dan18(QWidget *parent = 0);
     ~dan18();
@@ -707,6 +708,7 @@ public:
     void updateListOfTables();
 private:
     bool m_scriptRun = false;
+    int m_scriptDepth = 0;
     QStringList m_mergedNames; // the tables (or files) the last mergeMethod() made
     QStringList m_scriptMessages;
 

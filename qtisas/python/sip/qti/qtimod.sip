@@ -3675,6 +3675,15 @@ public:
         sipError = sipErrorFail;
     }
 %End
+    // auto mode's options (Options > Auto-Mode) by name; set: a dict of some of them
+    QVariantMap autoOptions() const;
+    void setAutoOptions(const QVariantMap &options);
+%MethodCode
+    if (!(sipCpp->setAutoOptions(*a0))) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
 };
 
 class DanOptions : DanPart /NoDefaultCtors/
@@ -3741,7 +3750,43 @@ class DanRawdata : DanPart /NoDefaultCtors/
 #include "dan-python.h"
 %End
 public:
-    QStringList runs() const;
+    // the run numbers of the input folder; with a minimum or a wildcard: only the runs above / matching
+    QStringList runs(int minDuration = -1, int minCounts = -1, const QString &files = QString(),
+                     const QString &skipFiles = QString(), const QString &samples = QString(),
+                     const QString &skipSamples = QString());
+%MethodCode
+    if (a0 < 0 && a1 < 0 && a2->isEmpty() && a3->isEmpty() && a4->isEmpty() && a5->isEmpty())
+        sipRes = new QStringList(sipCpp->runs());
+    else
+        sipRes = new QStringList(sipCpp->runs(a0, a1, *a2, *a3, *a4, *a5));
+%End
+    // per run a dict: run, sample, duration, counts, C, D, lambda, beamSize, polarization, attenuator, detectorX/Y
+    QVariantList info(SIP_PYOBJECT runs = Py_None);
+%MethodCode
+    QStringList runs;
+    if (a0 != Py_None && !sipqti_strings(a0, &runs, "runs: run numbers"))
+        sipError = sipErrorFail;
+    else
+        sipRes = new QVariantList(sipCpp->info(runs));
+%End
+    // the runs (auto mode's run filters when none are given) grouped by configuration: label, C, D, lambda, ..., runs
+    QVariantList conditions(SIP_PYOBJECT runs = Py_None);
+%MethodCode
+    QStringList runs;
+    if (a0 != Py_None && !sipqti_strings(a0, &runs, "runs: run numbers"))
+        sipError = sipErrorFail;
+    else
+        sipRes = new QVariantList(sipCpp->conditions(runs));
+%End
+    // the runs minus every standard run (empty beams, dark currents, calibrants, sensitivity) of auto mode
+    QStringList sampleRuns(SIP_PYOBJECT runs = Py_None);
+%MethodCode
+    QStringList runs;
+    if (a0 != Py_None && !sipqti_strings(a0, &runs, "runs: run numbers"))
+        sipError = sipErrorFail;
+    else
+        sipRes = new QStringList(sipCpp->sampleRuns(runs));
+%End
     QStringList headerItems() const;
     QString newHeaderTable(const QString &name, SIP_PYOBJECT items, const QString &runs = "*");
 %MethodCode
@@ -3954,6 +3999,24 @@ public:
     }
 %End
     QStringList masks() const;
+    // auto mode: "mask" and the masks the Masks option asks for
+    QStringList autoMasks();
+%MethodCode
+    sipRes = new QStringList(sipCpp->autoMasks());
+    if (sipRes->isEmpty()) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
+    // the mask files of the input folder: "mask" the one (or mask.mask), the others by their names
+    QStringList loadMasks(const QString &pattern = "*.mask");
+%MethodCode
+    sipRes = new QStringList(sipCpp->loadMasks(*a0));
+    if (sipRes->isEmpty()) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
 };
 
 class DanSensitivity : DanPart /NoDefaultCtors/
@@ -4023,6 +4086,23 @@ public:
     }
 %End
     QStringList sensitivities() const;
+    // auto mode: "sens" from the sensitivity run, the *.sens file(s) or flat
+    QString autoSensitivity();
+%MethodCode
+    sipRes = new QString(sipCpp->autoSensitivity());
+    if (sipRes->isEmpty()) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
+    QStringList loadSensitivities(const QString &pattern = "*.sens");
+%MethodCode
+    sipRes = new QStringList(sipCpp->loadSensitivities(*a0));
+    if (sipRes->isEmpty()) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
     // (Tr, dTr) of a run against an empty beam, counted through a (transmission) mask
     SIP_PYTUPLE transmission(const QString &run, const QString &emptyBeam, const QString &mask = "mask");
 %MethodCode
@@ -4135,6 +4215,80 @@ public:
             PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
             sipError = sipErrorFail;
         }
+    }
+%End
+    // auto mode: the table of configurations from the runs; configuration(i) of each
+    QVariantList autoConfigurations();
+%MethodCode
+    sipRes = new QVariantList(sipCpp->autoConfigurations());
+    if (sipRes->isEmpty()) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
+    // auto mode: the "Scale" column of a script table (a wavelength whose configurations measure their own
+    // transmissions, normalized to the longest distance); the rows scaled
+    int autoScale(SIP_PYOBJECT scriptTable);
+%MethodCode
+    QString name;
+    if (!sipqti_name(a0, &name, "scriptTable: the script table's name"))
+        sipError = sipErrorFail;
+    else {
+        sipRes = sipCpp->autoScale(name);
+        if (sipRes < 0) {
+            PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+            sipError = sipErrorFail;
+        }
+    }
+%End
+    // a run's beam center (1-based pixels) through mask and sens, by the center method of Options: (x, y)
+    SIP_PYTUPLE runCenter(const QString &run, const QString &mask = "mask", const QString &sens = "sens");
+%MethodCode
+    double x = 0.0, y = 0.0;
+    if (!sipCpp->runCenter(*a0, *a1, *a2, x, y)) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+    else
+        sipRes = Py_BuildValue("(dd)", x, y);
+%End
+    // the shift moving the run's center onto (xCenter, yCenter): (HShift, VShift) = (xCenter - x, yCenter - y)
+    SIP_PYTUPLE centerOffset(const QString &run, double xCenter, double yCenter, const QString &mask = "mask",
+                             const QString &sens = "sens");
+%MethodCode
+    double h = 0.0, v = 0.0;
+    if (!sipCpp->centerOffset(*a0, a1, a2, *a3, *a4, h, v)) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+    else
+        sipRes = Py_BuildValue("(dd)", h, v);
+%End
+    // the "HShift", "VShift" columns: each sample's center onto its empty beam's (the row's X-, Y-center); mask,
+    // sens None: the row's own; the rows written
+    int addCenterOffsets(SIP_PYOBJECT scriptTable, SIP_PYOBJECT mask = Py_None, SIP_PYOBJECT sens = Py_None);
+%MethodCode
+    QString name, mask, sens;
+    if (!sipqti_name(a0, &name, "scriptTable: the script table's name") ||
+        !sipqti_optionalString(a1, &mask, "mask: a mask name or None") ||
+        !sipqti_optionalString(a2, &sens, "sens: a sensitivity name or None"))
+        sipError = sipErrorFail;
+    else {
+        sipRes = sipCpp->addCenterOffsets(name, mask, sens);
+        if (sipRes < 0) {
+            PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+            sipError = sipErrorFail;
+        }
+    }
+%End
+    // auto mode up to the script table, ready for processing: masks, sensitivity, configurations, calculate(), the
+    // script table of the sample runs, transmissions, scale; its name
+    QString autoConfig(const QString &scriptTable = "script");
+%MethodCode
+    sipRes = new QString(sipCpp->autoConfig(*a0));
+    if (sipRes->isEmpty()) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
     }
 %End
 };

@@ -97,13 +97,19 @@ void dan18::danMessage(const QString &text, bool critical)
 
 void dan18::beginScriptRun()
 {
+    // nested runs (an auto-mode call made of other calls) collect into the outermost one
+    if (m_scriptDepth == 0)
+        m_scriptMessages.clear();
+    m_scriptDepth++;
     m_scriptRun = true;
-    m_scriptMessages.clear();
 }
 
 QStringList dan18::endScriptRun()
 {
-    m_scriptRun = false;
+    if (m_scriptDepth > 0)
+        m_scriptDepth--;
+    if (m_scriptDepth == 0)
+        m_scriptRun = false;
     return m_scriptMessages;
 }
 

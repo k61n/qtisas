@@ -1836,6 +1836,11 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                   <string>Polarized Neutrons:: Analyzer</string>
                  </property>
                 </item>
+                <item>
+                 <property name="text">
+                  <string>Auto-Mode</string>
+                 </property>
+                </item>
                </widget>
               </item>
               <item>
@@ -1979,7 +1984,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                  <number>0</number>
                 </property>
                 <property name="currentIndex">
-                 <number>8</number>
+                 <number>14</number>
                 </property>
                 <widget class="QWidget" name="configUnits">
                  <layout class="QVBoxLayout" name="verticalLayout_39">
@@ -22468,6 +22473,1628 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                      <size>
                       <width>5</width>
                       <height>245</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                 </layout>
+                </widget>
+                <widget class="QWidget" name="page_4">
+                 <layout class="QVBoxLayout" name="verticalLayout_79" stretch="0,0">
+                  <property name="spacing">
+                   <number>0</number>
+                  </property>
+                  <property name="leftMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>0</number>
+                  </property>
+                  <item>
+                   <widget class="QGroupBox" name="frameAutoMode">
+                    <property name="enabled">
+                     <bool>true</bool>
+                    </property>
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="minimumSize">
+                     <size>
+                      <width>220</width>
+                      <height>100</height>
+                     </size>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>1800</width>
+                      <height>14000</height>
+                     </size>
+                    </property>
+                    <property name="font">
+                     <font>
+                      <weight>50</weight>
+                      <bold>false</bold>
+                      <underline>false</underline>
+                      <stylestrategy>PreferDefault</stylestrategy>
+                      <kerning>false</kerning>
+                     </font>
+                    </property>
+                    <property name="autoFillBackground">
+                     <bool>false</bool>
+                    </property>
+                    <property name="styleSheet">
+                     <string notr="true">QGroupBox {border: none;}</string>
+                    </property>
+                    <property name="inputMethodHints">
+                     <set>Qt::ImhNone</set>
+                    </property>
+                    <property name="title">
+                     <string/>
+                    </property>
+                    <property name="flat">
+                     <bool>true</bool>
+                    </property>
+                    <property name="checkable">
+                     <bool>false</bool>
+                    </property>
+                    <property name="checked">
+                     <bool>false</bool>
+                    </property>
+                    <layout class="QVBoxLayout" name="verticalLayoutAutoMode">
+                     <property name="spacing">
+                      <number>2</number>
+                     </property>
+                     <property name="leftMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="topMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="rightMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="bottomMargin">
+                      <number>0</number>
+                     </property>
+                     <item>
+                      <widget class="QTabWidget" name="tabWidgetAutoConfig">
+                       <property name="currentIndex">
+                        <number>0</number>
+                       </property>
+                       <widget class="QWidget" name="autoRuns">
+                        <attribute name="title">
+                         <string>Runs</string>
+                        </attribute>
+                        <layout class="QGridLayout" name="gridLayoutAutoRuns">
+                         <property name="leftMargin">
+                          <number>8</number>
+                         </property>
+                         <property name="topMargin">
+                          <number>8</number>
+                         </property>
+                         <property name="rightMargin">
+                          <number>8</number>
+                         </property>
+                         <property name="bottomMargin">
+                          <number>8</number>
+                         </property>
+                         <property name="horizontalSpacing">
+                          <number>8</number>
+                         </property>
+                         <property name="verticalSpacing">
+                          <number>2</number>
+                         </property>
+                         <item row="2" column="2">
+                          <widget class="QLineEdit" name="lineEditAutoFilesSkip">
+                           <property name="minimumSize">
+                            <size>
+                             <width>0</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="font">
+                            <font>
+                             <weight>50</weight>
+                             <bold>false</bold>
+                            </font>
+                           </property>
+                           <property name="toolTip">
+                            <string>Files whose name matches are skipped</string>
+                           </property>
+                           <property name="text">
+                            <string/>
+                           </property>
+                          </widget>
+                         </item>
+                         <item row="2" column="0">
+                          <widget class="QLabel" name="labelAuto4">
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="font">
+                            <font>
+                             <weight>50</weight>
+                             <bold>false</bold>
+                            </font>
+                           </property>
+                           <property name="toolTip">
+                            <string>Wildcard on the file name</string>
+                           </property>
+                           <property name="styleSheet">
+                            <string notr="true">color: black;</string>
+                           </property>
+                           <property name="text">
+                            <string>File names:</string>
+                           </property>
+                          </widget>
+                         </item>
+                         <item row="3" column="0">
+                          <widget class="QLabel" name="labelAuto5">
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="font">
+                            <font>
+                             <weight>50</weight>
+                             <bold>false</bold>
+                            </font>
+                           </property>
+                           <property name="toolTip">
+                            <string>Sample-name wildcard; &quot;||&quot; separates alternatives; without &quot;*&quot; the exact name (case ignored)</string>
+                           </property>
+                           <property name="styleSheet">
+                            <string notr="true">color: black;</string>
+                           </property>
+                           <property name="text">
+                            <string>Sample names:</string>
+                           </property>
+                          </widget>
+                         </item>
+                         <item row="2" column="1">
+                          <widget class="QLineEdit" name="lineEditAutoFilesAccept">
+                           <property name="minimumSize">
+                            <size>
+                             <width>0</width>
+                             <height>20</height>
+                            </size>
+                           </property>
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="font">
+                            <font>
+                             <weight>50</weight>
+                             <bold>false</bold>
+                            </font>
+                           </property>
+                           <property name="toolTip">
+                            <string>Files whose name matches; &quot;||&quot; separates alternatives</string>
+                           </property>
+                           <property name="text">
+                            <string>*</string>
+                           </property>
+                          </widget>
+                         </item>
+                         <item row="4" column="0">
+                          <widget class="QLabel" name="labelAuto6">
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="font">
+                            <font>
+                             <weight>50</weight>
+                             <bold>false</bold>
+                            </font>
+                           </property>
+                           <property name="toolTip">
+                            <string>Which part of the sample name auto mode uses (empty: the whole name); see the field</string>
+                           </property>
+                           <property name="styleSheet">
+                            <string notr="true">color: black;</string>
+                           </property>
+                           <property name="text">
+                            <string>Sample name: use part</string>
+                           </property>
+                          </widget>
+                         </item>
+                         <item row="0" column="0">
+                          <widget class="QLabel" name="labelAuto2">
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="font">
+                            <font>
+                             <weight>50</weight>
+                             <bold>false</bold>
+                            </font>
+                           </property>
+                           <property name="toolTip">
+                            <string>Runs this long or shorter are skipped</string>
+                           </property>
+                           <property name="styleSheet">
+                            <string notr="true">color: black;</string>
+                           </property>
+                           <property name="text">
+                            <string>Duration more than:</string>
+                           </property>
+                          </widget>
+                         </item>
+                         <item row="1" column="0">
+                          <widget class="QLabel" name="labelAuto3">
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="font">
+                            <font>
+                             <weight>50</weight>
+                             <bold>false</bold>
+                            </font>
+                           </property>
+                           <property name="toolTip">
+                            <string>Runs with this many counts or fewer are skipped</string>
+                           </property>
+                           <property name="styleSheet">
+                            <string notr="true">color: black;</string>
+                           </property>
+                           <property name="text">
+                            <string>Counts more than:</string>
+                           </property>
+                          </widget>
+                         </item>
+                         <item row="4" column="1" colspan="2">
+                          <widget class="QLineEdit" name="lineEditAutoNameField">
+                           <property name="minimumSize">
+                            <size>
+                             <width>0</width>
+                             <height>20</height>
+                            </size>
+                           </property>
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="font">
+                            <font>
+                             <weight>50</weight>
+                             <bold>false</bold>
+                            </font>
+                           </property>
+                           <property name="toolTip">
+                            <string>Which part of the sample name auto mode uses. Empty: the whole name.
+    s&lt;separator&gt;&lt;n&gt;: the name split at the separator, the n-th part (from 1).
+    Example &quot;S1_H2O&quot;: s_1 → &quot;S1&quot;, s_2 → &quot;H2O&quot;.
+    Used for the role wildcards below (empty beam, B4C, ...), the sample filters and grouping runs of one sample (neighbours, merge table).</string>
+                           </property>
+                           <property name="text">
+                            <string/>
+                           </property>
+                           <property name="placeholderText">
+                            <string>whole name (e.g. s_2)</string>
+                           </property>
+                          </widget>
+                         </item>
+                         <item row="1" column="1" colspan="2">
+                          <widget class="QSpinBox" name="spinBoxAutoMinCounts">
+                           <property name="minimumSize">
+                            <size>
+                             <width>0</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="font">
+                            <font>
+                             <weight>50</weight>
+                             <bold>false</bold>
+                            </font>
+                           </property>
+                           <property name="toolTip">
+                            <string>Runs with n detector counts or fewer are skipped</string>
+                           </property>
+                           <property name="minimum">
+                            <number>0</number>
+                           </property>
+                           <property name="maximum">
+                            <number>2147483647</number>
+                           </property>
+                           <property name="value">
+                            <number>100</number>
+                           </property>
+                          </widget>
+                         </item>
+                         <item row="0" column="1" colspan="2">
+                          <widget class="QSpinBox" name="spinBoxAutoMinDuration">
+                           <property name="minimumSize">
+                            <size>
+                             <width>0</width>
+                             <height>20</height>
+                            </size>
+                           </property>
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="font">
+                            <font>
+                             <weight>50</weight>
+                             <bold>false</bold>
+                            </font>
+                           </property>
+                           <property name="toolTip">
+                            <string>Runs with a duration of n seconds or less are skipped</string>
+                           </property>
+                           <property name="suffix">
+                            <string> s</string>
+                           </property>
+                           <property name="minimum">
+                            <number>0</number>
+                           </property>
+                           <property name="maximum">
+                            <number>2147483647</number>
+                           </property>
+                           <property name="value">
+                            <number>30</number>
+                           </property>
+                          </widget>
+                         </item>
+                         <item row="3" column="2">
+                          <widget class="QLineEdit" name="lineEditAutoSamplesSkip">
+                           <property name="minimumSize">
+                            <size>
+                             <width>0</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="font">
+                            <font>
+                             <weight>50</weight>
+                             <bold>false</bold>
+                            </font>
+                           </property>
+                           <property name="toolTip">
+                            <string>Runs whose sample name matches are skipped</string>
+                           </property>
+                           <property name="text">
+                            <string/>
+                           </property>
+                          </widget>
+                         </item>
+                         <item row="3" column="1">
+                          <widget class="QLineEdit" name="lineEditAutoSamplesAccept">
+                           <property name="minimumSize">
+                            <size>
+                             <width>0</width>
+                             <height>20</height>
+                            </size>
+                           </property>
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="font">
+                            <font>
+                             <weight>50</weight>
+                             <bold>false</bold>
+                            </font>
+                           </property>
+                           <property name="toolTip">
+                            <string>Runs whose sample name matches</string>
+                           </property>
+                           <property name="text">
+                            <string>*</string>
+                           </property>
+                          </widget>
+                         </item>
+                         <item row="5" column="0" colspan="3">
+                          <spacer name="verticalSpacerAutoRuns">
+                           <property name="orientation">
+                            <enum>Qt::Vertical</enum>
+                           </property>
+                           <property name="sizeType">
+                            <enum>QSizePolicy::Minimum</enum>
+                           </property>
+                           <property name="sizeHint" stdset="0">
+                            <size>
+                             <width>20</width>
+                             <height>1</height>
+                            </size>
+                           </property>
+                          </spacer>
+                         </item>
+                        </layout>
+                       </widget>
+                       <widget class="QWidget" name="autoConfigurations">
+                        <attribute name="title">
+                         <string>Configurations</string>
+                        </attribute>
+                        <layout class="QGridLayout" name="gridLayoutAutoConfigurations">
+                         <property name="leftMargin">
+                          <number>8</number>
+                         </property>
+                         <property name="topMargin">
+                          <number>8</number>
+                         </property>
+                         <property name="rightMargin">
+                          <number>8</number>
+                         </property>
+                         <property name="bottomMargin">
+                          <number>8</number>
+                         </property>
+                         <property name="horizontalSpacing">
+                          <number>8</number>
+                         </property>
+                         <property name="verticalSpacing">
+                          <number>2</number>
+                         </property>
+                         <item row="0" column="0">
+                          <widget class="QLabel" name="labelAuto8">
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="font">
+                            <font>
+                             <weight>50</weight>
+                             <bold>false</bold>
+                            </font>
+                           </property>
+                           <property name="toolTip">
+                            <string>Defines the configurations (C, D, lambda, beam size, ...): per configuration the longest run</string>
+                           </property>
+                           <property name="styleSheet">
+                            <string notr="true">color: black;</string>
+                           </property>
+                           <property name="text">
+                            <string>Empty beam [EC]:</string>
+                           </property>
+                          </widget>
+                         </item>
+                         <item row="0" column="1" colspan="2">
+                          <widget class="QLineEdit" name="lineEditAutoEB">
+                           <property name="minimumSize">
+                            <size>
+                             <width>0</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="font">
+                            <font>
+                             <weight>50</weight>
+                             <bold>false</bold>
+                            </font>
+                           </property>
+                           <property name="toolTip">
+                            <string>Sample-name wildcard; &quot;||&quot; separates alternatives; without &quot;*&quot; the exact name (case ignored)</string>
+                           </property>
+                           <property name="text">
+                            <string>*eb*||*ec*||*empty*cell*||*empty*beam*</string>
+                           </property>
+                          </widget>
+                         </item>
+                         <item row="1" column="0">
+                          <widget class="QLabel" name="labelAuto9">
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="font">
+                            <font>
+                             <weight>50</weight>
+                             <bold>false</bold>
+                            </font>
+                           </property>
+                           <property name="toolTip">
+                            <string>The longest run of the configuration</string>
+                           </property>
+                           <property name="styleSheet">
+                            <string notr="true">color: black;</string>
+                           </property>
+                           <property name="text">
+                            <string>Dark current [B4C]:</string>
+                           </property>
+                          </widget>
+                         </item>
+                         <item row="1" column="1">
+                          <widget class="QLineEdit" name="lineEditAutoBC">
+                           <property name="minimumSize">
+                            <size>
+                             <width>0</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="font">
+                            <font>
+                             <weight>50</weight>
+                             <bold>false</bold>
+                            </font>
+                           </property>
+                           <property name="toolTip">
+                            <string>Sample-name wildcard; &quot;||&quot; separates alternatives; without &quot;*&quot; the exact name (case ignored)</string>
+                           </property>
+                           <property name="text">
+                            <string>*bc*||*b4c*</string>
+                           </property>
+                          </widget>
+                         </item>
+                         <item row="1" column="2">
+                          <widget class="QCheckBox" name="checkBoxAutoBCSingle">
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="font">
+                            <font>
+                             <weight>50</weight>
+                             <bold>false</bold>
+                            </font>
+                           </property>
+                           <property name="toolTip">
+                            <string>The longest dark-current run serves every configuration</string>
+                           </property>
+                           <property name="text">
+                            <string>one for all</string>
+                           </property>
+                           <property name="checked">
+                            <bool>false</bool>
+                           </property>
+                          </widget>
+                         </item>
+                         <item row="2" column="0">
+                          <widget class="QLabel" name="labelAuto10">
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="font">
+                            <font>
+                             <weight>50</weight>
+                             <bold>false</bold>
+                            </font>
+                           </property>
+                           <property name="toolTip">
+                            <string>Absolute calibration: the run with the most counts in the configuration; empty: direct beam</string>
+                           </property>
+                           <property name="styleSheet">
+                            <string notr="true">color: black;</string>
+                           </property>
+                           <property name="text">
+                            <string>Calibrant [FS]:</string>
+                           </property>
+                          </widget>
+                         </item>
+                         <item row="2" column="1">
+                          <widget class="QLineEdit" name="lineEditAutoCalibrant">
+                           <property name="minimumSize">
+                            <size>
+                             <width>0</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="font">
+                            <font>
+                             <weight>50</weight>
+                             <bold>false</bold>
+                            </font>
+                           </property>
+                           <property name="toolTip">
+                            <string>Sample-name wildcard; &quot;||&quot; separates alternatives; without &quot;*&quot; the exact name (case ignored)</string>
+                           </property>
+                           <property name="text">
+                            <string>*plex[i,y]*</string>
+                           </property>
+                          </widget>
+                         </item>
+                         <item row="2" column="2">
+                          <widget class="QCheckBox" name="checkBoxAutoCalibrantFlexD">
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="font">
+                            <font>
+                             <weight>50</weight>
+                             <bold>false</bold>
+                            </font>
+                           </property>
+                           <property name="toolTip">
+                            <string>None at this D (and D &gt;= 3.5 m): the nearest D above 1.5 m</string>
+                           </property>
+                           <property name="text">
+                            <string>other D</string>
+                           </property>
+                           <property name="checked">
+                            <bool>true</bool>
+                           </property>
+                          </widget>
+                         </item>
+                         <item row="3" column="0">
+                          <widget class="QLabel" name="labelAuto11">
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="font">
+                            <font>
+                             <weight>50</weight>
+                             <bold>false</bold>
+                            </font>
+                           </property>
+                           <property name="toolTip">
+                            <string>The longest run in the calibrant's configuration</string>
+                           </property>
+                           <property name="styleSheet">
+                            <string notr="true">color: black;</string>
+                           </property>
+                           <property name="text">
+                            <string>Calibrant empty beam:</string>
+                           </property>
+                          </widget>
+                         </item>
+                         <item row="3" column="1" colspan="2">
+                          <widget class="QLineEdit" name="lineEditAutoCalibrantEB">
+                           <property name="minimumSize">
+                            <size>
+                             <width>0</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="font">
+                            <font>
+                             <weight>50</weight>
+                             <bold>false</bold>
+                            </font>
+                           </property>
+                           <property name="toolTip">
+                            <string>Sample-name wildcard; &quot;||&quot; separates alternatives; without &quot;*&quot; the exact name (case ignored)</string>
+                           </property>
+                           <property name="text">
+                            <string>*eb*||*empty*beam*</string>
+                           </property>
+                          </widget>
+                         </item>
+                         <item row="4" column="0">
+                          <widget class="QLabel" name="labelAuto12">
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="font">
+                            <font>
+                             <weight>50</weight>
+                             <bold>false</bold>
+                            </font>
+                           </property>
+                           <property name="toolTip">
+                            <string>The longest run in the calibrant's configuration</string>
+                           </property>
+                           <property name="styleSheet">
+                            <string notr="true">color: black;</string>
+                           </property>
+                           <property name="text">
+                            <string>Calibrant dark current:</string>
+                           </property>
+                          </widget>
+                         </item>
+                         <item row="4" column="1">
+                          <widget class="QLineEdit" name="lineEditAutoCalibrantBC">
+                           <property name="minimumSize">
+                            <size>
+                             <width>0</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="font">
+                            <font>
+                             <weight>50</weight>
+                             <bold>false</bold>
+                            </font>
+                           </property>
+                           <property name="toolTip">
+                            <string>Sample-name wildcard; &quot;||&quot; separates alternatives; without &quot;*&quot; the exact name (case ignored)</string>
+                           </property>
+                           <property name="text">
+                            <string>*bc*||*b4c*</string>
+                           </property>
+                          </widget>
+                         </item>
+                         <item row="4" column="2">
+                          <widget class="QCheckBox" name="checkBoxAutoCalibrantBCSingle">
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="font">
+                            <font>
+                             <weight>50</weight>
+                             <bold>false</bold>
+                            </font>
+                           </property>
+                           <property name="toolTip">
+                            <string>The longest dark-current run serves every calibration</string>
+                           </property>
+                           <property name="text">
+                            <string>one for all</string>
+                           </property>
+                           <property name="checked">
+                            <bool>false</bool>
+                           </property>
+                          </widget>
+                         </item>
+                         <item row="5" column="0">
+                          <widget class="QLabel" name="labelAuto13">
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="font">
+                            <font>
+                             <weight>50</weight>
+                             <bold>false</bold>
+                            </font>
+                           </property>
+                           <property name="toolTip">
+                            <string>The run of each configuration the beam center is calculated from</string>
+                           </property>
+                           <property name="styleSheet">
+                            <string notr="true">color: black;</string>
+                           </property>
+                           <property name="text">
+                            <string>Center:</string>
+                           </property>
+                          </widget>
+                         </item>
+                         <item row="5" column="1">
+                          <widget class="QComboBox" name="comboBoxAutoCenter">
+                           <property name="minimumSize">
+                            <size>
+                             <width>0</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="font">
+                            <font>
+                             <weight>50</weight>
+                             <bold>false</bold>
+                            </font>
+                           </property>
+                           <property name="toolTip">
+                            <string>max flux: the run with the most counts, standard runs excluded (configurations without one are dropped); empty beam: the configuration's EC; wildcard: the runs named below</string>
+                           </property>
+                           <item>
+                            <property name="text">
+                             <string>max flux</string>
+                            </property>
+                           </item>
+                           <item>
+                            <property name="text">
+                             <string>empty beam</string>
+                            </property>
+                           </item>
+                           <item>
+                            <property name="text">
+                             <string>wildcard</string>
+                            </property>
+                           </item>
+                          </widget>
+                         </item>
+                         <item row="5" column="2">
+                          <widget class="QLineEdit" name="lineEditAutoCenter">
+                           <property name="minimumSize">
+                            <size>
+                             <width>0</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="font">
+                            <font>
+                             <weight>50</weight>
+                             <bold>false</bold>
+                            </font>
+                           </property>
+                           <property name="toolTip">
+                            <string>Center runs for &quot;wildcard&quot; (Sample-name wildcard; &quot;||&quot; separates alternatives; without &quot;*&quot; the exact name (case ignored))</string>
+                           </property>
+                           <property name="text">
+                            <string/>
+                           </property>
+                          </widget>
+                         </item>
+                         <item row="6" column="0">
+                          <widget class="QLabel" name="labelAuto14">
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="font">
+                            <font>
+                             <weight>50</weight>
+                             <bold>false</bold>
+                            </font>
+                           </property>
+                           <property name="toolTip">
+                            <string>The longest run of the configuration</string>
+                           </property>
+                           <property name="styleSheet">
+                            <string notr="true">color: black;</string>
+                           </property>
+                           <property name="text">
+                            <string>Empty beam for Tr(EC):</string>
+                           </property>
+                          </widget>
+                         </item>
+                         <item row="6" column="1" colspan="2">
+                          <widget class="QLineEdit" name="lineEditAutoCellEB">
+                           <property name="minimumSize">
+                            <size>
+                             <width>0</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="font">
+                            <font>
+                             <weight>50</weight>
+                             <bold>false</bold>
+                            </font>
+                           </property>
+                           <property name="toolTip">
+                            <string>Sample-name wildcard; &quot;||&quot; separates alternatives; without &quot;*&quot; the exact name (case ignored)</string>
+                           </property>
+                           <property name="text">
+                            <string>*eb*||*empty*beam*</string>
+                           </property>
+                          </widget>
+                         </item>
+                         <item row="7" column="0">
+                          <widget class="QLabel" name="labelAuto15">
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="font">
+                            <font>
+                             <weight>50</weight>
+                             <bold>false</bold>
+                            </font>
+                           </property>
+                           <property name="toolTip">
+                            <string>Configuration wildcard, e.g. *C8D8*: sample transmissions are measured there</string>
+                           </property>
+                           <property name="styleSheet">
+                            <string notr="true">color: black;</string>
+                           </property>
+                           <property name="text">
+                            <string>Transmissions in:</string>
+                           </property>
+                          </widget>
+                         </item>
+                         <item row="7" column="1" colspan="2">
+                          <widget class="QLineEdit" name="lineEditAutoTransmission">
+                           <property name="minimumSize">
+                            <size>
+                             <width>0</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="font">
+                            <font>
+                             <weight>50</weight>
+                             <bold>false</bold>
+                            </font>
+                           </property>
+                           <property name="toolTip">
+                            <string>Configuration wildcard (C..D..L..); &quot;||&quot; separates alternatives</string>
+                           </property>
+                           <property name="text">
+                            <string>*</string>
+                           </property>
+                          </widget>
+                         </item>
+                         <item row="8" column="0">
+                          <widget class="QLabel" name="labelAuto16">
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="font">
+                            <font>
+                             <weight>50</weight>
+                             <bold>false</bold>
+                            </font>
+                           </property>
+                           <property name="toolTip">
+                            <string>Configuration wildcard: these configurations are dropped</string>
+                           </property>
+                           <property name="styleSheet">
+                            <string notr="true">color: black;</string>
+                           </property>
+                           <property name="text">
+                            <string>Skip configurations:</string>
+                           </property>
+                          </widget>
+                         </item>
+                         <item row="8" column="1" colspan="2">
+                          <widget class="QLineEdit" name="lineEditAutoSkip">
+                           <property name="minimumSize">
+                            <size>
+                             <width>0</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="font">
+                            <font>
+                             <weight>50</weight>
+                             <bold>false</bold>
+                            </font>
+                           </property>
+                           <property name="toolTip">
+                            <string>Configuration wildcard (C..D..L..); &quot;||&quot; separates alternatives</string>
+                           </property>
+                           <property name="text">
+                            <string/>
+                           </property>
+                          </widget>
+                         </item>
+                         <item row="9" column="0" colspan="3">
+                          <spacer name="verticalSpacerAutoConfigurations">
+                           <property name="orientation">
+                            <enum>Qt::Vertical</enum>
+                           </property>
+                           <property name="sizeHint" stdset="0">
+                            <size>
+                             <width>20</width>
+                             <height>1</height>
+                            </size>
+                           </property>
+                          </spacer>
+                         </item>
+                        </layout>
+                       </widget>
+                       <widget class="QWidget" name="autoMaskSensetivity">
+                        <attribute name="title">
+                         <string>Mask and Sensitivity</string>
+                        </attribute>
+                        <layout class="QGridLayout" name="gridLayoutAutoMaskSens">
+                         <property name="leftMargin">
+                          <number>8</number>
+                         </property>
+                         <property name="topMargin">
+                          <number>8</number>
+                         </property>
+                         <property name="rightMargin">
+                          <number>8</number>
+                         </property>
+                         <property name="bottomMargin">
+                          <number>8</number>
+                         </property>
+                         <property name="horizontalSpacing">
+                          <number>8</number>
+                         </property>
+                         <property name="verticalSpacing">
+                          <number>2</number>
+                         </property>
+                         <item row="0" column="0">
+                          <widget class="QLabel" name="labelAuto18">
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="font">
+                            <font>
+                             <weight>50</weight>
+                             <bold>false</bold>
+                            </font>
+                           </property>
+                           <property name="toolTip">
+                            <string>The masks made besides the standard mask &quot;mask&quot;</string>
+                           </property>
+                           <property name="styleSheet">
+                            <string notr="true">color: black;</string>
+                           </property>
+                           <property name="text">
+                            <string>Masks:</string>
+                           </property>
+                          </widget>
+                         </item>
+                         <item row="0" column="1" colspan="2">
+                          <widget class="QComboBox" name="comboBoxAutoMasks">
+                           <property name="minimumSize">
+                            <size>
+                             <width>0</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="font">
+                            <font>
+                             <weight>50</weight>
+                             <bold>false</bold>
+                            </font>
+                           </property>
+                           <property name="toolTip">
+                            <string>per configuration: the beam-stop box around each empty beam's center, scaled by its beam size; per wavelength: the box moved by the detector offset from the reference position</string>
+                           </property>
+                           <item>
+                            <property name="text">
+                             <string>none</string>
+                            </property>
+                           </item>
+                           <item>
+                            <property name="text">
+                             <string>per configuration: beam stop at its center</string>
+                            </property>
+                           </item>
+                           <item>
+                            <property name="text">
+                             <string>per wavelength: beam stop moved with the detector</string>
+                            </property>
+                           </item>
+                           <item>
+                            <property name="text">
+                             <string>*.mask files of the input folder</string>
+                            </property>
+                           </item>
+                          </widget>
+                         </item>
+                         <item row="1" column="0">
+                          <widget class="QLabel" name="labelAuto19">
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="font">
+                            <font>
+                             <weight>50</weight>
+                             <bold>false</bold>
+                            </font>
+                           </property>
+                           <property name="toolTip">
+                            <string>Pixels added to each side of the beam-stop box (negative: smaller)</string>
+                           </property>
+                           <property name="styleSheet">
+                            <string notr="true">color: black;</string>
+                           </property>
+                           <property name="text">
+                            <string>Transmission-mask margin:</string>
+                           </property>
+                          </widget>
+                         </item>
+                         <item row="1" column="1" colspan="2">
+                          <widget class="QSpinBox" name="spinBoxAutoTrMargin">
+                           <property name="minimumSize">
+                            <size>
+                             <width>0</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="font">
+                            <font>
+                             <weight>50</weight>
+                             <bold>false</bold>
+                            </font>
+                           </property>
+                           <property name="toolTip">
+                            <string>Pixels added to each side of the beam-stop box for the transmission mask</string>
+                           </property>
+                           <property name="suffix">
+                            <string> px</string>
+                           </property>
+                           <property name="minimum">
+                            <number>-100</number>
+                           </property>
+                           <property name="maximum">
+                            <number>100</number>
+                           </property>
+                           <property name="value">
+                            <number>-2</number>
+                           </property>
+                          </widget>
+                         </item>
+                         <item row="2" column="0">
+                          <widget class="QLabel" name="labelAuto20">
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="font">
+                            <font>
+                             <weight>50</weight>
+                             <bold>false</bold>
+                            </font>
+                           </property>
+                           <property name="toolTip">
+                            <string>Beam size the instrument's beam-stop box belongs to; 0: no scaling</string>
+                           </property>
+                           <property name="styleSheet">
+                            <string notr="true">color: black;</string>
+                           </property>
+                           <property name="text">
+                            <string>Reference beam size:</string>
+                           </property>
+                          </widget>
+                         </item>
+                         <item row="2" column="1" colspan="2">
+                          <widget class="QSpinBox" name="spinBoxAutoBeamSize">
+                           <property name="minimumSize">
+                            <size>
+                             <width>0</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="font">
+                            <font>
+                             <weight>50</weight>
+                             <bold>false</bold>
+                            </font>
+                           </property>
+                           <property name="toolTip">
+                            <string>The box is scaled by the run's beam size / this one (ignored outside 0.2..5); 0: no scaling</string>
+                           </property>
+                           <property name="minimum">
+                            <number>0</number>
+                           </property>
+                           <property name="maximum">
+                            <number>1000</number>
+                           </property>
+                           <property name="value">
+                            <number>0</number>
+                           </property>
+                          </widget>
+                         </item>
+                         <item row="3" column="0">
+                          <widget class="QLabel" name="labelAuto21">
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="font">
+                            <font>
+                             <weight>50</weight>
+                             <bold>false</bold>
+                            </font>
+                           </property>
+                           <property name="toolTip">
+                            <string>Detector position the instrument's beam-stop box belongs to; 0: not moved</string>
+                           </property>
+                           <property name="styleSheet">
+                            <string notr="true">color: black;</string>
+                           </property>
+                           <property name="text">
+                            <string>Reference detector X, Y:</string>
+                           </property>
+                          </widget>
+                         </item>
+                         <item row="3" column="1">
+                          <widget class="QSpinBox" name="spinBoxAutoBSX">
+                           <property name="minimumSize">
+                            <size>
+                             <width>0</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="font">
+                            <font>
+                             <weight>50</weight>
+                             <bold>false</bold>
+                            </font>
+                           </property>
+                           <property name="toolTip">
+                            <string>Detector X of the reference position (&quot;per wavelength&quot;)</string>
+                           </property>
+                           <property name="minimum">
+                            <number>-100000</number>
+                           </property>
+                           <property name="maximum">
+                            <number>100000</number>
+                           </property>
+                           <property name="value">
+                            <number>0</number>
+                           </property>
+                          </widget>
+                         </item>
+                         <item row="3" column="2">
+                          <widget class="QSpinBox" name="spinBoxAutoBSY">
+                           <property name="minimumSize">
+                            <size>
+                             <width>0</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="font">
+                            <font>
+                             <weight>50</weight>
+                             <bold>false</bold>
+                            </font>
+                           </property>
+                           <property name="toolTip">
+                            <string>Detector Y of the reference position (&quot;per wavelength&quot;)</string>
+                           </property>
+                           <property name="minimum">
+                            <number>-100000</number>
+                           </property>
+                           <property name="maximum">
+                            <number>100000</number>
+                           </property>
+                           <property name="value">
+                            <number>0</number>
+                           </property>
+                          </widget>
+                         </item>
+                         <item row="4" column="0">
+                          <widget class="QLabel" name="labelAuto22">
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="font">
+                            <font>
+                             <weight>50</weight>
+                             <bold>false</bold>
+                            </font>
+                           </property>
+                           <property name="toolTip">
+                            <string>How &quot;sens&quot; is made</string>
+                           </property>
+                           <property name="styleSheet">
+                            <string notr="true">color: black;</string>
+                           </property>
+                           <property name="text">
+                            <string>Sensitivity:</string>
+                           </property>
+                          </widget>
+                         </item>
+                         <item row="4" column="1">
+                          <widget class="QComboBox" name="comboBoxAutoSens">
+                           <property name="minimumSize">
+                            <size>
+                             <width>0</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="font">
+                            <font>
+                             <weight>50</weight>
+                             <bold>false</bold>
+                            </font>
+                           </property>
+                           <property name="toolTip">
+                            <string>the sensitivity run: a single run named as below, a pure sensitivity; flat: no correction</string>
+                           </property>
+                           <item>
+                            <property name="text">
+                             <string>the sensitivity run</string>
+                            </property>
+                           </item>
+                           <item>
+                            <property name="text">
+                             <string>*.sens files of the input folder</string>
+                            </property>
+                           </item>
+                           <item>
+                            <property name="text">
+                             <string>flat (1 everywhere)</string>
+                            </property>
+                           </item>
+                          </widget>
+                         </item>
+                         <item row="4" column="2">
+                          <widget class="QLineEdit" name="lineEditAutoSens">
+                           <property name="minimumSize">
+                            <size>
+                             <width>0</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="font">
+                            <font>
+                             <weight>50</weight>
+                             <bold>false</bold>
+                            </font>
+                           </property>
+                           <property name="toolTip">
+                            <string>The sensitivity run (Sample-name wildcard; &quot;||&quot; separates alternatives; without &quot;*&quot; the exact name (case ignored))</string>
+                           </property>
+                           <property name="text">
+                            <string>*sens*</string>
+                           </property>
+                          </widget>
+                         </item>
+                         <item row="5" column="0" colspan="3">
+                          <spacer name="verticalSpacerAutoMaskSensetivity">
+                           <property name="orientation">
+                            <enum>Qt::Vertical</enum>
+                           </property>
+                           <property name="sizeHint" stdset="0">
+                            <size>
+                             <width>20</width>
+                             <height>1</height>
+                            </size>
+                           </property>
+                          </spacer>
+                         </item>
+                        </layout>
+                       </widget>
+                       <widget class="QWidget" name="autoProcessing">
+                        <attribute name="title">
+                         <string>Processing</string>
+                        </attribute>
+                        <layout class="QVBoxLayout" name="verticalLayoutAutoProcessing">
+                         <item>
+                          <widget class="QCheckBox" name="checkBoxAutoScale">
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="toolTip">
+                            <string>The script table gets a &quot;Scale&quot; column: for a wavelength whose configurations all measure their own transmissions, each row is normalized to the transmission of the same sample at the longest distance (Scale = Tr / Tr(longest D)); unchecked: no Scale column</string>
+                           </property>
+                           <property name="styleSheet">
+                            <string notr="true">color: black;</string>
+                           </property>
+                           <property name="text">
+                            <string>Scale to the transmission at the longest distance</string>
+                           </property>
+                           <property name="checked">
+                            <bool>false</bool>
+                           </property>
+                          </widget>
+                         </item>
+                         <item>
+                          <widget class="QCheckBox" name="checkBoxAutoCenterOffsets">
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="toolTip">
+                            <string>The script table gets the columns &quot;HShift&quot;, &quot;VShift&quot;: each sample run shifted so that its beam center (by the center method, through &quot;mask&quot; and &quot;sens&quot;) lies on its empty beam's center; unchecked: no shifts</string>
+                           </property>
+                           <property name="styleSheet">
+                            <string notr="true">color: black;</string>
+                           </property>
+                           <property name="text">
+                            <string>Shift samples onto the center of their empty beam</string>
+                           </property>
+                          </widget>
+                         </item>
+                         <item>
+                          <spacer name="verticalSpacerAutoProcessing">
+                           <property name="orientation">
+                            <enum>Qt::Vertical</enum>
+                           </property>
+                           <property name="sizeHint" stdset="0">
+                            <size>
+                             <width>20</width>
+                             <height>1</height>
+                            </size>
+                           </property>
+                          </spacer>
+                         </item>
+                        </layout>
+                       </widget>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QPushButton" name="pushButtonAutoConfig">
+                       <property name="minimumSize">
+                        <size>
+                         <width>0</width>
+                         <height>25</height>
+                        </size>
+                       </property>
+                       <property name="maximumSize">
+                        <size>
+                         <width>16777215</width>
+                         <height>25</height>
+                        </size>
+                       </property>
+                       <property name="toolTip">
+                        <string>From the runs of the input folder, by the rules above: the masks, the sensitivity, the table of configurations (calculated), the script table of the sample runs with their transmissions (and Scale). Ready for processing: the I[Q] button, then merging.</string>
+                       </property>
+                       <property name="text">
+                        <string>Auto-Configure Reduction</string>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </widget>
+                  </item>
+                  <item>
+                   <spacer name="verticalSpacer_7">
+                    <property name="orientation">
+                     <enum>Qt::Vertical</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>20</width>
+                      <height>1</height>
                      </size>
                     </property>
                    </spacer>

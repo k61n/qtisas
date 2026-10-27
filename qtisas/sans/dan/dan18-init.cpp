@@ -30,6 +30,21 @@ void dan18::connectSlot()
     connect(pushButtonDeleteCurrentInstr, &QPushButton::clicked, this, &dan18::deleteCurrentInstrument);
     connect(pushButtonInstrColor, &QPushButton::clicked, this, &dan18::selectInstrumentColor);
 
+    // auto mode (Options > Auto-Mode): the reduction configured from the runs of the input folder, as
+    // Dan.Processing.autoConfig() does; the configurations left out are told, a failure too
+    connect(pushButtonAutoConfig, &QPushButton::clicked, this, [this]() {
+        QString name = "script";
+        if (app()->checkTableExistence(name))
+            name = app()->generateUniqueName("script-");
+        const QString made = danProcessing->autoConfig(name);
+        QStringList lines = danProcessing->lastMessages();
+        if (made.isEmpty())
+            QMessageBox::warning(this, "QtiSAS", "Auto-Configure: " + danProcessing->lastError());
+        else if (!lines.isEmpty())
+            QMessageBox::information(this, "QtiSAS",
+                                     "Auto-Configure: script table " + made + "\n\n" + lines.join("\n"));
+    });
+
     // experiment mode
     connect(comboBoxMode, QOverload<int>::of(&QComboBox::activated), this,
             [this](int index) { experimentalModeSelected(); });
@@ -827,6 +842,8 @@ void dan18::applyInstrumentLines(QStringList lst, bool inFocus)
 
     selectPattern = "";
 
+    DanAuto(this).resetOptions(); // an instrument without "[AutoMode-...]" lines gets the defaults
+
     for (int i = 0; i < lst.count(); i++)
     {
         //+++ header :: map
@@ -843,6 +860,13 @@ void dan18::applyInstrumentLines(QStringList lst, bool inFocus)
         stringList = lst[i].split("] ");
         stringList[0].remove('[');
         line = (stringList.size() > 1) ? stringList[1].simplified() : " ";
+
+        //+++ auto mode's options (Options > Auto-Mode)
+        if (stringList[0].startsWith("AutoMode-"))
+        {
+            DanAuto(this).readOptionLine(stringList[0].mid(9).remove(']').trimmed(), line.trimmed());
+            continue;
+        }
 
         switch (InstrumentSANS::stringToEnumMap[stringList[0]])
         {
@@ -1714,6 +1738,9 @@ void dan18::saveInstrumentAsCpp(QString instrPath, QString instrName  )
     s += "lst<<\"[ANALYZER-TRANSMISSION] " + analyzerTransmissionSelector->writeSettingsString() + "\";\n";
     s += "lst<<\"[ANALYZER-EFFICIENCY] " + analyzerEfficiencySelector->writeSettingsString() + "\";\n";
 
+    for (QString autoLine : DanAuto(this).optionLines())
+        s += "lst<<\"" + autoLine.replace("\\", "\\\\").replace("\"", "\\\"") + "\";\n";
+
     s += "}\n";
 
     QFile f(instrPath + "/" + instrName + ".cpp");
@@ -1974,6 +2001,8 @@ QString dan18::instrumentText(const QString &fileName)
 
     s += "[ANALYZER-TRANSMISSION] " + analyzerTransmissionSelector->writeSettingsString() + "\n";
     s += "[ANALYZER-EFFICIENCY] " + analyzerEfficiencySelector->writeSettingsString() + "\n";
+
+    s += DanAuto(this).optionLines().join("\n") + "\n";
 
     return s;
 }

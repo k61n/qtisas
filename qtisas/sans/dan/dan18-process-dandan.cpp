@@ -4141,6 +4141,15 @@ void dan18::calcCenterNew(int col)
             sensName=((QComboBoxInTable*)tableEC->cellWidget(dptSENS,col))->currentText();
         }
 
+        // a direct-beam calibration with "use current mask and sensitivity": the center too through the active ones
+        // (KWS-3: the beam-stop mask of the configuration hides the beam the center is found from)
+        if (checkBoxACDBuseActive->isChecked() &&
+            (comboBoxACmethod->currentIndex() == 1 || comboBoxACmethod->currentIndex() == 4))
+        {
+            maskName = comboBoxMaskFor->currentText();
+            sensName = comboBoxSensFor->currentText();
+        }
+
         // HF starts from the center of the mask's beam stop, where the beam is: with a flat-scattering sample
         // several centers can be stable, and the previous value (or the detector center) picked one of them
         if (radioButtonCenterHF->isChecked())

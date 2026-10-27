@@ -1537,7 +1537,16 @@ void dan18::saveScriptSettings(QString tableName)
     s = analyzerEfficiencySelector->writeSettingsString() + " <";
     w->setText(currentRow, 1, s);
     currentRow++;
-    
+
+    //+++ Options::AutoMode::<key>: auto mode's rules (Options > Auto-Mode), restored with the session
+    for (const QString &line : DanAuto(this).optionLines())
+    {
+        w->setNumRows(currentRow + 1);
+        w->setText(currentRow, 0, "Options::AutoMode::" + line.section("] ", 0, 0).mid(QString("[AutoMode-").length()));
+        w->setText(currentRow, 1, line.section("] ", 1) + " <");
+        currentRow++;
+    }
+
     w->adjustColumnsWidth(false);
 }
 
@@ -2484,6 +2493,12 @@ bool dan18::readSettingNew(QString tableName)
     index = static_cast<int>(parameters.indexOf("Options::Polarization::Analyzer::Efficiency"));
     if (index >= 0)
         analyzerEfficiencySelector->readSettingsString(w->text(index, 1).remove(" <"));
+
+    //+++ Options::AutoMode::<key> (none in an older settings table: the rules stay as they are)
+    for (int i = 0; i < w->numRows(); i++)
+        if (parameters[i].startsWith("Options::AutoMode::"))
+            DanAuto(this).readOptionLine(parameters[i].mid(QString("Options::AutoMode::").length()),
+                                         w->text(i, 1).remove(" <").trimmed());
 
     //+++ header name generation
     for (int i = 0; i < imax; i++)

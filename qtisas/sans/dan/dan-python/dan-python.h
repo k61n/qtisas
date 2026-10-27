@@ -12,11 +12,68 @@ Description: DAN-SANS Python interface: one object per tab (Dan.Options, Dan.Raw
 
 #include <QPair>
 #include <QStringList>
+#include <QVariantList>
 #include <QVariantMap>
 #include <QtNumeric>
 
 class dan18;
 class QDoubleSpinBox;
+
+// Auto mode (from qtikws's DAN-BlackBox): the runs of the input folder sorted into the roles of a reduction by the
+// rules of the Options > Auto-Mode page, which an instrument saves as "[AutoMode-...]" lines. The parts' auto calls
+// (Dan.Rawdata.info(), Dan.Processing.autoConfigurations(), ...) use it.
+class DanAuto
+{
+  public:
+    explicit DanAuto(dan18 *dan) : d(dan)
+    {
+    }
+    struct Run
+    {
+        QString run, file, sample, name, CA, SA, polarization, attenuator; // name: as in the header, sample: cut
+        double duration = 0, counts = 0, C = 0, D = 0, lambda = 0, detectorX = 0, detectorY = 0, rotationX = 0,
+               rotationY = 0;
+        int position = 0; // C, D [m]
+    };
+    struct Choice
+    {
+        Run emptyBeam;
+        QString darkCurrent, calibrant, calibrantEmptyBeam, calibrantDarkCurrent, center, cellEmptyBeam;
+        bool transmission = false;
+    };
+
+    // the options: Python names, values as on the page; setOptions() returns the error or nothing
+    QVariantMap options() const;
+    QString setOptions(const QVariantMap &values);
+    void resetOptions();
+    // the instrument's lines "[AutoMode-<key>] <value>", and one such line read (false: no such key)
+    QStringList optionLines() const;
+    bool readOptionLine(const QString &key, const QString &value);
+
+    // the runs of the input folder, their headers read; filtered: by the page's run filters
+    QList<Run> runs(bool filtered) const;
+    static QList<Run> filter(const QList<Run> &all, int minDuration, int minCounts, const QString &files,
+                             const QString &skipFiles, const QString &samples, const QString &skipSamples);
+    static bool matches(const QString &name, const QString &wildcards);
+    // "C8D7.68L4.9BS30x30|10x10" (+ "P<polarization>", "A<attenuator>" when they count): what the configuration
+    // wildcards (transmissions in, skip) are matched against
+    QString label(const Run &r) const;
+    bool sameConfiguration(const Run &a, const Run &b, bool ignoreD = false) const;
+    QList<QList<Run>> conditions(const QList<Run> &runs) const;
+    QList<Run> standardRuns(const QList<Run> &runs) const;
+    QList<Run> sampleRuns(const QList<Run> &runs) const;
+    // the configurations: one per condition of the empty beams; dropped: the reasons for the conditions left out
+    QList<Choice> configurations(const QList<Run> &runs, QStringList &dropped) const;
+    // the empty beams of the configurations (in their order, the dropped ones left out)
+    QList<Run> emptyBeams(const QList<Run> &runs) const;
+    // "mask-bs-9.2m" / "mask-tr-9.2m" (+ "-<lambda>A" when another empty beam has the same D)
+    static QString maskName(const Run &emptyBeam, bool transmission, const QList<Run> &emptyBeams);
+
+  private:
+    Run readRun(const QString &run, const QString &file) const;
+    QString sampleName(const QString &name) const;
+    dan18 *d;
+};
 
 // What every tab object shares: its DAN, and why its last call made nothing. A call runs DAN without dialogs
 // (dan18::beginScriptRun); when it made nothing it returns false or an empty name and lastError() says why.
@@ -49,6 +106,8 @@ class DanPart
     bool isMask(const QString &name) const;
     bool isSens(const QString &name) const;
     QString noFile(const QString &file, const QString &given, bool mask) const;
+    // auto mode's intermediate results, one line in the terminal QtiSAS runs in ("DAN auto: ...")
+    static void report(const QString &line);
 
     dan18 *d;
     QString m_lastError;
@@ -105,6 +164,9 @@ class DanOptionsConfig : public DanPart
     QStringList transmissionMethods() const;
     QString transmissionMethod() const;
     bool setTransmissionMethod(const QString &method);
+    // auto mode's options (the Auto-Mode page), by name: minDuration, emptyBeam, center, masks, ...
+    QVariantMap autoOptions() const;
+    bool setAutoOptions(const QVariantMap &values);
     // the instrument's whole configuration, as its .SANS file holds it: "Options-1D-RemoveLast" -> "5", ...
     QVariantMap parameters();
     // some of them set, as selecting the instrument sets them (checked: a value the interface does not take fails)
@@ -123,6 +185,15 @@ class DanRawdata : public DanPart
   public:
     using DanPart::DanPart;
     QStringList runs() const;
+    // the runs whose duration [s] and counts are above the minimums, file and sample names matching
+    QStringList runs(int minDuration, int minCounts, const QString &files, const QString &skipFiles,
+                     const QString &samples, const QString &skipSamples);
+    // per run: run, sample, duration, counts, C, D, lambda, beamSize, polarization, attenuator, detectorX, detectorY
+    QVariantList info(const QStringList &runs);
+    // the runs grouped by configuration (as the script table groups them): label, C, D, lambda, beamSize, runs
+    QVariantList conditions(const QStringList &runs);
+    // the runs minus every standard run (empty beams, dark currents, calibrants, sensitivity) by auto mode's rules
+    QStringList sampleRuns(const QStringList &runs);
     QStringList headerItems() const;
     QString newHeaderTable(const QString &name, const QStringList &items, const QString &runs);
     // "Add :: Raw Files": the runs summed into one new run (matrix and header: duration, counts, monitors);
@@ -173,6 +244,10 @@ class DanMask : public DanPart
     // the mask as a file; file empty: <input folder>/<mask>.mask, as the interface saves it
     QString saveMask(const QString &mask, const QString &file);
     QStringList masks() const;
+    // the masks of auto mode: "mask" and what the Masks option asks for (beam-stop and transmission masks per
+    // configuration or per wavelength, or the *.mask files of the input folder)
+    QStringList autoMasks();
+    QStringList loadMasks(const QString &pattern);
 
   private:
     // a tool of "Adv Masking Options" pressed on the matrix, its fields set first
@@ -202,6 +277,9 @@ class DanSensitivity : public DanPart
     QString saveSensitivity(const QString &name, const QString &file);
     QString loadSensitivity(const QString &name, const QString &file);
     QStringList sensitivities() const;
+    // the sensitivity of auto mode: the sensitivity run, the *.sens file(s) of the input folder, or flat
+    QString autoSensitivity();
+    QStringList loadSensitivities(const QString &pattern);
     // the transmission of a run against an empty beam through a mask; dTr its error; false when none
     bool transmission(const QString &run, const QString &emptyBeam, const QString &mask, double &tr, double &dTr);
 
@@ -234,6 +312,27 @@ class DanProcessing : public DanPart
     QString newScriptTable(const QString &name, const QStringList &runs);
     bool calculateTransmissions(const QString &scriptTable);
     QStringList process(const QString &scriptTable, const QString &kind, const QString &output);
+    // the table of configurations from the runs of the input folder (auto mode); configuration(i) of each
+    QVariantList autoConfigurations();
+    // per wavelength whose configurations all measure their own transmissions: a "Scale" column normalizing every
+    // row to the transmission of the same sample at the longest distance; the rows scaled
+    int autoScale(const QString &scriptTable);
+    // a run's beam center (1-based pixels) through a mask and sensitivity, by the center method of Options (H.F.
+    // from the mask's beam-stop center, symmetry, or the header); false and lastError() when it cannot
+    bool runCenter(const QString &run, const QString &mask, const QString &sens, double &x, double &y);
+    // the shift that moves the run's center onto (xCenter, yCenter): HShift = xCenter - x, VShift = yCenter - y
+    bool centerOffset(const QString &run, double xCenter, double yCenter, const QString &mask, const QString &sens,
+                      double &hShift, double &vShift);
+    // the "HShift" and "VShift" columns of a script table (made, or written again): each sample run's center moved
+    // onto its configuration's (the empty beam's: X-center, Y-center of the row); mask, sens empty: as the
+    // configuration's center was found (the row's, or the active ones with "Use Current Mask and Sensitivity");
+    // the rows written, -1 on an error
+    int addCenterOffsets(const QString &scriptTable, const QString &mask, const QString &sens);
+    // auto mode up to the script table, ready for processing (qtikws DAN-BlackBox steps 3-7): masks, sensitivity,
+    // configurations, calculate(), the script table of the sample runs, transmissions, scale; its name. Processing
+    // (process()) and merging (Dan.Merge.join()) are calls of their own
+    QString autoConfig(const QString &scriptTable);
+
 
   private:
     bool selectScriptTable(const QString &name);
