@@ -3872,10 +3872,27 @@ public:
         }
     }
 %End
-    // by "columns" or "rows"; the files written
-    QStringList addRunsFromTable(const QString &table, const QString &by = "columns");
+    // "Generate Merge Table": sampleGroups() (consecutive: neighbours()) as a table to edit, then addRunsFromTable()
+    QString newAddingTemplate(SIP_PYOBJECT runs = Py_None, SIP_PYOBJECT consecutive = Py_None);
 %MethodCode
-    sipRes = new QStringList(sipCpp->addRunsFromTable(*a0, *a1));
+    QStringList runs;
+    if (a0 != Py_None && !sipqti_strings(a0, &runs, "runs: run numbers"))
+        sipError = sipErrorFail;
+    else {
+        const int consecutive = a1 == Py_None ? -1 : (PyObject_IsTrue(a1) ? 1 : 0);
+        sipRes = new QString(sipCpp->newAddingTemplate(runs, 2, consecutive));
+        if (sipRes->isEmpty()) {
+            PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+            sipError = sipErrorFail;
+        }
+    }
+%End
+    // by "columns" or "rows"; skipSingle: a column (row) of one run skipped, None as set; the files written
+    QStringList addRunsFromTable(const QString &table, const QString &by = "columns",
+                                 SIP_PYOBJECT skipSingle = Py_None);
+%MethodCode
+    const int skipSingle = a2 == Py_None ? -1 : (PyObject_IsTrue(a2) ? 1 : 0);
+    sipRes = new QStringList(sipCpp->addRunsFromTable(*a0, *a1, skipSingle));
     if (sipRes->isEmpty()) {
         PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
         sipError = sipErrorFail;

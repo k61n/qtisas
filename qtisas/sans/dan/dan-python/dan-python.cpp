@@ -412,7 +412,54 @@ QStringList DanRawdata::addRuns(const QStringList &runs, const QString &runGiven
     return files;
 }
 
-QStringList DanRawdata::addRunsFromTable(const QString &table, const QString &by)
+QString DanRawdata::newAddingTemplate(const QStringList &runs, int minimum, int consecutive)
+{
+    // the "Generate Merge Table" layout, grouped as sampleGroups() (DAN's configuration rule, no table of
+    // configurations needed), or as neighbours() with "Only consecutive runs"; the button shows single runs too
+    // (minimum 1), Python only what can be added (2)
+    if (consecutive >= 0)
+        d->checkBoxAddConsecutive->setChecked(consecutive == 1);
+    const QVariantList groups =
+        d->checkBoxAddConsecutive->isChecked() ? neighbours(0, runs, minimum) : sampleGroups(runs, minimum);
+    if (!m_lastError.isEmpty())
+        return {};
+    if (groups.isEmpty())
+        return fail(minimum > 1 ? "no sample measured twice in one configuration"
+                                : "no runs (runs made by adding are left out)");
+    int rows = 0;
+    for (const QVariant &g : groups)
+        rows = std::max(rows, static_cast<int>(g.toMap()["runs"].toStringList().count()) + 1);
+    begin();
+    QString name = d->app()->generateUniqueName("adding-template-");
+    Table *t = d->app()->newTable(name, rows, static_cast<int>(groups.count()));
+    t->setWindowLabel("DAN::Adding::Template");
+    d->app()->setListViewLabel(t->name(), "DAN::Adding::Template");
+    d->app()->updateWindowLists(t);
+    for (int col = 0; col < groups.count(); col++)
+    {
+        const QVariantMap g = groups[col].toMap();
+        const QStringList group = g["runs"].toStringList();
+        QString sample = g["sample"].toString().simplified();
+        sample.replace(" ", "-").replace("/", "-").replace("_", "-").replace(",", "-").replace(".", "-");
+        sample.remove("%").remove("(").remove(")");
+        // unique: "S1_H2O" and "S1-H2O" of one configuration are two samples, one column name
+        QString colName = "C" + QString::number(g["condition"].toInt()) + "-" + sample;
+        for (int k = 2; t->colNames().contains(colName); k++)
+            colName = "C" + QString::number(g["condition"].toInt()) + "-" + sample + "-" + QString::number(k);
+        t->setColName(col, colName);
+        t->setColPlotDesignation(col, Table::None);
+        t->setColumnType(col, Table::Text);
+        // first row: the new run, as the button names it (<first run> + the count in 5 digits)
+        t->setText(0, col, group.first() + QString("%1").arg(group.count(), 5, 10, QChar('0')));
+        for (int row = 0; row < group.count(); row++)
+            t->setText(row + 1, col, group[row]);
+    }
+    t->adjustColumnsWidth(false);
+    end(true);
+    return name;
+}
+
+QStringList DanRawdata::addRunsFromTable(const QString &table, const QString &by, int skipSingle)
 {
     if (by != "columns" && by != "rows")
     {
@@ -428,13 +475,16 @@ QStringList DanRawdata::addRunsFromTable(const QString &table, const QString &by
     const QStringList folders = {d->filesManager->pathInString(), d->lineEditPathRAD->text()};
     begin();
     d->toolBoxAdv->setCurrentIndex(0); // "Conventional": the columns' Add of the RT and TOF pages adds otherwise
+    if (skipSingle >= 0)
+        d->checkBoxAddSkipSingle->setChecked(skipSingle == 1);
     const auto before = folderState(folders);
     if (by == "columns")
         d->addFilesInTableCols(t);
     else
         d->addFilesInTableRows(t);
     QStringList files = written(before, folderState(folders));
-    if (!end(!files.isEmpty(), "nothing was written: no run of " + table + " found"))
+    if (!end(!files.isEmpty(), "nothing was written: no run of " + table + " found" +
+                                   (d->checkBoxAddSkipSingle->isChecked() ? ", or single runs only (skipSingle)" : "")))
         return {};
     return files;
 }

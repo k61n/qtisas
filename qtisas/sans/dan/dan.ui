@@ -27100,6 +27100,41 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                      </property>
                     </widget>
                    </item>
+                   <item>
+                    <widget class="QCheckBox" name="checkBoxAddSkipSingle">
+                     <property name="maximumSize">
+                      <size>
+                       <width>16777215</width>
+                       <height>25</height>
+                      </size>
+                     </property>
+                     <property name="toolTip">
+                      <string>Add: a column (row) with a single run is skipped; unchecked, it is copied as &lt;run&gt;00001</string>
+                     </property>
+                     <property name="text">
+                      <string>Skip single runs</string>
+                     </property>
+                     <property name="checked">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QCheckBox" name="checkBoxAddConsecutive">
+                     <property name="maximumSize">
+                      <size>
+                       <width>16777215</width>
+                       <height>25</height>
+                      </size>
+                     </property>
+                     <property name="toolTip">
+                      <string>Generate Merge Table: a column per series of runs measured one after another (the same sample and configuration); unchecked: all runs of a sample and configuration, wherever they are in the folder</string>
+                     </property>
+                     <property name="text">
+                      <string>Only consecutive runs</string>
+                     </property>
+                    </widget>
+                   </item>
                   </layout>
                  </widget>
                 </item>

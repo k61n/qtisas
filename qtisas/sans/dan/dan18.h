@@ -186,8 +186,7 @@ public:
     // rawdata-addfiles
     void addSeveralFilesUniSingleFrame(QStringList selectedFileList, QStringList selectedNumberList, QString fileName);
     void addSeveralFilesUniSingleFrame(QStringList selectedNumberList, QString fileNumber);
-    bool generateTemplateToAddeFiles(QStringList selectedNumbers );
-    QString configurationPlusSampleName(QString Number);
+    QString generateTemplateToAddeFiles(const QStringList &selectedNumbers);
     
     //rawdata-extractor
     void extractorInit();

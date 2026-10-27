@@ -262,6 +262,9 @@ void dan18::addFilesInTableCols(Table *t)
             selectedFiles << filesManager->fileNameFull(file2add, wildCard);
         }
 
+        // "Skip single runs": a column of one run has nothing to add (unchecked: copied under the new number)
+        if (selectedNumberList.count() < 2 && checkBoxAddSkipSingle->isChecked())
+            continue;
         if (toolBoxAdv->currentIndex() == 0)
             addSeveralFilesUniSingleFrame(selectedNumberList, fileNumber);
         else if (toolBoxAdv->currentIndex() == 1)
@@ -333,7 +336,8 @@ void dan18::addFilesInTableRows(Table *t)
             selectedFiles << filesManager->fileNameFull(file2add, wildCard);
         }
 
-        if (rr == R - 1 || !t->text(rr + 1, 0).isEmpty())
+        if ((rr == R - 1 || !t->text(rr + 1, 0).isEmpty()) &&
+            !(selectedNumberList.count() < 2 && checkBoxAddSkipSingle->isChecked()))
             // named as by columns: the first run's file name, its number replaced (a pattern with "*" has no new
             // file name of its own)
             addSeveralFilesUniSingleFrame(selectedNumberList, fileNumber);
@@ -381,171 +385,14 @@ void dan18::generateTableToAdd()
      generateTemplateToAddeFiles(numberList);
 }
 
-//+++  Merging Table Generation [function]
-bool dan18::generateTemplateToAddeFiles(QStringList selectedNumbers)
+//+++  Merging Table Generation [function]: the selected runs of the same sample and configuration, a column each, a
+//+++  single run too (as Dan.Rawdata.newAddingTemplate(): DAN's configuration rule on the runs' headers, so no table
+//+++  of configurations is needed; before, an empty one put all runs of a sample, of any configuration, into one
+//+++  column)
+QString dan18::generateTemplateToAddeFiles(const QStringList &selectedNumbers)
 {
-    QString name = "adding-template-";
-    name = app()->generateUniqueName(name);
-    Table *t = app()->newTable(name, 3, selectedNumbers.count());
-
-    t->setWindowLabel("DAN::Adding::Template");
-    app()->setListViewLabel(t->name(), "DAN::Adding::Template");
-    app()->updateWindowLists(t);
-
-    QStringList selectedNumbersNames;
-    int *skip = new int[selectedNumbers.count()];
-
-    for (int i=0; i<selectedNumbers.count();i++ )
-    {
-        selectedNumbersNames<<configurationPlusSampleName(selectedNumbers[i]);
-        skip[i]=0;
-    }
-    
-    QString currentNumberName;
-    QStringList currentSelectedNumbers;
-
-    int maxNumberRaws = 3;
-    int maxNumberCols = 0;
-
-    for (int i = 0; i < selectedNumbers.count(); i++)
-    {
-        currentSelectedNumbers.clear();
-        
-        currentNumberName=selectedNumbersNames[i];
-        
-        if (currentNumberName == "")
-            continue;
-        if (skip[i] == 1)
-            continue;
-
-        for (int ii = i; ii < selectedNumbers.count(); ii++)
-        {
-            if (skip[ii] == 1)
-                continue;
-
-            if (selectedNumbersNames[ii] == currentNumberName)
-            {
-                currentSelectedNumbers << selectedNumbers[ii];
-                skip[ii]=1;
-            }
-        }
-
-        if (currentSelectedNumbers.count() < 1)
-            continue;
-        if (maxNumberRaws < currentSelectedNumbers.count() + 1)
-            maxNumberRaws = currentSelectedNumbers.count() + 1;
-
-        t->setNumRows(maxNumberRaws);
-        
-        maxNumberCols++;
-        
-        QString currentLabel;
-
-        if (currentSelectedNumbers.count() > 999)
-            currentLabel = "0";
-        else if (currentSelectedNumbers.count() > 99)
-            currentLabel = "00";
-        else if (currentSelectedNumbers.count() > 9)
-            currentLabel = "000";
-        else
-            currentLabel = "0000";
-
-        currentLabel = currentSelectedNumbers[0] + currentLabel + QString::number(currentSelectedNumbers.count());
-
-        t->setColName(maxNumberCols - 1, currentNumberName);
-        t->setColPlotDesignation(maxNumberCols - 1, Table::None);
-        t->setColumnType(maxNumberCols - 1, Table::ColType::Text);
-        t->setText(0, maxNumberCols - 1, currentLabel);
-
-        for (int ii = 0; ii < currentSelectedNumbers.count(); ii++)
-            t->setText(ii + 1, maxNumberCols - 1, currentSelectedNumbers[ii]);
-    }
-    
-    //+++ to minimize number of columns in the table
-    t->setNumCols(maxNumberCols);  
-    
-    //+++ adjust cols
-    t->adjustColumnsWidth(false);
-    return true;
-}
-
-QString dan18::configurationPlusSampleName(QString Number)
-{
-    QStringList lst;
-    int  C;
-    double M2, M3;
-    double D, lambda, cps,thickness;
-    QString beamSize;
-    //+++
-    int iter;
-    
-    
-    int index=-1;
-    if (Number.contains("["))
-    {
-        index=Number.right(Number.length()-Number.indexOf("[")).remove("[").remove("]").toInt();
-    }
-    
-    readHeaderNumberFull( Number, lst );
-    
-    D = detector->readDinM(Number, lst);
-    C = int(collimation->readCinM(Number, lst));
-    lambda = selector->readLambda(Number, monitors->readDuration(Number, lst), lst);
-    thickness = sample->readThickness(Number, lst);
-    beamSize = collimation->readCA(Number, lst) + "|" + collimation->readSA(Number, lst);
-    
-    // check CD conditions
-    int Ncond, iC;
-    int iMax=tableEC->columnCount();
-    
-    Ncond=-1;
-    
-    for(iC=iMax-1; iC>=0;iC--)
-    {
-        bool condLambda=lambda>(0.95*tableEC->item(dptWL, iC)->text().toDouble() ) &&
-        lambda<(1.05*tableEC->item(dptWL,iC)->text().toDouble() );
-        
-        bool condD=D>(0.95*tableEC->item(dptD,iC)->text().toDouble()) &&
-        D<(1.05*tableEC->item(dptD,iC)->text().toDouble());
-        
-        bool condC=(C==tableEC->item(dptC,iC)->text().toInt());
-        
-        bool condBeamSize = (beamSize==tableEC->item(dptBSIZE,iC)->text());
-        
-        bool condSample=true;
-        
-        bool attenuatorCompare=true;
-        
-        bool beamPosCompare=true;
-        
-        bool polarizationCompare=true;
-        
-        bool detAngleCompare=true;
-        
-        QString NumberEC=tableEC->item(dptEC,iC)->text();
-        
-        if (NumberEC!="")
-        {
-            condSample = sample->compareSamplePositions(Number, NumberEC);
-            attenuatorCompare = collimation->compareAttenuators(Number, NumberEC);
-            beamPosCompare = detector->compareBeamPosition(Number, NumberEC);
-            polarizationCompare = collimation->comparePolarization(Number, NumberEC);
-            detAngleCompare = detector->compareDetRotationPosition(Number, NumberEC);
-        }
-        
-        if (condC && condD && condLambda && condSample && condBeamSize && attenuatorCompare && beamPosCompare && polarizationCompare && detAngleCompare)
-        {
-            Ncond=iC;
-            break;
-        }
-    }
-    
-    QString colName = "C" + QString::number(Ncond + 1) + "-" + sample->readName(Number, lst);
-    colName=colName.simplified();
-    colName=colName.replace(" ", "-").replace("/", "-").replace("_", "-").replace(",", "-").replace(".", "-").remove("%").remove("(").remove(")");
-    
-    
-    if (Ncond>=0 || (iMax == 1 && tableEC->item(0,0)->text()=="")) return colName;
-    
-    return "";
+    const QString name = danRawdata->newAddingTemplate(selectedNumbers, 1);
+    if (name.isEmpty() && !m_scriptRun)
+        QMessageBox::warning(this, "QtiSAS", danRawdata->lastError());
+    return name;
 }

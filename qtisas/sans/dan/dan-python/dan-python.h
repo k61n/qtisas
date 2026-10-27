@@ -209,8 +209,13 @@ class DanRawdata : public DanPart
     // the runs of the same sample and DAN configuration, wherever they are in the folder (2 runs or more; added runs
     // left out); per group: label, condition (as numbered by conditions()), sample, runs
     QVariantList sampleGroups(const QStringList &runs);
-    // the Add buttons on a table: by "columns" (Two Step Add) or by "rows" (Quick Add); the files written
-    QStringList addRunsFromTable(const QString &table, const QString &by);
+    // "Generate Merge Table": sampleGroups() as a table, a column each (first row: the new run), to edit and add
+    // minimum: the runs a group needs to get a column (the button: 1, every selected run shown)
+    // consecutive: "Only consecutive runs" (-1 as set, 0/1): a column per series of neighbours()
+    QString newAddingTemplate(const QStringList &runs, int minimum = 2, int consecutive = -1);
+    // the Add buttons on such a table: by "columns" (Two Step Add) or by "rows" (Quick Add); the files written
+    // skipSingle: "Skip single runs" (-1 as set, 0/1)
+    QStringList addRunsFromTable(const QString &table, const QString &by, int skipSingle = -1);
     // "Header(s) - to - Info-Table" (added to an info table of that name); the options: -1 as set, 0/1
     QString newInfoTable(const QString &name, const QStringList &runs, int compact, int matrices, int detectorSum);
     // "Image(s) - to - Info-Matrix" (added to an info matrix of that name); columns < 1 and the options -1: as set
@@ -224,7 +229,7 @@ class DanRawdata : public DanPart
     QStringList runFiles(const QStringList &runs);
     // one run's files: the detector file and its own header file
     QStringList filesOf(const QString &run) const;
-    // sampleGroups() / neighbours() of groups of at least minimum runs
+    // sampleGroups() / neighbours() of groups of at least minimum runs (the template: 1)
     QVariantList sampleGroups(const QStringList &runs, int minimum);
     QVariantList neighbours(int n, const QStringList &runs, int minimum);
 };
