@@ -8,7 +8,10 @@ skipped without its files).
 - The calibration runs' dark current defaults to the configuration's.
 - "Standard (Shells)" radial averaging: one ring per pixel — with the centers of dan-example-kws1.qti every I[Q]
   table and the merged ones are that project's, row by row (rings of equal angle gave 72 instead of 74 rows at 2 m).
-- Each Dan part shows its own tab: Processing.run makes "QI-SM-..." even when the Rawdata tab was open (radial
+- Dan.Merge.join() merges as the interface does (the template as the project table, the merge button): all three
+  samples — from a project table the button left out the last row and read a column past the table.
+- Dan.Merge.join() scales the curves only when asked (smart=True): "Smart" left on in the Merge tab rescaled them.
+- Each Dan part shows its own tab: Processing.process makes "QI-SM-..." even when the Rawdata tab was open (radial
   averaging named its tables "raw-..." there).
 """
 
@@ -19,9 +22,9 @@ sys.dont_write_bytecode = True  # no __pycache__ in the source tree
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 try:
-    from PyQt6.QtWidgets import QCheckBox, QTabWidget
+    from PyQt6.QtWidgets import QCheckBox, QGroupBox, QTabWidget
 except ImportError:
-    from PyQt5.QtWidgets import QCheckBox, QTabWidget
+    from PyQt5.QtWidgets import QCheckBox, QGroupBox, QTabWidget
 
 import dan_reduction as dr
 
@@ -35,10 +38,11 @@ conditions = [s.text(dr.column(s, "#-Condition"), r) for r in range(1, s.numRows
 assert conditions == ["1"] * 3 + ["2"] * 3 + ["3"] * 3, conditions
 tabs = Dan.findChild(QTabWidget, "sansTab")
 tabs.setCurrentIndex(1)  # the Rawdata tab, as a user may have left it
-made = Dan.Processing.run(script)
+made = Dan.Processing.process(script)
 assert tabs.currentIndex() == 4, tabs.currentIndex()
 assert "QI-SM-53217-H-J" in made and script + "-mergingTemplate" in made, made
-assert Dan.Merge.run(script + "-mergingTemplate") == ["H-J", "H-L", "H-M"]
+Dan.findChild(QGroupBox, "checkBoxSmart").setChecked(True)  # "Smart" left on in the interface: not used
+assert Dan.Merge.join(script + "-mergingTemplate") == ["H-J", "H-L", "H-M"]
 assert tabs.currentIndex() == 5, tabs.currentIndex()
 reference = {  # dan-example-kws1.qti: rows, (Q, I) of rows 1, 20 and the last (merged tables saved to 7 digits)
     "QI-SM-53217-H-J": (76, ((0.00270696975, 595.856827), (0.0129929703, 1.83282018), (0.0432928456, 0.0621309327))),
@@ -81,3 +85,18 @@ try:
     raise AssertionError("no ValueError")
 except ValueError as e:
     assert "transmission=True" in str(e), str(e)
+
+# the Rebin page: one Q grid of the points asked (the merged tables are made anew)
+assert Dan.Merge.rebin(script + "-mergingTemplate", points=50) == ["H-J", "H-L", "H-M"]
+assert table("H-L").numRows() <= 50, table("H-L").numRows()
+
+# the session keeps whether the edge and the beam stop are on (before: only their boxes and shapes)
+bs = Dan.findChild(QGroupBox, "groupBoxMaskBS")
+settings = table(script + "-Settings")
+keys = [settings.text(1, r) for r in range(1, settings.numRows() + 1)]
+assert settings.text(2, keys.index("Mask::BeamStop::Status") + 1).startswith("Yes"), keys
+assert "Mask::Edges::Status" in keys
+bs.setChecked(False)
+Dan.Options.openSession(script)
+assert bs.isChecked()
+

@@ -57,6 +57,19 @@ for row in (17, 21):
 Dan.Processing.setConfiguration(2, mask="mask-new")
 assert Dan.Processing.configuration(2)["mask"] == "mask-new"
 
+# triangles: three points each, all on the detector; a wrong one is a ValueError, not skipped without a word
+def zeros(triangles):
+    m = matrix(Dan.Mask.newMask("mask-tri", edge=0, beamstop=0, triangles=triangles))
+    return sum(m.cell(r, c) == 0 for r in range(1, m.numRows() + 1) for c in range(1, m.numCols() + 1))
+
+
+masked = zeros("60-60,90-60,60-90") - zeros("")  # the instrument's dead rows and columns stay masked
+assert masked == 31 * 32 // 2, masked  # the legs' 31 pixels each: 31 + 30 + ... + 1
+for wrong in ("10-10,40-10", "10-10,40-10,60-40,10-90", "10-10,10-10,60-40", "0-10,40-10,60-40", "10-10,40-10,a-40",
+              "10-10,40-10,60-999"):
+    raises(lambda: Dan.Mask.newMask("mask-tri", triangles=wrong), "three different points x-y")
+Dan.Mask.newMask("mask-tri", triangles="")
+
 # each part's action shows its tab, as a click would (Options 0, Rawdata 1, Mask 2, Sensitivity 3, Processing 4,
 # Merge 5); a query (masks(), runs(), configuration()) changes nothing and leaves the tab as it is
 tabs = Dan.findChild(QTabWidget, "sansTab")
@@ -77,4 +90,4 @@ assert Dan.findChild(QSpinBox, "spinBoxLTxBS").value() != 61
 # a Table object where a table's name is asked counts as its name
 t = newTable("plain", 2, 2)
 raises(lambda: Dan.Processing.calculateTransmissions(t), "no script table plain")
-raises(lambda: Dan.Merge.run(t), "nothing to merge in plain")
+raises(lambda: Dan.Merge.join(t), "nothing to merge in plain")

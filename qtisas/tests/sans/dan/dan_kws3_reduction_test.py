@@ -27,8 +27,8 @@ assert [(c["xCenter"], c["yCenter"]) for c in config] == [(120.044, 140.661), (1
 s = table(script)
 tr = [s.text(dr.column(s, "Transmission-Sample"), r).split("[")[0].strip() for r in range(1, 7)]
 assert tr == ["0.5380", "0.5471", "0.4829", "0.8232", "0.7811", "0.8088"], tr
-Dan.Processing.run(script)
-assert Dan.Merge.run(script + "-mergingTemplate") == ["H-M", "H-J", "H-L"]
+Dan.Processing.process(script)
+assert Dan.Merge.join(script + "-mergingTemplate") == ["H-M", "H-J", "H-L"]
 reference = {  # dan-example-kws3.qti: rows, (Q, I) of rows 1, 20 and the last (merged tables saved to 7 digits)
     "QI-SM-00082557-H-M": (132, ((0.000108956598, 11716934), (0.000453985689, 145859.18), (0.00248781846, 1251.67575))),
     "QI-SM-00082559-H-J": (132, ((0.000108956598, 11797939.9), (0.000453985689, 124618.121),
