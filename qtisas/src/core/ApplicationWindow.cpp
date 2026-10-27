@@ -6276,6 +6276,10 @@ void ApplicationWindow::printHttpRetryStatus(const QString &message, bool isFirs
 // the wrong panel since d_fitFromScriptWindow is never true for them).
 AiScriptResult ApplicationWindow::runScript(const QString &code, const QString &scriptName)
 {
+    if (console && console->isVisible())
+        console->viewport()->repaint();
+    if (scriptWindow && scriptWindow->isVisible() && scriptWindow->outputConsole())
+        scriptWindow->outputConsole()->viewport()->repaint();
     AiScriptResult result;
     m_aiErrorBuffer.clear();
     m_aiCaptureBuffer.clear();
