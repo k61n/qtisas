@@ -463,7 +463,7 @@ void dan18::createSensFull(const QString &sensName)
         maskRange += "|" + QString::number(spinBoxRByBS->value());
         maskRange += "| " + lineEditDeadRows->text();
         maskRange += "| " + lineEditDeadCols->text();
-        maskRange += "| " + lineEditMaskPolygons->text();
+        maskRange += "| " + lineEditMaskTriangles->text();
         maskRange += "|";
 
         makeMatrixSymmetric(mask, maskName, "DAN::Mask::" + QString::number(MD) + maskRange, MD);

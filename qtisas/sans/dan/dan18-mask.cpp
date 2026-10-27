@@ -16,7 +16,7 @@ void dan18::maskConnectSlot()
     connect(toolButtonCreateMask, &QToolButton::clicked, this, [this](bool) { createMask(false); });
     connect(lineEditDeadRows, &QLineEdit::returnPressed, this, [this]() { createMask(false); });
     connect(lineEditDeadCols, &QLineEdit::returnPressed, this, [this]() { createMask(false); });
-    connect(lineEditMaskPolygons, &QLineEdit::returnPressed, this, [this]() { createMask(false); });
+    connect(lineEditMaskTriangles, &QLineEdit::returnPressed, this, [this]() { createMask(false); });
     connect(toolButtonSaveMaskTr, &QToolButton::clicked, this, [this](bool) { createMask(true); });
     connect(toolButtonCreateMaskAs, &QToolButton::clicked, this, [this](bool) { saveMaskAs(); });
     connect(toolButtonSaveMask, &QToolButton::clicked, this, &dan18::saveMaskFull);
@@ -28,7 +28,7 @@ void dan18::maskConnectSlot()
     connect(toolButtonPlusMaskBS, &QToolButton::clicked, this, &dan18::maskPlusMaskBS);
     connect(pushButtonGetCoordDRows, &QPushButton::clicked, this, &dan18::readCoordDRows);
     connect(pushButtonGetCoordDCols, &QPushButton::clicked, this, &dan18::readCoordDCols);
-    connect(pushButtonGetCoordTrian, &QPushButton::clicked, this, &dan18::readCoordTriangle);
+    connect(pushButtonGetCoordTrian, &QPushButton::clicked, this, &dan18::readCoordTriangles);
     connect(comboBoxMaskFor, &QComboBox::textActivated, this, &dan18::readMaskParaFromMaskMatrix);
     connect(pushButtonReadDisplay, &QPushButton::clicked, this, &dan18::readCoorMaskTools);
     connect(toolBoxMask, &QTabWidget::currentChanged, this, [this](int) { matrixList(); });
@@ -98,17 +98,22 @@ void dan18::createMask(bool Tr)
 //+++ save MASK to file
 void dan18::saveMaskFull()
 {
-    QString Dir = filesManager->pathInString();
-    int MD = lineEditMD->text().toInt();
     QString maskName = comboBoxMaskFor->currentText();
+    saveMaskToFile(maskName, filesManager->pathInString() + maskName + ".mask");
+}
+bool dan18::saveMaskToFile(const QString &maskName, const QString &file)
+{
+    int MD = lineEditMD->text().toInt();
 
     gsl_matrix *mask = gsl_matrix_alloc(MD, MD);
     gsl_matrix_set_zero(mask);
 
-    if (make_GSL_Matrix_Symmetric(maskName, mask, MD))
-        saveMatrixToFile(Dir + maskName + ".mask", mask, MD);
+    bool ok = make_GSL_Matrix_Symmetric(maskName, mask, MD);
+    if (ok)
+        saveMatrixToFile(file, mask, MD);
 
     gsl_matrix_free(mask);
+    return ok;
 }
 //+++ load MASK
 void dan18::loadMaskFull()
@@ -194,7 +199,7 @@ void dan18::createMaskFull(const QString &maskName)
     maskRange += "|" + QString::number(spinBoxRByBS->value());
     maskRange += "| " + lineEditDeadRows->text();
     maskRange += "| " + lineEditDeadCols->text();
-    maskRange += "| " + lineEditMaskPolygons->text();
+    maskRange += "| " + lineEditMaskTriangles->text();
     maskRange += "|";
 
     Matrix *m;
@@ -366,7 +371,7 @@ void dan18::createMaskFull(const QString &maskName)
         }
     }
 
-    maskTriangle(m, MD);
+    maskTriangles(m, MD);
 
     m->setColumnsWidth(25);
     m->resetView();
@@ -407,7 +412,7 @@ void dan18::createMaskFullTr(const QString &maskName)
     maskRange += "|" + QString::number(spinBoxRByBS->value());
     maskRange += "| " + lineEditDeadRows->text();
     maskRange += "| " + lineEditDeadCols->text();
-    maskRange += "| " + lineEditMaskPolygons->text();
+    maskRange += "| " + lineEditMaskTriangles->text();
     maskRange += "|";
 
     Matrix *m;
@@ -519,7 +524,7 @@ void dan18::loadMaskFull(const QString &maskName, const QString &maskFileName)
 void dan18::addBS2CurrentMask(const QString &maskName)
 {
     foreach (MdiSubWindow *w, app()->matrixList())
-        if (w->name() == comboBoxMlistMask->currentText())
+        if (w->name() == maskName)
         {
             auto *m = (Matrix *)w;
 
@@ -577,7 +582,7 @@ void dan18::readCoordDCols()
     if (!readDisplay(x, y))
         return;
 
-    QString currentStr = lineEditDeadRows->text().remove(" ");
+    QString currentStr = lineEditDeadCols->text().remove(" ");
 
     currentStr +=
         (currentStr.right(1) == "-" ? QString::number(Qwt3D::round(x)) + ";" : QString::number(Qwt3D::round(x)) + "-");
@@ -585,13 +590,13 @@ void dan18::readCoordDCols()
     lineEditDeadCols->setText(currentStr);
 }
 
-void dan18::readCoordTriangle()
+void dan18::readCoordTriangles()
 {
     double x, y;
     if (!readDisplay(x, y))
         return;
 
-    QString currentStr = lineEditDeadRows->text().remove(" ");
+    QString currentStr = lineEditMaskTriangles->text().remove(" ");
 
     if (int(currentStr.count(",") / 2) * 2 != currentStr.count(",") || currentStr.count(",") == 0 ||
         currentStr.right(1) == ";")
@@ -599,12 +604,12 @@ void dan18::readCoordTriangle()
     else
         currentStr += QString::number(Qwt3D::round(x)) + "-" + QString::number(Qwt3D::round(y)) + ";";
 
-    lineEditMaskPolygons->setText(currentStr);
+    lineEditMaskTriangles->setText(currentStr);
 }
 
-bool dan18::maskTriangle(Matrix *m, int md)
+bool dan18::maskTriangles(Matrix *m, int md)
 {
-    QString sMask = lineEditMaskPolygons->text();
+    QString sMask = lineEditMaskTriangles->text();
 
     if (!sMask.isEmpty())
     {
@@ -626,7 +631,8 @@ bool dan18::maskTriangle(Matrix *m, int md)
                 pointListY[pi] = lstXY[1].toInt();
             }
 
-            maskTriangle(m, md, pointListX[0], pointListY[0], pointListX[1], pointListY[1], pointListX[2], pointListY[2]);
+            maskTriangle(m, md, pointListX[0], pointListY[0], pointListX[1], pointListY[1], pointListX[2],
+                         pointListY[2]);
             
         }
         delete[] pointListX;
@@ -695,7 +701,7 @@ void dan18::readMaskParaFromMaskMatrix(const QString &name)
                 {
                     lineEditDeadRows->setText(lst[8]);
                     lineEditDeadCols->setText(lst[9]);
-                    lineEditMaskPolygons->setText(lst[10]);
+                    lineEditMaskTriangles->setText(lst[10]);
                 }
             }
             return;
@@ -820,7 +826,7 @@ void dan18::matrixList(const QString &selectedName)
     comboBoxMlistMask->clear();
     comboBoxMlistMask->addItems(lst);
     if (lst.contains(currentMask))
-        comboBoxMlistMask->setItemText(comboBoxMlistMask->currentIndex(), currentMask);
+        comboBoxMlistMask->setCurrentIndex(static_cast<int>(lst.indexOf(currentMask)));
 
     toolButtonUpdateMatrixActive->setVisible(comboBoxMlistMask->currentText() == "Matrix-Active");
 }
@@ -913,8 +919,10 @@ void dan18::maskSector()
                     else
                         currentPhi = phiMin;
 
+                    // phiMin..phiMax counted from phiMin, through 0: -30..30 is 330..360 and 0..30
                     auto inRange = [&](double phi) {
-                        return (phiMin < 0 ? phi >= 360 + phiMin : phi >= phiMin && phi <= phiMax);
+                        const double width = phiMax - phiMin;
+                        return width >= 360 || (width >= 0 && fmod(phi - phiMin + 720, 360) <= width);
                     };
 
                     if (maskInside ? inRange(currentPhi) : !inRange(currentPhi))
@@ -977,6 +985,8 @@ void dan18::maskEllipseShell()
             if (xSize == 0 || ySize == 0 || shell == 0)
                 return;
 
+            // a shell as wide as the ellipse leaves no inner ellipse: the whole outer one is the shell
+            const bool noInner = shell >= xSize || shell >= ySize;
             double rPlus, rMinus;
             for (int xx = 0; xx < m->numCols(); xx++)
                 for (int yy = 0; yy < m->numRows(); yy++)
@@ -984,10 +994,14 @@ void dan18::maskEllipseShell()
                     rPlus = (xCenter - xx) * (xCenter - xx) * 4 / (xSize + shell) / (xSize + shell);
                     rPlus += (yCenter - yy) * (yCenter - yy) * 4 / (ySize + shell) / (ySize + shell);
 
-                    rMinus = (xCenter - xx) * (xCenter - xx) * 4 / (xSize - shell) / (xSize - shell);
-                    rMinus += (yCenter - yy) * (yCenter - yy) * 4 / (ySize - shell) / (ySize - shell);
-
-                    if ((maskInside && rPlus <= 1 && rMinus >= 1) || (!maskInside && (rPlus > 1 || rMinus < 1)))
+                    bool inShell = rPlus <= 1;
+                    if (inShell && !noInner)
+                    {
+                        rMinus = (xCenter - xx) * (xCenter - xx) * 4 / (xSize - shell) / (xSize - shell);
+                        rMinus += (yCenter - yy) * (yCenter - yy) * 4 / (ySize - shell) / (ySize - shell);
+                        inShell = rMinus >= 1;
+                    }
+                    if (inShell == maskInside)
                         m->setCell(yy, xx, newValue);
                 }
             m->notifyModifiedData();

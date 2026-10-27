@@ -201,12 +201,13 @@ public:
     void createMaskFullTr(const QString &maskName);
     void loadMaskFull(const QString &maskName, const QString &maskFileName);
     void addBS2CurrentMask(const QString &maskName);
+    bool saveMaskToFile(const QString &maskName, const QString &file);
     // a progress window over QtiSAS, also while a script runs (non-modal then, its events not taken: a long reduction
     // looked frozen); none while QtiSAS itself is hidden (test instances)
     void startProgress(QProgressDialog &progress);
     static void stepProgress(QProgressDialog &progress, int value);
     bool maskTriangle(Matrix *m, int md, int x1, int y1, int x2, int y2, int x3, int y3);
-    bool maskTriangle(Matrix *m, int md);
+    bool maskTriangles(Matrix *m, int md);
     bool readDisplay(double &x, double &y);
     bool neededMaskExists(int MD, const QString &maskName, bool showErrorMessage = false);
     void updateMaskList();
@@ -598,7 +599,7 @@ public:
     void maskPlusMaskBS();
     void readCoordDRows();
     void readCoordDCols();
-    void readCoordTriangle();
+    void readCoordTriangles();
     void readMaskParaFromMaskMatrix(const QString &name);
 
     //  mask Tools

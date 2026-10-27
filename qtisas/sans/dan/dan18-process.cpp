@@ -659,7 +659,7 @@ void dan18::saveScriptSettings(QString tableName)
     
     //----- Mask::Triangular 
     w->setNumRows(currentRow+1);
-    s=lineEditMaskPolygons->text()+" <";
+    s = lineEditMaskTriangles->text() + " <";
     w->setText(currentRow, 0, "Mask::Triangular");
     w->setText(currentRow, 1, s);
     currentRow++;      
@@ -1725,7 +1725,7 @@ bool dan18::readSettingNew(QString tableName)
     //+++ Mask::Triangular
     index = static_cast<int>(parameters.indexOf("Mask::Triangular"));
     if (index >= 0)
-        lineEditMaskPolygons->setText(w->text(index, 1).remove(" <"));
+        lineEditMaskTriangles->setText(w->text(index, 1).remove(" <"));
 
     //+++ Sensitivity::Error::Range
     index = static_cast<int>(parameters.indexOf("Sensitivity::Error::Range"));

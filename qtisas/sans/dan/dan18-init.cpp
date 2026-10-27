@@ -612,7 +612,7 @@ void dan18::instrumentSelected(QString instrName)
     comboBoxUnitsTimeRT->setCurrentIndex(0);
     lineEditDeadRows->setText("");
     lineEditDeadCols->setText("");
-    lineEditMaskPolygons->setText("");
+    lineEditMaskTriangles->setText("");
 
     spinBoxReadMatrixTofNumberPerLine->setValue(1);
     spinBoxDataHeaderNumberLines->setValue(0);
@@ -1156,7 +1156,7 @@ void dan18::applyInstrumentLines(QStringList lst, bool inFocus)
             lineEditDeadCols->setText(line);
             break;
         case InstrumentSANS::Parameter::Mask_Triangular:
-            lineEditMaskPolygons->setText(line);
+            lineEditMaskTriangles->setText(line);
             break;
         case InstrumentSANS::Parameter::Sensitivity_SpinBoxErrRightLimit:
             spinBoxErrRightLimit->setValue(line.toDouble());
@@ -1600,7 +1600,7 @@ void dan18::saveInstrumentAsCpp(QString instrPath, QString instrName  )
 
     s += "lst<<\"[Mask-Dead-Rows] " + lineEditDeadRows->text() + "\";\n";
     s += "lst<<\"[Mask-Dead-Cols] " + lineEditDeadCols->text() + "\";\n";
-    s += "lst<<\"[Mask-Triangular] " + lineEditMaskPolygons->text() + "\";\n";
+    s += "lst<<\"[Mask-Triangular] " + lineEditMaskTriangles->text() + "\";\n";
 
     //+++ sensitivity :: options               +
     s += "lst<<\"[Sensitivity-SpinBoxErrLeftLimit] " + QString::number(spinBoxErrLeftLimit->value()) + "\";\n";
@@ -1890,7 +1890,7 @@ QString dan18::instrumentText(const QString &fileName)
     s += "[Mask-BeamStop-Right-Y] " + QString::number(spinBoxRByBS->value()) + "\n";
     s += "[Mask-Dead-Rows] " + lineEditDeadRows->text() + "\n";
     s += "[Mask-Dead-Cols] " + lineEditDeadCols->text() + "\n";
-    s += "[Mask-Triangular] " + lineEditMaskPolygons->text() + "\n";
+    s += "[Mask-Triangular] " + lineEditMaskTriangles->text() + "\n";
 
     //+++ sensitivity :: options               +
     s += "[Sensitivity-SpinBoxErrLeftLimit] " + QString::number(spinBoxErrLeftLimit->value()) + "\n";

@@ -10,10 +10,12 @@ Description: DAN-SANS Python interface: one object per tab (Dan.Options, Dan.Raw
 #ifndef DAN_PYTHON_H
 #define DAN_PYTHON_H
 
+#include <QPair>
 #include <QStringList>
 #include <QVariantMap>
 
 class dan18;
+class QDoubleSpinBox;
 
 // What every tab object shares: its DAN, and why its last call made nothing. A call runs DAN without dialogs
 // (dan18::beginScriptRun); when it made nothing it returns false or an empty name and lastError() says why.
@@ -136,10 +138,29 @@ class DanMask : public DanPart
   public:
     using DanPart::DanPart;
     // edge, beamstop: x1 x2 y1 y2 (pixels, 1-based); empty: as set (the instrument's default), {0}: none
+    // triangles, deadRows, deadCols: as the fields take them; a null string: as set
     QString newMask(const QString &name, const QList<int> &edge, const QList<int> &beamstop, const QString &shape,
-                    const QString &polygons, bool transmission);
+                    const QString &triangles, bool transmission, const QString &deadRows = QString(),
+                    const QString &deadCols = QString(), const QString &edgeShape = QString());
     QString loadMask(const QString &name, const QString &file);
+    // the tools of "Adv Masking Options" on any matrix: center x, y and sizes in pixels (1-based), value set inside
+    // (or outside) the shape
+    QString setValue(const QString &matrix, double value);
+    QString rectangle(const QString &matrix, double x, double y, double sizeX, double sizeY, bool inside, double value);
+    QString sector(const QString &matrix, double x, double y, double phiFrom, double phiTo, bool inside, double value);
+    QString ellipse(const QString &matrix, double x, double y, double sizeX, double sizeY, bool inside, double value);
+    QString ellipseShell(const QString &matrix, double x, double y, double sizeX, double sizeY, double shell,
+                         bool inside, double value);
+    // the beam-stop box masked in an existing mask (the mask kept otherwise); beamstop empty: as set
+    QString addBeamstop(const QString &mask, const QList<int> &beamstop, const QString &shape);
+    // the mask as a file; file empty: <input folder>/<mask>.mask, as the interface saves it
+    QString saveMask(const QString &mask, const QString &file);
     QStringList masks() const;
+
+  private:
+    // a tool of "Adv Masking Options" pressed on the matrix, its fields set first
+    QString tool(const QString &matrix, const QList<QPair<QDoubleSpinBox *, double>> &fields, bool inside, double value,
+                 void (dan18::*press)());
 };
 
 // Sensitivity tab

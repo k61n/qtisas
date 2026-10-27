@@ -10,6 +10,7 @@ Description: DAN-SANS Python interface: one object per tab (Dan.Options, Dan.Raw
 #include <cmath>
 
 #include <QDirIterator>
+#include <QDoubleSpinBox>
 #include <QFileInfo>
 #include <QSet>
 #include <QTextStream>
@@ -319,8 +320,31 @@ QString DanRawdata::newHeaderTable(const QString &name, const QStringList &items
 }
 
 //+++ DanMask
+// the dead rows (or columns) as createMaskFull() reads them: "a-b" (rows a..b) or "a-b-c-d" (rows a..b, columns
+// c..d; for columns the other way round), pixels 1..md, a <= b; empty: none
+static QString deadLinesError(const QString &lines, const QString &what, int md)
+{
+    for (const QString &entry : lines.split(";", Qt::SkipEmptyParts))
+    {
+        const QStringList numbers = entry.split("-", Qt::SkipEmptyParts);
+        bool ok = numbers.count() == 2 || numbers.count() == 4;
+        QList<int> values;
+        for (const QString &number : numbers)
+        {
+            bool okNumber = false;
+            values << number.trimmed().toInt(&okNumber);
+            ok = ok && okNumber && values.last() >= 1 && values.last() <= md;
+        }
+        if (!ok || values[0] > values[1])
+            return QString(R"(%1 "%2": a-b or a-b-c-d, pixels 1..%3, a <= b, e.g. "1-3;250-256")")
+                .arg(what, entry.trimmed(), QString::number(md));
+    }
+    return {};
+}
+
 QString DanMask::newMask(const QString &name, const QList<int> &edge, const QList<int> &beamstop, const QString &shape,
-                         const QString &polygons, bool transmission)
+                         const QString &triangles, bool transmission, const QString &deadRows, const QString &deadCols,
+                         const QString &edgeShape)
 {
     if (name.isEmpty())
         return fail("no mask name");
@@ -331,6 +355,33 @@ QString DanMask::newMask(const QString &name, const QList<int> &edge, const QLis
             return fail("a mask box is x1, x2, y1, y2 (pixels), or 0 for none");
     if (!shape.isEmpty() && shape != "rectangle" && shape != "ellipse")
         return fail("beam-stop shape: rectangle or ellipse");
+    if (!edgeShape.isEmpty() && edgeShape != "rectangle" && edgeShape != "ellipse")
+        return fail("edge shape: rectangle or ellipse");
+    // as maskTriangles() reads them: "x1-y1,x2-y2,x3-y3;..." in pixels 1..MD, three different points each
+    const int md = d->lineEditMD->text().toInt();
+    for (const QString &triangle : triangles.split(";", Qt::SkipEmptyParts))
+    {
+        const QStringList points = triangle.split(",", Qt::SkipEmptyParts);
+        QSet<QString> seen;
+        bool ok = points.count() == 3;
+        for (const QString &point : points)
+        {
+            const QStringList xy = point.split("-", Qt::SkipEmptyParts);
+            bool okX = false, okY = false;
+            const int x = xy.count() == 2 ? xy[0].trimmed().toInt(&okX) : 0;
+            const int y = xy.count() == 2 ? xy[1].trimmed().toInt(&okY) : 0;
+            ok = ok && okX && okY && x >= 1 && y >= 1 && x <= md && y <= md;
+            seen.insert(QString::number(x) + "-" + QString::number(y));
+        }
+        if (!ok || seen.count() != 3)
+            return fail("triangle \"" + triangle.trimmed() + "\": three different points x-y, pixels 1.." +
+                        QString::number(md) + ", e.g. \"10-10,40-10,60-40\"");
+    }
+    const QString rowsError = deadLinesError(deadRows, "dead rows", md);
+    const QString colsError = deadLinesError(deadCols, "dead columns", md);
+    for (const QString &error : {rowsError, colsError})
+        if (!error.isEmpty())
+            return fail(error);
 
     if (edge.count() == 4)
     {
@@ -350,8 +401,14 @@ QString DanMask::newMask(const QString &name, const QList<int> &edge, const QLis
         d->groupBoxMaskBS->setChecked(false);
     if (!shape.isEmpty())
         d->comboBoxMaskBeamstopShape->setCurrentIndex(shape == "ellipse" ? 1 : 0);
-    if (!polygons.isNull())
-        d->lineEditMaskPolygons->setText(polygons);
+    if (!edgeShape.isEmpty())
+        d->comboBoxMaskEdgeShape->setCurrentIndex(edgeShape == "ellipse" ? 1 : 0);
+    if (!triangles.isNull())
+        d->lineEditMaskTriangles->setText(triangles);
+    if (!deadRows.isNull())
+        d->lineEditDeadRows->setText(deadRows);
+    if (!deadCols.isNull())
+        d->lineEditDeadCols->setText(deadCols);
 
     begin();
     d->saveMaskAs(name);
@@ -379,6 +436,140 @@ QString DanMask::loadMask(const QString &name, const QString &fileGiven)
 QStringList DanMask::masks() const
 {
     return d->app()->findMatrixListByLabel("DAN::Mask::" + d->lineEditMD->text());
+}
+
+QString DanMask::tool(const QString &matrix, const QList<QPair<QDoubleSpinBox *, double>> &fields, bool inside,
+                      double value, void (dan18::*press)())
+{
+    if (!d->app()->matrixNames().contains(matrix))
+        return fail("no matrix " + matrix);
+    // the Python names of the fields, for the message
+    static const QMap<QString, QString> names = {
+        {"doubleSpinBoxXcenter", "center x"},    {"doubleSpinBoxYcenter", "center y"},
+        {"doubleSpinBoxRectXsize", "size x"},    {"doubleSpinBoxRectYsize", "size y"},
+        {"doubleSpinBoxEllipseXsize", "size x"}, {"doubleSpinBoxEllipseYsize", "size y"},
+        {"doubleSpinBoxAngleFrom", "phi from"},  {"doubleSpinBoxAngleTo", "phi to"},
+        {"doubleSpinBoxEllShell", "shell"}};
+    for (const auto &field : fields)
+        if (field.second < field.first->minimum() || field.second > field.first->maximum())
+            return fail(QString("%1: %2..%3")
+                            .arg(names.value(field.first->objectName()), QString::number(field.first->minimum()),
+                                 QString::number(field.first->maximum())));
+    begin();
+    // the tools' page, its matrix list showing the matrix: as selecting it there
+    d->toolBoxMask->setCurrentIndex(1);
+    d->matrixList(matrix);
+    if (d->comboBoxMlistMask->currentText() != matrix)
+    {
+        end(false, "no matrix " + matrix + " in the tools' list");
+        return {};
+    }
+    for (const auto &field : fields)
+        field.first->setValue(field.second);
+    d->comboBoxMaskInside->setCurrentIndex(inside ? 0 : 1);
+    d->comboBoxValue->setCurrentText(QString::number(value));
+    (d->*press)();
+    end(true);
+    return matrix;
+}
+
+QString DanMask::setValue(const QString &matrix, double value)
+{
+    return tool(matrix, {}, true, value, &dan18::maskSetValue);
+}
+
+QString DanMask::rectangle(const QString &matrix, double x, double y, double sizeX, double sizeY, bool inside,
+                           double value)
+{
+    return tool(matrix,
+                {{d->doubleSpinBoxXcenter, x},
+                 {d->doubleSpinBoxYcenter, y},
+                 {d->doubleSpinBoxRectXsize, sizeX},
+                 {d->doubleSpinBoxRectYsize, sizeY}},
+                inside, value, &dan18::maskRectangular);
+}
+
+QString DanMask::sector(const QString &matrix, double x, double y, double phiFrom, double phiTo, bool inside,
+                        double value)
+{
+    if (phiTo < phiFrom)
+        return fail("sector: phi from <= phi to (-30, 30 goes through 0)");
+    return tool(matrix,
+                {{d->doubleSpinBoxXcenter, x},
+                 {d->doubleSpinBoxYcenter, y},
+                 {d->doubleSpinBoxAngleFrom, phiFrom},
+                 {d->doubleSpinBoxAngleTo, phiTo}},
+                inside, value, &dan18::maskSector);
+}
+
+QString DanMask::ellipse(const QString &matrix, double x, double y, double sizeX, double sizeY, bool inside,
+                         double value)
+{
+    if (sizeX <= 0 || sizeY <= 0)
+        return fail("ellipse: sizes > 0");
+    return tool(matrix,
+                {{d->doubleSpinBoxXcenter, x},
+                 {d->doubleSpinBoxYcenter, y},
+                 {d->doubleSpinBoxEllipseXsize, sizeX},
+                 {d->doubleSpinBoxEllipseYsize, sizeY}},
+                inside, value, &dan18::maskEllipse);
+}
+
+QString DanMask::ellipseShell(const QString &matrix, double x, double y, double sizeX, double sizeY, double shell,
+                              bool inside, double value)
+{
+    if (sizeX <= 0 || sizeY <= 0 || shell <= 0)
+        return fail("ellipse shell: sizes and shell > 0");
+    return tool(matrix,
+                {{d->doubleSpinBoxXcenter, x},
+                 {d->doubleSpinBoxYcenter, y},
+                 {d->doubleSpinBoxEllipseXsize, sizeX},
+                 {d->doubleSpinBoxEllipseYsize, sizeY},
+                 {d->doubleSpinBoxEllShell, shell}},
+                inside, value, &dan18::maskEllipseShell);
+}
+
+QString DanMask::addBeamstop(const QString &mask, const QList<int> &beamstop, const QString &shape)
+{
+    if (!isMask(mask))
+        return fail("no mask " + mask);
+    if (!beamstop.isEmpty() && beamstop.count() != 4)
+        return fail("beamstop: x1, x2, y1, y2 (pixels)");
+    if (!shape.isEmpty() && shape != "rectangle" && shape != "ellipse")
+        return fail("beam-stop shape: rectangle or ellipse");
+    const int md = d->lineEditMD->text().toInt();
+    for (int v : beamstop)
+        if (v < 1 || v > md)
+            return fail("beamstop: pixels 1.." + QString::number(md));
+    begin();
+    d->updateMaskList();
+    d->comboBoxMaskFor->setCurrentIndex(d->comboBoxMaskFor->findText(mask));
+    QSpinBox *boxes[] = {d->spinBoxLTxBS, d->spinBoxRBxBS, d->spinBoxLTyBS, d->spinBoxRByBS};
+    if (beamstop.count() == 4)
+        for (int i = 0; i < 4; i++)
+            boxes[i]->setValue(beamstop[i]);
+    if (!shape.isEmpty())
+        d->comboBoxMaskBeamstopShape->setCurrentIndex(shape == "ellipse" ? 1 : 0);
+    d->maskPlusMaskBS();
+    end(true);
+    return mask;
+}
+
+QString DanMask::saveMask(const QString &mask, const QString &fileGiven)
+{
+    if (!isMask(mask))
+        return fail("no mask " + mask);
+    const QString folder = d->filesManager->pathInString();
+    QString file = fileGiven.isEmpty() ? folder + mask + ".mask" : expandHome(fileGiven);
+    if (QFileInfo(file).isRelative() && !folder.isEmpty())
+        file = QDir(folder).filePath(file);
+    if (!QFileInfo(QFileInfo(file).absolutePath()).isDir())
+        return fail("no folder " + QFileInfo(file).absolutePath());
+    begin();
+    const bool ok = d->saveMaskToFile(mask, file) && QFileInfo(file).isFile();
+    if (!end(ok, "the mask was not saved to " + file))
+        return {};
+    return file;
 }
 
 //+++ DanSensitivity

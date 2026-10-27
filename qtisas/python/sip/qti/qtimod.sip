@@ -3765,21 +3765,22 @@ class DanMask : DanPart /NoDefaultCtors/
 %End
 public:
     // edge, beamstop: (x1, x2, y1, y2) in pixels; None: as set (the instrument's default); 0: none
+    // triangles, deadRows, deadCols: strings as the fields take them; None: as set
     QString newMask(const QString &name = "mask", SIP_PYOBJECT edge = Py_None, SIP_PYOBJECT beamstop = Py_None,
-                    const QString &shape = QString(), SIP_PYOBJECT polygons = Py_None, bool transmission = false);
+                    const QString &shape = QString(), SIP_PYOBJECT triangles = Py_None, bool transmission = false,
+                    SIP_PYOBJECT deadRows = Py_None, SIP_PYOBJECT deadCols = Py_None,
+                    const QString &edgeShape = QString());
 %MethodCode
     QList<int> edge, beamstop;
-    QString polygons;
+    QString triangles, deadRows, deadCols;
     if (!sipqti_box(a1, &edge, "edge") || !sipqti_box(a2, &beamstop, "beamstop"))
         sipError = sipErrorFail;
-    else if (a4 != Py_None && !PyUnicode_Check(a4)) {
-        PyErr_SetString(PyExc_TypeError, "polygons: a string like \"x1-y1,x2-y2,x3-y3;...\" or None");
+    else if (!sipqti_optionalString(a4, &triangles, "triangles: a string like \"x1-y1,x2-y2,x3-y3;...\" or None") ||
+             !sipqti_optionalString(a6, &deadRows, "deadRows: a string like \"1-3;250-256\" or None") ||
+             !sipqti_optionalString(a7, &deadCols, "deadCols: a string like \"1-3;250-256\" or None"))
         sipError = sipErrorFail;
-    }
     else {
-        if (a4 != Py_None)
-            polygons = QString::fromUtf8(PyUnicode_AsUTF8(a4));
-        sipRes = new QString(sipCpp->newMask(*a0, edge, beamstop, *a3, polygons, a5));
+        sipRes = new QString(sipCpp->newMask(*a0, edge, beamstop, *a3, triangles, a5, deadRows, deadCols, *a8));
         if (!(!sipRes->isEmpty())) {
             PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
             sipError = sipErrorFail;
@@ -3790,6 +3791,94 @@ public:
 %MethodCode
     sipRes = new QString(sipCpp->loadMask(*a1, *a0));
     if (!(!sipRes->isEmpty())) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
+    // the tools of "Adv Masking Options" on any matrix: center (x, y) and size (x, y) or one number, in pixels
+    QString setValue(const QString &matrix, double value);
+%MethodCode
+    sipRes = new QString(sipCpp->setValue(*a0, a1));
+    if (sipRes->isEmpty()) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
+    QString rectangle(const QString &matrix, SIP_PYOBJECT center, SIP_PYOBJECT size,
+                      bool inside = true, double value = 0);
+%MethodCode
+    double x = 0, y = 0, a = 0, b = 0;
+    if (!sipqti_pair(a1, &x, &y, "center", false) || !sipqti_pair(a2, &a, &b, "size", true))
+        sipError = sipErrorFail;
+    else {
+        sipRes = new QString(sipCpp->rectangle(*a0, x, y, a, b, a3, a4));
+        if (sipRes->isEmpty()) {
+            PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+            sipError = sipErrorFail;
+        }
+    }
+%End
+    QString sector(const QString &matrix, SIP_PYOBJECT center, SIP_PYOBJECT phi, bool inside = true, double value = 0);
+%MethodCode
+    double x = 0, y = 0, a = 0, b = 0;
+    if (!sipqti_pair(a1, &x, &y, "center", false) || !sipqti_pair(a2, &a, &b, "phi", false))
+        sipError = sipErrorFail;
+    else {
+        sipRes = new QString(sipCpp->sector(*a0, x, y, a, b, a3, a4));
+        if (sipRes->isEmpty()) {
+            PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+            sipError = sipErrorFail;
+        }
+    }
+%End
+    QString ellipse(const QString &matrix, SIP_PYOBJECT center, SIP_PYOBJECT size,
+                    bool inside = true, double value = 0);
+%MethodCode
+    double x = 0, y = 0, a = 0, b = 0;
+    if (!sipqti_pair(a1, &x, &y, "center", false) || !sipqti_pair(a2, &a, &b, "size", true))
+        sipError = sipErrorFail;
+    else {
+        sipRes = new QString(sipCpp->ellipse(*a0, x, y, a, b, a3, a4));
+        if (sipRes->isEmpty()) {
+            PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+            sipError = sipErrorFail;
+        }
+    }
+%End
+    QString ellipseShell(const QString &matrix, SIP_PYOBJECT center, SIP_PYOBJECT size, double shell,
+                         bool inside = true, double value = 0);
+%MethodCode
+    double x = 0, y = 0, a = 0, b = 0;
+    if (!sipqti_pair(a1, &x, &y, "center", false) || !sipqti_pair(a2, &a, &b, "size", true))
+        sipError = sipErrorFail;
+    else {
+        sipRes = new QString(sipCpp->ellipseShell(*a0, x, y, a, b, a3, a4, a5));
+        if (sipRes->isEmpty()) {
+            PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+            sipError = sipErrorFail;
+        }
+    }
+%End
+    // the beam-stop box (x1, x2, y1, y2) masked in an existing mask; None: as set
+    QString addBeamstop(const QString &mask = "mask", SIP_PYOBJECT beamstop = Py_None,
+                        const QString &shape = QString());
+%MethodCode
+    QList<int> beamstop;
+    if (!sipqti_box(a1, &beamstop, "beamstop"))
+        sipError = sipErrorFail;
+    else {
+        sipRes = new QString(sipCpp->addBeamstop(*a0, beamstop, *a2));
+        if (sipRes->isEmpty()) {
+            PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+            sipError = sipErrorFail;
+        }
+    }
+%End
+    // file: None the input folder's <mask>.mask; a relative name in the input folder
+    QString saveMask(const QString &mask = "mask", const QString &file = QString());
+%MethodCode
+    sipRes = new QString(sipCpp->saveMask(*a0, *a1));
+    if (sipRes->isEmpty()) {
         PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
         sipError = sipErrorFail;
     }
@@ -5605,6 +5694,38 @@ bool sipqti_box(PyObject *obj, QList<int> *out, const char *name)
     PyErr_Format(PyExc_TypeError, "%s: (x1, x2, y1, y2) in pixels, 0 for none, or None", name);
   return ok;
 }
+// None (left null) or a string; TypeError with the message otherwise
+bool sipqti_optionalString(PyObject *obj, QString *out, const char *message)
+{
+  if (!obj || obj == Py_None)
+    return true;
+  if (!PyUnicode_Check(obj)) {
+    PyErr_SetString(PyExc_TypeError, message);
+    return false;
+  }
+  *out = QString::fromUtf8(PyUnicode_AsUTF8(obj));
+  return true;
+}
+// (a, b) of numbers, or one number for both when number is true; TypeError otherwise
+bool sipqti_pair(PyObject *obj, double *a, double *b, const char *name, bool number)
+{
+  if (number && obj && (PyFloat_Check(obj) || (PyLong_Check(obj) && !PyBool_Check(obj)))) {
+    *a = *b = PyFloat_AsDouble(obj);
+    return true;
+  }
+  PyObject *seq = obj && PySequence_Check(obj) && !PyUnicode_Check(obj) ? PySequence_Fast(obj, "") : nullptr;
+  bool ok = seq != nullptr && PySequence_Fast_GET_SIZE(seq) == 2;
+  for (Py_ssize_t i = 0; ok && i < 2; i++) {
+    PyObject *item = PySequence_Fast_GET_ITEM(seq, i);
+    ok = (PyFloat_Check(item) || PyLong_Check(item)) && !PyBool_Check(item);
+    if (ok)
+      *(i == 0 ? a : b) = PyFloat_AsDouble(item);
+  }
+  Py_XDECREF(seq);
+  if (!ok)
+    PyErr_Format(PyExc_TypeError, number ? "%s: (x, y) or one number" : "%s: (a, b) of numbers", name);
+  return ok;
+}
 // save=None / False / True of closeProject(), newProject(), openProject(): -1 ask, 0 discard, 1 save first
 int sipqti_savePolicy(PyObject *save)
 {
@@ -5667,6 +5788,8 @@ bool sipqti_strings(PyObject *obj, QStringList *out, const char *message);
 bool sipqti_windowName(PyObject *obj, QStringList *out);
 bool sipqti_name(PyObject *obj, QString *out, const char *message);
 bool sipqti_box(PyObject *obj, QList<int> *out, const char *name);
+bool sipqti_optionalString(PyObject *obj, QString *out, const char *message);
+bool sipqti_pair(PyObject *obj, double *a, double *b, const char *name, bool number);
 ApplicationWindow *sipqti_app();
 #define SIPQTI_APP(sipcppexpr)\
 ApplicationWindow *app = sipqti_app();\

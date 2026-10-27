@@ -38214,7 +38214,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                 <string notr="true">color: rgb(137, 137, 183);</string>
                </property>
                <property name="text">
-                <string>Thriangular mask(s)</string>
+                <string>Triangular mask(s)</string>
                </property>
                <property name="wordWrap">
                 <bool>false</bool>
@@ -38284,7 +38284,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
               </widget>
              </item>
              <item row="2" column="1">
-              <widget class="QLineEdit" name="lineEditMaskPolygons">
+              <widget class="QLineEdit" name="lineEditMaskTriangles">
                <property name="enabled">
                 <bool>true</bool>
                </property>
