@@ -3766,8 +3766,13 @@ public:
     QStringList runs;
     if (a0 != Py_None && !sipqti_strings(a0, &runs, "runs: run numbers"))
         sipError = sipErrorFail;
-    else
+    else {
         sipRes = new QVariantList(sipCpp->info(runs));
+        if (!sipCpp->lastError().isEmpty()) {
+            PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+            sipError = sipErrorFail;
+        }
+    }
 %End
     // the runs (auto mode's run filters when none are given) grouped by configuration: label, C, D, lambda, ..., runs
     QVariantList conditions(SIP_PYOBJECT runs = Py_None);
@@ -3777,6 +3782,30 @@ public:
         sipError = sipErrorFail;
     else
         sipRes = new QVariantList(sipCpp->conditions(runs));
+%End
+    // runs next to each other of the same sample and configuration: n None every whole series (2 runs or more),
+    // n >= 2 groups of n; added runs left out
+    QVariantList neighbours(SIP_PYOBJECT n = Py_None, SIP_PYOBJECT runs = Py_None);
+%MethodCode
+    QStringList runs;
+    int n = 0;
+    bool ok = true;
+    if (a0 != Py_None) {
+        ok = PyLong_Check(a0) && !PyBool_Check(a0);
+        if (ok)
+            n = int(PyLong_AsLong(a0));
+        else
+            PyErr_SetString(PyExc_TypeError, "n: None (the whole series) or a number of runs");
+    }
+    if (!ok || (a1 != Py_None && !sipqti_strings(a1, &runs, "runs: run numbers")))
+        sipError = sipErrorFail;
+    else {
+        sipRes = new QVariantList(sipCpp->neighbours(n, runs));
+        if (!sipCpp->lastError().isEmpty()) {
+            PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+            sipError = sipErrorFail;
+        }
+    }
 %End
     // the runs minus every standard run (empty beams, dark currents, calibrants, sensitivity) of auto mode
     QStringList sampleRuns(SIP_PYOBJECT runs = Py_None);
@@ -3801,6 +3830,20 @@ public:
         }
     }
 %End
+    // the runs' files, full paths: the detector file and its own header file; one run or a list
+    QStringList files(SIP_PYOBJECT runs);
+%MethodCode
+    QStringList runs;
+    if (!sipqti_strings(a0, &runs, "runs: a run number or a list of them"))
+        sipError = sipErrorFail;
+    else {
+        sipRes = new QStringList(sipCpp->files(runs));
+        if (sipRes->isEmpty()) {
+            PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+            sipError = sipErrorFail;
+        }
+    }
+%End
     // the runs summed into one new run; run None: <first run>0000<N>; the files written (output folder)
     QStringList addRuns(SIP_PYOBJECT runs, const QString &run = QString());
 %MethodCode
@@ -3810,6 +3853,20 @@ public:
     else {
         sipRes = new QStringList(sipCpp->addRuns(runs, *a1));
         if (sipRes->isEmpty()) {
+            PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+            sipError = sipErrorFail;
+        }
+    }
+%End
+    // the runs of the same sample and configuration anywhere in the folder (2 or more); added runs left out
+    QVariantList sampleGroups(SIP_PYOBJECT runs = Py_None);
+%MethodCode
+    QStringList runs;
+    if (a0 != Py_None && !sipqti_strings(a0, &runs, "runs: run numbers"))
+        sipError = sipErrorFail;
+    else {
+        sipRes = new QVariantList(sipCpp->sampleGroups(runs));
+        if (!sipCpp->lastError().isEmpty()) {
             PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
             sipError = sipErrorFail;
         }

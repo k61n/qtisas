@@ -33,7 +33,8 @@ class DanAuto
         QString run, file, sample, name, CA, SA, polarization, attenuator; // name: as in the header, sample: cut
         double duration = 0, counts = 0, C = 0, D = 0, lambda = 0, detectorX = 0, detectorY = 0, rotationX = 0,
                rotationY = 0;
-        int position = 0; // C, D [m]
+        int position = 0;  // C, D [m]
+        QStringList added; // a run made by adding others (Rawdata "Add"): those runs, from its header's comment
     };
     struct Choice
     {
@@ -192,13 +193,22 @@ class DanRawdata : public DanPart
     QVariantList info(const QStringList &runs);
     // the runs grouped by configuration (as the script table groups them): label, C, D, lambda, beamSize, runs
     QVariantList conditions(const QStringList &runs);
+    // runs next to each other in the folder of the same sample and DAN configuration: n 0 every whole series (2 runs
+    // or more), n >= 2 the series in groups of n (6 such runs: 2 groups of 3); runs made by adding left out; per
+    // group: label, condition, sample, runs
+    QVariantList neighbours(int n, const QStringList &runs);
     // the runs minus every standard run (empty beams, dark currents, calibrants, sensitivity) by auto mode's rules
     QStringList sampleRuns(const QStringList &runs);
     QStringList headerItems() const;
+    // the runs' files, full paths in the order given: the detector file and its own header file (KWS-3 .det, .yaml)
+    QStringList files(const QStringList &runs);
     QString newHeaderTable(const QString &name, const QStringList &items, const QString &runs);
     // "Add :: Raw Files": the runs summed into one new run (matrix and header: duration, counts, monitors);
     // run empty: <first run>0000<N>; the files written (in the output folder)
     QStringList addRuns(const QStringList &runs, const QString &run);
+    // the runs of the same sample and DAN configuration, wherever they are in the folder (2 runs or more; added runs
+    // left out); per group: label, condition (as numbered by conditions()), sample, runs
+    QVariantList sampleGroups(const QStringList &runs);
     // the Add buttons on a table: by "columns" (Two Step Add) or by "rows" (Quick Add); the files written
     QStringList addRunsFromTable(const QString &table, const QString &by);
     // "Header(s) - to - Info-Table" (added to an info table of that name); the options: -1 as set, 0/1
@@ -212,6 +222,11 @@ class DanRawdata : public DanPart
   private:
     // the runs as files of the input folder; empty and lastError() set when one is missing
     QStringList runFiles(const QStringList &runs);
+    // one run's files: the detector file and its own header file
+    QStringList filesOf(const QString &run) const;
+    // sampleGroups() / neighbours() of groups of at least minimum runs
+    QVariantList sampleGroups(const QStringList &runs, int minimum);
+    QVariantList neighbours(int n, const QStringList &runs, int minimum);
 };
 
 // Mask tab
@@ -332,7 +347,6 @@ class DanProcessing : public DanPart
     // configurations, calculate(), the script table of the sample runs, transmissions, scale; its name. Processing
     // (process()) and merging (Dan.Merge.join()) are calls of their own
     QString autoConfig(const QString &scriptTable);
-
 
   private:
     bool selectScriptTable(const QString &name);

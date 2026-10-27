@@ -3672,7 +3672,7 @@ const QStringList &InstrumentSANS::KWSX_init()
         "[2nd-Header-Pattern] ",
         "[2nd-Header-Lines] 0",
         "[Pattern] *_0_#.edf",
-        "[Pattern-Select-Data] *.edf",
+        "[Pattern-Select-Data] *[0-9].edf",
         "[Header-Number-Lines] 200",
         "[Data-Header-Lines] 0",
         "[Lines-Between-Frames] 0",

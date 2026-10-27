@@ -281,24 +281,10 @@ bool DanOptionsConfig::setTransmissionMethod(const QString &method)
 //+++ DanRawdata
 QStringList DanRawdata::runs() const
 {
-    QStringList files;
-    QDirIterator it(d->filesManager->pathInString(), QStringList() << d->filesManager->wildCardInString(), QDir::Files,
-                    d->filesManager->subFoldersYN() ? QDirIterator::Subdirectories : QDirIterator::NoIteratorFlags);
-    while (it.hasNext())
-        files << it.next();
+    // the runs auto mode and info() see: only those DAN opens
     QStringList numbers;
-    QSet<QString> seen;
-    for (const QString &file : files)
-    {
-        const QString number =
-            FilesManager::findFileNumberInFileName(d->filesManager->wildCardHeader(), QFileInfo(file).fileName());
-        if (!number.isEmpty() && !seen.contains(number))
-        {
-            seen.insert(number);
-            numbers << number;
-        }
-    }
-    NaturalSort::sort(numbers);
+    for (const DanAuto::Run &r : DanAuto(d).runs(false))
+        numbers << r.run;
     return numbers;
 }
 
@@ -351,6 +337,36 @@ static QStringList written(const QMap<QString, QString> &before, const QMap<QStr
         if (before.value(it.key()) != it.value())
             files << it.key();
     return files;
+}
+
+QStringList DanRawdata::filesOf(const QString &run) const
+{
+    QStringList files = {d->filesManager->fileNameFull(run, d->filesManager->wildCardDetector())};
+    const QString header = d->filesManager->fileNameFull(run, d->filesManager->wildCardHeader());
+    if (!header.isEmpty() && !files.contains(header))
+        files << header;
+    return files;
+}
+
+QStringList DanRawdata::files(const QStringList &runs)
+{
+    m_lastError.clear();
+    if (runs.isEmpty())
+    {
+        fail("no runs");
+        return {};
+    }
+    QStringList list;
+    for (const QString &run : runs)
+    {
+        if (!d->filesManager->checkFileNumber(run))
+        {
+            fail("no run " + run + " in " + d->filesManager->pathInString());
+            return {};
+        }
+        list << filesOf(run);
+    }
+    return list;
 }
 
 QStringList DanRawdata::runFiles(const QStringList &runs)
@@ -1582,6 +1598,12 @@ DanAuto::Run DanAuto::readRun(const QString &run, const QString &file) const
     r.rotationX = d->detector->readDetRotationX(run);
     r.rotationY = d->detector->readDetRotationY(run);
     r.position = d->sample->readPositionNumber(run).toInt();
+    // "added files: 53217, 53218" (addHeadersAscii / addNheadersYaml write it into Comment1)
+    static const QRegularExpression addedFiles("added files:\\s*([^;]+)");
+    const QRegularExpressionMatch m = addedFiles.match(d->sample->readComment1(run));
+    if (m.hasMatch())
+        for (const QString &one : m.captured(1).split(",", Qt::SkipEmptyParts))
+            r.added << one.trimmed();
     return r;
 }
 
@@ -1593,10 +1615,20 @@ QList<DanAuto::Run> DanAuto::runs(bool filtered) const
     while (it.hasNext())
     {
         const QString path = it.next();
-        const QString number =
+        QString number =
             FilesManager::findFileNumberInFileName(d->filesManager->wildCardHeader(), QFileInfo(path).fileName());
-        if (!number.isEmpty() && !files.contains(number))
-            files[number] = path;
+        if (number.isEmpty())
+            continue;
+        // a file of a sub-folder is the run "<sub-folder>/<number>", as DAN names it
+        const QString sub = QDir(d->filesManager->pathInString()).relativeFilePath(QFileInfo(path).path());
+        if (sub != ".")
+            number = sub + "/" + number;
+        // only what DAN opens as that run: the folder pattern is wider than the run pattern (KWSX-init "*_0_#.edf"
+        // listed db_..._0_00007_0.edf of a sub-folder as the run 00007, which no call then found)
+        // the file DAN reads for it (..._0_00041.edf, not ..._0_00041_2D_sum.edf, which the number pattern also
+        // matches): its time and size tell when the run is read again
+        if (!files.contains(number) && d->filesManager->checkFileNumber(number))
+            files[number] = d->filesManager->fileNameFull(number, d->filesManager->wildCardDetector());
     }
     QStringList numbers = files.keys();
     NaturalSort::sort(numbers);
@@ -1620,6 +1652,30 @@ QList<DanAuto::Run> DanAuto::runs(bool filtered) const
         }
         r.sample = sampleName(r.name);
         all << r;
+    }
+    // an added run of an instrument whose header has no comment (KWSX-init's EDF): DAN names it <first run> + the
+    // count in 5 digits ("00023" + 3 runs: "0002300003"); it is one when those runs' durations add up to its own
+    QHash<QString, int> index;
+    for (int i = 0; i < all.count(); i++)
+        index[all[i].run] = i;
+    for (Run &r : all)
+    {
+        if (!r.added.isEmpty() || r.run.length() <= 5)
+            continue;
+        const int first = index.value(r.run.left(r.run.length() - 5), -1);
+        bool ok = false;
+        const int count = r.run.right(5).toInt(&ok);
+        if (!ok || first < 0 || count < 2 || first + count > all.count())
+            continue;
+        double duration = 0;
+        QStringList parts;
+        for (int k = first; k < first + count; k++)
+        {
+            duration += all[k].duration;
+            parts << all[k].run;
+        }
+        if (std::abs(duration - r.duration) <= 1e-6 * std::max(1.0, r.duration))
+            r.added = parts;
     }
     if (!filtered)
         return all;
@@ -1903,7 +1959,8 @@ QVariantMap runInfo(const DanAuto::Run &r)
             {"polarization", r.polarization},
             {"attenuator", r.attenuator},
             {"detectorX", r.detectorX},
-            {"detectorY", r.detectorY}};
+            {"detectorY", r.detectorY},
+            {"added", r.added}};
 }
 
 // the runs given (all of the folder when none), in the folder's order
@@ -1937,9 +1994,26 @@ QStringList DanRawdata::runs(int minDuration, int minCounts, const QString &file
 
 QVariantList DanRawdata::info(const QStringList &runs)
 {
+    m_lastError.clear();
+    const QList<DanAuto::Run> found = selected(DanAuto(d), runs, false);
+    // a run asked for and not found is an error (it was left out without a word)
+    const QStringList known = numbers(found);
+    QStringList missing;
+    for (const QString &run : runs)
+        if (!known.contains(run) && !missing.contains(run))
+            missing << run;
+    if (!missing.isEmpty())
+    {
+        fail("no run " + missing.join(", ") + " in " + d->filesManager->pathInString());
+        return {};
+    }
     QVariantList list;
-    for (const DanAuto::Run &r : selected(DanAuto(d), runs, false))
-        list << runInfo(r);
+    for (const DanAuto::Run &r : found)
+    {
+        QVariantMap one = runInfo(r);
+        one["files"] = filesOf(r.run);
+        list << one;
+    }
     return list;
 }
 
@@ -1952,6 +2026,118 @@ QVariantList DanRawdata::conditions(const QStringList &runs)
         const DanAuto::Run &r = g.first();
         list << QVariantMap{{"label", a.label(r)},           {"C", r.C},          {"D", r.D}, {"lambda", r.lambda},
                             {"beamSize", r.CA + "|" + r.SA}, {"runs", numbers(g)}};
+    }
+    return list;
+}
+
+QVariantList DanRawdata::neighbours(int n, const QStringList &runs)
+{
+    return neighbours(n, runs, 2);
+}
+
+QVariantList DanRawdata::neighbours(int n, const QStringList &runs, int minimum)
+{
+    m_lastError.clear();
+    // n 0: every whole series (2 runs or more, as many as were measured); n >= 2: the series cut into groups of n
+    if (n == 1 || n < 0)
+    {
+        fail("n: None (the whole series) or 2 or more");
+        return {};
+    }
+    const DanAuto a(d);
+    // next to each other in the FOLDER: all its runs, those not asked for part a sequence
+    const QList<DanAuto::Run> found = a.runs(false);
+    const QStringList known = numbers(found);
+    for (const QString &run : runs)
+        if (!known.contains(run))
+        {
+            fail("no run " + run + " in " + d->filesManager->pathInString());
+            return {};
+        }
+    // the folder's order, without the runs made by adding (an added run between two would part them)
+    QList<DanAuto::Run> measured;
+    for (const DanAuto::Run &r : found)
+        if (r.added.isEmpty())
+            measured << r;
+    // DAN's configuration of each run
+    QHash<QString, int> condition;
+    const QList<QList<DanAuto::Run>> groups = a.conditions(measured);
+    for (int i = 0; i < groups.count(); i++)
+        for (const DanAuto::Run &r : groups[i])
+            condition[r.run] = i;
+    QVariantList list;
+    QList<DanAuto::Run> sequence;
+    auto close = [&]() {
+        // a whole series needs minimum runs (the merge-table button shows single runs too: 1)
+        const int size = n == 0 ? (sequence.count() >= minimum ? static_cast<int>(sequence.count()) : 0) : n;
+        for (int start = 0; size > 0 && start + size <= sequence.count(); start += size)
+        {
+            QStringList group;
+            for (int k = start; k < start + size; k++)
+                group << sequence[k].run;
+            list << QVariantMap{{"label", a.label(sequence[start])},
+                                {"condition", condition.value(sequence[start].run) + 1},
+                                {"sample", sequence[start].sample},
+                                {"runs", group}};
+        }
+        sequence.clear();
+    };
+    for (const DanAuto::Run &r : measured)
+    {
+        if (!runs.isEmpty() && !runs.contains(r.run))
+        {
+            close();
+            continue;
+        }
+        if (!sequence.isEmpty() &&
+            (r.sample != sequence.last().sample || condition.value(r.run) != condition.value(sequence.last().run)))
+            close();
+        sequence << r;
+    }
+    close();
+    return list;
+}
+
+QVariantList DanRawdata::sampleGroups(const QStringList &runs)
+{
+    return sampleGroups(runs, 2);
+}
+
+QVariantList DanRawdata::sampleGroups(const QStringList &runs, int minimum)
+{
+    m_lastError.clear();
+    const DanAuto a(d);
+    const QList<DanAuto::Run> found = a.runs(false);
+    const QStringList known = numbers(found);
+    for (const QString &run : runs)
+        if (!known.contains(run))
+        {
+            fail("no run " + run + " in " + d->filesManager->pathInString());
+            return {};
+        }
+    QList<DanAuto::Run> measured;
+    for (const DanAuto::Run &r : found)
+        if (r.added.isEmpty() && (runs.isEmpty() || runs.contains(r.run)))
+            measured << r;
+    // DAN's configurations (numbered as conditions() lists them), then the sample in each, in the folder's order
+    const QList<QList<DanAuto::Run>> groups = a.conditions(measured);
+    QVariantList list;
+    for (int i = 0; i < groups.count(); i++)
+    {
+        QStringList samples;
+        QHash<QString, QStringList> bySample;
+        for (const DanAuto::Run &r : groups[i])
+        {
+            if (!bySample.contains(r.sample))
+                samples << r.sample;
+            bySample[r.sample] << r.run;
+        }
+        for (const QString &sample : samples)
+            if (bySample[sample].count() >= minimum)
+                list << QVariantMap{{"label", a.label(groups[i].first())},
+                                    {"condition", i + 1},
+                                    {"sample", sample},
+                                    {"runs", bySample[sample]}};
     }
     return list;
 }
