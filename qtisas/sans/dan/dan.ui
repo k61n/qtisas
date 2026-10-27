@@ -10,8 +10,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>618</width>
-    <height>813</height>
+    <width>823</width>
+    <height>839</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -520,7 +520,7 @@ top: 10px;
       <enum>QTabWidget::Rounded</enum>
      </property>
      <property name="currentIndex">
-      <number>4</number>
+      <number>0</number>
      </property>
      <property name="iconSize">
       <size>
@@ -35005,7 +35005,7 @@ left:10px;
           <enum>QTabWidget::West</enum>
          </property>
          <property name="currentIndex">
-          <number>0</number>
+          <number>1</number>
          </property>
          <widget class="QWidget" name="pageMask">
           <attribute name="title">
@@ -43771,8 +43771,11 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                     <string/>
                    </property>
                    <property name="icon">
-                    <iconset>
-                     <normaloff>:/sans-find.png</normaloff>:/sans-find.png</iconset>
+                    <iconset resource="../../icons/icons/icons.qrc">
+                     <normaloff>:/sans-filesearch.png</normaloff>:/sans-filesearch.png</iconset>
+                   </property>
+                   <property name="toolButtonStyle">
+                    <enum>Qt::ToolButtonIconOnly</enum>
                    </property>
                   </widget>
                  </item>
@@ -43853,8 +43856,8 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                     <string/>
                    </property>
                    <property name="icon">
-                    <iconset>
-                     <normaloff>:/sans-find.png</normaloff>:/sans-find.png</iconset>
+                    <iconset resource="../../icons/icons/icons.qrc">
+                     <normaloff>:/sans-filesearch.png</normaloff>:/sans-filesearch.png</iconset>
                    </property>
                   </widget>
                  </item>
@@ -43926,8 +43929,8 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                     <string/>
                    </property>
                    <property name="icon">
-                    <iconset>
-                     <normaloff>:/sans-find.png</normaloff>:/sans-find.png</iconset>
+                    <iconset resource="../../icons/icons/icons.qrc">
+                     <normaloff>:/sans-filesearch.png</normaloff>:/sans-filesearch.png</iconset>
                    </property>
                   </widget>
                  </item>
@@ -73579,7 +73582,7 @@ p, li { white-space: pre-wrap; }
          <number>1</number>
         </property>
         <property name="text">
-         <string>v.7.7-29.09.2026</string>
+         <string>v.8.0-21.10.2026</string>
         </property>
         <property name="alignment">
          <set>Qt::AlignCenter</set>
