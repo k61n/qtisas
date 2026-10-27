@@ -111,18 +111,22 @@ void dan18::saveSensAs(QString sensName)
 //+++ save Sens
 void dan18::saveSensFull()
 {
-    QString Dir = filesManager->pathInString();
-    int MD = lineEditMD->text().toInt();
-
     QString sensName = comboBoxSensFor->currentText();
+    saveSensToFile(sensName, filesManager->pathInString() + sensName + ".sens");
+}
+bool dan18::saveSensToFile(const QString &sensName, const QString &file)
+{
+    int MD = lineEditMD->text().toInt();
 
     gsl_matrix *sens = gsl_matrix_alloc(MD, MD);
     gsl_matrix_set_zero(sens);
 
-    if (make_GSL_Matrix_Symmetric(sensName, sens, MD))
-        saveMatrixToFile(Dir + sensName + ".sens", sens, MD);
+    bool ok = make_GSL_Matrix_Symmetric(sensName, sens, MD);
+    if (ok)
+        saveMatrixToFile(file, sens, MD);
 
     gsl_matrix_free(sens);
+    return ok;
 }
 //+++ load Sens
 void dan18::loadSensFull()
@@ -452,21 +456,15 @@ void dan18::createSensFull(const QString &sensName)
             makeMatrixSymmetric(sensErr, sensName + "Error", "DAN::Sensitivity::Error::" + QString::number(MD), MD);
         
         
-        QString maskRange;
-        maskRange = "|" + QString::number(spinBoxLTx->value());
-        maskRange += "|" + QString::number(spinBoxRBx->value());
-        maskRange += "|" + QString::number(spinBoxLTy->value());
-        maskRange += "|" + QString::number(spinBoxRBy->value());
-        maskRange += "|" + QString::number(spinBoxLTxBS->value());
-        maskRange += "|" + QString::number(spinBoxRBxBS->value());
-        maskRange += "|" + QString::number(spinBoxLTyBS->value());
-        maskRange += "|" + QString::number(spinBoxRByBS->value());
-        maskRange += "| " + lineEditDeadRows->text();
-        maskRange += "| " + lineEditDeadCols->text();
-        maskRange += "| " + lineEditMaskTriangles->text();
-        maskRange += "|";
+        // the pixels outside the error range masked in the mask too; its label (the parameters it was made with) kept,
+        // not the mask fields' values, which may be another mask's
+        QString maskLabel;
+        if (auto *w = app()->window(maskName))
+            maskLabel = w->windowLabel();
+        if (!maskLabel.startsWith("DAN::Mask::"))
+            maskLabel = this->maskLabel(false);
 
-        makeMatrixSymmetric(mask, maskName, "DAN::Mask::" + QString::number(MD) + maskRange, MD);
+        makeMatrixSymmetric(mask, maskName, maskLabel, MD);
         
         QString label = "DAN::Sensitivity::" + QString::number(MD) + "::Plexi::" + lineEditPlexiAnyD->text();
         label += "::EB::" + lineEditEBAnyD->text();

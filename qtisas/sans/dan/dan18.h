@@ -204,6 +204,7 @@ public:
     bool saveMaskToFile(const QString &maskName, const QString &file);
     // the label of a mask made from the Mask tab's fields
     QString maskLabel(bool transmission) const;
+    bool saveSensToFile(const QString &sensName, const QString &file);
     // a progress window over QtiSAS, also while a script runs (non-modal then, its events not taken: a long reduction
     // looked frozen); none while QtiSAS itself is hidden (test instances)
     void startProgress(QProgressDialog &progress);

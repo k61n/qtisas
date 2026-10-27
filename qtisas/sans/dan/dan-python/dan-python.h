@@ -13,6 +13,7 @@ Description: DAN-SANS Python interface: one object per tab (Dan.Options, Dan.Raw
 #include <QPair>
 #include <QStringList>
 #include <QVariantMap>
+#include <QtNumeric>
 
 class dan18;
 class QDoubleSpinBox;
@@ -174,12 +175,23 @@ class DanSensitivity : public DanPart
 
   public:
     using DanPart::DanPart;
+    // transmissionMode: empty (the number transmission), "measured" (the run against emptyBeam through the mask) or
+    // "formula" (T(lambda)), as the Transmission button; errorRange: (min, max) relative error in % of the pixels used,
+    // empty: as set; errorMatrix: -1 as set, 0/1; maskedValue: NaN as set
     QString newSensitivity(const QString &name, const QString &run, const QString &emptyBeam,
-                           const QString &darkCurrent, double transmission, const QString &mask);
+                           const QString &darkCurrent, double transmission, const QString &mask,
+                           const QString &transmissionMode = QString(), const QList<double> &errorRange = {},
+                           int errorMatrix = -1, double maskedValue = qQNaN());
+    // the sensitivity as a file; file empty: <input folder>/<sens>.sens, as the interface saves it
+    QString saveSensitivity(const QString &name, const QString &file);
     QString loadSensitivity(const QString &name, const QString &file);
     QStringList sensitivities() const;
     // the transmission of a run against an empty beam through a mask; dTr its error; false when none
     bool transmission(const QString &run, const QString &emptyBeam, const QString &mask, double &tr, double &dTr);
+
+  private:
+    // the masked pixels of a mask (0 when there is none)
+    int maskedPixels(const QString &mask) const;
 };
 
 // Data Processing tab: the table of configurations, script tables, the processing buttons

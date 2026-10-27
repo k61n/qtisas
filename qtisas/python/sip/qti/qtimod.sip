@@ -3892,10 +3892,54 @@ class DanSensitivity : DanPart /NoDefaultCtors/
 #include "dan-python.h"
 %End
 public:
-    QString newSensitivity(const QString &run, const QString &name = "sens", const QString &emptyBeam = QString(), const QString &darkCurrent = QString(), double transmission = 1.0, const QString &mask = "mask");
+    // transmission: a number, "measured" or "formula"; errorRange (min, max) in %, errorMatrix, maskedValue: None
+    // as set
+    QString newSensitivity(const QString &run, const QString &name = "sens", const QString &emptyBeam = QString(),
+                           const QString &darkCurrent = QString(), SIP_PYOBJECT transmission = Py_None,
+                           const QString &mask = "mask", SIP_PYOBJECT errorRange = Py_None,
+                           SIP_PYOBJECT errorMatrix = Py_None, SIP_PYOBJECT maskedValue = Py_None);
 %MethodCode
-    sipRes = new QString(sipCpp->newSensitivity(*a1, *a0, *a2, *a3, a4, *a5));
-    if (!(!sipRes->isEmpty())) {
+    double tr = 1.0, a = 0, b = 0, masked = qQNaN();
+    QString mode;
+    QList<double> range;
+    int errors = a7 == Py_None ? -1 : (PyObject_IsTrue(a7) ? 1 : 0);
+    bool ok = true;
+    if (a4 == Py_None)
+        tr = 1.0;
+    else if (PyUnicode_Check(a4))
+        mode = QString::fromUtf8(PyUnicode_AsUTF8(a4));
+    else if ((PyFloat_Check(a4) || PyLong_Check(a4)) && !PyBool_Check(a4))
+        tr = PyFloat_AsDouble(a4);
+    else {
+        PyErr_SetString(PyExc_TypeError, "transmission: a number, \"measured\" or \"formula\"");
+        ok = false;
+    }
+    if (ok && a6 != Py_None) {
+        ok = sipqti_pair(a6, &a, &b, "errorRange", false);
+        range << a << b;
+    }
+    if (ok && a8 != Py_None) {
+        ok = (PyFloat_Check(a8) || PyLong_Check(a8)) && !PyBool_Check(a8);
+        if (ok)
+            masked = PyFloat_AsDouble(a8);
+        else
+            PyErr_SetString(PyExc_TypeError, "maskedValue: a number or None");
+    }
+    if (!ok)
+        sipError = sipErrorFail;
+    else {
+        sipRes = new QString(sipCpp->newSensitivity(*a1, *a0, *a2, *a3, tr, *a5, mode, range, errors, masked));
+        if (sipRes->isEmpty()) {
+            PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+            sipError = sipErrorFail;
+        }
+    }
+%End
+    // file: None the input folder's <sens>.sens; a relative name in the input folder
+    QString saveSensitivity(const QString &name = "sens", const QString &file = QString());
+%MethodCode
+    sipRes = new QString(sipCpp->saveSensitivity(*a0, *a1));
+    if (sipRes->isEmpty()) {
         PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
         sipError = sipErrorFail;
     }

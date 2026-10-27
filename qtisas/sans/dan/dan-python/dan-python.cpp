@@ -13,6 +13,7 @@ Description: DAN-SANS Python interface: one object per tab (Dan.Options, Dan.Raw
 #include <QDoubleSpinBox>
 #include <QFileInfo>
 #include <QSet>
+#include <QSignalBlocker>
 #include <QTextStream>
 
 #include "Table.h"
@@ -573,8 +574,24 @@ QString DanMask::saveMask(const QString &mask, const QString &fileGiven)
 }
 
 //+++ DanSensitivity
+int DanSensitivity::maskedPixels(const QString &mask) const
+{
+    const int md = d->lineEditMD->text().toInt();
+    gsl_matrix *m = gsl_matrix_alloc(md, md);
+    gsl_matrix_set_zero(m);
+    int n = 0;
+    if (d->make_GSL_Matrix_Symmetric(mask, m, md))
+        for (int i = 0; i < md; i++)
+            for (int j = 0; j < md; j++)
+                n += gsl_matrix_get(m, i, j) == 0.0 ? 1 : 0;
+    gsl_matrix_free(m);
+    return n;
+}
+
 QString DanSensitivity::newSensitivity(const QString &name, const QString &run, const QString &emptyBeam,
-                                       const QString &darkCurrent, double transmission, const QString &mask)
+                                       const QString &darkCurrent, double transmission, const QString &mask,
+                                       const QString &transmissionMode, const QList<double> &errorRange,
+                                       int errorMatrix, double maskedValue)
 {
     if (name.isEmpty())
         return fail("no sensitivity name");
@@ -585,20 +602,79 @@ QString DanSensitivity::newSensitivity(const QString &name, const QString &run, 
             return fail("no run " + other + " in " + d->filesManager->pathInString());
     if (!isMask(mask))
         return fail("no mask " + mask);
+    if (!transmissionMode.isEmpty() && transmissionMode != "measured" && transmissionMode != "formula")
+        return fail(R"(transmission: a number, "measured" or "formula")");
+    if (transmissionMode.isEmpty() && (transmission <= 0 || transmission > 1))
+        return fail("transmission: 0 < Tr <= 1");
+    if (transmissionMode == "measured" && emptyBeam.isEmpty())
+        return fail(R"(transmission "measured": the empty beam is needed)");
+    if (!errorRange.isEmpty() &&
+        (errorRange.count() != 2 || errorRange[0] < 0 || errorRange[1] > 100 || errorRange[0] >= errorRange[1]))
+        return fail("errorRange: (min, max) in %, 0 <= min < max <= 100");
+    if (!std::isnan(maskedValue) && maskedValue < 0)
+        return fail("maskedValue: >= 0");
+
+    // begin() first: leaving the Mask tab activates "mask", the mask asked for is selected after it
+    begin();
     d->lineEditPlexiAnyD->setText(run);
     d->lineEditEBAnyD->setText(emptyBeam);
     d->lineEditBcAnyD->setText(darkCurrent);
-    d->lineEditTransAnyD->setText(QString::number(transmission, 'f', 4));
+    d->lineEditTransAnyD->setText(QString::number(transmissionMode.isEmpty() ? transmission : 1.0, 'f', 4));
     d->SensitivityLineEditCheck();
     d->buttonGroupSensanyD->setChecked(true);
     d->comboBoxMaskFor->setCurrentIndex(d->comboBoxMaskFor->findText(mask));
+    if (errorRange.count() == 2)
+    {
+        // both at once: checkErrorLimits() resets the pair to 0..100 whenever min >= max in between
+        const QSignalBlocker left(d->spinBoxErrLeftLimit), right(d->spinBoxErrRightLimit);
+        d->spinBoxErrLeftLimit->setValue(errorRange[0]);
+        d->spinBoxErrRightLimit->setValue(errorRange[1]);
+    }
+    if (errorMatrix >= 0)
+        d->checkBoxSensError->setChecked(errorMatrix == 1);
+    if (!std::isnan(maskedValue))
+        d->lineEditSensMaskedPixels->setText(QString::number(maskedValue));
+    if (!transmissionMode.isEmpty())
+    {
+        // the Transmission button: the formula T(lambda) when its option is checked, else measured
+        d->checkBoxSensTr->setChecked(transmissionMode == "formula");
+        d->calculateAnyTr();
+        const double tr = d->lineEditTransAnyD->text().toDouble();
+        if (tr <= 0 || tr > 1)
+        {
+            end(false, "transmission " + transmissionMode + ": " + d->lineEditTransAnyD->text() + " (0 < Tr <= 1)");
+            return {};
+        }
+    }
 
-    begin();
+    const int maskedBefore = maskedPixels(mask);
     d->saveSensAs(name);
     d->updateSensList();
     if (!end(isSens(name)))
         return {};
+    const int added = maskedPixels(mask) - maskedBefore;
+    if (added > 0)
+        m_lastMessages << QString("mask %1: %2 pixels with errors outside %3..%4 % masked")
+                              .arg(mask, QString::number(added), QString::number(d->spinBoxErrLeftLimit->value()),
+                                   QString::number(d->spinBoxErrRightLimit->value()));
     return name;
+}
+
+QString DanSensitivity::saveSensitivity(const QString &name, const QString &fileGiven)
+{
+    if (!isSens(name))
+        return fail("no sensitivity " + name);
+    const QString folder = d->filesManager->pathInString();
+    QString file = fileGiven.isEmpty() ? folder + name + ".sens" : expandHome(fileGiven);
+    if (QFileInfo(file).isRelative() && !folder.isEmpty())
+        file = QDir(folder).filePath(file);
+    if (!QFileInfo(QFileInfo(file).absolutePath()).isDir())
+        return fail("no folder " + QFileInfo(file).absolutePath());
+    begin();
+    const bool ok = d->saveSensToFile(name, file) && QFileInfo(file).isFile();
+    if (!end(ok, "the sensitivity was not saved to " + file))
+        return {};
+    return file;
 }
 
 QString DanSensitivity::loadSensitivity(const QString &name, const QString &fileGiven)
