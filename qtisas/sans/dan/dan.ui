@@ -29954,6 +29954,11 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                      </item>
                      <item>
                       <property name="text">
+                       <string>Polarization-Aliased</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
                        <string>Polarizer-Polarization</string>
                       </property>
                      </item>

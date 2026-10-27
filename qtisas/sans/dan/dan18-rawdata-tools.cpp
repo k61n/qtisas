@@ -1621,6 +1621,12 @@ void dan18::check(QString NumberIn, bool fromComboBox, QString whatToCheck)
     {
         lineEditCheckRes->setText(collimation->readPolarization(Number));
     }
+    else if (whatToCheck == "Polarization-Aliased")
+    {
+        QString polarization = collimation->readPolarization(Number);
+        polarizedAlias(polarization);
+        lineEditCheckRes->setText(polarization);
+    }
     else if (whatToCheck == "Polarizer-Polarization")
     {
         lineEditCheckRes->setText(QString::number(

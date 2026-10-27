@@ -221,32 +221,38 @@ int dan18::polarizedAlias(QString &valueFromHeader) const
         valueFromHeader = "out";
         return 0;
     }
-    if (valueFromHeader.contains(lineEditDownUp->text()))
+    if (valueFromHeader.contains(
+            QRegularExpression(QRegularExpression::wildcardToRegularExpression(lineEditDownUp->text()))))
     {
         valueFromHeader = "down-up";
         return 6;
     }
-    if (valueFromHeader.contains(lineEditDownDown->text()))
+    if (valueFromHeader.contains(
+            QRegularExpression(QRegularExpression::wildcardToRegularExpression(lineEditDownDown->text()))))
     {
         valueFromHeader = "down-down";
         return 5;
     }
-    if (valueFromHeader.contains(lineEditUpDown->text()))
+    if (valueFromHeader.contains(
+            QRegularExpression(QRegularExpression::wildcardToRegularExpression(lineEditUpDown->text()))))
     {
         valueFromHeader = "up-down";
         return 4;
     }
-    if (valueFromHeader.contains(lineEditUpUp->text()))
+    if (valueFromHeader.contains(
+            QRegularExpression(QRegularExpression::wildcardToRegularExpression(lineEditUpUp->text()))))
     {
         valueFromHeader = "up-up";
         return 3;
     }
-    if (valueFromHeader.contains(lineEditDown->text()))
+    if (valueFromHeader.contains(
+            QRegularExpression(QRegularExpression::wildcardToRegularExpression(lineEditDown->text()))))
     {
         valueFromHeader = "down";
         return 2;
     }
-    if (valueFromHeader.contains(lineEditUp->text()))
+    if (valueFromHeader.contains(
+            QRegularExpression(QRegularExpression::wildcardToRegularExpression(lineEditUp->text()))))
     {
         valueFromHeader = "up";
         return 1;

@@ -64,6 +64,12 @@ QString dan18::getHeaderInfoString(QString number, QString name)
         return QString::number(monitors->readMonitor3(number));
     if (name == "Polarization")
         return collimation->readPolarization(number);
+    if (name == "Polarization-Aliased")
+    {
+        QString polarization = collimation->readPolarization(number);
+        polarizedAlias(polarization);
+        return polarization;
+    }
     if (name == "Polarizer-Polarization")
         return QString::number(
             polarizationSelector->getValue(selector->readLambda(number, monitors->readDuration(number)), number));
@@ -255,10 +261,25 @@ void dan18::addColToInfoExtractor()
     tableDat->setColComment(initNumberCols, what2add);
     tableDat->setColName(initNumberCols,generateUniqueStringInList (tableDat->colNames(), comboBoxInfoExtractorCol->currentText()));
 
-    QStringList lstTextType{
-        "Sample",       "Beam",   "Date",      "Time",           "Comment1",       "Comment2",          "Name",
-        "Who",          "Files",  "RT-number", "RT-Time-Factor", "RT-Repetitions", "RT-Frame-Duration", "Attenuator",
-        "Polarization", "Lenses", "Runs",      "File-Names"};
+    QStringList lstTextType{"Sample",
+                            "Beam",
+                            "Date",
+                            "Time",
+                            "Comment1",
+                            "Comment2",
+                            "Name",
+                            "Who",
+                            "Files",
+                            "RT-number",
+                            "RT-Time-Factor",
+                            "RT-Repetitions",
+                            "RT-Frame-Duration",
+                            "Attenuator",
+                            "Polarization",
+                            "Polarization-Aliased",
+                            "Lenses",
+                            "Runs",
+                            "File-Names"};
 
     QStringList lstNumericType{"C",
                                "D",
@@ -575,6 +596,7 @@ void dan18::extractorInit()
     lst << "Field-4";
     lst << "Attenuator";
     lst << "Polarization";
+    lst << "Polarization-Aliased";
     lst << "Polarizer-Polarization";
     lst << "Polarizer-Transmission";
     lst << "Polarizer-Flipper-Efficiency";
