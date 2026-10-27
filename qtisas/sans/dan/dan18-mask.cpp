@@ -188,19 +188,6 @@ void dan18::createMaskFull(const QString &maskName)
     if (checkBoxSortOutputToFolders->isChecked() && !neededMaskExists(MD, maskName))
         app()->changeFolder("DAN :: mask, sens");
     
-    QString maskRange;
-    maskRange = "|" + QString::number(spinBoxLTx->value());
-    maskRange += "|" + QString::number(spinBoxRBx->value());
-    maskRange += "|" + QString::number(spinBoxLTy->value());
-    maskRange += "|" + QString::number(spinBoxRBy->value());
-    maskRange += "|" + QString::number(spinBoxLTxBS->value());
-    maskRange += "|" + QString::number(spinBoxRBxBS->value());
-    maskRange += "|" + QString::number(spinBoxLTyBS->value());
-    maskRange += "|" + QString::number(spinBoxRByBS->value());
-    maskRange += "| " + lineEditDeadRows->text();
-    maskRange += "| " + lineEditDeadCols->text();
-    maskRange += "| " + lineEditMaskTriangles->text();
-    maskRange += "|";
 
     Matrix *m;
     bool matrixExists = false;
@@ -220,7 +207,7 @@ void dan18::createMaskFull(const QString &maskName)
     m->setNumericFormat('f', 0);
     m->setCoordinates(1, MD, 1, MD);
 
-    QString label = "DAN::Mask::" + QString::number(MD) + maskRange;
+    QString label = maskLabel(false);
     m->setWindowLabel(label);
     app()->setListViewLabel(maskName, label);
     
@@ -401,19 +388,6 @@ void dan18::createMaskFullTr(const QString &maskName)
     if (cfbool)
         app()->changeFolder("DAN :: mask, sens");
 
-    QString maskRange;
-    maskRange = "|" + QString::number(spinBoxLTx->value());
-    maskRange += "|" + QString::number(spinBoxRBx->value());
-    maskRange += "|" + QString::number(spinBoxLTy->value());
-    maskRange += "|" + QString::number(spinBoxRBy->value());
-    maskRange += "|" + QString::number(spinBoxLTxBS->value());
-    maskRange += "|" + QString::number(spinBoxRBxBS->value());
-    maskRange += "|" + QString::number(spinBoxLTyBS->value());
-    maskRange += "|" + QString::number(spinBoxRByBS->value());
-    maskRange += "| " + lineEditDeadRows->text();
-    maskRange += "| " + lineEditDeadCols->text();
-    maskRange += "| " + lineEditMaskTriangles->text();
-    maskRange += "|";
 
     Matrix *m;
     bool matrixExists = false;
@@ -433,7 +407,7 @@ void dan18::createMaskFullTr(const QString &maskName)
     m->setNumericFormat('f', 0);
     m->setCoordinates(1, MD, 1, MD);
 
-    QString label = "DAN::Mask::" + QString::number(MD) + maskRange;
+    QString label = maskLabel(true);
     m->setWindowLabel(label);
     app()->setListViewLabel(maskName, label);
 
@@ -672,6 +646,26 @@ bool dan18::maskTriangle(Matrix *m, int md, int x1, int y1, int x2, int y2, int 
     return true;    
 }
 //+++
+//+++ a mask's label: "DAN::Mask::<MD>|edge x1|x2|y1|y2|beam stop x1|x2|y1|y2| dead rows| dead cols| triangles|"
+//+++ (each text field after a space, so an empty one is not lost when the label is split), then the switches and
+//+++ shapes "Edge:Yes|BeamStop:No|EdgeShape:rectangle|BeamStopShape:ellipse|Transmission:No|" (before: not kept)
+QString dan18::maskLabel(bool transmission) const
+{
+    QString label = "DAN::Mask::" + lineEditMD->text();
+    for (const QSpinBox *box :
+         {spinBoxLTx, spinBoxRBx, spinBoxLTy, spinBoxRBy, spinBoxLTxBS, spinBoxRBxBS, spinBoxLTyBS, spinBoxRByBS})
+        label += "|" + QString::number(box->value());
+    label += "| " + lineEditDeadRows->text().trimmed();
+    label += "| " + lineEditDeadCols->text().trimmed();
+    label += "| " + lineEditMaskTriangles->text().trimmed();
+    label += QString("|Edge:%1").arg(groupBoxMask->isChecked() ? "Yes" : "No");
+    label += QString("|BeamStop:%1").arg(groupBoxMaskBS->isChecked() ? "Yes" : "No");
+    label += QString("|EdgeShape:%1").arg(comboBoxMaskEdgeShape->currentIndex() == 1 ? "ellipse" : "rectangle");
+    label += QString("|BeamStopShape:%1").arg(comboBoxMaskBeamstopShape->currentIndex() == 1 ? "ellipse" : "rectangle");
+    label += QString("|Transmission:%1|").arg(transmission ? "Yes" : "No");
+    return label;
+}
+
 void dan18::readMaskParaFromMaskMatrix(const QString &name)
 {
     int MD = lineEditMD->text().toInt();
@@ -699,9 +693,23 @@ void dan18::readMaskParaFromMaskMatrix(const QString &name)
 
                 if (lst.count() >= 11)
                 {
-                    lineEditDeadRows->setText(lst[8]);
-                    lineEditDeadCols->setText(lst[9]);
-                    lineEditMaskTriangles->setText(lst[10]);
+                    lineEditDeadRows->setText(lst[8].trimmed());
+                    lineEditDeadCols->setText(lst[9].trimmed());
+                    lineEditMaskTriangles->setText(lst[10].trimmed());
+                }
+                // the switches and shapes of a newer label (an older one has none: they stay as they are)
+                for (int i = 11; i < lst.count(); i++)
+                {
+                    const QString key = lst[i].section(':', 0, 0).trimmed();
+                    const QString value = lst[i].section(':', 1).trimmed();
+                    if (key == "Edge")
+                        groupBoxMask->setChecked(value == "Yes");
+                    else if (key == "BeamStop")
+                        groupBoxMaskBS->setChecked(value == "Yes");
+                    else if (key == "EdgeShape")
+                        comboBoxMaskEdgeShape->setCurrentIndex(value == "ellipse" ? 1 : 0);
+                    else if (key == "BeamStopShape")
+                        comboBoxMaskBeamstopShape->setCurrentIndex(value == "ellipse" ? 1 : 0);
                 }
             }
             return;

@@ -643,6 +643,16 @@ void dan18::saveScriptSettings(QString tableName)
     w->setText(currentRow, 1, s);
     currentRow++;
     
+    //----- Mask::Edges::Status, Mask::BeamStop::Status: the edge and the beam stop switched on (before: not kept)
+    for (const auto &[key, box] : {std::pair<QString, QGroupBox *>{"Mask::Edges::Status", groupBoxMask},
+                                   std::pair<QString, QGroupBox *>{"Mask::BeamStop::Status", groupBoxMaskBS}})
+    {
+        w->setNumRows(currentRow + 1);
+        w->setText(currentRow, 0, key);
+        w->setText(currentRow, 1, QString(box->isChecked() ? "Yes" : "No") + " <");
+        currentRow++;
+    }
+
     //----- Mask::Dead::Rows 
     w->setNumRows(currentRow+1);
     s=lineEditDeadRows->text()+" <";
@@ -1711,6 +1721,14 @@ bool dan18::readSettingNew(QString tableName)
         else
             comboBoxMaskBeamstopShape->setCurrentIndex(1);
     }
+
+    //+++ Mask::Edges::Status, Mask::BeamStop::Status (none in an older session: they stay as they are)
+    index = static_cast<int>(parameters.indexOf("Mask::Edges::Status"));
+    if (index >= 0)
+        groupBoxMask->setChecked(w->text(index, 1).contains("Yes"));
+    index = static_cast<int>(parameters.indexOf("Mask::BeamStop::Status"));
+    if (index >= 0)
+        groupBoxMaskBS->setChecked(w->text(index, 1).contains("Yes"));
 
     //+++ Mask::Dead::Rows
     index = static_cast<int>(parameters.indexOf("Mask::Dead::Rows"));
