@@ -34,12 +34,12 @@
     {
       "text": "Radially average all runs of the script table into the project. Print the number of I[Q] tables made and the number of points of the table of run 53227.",
       "expected": "9 74",
-      "hint": "Dan.Processing.run(\"script\"): tables QI-SM-<run>-<sample> plus script-mergingTemplate (not an I[Q] table)"
+      "hint": "Dan.Processing.process(\"script\"): tables QI-SM-<run>-<sample> plus script-mergingTemplate (not an I[Q] table)"
     },
     {
       "text": "Merge the three configurations of each sample with the merging template of the script table. Print the number of merged tables, the number of points of the merged H-L, its first Q rounded to 4 decimals and its first intensity rounded to 1 decimal.",
       "expected": "3 164 0.0032 711.1",
-      "hint": "Dan.Merge.run(\"script-mergingTemplate\") -> H-J, H-L, H-M"
+      "hint": "Dan.Merge.join(\"script-mergingTemplate\") -> H-J, H-L, H-M"
     },
     {
       "text": "Rename the three merged KWS-1 tables to KWS1-H-J, KWS1-H-L and KWS1-H-M. Print the names of all tables starting with KWS1-, sorted.",
@@ -66,17 +66,17 @@
     {
       "text": "Scale the 1.2 m rows of script3 to the 9.2 m transmission of the same sample: add a column Scale with 1 for configuration 1 and Tr(configuration 2) / Tr(configuration 1) of the same sample for configuration 2. Remove the last 5 points of every I[Q], radially average script3 into the project and merge with its merging template. Print the number of points of the merged H-M, its first intensity rounded to an integer and its last intensity rounded to 3 decimals.",
       "expected": "229 11716934 2.517",
-      "hint": "Dan.Processing.Options.setRemovePoints(0, 5); Scale column by the table API; Dan.Merge.run(\"script3-mergingTemplate\")"
+      "hint": "Dan.Processing.Options.setRemovePoints(0, 5); Scale column by the table API; Dan.Merge.join(\"script3-mergingTemplate\")"
     },
     {
       "text": "Compare the merged KWS-3 curve H-J with the merged KWS-1 curve KWS1-H-J where they overlap, then join them into one table named H-J-both. Print the number of KWS1-H-J points in the overlap, the mean intensity ratio KWS1-H-J / H-J there rounded to 2 decimals, and the number of points of H-J-both.",
       "expected": "28 0.42 345",
-      "hint": "Dan.Merge.overlap(\"H-J\", \"KWS1-H-J\") -> (qMin, qMax, points, ratio); Dan.Merge.join"
+      "hint": "Dan.Merge.overlap(\"H-J\", \"KWS1-H-J\") -> (qMin, qMax, points, ratio); Dan.Merge.joinTables"
     },
     {
       "text": "Write the merged KWS-3 curves as ASCII files into the folder benchdata/dan/out in the home directory (merging template of script3). Print the number of files written and their file names, sorted.",
       "expected": "3 QI-MERGED-H-J.DAT QI-MERGED-H-L.DAT QI-MERGED-H-M.DAT",
-      "hint": "Dan.Options.setOutputPath; Dan.Merge.run(template, output=\"files\") -> the paths",
+      "hint": "Dan.Options.setOutputPath; Dan.Merge.join(template, output=\"files\") -> the paths",
       "verify": "import os\ncheck(len(os.listdir(os.path.expanduser(\"~/benchdata/dan/out/ASCII-QI-MERGED\"))))",
       "verified": "3"
     },
@@ -89,6 +89,21 @@
       "text": "Start a new KWS1-2020 session again (folder benchdata/dan/kws1, standard mask, sensitivity file sens-20200117.sens, the same three configurations as before: configuration 1 (C20D20): empty beam 53216, Plexiglas 53229 with its empty beam 53230, center from run 53218; configuration 2 (C8D8): empty beam 53220, Plexiglas 53224 with its empty beam 53225, center from 53222, the sample transmissions are measured in this configuration; configuration 3 (C8D2): empty beam 53225, Plexiglas 53224 with its empty beam 53225, center from 53227. The dark current (B4C) of all is run 48462; the empty beam of each configuration is also the empty cell for its Tr(EC -> EB)), but determine the beam centers by X-Y symmetrization. Print X and Y center of configuration 3 rounded to 2 decimals.",
       "expected": "73.78 85.61",
       "hint": "Dan.Options.Config.setCenterMethod(\"symmetry\") after selectInstrument, before calculate()"
+    },
+    {
+      "text": "Configure the DAN-SANS reduction of the data measured at the instrument KWS1-2020 in the folder benchdata/dan/kws1 automatically, only up to the script table auto1, ready for processing (no processing yet). Print the number of rows of auto1, then the empty beam, the calibrant and the center run of configuration 2.",
+      "expected": "9 53220 53224 53222",
+      "hint": "newSession/selectInstrument/setInputPath, then Dan.Processing.autoConfig(\"auto1\"); configuration(2)"
+    },
+    {
+      "text": "Process auto1 into I[Q] tables and merge them. Print the number of merged curves and the number of points of each.",
+      "expected": "3 164 164 164",
+      "hint": "Dan.Processing.process(\"auto1\"); Dan.Merge.join(\"auto1-mergingTemplate\")"
+    },
+    {
+      "text": "Reduce the data measured at the instrument KWS3-2020 in the folder benchdata/dan/kws3 automatically (script table auto3): configure, process into I[Q] and merge. Print the number of merged curves, the number of points of the first one, and the Scale of H-J at 1.2 m with 4 decimals.",
+      "expected": "3 229 1.4730",
+      "hint": "autoConfig(\"auto3\"), process(), Dan.Merge.join(); the Scale column of auto3"
     }
   ]
 }

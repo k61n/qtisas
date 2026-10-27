@@ -246,7 +246,7 @@ and 11 were reworded where both readings were fair (two *different* temperatures
 
 ## DAN and DAN HOLDOUT — the DAN-SANS module (coach M3)
 
-`dan.json` (16 items) and `dan_holdout.json` (4 items, never used to design doc fixes) test the SANS-reduction API
+`dan.json` (19 items) and `dan_holdout.json` (4 items, never used to design doc fixes) test the SANS-reduction API
 (`Dan.Options`, `Dan.Rawdata`, `Dan.Mask`, `Dan.Sensitivity`, `Dan.Processing`, `Dan.Merge`, see
 `python/doc/dan-python-api.md`) on the example data of qtisas.com/dan-sans, which the setup downloads once into
 `~/benchdata/dan/kws1`, `kws3`, `sans1` (data-kws1.zip, data-kws3.zip, data-sans1.zip). KWS-1 (items 1-8): the runs, a
@@ -255,10 +255,11 @@ table and transmissions, I[Q], the merge, the merged curves renamed; KWS-3 (9-14
 (standard, beam-stop, transmission) and a pure sensitivity run, the configurations with direct-beam calibration and
 their masks, the script table and transmissions, the 1.2 m data scaled to the 9.2 m transmission, the last 5 points
 removed, the join with KWS-1 and its overlap ratio, ASCII files; an unknown instrument (15); the center by X-Y
-symmetrization (16). The holdout is the SANS-1 example (water transmission and sensitivity, one configuration with water
+symmetrization (16); auto mode (17-19): KWS-1 configured to a script table, processed and merged, KWS-3 in one go with
+its Scale column. The holdout is the SANS-1 example (water transmission and sensitivity, one configuration with water
 calibration, a script table with thickness and transmissions set). The values are those of the qtisas.com projects
 (dan-example-kws1.qti and -kws3.qti, identical point by point); KWS-1 with today's centers (the H.F. center converges
-since 2026-10-20). Reference scripts: `reference/dan`, `reference/dan_holdout` — 16/16 and 4/4 (2026-10-21).
+since 2026-10-20). Reference scripts: `reference/dan`, `reference/dan_holdout` — 19/19 and 4/4 (2026-10-27).
 
 ## Multi-AI baseline — the status of the AI integration
 
