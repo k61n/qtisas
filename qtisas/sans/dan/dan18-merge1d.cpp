@@ -1036,6 +1036,7 @@ bool dan18::singleSampleMergeRebin(const QString &nameMerged, QStringList tables
 //+++ mergeMethod
 void dan18::mergeMethod(bool asciiYN)
 {
+    m_mergedNames.clear();
     //+++ current folder
     auto *cf = (Folder *)app()->current_folder;
 
@@ -1081,15 +1082,17 @@ void dan18::mergeMethod(bool asciiYN)
             danMessage(tr("<h4>Select active merging table...</h4>"));
             return;
         }
+        // M: the tables per sample (the first column or row is the samples' names), N: the samples — the last
+        // sample was left out, and a column past the table read
         if (velticalYN)
         {
-            M = activeTable->numRows();
-            N = activeTable->numCols() - 1;
+            M = activeTable->numRows() - 1;
+            N = activeTable->numCols();
         }
         else
         {
-            M = activeTable->numCols();
-            N = activeTable->numRows() - 1;
+            M = activeTable->numCols() - 1;
+            N = activeTable->numRows();
         }
         select = activeTable->table()->selectionModel();
     }
@@ -1158,7 +1161,10 @@ void dan18::mergeMethod(bool asciiYN)
                 continue;
         }
 
-        saveMergedMatrix(nameMerged, labelList, data, Nall, dIExist, dQExist, sigmaExist, anisotropyExist, asciiYN);
+        if (const QString made = saveMergedMatrix(nameMerged, labelList, data, Nall, dIExist, dQExist, sigmaExist,
+                                                  anisotropyExist, asciiYN);
+            !made.isEmpty())
+            m_mergedNames << made;
 
         gsl_matrix_free(data);
 

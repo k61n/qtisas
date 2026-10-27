@@ -721,7 +721,7 @@ static QStringList filesIn(const QString &folder)
     return files;
 }
 
-QStringList DanProcessing::run(const QString &scriptTable, const QString &kind, const QString &output)
+QStringList DanProcessing::process(const QString &scriptTable, const QString &kind, const QString &output)
 {
     static const QStringList kinds = {"I-Q",       "I-x-y", "dI-x-y", "I-Qx",   "I-Qy",
                                       "Sigma-x-y", "Q-x-y", "dQ-x-y", "I-Polar"};
@@ -762,90 +762,61 @@ QStringList DanProcessing::run(const QString &scriptTable, const QString &kind, 
 }
 
 //+++ DanMerge
-QString DanMerge::mergeOne(const QString &name, const QStringList &tables, bool join, bool ascii)
-{
-    gsl_matrix *data = nullptr;
-    int n = 0;
-    bool dIExist, dQExist, sigmaExist, anisotropyExist;
-    QString labelList;
-    const bool ok =
-        join ? d->singleSampleMergeJoin(name, tables, labelList, data, n, dIExist, dQExist, sigmaExist, anisotropyExist)
-             : d->singleSampleMergeRebin(name, tables, labelList, data, n, dIExist, dQExist, sigmaExist,
-                                         anisotropyExist);
-    if (!ok)
-        return {};
-    const QString made =
-        d->saveMergedMatrix(name, labelList, data, n, dIExist, dQExist, sigmaExist, anisotropyExist, ascii);
-    gsl_matrix_free(data);
-    return made;
-}
-
-QStringList DanMerge::run(const QString &templateTable, const QString &method, int overlap, int removeFirst,
-                          int removeLast, const QString &output)
+// the template as the project table to merge from, the page and its options set by the caller; the merge button
+QStringList DanMerge::mergeTemplate(const QString &templateTable, int removeFirst, int removeLast,
+                                    const QString &output)
 {
     Table *t = nullptr;
     if (!d->app()->checkTableExistence(templateTable, t))
-    {
-        m_lastError = "no merging template " + templateTable;
-        return {};
-    }
-    if (method != "join" && method != "rebin")
-    {
-        m_lastError = "method: join or rebin";
-        return {};
-    }
+        return {fail("no merging template " + templateTable)};
     if (output != "project" && output != "files")
-    {
-        m_lastError = "output: project or files";
-        return {};
-    }
-    if (overlap < 0 || overlap > 100 || removeFirst < 0 || removeLast < 0)
-    {
-        m_lastError = "overlap 0..100 %, points to remove 0 or more";
-        return {};
-    }
-    d->spinBoxOverlap->setValue(overlap);
+        return {fail("output: project or files")};
+    if (removeFirst < 0 || removeLast < 0)
+        return {fail("points to remove: 0 or more")};
     d->spinBoxRemoveFirstMerging->setValue(removeFirst);
     d->spinBoxRemoveLastMerging->setValue(removeLast);
-    d->toolBoxMerge->setCurrentIndex(method == "join" ? 0 : 1);
-    const bool ascii = output == "files";
-
+    d->checkBoxMergeVertical->setChecked(false);
+    d->checkBoxMergeFromProjectTable->setChecked(true);
+    d->lineEditCheckMergeActiveTable->setText(templateTable);
+    t->table()->clearSelection(); // a selection merges only its rows
     begin();
-    auto *folder = d->app()->current_folder;
-    if (ascii)
-    {
-        QDir dir(d->filesManager->pathOutString());
-        if (!dir.exists("ASCII-QI-MERGED"))
-            dir.mkdir("ASCII-QI-MERGED");
-    }
-    else
-        d->app()->changeFolder("DAN :: Merge.1D");
-    QStringList made;
-    for (int row = 0; row < t->numRows(); row++)
-    {
-        QString name = t->text(row, 0).simplified();
-        name = name.replace(" ", "-").replace("/", "-").replace("_", "-").replace(",", "-").replace(".", "-");
-        name.remove("%");
-        if (name.isEmpty())
-            name = "merged-" + QString::number(row + 1);
-        QStringList tables;
-        for (int col = 1; col < t->numCols(); col++)
-            if (!t->text(row, col).trimmed().isEmpty() && d->app()->checkTableExistence(t->text(row, col).trimmed()))
-                tables << t->text(row, col).trimmed();
-        if (tables.isEmpty())
-            continue;
-        const QString one = mergeOne(name, tables, method == "join", ascii);
-        if (!one.isEmpty())
-            made << one;
-    }
-    if (!ascii)
-        d->app()->changeFolder(folder, true);
-    if (!end(!made.isEmpty(), "nothing to merge in " + templateTable))
+    d->mergeMethod(output == "files");
+    if (!end(!d->m_mergedNames.isEmpty(),
+             "nothing to merge in " + templateTable + " (one table per sample: one configuration)"))
         return {};
-    return made;
+    return d->m_mergedNames;
 }
 
-QString DanMerge::join(const QString &name, const QStringList &tables, int overlap)
+QStringList DanMerge::join(const QString &templateTable, int overlap, int removeFirst, int removeLast,
+                           const QString &output, bool smart)
+{
+    if (overlap < 0 || overlap > 100)
+        return {fail("overlap 0..100 %")};
+    d->toolBoxMerge->setCurrentIndex(0);
+    d->spinBoxOverlap->setValue(overlap);
+    // set by the call, never left from the interface: absolute curves are not scaled unless asked for
+    d->checkBoxSmart->setChecked(smart);
+    return mergeTemplate(templateTable, removeFirst, removeLast, output);
+}
+
+QStringList DanMerge::rebin(const QString &templateTable, int points, bool manual, double qMin, double qMax,
+                            int logStep, int removeFirst, int removeLast, const QString &output)
+{
+    d->toolBoxMerge->setCurrentIndex(1);
+    if (points > 0)
+        d->spinBoxRebinPoints->setValue(points);
+    if (logStep >= 0)
+        d->checkBoxLogStepRebin->setChecked(logStep > 0);
+    (manual ? d->radioButtonQrangeManual : d->radioButton)->setChecked(true);
+    if (manual)
+    {
+        d->spinBoxRebinQmin->setValue(qMin);
+        d->spinBoxRebinQmax->setValue(qMax);
+    }
+    return mergeTemplate(templateTable, removeFirst, removeLast, output);
+}
+
+QString DanMerge::joinTables(const QString &name, const QStringList &tables, int overlap)
 {
     if (name.isEmpty())
         return fail("no name");
@@ -856,17 +827,34 @@ QString DanMerge::join(const QString &name, const QStringList &tables, int overl
             return fail("no table " + table);
     if (overlap < 0 || overlap > 100)
         return fail("overlap 0..100 %");
+    // as in the interface: the tab's own merging table, one row, a column per table, then the merge button
+    d->toolBoxMerge->setCurrentIndex(0);
     d->spinBoxOverlap->setValue(overlap);
+    d->checkBoxSmart->setChecked(false); // joined as they are (absolute units)
     d->spinBoxRemoveFirstMerging->setValue(0);
     d->spinBoxRemoveLastMerging->setValue(0);
+    d->checkBoxMergeFromTable->setChecked(true);
+    d->lineEditFilter->setText("*");
+    d->spinBoxMmergingCond->setValue(1);
+    d->spinBoxNtoMerge->setValue(int(tables.count()));
+    d->updateListOfTables();
+    d->tableMerge->clearSelection();
+    if (!d->tableMerge->item(0, 0))
+        d->tableMerge->setItem(0, 0, new QTableWidgetItem);
+    d->tableMerge->item(0, 0)->setText(name);
+    for (int i = 0; i < tables.count(); i++)
+    {
+        auto *box = qobject_cast<QComboBox *>(d->tableMerge->cellWidget(0, i + 1));
+        const int index = box ? box->findText(tables[i], Qt::MatchExactly) : -1;
+        if (index <= 0)
+            return fail("no table " + tables[i] + " in the Merge tab's list");
+        box->setCurrentIndex(index);
+    }
     begin();
-    auto *folder = d->app()->current_folder;
-    d->app()->changeFolder("DAN :: Merge.1D");
-    QString made = mergeOne(name, tables, true, false);
-    d->app()->changeFolder(folder, true);
-    if (!end(!made.isEmpty()))
+    d->mergeMethod(false);
+    if (!end(!d->m_mergedNames.isEmpty(), "nothing joined"))
         return {};
-    return made;
+    return d->m_mergedNames.first();
 }
 
 // (Q, I) of a table's rows with both numeric and I > 0, sorted by Q

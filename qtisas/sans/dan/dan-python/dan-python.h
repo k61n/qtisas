@@ -184,7 +184,7 @@ class DanProcessing : public DanPart
     bool calculate();
     QString newScriptTable(const QString &name, const QStringList &runs);
     bool calculateTransmissions(const QString &scriptTable);
-    QStringList run(const QString &scriptTable, const QString &kind, const QString &output);
+    QStringList process(const QString &scriptTable, const QString &kind, const QString &output);
 
   private:
     bool selectScriptTable(const QString &name);
@@ -217,14 +217,21 @@ class DanMerge : public DanPart
 
   public:
     using DanPart::DanPart;
-    QStringList run(const QString &templateTable, const QString &method, int overlap, int removeFirst, int removeLast,
-                    const QString &output);
-    QString join(const QString &name, const QStringList &tables, int overlap);
+    // the Merge tab's Join page with the template as the project table, then Merge (output "project") or Merge ASCII
+    // ("files"); smart: the curves scaled to each other in their overlap ("Smart"); the merged tables (or files)
+    QStringList join(const QString &templateTable, int overlap, int removeFirst, int removeLast, const QString &output,
+                     bool smart);
+    // the Rebin page: points < 1 and logStep < 0 keep the page's values; manual: the Q range qMin..qMax, else the
+    // data's
+    QStringList rebin(const QString &templateTable, int points, bool manual, double qMin, double qMax, int logStep,
+                      int removeFirst, int removeLast, const QString &output);
+    // any tables joined into one curve, through the tab's own merging table (one row): its name
+    QString joinTables(const QString &name, const QStringList &tables, int overlap);
     // where two curves overlap: Q range, number of points of the second inside it, mean ratio second/first
     bool overlap(const QString &first, const QString &second, double &qMin, double &qMax, int &points, double &ratio);
 
   private:
-    QString mergeOne(const QString &name, const QStringList &tables, bool join, bool ascii);
+    QStringList mergeTemplate(const QString &templateTable, int removeFirst, int removeLast, const QString &output);
 };
 
 #endif

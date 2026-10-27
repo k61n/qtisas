@@ -3921,13 +3921,13 @@ public:
         sipError = sipErrorFail;
     }
 %End
-    QStringList run(SIP_PYOBJECT scriptTable, const QString &kind = "I-Q", const QString &output = "project");
+    QStringList process(SIP_PYOBJECT scriptTable, const QString &kind = "I-Q", const QString &output = "project");
 %MethodCode
     QString name;
     if (!sipqti_name(a0, &name, "scriptTable: the script table's name"))
         sipError = sipErrorFail;
     else {
-        sipRes = new QStringList(sipCpp->run(name, *a1, *a2));
+        sipRes = new QStringList(sipCpp->process(name, *a1, *a2));
         if (sipRes->isEmpty() && !sipCpp->lastError().isEmpty()) {
             PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
             sipError = sipErrorFail;
@@ -3942,27 +3942,54 @@ class DanMerge : DanPart /NoDefaultCtors/
 #include "dan-python.h"
 %End
 public:
-    QStringList run(SIP_PYOBJECT templateTable, const QString &method = "join", int overlap = 30, int removeFirst = 0, int removeLast = 0, const QString &output = "project");
+    // the Join page, then Merge (output "project") or Merge ASCII ("files"); smart: scaled to each other in the overlap
+    QStringList join(SIP_PYOBJECT templateTable, int overlap = 30, bool smart = false, int removeFirst = 0,
+                     int removeLast = 0, const QString &output = "project");
 %MethodCode
     QString name;
     if (!sipqti_name(a0, &name, "templateTable: the merging template's name"))
         sipError = sipErrorFail;
     else {
-        sipRes = new QStringList(sipCpp->run(name, *a1, a2, a3, a4, *a5));
-        if (sipRes->isEmpty() && !sipCpp->lastError().isEmpty()) {
+        sipRes = new QStringList(sipCpp->join(name, a1, a3, a4, *a5, a2));
+        if (sipRes->isEmpty()) {
             PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
             sipError = sipErrorFail;
         }
     }
 %End
-    QString join(const QString &name, SIP_PYOBJECT tables, int overlap = 30);
+    // the Rebin page: points and logStep None keep the page's values; qMin and qMax: the Q range (None: the data's)
+    QStringList rebin(SIP_PYOBJECT templateTable, SIP_PYOBJECT points = Py_None, SIP_PYOBJECT qMin = Py_None,
+                      SIP_PYOBJECT qMax = Py_None, SIP_PYOBJECT logStep = Py_None, int removeFirst = 0,
+                      int removeLast = 0, const QString &output = "project");
+%MethodCode
+    QString name;
+    const bool manual = a2 != Py_None && a3 != Py_None;
+    if (!sipqti_name(a0, &name, "templateTable: the merging template's name"))
+        sipError = sipErrorFail;
+    else if ((a2 == Py_None) != (a3 == Py_None)) {
+        PyErr_SetString(PyExc_ValueError, "qMin and qMax: both or none");
+        sipError = sipErrorFail;
+    }
+    else {
+        const int points = a1 == Py_None ? -1 : int(PyLong_AsLong(a1));
+        const int logStep = a4 == Py_None ? -1 : (PyObject_IsTrue(a4) ? 1 : 0);
+        sipRes = new QStringList(sipCpp->rebin(name, points, manual, manual ? PyFloat_AsDouble(a2) : 0.0,
+                                               manual ? PyFloat_AsDouble(a3) : 0.0, logStep, a5, a6, *a7));
+        if (sipRes->isEmpty()) {
+            PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+            sipError = sipErrorFail;
+        }
+    }
+%End
+    // any tables joined into one curve (e.g. KWS-1 and KWS-3), through the tab's own merging table
+    QString joinTables(const QString &name, SIP_PYOBJECT tables, int overlap = 30);
 %MethodCode
     QStringList tables;
     if (!sipqti_strings(a1, &tables, "tables: table names"))
         sipError = sipErrorFail;
     else {
-        sipRes = new QString(sipCpp->join(*a0, tables, a2));
-        if (!(!sipRes->isEmpty())) {
+        sipRes = new QString(sipCpp->joinTables(*a0, tables, a2));
+        if (sipRes->isEmpty()) {
             PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
             sipError = sipErrorFail;
         }

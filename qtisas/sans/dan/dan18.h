@@ -698,6 +698,7 @@ public:
     void updateListOfTables();
 private:
     bool m_scriptRun = false;
+    QStringList m_mergedNames; // the tables (or files) the last mergeMethod() made
     QStringList m_scriptMessages;
 
 };
