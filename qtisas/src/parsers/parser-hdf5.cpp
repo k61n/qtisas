@@ -25,7 +25,7 @@ QString ParserHDF5::readEntry(const QString &fileNameString, const QString &code
     if (code == "")
         return "";
 
-    int dimXtest, dimYtest, Ntest, TOFtest, dataTypetest;
+    int dimXtest = 0, dimYtest = 0, Ntest = 0, TOFtest = 0, dataTypetest = 0;
     dataInfo(fileNameString, code, dimXtest, dimYtest, Ntest, TOFtest, dataTypetest);
 
     if (dataTypetest < 0)
@@ -56,8 +56,20 @@ QString ParserHDF5::readEntry(const QString &fileNameString, const QString &code
     const H5std_string FILE_NAME(fileNameString.toLocal8Bit().constData());
     const H5std_string GROUP_NAME(code.toLocal8Bit().constData());
 
-    H5File file(FILE_NAME, H5F_ACC_RDONLY);
+    // a file HDF5 cannot open (not HDF5, locked while another process writes it): as a missing entry, no
+    // exception out of here (it ended the application)
     H5::Exception::dontPrint();
+    H5File file;
+    try
+    {
+        file = H5File(FILE_NAME, H5F_ACC_RDONLY);
+    }
+    catch (...)
+    {
+        std::cout << "entry: could not open file: " << FILE_NAME << "\n";
+        action = "";
+        return "0";
+    }
 
     DataSet dataset;
     try
@@ -761,7 +773,7 @@ bool dimScale(int dimData, int dim, int &dimStart, int &dimFinish)
 bool ParserHDF5::readSingleMatrix(const QString &fileNameString, QString code, gsl_matrix *&matrix, int dimXY,
                                   int roiXY, int N, int TOF, int dataType)
 {
-    int dimXtest, dimYtest, Ntest, TOFtest, dataTypetest;
+    int dimXtest = 0, dimYtest = 0, Ntest = 0, TOFtest = 0, dataTypetest = 0;
     dataInfo(fileNameString, code, dimXtest, dimYtest, Ntest, TOFtest, dataTypetest);
 
     if (N != 1) // todo numberFramesRequested >1
@@ -836,8 +848,17 @@ bool ParserHDF5::readSingleMatrix(const QString &fileNameString, QString code, g
     const H5std_string FILE_NAME(fileNameString.toLocal8Bit().constData());
     const H5std_string GROUP_NAME(code.toLocal8Bit().constData());
 
-    H5File file(FILE_NAME, H5F_ACC_RDONLY);
     H5::Exception::dontPrint();
+    H5File file;
+    try
+    {
+        file = H5File(FILE_NAME, H5F_ACC_RDONLY);
+    }
+    catch (...)
+    {
+        std::cout << "readSingleMatrix(...): could not open file: " << FILE_NAME << "\n";
+        return false;
+    }
 
     DataSet dataset;
     try
