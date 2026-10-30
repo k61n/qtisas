@@ -3817,6 +3817,33 @@ public:
         sipRes = new QStringList(sipCpp->sampleRuns(runs));
 %End
     QStringList headerItems() const;
+    // the header map's keys: the header's own values, read and written as the header map reads them
+    QStringList headerKeys() const;
+    QString headerValue(const QString &run, const QString &key);
+%MethodCode
+    sipRes = new QString(sipCpp->headerValue(*a0, *a1));
+    if (!sipCpp->lastError().isEmpty()) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
+    // the value into each run's header file (every format), read back; backup: <file>.bak; the files
+    QStringList setHeaderValue(SIP_PYOBJECT runs, const QString &key, SIP_PYOBJECT value, bool backup = false);
+%MethodCode
+    QStringList runs;
+    PyObject *text = PyObject_Str(a2);
+    if (!sipqti_strings(a0, &runs, "runs: a run number or a list of them") || !text)
+        sipError = sipErrorFail;
+    else {
+        const QString value = QString::fromUtf8(PyUnicode_AsUTF8(text));
+        sipRes = new QStringList(sipCpp->setHeaderValue(runs, *a1, value, a3));
+        if (!sipCpp->lastError().isEmpty()) {
+            PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+            sipError = sipErrorFail;
+        }
+    }
+    Py_XDECREF(text);
+%End
     QString newHeaderTable(const QString &name, SIP_PYOBJECT items, const QString &runs = "*");
 %MethodCode
     QStringList items;

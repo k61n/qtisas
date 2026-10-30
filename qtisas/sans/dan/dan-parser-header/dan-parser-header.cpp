@@ -8,11 +8,15 @@ Description: Header::Map Parser used in DAN-SANS interface
  ******************************************************************************/
 
 #include <QHeaderView>
+#include <QSaveFile>
+
+#include <cmath>
 
 #include <fstream>
 #include <iostream>
 
 #include "dan-parser-header.h"
+#include "parser-edf.h"
 
 ParserHeader::ParserHeader(FilesManager *filesManagerDan, QTableWidget *tableHeaderDan, QComboBox *HeaderFormatDan,
                            QGroupBox *XMLgroupDan, QLineEdit *XMLbaseDan, QGroupBox *FLEXIgroupDan,
@@ -357,100 +361,225 @@ bool ParserHeader::readHeader(const QString &fileName, const int &linesNumber, Q
     file.close();
     return true;
 }
-//+++ replaceHeaderValue
+//+++ the lines an ASCII header has (Flexi: the search goes that far)
+int ParserHeader::linesInHeader() const
+{
+    if (filesManager->secondHeaderYN())
+        return HEADER2NDlength->value();
+    return HEADERlength->value() + HEADERDATAlength->value();
+}
+//+++ an ASCII/Flexi entry: its line (1, 2, ...), the column it starts at and the entry (Flexi: the rest of the line
+//+++ after the searched text, or the whole line before/after it); false: not found
+bool ParserHeader::asciiEntry(const QString &fileName, const QString &pos, const QStringList &lst, int &line,
+                              int &start, QString &entry) const
+{
+    start = 0;
+    if (pos.contains("{") && pos.contains("}"))
+    {
+        QString code = pos;
+        entry = ParserASCII::readEntryFlexy(fileName, code, start, linesInHeader());
+        line = code.toInt();
+        return !entry.isEmpty() && line >= 1;
+    }
+    line = pos.trimmed().toInt();
+    if (line <= 0)
+        line = 1;
+    entry = ParserASCII::readEntry(fileName, pos, lst);
+    return true;
+}
+//+++ the same text or the same number
+static bool sameValue(const QString &a, const QString &b)
+{
+    if (a.trimmed() == b.trimmed())
+        return true;
+    bool okA = false;
+    bool okB = false;
+    const double x = a.trimmed().toDouble(&okA);
+    const double y = b.trimmed().toDouble(&okB);
+    return okA && okB && std::fabs(x - y) <= 1e-12 * std::fmax(1.0, std::fabs(x));
+}
+//+++ readNumberString() the other way: the run's header file gets newValue where the header map reads headerName;
+//+++ read back to check, the file as it was when that fails; error: why not
+bool ParserHeader::setNumberString(const QString &Number, const QString &headerName, const QString &newValue,
+                                   QString &error)
+{
+    const int index = static_cast<int>(listOfHeaders.indexOf(headerName));
+    if (index < 0)
+    {
+        error = "no header item " + headerName;
+        return false;
+    }
+    const QString pos = tableHeader->item(index, 0)->text().trimmed();
+    const QString num = tableHeader->item(index, 1)->text().trimmed();
+    if (num == "#" || headerName == "[Sample-Run-Number]")
+    {
+        error = headerName + " is the run number: it names the run's files";
+        return false;
+    }
+    if (pos.isEmpty())
+    {
+        error = headerName + " is not in the instrument's header map";
+        return false;
+    }
+    if (pos.contains("const"))
+    {
+        error = headerName + " is a constant of the instrument (Config.setParameters()), not in the header";
+        return false;
+    }
+    if (Number.contains("["))
+    {
+        error = "run " + Number + ": a frame of a multi-frame run";
+        return false;
+    }
+    const QString fileName = filesManager->fileNameFull(Number, filesManager->wildCardHeader());
+    if (fileName.isEmpty())
+    {
+        error = "no header file of run " + Number;
+        return false;
+    }
+
+    QFile original(fileName);
+    if (!original.open(QIODevice::ReadOnly))
+    {
+        error = "cannot read " + fileName;
+        return false;
+    }
+    const QByteArray originalData = original.readAll();
+    original.close();
+
+    bool written = false;
+    bool ok = false;
+    switch (HeaderFormat->currentIndex())
+    {
+    case 0: {
+        int line = 0;
+        int start = 0;
+        QString entry;
+        if (!asciiEntry(fileName, pos, QStringList(), line, start, entry))
+        {
+            error = headerName + " (" + pos + ") not found in " + fileName;
+            return false;
+        }
+        const QString fullLine = ParserASCII::readEntry(fileName, QString::number(line));
+        const QString newLine = fullLine.left(start) + ParserASCII::stringReplace(entry, num, newValue, ok);
+        if (!ok)
+        {
+            error = headerName + ": \"" + num + "\" selects nothing in \"" + entry + "\"";
+            return false;
+        }
+        // EDF: the header block of a binary file, its size kept (ParserEDF pads it)
+        if (fileName.endsWith(".edf", Qt::CaseInsensitive))
+            written = ParserEDF::replaceHeader(fileName, {newLine});
+        else
+            written = ParserASCII::setEntry(fileName, line, newLine);
+        break;
+    }
+    case 1: {
+        // a post-action ("s 1", ...): a part of the element's text
+        QString value = newValue;
+        if (!num.isEmpty())
+        {
+            const QString oldValue = ParserXML::readEntry(fileName, pos, XMLbase->text());
+            value = ParserASCII::stringReplace(oldValue, num, newValue, ok);
+            if (!ok)
+            {
+                error = headerName + ": \"" + num + "\" selects nothing in \"" + oldValue + "\"";
+                return false;
+            }
+        }
+        written = ParserXML::setEntry(fileName, pos, XMLbase->text(), value);
+        break;
+    }
+    case 2: {
+        // a list ("a; b; c") and "s ...": its element; another post-action: a part of the value
+        const QString oldValue = ParserYAML::readEntry(fileName, pos);
+        int element = 0;
+        QString value = newValue;
+        if (num.startsWith("s") && oldValue.contains("; "))
+            element = num.mid(2).toInt() - 1;
+        else if (!num.isEmpty())
+        {
+            value = ParserASCII::stringReplace(oldValue, num, newValue, ok);
+            if (!ok)
+            {
+                error = headerName + ": \"" + num + "\" selects nothing in \"" + oldValue + "\"";
+                return false;
+            }
+        }
+        bool numberBefore = false;
+        bool numberAfter = false;
+        (void)oldValue.toDouble(&numberBefore);
+        (void)value.toDouble(&numberAfter);
+        written = ParserYAML::setEntry(fileName, pos, value, numberBefore && numberAfter, element < 0 ? 0 : element);
+        break;
+    }
+    case 3: {
+        // the element part of the action ("[2]") is ParserHDF5's; a post-action ("s 1") a part of the value
+        QString postAction = num;
+        const QString oldValue = ParserHDF5::readEntry(fileName, pos, postAction);
+        QString value = newValue;
+        if (!postAction.isEmpty())
+        {
+            value = ParserASCII::stringReplace(oldValue, postAction, newValue, ok);
+            if (!ok)
+            {
+                error = headerName + ": \"" + postAction + "\" selects nothing in \"" + oldValue + "\"";
+                return false;
+            }
+        }
+        written = ParserHDF5::setEntry(fileName, pos, num, value);
+        break;
+    }
+    default:
+        error = "header values of the " + HeaderFormat->currentText().simplified() + " are not written yet";
+        return false;
+    }
+
+    QString check = num;
+    QString readPos = pos;
+    if (written && sameValue(readNumberString(Number, readPos, check), newValue))
+        return true;
+
+    QSaveFile restore(fileName);
+    if (restore.open(QIODevice::WriteOnly) && restore.write(originalData) == originalData.size())
+        restore.commit();
+    error = written ? headerName + ": the value read back is not " + newValue + "; " + fileName + " left as it was"
+                    : headerName + " (" + pos + ") not found or not writable in " + fileName;
+    return false;
+}
+//+++ replaceHeaderValue: in the lines of a header read before (a new file's)
 bool ParserHeader::replaceHeaderValue(const QString &Number, const QString &headerName, QStringList &lst,
                                       const QString &newValue)
 {
-    int indexInHeader = listOfHeaders.indexOf(headerName);
-    if (indexInHeader < 0)
+    const int index = static_cast<int>(listOfHeaders.indexOf(headerName));
+    if (index < 0)
+        return false;
+    const QString pos = tableHeader->item(index, 0)->text().trimmed();
+    const QString num = tableHeader->item(index, 1)->text().trimmed();
+    if (pos.isEmpty() || pos.contains("const") || num == "#")
         return false;
 
-    QString pos = tableHeader->item(indexInHeader, 0)->text();
-    QString num = tableHeader->item(indexInHeader, 1)->text();
-
-    if (pos == "const" || num == "#")
+    int line = 0;
+    int start = 0;
+    QString entry;
+    const QString fileName = filesManager->fileNameFull(Number, filesManager->wildCardHeader());
+    if (!asciiEntry(fileName, pos, lst, line, start, entry) || line > lst.count())
         return false;
-
-    QString oldValue = readNumberString(Number, pos, num, lst);
-
-    int numInt = num.toInt() - 1;
-    int posInt = pos.toInt() - 1;
-    if (numInt < 0 || posInt < 0 || posInt > lst.count())
-        return false;
-
-    QString oldLine = lst[posInt];
-    numInt = oldLine.indexOf(oldValue, numInt);
-
-    lst[posInt] = oldLine.replace(numInt, oldValue.length(), newValue);
-
-    return true;
+    bool ok = false;
+    const QString newLine = lst[line - 1].left(start) + ParserASCII::stringReplace(entry, num, newValue, ok);
+    return ok && ParserASCII::setEntry(lst, line, newLine);
 }
-//+++ replace value
+//+++ replace value: a YAML header file (a new file's)
 bool ParserHeader::replaceEntryYaml(const QString &fileNameString, const QString &headerName, bool numerical,
                                     const QString &newValue)
 {
-    int indexInHeader = listOfHeaders.indexOf(headerName);
-
-    QString yamlCode = tableHeader->item(indexInHeader, 0)->text();
-    yamlCode = yamlCode.remove(" ");
-    yamlCode = yamlCode.replace("::", ":");
-    yamlCode = yamlCode.replace("::", ":");
-    yamlCode = yamlCode.replace("||", "|");
-    yamlCode = yamlCode.replace("||", "|");
-    QStringList lst = yamlCode.split(":", Qt::SkipEmptyParts);
-    int countLevels = lst.count();
-
-    if (countLevels > 10)
-        return "> 10 levels";
-
-    QString postAction = tableHeader->item(indexInHeader, 1)->text();
+    const int index = static_cast<int>(listOfHeaders.indexOf(headerName));
+    if (index < 0)
+        return false;
+    const QString postAction = tableHeader->item(index, 1)->text();
     int listPos = 0;
     if (postAction.left(1) == "s")
-    {
-        listPos = postAction.right(postAction.length() - 2).toInt();
-        listPos--;
-    }
-
-    std::ifstream fin(fileNameString.toLocal8Bit().constData());
-
-    QString result = "";
-
-    try
-    {
-        auto documents = YAML::LoadAll(fin);
-        fin.close();
-        std::ofstream fout(fileNameString.toLocal8Bit().constData());
-        bool lastLevel;
-
-        for (std::size_t docIndex = 0; docIndex < documents.size(); docIndex++)
-        {
-            YAML::Node doc = documents[docIndex];
-
-            if (!ParserYAML::nodeModify(doc, lst, numerical, newValue, listPos))
-                std::cout << "node does not exist: " << docIndex << " \n";
-
-            fout << YAML::Dump(doc) << std::endl;
-
-            continue;
-
-            for (int levelIndex = 0; levelIndex < countLevels; levelIndex++)
-            {
-                lastLevel = (levelIndex == countLevels - 1) ? true : false;
-
-                if (!ParserYAML::singleLevelParsing(doc, lst[levelIndex], lastLevel, result))
-                    continue;
-
-                if (countLevels == levelIndex + 1)
-                    continue;
-
-                fout << YAML::Dump(doc) << std::endl;
-            }
-        }
-        fout.close();
-    }
-    catch (const YAML::Exception &e)
-    {
-        std::cerr << e.what() << "\n";
-    }
-    return true;
+        listPos = postAction.right(postAction.length() - 2).toInt() - 1;
+    return ParserYAML::setEntry(fileNameString, tableHeader->item(index, 0)->text(), newValue, numerical,
+                                listPos < 0 ? 0 : listPos);
 }

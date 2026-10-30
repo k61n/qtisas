@@ -56,6 +56,9 @@ class DanAuto
     static QList<Run> filter(const QList<Run> &all, int minDuration, int minCounts, const QString &files,
                              const QString &skipFiles, const QString &samples, const QString &skipSamples);
     static bool matches(const QString &name, const QString &wildcards);
+    // the headers runs() read are kept (a run read again when its detector file changed): forgotten when a header
+    // file is written (Rawdata.setHeaderValue())
+    static void forgetRuns();
     // "C8D7.68L4.9BS30x30|10x10" (+ "P<polarization>", "A<attenuator>" when they count): what the configuration
     // wildcards (transmissions in, skip) are matched against
     QString label(const Run &r) const;
@@ -200,6 +203,13 @@ class DanRawdata : public DanPart
     // the runs minus every standard run (empty beams, dark currents, calibrants, sensitivity) by auto mode's rules
     QStringList sampleRuns(const QStringList &runs);
     QStringList headerItems() const;
+    // the header map's keys ("Sample-Title", "Duration", "Polarization", ...): the header's own values (as DAN reads
+    // them, before any conversion), read and written by these two
+    QStringList headerKeys() const;
+    QString headerValue(const QString &run, const QString &key);
+    // the value written into each run's header file where the header map reads it (every format), read
+    // back; backup: <file>.bak first, when there is none; the files written
+    QStringList setHeaderValue(const QStringList &runs, const QString &key, const QString &value, bool backup = false);
     // the runs' files, full paths in the order given: the detector file and its own header file (KWS-3 .det, .yaml)
     QStringList files(const QStringList &runs);
     QString newHeaderTable(const QString &name, const QStringList &items, const QString &runs);

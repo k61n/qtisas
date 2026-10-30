@@ -15,12 +15,14 @@ Description: DAN-SANS Python interface: one object per tab (Dan.Options, Dan.Raw
 #include <QComboBox>
 #include <QDirIterator>
 #include <QDoubleSpinBox>
+#include <QFile>
 #include <QFileInfo>
 #include <QLineEdit>
 #include <QRegularExpression>
 #include <QSet>
 #include <QSignalBlocker>
 #include <QSpinBox>
+#include <QTableWidget>
 #include <QTextStream>
 
 #include "Table.h"
@@ -36,6 +38,9 @@ static QString expandHome(const QString &path)
         return QDir::homePath() + path.mid(1);
     return path;
 }
+
+// an empty list of runs: an error, saying the list was empty (a filter that matched none: nothing to do)
+static const QString noRuns = "no runs: the list is empty, nothing to do (did a filter match none?)";
 
 // a file as given ("~/..." expanded), or a relative name in DAN's input folder
 static QString resolveFile(const QString &file, const QString &inputFolder)
@@ -296,6 +301,113 @@ QStringList DanRawdata::headerItems() const
     return names;
 }
 
+QStringList DanRawdata::headerKeys() const
+{
+    QStringList keys;
+    for (QString key : d->parserHeader->listOfHeaders)
+        keys << key.remove('[').remove(']');
+    return keys;
+}
+
+// a key as headerKeys() gives it, with or without [], or one of its alternatives ("Detector-X"); case and spaces
+// ignored
+static QString headerName(const QStringList &listOfHeaders, const QString &key)
+{
+    auto plain = [](QString s) { return s.remove('[').remove(']').remove(' ').toLower(); };
+    const QString wanted = plain(key);
+    for (const QString &name : listOfHeaders)
+        if (plain(name) == wanted || plain(name).split('|', Qt::SkipEmptyParts).contains(wanted))
+            return name;
+    return {};
+}
+
+// " (did you mean <name>?)" for the nearest of the names (case, spaces and [] ignored), a few letters apart at most;
+// empty without one: a misspelled key named with its correction, never taken for it
+static QString didYouMean(const QStringList &names, const QString &wanted)
+{
+    auto plain = [](QString s) { return s.remove('[').remove(']').remove(' ').toLower(); };
+    auto distance = [](const QString &a, const QString &b) {
+        std::vector<int> row(static_cast<size_t>(b.size()) + 1); // QList has no size constructor in Qt5
+        for (int j = 0; j <= b.size(); j++)
+            row[j] = j;
+        for (int i = 1; i <= a.size(); i++)
+        {
+            int diagonal = row[0];
+            row[0] = i;
+            for (int j = 1; j <= b.size(); j++)
+            {
+                const int above = row[j];
+                row[j] = std::min({row[j] + 1, row[j - 1] + 1, diagonal + (a[i - 1] == b[j - 1] ? 0 : 1)});
+                diagonal = above;
+            }
+        }
+        return row[b.size()];
+    };
+    const QString key = plain(wanted);
+    QString best;
+    int bestDistance = std::max(2, static_cast<int>(key.size()) / 4) + 1;
+    for (const QString &name : names)
+        if (const int d = distance(key, plain(name)); d < bestDistance)
+        {
+            bestDistance = d;
+            best = name;
+        }
+    return best.isEmpty() ? QString() : " (did you mean " + best + "?)";
+}
+
+QString DanRawdata::headerValue(const QString &run, const QString &key)
+{
+    m_lastError.clear();
+    const QString name = headerName(d->parserHeader->listOfHeaders, key);
+    if (name.isEmpty())
+        return fail("no header key " + key + didYouMean(headerKeys(), key) +
+                    "; headerKeys(): " + headerKeys().join(", "));
+    if (!d->filesManager->checkFileNumber(run))
+        return fail("no run " + run + " in " + d->filesManager->pathInString());
+    return d->parserHeader->readNumberString(run, name);
+}
+
+QStringList DanRawdata::setHeaderValue(const QStringList &runs, const QString &key, const QString &value, bool backup)
+{
+    m_lastError.clear();
+    const QString name = headerName(d->parserHeader->listOfHeaders, key);
+    if (name.isEmpty())
+    {
+        fail("no header key " + key + didYouMean(headerKeys(), key) + "; headerKeys(): " + headerKeys().join(", "));
+        return {};
+    }
+    if (runs.isEmpty())
+    {
+        fail(noRuns);
+        return {};
+    }
+    for (const QString &run : runs)
+        if (!d->filesManager->checkFileNumber(run))
+        {
+            fail("no run " + run + " in " + d->filesManager->pathInString());
+            return {};
+        }
+    QStringList changed;
+    for (const QString &run : runs)
+    {
+        const QString file = d->filesManager->fileNameFull(run, d->filesManager->wildCardHeader());
+        if (backup && !QFile::exists(file + ".bak") && !QFile::copy(file, file + ".bak"))
+        {
+            fail("cannot write the backup " + file + ".bak");
+            break;
+        }
+        QString error;
+        if (!d->parserHeader->setNumberString(run, name, value, error))
+        {
+            fail(changed.isEmpty() ? error : error + "; written before: " + changed.join(", "));
+            break;
+        }
+        changed << file;
+    }
+    DanAuto::forgetRuns();
+    return m_lastError.isEmpty() ? changed : QStringList();
+}
+
 QString DanRawdata::newHeaderTable(const QString &name, const QStringList &items, const QString &runs)
 {
     const QStringList all = headerItems();
@@ -304,7 +416,7 @@ QString DanRawdata::newHeaderTable(const QString &name, const QStringList &items
     {
         const auto index = all.indexOf(item);
         if (index < 0)
-            return fail("no header item " + item + "; headerItems(): " + all.join(", "));
+            return fail("no header item " + item + didYouMean(all, item) + "; headerItems(): " + all.join(", "));
         indices << QString::number(index + 1);
     }
     QString tableName = name;
@@ -353,7 +465,7 @@ QStringList DanRawdata::files(const QStringList &runs)
     m_lastError.clear();
     if (runs.isEmpty())
     {
-        fail("no runs");
+        fail(noRuns);
         return {};
     }
     QStringList list;
@@ -499,7 +611,7 @@ QString DanRawdata::newInfoTable(const QString &name, const QStringList &runs, i
         return fail(name + " is no info table");
     const QStringList files = runFiles(runs);
     if (files.isEmpty())
-        return runs.isEmpty() ? fail("no runs") : QString();
+        return runs.isEmpty() ? fail(noRuns) : QString();
     begin();
     if (compact >= 0)
         d->checkBoxShortList->setChecked(compact == 1);
@@ -535,7 +647,7 @@ QString DanRawdata::newInfoMatrix(const QString &nameGiven, const QStringList &r
         return fail("sens: no active sensitivity");
     const QStringList files = runFiles(runs);
     if (files.isEmpty())
-        return runs.isEmpty() ? fail("no runs") : QString();
+        return runs.isEmpty() ? fail(noRuns) : QString();
 
     begin();
     d->checkBoxBigMatrixASCII->setChecked(false); // the runs' raw data, not the ASCII I(Q) files
@@ -579,7 +691,7 @@ QStringList DanRawdata::extractMatrices(const QStringList &runs, int asDouble)
 {
     if (runs.isEmpty())
     {
-        fail("no runs");
+        fail(noRuns);
         return {};
     }
     if (runFiles(runs).isEmpty())
@@ -1179,7 +1291,7 @@ QString DanProcessing::newScriptTable(const QString &name, const QStringList &ru
         files << file;
     }
     if (files.isEmpty())
-        return fail("no runs");
+        return fail(noRuns);
     begin();
     d->newScriptTable(name);
     if (d->comboBoxMakeScriptTable->currentText() == name)
@@ -1657,6 +1769,17 @@ DanAuto::Run DanAuto::readRun(const QString &run, const QString &file) const
     return r;
 }
 
+static QHash<QString, QPair<QString, DanAuto::Run>> &runCache()
+{
+    static QHash<QString, QPair<QString, DanAuto::Run>> cache;
+    return cache;
+}
+
+void DanAuto::forgetRuns()
+{
+    runCache().clear();
+}
+
 QList<DanAuto::Run> DanAuto::runs(bool filtered) const
 {
     QMap<QString, QString> files; // run -> its first file (the path)
@@ -1684,8 +1807,14 @@ QList<DanAuto::Run> DanAuto::runs(bool filtered) const
     NaturalSort::sort(numbers);
     // the headers read once: a folder of 500 runs took minutes when every auto call read them again. A run is read
     // again when its file changed or another instrument (another header map) reads it
-    static QHash<QString, QPair<QString, Run>> cache;
-    const QString instrument = d->comboBoxInstrument->currentText() + "|" + d->comboBoxMode->currentText() + "|";
+    auto &cache = runCache();
+    // ... and the header map: its format and its cells (a path or a post-action edited reads every run again)
+    QString instrument = d->comboBoxInstrument->currentText() + "|" + d->comboBoxMode->currentText() + "|" +
+                         QString::number(d->comboBoxHeaderFormat->currentIndex()) + "|";
+    for (int row = 0; row < d->tableHeaderPosNew->rowCount(); row++)
+        for (int col = 0; col < 2; col++)
+            if (const QTableWidgetItem *item = d->tableHeaderPosNew->item(row, col))
+                instrument += item->text() + "|";
     QList<Run> all;
     for (const QString &number : numbers)
     {
