@@ -572,7 +572,8 @@ bool dan18::singleSampleMergeJoin(const QString &nameMerged, QStringList tablesT
         labelList += tablesToMerge[positions[currentPos]] + ", ";
     }
 
-    //+++ Smart merging
+    //+++ Smart merging; every scan stays inside the NN filled rows: GSL's error handler is off, so a row past them
+    //+++ read as 0, and a curve whose points the join all dropped (inside its neighbour's range) looped forever
     if (checkBoxSmart->isChecked())
     {
         double qExponent = comboBoxSmartSelect->currentIndex();
@@ -590,7 +591,7 @@ bool dan18::singleSampleMergeJoin(const QString &nameMerged, QStringList tablesT
             //--- finding of maximum of dataset [k] left from reference
             int QmaxInt = firstPointS[k + 1] - 1;
             double QmaxRef = gsl_matrix_get(data, QmaxInt, 0);
-            while (QmaxRef == InvalidCellValue)
+            while (QmaxRef == InvalidCellValue && QmaxInt > 0)
             {
                 QmaxInt--;
                 QmaxRef = gsl_matrix_get(data, QmaxInt, 0);
@@ -605,8 +606,8 @@ bool dan18::singleSampleMergeJoin(const QString &nameMerged, QStringList tablesT
                 double leftLevel = 0;
                 int numLeftLevel = 0;
                 double Q;
-                while (gsl_matrix_get(data, QmaxInt, 0) >= QminRef ||
-                       gsl_matrix_get(data, QmaxInt, 0) == InvalidCellValue)
+                while (QmaxInt >= 0 && (gsl_matrix_get(data, QmaxInt, 0) >= QminRef ||
+                                        gsl_matrix_get(data, QmaxInt, 0) == InvalidCellValue))
                 {
                     if (gsl_matrix_get(data, QmaxInt, 0) != InvalidCellValue &&
                         gsl_matrix_get(data, QmaxInt, 1) != InvalidCellValue)
@@ -618,7 +619,7 @@ bool dan18::singleSampleMergeJoin(const QString &nameMerged, QStringList tablesT
                     QmaxInt--;
                 }
 
-                for (int lp = 0; lp < plusLeft; lp++)
+                for (int lp = 0; lp < plusLeft && QmaxInt >= 0; lp++)
                 {
                     if (gsl_matrix_get(data, QmaxInt, 0) != InvalidCellValue &&
                         gsl_matrix_get(data, QmaxInt, 1) != InvalidCellValue)
@@ -632,8 +633,8 @@ bool dan18::singleSampleMergeJoin(const QString &nameMerged, QStringList tablesT
 
                 double rightLevel = 0;
                 int numRightLevel = 0;
-                while (gsl_matrix_get(data, QminInt, 0) <= QmaxRef ||
-                       gsl_matrix_get(data, QminInt, 0) == InvalidCellValue)
+                while (QminInt < NN && (gsl_matrix_get(data, QminInt, 0) <= QmaxRef ||
+                                        gsl_matrix_get(data, QminInt, 0) == InvalidCellValue))
                 {
                     if (gsl_matrix_get(data, QminInt, 0) != InvalidCellValue &&
                         gsl_matrix_get(data, QminInt, 1) != InvalidCellValue)
@@ -645,7 +646,7 @@ bool dan18::singleSampleMergeJoin(const QString &nameMerged, QStringList tablesT
                     QminInt++;
                 }
 
-                for (int rp = 0; rp < plusRight; rp++)
+                for (int rp = 0; rp < plusRight && QminInt < NN; rp++)
                 {
                     if (gsl_matrix_get(data, QminInt, 0) != InvalidCellValue &&
                         gsl_matrix_get(data, QminInt, 1) != InvalidCellValue)
@@ -691,7 +692,7 @@ bool dan18::singleSampleMergeJoin(const QString &nameMerged, QStringList tablesT
             //+++ finding of maximum of dataset [k-1] of "reference"
             int QmaxInt = firstPointS[k] - 1;
             double QmaxRef = gsl_matrix_get(data, QmaxInt, 0);
-            while (QmaxRef == InvalidCellValue)
+            while (QmaxRef == InvalidCellValue && QmaxInt > 0)
             {
                 QmaxInt--;
                 QmaxRef = gsl_matrix_get(data, QmaxInt, 0);
@@ -706,8 +707,8 @@ bool dan18::singleSampleMergeJoin(const QString &nameMerged, QStringList tablesT
                 double leftLevel = 0;
                 int numLeftLevel = 0;
                 double Q;
-                while (gsl_matrix_get(data, QmaxInt, 0) >= QminRef ||
-                       gsl_matrix_get(data, QmaxInt, 0) == InvalidCellValue)
+                while (QmaxInt >= 0 && (gsl_matrix_get(data, QmaxInt, 0) >= QminRef ||
+                                        gsl_matrix_get(data, QmaxInt, 0) == InvalidCellValue))
                 {
                     if (gsl_matrix_get(data, QmaxInt, 0) != InvalidCellValue &&
                         gsl_matrix_get(data, QmaxInt, 1) != InvalidCellValue)
@@ -719,7 +720,7 @@ bool dan18::singleSampleMergeJoin(const QString &nameMerged, QStringList tablesT
                     QmaxInt--;
                 }
 
-                for (int lp = 0; lp < plusLeft; lp++)
+                for (int lp = 0; lp < plusLeft && QmaxInt >= 0; lp++)
                 {
                     if (gsl_matrix_get(data, QmaxInt, 0) != InvalidCellValue &&
                         gsl_matrix_get(data, QmaxInt, 1) != InvalidCellValue)
@@ -733,8 +734,8 @@ bool dan18::singleSampleMergeJoin(const QString &nameMerged, QStringList tablesT
 
                 double rightLevel = 0;
                 int numRightLevel = 0;
-                while (gsl_matrix_get(data, QminInt, 0) <= QmaxRef ||
-                       gsl_matrix_get(data, QminInt, 0) == InvalidCellValue)
+                while (QminInt < NN && (gsl_matrix_get(data, QminInt, 0) <= QmaxRef ||
+                                        gsl_matrix_get(data, QminInt, 0) == InvalidCellValue))
                 {
                     if (gsl_matrix_get(data, QminInt, 0) != InvalidCellValue &&
                         gsl_matrix_get(data, QminInt, 1) != InvalidCellValue)
@@ -746,7 +747,7 @@ bool dan18::singleSampleMergeJoin(const QString &nameMerged, QStringList tablesT
                     QminInt++;
                 }
 
-                for (int rp = 0; rp < plusRight; rp++)
+                for (int rp = 0; rp < plusRight && QminInt < NN; rp++)
                 {
                     if (gsl_matrix_get(data, QminInt, 0) != InvalidCellValue &&
                         gsl_matrix_get(data, QminInt, 1) != InvalidCellValue)
