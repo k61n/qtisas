@@ -20214,7 +20214,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                           </font>
                          </property>
                          <property name="toolTip">
-                          <string>... Flat Scatter ...</string>
+                          <string>Wildcard for the header polarization value, e.g. *RFflipper_on*. Use || between alternatives.</string>
                          </property>
                          <property name="styleSheet">
                           <string notr="true">background-color: rgb(255, 255, 195);</string>
@@ -20273,7 +20273,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                           </font>
                          </property>
                          <property name="toolTip">
-                          <string>... Flat Scatter ...</string>
+                          <string>Wildcard for the header polarization value, e.g. *RFflipper_on*. Use || between alternatives.</string>
                          </property>
                          <property name="styleSheet">
                           <string notr="true">background-color: rgb(255, 255, 195);</string>
@@ -20332,7 +20332,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                           </font>
                          </property>
                          <property name="toolTip">
-                          <string>... Flat Scatter ...</string>
+                          <string>Wildcard for the header polarization value, e.g. *RFflipper_on*. Use || between alternatives.</string>
                          </property>
                          <property name="styleSheet">
                           <string notr="true">background-color: rgb(255, 255, 195);</string>
@@ -20391,7 +20391,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                           </font>
                          </property>
                          <property name="toolTip">
-                          <string>... Flat Scatter ...</string>
+                          <string>Wildcard for the header polarization value, e.g. *RFflipper_on*. Use || between alternatives.</string>
                          </property>
                          <property name="styleSheet">
                           <string notr="true">background-color: rgb(255, 255, 195);</string>
@@ -20450,7 +20450,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                           </font>
                          </property>
                          <property name="toolTip">
-                          <string>... Flat Scatter ...</string>
+                          <string>Wildcard for the header polarization value, e.g. *RFflipper_on*. Use || between alternatives.</string>
                          </property>
                          <property name="styleSheet">
                           <string notr="true">background-color: rgb(255, 255, 195);</string>
@@ -20509,13 +20509,131 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                           </font>
                          </property>
                          <property name="toolTip">
-                          <string>... Flat Scatter ...</string>
+                          <string>Wildcard for the header polarization value, e.g. *RFflipper_on*. Use || between alternatives.</string>
                          </property>
                          <property name="styleSheet">
                           <string notr="true">background-color: rgb(255, 255, 195);</string>
                          </property>
                          <property name="text">
                           <string>down-up</string>
+                         </property>
+                        </widget>
+                       </item>
+<item row="6" column="0">
+                        <widget class="QLabel" name="textLabelOutUp">
+                         <property name="sizePolicy">
+                          <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                           <horstretch>0</horstretch>
+                           <verstretch>0</verstretch>
+                          </sizepolicy>
+                         </property>
+                         <property name="font">
+                          <font>
+                           <weight>50</weight>
+                           <bold>false</bold>
+                          </font>
+                         </property>
+                         <property name="styleSheet">
+                          <string notr="true">color: rgb(137, 137, 183);</string>
+                         </property>
+                         <property name="text">
+                          <string>&quot;out-up&quot; alias</string>
+                         </property>
+                         <property name="wordWrap">
+                          <bool>false</bool>
+                         </property>
+                        </widget>
+                       </item>
+                       <item row="6" column="1">
+                        <widget class="QLineEdit" name="lineEditOutUp">
+                         <property name="enabled">
+                          <bool>true</bool>
+                         </property>
+                         <property name="minimumSize">
+                          <size>
+                           <width>50</width>
+                           <height>25</height>
+                          </size>
+                         </property>
+                         <property name="maximumSize">
+                          <size>
+                           <width>15000</width>
+                           <height>25</height>
+                          </size>
+                         </property>
+                         <property name="font">
+                          <font>
+                           <weight>50</weight>
+                           <bold>false</bold>
+                          </font>
+                         </property>
+                         <property name="toolTip">
+                          <string>Wildcard for the header polarization value, e.g. *RFflipper_on*. Use || between alternatives.</string>
+                         </property>
+                         <property name="styleSheet">
+                          <string notr="true">background-color: rgb(255, 255, 195);</string>
+                         </property>
+                         <property name="text">
+                          <string>out-up</string>
+                         </property>
+                        </widget>
+                       </item>
+<item row="7" column="0">
+                        <widget class="QLabel" name="textLabelOutDown">
+                         <property name="sizePolicy">
+                          <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                           <horstretch>0</horstretch>
+                           <verstretch>0</verstretch>
+                          </sizepolicy>
+                         </property>
+                         <property name="font">
+                          <font>
+                           <weight>50</weight>
+                           <bold>false</bold>
+                          </font>
+                         </property>
+                         <property name="styleSheet">
+                          <string notr="true">color: rgb(137, 137, 183);</string>
+                         </property>
+                         <property name="text">
+                          <string>&quot;out-down&quot; alias</string>
+                         </property>
+                         <property name="wordWrap">
+                          <bool>false</bool>
+                         </property>
+                        </widget>
+                       </item>
+                       <item row="7" column="1">
+                        <widget class="QLineEdit" name="lineEditOutDown">
+                         <property name="enabled">
+                          <bool>true</bool>
+                         </property>
+                         <property name="minimumSize">
+                          <size>
+                           <width>50</width>
+                           <height>25</height>
+                          </size>
+                         </property>
+                         <property name="maximumSize">
+                          <size>
+                           <width>15000</width>
+                           <height>25</height>
+                          </size>
+                         </property>
+                         <property name="font">
+                          <font>
+                           <weight>50</weight>
+                           <bold>false</bold>
+                          </font>
+                         </property>
+                         <property name="toolTip">
+                          <string>Wildcard for the header polarization value, e.g. *RFflipper_on*. Use || between alternatives.</string>
+                         </property>
+                         <property name="styleSheet">
+                          <string notr="true">background-color: rgb(255, 255, 195);</string>
+                         </property>
+                         <property name="text">
+                          <string>out-down</string>
                          </property>
                         </widget>
                        </item>
@@ -67988,10 +68106,10 @@ QGroupBox {border: 1px solid  rgb(137, 137, 183); border-radius: 8px;}</string>
              </size>
             </property>
             <property name="toolTip">
-             <string>Active info-matrix</string>
+             <string>Select polarization reduction; x42* modes use two analyzed files and return spin projections.</string>
             </property>
             <property name="whatsThis">
-             <string>Active info-matrix</string>
+             <string>x421/x423 return analyzer-weighted projections; x422/x424 return incident-weighted projections.</string>
             </property>
             <property name="editable">
              <bool>false</bool>
@@ -68012,6 +68130,26 @@ QGroupBox {border: 1px solid  rgb(137, 137, 183); border-radius: 8px;}</string>
             <item>
              <property name="text">
               <string>x4: u-u/u-d/d-d/d-u corrected</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>x421: u-u/d-u, analyzer up (2 files)</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>x422: u-u/u-d, incident up (2 files)</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>x423: u-d/d-d, analyzer down (2 files)</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>x424: d-u/d-d, incident down (2 files)</string>
              </property>
             </item>
            </widget>

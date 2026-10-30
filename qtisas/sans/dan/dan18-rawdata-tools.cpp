@@ -2193,6 +2193,8 @@ void dan18::asciiOrRawdata()
         lst<<"Thickness [cm]";
         lst<<"SA";
         lst<<"CA";
+        lst << "Polarization";
+        lst << "Polarization-Aliased";
         lst<<"[Info]";
         lst<<"RT-normalization";
         lst<<"Q2-vs-Mask";

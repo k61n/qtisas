@@ -3,7 +3,7 @@ Project: QtiSAS
 License: GNU GPL Version 3 (see LICENSE)
 Copyright (C) by the authors:
     2026 Vitaliy Pipich <v.pipich@gmail.com>
-Description: polarized-neutron corrections (PN mode): x2 and x4 on GSL matrices
+Description: polarized-neutron corrections (PN mode): x2, x4 and the two-file x421..x424 on GSL matrices
  ******************************************************************************/
 
 #include "dan-polarization-corrections.h"
@@ -27,8 +27,13 @@ bool transmissionCorrectionPNx2(double &TrDown, double &TrDownSigma, double &TrU
     double TrMinus = (P * Pf + 1) / (P * (Pf + 1)) * TrDown + (P - 1) / (P * (Pf + 1)) * TrUp;
     double TrPlus = (P * Pf - 1) / (P * (Pf + 1)) * TrDown + (P + 1) / (P * (Pf + 1)) * TrUp;
 
-    double TrMinusSigma = sqrt(square((P * Pf + 1) * TrDownSigma) + square((P - 1) * TrUpSigma)) / P / (Pf + 1);
-    double TrPlusSigma = sqrt(square((P * Pf - 1) * TrDownSigma) + square((P + 1) * TrUpSigma)) / P / (Pf + 1);
+    // the sigmas are relative (sigma / Tr), in and out: the linear combination is propagated in absolute sigmas
+    const double downSigma = TrDownSigma * TrDown;
+    const double upSigma = TrUpSigma * TrUp;
+    double TrMinusSigma = sqrt(square((P * Pf + 1) * downSigma) + square((P - 1) * upSigma)) / std::fabs(P * (Pf + 1));
+    double TrPlusSigma = sqrt(square((P * Pf - 1) * downSigma) + square((P + 1) * upSigma)) / std::fabs(P * (Pf + 1));
+    TrMinusSigma = TrMinus != 0 ? TrMinusSigma / std::fabs(TrMinus) : 0.0;
+    TrPlusSigma = TrPlus != 0 ? TrPlusSigma / std::fabs(TrPlus) : 0.0;
 
     if (infoTerminalYN)
     {
@@ -210,5 +215,124 @@ void addScaled(gsl_matrix *a, gsl_matrix *b, double scale, int MD)
     gsl_matrix_scale(m, scale);
     gsl_matrix_add(a, m);
     gsl_matrix_free(m);
+}
+
+bool invertTwoByTwo(const double matrix[2][2], double inverse[2][2])
+{
+    const double determinant = matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0];
+    const double scale =
+        std::fmax(std::fabs(matrix[0][0]) + std::fabs(matrix[0][1]), std::fabs(matrix[1][0]) + std::fabs(matrix[1][1]));
+    if (!std::isfinite(determinant) || scale <= 0.0 || std::fabs(determinant) < 1e-6 * scale * scale)
+        return false;
+    inverse[0][0] = matrix[1][1] / determinant;
+    inverse[0][1] = -matrix[0][1] / determinant;
+    inverse[1][0] = -matrix[1][0] / determinant;
+    inverse[1][1] = matrix[0][0] / determinant;
+    return true;
+}
+
+// The x4 forward matrix is the incident-spin row multiplied by (1 +/- A).
+// Divide each measured channel by 2, as the x4 correction does (its ideal-optics limit is 1/2).
+bool correctTwoChannelPair(const std::array<TwoChannel, 2> &channels, bool fixedAnalyzer, int matrixSize,
+                           TwoChannelPair &result)
+{
+    double response[2][2] = {};
+    double incident[2][2] = {};
+    for (int j = 0; j < 2; ++j)
+    {
+        const TwoChannel &channel = channels[j];
+        const double effectivePolarization = channel.state == 3 || channel.state == 4
+                                                 ? channel.polarization * (2.0 * channel.flipperEfficiency - 1.0)
+                                                 : -channel.polarization;
+        incident[j][0] = (1.0 + effectivePolarization) / 2.0; // incident up
+        incident[j][1] = (1.0 - effectivePolarization) / 2.0; // incident down
+        if (!std::isfinite(channel.transmission) || channel.transmission <= 0.0 || !std::isfinite(channel.thickness) ||
+            channel.thickness <= 0.0 || !std::isfinite(channel.analyzerTransmission) ||
+            channel.analyzerTransmission <= 0.0 || !std::isfinite(channel.analyzerEfficiency) ||
+            channel.analyzerEfficiency <= 0.0 || channel.analyzerEfficiency > 1.0 || !std::isfinite(channel.factor) ||
+            channel.factor <= 0.0)
+            return false;
+
+        if (!fixedAnalyzer)
+        {
+            const double a = channel.analyzerEfficiency;
+            const bool analyzerUp = channel.state == 3 || channel.state == 6;
+            response[j][0] = (1.0 + (analyzerUp ? a : -a)) / 2.0; // outgoing up
+            response[j][1] = 1.0 - response[j][0];                // outgoing down
+        }
+    }
+
+    if (fixedAnalyzer)
+    {
+        double inverseIncident[2][2];
+        if (!invertTwoByTwo(incident, inverseIncident))
+            return false;
+        const double pureUpTransmission =
+            inverseIncident[0][0] * channels[0].transmission + inverseIncident[0][1] * channels[1].transmission;
+        const double pureDownTransmission =
+            inverseIncident[1][0] * channels[0].transmission + inverseIncident[1][1] * channels[1].transmission;
+        if (!std::isfinite(pureUpTransmission) || !std::isfinite(pureDownTransmission) || pureUpTransmission <= 0.0 ||
+            pureDownTransmission <= 0.0)
+            return false;
+        for (int j = 0; j < 2; ++j)
+        {
+            response[j][0] = incident[j][0] * pureUpTransmission / channels[j].transmission;
+            response[j][1] = incident[j][1] * pureDownTransmission / channels[j].transmission;
+        }
+    }
+
+    double inverse[2][2];
+    if (!invertTwoByTwo(response, inverse))
+        return false;
+
+    result.first.reset(gsl_matrix_calloc(matrixSize, matrixSize));
+    result.second.reset(gsl_matrix_calloc(matrixSize, matrixSize));
+    result.firstVariance.reset(gsl_matrix_calloc(matrixSize, matrixSize));
+    result.secondVariance.reset(gsl_matrix_calloc(matrixSize, matrixSize));
+    result.mask.reset(gsl_matrix_alloc(matrixSize, matrixSize));
+    if (!result.first || !result.second || !result.firstVariance || !result.secondVariance || !result.mask)
+        return false;
+    gsl_matrix_memcpy(result.mask.get(), channels[0].mask.get());
+    gsl_matrix_mul_elements(result.mask.get(), channels[1].mask.get());
+
+    const double scales[2] = {channels[0].factor / (2.0 * channels[0].thickness * channels[0].analyzerTransmission *
+                                                    channels[0].transmission),
+                              channels[1].factor / (2.0 * channels[1].thickness * channels[1].analyzerTransmission *
+                                                    channels[1].transmission)};
+    for (int row = 0; row < matrixSize; ++row)
+        for (int col = 0; col < matrixSize; ++col)
+        {
+            if (gsl_matrix_get(result.mask.get(), row, col) == 0.0)
+                continue;
+            double values[2];
+            double variances[2];
+            for (int j = 0; j < 2; ++j)
+            {
+                values[j] = scales[j] * gsl_matrix_get(channels[j].image.get(), row, col);
+                const double relativeVariance = gsl_matrix_get(channels[j].relativeVariance.get(), row, col);
+                if (!std::isfinite(values[j]) || !std::isfinite(relativeVariance) || relativeVariance < 0.0)
+                {
+                    gsl_matrix_set(result.mask.get(), row, col, 0.0);
+                    break;
+                }
+                // Transmission and optical uncertainties are shared across pixels and output channels.
+                // Keep the image variance statistical rather than adding them as independent pixel noise.
+                variances[j] = values[j] * values[j] * relativeVariance;
+            }
+            if (gsl_matrix_get(result.mask.get(), row, col) == 0.0)
+                continue;
+            const double first = inverse[0][0] * values[0] + inverse[0][1] * values[1];
+            const double second = inverse[1][0] * values[0] + inverse[1][1] * values[1];
+            for (int k = 0; k < 2; ++k)
+                for (int j = 0; j < 2; ++j)
+                    result.channelShares[k][j] += inverse[k][j] * values[j];
+            gsl_matrix_set(result.first.get(), row, col, first);
+            gsl_matrix_set(result.second.get(), row, col, second);
+            gsl_matrix_set(result.firstVariance.get(), row, col,
+                           inverse[0][0] * inverse[0][0] * variances[0] + inverse[0][1] * inverse[0][1] * variances[1]);
+            gsl_matrix_set(result.secondVariance.get(), row, col,
+                           inverse[1][0] * inverse[1][0] * variances[0] + inverse[1][1] * inverse[1][1] * variances[1]);
+        }
+    return true;
 }
 } // namespace DanPolarization

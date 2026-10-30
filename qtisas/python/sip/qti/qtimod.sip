@@ -3718,6 +3718,15 @@ public:
         sipError = sipErrorFail;
     }
 %End
+    QStringList polarizationReductionModes() const;
+    QString polarizationReductionMode() const;
+    void selectPolarizationReductionMode(const QString &mode);
+%MethodCode
+    if (!(sipCpp->selectPolarizationReductionMode(*a0))) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
     void setInputPath(const QString &path);
 %MethodCode
     if (!(sipCpp->setInputPath(*a0))) {

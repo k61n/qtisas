@@ -126,6 +126,11 @@ bool dan18::compareConfigurations(const QString &RunNumber1, const QString &RunN
     {
         QString polarization1 = collimation->readPolarization(RunNumber1);
         QString polarization2 = collimation->readPolarization(RunNumber2);
+        if (comboBoxMode->currentText().contains("(PN)"))
+        {
+            polarizedAlias(polarization1);
+            polarizedAlias(polarization2);
+        }
         if (polarization1 != polarization2)
             return false;
     }
@@ -1506,6 +1511,15 @@ void dan18::saveScriptSettings(QString tableName)
     s = lineEditDownUp->text() + " <";
     w->setText(currentRow, 1, s);
     currentRow++;
+    //+++ Options::Polarization::Alias::OutUp, OutDown: polarizer out, analyzer up/down
+    w->setNumRows(currentRow + 1);
+    w->setText(currentRow, 0, "Options::Polarization::Alias::OutUp");
+    w->setText(currentRow, 1, lineEditOutUp->text() + " <");
+    currentRow++;
+    w->setNumRows(currentRow + 1);
+    w->setText(currentRow, 0, "Options::Polarization::Alias::OutDown");
+    w->setText(currentRow, 1, lineEditOutDown->text() + " <");
+    currentRow++;
 
     //+++ Options::Polarization::Pol::Polarization
     w->setNumRows(currentRow + 1);
@@ -2470,6 +2484,14 @@ bool dan18::readSettingNew(QString tableName)
     if (index >= 0)
         lineEditDownUp->setText(w->text(index, 1).remove(" <"));
 
+    //+++ Options::Polarization::Alias::OutUp, OutDown
+    index = static_cast<int>(parameters.indexOf("Options::Polarization::Alias::OutUp"));
+    if (index >= 0)
+        lineEditOutUp->setText(w->text(index, 1).remove(" <"));
+    index = static_cast<int>(parameters.indexOf("Options::Polarization::Alias::OutDown"));
+    if (index >= 0)
+        lineEditOutDown->setText(w->text(index, 1).remove(" <"));
+
     //+++ Options::Polarization::Pol::Polarization
     index = static_cast<int>(parameters.indexOf("Options::Polarization::Pol::Polarization"));
     if (index >= 0)
@@ -2600,7 +2622,7 @@ void dan18::addMaskAndSens(int condNumber, int oldNumber)
     {
         //+++ polarization
         lst.clear();
-        lst << "out" << "up" << "down" << "up-up" << "up-down" << "down-down" << "down-up";
+        lst << "out" << "up" << "down" << "up-up" << "up-down" << "down-down" << "down-up" << "out-up" << "out-down";
         auto *pol = new QComboBoxInTable(dptPOL, i, tableEC);
         pol->addItems(lst);
         tableEC->setCellWidget(dptPOL, i, pol);
@@ -2725,7 +2747,7 @@ void dan18::vertHeaderTableECPressed(int raw,  bool headerReallyPressed )
             if (filesManager->checkFileNumber(ECnumber))
             {
                 QString polarization = collimation->readPolarization(ECnumber);
-                int currentValue = polarizedAlias(polarization);
+                const int currentValue = polarizationSlot(polarizedAlias(polarization));
                 ((QComboBoxInTable *)tableEC->cellWidget(dptPOL, i))->setCurrentIndex(currentValue);
             }
         }
@@ -2954,7 +2976,7 @@ void dan18::tableECclick(  int row, int col )
         QString beam = CA + "|" + SA;
 
         QString polarization = collimation->readPolarization(s);
-        int polarizationNumber = polarizedAlias(polarization);
+        const int polarizationNumber = polarizationSlot(polarizedAlias(polarization));
 
         bool changeNumber = true;
 
@@ -3583,14 +3605,24 @@ bool dan18::calcAbsCalTrFs( int col )
 
         if (polarizationNumberPLEXY == 0 && polarizationNumberEC > 0)
             transPolarizer = trConfigValue;
-        else if ((polarizationNumberPLEXY == 1 || polarizationNumberPLEXY == 2) && polarizationNumberEC == 0)
+        else if ((polarizationNumberPLEXY == 1 || polarizationNumberPLEXY == 2) && polarizationNumberEC <= 0)
             transPolarizer = 1.0 / trConfigValue;
         else if ((polarizationNumberPLEXY == 1 || polarizationNumberPLEXY == 2) && polarizationNumberEC > 0)
             transPolarizer = 1.0;
-        else if ((polarizationNumberPLEXY == 3 || polarizationNumberPLEXY == 5) && polarizationNumberEC == 0)
+        else if ((polarizationNumberPLEXY == 3 || polarizationNumberPLEXY == 5) && polarizationNumberEC <= 0)
             transPolarizer = 1.0 / trConfigValue / trConfigAnalazer;
         else if ((polarizationNumberPLEXY == 3 || polarizationNumberPLEXY == 5) && polarizationNumberEC > 0)
             transPolarizer = trConfigAnalazer;
+        // the calibrant with the analyzer only (out-up, out-down): its counts carry the analyzer transmission at
+        // its own run (the 3He cell decays between runs)
+        else if (polarizationNumberPLEXY < 0)
+        {
+            double trCalibrantAnalyzer =
+                analyzerTransmissionSelector->getValue(tableEC->item(dptWL, col)->text().toDouble(), PlexiNumber);
+            if (trCalibrantAnalyzer <= 0)
+                trCalibrantAnalyzer = 1.0;
+            transPolarizer = (polarizationNumberEC > 0 ? trConfigValue : 1.0) / trCalibrantAnalyzer;
+        }
     }
 
     //+++
@@ -3782,14 +3814,24 @@ bool dan18::calcAbsCalDB( int col )
 
         if (polarizationNumberEB == 0 && polarizationNumberEC > 0)
             transPolarizer = trConfigValue;
-        else if ((polarizationNumberEB == 1 || polarizationNumberEB == 2) && polarizationNumberEC == 0)
+        else if ((polarizationNumberEB == 1 || polarizationNumberEB == 2) && polarizationNumberEC <= 0)
             transPolarizer = 1.0 / trConfigValue;
         else if ((polarizationNumberEB == 1 || polarizationNumberEB == 2) && polarizationNumberEC > 0)
             transPolarizer = 1.0;
-        else if ((polarizationNumberEB == 3 || polarizationNumberEB == 5) && polarizationNumberEC == 0)
+        else if ((polarizationNumberEB == 3 || polarizationNumberEB == 5) && polarizationNumberEC <= 0)
             transPolarizer = 1.0 / trConfigValue / trConfigAnalazer;
         else if ((polarizationNumberEB == 3 || polarizationNumberEB == 5) && polarizationNumberEC > 0)
             transPolarizer = trConfigAnalazer;
+        // the calibrant with the analyzer only (out-up, out-down): its counts carry the analyzer transmission at
+        // its own run (the 3He cell decays between runs)
+        else if (polarizationNumberEB < 0)
+        {
+            double trCalibrantAnalyzer =
+                analyzerTransmissionSelector->getValue(tableEC->item(dptWL, col)->text().toDouble(), EBNumber);
+            if (trCalibrantAnalyzer <= 0)
+                trCalibrantAnalyzer = 1.0;
+            transPolarizer = (polarizationNumberEC > 0 ? trConfigValue : 1.0) / trCalibrantAnalyzer;
+        }
     }
 
     I0 /= attenuation;
@@ -3881,14 +3923,24 @@ bool dan18::calcAbsCalDBM3(int col)
 
         if (polarizationNumberEB == 0 && polarizationNumberEC > 0)
             transPolarizer = trConfigValue;
-        else if ((polarizationNumberEB == 1 || polarizationNumberEB == 2) && polarizationNumberEC == 0)
+        else if ((polarizationNumberEB == 1 || polarizationNumberEB == 2) && polarizationNumberEC <= 0)
             transPolarizer = 1.0 / trConfigValue;
         else if ((polarizationNumberEB == 1 || polarizationNumberEB == 2) && polarizationNumberEC > 0)
             transPolarizer = 1.0;
-        else if ((polarizationNumberEB == 3 || polarizationNumberEB == 5) && polarizationNumberEC == 0)
+        else if ((polarizationNumberEB == 3 || polarizationNumberEB == 5) && polarizationNumberEC <= 0)
             transPolarizer = 1.0 / trConfigValue / trConfigAnalazer;
         else if ((polarizationNumberEB == 3 || polarizationNumberEB == 5) && polarizationNumberEC > 0)
             transPolarizer = trConfigAnalazer;
+        // the calibrant with the analyzer only (out-up, out-down): its counts carry the analyzer transmission at
+        // its own run (the 3He cell decays between runs)
+        else if (polarizationNumberEB < 0)
+        {
+            double trCalibrantAnalyzer =
+                analyzerTransmissionSelector->getValue(tableEC->item(dptWL, col)->text().toDouble(), EBNumber);
+            if (trCalibrantAnalyzer <= 0)
+                trCalibrantAnalyzer = 1.0;
+            transPolarizer = (polarizationNumberEC > 0 ? trConfigValue : 1.0) / trCalibrantAnalyzer;
+        }
     }
 
     double I0 = M3;
@@ -4170,14 +4222,24 @@ bool dan18::calcAbsCalNew( int col )
 
         if (polarizationNumberPLEXY == 0 && polarizationNumberEC > 0)
             transPolarizer = trConfigValue;
-        else if ((polarizationNumberPLEXY == 1 || polarizationNumberPLEXY == 2) && polarizationNumberEC == 0)
+        else if ((polarizationNumberPLEXY == 1 || polarizationNumberPLEXY == 2) && polarizationNumberEC <= 0)
             transPolarizer = 1.0 / trConfigValue;
         else if ((polarizationNumberPLEXY == 1 || polarizationNumberPLEXY == 2) && polarizationNumberEC > 0)
             transPolarizer = 1.0;
-        else if ((polarizationNumberPLEXY == 3 || polarizationNumberPLEXY == 5) && polarizationNumberEC == 0)
+        else if ((polarizationNumberPLEXY == 3 || polarizationNumberPLEXY == 5) && polarizationNumberEC <= 0)
             transPolarizer = 1.0 / trConfigValue / trConfigAnalazer;
         else if ((polarizationNumberPLEXY == 3 || polarizationNumberPLEXY == 5) && polarizationNumberEC > 0)
             transPolarizer = trConfigAnalazer;
+        // the calibrant with the analyzer only (out-up, out-down): its counts carry the analyzer transmission at
+        // its own run (the 3He cell decays between runs)
+        else if (polarizationNumberPLEXY < 0)
+        {
+            double trCalibrantAnalyzer =
+                analyzerTransmissionSelector->getValue(tableEC->item(dptWL, col)->text().toDouble(), PlexiNumber);
+            if (trCalibrantAnalyzer <= 0)
+                trCalibrantAnalyzer = 1.0;
+            transPolarizer = (polarizationNumberEC > 0 ? trConfigValue : 1.0) / trCalibrantAnalyzer;
+        }
     }
     //+++
     cal = mu / sum * Nmask / D / D * Ds * Ds / transEC / transPolarizer;
@@ -4513,7 +4575,11 @@ void dan18::updateMaskNamesInScript(int startRow, QString headerName)
     for(int iter=startRow; iter<rowNumber;iter++)
     {
         cond = scriptTableManager->condition(iter).toInt();
-        
+        // a condition the configuration table no longer has (a script made before fewer configurations): its cell
+        // widget is none
+        if (std::abs(cond) > tableEC->columnCount())
+            continue;
+
         if (headerName.contains("Mask"))
         {
             if (cond==0) w->setText(iter,index,comboBoxMaskFor->currentText());

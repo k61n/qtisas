@@ -332,9 +332,18 @@ bool dan18::readMergeInfo(bool readFromActiveScript)
 
     if (readFromActiveScript)
     {
-        QString scriptTableName = comboBoxMakeScriptTable->currentText() + "-mergingTemplate";
+        QString scriptTableName = comboBoxMakeScriptTable->currentText();
+        const int reductionMode = comboBoxPolReductionMode->currentIndex();
+        if (comboBoxMode->currentText().contains("(PN)") && reductionMode >= 3 && reductionMode <= 6)
+            scriptTableName += "-PNx42" + QString::number(reductionMode - 2);
+        scriptTableName += "-mergingTemplate";
         if (!app()->checkTableExistence(scriptTableName, t))
+        {
+            danMessage(
+                tr("Merging template %1 was not found. Process I-Q data in the selected polarization mode first.")
+                    .arg(scriptTableName));
             return false;
+        }
     }
     else
     {

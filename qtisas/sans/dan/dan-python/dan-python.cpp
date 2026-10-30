@@ -204,6 +204,37 @@ bool DanOptions::selectMode(const QString &mode)
     return end(true);
 }
 
+QStringList DanOptions::polarizationReductionModes()
+{
+    return {"none", "x2", "x4", "x421", "x422", "x423", "x424"};
+}
+
+QString DanOptions::polarizationReductionMode() const
+{
+    return polarizationReductionModes().value(d->comboBoxPolReductionMode->currentIndex());
+}
+
+bool DanOptions::selectPolarizationReductionMode(const QString &mode)
+{
+    if (!d->comboBoxMode->currentText().contains("(PN)"))
+    {
+        m_lastError = "select polarized-neutron mode first with selectMode()";
+        return false;
+    }
+    int index = static_cast<int>(polarizationReductionModes().indexOf(mode.trimmed().toLower()));
+    if (index < 0)
+        index = d->comboBoxPolReductionMode->findText(mode);
+    if (index < 0)
+    {
+        m_lastError = "no polarization reduction mode " + mode +
+                      "; polarizationReductionModes(): " + polarizationReductionModes().join(", ");
+        return false;
+    }
+    begin();
+    d->comboBoxPolReductionMode->setCurrentIndex(index);
+    return end(d->comboBoxPolReductionMode->currentIndex() == index);
+}
+
 bool DanOptions::setInputPath(const QString &pathGiven)
 {
     const QString path = expandHome(pathGiven);
@@ -1253,8 +1284,10 @@ bool DanProcessing::calculate()
     // the headers pressed as in the interface; a direct-beam calibration through the active mask and sensitivity
     // ("mask", "sens" after the Mask step) when the instrument says so ("Direct Beam:: Use Current Mask and
     // Sensitivity Matrices", KWS-3)
-    for (int row : {dan18::dptC, dan18::dptD, dan18::dptWL, dan18::dptBSIZE, dan18::dptDAC, dan18::dptACMU,
-                    dan18::dptACTR, dan18::dptACFAC, dan18::dptCENTERX, dan18::dptECTR})
+    // dptPOL too, as the interface's corner button: in the PN mode the configurations' polarization states (before,
+    // they stayed "out" from Python)
+    for (int row : {dan18::dptC, dan18::dptD, dan18::dptWL, dan18::dptBSIZE, dan18::dptPOL, dan18::dptDAC,
+                    dan18::dptACMU, dan18::dptACTR, dan18::dptACFAC, dan18::dptCENTERX, dan18::dptECTR})
         d->vertHeaderTableECPressed(row, true);
     return end(true); // a configuration without calibrant or center run is not an error: lastMessages() says so
 }
@@ -1755,6 +1788,9 @@ DanAuto::Run DanAuto::readRun(const QString &run, const QString &file) const
     r.CA = d->collimation->readCA(run);
     r.SA = d->collimation->readSA(run);
     r.polarization = d->collimation->readPolarization(run);
+    r.polarizationAliased = r.polarization;
+    if (d->comboBoxMode->currentText().contains("(PN)"))
+        d->polarizedAlias(r.polarizationAliased);
     r.attenuator = d->collimation->readAttenuator(run);
     r.detectorX = d->detector->readDetectorX(run);
     r.detectorY = d->detector->readDetectorY(run);
@@ -1877,18 +1913,28 @@ QList<DanAuto::Run> DanAuto::filter(const QList<Run> &all, int minDuration, int 
     return kept;
 }
 
-// wildcards "||"-separated, case ignored, the whole name: "*ec*" anywhere, "EB" exactly that name
+// wildcards "||"-separated, case and spaces ignored, the whole name: "*ec*" anywhere, "EB" exactly that name,
+// "*plex[i,y]*" a character class ("[0-9]" a range, "[!...]" the negation);
+// "*" also matches "/" (a header value is no path)
 bool DanAuto::matches(const QString &name, const QString &wildcards)
 {
+    QString text = name;
+    text.remove(' ');
     for (QString w : wildcards.split("||"))
     {
         w.remove(' ');
         if (w.isEmpty())
             continue;
-        const QRegularExpression re(
-            QRegularExpression::anchoredPattern(QRegularExpression::wildcardToRegularExpression(w)),
-            QRegularExpression::CaseInsensitiveOption);
-        if (re.match(name).hasMatch())
+        QString pattern = QRegularExpression::escape(w);
+        pattern.replace("\\*", ".*");
+        pattern.replace("\\?", ".");
+        pattern.replace("\\[\\!", "[^");
+        pattern.replace("\\[", "[");
+        pattern.replace("\\]", "]");
+        pattern.replace("\\-", "-"); // ranges "[0-9]"; outside a class "-" is literal anyway
+        const QRegularExpression re(QRegularExpression::anchoredPattern(pattern),
+                                    QRegularExpression::CaseInsensitiveOption);
+        if (re.isValid() && re.match(text).hasMatch())
             return true;
     }
     return false;
@@ -1899,7 +1945,7 @@ QString DanAuto::label(const Run &r) const
     QString text = "C" + QString::number(qRound(r.C)) + "D" + QString::number(r.D, 'f', 2) + "L" +
                    QString::number(r.lambda, 'f', 1) + "BS" + r.CA + "|" + r.SA;
     if (d->checkBoxPolarizationAsPara->isChecked())
-        text += "P" + r.polarization;
+        text += "P" + r.polarizationAliased;
     if (d->checkBoxAttenuatorAsPara->isChecked())
         text += "A" + r.attenuator;
     return text;
@@ -1919,7 +1965,7 @@ bool DanAuto::sameConfiguration(const Run &a, const Run &b, bool ignoreD) const
         return false;
     if (d->checkBoxRecalculateUseNumber->isChecked() && a.position != b.position)
         return false;
-    if (d->checkBoxPolarizationAsPara->isChecked() && a.polarization != b.polarization)
+    if (d->checkBoxPolarizationAsPara->isChecked() && a.polarizationAliased != b.polarizationAliased)
         return false;
     if (d->checkBoxAttenuatorAsPara->isChecked() && a.attenuator != b.attenuator)
         return false;

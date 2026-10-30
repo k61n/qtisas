@@ -30,7 +30,8 @@ class DanAuto
     }
     struct Run
     {
-        QString run, file, sample, name, CA, SA, polarization, attenuator; // name: as in the header, sample: cut
+        QString run, file, sample, name, CA, SA, polarization, polarizationAliased, attenuator;
+        // name: as in the header, sample: cut; polarization remains the raw header value
         double duration = 0, counts = 0, C = 0, D = 0, lambda = 0, detectorX = 0, detectorY = 0, rotationX = 0,
                rotationY = 0;
         int position = 0;  // C, D [m]
@@ -140,6 +141,9 @@ class DanOptions : public DanPart
     bool selectInstrument(const QString &name);
     QStringList modes() const;
     bool selectMode(const QString &mode);
+    static QStringList polarizationReductionModes();
+    QString polarizationReductionMode() const;
+    bool selectPolarizationReductionMode(const QString &mode);
     bool setInputPath(const QString &path);
     QString inputPath() const;
     bool setOutputPath(const QString &path);

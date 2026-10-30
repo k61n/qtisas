@@ -1129,10 +1129,10 @@ void dan18::danDanMultiButton(QString button)
     {
         generateMergingTable(w, mergedTemplate, firstLine);
 
-        if (checkBoxAutoMerging->isChecked() )
+        if (checkBoxAutoMerging->isChecked())
         {
-            readMergeInfo(true);
-            mergeMethod();
+            if (readMergeInfo(true))
+                mergeMethod();
         }
     }
 

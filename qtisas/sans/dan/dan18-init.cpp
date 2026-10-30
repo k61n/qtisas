@@ -574,6 +574,8 @@ void dan18::instrumentSelected(QString instrName)
     lineEditUpDown->setText("up-down");
     lineEditDownDown->setText("down-down");
     lineEditDownUp->setText("down-up");
+    lineEditOutUp->setText("out-up");
+    lineEditOutDown->setText("out-down");
 
     radioButtonDetectorFormatAscii->setChecked(true);
 
@@ -1373,6 +1375,12 @@ void dan18::applyInstrumentLines(QStringList lst, bool inFocus)
         case InstrumentSANS::Parameter::POL_ALIAS_DOWN_UP:
             lineEditDownUp->setText(line);
             break;
+        case InstrumentSANS::Parameter::POL_ALIAS_OUT_UP:
+            lineEditOutUp->setText(line);
+            break;
+        case InstrumentSANS::Parameter::POL_ALIAS_OUT_DOWN:
+            lineEditOutDown->setText(line);
+            break;
         case InstrumentSANS::Parameter::POLARIZATION:
             polarizationSelector->readSettingsString(line);
             break;
@@ -1730,6 +1738,8 @@ void dan18::saveInstrumentAsCpp(QString instrPath, QString instrName  )
     s += "lst<<\"[POL-ALIAS-UP-DOWN] " + lineEditUpDown->text() + "\";\n";
     s += "lst<<\"[POL-ALIAS-DOWN-DOWN] " + lineEditDownDown->text() + "\";\n";
     s += "lst<<\"[POL-ALIAS-DOWN-UP] " + lineEditDownUp->text() + "\";\n";
+    s += "lst<<\"[POL-ALIAS-OUT-UP] " + lineEditOutUp->text() + "\";\n";
+    s += "lst<<\"[POL-ALIAS-OUT-DOWN] " + lineEditOutDown->text() + "\";\n";
 
     s += "lst<<\"[POLARIZATION] " + polarizationSelector->writeSettingsString() + "\";\n";
     s += "lst<<\"[POL-TRANSMISSION] " + polTransmissionSelector->writeSettingsString() + "\";\n";
@@ -1994,6 +2004,8 @@ QString dan18::instrumentText(const QString &fileName)
     s += "[POL-ALIAS-UP-DOWN] " + lineEditUpDown->text() + "\n";
     s += "[POL-ALIAS-DOWN-DOWN] " + lineEditDownDown->text() + "\n";
     s += "[POL-ALIAS-DOWN-UP] " + lineEditDownUp->text() + "\n";
+    s += "[POL-ALIAS-OUT-UP] " + lineEditOutUp->text() + "\n";
+    s += "[POL-ALIAS-OUT-DOWN] " + lineEditOutDown->text() + "\n";
 
     s += "[POLARIZATION] " + polarizationSelector->writeSettingsString() + "\n";
     s += "[POL-TRANSMISSION] " + polTransmissionSelector->writeSettingsString() + "\n";

@@ -263,7 +263,27 @@ public:
     void updateColInScript(const QString &colName, int rowIndexint, int startRow = 0);
     bool generateMergingTable(Table *scriptTable, const QStringList &generatedTables, const int &startingRaw = 0);
     bool generateMergingTablePN(QStringList allUniqueSamples, QList<QList<QStringList>> linesInScriptMerged);
+    // the polarization state of a header value, by the POL-ALIAS fields: 0 out, 1 up, 2 down, 3 up-up, 4 up-down,
+    // 5 down-down, 6 down-up; -1 out-up, -2 out-down (polarizer out, analyzer up/down: "No Corrections" and
+    // transmissions only); the value becomes the state's name. Always 0 ("out") outside the PN mode
     int polarizedAlias(QString &valueFromHeader) const;
+    // a state as a slot 0..8 (lists, the configuration table's combo box: out-up 7, out-down 8) and back
+    static int polarizationSlot(int state)
+    {
+        return state >= 0 ? state : 6 - state;
+    }
+    static int polarizationState(int slot)
+    {
+        return slot <= 6 ? slot : 6 - slot;
+    }
+    // the Pol-script table's column of a slot: 2..8, out-up 11, out-down 12 (after the buffer columns 9, 10)
+    static int polarizedScriptColumn(int slot)
+    {
+        return slot <= 6 ? 2 + slot : 4 + slot;
+    }
+    // the outputs' suffix of a slot: "-Out", "-Up", ..., "-DownUp", "-OutUp", "-OutDown"
+    static QString polarizationSuffix(int slot);
+    static void addPolarizedScriptOutColumns(Table *w);
 
     // dandan
     void danDanMultiButton(QString button);
