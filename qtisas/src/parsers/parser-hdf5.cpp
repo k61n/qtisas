@@ -19,25 +19,87 @@ Description: HDF5 parser
 
 using namespace H5;
 
+//+++ a numeric entry read whole (HDF5 writes it contiguous) and reduced by its action: [sum], [mean], [first], [last],
+//+++ an index [i] / [i,j]; rank 2: [sum] and [sum][sum] all; rank 3: [sum][sum] all, [mean][sum] the sum per frame,
+//+++ [sum], [mean], [last], [i,j] in the first frame. Arrays were read into arrays of row pointers (memory overwritten)
+//+++ and a gate refused [sum] on any array, so a detector total ([Sum] counts;;;[sum][sum]) was never read
+static QString numericEntry(const DataSet &dataset, const DataSpace &dataspace, const QString &action, bool integer)
+{
+    const int rank = dataspace.getSimpleExtentNdims();
+    if (rank > 3)
+        return "";
+    std::vector<hsize_t> dim(3, 1);
+    if (rank > 0)
+        dataspace.getSimpleExtentDims(dim.data(), nullptr);
+    const hsize_t total = dim[0] * dim[1] * dim[2];
+    if (total == 0)
+        return "";
+    std::vector<double> v(total);
+    dataset.read(v.data(), PredType::NATIVE_DOUBLE);
+
+    auto number = [integer](double x) {
+        return integer ? QString::number(qint64(std::llround(x))) : QString::number(x);
+    };
+    auto sum = [&v](hsize_t n) {
+        double s = 0;
+        for (hsize_t i = 0; i < n; i++)
+            s += v[i];
+        return s;
+    };
+    // [i] or [i,j]; out of range: 0
+    QStringList lst = QString(action).remove("[").remove("]").split(",", Qt::SkipEmptyParts);
+    auto index = [&lst](int k, hsize_t n) {
+        const int i = k < lst.count() ? lst[k].toInt() : 0;
+        return i >= 0 && hsize_t(i) < n ? hsize_t(i) : hsize_t(0);
+    };
+    const bool sumAndMean = action.contains("[mean]") && action.contains("[sum]");
+
+    if (rank <= 1)
+    {
+        if (action == "[sum]" || action == "[meansum]")
+            return number(sum(total));
+        if (action == "[mean]")
+            return QString::number(sum(total) / double(total));
+        if (action == "[last]")
+            return number(v[total - 1]);
+        if (action == "[first]")
+            return number(v[0]);
+        return number(v[index(0, total)]);
+    }
+    if (rank == 2)
+    {
+        if (action == "[sum]" || action == "[sum][sum]" || sumAndMean)
+            return number(sum(total));
+        if (action == "[mean]" || action == "[mean][mean]")
+            return QString::number(sum(total) / double(total));
+        if (action == "[first]")
+            return number(v[0]);
+        if (action == "[last]")
+            return number(v[total - 1]);
+        return number(v[index(0, dim[0]) * dim[1] + index(1, dim[1])]);
+    }
+    const hsize_t frame = dim[1] * dim[2];
+    if (action == "[sum][sum]")
+        return number(sum(total));
+    if (action == "[mean][mean]")
+        return QString::number(sum(total) / double(total));
+    if (sumAndMean)
+        return QString::number(sum(total) / double(dim[0]));
+    if (action == "[sum]")
+        return number(sum(frame));
+    if (action == "[mean]")
+        return QString::number(sum(frame) / double(frame));
+    if (action == "[first]")
+        return number(v[0]);
+    if (action == "[last]")
+        return number(v[frame - 1]);
+    return number(v[index(0, dim[1]) * dim[2] + index(1, dim[2])]);
+}
 
 QString ParserHDF5::readEntry(const QString &fileNameString, const QString &code, QString &action)
 {
     if (code == "")
         return "";
-
-    int dimXtest = 0, dimYtest = 0, Ntest = 0, TOFtest = 0, dataTypetest = 0;
-    dataInfo(fileNameString, code, dimXtest, dimYtest, Ntest, TOFtest, dataTypetest);
-
-    if (dataTypetest < 0)
-    {
-        std::cout << "entry: " << fileNameString.toLatin1().constData() << " not existing\n";
-        return "-1.0";
-    }
-    if (dataTypetest != 0 && (action.contains("[sum]") || action.contains("[mean]")))
-    {
-        std::cout << "entry: " << fileNameString.toLatin1().constData() << " is not scalar, check data structure\n";
-        return "-1.0";
-    }
 
     QString postAction = action;
     postAction = postAction.remove("[sum]").remove("[mean]");
@@ -94,380 +156,8 @@ QString ParserHDF5::readEntry(const QString &fileNameString, const QString &code
         dataset.read(data, datatype, dataspace);
         result = QString::fromLocal8Bit(data.c_str());
     }
-    else if (type_class == H5T_INTEGER)
-    {
-        int rank = dataspace.getSimpleExtentNdims();
-        if (rank == 1)
-        {
-            hsize_t dim[1];
-            int ndims = dataspace.getSimpleExtentDims(dim, nullptr);
-            auto int_value = new int[dim[0]];
-            dataset.read(int_value, PredType::NATIVE_INT, H5S_ALL, H5S_ALL);
-
-            QString s = action;
-            int index = s.remove("[").remove("]").toInt();
-            if (index >= dim[0])
-                index = 0;
-
-            if (action == "[sum]")
-            {
-                int sum = 0;
-                for (int i = 0; i < dim[0]; i++)
-                    sum += int_value[i];
-                result = QString::number(sum);
-            }
-            else if (action == "[mean]")
-            {
-                double sum = 0;
-                for (int i = 0; i < dim[0]; i++)
-                    sum += int_value[i];
-                result = QString::number(sum / double(dim[0]));
-            }
-            else if (action == "[last]")
-            {
-                result = QString::number(int_value[dim[0] - 1]);
-            }
-            else if (action == "[first]")
-            {
-                result = QString::number(int_value[0]);
-            }
-            else
-                result = QString::number(int_value[index]);
-            delete[] int_value;
-        }
-        else if (rank == 2)
-        {
-            hsize_t dim[2];
-            int ndims = dataspace.getSimpleExtentDims(dim, nullptr);
-            auto int_value = new int *[dim[0]];
-            for (int i = 0; i < dim[0]; i++)
-                int_value[i] = new int[dim[1]];
-            dataset.read(int_value, PredType::NATIVE_INT, H5S_ALL, H5S_ALL);
-
-            QString s = action;
-            s = s.remove("[").remove("]");
-            QStringList lst = s.split(",", Qt::SkipEmptyParts);
-            int index0 = 0;
-            int index1 = 0;
-
-            if (lst.count() == 2)
-            {
-                index0 = lst[0].toInt();
-                if (index0 >= dim[0])
-                    index0 = 0;
-                index1 = lst[1].toInt();
-                if (index1 >= dim[1])
-                    index1 = 0;
-            }
-
-            if (action == "[sum]" || action == "[sum][sum]" || (action.contains("[mean]") && action.contains("[sum]")))
-            {
-                int sum = 0;
-                for (int i = 0; i < dim[0]; i++)
-                    for (int j = 0; j < dim[1]; j++)
-                        sum += int_value[i][j];
-                result = QString::number(sum);
-            }
-            else if (action == "[mean]" || action == "[mean][mean]")
-            {
-                double sum = 0;
-                for (int i = 0; i < dim[0]; i++)
-                    for (int j = 0; j < dim[1]; j++)
-                        sum += int_value[i][j];
-                result = QString::number(sum / double(dim[0]) / double(dim[1]));
-            }
-            else if (action == "[first]")
-                result = QString::number(int_value[0][0]);
-            else if (action == "[last]")
-                result = QString::number(int_value[dim[0] - 1][dim[1] - 1]);
-            else
-                result = QString::number(int_value[index0][index1]);
-            for (int i = 0; i < dim[0]; i++)
-                delete[] int_value[i];
-            delete[] int_value;
-        }
-        else if (rank == 3)
-        {
-            hsize_t dim[3];
-            dataspace.getSimpleExtentDims(dim, nullptr);
-
-            auto int_value = new int **[dim[0]];
-            for (int i = 0; i < dim[0]; i++)
-            {
-                int_value[i] = new int *[dim[1]];
-                for (int j = 0; j < dim[1]; j++)
-                    int_value[i][j] = new int[dim[2]];
-            }
-            dataset.read(int_value, PredType::NATIVE_INT, H5S_ALL, H5S_ALL);
-
-            if (action == "[sum][sum]" || action == "[mean][mean]" ||
-                (action.contains("[mean]") && action.contains("[sum]")))
-            {
-                if (action == "[sum][sum]")
-                {
-                    int sum = 0;
-                    for (int k = 0; k < dim[0]; k++)
-                        for (int i = 0; i < dim[1]; i++)
-                            for (int j = 0; j < dim[2]; j++)
-                                sum += int_value[k][i][j];
-                    result = QString::number(sum);
-                }
-                else if (action == "[mean][mean]")
-                {
-                    double sum = 0;
-                    for (int k = 0; k < dim[0]; k++)
-                        for (int i = 0; i < dim[1]; i++)
-                            for (int j = 0; j < dim[2]; j++)
-                                sum += int_value[k][i][j];
-                    result = QString::number(sum / double(dim[0]) / double(dim[1]) / double(dim[2]));
-                }
-                else if (action.contains("[mean]") && action.contains("[sum]"))
-                {
-                    double sum = 0;
-                    for (int k = 0; k < dim[0]; k++)
-                        for (int i = 0; i < dim[1]; i++)
-                            for (int j = 0; j < dim[2]; j++)
-                                sum += int_value[k][i][j];
-                    result = QString::number(sum / double(dim[0]));
-                }
-                else
-                    result = QString::number(int_value[0][0][0]);
-            }
-            else
-            {
-                QString s = action;
-                s = s.remove("[").remove("]");
-                QStringList lst = s.split(",", Qt::SkipEmptyParts);
-                int index0 = 0;
-                int index1 = 0;
-
-                if (lst.count() == 2)
-                {
-                    index0 = lst[0].toInt();
-                    if (index0 >= dim[0])
-                        index0 = 0;
-                    index1 = lst[1].toInt();
-                    if (index1 >= dim[1])
-                        index1 = 0;
-                }
-
-                if (action == "[sum]")
-                {
-                    int sum = 0;
-                    for (int i = 0; i < dim[1]; i++)
-                        for (int j = 0; j < dim[2]; j++)
-                            sum += int_value[0][i][j];
-                    result = QString::number(sum);
-                }
-                else if (action == "[mean]")
-                {
-                    double sum = 0;
-                    for (int i = 0; i < dim[1]; i++)
-                        for (int j = 0; j < dim[2]; j++)
-                            sum += int_value[0][i][j];
-                    result = QString::number(sum / double(dim[1]) / double(dim[2]));
-                }
-                else if (action == "[first]")
-                    result = QString::number(int_value[0][0][0]);
-                else if (action == "[last]")
-                    result = QString::number(int_value[0][dim[1] - 1][dim[2] - 1]);
-                else
-                    result = QString::number(int_value[0][index0][index1]);
-            }
-            for (int i = 0; i < dim[0]; i++)
-            {
-                for (int j = 0; j < dim[1]; j++)
-                    delete[] int_value[i][j];
-                delete[] int_value[i];
-            }
-            delete[] int_value;
-        }
-    }
-    else if (type_class == H5T_FLOAT)
-    {
-        int rank = dataspace.getSimpleExtentNdims();
-        if (rank == 1)
-        {
-            hsize_t dim[1];
-            int ndims = dataspace.getSimpleExtentDims(dim, nullptr);
-            auto double_value = new double[dim[0]];
-            dataset.read(double_value, PredType::NATIVE_DOUBLE, H5S_ALL, H5S_ALL);
-
-            QString s = action;
-            int index = s.remove("[").remove("]").toInt();
-            if (index >= dim[0])
-                index = 0;
-
-            if (action == "[sum]" || action == "[meansum]")
-            {
-                double sum = 0;
-                for (int i = 0; i < dim[0]; i++)
-                    sum += double_value[i];
-                result = QString::number(sum);
-            }
-            else if (action == "[mean]")
-            {
-                double sum = 0;
-                for (int i = 0; i < dim[0]; i++)
-                    sum += double_value[i];
-                result = QString::number(sum / double(dim[0]));
-            }
-            else if (action == "[last]")
-                result = QString::number(double_value[dim[0] - 1]);
-            else if (action == "[first]")
-                result = QString::number(double_value[0]);
-            else
-                result = QString::number(double_value[index]);
-            delete[] double_value;
-        }
-        else if (rank == 2)
-        {
-            hsize_t dim[2];
-            int ndims = dataspace.getSimpleExtentDims(dim, nullptr);
-            auto double_value = new double *[dim[0]];
-            for (int i = 0; i < dim[0]; i++)
-                double_value[i] = new double[dim[1]];
-            dataset.read(double_value, PredType::NATIVE_DOUBLE, H5S_ALL, H5S_ALL);
-
-            QString s = action;
-            s = s.remove("[").remove("]");
-            QStringList lst = s.split(",", Qt::SkipEmptyParts);
-            int index0 = 0;
-            int index1 = 0;
-
-            if (lst.count() == 2)
-            {
-                index0 = lst[0].toInt();
-                if (index0 >= dim[0])
-                    index0 = 0;
-                index1 = lst[1].toInt();
-                if (index1 >= dim[1])
-                    index1 = 0;
-            }
-
-            if (action == "[sum]" || action == "[sum][sum]" || (action.contains("[mean]") && action.contains("[sum]")))
-            {
-                double sum = 0;
-                for (int i = 0; i < dim[0]; i++)
-                    for (int j = 0; j < dim[1]; j++)
-                        sum += double_value[i][j];
-                result = QString::number(sum);
-            }
-            else if (action == "[mean]" || action == "[mean][mean]")
-            {
-                double sum = 0;
-                for (int i = 0; i < dim[0]; i++)
-                    for (int j = 0; j < dim[1]; j++)
-                        sum += double_value[i][j];
-                result = QString::number(sum / double(dim[0]) / double(dim[1]));
-            }
-            else if (action == "[first]")
-                result = QString::number(double_value[0][0]);
-            else if (action == "[last]")
-                result = QString::number(double_value[dim[0] - 1][dim[1] - 1]);
-            else
-                result = QString::number(double_value[index0][index1]);
-            for (int i = 0; i < dim[0]; i++)
-                delete[] double_value[i];
-            delete[] double_value;
-        }
-        else if (rank == 3)
-        {
-            hsize_t dim[3];
-            dataspace.getSimpleExtentDims(dim, nullptr);
-
-            auto double_value = new double **[dim[0]];
-            for (int i = 0; i < dim[0]; i++)
-            {
-                double_value[i] = new double *[dim[1]];
-                for (int j = 0; j < dim[1]; j++)
-                    double_value[i][j] = new double[dim[2]];
-            }
-            dataset.read(double_value, PredType::NATIVE_DOUBLE, H5S_ALL, H5S_ALL);
-
-            if (action == "[sum][sum]" || action == "[mean][mean]" ||
-                (action.contains("[mean]") && action.contains("[sum]")))
-            {
-                if (action == "[sum][sum]")
-                {
-                    double sum = 0;
-                    for (int k = 0; k < dim[0]; k++)
-                        for (int i = 0; i < dim[1]; i++)
-                            for (int j = 0; j < dim[2]; j++)
-                                sum += double_value[k][i][j];
-                    result = QString::number(sum);
-                }
-                else if (action == "[mean][mean]")
-                {
-                    double sum = 0;
-                    for (int k = 0; k < dim[0]; k++)
-                        for (int i = 0; i < dim[1]; i++)
-                            for (int j = 0; j < dim[2]; j++)
-                                sum += double_value[k][i][j];
-                    result = QString::number(sum / double(dim[0]) / double(dim[1]) / double(dim[2]));
-                }
-                else if (action.contains("[mean]") && action.contains("[sum]"))
-                {
-                    double sum = 0;
-                    for (int k = 0; k < dim[0]; k++)
-                        for (int i = 0; i < dim[1]; i++)
-                            for (int j = 0; j < dim[2]; j++)
-                                sum += double_value[k][i][j];
-                    result = QString::number(sum / double(dim[0]));
-                }
-                else
-                    result = QString::number(double_value[0][0][0]);
-            }
-            else
-            {
-                QString s = action;
-                s = s.remove("[").remove("]");
-                QStringList lst = s.split(",", Qt::SkipEmptyParts);
-                int index0 = 0;
-                int index1 = 0;
-
-                if (lst.count() == 2)
-                {
-                    index0 = lst[0].toInt();
-                    if (index0 >= dim[0])
-                        index0 = 0;
-                    index1 = lst[1].toInt();
-                    if (index1 >= dim[1])
-                        index1 = 0;
-                }
-
-                if (action == "[sum]")
-                {
-                    double sum = 0;
-                    for (int i = 0; i < dim[1]; i++)
-                        for (int j = 0; j < dim[2]; j++)
-                            sum += double_value[0][i][j];
-                    result = QString::number(sum);
-                }
-                else if (action == "[mean]")
-                {
-                    double sum = 0;
-                    for (int i = 0; i < dim[1]; i++)
-                        for (int j = 0; j < dim[2]; j++)
-                            sum += double_value[0][i][j];
-                    result = QString::number(sum / double(dim[1]) / double(dim[2]));
-                }
-                else if (action == "[first]")
-                    result = QString::number(double_value[0][0][0]);
-                else if (action == "[last]")
-                    result = QString::number(double_value[0][dim[1] - 1][dim[2] - 1]);
-                else
-                    result = QString::number(double_value[0][index0][index1]);
-            }
-            for (int i = 0; i < dim[0]; i++)
-            {
-                for (int j = 0; j < dim[1]; j++)
-                    delete[] double_value[i][j];
-                delete[] double_value[i];
-            }
-            delete[] double_value;
-        }
-    }
+    else if (type_class == H5T_INTEGER || type_class == H5T_FLOAT)
+        result = numericEntry(dataset, dataspace, action, type_class == H5T_INTEGER);
     else if (type_class == H5T_TIME)
         result = "TIME";
     else if (type_class == H5T_ARRAY)
@@ -1560,7 +1250,8 @@ bool ParserHDF5::dataInfo(const QString &fileNameString, QString code, int &dimX
         bool d0det = couldBeDetectorDim(static_cast<hsize_t>(std::sqrt(d0)));
         bool d1det = couldBeDetectorDim(static_cast<hsize_t>(std::sqrt(d1)));
 
-        if (d0det && d1det)
+        // [dimX][dimY]: the dimensions themselves (their square roots are for [N][dimX*dimY], [dimX*dimY][N])
+        if (couldBeDetectorDim(d0) && couldBeDetectorDim(d1))
         {
             // simplest: [dimX][dimY]
             dimX = static_cast<int>(d0);
