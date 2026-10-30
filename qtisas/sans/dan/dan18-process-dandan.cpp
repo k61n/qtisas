@@ -9,6 +9,7 @@ Description: SANS data reduction tools
 
 #include <cmath>
 #include <limits>
+#include <map>
 
 #include <QElapsedTimer>
 
@@ -46,10 +47,50 @@ void dan18::slotDANbuttonSigma()    {   danDanMultiButton("Sigma-x-y"); };
 void dan18::slotDANbuttonQxy()      {   danDanMultiButton("Q-x-y");     };
 void dan18::slotDANbuttondQxy()     {   danDanMultiButton("dQ-x-y"); };
 
-
 //*******************************************
 //+++ dan
 //*******************************************
+bool dan18::isOneDimensionalOutput(const QString &button)
+{
+    return button == "I-Q" || button == "I-Qx" || button == "I-Qy";
+}
+
+double dan18::maskedSum(const gsl_matrix *m, const gsl_matrix *mask, int MD)
+{
+    double sum = 0.0;
+    for (int i = 0; i < MD; i++)
+        for (int j = 0; j < MD; j++)
+            if (gsl_matrix_get(mask, i, j) > 0)
+                sum += gsl_matrix_get(m, i, j);
+    return sum;
+}
+
+double dan18::transmissionError(double total, const QList<QPair<double, double>> &parts)
+{
+    if (total == 0.0)
+        return 0.0;
+    double variance = 0.0;
+    for (const auto &part : parts)
+        variance += std::pow(part.first / total * part.second, 2);
+    return std::sqrt(variance);
+}
+
+//+++ I -> I - c on the pixels the mask keeps; err holds the relative variance (dI/I)^2: dI stays, so it becomes
+//+++ (dI/I)^2 * I^2 / (I - c)^2 (0 where I - c = 0)
+void dan18::subtractConstantBackground(gsl_matrix *Sample, gsl_matrix *err, gsl_matrix *mask, double c, int MD)
+{
+    for (int i = 0; i < MD; i++)
+        for (int j = 0; j < MD; j++)
+        {
+            if (gsl_matrix_get(mask, i, j) <= 0)
+                continue;
+            const double I = gsl_matrix_get(Sample, i, j);
+            const double reduced = I - c;
+            const double relative = gsl_matrix_get(err, i, j);
+            gsl_matrix_set(Sample, i, j, reduced);
+            gsl_matrix_set(err, i, j, reduced != 0.0 ? relative * I * I / (reduced * reduced) : 0.0);
+        }
+}
 void dan18::danDanMultiButton(QString button)
 {
     //+++ Output data Suffix
@@ -640,7 +681,7 @@ void dan18::danDanMultiButton(QString button)
         else status=status+">>>  Thickness="+QString::number(thickness,'f',3)+"  ";
 
         //+++ absolute factor check
-        double abs0 = scale * scriptTableManager->absoluteFactor(iRow).toDouble();
+        double abs0 = scale * factorValue(scriptTableManager->absoluteFactor(iRow)); // "F" or "F [ ±s ]"
         if (thickness != 0)
             abs0 /= thickness;
 
@@ -702,7 +743,19 @@ void dan18::danDanMultiButton(QString button)
         double scaleBufferData=0;
         if (subtractBufferLocal)
             scaleBufferData = fractionBuffer * absBuffer / abs;
-        
+
+        // 1D outputs (sums over pixels): the transmission error is common to the pixels, so it stays out of the pixel
+        // variance and comes as one relative error per row, added once per point after averaging
+        const bool transmissionOnce = isOneDimensionalOutput(button);
+        const bool bufferAsSensRow =
+            subtractBufferLocal && bufferAsSens && scriptTableManager->sensFromBuffer(iRow) == "yes";
+        double sumSignal = 0.0;
+        double sumSamplePart = 0.0;
+        double sumBufferPart = 0.0;
+        double sumKappa = 0.0;
+        double sumKappaBuffer = 0.0;
+        int pixelsKappa = 0;
+
         for (iii=0;iii<MD;iii++) for (jjj=0;jjj<MD;jjj++)
         {
             //+++
@@ -717,63 +770,118 @@ void dan18::danDanMultiButton(QString button)
             Iec=Iec*trans*trans;
             Iec*=gsl_matrix_get(ECErr,iii,jjj);
             //+++
-            Ibc=gsl_matrix_get(BC,iii,jjj);
-            err2 -= ( (1.0-trans) * Ibc );  //+++
-            Ibc*=Ibc;
-            Ibc*=(1.0-trans)*(1.0-trans);
+                // BC: S - BC - T*(EC - BC) with an EC, S - BC without one
+                const double weightBC = ECexist ? 1.0 - trans : 1.0;
+                Ibc = gsl_matrix_get(BC, iii, jjj);
+                err2 -= weightBC * Ibc;
+                Ibc *= Ibc;
+                Ibc *= weightBC * weightBC;
             Ibc*=gsl_matrix_get(BCErr,iii,jjj);
             
-            //+++  2019 : error of transmission
-            ItransSample=gsl_matrix_get(Sample,iii,jjj)-gsl_matrix_get(BC,iii,jjj);
-            ItransSample*=ItransSample;
-            ItransSample=ItransSample*sigmaTrans*sigmaTrans;
-
-            if (subtractBufferLocal)
-
-            {
-                //+++2019
-                Ibuffer=scaleBufferData*gsl_matrix_get(Buffer,iii,jjj);
-                err2-= Ibuffer;
-                Ibuffer*=Ibuffer;
-                Ibuffer*=gsl_matrix_get(BufferErr,iii,jjj);
-                //+++2019
-                IecBuffer=transBuffer*scaleBufferData*gsl_matrix_get(EC,iii,jjj);
-                err2 += IecBuffer;
-                IecBuffer*=IecBuffer;
-                IecBuffer*=gsl_matrix_get(ECErr,iii,jjj);
-                //+++2019
-                IbcBuffer=scaleBufferData*(1.0-transBuffer)*gsl_matrix_get(BC,iii,jjj);
-                err2 += IbcBuffer;
-                IbcBuffer*=IbcBuffer;
-                IbcBuffer*=gsl_matrix_get(BCErr,iii,jjj);
                 //+++  2019 : error of transmission
-                ItransBuffer=scaleBufferData*(gsl_matrix_get(Buffer,iii,jjj)-gsl_matrix_get(BC,iii,jjj));
-                ItransBuffer*=ItransBuffer;
-                ItransBuffer=ItransBuffer*sigmaTransBuffer*sigmaTransBuffer;
-            }
-            
+                ItransSample = gsl_matrix_get(Sample, iii, jjj) - gsl_matrix_get(BC, iii, jjj);
+                ItransSample *= ItransSample;
+                ItransSample = ItransSample * sigmaTrans * sigmaTrans;
+
+                if (subtractBufferLocal)
+
+                {
+                    //+++2019
+                    Ibuffer = scaleBufferData * gsl_matrix_get(Buffer, iii, jjj);
+                    err2 -= Ibuffer;
+                    Ibuffer *= Ibuffer;
+                    Ibuffer *= gsl_matrix_get(BufferErr, iii, jjj);
+                    //+++2019
+                    IecBuffer = transBuffer * scaleBufferData * gsl_matrix_get(EC, iii, jjj);
+                    err2 += IecBuffer;
+                    IecBuffer *= IecBuffer;
+                    IecBuffer *= gsl_matrix_get(ECErr, iii, jjj);
+                    IbcBuffer = scaleBufferData * (ECexist ? 1.0 - transBuffer : 1.0) * gsl_matrix_get(BC, iii, jjj);
+                    err2 += IbcBuffer;
+                    IbcBuffer *= IbcBuffer;
+                    IbcBuffer *= gsl_matrix_get(BCErr, iii, jjj);
+                    //+++  2019 : error of transmission
+                    ItransBuffer = scaleBufferData * (gsl_matrix_get(Buffer, iii, jjj) - gsl_matrix_get(BC, iii, jjj));
+                    ItransBuffer *= ItransBuffer;
+                    ItransBuffer = ItransBuffer * sigmaTransBuffer * sigmaTransBuffer;
+                }
+
+                // the T and Tb shares of this pixel: sums for the row's transmission error (see the notes)
+                if (gsl_matrix_get(mask, iii, jjj) > 0 && err2 != 0.0)
+                {
+                    const double samplePart = gsl_matrix_get(Sample, iii, jjj) - gsl_matrix_get(BC, iii, jjj);
+                    const double bufferPart =
+                        subtractBufferLocal
+                            ? scaleBufferData * (gsl_matrix_get(Buffer, iii, jjj) - gsl_matrix_get(BC, iii, jjj))
+                            : 0.0;
+                    sumSignal += err2;
+                    sumSamplePart += samplePart;
+                    sumBufferPart += bufferPart;
+                    if (bufferAsSensRow)
+                    {
+                        // R = N / B: T acts on N only, Tb on N (through the buffer term) and on B
+                        const double bufferSubtracted =
+                            gsl_matrix_get(Buffer, iii, jjj) -
+                            (ECexist ? transBuffer * gsl_matrix_get(EC, iii, jjj) +
+                                           (1.0 - transBuffer) * gsl_matrix_get(BC, iii, jjj)
+                                     : gsl_matrix_get(BC, iii, jjj));
+                        sumKappa += samplePart / err2;
+                        if (bufferSubtracted != 0.0)
+                            sumKappaBuffer += (gsl_matrix_get(Buffer, iii, jjj) - gsl_matrix_get(BC, iii, jjj)) *
+                                              (scaleBufferData / err2 + 1.0 / bufferSubtracted);
+                        pixelsKappa++;
+                    }
+                }
+                if (transmissionOnce)
+                {
+                    ItransSample = 0.0;
+                    ItransBuffer = 0.0;
+                }
+
             if ( err2 != 0.0 ) err2=1.0/err2; else err2=0.0;
             err2=err2*err2;
 
                 if (subtractBufferLocal)
-                    err2 *= (Isample + Iec + Ibc + ItransSample + Ibuffer + IecBuffer + IbcBuffer + ItransBuffer);
+                {
+                    // EC and BC enter the sample's and the buffer's term: one coefficient each, squared once (their
+                    // noise partly cancels: -T EC + sB Tb EC)
+                    const double ec = gsl_matrix_get(EC, iii, jjj);
+                    const double bc = gsl_matrix_get(BC, iii, jjj);
+                    const double coefficientEC = -trans + scaleBufferData * transBuffer;
+                    const double coefficientBC = -weightBC + scaleBufferData * (ECexist ? 1.0 - transBuffer : 1.0);
+                    const double varianceEC = coefficientEC * coefficientEC * ec * ec * gsl_matrix_get(ECErr, iii, jjj);
+                    const double varianceBC = coefficientBC * coefficientBC * bc * bc * gsl_matrix_get(BCErr, iii, jjj);
+                    err2 *= (Isample + varianceEC + varianceBC + ItransSample + Ibuffer + ItransBuffer);
+                }
                 else
                     err2 *= (Isample + Iec + Ibc + ItransSample);
 
-            gsl_matrix_set(ErrMatrix, iii, jjj, sqrt(
-                                                     gsl_matrix_get(ErrMatrix,iii,jjj) + err2 ) ); // sigma(relative)
-            gsl_matrix_set(SampleErr, iii, jjj,
-                           gsl_matrix_get(ErrMatrix,iii,jjj) * gsl_matrix_get(ErrMatrix,iii,jjj)
-                           );//sigma^2
+                gsl_matrix_set(ErrMatrix, iii, jjj,
+                               sqrt(gsl_matrix_get(ErrMatrix, iii, jjj) + err2)); // sigma(relative)
+                gsl_matrix_set(SampleErr, iii, jjj,
+                               gsl_matrix_get(ErrMatrix, iii, jjj) * gsl_matrix_get(ErrMatrix, iii, jjj)); // sigma^2
         }
         
         
         gsl_matrix_mul_elements(ErrMatrix,mask);
         gsl_matrix_mul_elements(SampleErr,mask);
-        
-        
-        //+++ TODO :: Error of BUFFER
-        
+
+        // the row's relative transmission error: kappa sigmaT/T and kappa_b sigmaTb/Tb in quadrature
+        double rowCommonError = 0.0;
+        if (transmissionOnce)
+        {
+            if (bufferAsSensRow)
+                rowCommonError = pixelsKappa > 0 ? std::hypot(sumKappa / pixelsKappa * sigmaTrans,
+                                                              sumKappaBuffer / pixelsKappa * sigmaTransBuffer)
+                                                 : 0.0;
+            else
+                rowCommonError =
+                    transmissionError(sumSignal, {{sumSamplePart, sigmaTrans},
+                                                  {sumBufferPart, subtractBufferLocal ? sigmaTransBuffer : 0.0}});
+            // the absolute factor's error is common too
+            rowCommonError = std::hypot(rowCommonError, factorRelativeError(iRow));
+        }
+
         if (checkBoxWaTrDetChecked) gsl_matrix_mul_elements(Sample,sensTrDet);
         
         //+++ Matrix-to-Matrix actions +++
@@ -868,9 +976,11 @@ void dan18::danDanMultiButton(QString button)
             gsl_matrix_sub(Sample,Buffer);
         }
 
+        double sampleScale = abs; // Sample in the units of Buffer, times sampleScale
         if (comboBoxACmethod->currentIndex() == 3)
         {
             double normalization = monitors->normalizationFactor(scriptTableManager->runSample(iRow));
+            sampleScale = normalization > 0 ? 1 / normalization : 1.0;
             if (normalization > 0)
                 gsl_matrix_scale(Sample, 1 / normalization);
         }
@@ -898,6 +1008,16 @@ void dan18::danDanMultiButton(QString button)
                         Ibuffer= gsl_matrix_get(Buffer,iii,jjj);
                         if (Ibuffer>0)
                         {
+                                // R = N / B with N = S - B: (dR/R)^2 = (dN/N)^2 + (dB/B)^2 + 2 (dB/B)^2 B / N (N and B
+                                // correlated); the sensitivity's error leaves (the sensitivity is not used), the
+                                // buffer's own comes in (its counts' relative variance)
+                                const double numerator = Isample / sampleScale;
+                                const double relativeN =
+                                    gsl_matrix_get(SampleErr, iii, jjj) - gsl_matrix_get(sensErr, iii, jjj);
+                                const double relativeB = gsl_matrix_get(BufferErr, iii, jjj);
+                                const double relativeR = relativeN + relativeB +
+                                                         (numerator != 0 ? 2 * relativeB * Ibuffer / numerator : 0.0);
+                                gsl_matrix_set(SampleErr, iii, jjj, relativeR > 0 ? relativeR : 0.0);
                             Isample/=Ibuffer;
                         }
                         summBufferSens+=Ibuffer*gsl_matrix_get(sens,iii,jjj);
@@ -910,14 +1030,9 @@ void dan18::danDanMultiButton(QString button)
         }
         else gsl_matrix_mul_elements(Sample,sens);
 
-        //+++ subtract const bgd
+        //+++ subtract const bgd: the absolute error stays, the relative variance follows I -> I - c
         if (BackgroundConst != 0)
-        {
-            for (iii=0;iii<MD;iii++) for (jjj=0;jjj<MD;jjj++)
-            {
-                if (gsl_matrix_get(mask,iii,jjj)>0) gsl_matrix_set(Sample,iii,jjj,gsl_matrix_get(Sample,iii,jjj)-BackgroundConst);
-            }
-        }
+            subtractConstantBackground(Sample, SampleErr, mask, BackgroundConst, MD);
 
         //+++ Masking of  Negative Points
         if (checkBoxMaskNegativeisChecked)
@@ -975,7 +1090,8 @@ void dan18::danDanMultiButton(QString button)
         statusAll+="DAN :: "+status+"\n";
 
         timeElapsed = static_cast<double>(dt.elapsed() - pre_dt) / 1000.0;
-        mergedTemplate << singleDanMultiButton(iRow, button, dataSuffix, Sample, SampleErr, mask, timeElapsed);
+        mergedTemplate << singleDanMultiButton(iRow, button, dataSuffix, Sample, SampleErr, mask, timeElapsed,
+                                               rowCommonError);
 
         //+++ Progress
         progressUpdateSteps--;
@@ -1056,7 +1172,8 @@ void dan18::danDanMultiButton(QString button)
 void dan18::radUniStandartMSmode(int md, gsl_matrix *Sample, gsl_matrix *SampleErr, gsl_matrix *mask, double Xcenter,
                                  double Ycenter, QString &sampleMatrix, double C, double lambda, double deltaLambda,
                                  double detdist, double detelem, double r1, double r2, const QString &label,
-                                 double numberF, double pixelAsymetry, double angle, int skipFirst, int skipLast)
+                                 double numberF, double pixelAsymetry, double angle, int skipFirst, int skipLast,
+                                 double commonError)
 {
     //+++
     int numRowsOut=0;
@@ -1327,10 +1444,12 @@ void dan18::radUniStandartMSmode(int md, gsl_matrix *Sample, gsl_matrix *SampleE
         
         nn[ir]=1;
         II[ir]=c0;
-        dII[ir]=chisq/(realNumPhiSteps-2)*cov00;
+        // the variances of the fitted c0 and c1 (scaled by chi^2 / dof); summed over merged bins, sqrt at the output
+        const double dof = realNumPhiSteps > 2 ? realNumPhiSteps - 2 : 1;
+        dII[ir] = chisq / dof * cov00;
         IIms[ir]=c1;
-        dIIms[ir]=chisq/(realNumPhiSteps-2)*cov11;
-        
+        dIIms[ir] = chisq / dof * cov11;
+
         delete[] sin2phi;
         delete[] intensityPhi;
         delete[] dIntensityPhi;
@@ -1403,11 +1522,12 @@ void dan18::radUniStandartMSmode(int md, gsl_matrix *Sample, gsl_matrix *SampleE
             
             
             avg = II[ir] / nn[ir];
-            avge=dII[ir] / nn[ir];
-            
+            // the common errors (transmission, factor) are common to the pixels: once per point, not per pixel
+            avge = std::hypot(std::sqrt(std::fabs(dII[ir])) / nn[ir], commonError * avg);
+
             avgms = IIms[ir] / nn[ir];
-            avgems=dIIms[ir] / nn[ir];
-            
+            avgems = std::hypot(std::sqrt(std::fabs(dIIms[ir])) / nn[ir], commonError * avgms);
+
             sig= sigmaQmerged( qr, detdist, C, lambda, deltaLambda, r1, r2, mergedPoints[ir]);
             dq=dQ(qr, numberF, mergedPoints[ir]*ir*(pixelAsymetry+1)/2*detelem, detdist, detelem );
             
@@ -1430,100 +1550,10 @@ void dan18::radUniStandartMSmode(int md, gsl_matrix *Sample, gsl_matrix *SampleE
             dIIIms=avgems;
             
             // * ****** Change of Presentation  *****************************
-            if (CurrentLabel!="QI")
-            {
-                if (CurrentLabel=="Guinier")
-                {
-                    QQQ=Q*Q;
-                    III=log(fabs(I));
-                    if (I!=0) dIII=dI/fabs(I);
-                    IIIms=log(fabs(Ims));
-                    if (Ims!=0) dIIIms=dIms/fabs(Ims);
-                }
-                else if (CurrentLabel=="Zimm")
-                {
-                    QQQ=Q*Q;
-                    if (I!=0) III=1/I; else III=0;
-                    if (I!=0) dIII=dI/I/I; else dIII=0;
-                    
-                    if (Ims!=0) IIIms=1/Ims; else IIIms=0;
-                    if (Ims!=0) dIIIms=dIms/Ims/Ims; else dIIIms=0;
-                }
-                else if (CurrentLabel=="Porod")
-                {
-                    QQQ=log10(Q);
-                    III=log10(fabs(I));
-                    if (I!=0) dIII=dI/fabs(I)/log(10.0);
-                    IIIms=log10(fabs(Ims));
-                    if (Ims!=0) dIII=dI/fabs(Ims)/log(10.0);
-                }
-                else if (CurrentLabel=="Porod2")
-                {
-                    QQQ=Q*Q;
-                    III=I*pow(Q,4);
-                    dIII=dI*pow(Q,4);
-                    IIIms=Ims*pow(Q,4);
-                    dIIIms=dIms*pow(Q,4);
-                }
-                else if (CurrentLabel=="logQ")
-                {
-                    QQQ=log10(Q);
-                }
-                else if (CurrentLabel=="logI")
-                {
-                    III=log10(fabs(I));
-                    if (I!=0) dIII=dI/fabs(I)/log(10.0);
-                    IIIms=log10(fabs(Ims));
-                    if (Ims!=0) dIIIms=dIms/fabs(Ims)/log(10.0);
-                }
-                else if (CurrentLabel=="Debye")
-                {
-                    QQQ=Q*Q;
-                    if (I!=0) III=1/sqrt(fabs(I)); else III=0;
-                    if (I!=0) dIII=dI/pow(fabs(I),1.5); else dIII=0;
-                    if (Ims!=0) IIIms=1/sqrt(fabs(Ims)); else IIIms=0;
-                    if (Ims!=0) dIIIms=dIms/pow(fabs(Ims),1.5); else dIIIms=0;
-                }
-                else if (CurrentLabel=="1Moment")
-                {
-                    III=Q*I;
-                    dIII=Q*dI;
-                    IIIms=Q*Ims;
-                    dIIIms=Q*dIms;
-                }
-                else if (CurrentLabel=="2Moment")
-                {
-                    III=Q*Q*I;
-                    dIII=Q*Q*dI;
-                    IIIms=Q*Q*Ims;
-                    dIIIms=Q*Q*dIms;
-                }
-                else if (CurrentLabel=="Kratky")
-                {
-                    III=Q*Q*I;
-                    dIII=Q*Q*dI;
-                    IIIms=Q*Q*Ims;
-                    dIIIms=Q*Q*dIms;
-                }
-                else if (CurrentLabel=="GuinierRod")
-                {
-                    QQQ=Q*Q;
-                    III=log(fabs(I*Q));
-                    if (I!=0) dIII=Q*fabs((dI/I)); else III=0;
-                    IIIms=log(fabs(Ims*Q));
-                    if (Ims!=0) dIIIms=Q*fabs((dIms/Ims)); else IIIms=0;
-                }
-                else if (CurrentLabel=="GuinierPlate")
-                {
-                    QQQ=Q*Q;
-                    III=log(fabs(I*Q*Q));
-                    if (I!=0) dIII=Q*Q*fabs(dI/I); else III=0;
-                    IIIms=log(fabs(Ims*Q*Q));
-                    if (Ims!=0) dIIIms=Q*Q*fabs(dIms/Ims); else IIIms=0;
-                }
-                
-            }
-            
+            double dQignored = 0.0;
+            presentation(CurrentLabel, Q, I, dI, 0.0, QQQ, III, dIII, dQignored);
+            presentation(CurrentLabel, Q, Ims, dIms, 0.0, QQQ, IIIms, dIIIms, dQignored);
+
             //+++  To File Q-I-dI-?
             if (radioButtonFile->isChecked())
             {
@@ -1803,7 +1833,8 @@ void dan18::radUniStandartMSmode(int md, gsl_matrix *Sample, gsl_matrix *SampleE
 void dan18::radUni(int md, gsl_matrix *Sample, gsl_matrix *SampleErr, gsl_matrix *mask, double Xcenter, double Ycenter,
                    QString &sampleMatrix, double C, double lambda, double deltaLambda, double detdist, double detelem,
                    double r1, double r2, const QString &label, double numberF, double pixelAsymetry,
-                   double DetRotationX, double DetRotationY, double angleAnisotropy, int skipFirst, int skipLast)
+                   double DetRotationX, double DetRotationY, double angleAnisotropy, int skipFirst, int skipLast,
+                   double commonError)
 {
     //------------------------------------
     // All Data
@@ -1870,8 +1901,12 @@ void dan18::radUni(int md, gsl_matrix *Sample, gsl_matrix *SampleErr, gsl_matrix
             
             if (II[ir]>0 ) anisotropyCurrent[i]= IIcos2phi[ir] / II[ir]; else anisotropyCurrent[i]=0.0;
             if (nn[ir]>0 ) iCurrent[i]= II[ir] / nn[ir]; else iCurrent[i]=0.0;
-            if (nn[ir]>0 ) diCurrent[i]=sqrt(fabs(dII[ir])) / nn[ir]; else diCurrent[i]=0.0;
-            
+            // the common errors (transmission, factor) are common to the pixels: once per point, not per pixel
+            if (nn[ir] > 0)
+                diCurrent[i] = std::hypot(sqrt(fabs(dII[ir])) / nn[ir], commonError * iCurrent[i]);
+            else
+                diCurrent[i] = 0.0;
+
             if (mergedPoints[ir]>0)
             {
                 sigmaCurrent[i]= sigmaQmerged( qCurrent[i], detdist, C, lambda, deltaLambda, r1, r2, mergedPoints[ir]);
@@ -1922,107 +1957,94 @@ void dan18::radUni(int md, gsl_matrix *Sample, gsl_matrix *SampleErr, gsl_matrix
 }
 
 //+++ Change of SAS presentations: from Q-I to Guinier/Zimm/...
-void dan18::radAvDataChangeSASpresentation( int nCurrent, double *&QQ, double *&II, double *&dII, double *&dQQ )
+//+++ the presentation of one point: (Q, I, dI, dQ) -> (x, y, dy, dx) of Guinier, Zimm, Porod, ...; dy and dx are the
+//+++ errors of y and x (|dy/dI| dI, |dx/dQ| dQ); I = 0 gives y = dy = 0 where y needs 1/I or log I; the outputs may be
+// the
+//+++ inputs
+void dan18::presentation(const QString &label, double Q, double I, double dI, double dQ, double &x, double &y,
+                         double &dy, double &dx)
 {
-    //+++ Presentation
-    QString CurrentLabel=comboBoxSelectPresentation->currentText();
-    
-    //+++
-    if (CurrentLabel=="QI") return;
-    
-
-    double Q,I,dI, dQ;
-    double QQQ, III, dIII, dQQQ;
-    
-    for(int ir=0;ir<nCurrent;ir++)
+    double X = Q;
+    double Y = I;
+    double dY = dI;
+    double dX = dQ;
+    const double absI = std::fabs(I);
+    if (label == "Guinier")
     {
-        Q=QQ[ir];
-        I=II[ir];
-        dI=dII[ir];
-        dQ=dQQ[ir];
-        QQQ = Q;
-
-        if (CurrentLabel=="Guinier")
-        {
-            QQQ=Q*Q;
-            dQQQ=2*Q*dQ;
-            III=log(fabs(I));
-            if (I!=0) dIII=dI/fabs(I);
-        }
-        else if (CurrentLabel=="Zimm")
-        {
-            QQQ=Q*Q;
-            dQQQ=2*Q*dQ;
-            if (I!=0) III=1/I; else III=0;
-            if (I!=0) dIII=dI/I/I; else dIII=0;
-        }
-        else if (CurrentLabel=="Porod")
-        {
-            QQQ=log10(Q);
-            if (Q==0) dQQQ=0; else dQQQ=dQ/log(10.0)/fabs(Q);
-            III=log10(fabs(I));
-            if (I!=0) dIII=dI/fabs(I)/log(10.0);
-        }
-        else if (CurrentLabel=="Porod2")
-        {
-            QQQ=Q*Q;
-            dQQQ=2*Q*dQ;
-            III=I*pow(Q,4);
-            dIII=dI*pow(Q,4);
-        }
-        else if (CurrentLabel=="logQ")
-        {
-            QQQ=log10(Q);
-            if (Q==0) dQQQ=0; else dQQQ=dQ/log(10.0)/fabs(Q);
-        }
-        else if (CurrentLabel=="logI")
-        {
-            
-            III=log10(fabs(I));
-            if (I!=0) dIII=dI/fabs(I)/log(10.0);
-        }
-        else if (CurrentLabel=="Debye")
-        {
-            QQQ=Q*Q;
-            dQQQ=2*Q*dQ;
-            if (I!=0) III=1/sqrt(fabs(I)); else III=0;
-            if (I!=0) dIII=dI/pow(fabs(I),1.5); else dIII=0;
-        }
-        else if (CurrentLabel=="1Moment")
-        {
-            III=Q*I;
-            dIII=Q*dI;
-        }
-        else if (CurrentLabel=="2Moment")
-        {
-            III=Q*Q*I;
-            dIII=Q*Q*dI;
-        }
-        else if (CurrentLabel=="Kratky")
-        {
-            III=Q*Q*I;
-            dIII=Q*Q*dI;
-        }
-        else if (CurrentLabel=="GuinierRod")
-        {
-            QQQ=Q*Q;
-            dQQQ=2*Q*dQ;
-            III=log(fabs(I*Q));
-            if (I!=0) dIII=Q*fabs((dI/I)); else III=0;
-        }
-        else if (CurrentLabel=="GuinierPlate")
-        {
-            QQQ=Q*Q;
-            dQQQ=2*Q*dQ;
-            III=log(fabs(I*Q*Q));
-            if (I!=0) dIII=Q*Q*fabs(dI/I); else III=0;
-        }
-        
-        QQ[ir]= QQQ;
-        II[ir]= III;
-        dII[ir]=dIII;
-        dQQ[ir]=dQQQ;
+        X = Q * Q;
+        dX = 2 * Q * dQ;
+        Y = I != 0 ? std::log(absI) : 0.0;
+        dY = I != 0 ? dI / absI : 0.0;
     }
+    else if (label == "Zimm")
+    {
+        X = Q * Q;
+        dX = 2 * Q * dQ;
+        Y = I != 0 ? 1 / I : 0.0;
+        dY = I != 0 ? dI / (I * I) : 0.0;
+    }
+    else if (label == "Porod" || label == "logQ")
+    {
+        X = std::log10(Q);
+        dX = Q != 0 ? dQ / std::log(10.0) / std::fabs(Q) : 0.0;
+        if (label == "Porod")
+        {
+            Y = I != 0 ? std::log10(absI) : 0.0;
+            dY = I != 0 ? dI / absI / std::log(10.0) : 0.0;
+        }
+    }
+    else if (label == "Porod2")
+    {
+        X = Q * Q;
+        dX = 2 * Q * dQ;
+        Y = I * std::pow(Q, 4);
+        dY = dI * std::pow(Q, 4);
+    }
+    else if (label == "logI")
+    {
+        Y = I != 0 ? std::log10(absI) : 0.0;
+        dY = I != 0 ? dI / absI / std::log(10.0) : 0.0;
+    }
+    else if (label == "Debye")
+    {
+        // y = |I|^-1/2: dy = |I|^-3/2 dI / 2
+        X = Q * Q;
+        dX = 2 * Q * dQ;
+        Y = I != 0 ? 1 / std::sqrt(absI) : 0.0;
+        dY = I != 0 ? 0.5 * dI / std::pow(absI, 1.5) : 0.0;
+    }
+    else if (label == "1Moment")
+    {
+        Y = Q * I;
+        dY = Q * dI;
+    }
+    else if (label == "2Moment" || label == "Kratky")
+    {
+        Y = Q * Q * I;
+        dY = Q * Q * dI;
+    }
+    else if (label == "GuinierRod" || label == "GuinierPlate")
+    {
+        // y = log|I Q^n| (Q exact): dy = dI / |I|
+        const double power = label == "GuinierRod" ? Q : Q * Q;
+        X = Q * Q;
+        dX = 2 * Q * dQ;
+        Y = I != 0 ? std::log(std::fabs(I * power)) : 0.0;
+        dY = I != 0 ? dI / absI : 0.0;
+    }
+    x = X;
+    y = Y;
+    dy = dY;
+    dx = dX;
+}
+
+void dan18::radAvDataChangeSASpresentation(int nCurrent, double *&QQ, double *&II, double *&dII, double *&dQQ)
+{
+    const QString CurrentLabel = comboBoxSelectPresentation->currentText();
+    if (CurrentLabel == "QI")
+        return;
+    for (int ir = 0; ir < nCurrent; ir++)
+        presentation(CurrentLabel, QQ[ir], II[ir], dII[ir], dQQ[ir], QQ[ir], II[ir], dII[ir], dQQ[ir]);
 }
 
 //+++ SD:: QI rad Av std log, det. ritation, ...
@@ -2257,11 +2279,9 @@ void dan18::radAvHF
     double avg;                 // Mittel
     double avge;                        //Fehler
     double anisotropy, phiAnisotropy;
-    
-    double sigmaErr;
-    
 
-    
+    std::map<int, double> pixelWeights; // pixel (row * md + col) -> its total weight on the current ring
+
     nTotal=int(rmax+0.5)+1;
     
     QQ=new double[nTotal];
@@ -2305,7 +2325,8 @@ void dan18::radAvHF
         
         ix1old=-1000;
         iy1old=-1000;
-        
+        pixelWeights.clear();
+
         for(ii=0; ii< phisteps; ii++)
         {
             //+++ Phi
@@ -2319,12 +2340,9 @@ void dan18::radAvHF
             R=detelem*sqrt((xs-Xc)*(xs-Xc)+(ys-Yc)*(ys-Yc));
             
             //+++
-            ix1 = int(xs);      //         ! Eckpunkte
-            iy1 = int(ys);
-            if (ix1<0) ix1=ix1-1;
-            if (iy1<0) iy1=iy1-1;
-            
-            
+            ix1 = int(std::floor(xs)); // the corner pixels (floor: -0.5 lies between -1 and 0, not at 0)
+            iy1 = int(std::floor(ys));
+
             ix1old=ix1;
             iy1old=iy1;
             
@@ -2345,11 +2363,11 @@ void dan18::radAvHF
                 wt  = msk*(1.0-rex)*(1.0-rey);
                 twt += wt;
                 avg += wt *gsl_matrix_get(Sample,iy1,ix1);
-                
+
                 //+++ err
-                sigmaErr=gsl_matrix_get(SampleErr,iy1,ix1);
-                avge += wt*wt*sigmaErr*gsl_matrix_get(Sample,iy1,ix1)*gsl_matrix_get(Sample,iy1,ix1);
-                
+                // one pixel is sampled several times on the ring: its weights add before squaring
+                pixelWeights[iy1 * md + ix1] += wt;
+
                 //+++ anisotropy 2022
                 if ((iy1-Ycenter)!=0) phiAnisotropy=atan( (ix1-Xcenter) / pixelAsymetry / (iy1-Ycenter));
                 else
@@ -2369,12 +2387,11 @@ void dan18::radAvHF
                 wt  = msk*(rex)*(1.0-rey);
                 twt +=  wt;
                 avg += wt*gsl_matrix_get(Sample,iy1,ix2);
-                
+
                 //+++err
-                sigmaErr=gsl_matrix_get(SampleErr,iy1, ix2);
-                avge += wt*wt*sigmaErr*gsl_matrix_get(Sample,iy1,
-                                                      ix2)*gsl_matrix_get(Sample,iy1, ix2);
-                
+                // one pixel is sampled several times on the ring: its weights add before squaring
+                pixelWeights[iy1 * md + ix2] += wt;
+
                 //+++ anisotropy 2022
                 if ((iy1-Ycenter)!=0) phiAnisotropy=atan( (ix2-Xcenter) / pixelAsymetry / (iy1-Ycenter));
                 else
@@ -2394,11 +2411,11 @@ void dan18::radAvHF
                 wt  = msk*(1.0-rex)*(rey);
                 twt += wt;
                 avg += wt*gsl_matrix_get(Sample,iy2,ix1);
-                
+
                 //+++err
-                sigmaErr = gsl_matrix_get(SampleErr,iy2,ix1);
-                avge += wt*wt*sigmaErr*gsl_matrix_get(Sample,iy2,ix1)*gsl_matrix_get(Sample,iy2,ix1);
-                
+                // one pixel is sampled several times on the ring: its weights add before squaring
+                pixelWeights[iy2 * md + ix1] += wt;
+
                 //+++ anisotropy 2022
                 if ((iy2-Ycenter)!=0) phiAnisotropy=atan( (ix1-Xcenter) / pixelAsymetry / (iy2-Ycenter));
                 else
@@ -2418,12 +2435,11 @@ void dan18::radAvHF
                 wt  = msk*(rex)*(rey);
                 twt += wt;
                 avg += wt * gsl_matrix_get(Sample,iy2,ix2);
-                
+
                 //+++erri
-                sigmaErr=gsl_matrix_get(SampleErr,iy2,ix2);
-                
-                avge += wt*wt*sigmaErr*gsl_matrix_get(Sample,iy2,ix2)*gsl_matrix_get(Sample,iy2,ix2);
-                
+                // one pixel is sampled several times on the ring: its weights add before squaring
+                pixelWeights[iy2 * md + ix2] += wt;
+
                 //+++ anisotropy 2022
                 if ((iy2-Ycenter)!=0) phiAnisotropy=atan( (ix2-Xcenter) / pixelAsymetry / (iy2-Ycenter));
                 else
@@ -2437,8 +2453,14 @@ void dan18::radAvHF
 
             
         }
-        
-        
+
+        // the variance of sum_p W_p I_p: sum_p W_p^2 var_p (SampleErr: the relative variance)
+        for (const auto &pw : pixelWeights)
+        {
+            const double value = gsl_matrix_get(Sample, pw.first / md, pw.first % md);
+            avge += pw.second * pw.second * gsl_matrix_get(SampleErr, pw.first / md, pw.first % md) * value * value;
+        }
+
         II[ir]  = avg;
         dII[ir] = avge;
         nn[ir] = twt;
@@ -2525,7 +2547,7 @@ void dan18::radAvDataCorrectionOptions(int nTotal, double *&QQ, double *&II, dou
             double IIlocal=0.0;
             double dIIlocal=0.0;
             double IIcos2philocal=0;
-            int nnLocal=0.0;
+            double nnLocal = 0.0; // HF's weights are fractional
             double qLocal=0.0;
             
             bool allNegative=true;
@@ -2905,7 +2927,7 @@ void dan18::radAvASCIIGeneration( QString &sampleMatrix, QString label, int N, d
 void dan18::horizontalSlice(int md, gsl_matrix *Sample, gsl_matrix *SampleErr, gsl_matrix *mask, double Xcenter,
                             double Ycenter, QString &sampleMatrix, double C, double lambda, double deltaLambda,
                             double detdist, double detelem, double r1, double r2, const QString &label, int skipFirst,
-                            int skipLast)
+                            int skipLast, double commonError)
 {
     //+++
     int numRowsOut=0;
@@ -2994,6 +3016,7 @@ void dan18::horizontalSlice(int md, gsl_matrix *Sample, gsl_matrix *SampleErr, g
         II[xxx]= 0;
         dII[xxx]= 0;
         nn[xxx]=0;
+        sigmaM[xxx] = 0;
     }
     
     for (xxx=0;xxx<md;xxx++) for (yyy=0;yyy<md;yyy++)
@@ -3021,7 +3044,8 @@ void dan18::horizontalSlice(int md, gsl_matrix *Sample, gsl_matrix *SampleErr, g
         {
             qr  = 4.0*M_PI/lambda * sin(0.5*atan((xxx-Xcenter)*detelem/detdist));
             avg = II[xxx] / nn[xxx];
-            avge=sqrt(dII[xxx]) / nn[xxx];
+            avge = std::hypot(sqrt(dII[xxx]) / nn[xxx],
+                              commonError * avg); // common errors (transmission, factor): once per point
             sig= sigmaM[xxx] / nn[xxx];
             
             
@@ -3038,77 +3062,9 @@ void dan18::horizontalSlice(int md, gsl_matrix *Sample, gsl_matrix *SampleErr, g
             
             
             // * ****** Change of Presentation  *****************************
-            if (CurrentLabel!="QI")
-            {
-                if (CurrentLabel=="Guinier")
-                {
-                    QQQ=Q*Q;
-                    III=log(fabs(I));
-                    if (I!=0) dIII=dI/fabs(I);
-                }
-                else if (CurrentLabel=="Zimm")
-                {
-                    QQQ=Q*Q;
-                    if (I!=0) III=1/I; else III=0;
-                    if (I!=0) dIII=dI/I/I; else dIII=0;
-                }
-                else if (CurrentLabel=="Porod")
-                {
-                    QQQ=log10(Q);
-                    III=log10(fabs(I));
-                    if (I!=0) dIII=dI/fabs(I)/log(10.0);
-                }
-                else if (CurrentLabel=="Porod2")
-                {
-                    QQQ=Q*Q;
-                    III=I*pow(Q,4);
-                    dIII=dI*pow(Q,4);
-                }
-                else if (CurrentLabel=="logQ")
-                {
-                    QQQ=log10(Q);
-                }
-                else if (CurrentLabel=="logI")
-                {
-                    
-                    III=log10(fabs(I));
-                    if (I!=0) dIII=dI/fabs(I)/log(10.0);
-                }
-                else if (CurrentLabel=="Debye")
-                {
-                    QQQ=Q*Q;
-                    if (I!=0) III=1/sqrt(fabs(I)); else III=0;
-                    if (I!=0) dIII=dI/pow(fabs(I),1.5); else dIII=0;
-                }
-                else if (CurrentLabel=="1Moment")
-                {
-                    III=Q*I;
-                    dIII=Q*dI;
-                }
-                else if (CurrentLabel=="2Moment")
-                {
-                    III=Q*Q*I;
-                    dIII=Q*Q*dI;
-                }
-                else if (CurrentLabel=="Kratky")
-                {
-                    III=Q*Q*I;
-                    dIII=Q*Q*dI;
-                }
-                else if (CurrentLabel=="GuinierRod")
-                {
-                    QQQ=Q*Q;
-                    III=log(fabs(I*Q));
-                    if (I!=0) dIII=Q*fabs((dI/I)); else III=0;
-                }
-                else if (CurrentLabel=="GuinierPlate")
-                {
-                    QQQ=Q*Q;
-                    III=log(fabs(I*Q*Q));
-                    if (I!=0) dIII=Q*Q*fabs(dI/I); else III=0;
-                }
-            }
-            
+            double dQignored = 0.0;
+            presentation(CurrentLabel, Q, I, dI, 0.0, QQQ, III, dIII, dQignored);
+
             if ( !(avg<=0 && checkBoxMaskNegativeQ->isChecked()) )
             {
                 if (comboBox4thCol->currentIndex()==0)
@@ -3219,7 +3175,7 @@ void dan18::horizontalSlice(int md, gsl_matrix *Sample, gsl_matrix *SampleErr, g
 void dan18::verticalSlice(int md, gsl_matrix *Sample, gsl_matrix *SampleErr, gsl_matrix *mask, double Xcenter,
                           double Ycenter, QString &sampleMatrix, double C, double lambda, double deltaLambda,
                           double detdist, double detelem, double r1, double r2, const QString &label, int skipFirst,
-                          int skipLast)
+                          int skipLast, double commonError)
 {
     //+++
     int numRowsOut=0;
@@ -3310,6 +3266,7 @@ void dan18::verticalSlice(int md, gsl_matrix *Sample, gsl_matrix *SampleErr, gsl
         II[ir]= 0;
         dII[ir]= 0;
         nn[ir]=0;
+        sigmaM[ir] = 0;
     }
     
     for (yyy=0;yyy<md;yyy++) for (xxx=0;xxx<md;xxx++)
@@ -3339,7 +3296,8 @@ void dan18::verticalSlice(int md, gsl_matrix *Sample, gsl_matrix *SampleErr, gsl
         {
             qr  = 4.0*M_PI/lambda * sin(0.5*atan((yyy-Ycenter)*detelem/detdist));
             avg = II[yyy] / nn[yyy];
-            avge=sqrt(dII[yyy]) / nn[yyy];
+            avge = std::hypot(sqrt(dII[yyy]) / nn[yyy],
+                              commonError * avg); // common errors (transmission, factor): once per point
             sig= sigmaM[yyy] / nn[yyy];
             
             
@@ -3356,77 +3314,9 @@ void dan18::verticalSlice(int md, gsl_matrix *Sample, gsl_matrix *SampleErr, gsl
             
             
             // * ****** Change of Presentation  *****************************
-            if (CurrentLabel!="QI")
-            {
-                if (CurrentLabel=="Guinier")
-                {
-                    QQQ=Q*Q;
-                    III=log(fabs(I));
-                    if (I!=0) dIII=dI/fabs(I);
-                }
-                else if (CurrentLabel=="Zimm")
-                {
-                    QQQ=Q*Q;
-                    if (I!=0) III=1/I; else III=0;
-                    if (I!=0) dIII=dI/I/I; else dIII=0;
-                }
-                else if (CurrentLabel=="Porod")
-                {
-                    QQQ=log10(Q);
-                    III=log10(fabs(I));
-                    if (I!=0) dIII=dI/fabs(I)/log(10.0);
-                }
-                else if (CurrentLabel=="Porod2")
-                {
-                    QQQ=Q*Q;
-                    III=I*pow(Q,4);
-                    dIII=dI*pow(Q,4);
-                }
-                else if (CurrentLabel=="logQ")
-                {
-                    QQQ=log10(Q);
-                }
-                else if (CurrentLabel=="logI")
-                {
-                    
-                    III=log10(fabs(I));
-                    if (I!=0) dIII=dI/fabs(I)/log(10.0);
-                }
-                else if (CurrentLabel=="Debye")
-                {
-                    QQQ=Q*Q;
-                    if (I!=0) III=1/sqrt(fabs(I)); else III=0;
-                    if (I!=0) dIII=dI/pow(fabs(I),1.5); else dIII=0;
-                }
-                else if (CurrentLabel=="1Moment")
-                {
-                    III=Q*I;
-                    dIII=Q*dI;
-                }
-                else if (CurrentLabel=="2Moment")
-                {
-                    III=Q*Q*I;
-                    dIII=Q*Q*dI;
-                }
-                else if (CurrentLabel=="Kratky")
-                {
-                    III=Q*Q*I;
-                    dIII=Q*Q*dI;
-                }
-                else if (CurrentLabel=="GuinierRod")
-                {
-                    QQQ=Q*Q;
-                    III=log(fabs(I*Q));
-                    if (I!=0) dIII=Q*fabs((dI/I)); else III=0;
-                }
-                else if (CurrentLabel=="GuinierPlate")
-                {
-                    QQQ=Q*Q;
-                    III=log(fabs(I*Q*Q));
-                    if (I!=0) dIII=Q*Q*fabs(dI/I); else III=0;
-                }
-            }
-            
+            double dQignored = 0.0;
+            presentation(CurrentLabel, Q, I, dI, 0.0, QQQ, III, dIII, dQignored);
+
             if ( !(avg<=0 && checkBoxMaskNegativeQ->isChecked()) )
             {
                 if (comboBox4thCol->currentIndex()==0)
@@ -5042,11 +4932,32 @@ bool dan18::danDanMultiButtonSingleLine(    QString button,
         Ibc*=Ibc;
         if (ECexist) Ibc*=(1.0-trans)*(1.0-trans);
         Ibc*=gsl_matrix_get(BCErr,iii,jjj);
-        
-        if ( err2 != 0.0 ) err2=1.0/err2; else err2=0.0;
-        err2=err2*err2;
-        err2*=(Isample+Iec+Ibc);
-        
+
+            double variance = Isample + Iec + Ibc;
+            if (subtractBuffer)
+            {
+                // - sB (Buffer - Tb EC - (1 - Tb) BC) as subtracted below; EC and BC with one coefficient each
+                const double sB = fractionBuffer * absBuffer / abs;
+                const double buffer = gsl_matrix_get(Buffer, iii, jjj);
+                const double ec = gsl_matrix_get(EC, iii, jjj);
+                const double bc = gsl_matrix_get(BC, iii, jjj);
+                const double weightBC = ECexist ? 1.0 - trans : 1.0;
+                const double weightBCBuffer = ECexist ? 1.0 - transBuffer : 1.0;
+                err2 -= sB * (buffer - (ECexist ? transBuffer * ec : 0.0) - weightBCBuffer * bc);
+                const double coefficientEC = ECexist ? -trans + sB * transBuffer : 0.0;
+                const double coefficientBC = -weightBC + sB * weightBCBuffer;
+                variance = Isample + sB * sB * buffer * buffer * gsl_matrix_get(BufferErr, iii, jjj) +
+                           coefficientEC * coefficientEC * ec * ec * gsl_matrix_get(ECErr, iii, jjj) +
+                           coefficientBC * coefficientBC * bc * bc * gsl_matrix_get(BCErr, iii, jjj);
+            }
+
+            if (err2 != 0.0)
+                err2 = 1.0 / err2;
+            else
+                err2 = 0.0;
+            err2 = err2 * err2;
+            err2 *= variance;
+
         gsl_matrix_set(ErrMatrix, iii, jjj, sqrt(gsl_matrix_get(ErrMatrix,iii,jjj) + err2 ) );
         gsl_matrix_set(SampleErr, iii, jjj, gsl_matrix_get(ErrMatrix,iii,jjj) * gsl_matrix_get(ErrMatrix,iii,jjj));
     }
@@ -5055,9 +4966,6 @@ bool dan18::danDanMultiButtonSingleLine(    QString button,
     
     gsl_matrix_mul_elements(ErrMatrix,mask);
     gsl_matrix_mul_elements(SampleErr,mask);
-    
-    //+++ TODO :: Error of BUFFER
-    
     
     //+++ Matrix-to-Matrix actions +++
     gsl_matrix_sub(Sample,BC);                      // Sample=Sample - BC
@@ -5149,17 +5057,13 @@ bool dan18::danDanMultiButtonSingleLine(    QString button,
     
     //+++ Sensitivity correction
     gsl_matrix_mul_elements(Sample,sens);
-    
-    
-    if (BackgroundConst!=0)
+
+    if (BackgroundConst != 0)
     {
-        for (iii=0;iii<MD;iii++) for (jjj=0;jjj<MD;jjj++)
-        {
-            if (gsl_matrix_get(mask,iii,jjj)>0)
-            {
-                gsl_matrix_set(Sample,iii,jjj,gsl_matrix_get(Sample,iii,jjj)-BackgroundConst);
-            }
-        }
+        subtractConstantBackground(Sample, SampleErr, mask, BackgroundConst, MD);
+        for (iii = 0; iii < MD; iii++)
+            for (jjj = 0; jjj < MD; jjj++)
+                gsl_matrix_set(ErrMatrix, iii, jjj, sqrt(gsl_matrix_get(SampleErr, iii, jjj)));
     }
     
     //+++ Masking of  Negative Points +++
@@ -5201,8 +5105,14 @@ bool dan18::danDanMultiButtonSingleLine(    QString button,
     //+++ Ext
     QString currentExt=lineEditFileExt->text().remove(" ");
     if(currentExt!="") currentExt+="-";
-    
-    
+
+    // dI-x-y: the absolute error, sqrt((dI/I)^2) |I| of the final I
+    for (iii = 0; iii < MD; iii++)
+        for (jjj = 0; jjj < MD; jjj++)
+            gsl_matrix_set(ErrMatrix, iii, jjj,
+                           std::sqrt(gsl_matrix_get(SampleErr, iii, jjj)) *
+                               std::fabs(gsl_matrix_get(Sample, iii, jjj)));
+
     //+++   Open Reduced Matrix in Project
     if (radioButtonOpenInProject->isChecked() && button=="I-x-y")
     {

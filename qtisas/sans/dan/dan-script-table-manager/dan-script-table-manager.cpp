@@ -323,6 +323,14 @@ bool ScriptTableManager::fractionBufferWrite(int row, const QString &txt)
 }
 bool ScriptTableManager::absoluteFactorWrite(int row, const QString &txt)
 {
+    // "F [ ±s ]" is text: a Factor column of an older script table (Numeric, in the table's locale) becomes Text, its
+    // values converted to C first
+    if (w && indexFactor >= 0 && indexFactor < cols && w->columnType(indexFactor) == Table::Numeric)
+    {
+        for (int r = 0; r < w->numRows(); r++)
+            w->setText(r, indexFactor, read(r, indexFactor));
+        w->setColumnType(indexFactor, Table::Text);
+    }
     return write(row, indexFactor, txt);
 }
 bool ScriptTableManager::centerXWrite(int row, const QString &txt)
@@ -518,7 +526,7 @@ void ScriptTableManager::emptyScriptTable(Table *newTable)
     indexFactor = colNumber;
     w->setColName(indexFactor, "Factor");
     w->setColPlotDesignation(indexFactor, Table::None);
-    w->setColumnType(indexFactor, Table::Numeric);
+    w->setColumnType(indexFactor, Table::Text); // "F [ ±s ]", as the transmissions
     colNumber++;
 
     indexXC = colNumber;

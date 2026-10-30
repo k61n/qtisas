@@ -1231,6 +1231,7 @@ QVariantMap DanProcessing::configuration(int index)
     values["mu"] = number(dan18::dptACMU);
     values["calibrantTransmission"] = number(dan18::dptACTR);
     values["factor"] = number(dan18::dptACFAC);
+    values["factorError"] = error(dan18::dptACFAC); // the calibrant's counting statistics (0: none)
     values["center"] = text(dan18::dptCENTER);
     values["xCenter"] = number(dan18::dptCENTERX);
     values["xCenterError"] = error(dan18::dptCENTERX);

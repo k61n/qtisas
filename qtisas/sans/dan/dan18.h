@@ -267,6 +267,16 @@ public:
 
     // dandan
     void danDanMultiButton(QString button);
+    void addCountingVariance(gsl_matrix *variance, const gsl_matrix *values, const QString &run, double weight);
+    static double relativeErrorOfSum(const gsl_matrix *variance, const gsl_matrix *sens, const gsl_matrix *mask,
+                                     double sum, int MD);
+    // the absolute factor with its error: "F±s" in the configuration table, "F [ ±s ]" in script tables; reading
+    // takes both and the old "F"
+    static QString factorText(double factor, double sigma);
+    static QString factorScriptText(const QString &configurationText);
+    static double factorValue(const QString &text);
+    static double factorError(const QString &text);
+    static void subtractConstantBackground(gsl_matrix *Sample, gsl_matrix *err, gsl_matrix *mask, double c, int MD);
     void danDanMultiButtonPN(const QString &button);
     bool danDanMultiButtonSingleLine(   QString button,
                                      QString label, QString Nsample,QString NEC, QString NBC, QString Nbuffer, QString maskName, QString sensName,
@@ -282,19 +292,30 @@ public:
                                               double &trans, double &sigmaTrans, double &thickness);
     static bool singleDanAnalyzerStatus(ScriptTableManager *scriptTableManager, int iRow, double &analyzerTransmission,
                                         double &analyzerEfficiency);
+    // commonError: the relative error common to all pixels of this output (the transmissions of sample and buffer,
+    // the absolute factor; notes/dan-reduction-error-propagation.md), added once per point of a 1D output; SampleErr
+    // is then statistical
     QString singleDanMultiButton(int iRow, const QString &button, const QString &dataSuffix, gsl_matrix *Sample,
-                                 gsl_matrix *SampleErr, gsl_matrix *mask, double time);
+                                 gsl_matrix *SampleErr, gsl_matrix *mask, double time, double commonError = 0.0);
+    // the relative error of the row's absolute factor (script column Factor, "F [ ±s ]"; 0 for a plain "F")
+    double factorRelativeError(int iRow) const;
+    // the outputs a sum over pixels is made for (radial averaging, slices): the matrix carries no transmission error
+    static bool isOneDimensionalOutput(const QString &button);
+    static double maskedSum(const gsl_matrix *m, const gsl_matrix *mask, int MD);
+    // sqrt(sum_k (part_k / total * relativeSigma_k)^2): parts = (sum of the part's intensity, its relative T error)
+    static double transmissionError(double total, const QList<QPair<double, double>> &parts);
 
     void radUniStandartMSmode(int md, gsl_matrix *Sample, gsl_matrix *SampleErr, gsl_matrix *mask, double Xcenter,
                               double Ycenter, QString &sampleMatrix, double C, double lambda, double deltaLambda,
                               double detdist, double detelem, double r1, double r2, const QString &label,
-                              double numberF, double pixelAsymetry, double angle, int skipFirst, int skipLast);
+                              double numberF, double pixelAsymetry, double angle, int skipFirst, int skipLast,
+                              double commonError = 0.0);
 
     void radUni(int md, gsl_matrix *Sample, gsl_matrix *SampleErr, gsl_matrix *mask, double Xcenter, double Ycenter,
                 QString &sampleMatrix, double C, double lambda, double deltaLambda, double detdist, double detelem,
                 double r1, double r2, const QString &label, double numberF, double pixelAsymetry,
                 double DetectorHShiftAngle, double DetectorVShiftAngle, double angleAnisotropy, int skipFirst,
-                int skipLast);
+                int skipLast, double commonError = 0.0);
 
     void radAvStd
     (
@@ -309,6 +330,8 @@ public:
     void radAvTableGeneration(QString &sampleMatrix, QString label, int N, double *Q,double *I, double *dI, double *dQ, double *sigma, double *anisotropy);
     void radAvASCIIGeneration(QString &sampleMatrix, QString label, int N, double *Q,double *I, double *dI, double *dQ, double *sigma, double *anisotropy);
     void radAvDataChangeSASpresentation(int nCurrent, double *&QQ, double *&II, double *&dII,  double *&dQQ);
+    static void presentation(const QString &label, double Q, double I, double dI, double dQ, double &x, double &y,
+                             double &dy, double &dx);
 
     void radAvHF(int md, gsl_matrix *Sample, gsl_matrix *SampleErr, gsl_matrix *mask, double Xcenter, double Ycenter,
                  double lambda, double detdist, double detelem, double pixelAsymetry, double DetRotationX,
@@ -317,11 +340,11 @@ public:
     void horizontalSlice(int md, gsl_matrix *Sample, gsl_matrix *SampleErr, gsl_matrix *mask, double Xcenter,
                          double Ycenter, QString &sampleMatrix, double C, double lambda, double deltaLambda,
                          double detdist, double detelem, double r1, double r2, const QString &label, int skipFirst,
-                         int skipLast);
+                         int skipLast, double commonError = 0.0);
     void verticalSlice(int md, gsl_matrix *Sample, gsl_matrix *SampleErr, gsl_matrix *mask, double Xcenter,
                        double Ycenter, QString &sampleMatrix, double C, double lambda, double deltaLambda,
                        double detdist, double detelem, double r1, double r2, const QString &label, int skipFirst,
-                       int skipLast);
+                       int skipLast, double commonError = 0.0);
     void radUniPolar(int md, gsl_matrix *Sample, gsl_matrix *mask, double Xcenter, double Ycenter,
                      QString &sampleMatrix, double lambda, double detdist, double detelem,
                      double pixelAsymetry); //+++ TODOAsymetry

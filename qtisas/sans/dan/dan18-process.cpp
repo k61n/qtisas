@@ -443,8 +443,7 @@ void dan18::makeScriptTable(QStringList selectedDat)
             {
                 scriptTableManager->runECWrite(iter, tableEC->item(dptEC, Ncond)->text());
                 scriptTableManager->runBCWrite(iter, tableEC->item(dptBC, Ncond)->text());
-                scriptTableManager->absoluteFactorWrite(
-                    iter, QString::number(tableEC->item(dptACFAC, Ncond)->text().toDouble()));
+                scriptTableManager->absoluteFactorWrite(iter, factorScriptText(tableEC->item(dptACFAC, Ncond)->text()));
                 scriptTableManager->fractionBufferWrite(iter, "0.000");
                 scriptTableManager->transmissionBufferWrite(iter, "1.000");
                 scriptTableManager->sensFromBufferWrite(iter, "no");
@@ -909,10 +908,12 @@ void dan18::saveScriptSettings(QString tableName)
     currentRow++;    
     
     //+++ Processing::AC::Factor
-    w->setNumRows(currentRow+1);            
-    s=QString::number(tableEC->item(dptACFAC,0)->text().toDouble(),'E',4);
-    for (i=1; i<iMax;i++) s=s+" "+QString::number(tableEC->item(dptACFAC,i)->text().toDouble(),'E',4);
-    
+    w->setNumRows(currentRow + 1);
+    // "F±s" (or "F"): no spaces, the values are separated by spaces
+    s = tableEC->item(dptACFAC, 0)->text().remove(' ');
+    for (i = 1; i < iMax; i++)
+        s = s + " " + tableEC->item(dptACFAC, i)->text().remove(' ');
+
     w->setText(currentRow,0,"Processing::AC::Factor");
     w->setText(currentRow,1,s+" <");
     currentRow++;        
@@ -3227,6 +3228,71 @@ void dan18::calculateTransmission(int startRow)
 }
 
 //+-1-+SLOT::calculate absolute constants ++++++++++++++++++
+//+++ variance += (weight * values)^2 * (dN/N)^2 of the run: the absolute counting variance of weight * values
+void dan18::addCountingVariance(gsl_matrix *variance, const gsl_matrix *values, const QString &run, double weight)
+{
+    int MD = lineEditMD->text().toInt();
+    gsl_matrix *relative = gsl_matrix_calloc(MD, MD);
+    readErrorMatrix(run, relative);
+    for (int i = 0; i < MD; i++)
+        for (int j = 0; j < MD; j++)
+        {
+            const double value = weight * gsl_matrix_get(values, i, j);
+            gsl_matrix_set(variance, i, j,
+                           gsl_matrix_get(variance, i, j) + value * value * gsl_matrix_get(relative, i, j));
+        }
+    gsl_matrix_free(relative);
+}
+
+//+++ the relative error of sum = sum_p mask_p sens_p x_p, x_p with the absolute variances in variance
+double dan18::relativeErrorOfSum(const gsl_matrix *variance, const gsl_matrix *sens, const gsl_matrix *mask, double sum,
+                                 int MD)
+{
+    if (sum == 0.0)
+        return 0.0;
+    double sumVariance = 0.0;
+    for (int i = 0; i < MD; i++)
+        for (int j = 0; j < MD; j++)
+            if (gsl_matrix_get(mask, i, j) > 0)
+                sumVariance += std::pow(gsl_matrix_get(sens, i, j), 2) * gsl_matrix_get(variance, i, j);
+    return std::sqrt(sumVariance) / std::fabs(sum);
+}
+
+//+++ the factor in the configuration table: "1.4310E+04±3.25E+01" (no "±..." without an error)
+QString dan18::factorText(double factor, double sigma)
+{
+    QString text = QString::number(factor, 'E', 4);
+    if (sigma > 0.0)
+        text += QChar(177) + QString::number(sigma, 'E', 2);
+    return text;
+}
+
+//+++ the factor in a script table, as the transmissions: "1.4310E+04 [ ±3.25E+01 ]"; from the configuration table's
+// text
+QString dan18::factorScriptText(const QString &configurationText)
+{
+    const double sigma = factorError(configurationText);
+    const QString value = QString::number(factorValue(configurationText), 'E', 4);
+    return sigma > 0.0 ? value + " [ " + QChar(177) + QString::number(sigma, 'E', 2) + " ]" : value;
+}
+
+//+++ the value of a factor text: "F", "F±s" or "F [ ±s ]" (old and new formats)
+double dan18::factorValue(const QString &text)
+{
+    QString s = text;
+    s.remove(' ').remove('\t');
+    return s.split(QRegularExpression(QString("[\\[") + QChar(177) + "]")).first().toDouble();
+}
+
+//+++ the error of a factor text (0 without one)
+double dan18::factorError(const QString &text)
+{
+    QString s = text;
+    s.remove(' ').remove('\t').remove('[').remove(']');
+    const QStringList parts = s.split(QChar(177));
+    return parts.count() > 1 ? std::fabs(parts[1].toDouble()) : 0.0;
+}
+
 bool dan18::calcAbsCalNew( )
 {
     int i;
@@ -3348,7 +3414,10 @@ bool dan18::calcAbsCalTrFs( int col )
     
     // read Plexi matrix
     readMatrixCor( PlexiNumber, plexi );
-    
+    // the calibrant's counting variance per pixel (absolute), for the factor's statistical error
+    gsl_matrix *variance = gsl_matrix_calloc(MD, MD);
+    addCountingVariance(variance, plexi, PlexiNumber, 1.0);
+
     //check existence of EB File
     QString EBNumber=tableEC->item(dptACEB,col)->text();
 
@@ -3369,6 +3438,7 @@ bool dan18::calcAbsCalTrFs( int col )
         if (transmision>1.0) transmision=1.0;
         if (transmision<0.01) transmision=0.0;
         tableEC->item(dptACTR,col)->setText(QString::number(transmision, 'f',4));
+        addCountingVariance(variance, plexiEB, EBNumber, transmision); // - T EB
     }
     
     //check existence of BC File
@@ -3427,7 +3497,9 @@ bool dan18::calcAbsCalTrFs( int col )
         
         gsl_matrix_scale(plexiBC,NormSample);      // EB=T*EB
     }
-    
+
+    if (existBC)
+        addCountingVariance(variance, plexiBC, BCNumber, existEB ? 1.0 - transmision : 1.0); // - (1 - T) BC
     gsl_matrix_sub(plexi,plexiBC);              // plexi=plexi - BC
     
     
@@ -3471,18 +3543,13 @@ bool dan18::calcAbsCalTrFs( int col )
             }
         }
     }
-    
-    //Error
-    double sigma2=0.0;
-    for(ii=0;ii<MD;ii++) for(jj=0;jj<MD;jj++)
-    {
-        if (gsl_matrix_get(mask,ii,jj)>0.0)
-            sigma2+=(sum/Nmask-gsl_matrix_get(plexi,ii,jj))*(sum/Nmask-gsl_matrix_get(plexi,ii,jj));
-    }
-    
-    sigma2=sigma2/Nmask/ (Nmask-1.0);
-    sigma2=sqrt(sigma2);
-   
+
+    // the factor's statistical error: the calibrant's counting statistics (P, EB, BC), not the sensitivity's
+    // (that one is in every sample pixel's error) and not the pixel spread (it also holds real structure)
+    const double relativeError = relativeErrorOfSum(variance, sens, mask, sum, MD);
+    gsl_matrix_free(variance);
+    double sigma2 = 0.0;
+
     //+++
     double mu=tableEC->item(dptACMU,col)->text().toDouble();
     double Ds=tableEC->item(dptD,col)->text().toDouble();
@@ -3528,10 +3595,9 @@ bool dan18::calcAbsCalTrFs( int col )
 
     //+++
     cal = mu * (1 - transmision) / sum * Nmask / D / D * Ds * Ds / transEC / transPolarizer;
-    sigma2=mu*(1-transmision)/sum*Nmask/sum/D/D*Ds*Ds*sigma2;
+    sigma2 = cal * relativeError;
     //+++
-    tableEC->item(dptACFAC,col)->setText(QString::number(cal,'E',4));
-    //tableEC->item(14,col)->setText(QString::number(sigma2,'E',1));
+    tableEC->item(dptACFAC, col)->setText(factorText(cal, sigma2));
     toResLog("DAN :: Abs.Factor | Condition #"+QString::number(col+1)+" | "+ QString::number(cal,'E',4)+QChar(177)+QString::number(sigma2,'E',4)+"\n");
     
     //+++
@@ -3615,7 +3681,10 @@ bool dan18::calcAbsCalDB( int col )
         return false;
     }
     readMatrixCor( EBNumber, EB );
-    
+    // the direct beam's counting variance per pixel (absolute), for the factor's statistical error
+    gsl_matrix *variance = gsl_matrix_calloc(MD, MD);
+    addCountingVariance(variance, EB, EBNumber, 1.0);
+
     //check existence of BC File
     QString BCNumber=tableEC->item(dptACBC,col)->text();
     bool existBC = filesManager->checkFileNumber(BCNumber);
@@ -3648,7 +3717,8 @@ bool dan18::calcAbsCalDB( int col )
             gsl_matrix_scale(BC,NormSample);      // EB=T*EB
         }
         else readMatrixCor( BCNumber, BC );
-        
+
+        addCountingVariance(variance, BC, BCNumber, 1.0);
         gsl_matrix_sub(EB, BC);            // EB=EB - BC
     }
     
@@ -3687,7 +3757,10 @@ bool dan18::calcAbsCalDB( int col )
     {
         I0+=gsl_matrix_get(EB,ii,jj);
     }
-    
+    // the factor's statistical error: the direct beam's counting statistics (EB, BC); 1/I0 has I0's relative error
+    const double relativeError = relativeErrorOfSum(variance, sens, mask, I0, MD);
+    gsl_matrix_free(variance);
+
     double transPolarizer = 1.0;
     if (comboBoxMode->currentText().contains("(PN)"))
     {
@@ -3726,9 +3799,10 @@ bool dan18::calcAbsCalDB( int col )
     I0 *= transPolarizer;
 
     //+++
-    tableEC->item(dptACFAC,col)->setText(QString::number(1/I0,'E',4));
-    toResLog("DAN :: Abs.Factor (DB) | Condition #"+QString::number(col+1)+" | "+ QString::number(1/I0,'E',4)+"\n");
-    
+    tableEC->item(dptACFAC, col)->setText(factorText(1 / I0, relativeError / I0));
+    toResLog("DAN :: Abs.Factor (DB) | Condition #" + QString::number(col + 1) + " | " +
+             factorText(1 / I0, relativeError / I0) + "\n");
+
     //+++
     gsl_matrix_free(mask);
     gsl_matrix_free(sens);
@@ -3927,6 +4001,9 @@ bool dan18::calcAbsCalNew( int col )
     
     // read Plexi matrix
     readMatrixCor(PlexiNumber, plexi);
+    // the calibrant's counting variance per pixel (absolute), for the factor's statistical error
+    gsl_matrix *variance = gsl_matrix_calloc(MD, MD);
+    addCountingVariance(variance, plexi, PlexiNumber, 1.0);
     // D = detector->readDinM(PlexiNumber);
 
     // check existence of EB File
@@ -3949,6 +4026,7 @@ bool dan18::calcAbsCalNew( int col )
         if (transmision>1.0) transmision=1.0;
         if (transmision<0.01) transmision=0.0;
         tableEC->item(dptACTR,col)->setText(QString::number(transmision, 'f',4));
+        addCountingVariance(variance, plexiEB, EBNumber, transmision); // - T EB
     }
     
     //check existence of BC File
@@ -4007,7 +4085,9 @@ bool dan18::calcAbsCalNew( int col )
         
         gsl_matrix_scale(plexiBC,NormSample);      // EB=T*EB
     }
-    
+
+    if (existBC)
+        addCountingVariance(variance, plexiBC, BCNumber, existEB ? 1.0 - transmision : 1.0); // - (1 - T) BC
     gsl_matrix_sub(plexi,plexiBC);              // plexi=plexi - BC
     
     
@@ -4051,17 +4131,12 @@ bool dan18::calcAbsCalNew( int col )
             }
         }
     }
-    
-    //Error
-    double sigma2=0.0;
-    for(ii=0;ii<MD;ii++) for(jj=0;jj<MD;jj++)
-    {
-        if (gsl_matrix_get(mask,ii,jj)>0.0)
-            sigma2+=(sum/Nmask-gsl_matrix_get(plexi,ii,jj))*(sum/Nmask-gsl_matrix_get(plexi,ii,jj));
-    }
-    
-    sigma2=sigma2/Nmask/ (Nmask-1.0);
-    sigma2=sqrt(sigma2);
+
+    // the factor's statistical error: the calibrant's counting statistics (P, EB, BC), not the sensitivity's
+    // (that one is in every sample pixel's error) and not the pixel spread (it also holds real structure)
+    const double relativeError = relativeErrorOfSum(variance, sens, mask, sum, MD);
+    gsl_matrix_free(variance);
+    double sigma2 = 0.0;
     //+++
     double mu=tableEC->item(dptACMU,col)->text().toDouble();
     double Ds=tableEC->item(dptD,col)->text().toDouble();
@@ -4106,10 +4181,10 @@ bool dan18::calcAbsCalNew( int col )
     }
     //+++
     cal = mu / sum * Nmask / D / D * Ds * Ds / transEC / transPolarizer;
-    sigma2 = mu / sum * Nmask / sum / D / D * Ds * Ds * sigma2;
+    sigma2 = cal * relativeError;
 
     //+++
-    tableEC->item(dptACFAC,col)->setText(QString::number(cal,'E',4));
+    tableEC->item(dptACFAC, col)->setText(factorText(cal, sigma2));
     toResLog("DAN :: Abs.Factor | Condition #"+QString::number(col+1)+" | "+ QString::number(cal,'E',4)+QChar(177)+QString::number(sigma2,'E',4)+"\n");
     
     //+++
@@ -4511,9 +4586,13 @@ void dan18::updateColInScript(const QString &colName, int rowIndex, int startRow
         {
             // tableEC is C; a Numeric script column shows the value in the table's locale (like ScriptTableManager)
             const QString text = tableEC->item(rowIndex, cond - 1)->text();
-            w->setText(iter, index,
-                       w->columnType(index) == Table::Numeric ? NumericLocale::convert(text, QLocale::c(), w->locale())
-                                                              : text);
+            if (colName == "Factor") // "F±s" -> "F [ ±s ]" (the column made Text)
+                scriptTableManager->absoluteFactorWrite(iter, factorScriptText(text));
+            else
+                w->setText(iter, index,
+                           w->columnType(index) == Table::Numeric
+                               ? NumericLocale::convert(text, QLocale::c(), w->locale())
+                               : text);
         }
     }
 }

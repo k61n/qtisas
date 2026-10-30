@@ -11,7 +11,7 @@ Description: Data reduction functions defined by line number in a script
 
 //+++ button controlled output afzer data reduction
 QString dan18::singleDanMultiButton(int iRow, const QString &button, const QString &dataSuffix, gsl_matrix *Sample,
-                                    gsl_matrix *SampleErr, gsl_matrix *mask, double time)
+                                    gsl_matrix *SampleErr, gsl_matrix *mask, double time, double commonError)
 {
     int MD = lineEditMD->text().toInt();
 
@@ -238,14 +238,14 @@ QString dan18::singleDanMultiButton(int iRow, const QString &button, const QStri
             radUniStandartMSmode(MD, Sample, SampleErr, mask, Xcenter, Ycenter, nameQI, C, lambda, deltaLambda, detdist,
                                  pixel * binning, r1, r2, label,
                                  selector->readRotations(Nsample, monitors->readDuration(Nsample)), pixelAsymetry,
-                                 angleMS, skipFirst, skipLast);
+                                 angleMS, skipFirst, skipLast, commonError);
         }
         else
         {
             double angleAnisotropy = double(spinBoxAnisotropyOffset->value()) / 180.0 * M_PI;
             radUni(MD, Sample, SampleErr, mask, Xcenter, Ycenter, nameQI, C, lambda, deltaLambda, detdist,
                    pixel * binning, r1, r2, label, selector->readRotations(Nsample, monitors->readDuration(Nsample)),
-                   pixelAsymetry, detRotationX, detRotationY, angleAnisotropy, skipFirst, skipLast);
+                   pixelAsymetry, detRotationX, detRotationY, angleAnisotropy, skipFirst, skipLast, commonError);
         }
     }
     else if (button == "I-Qx") //+++ Hosizontal Slice
@@ -268,7 +268,7 @@ QString dan18::singleDanMultiButton(int iRow, const QString &button, const QStri
         }
 
         horizontalSlice(MD, Sample, SampleErr, mask, Xcenter, Ycenter, nameQI, C, lambda, deltaLambda, detdist,
-                        pixel * binning * pixelAsymetry, r1, r2, label, skipFirst, skipLast);
+                        pixel * binning * pixelAsymetry, r1, r2, label, skipFirst, skipLast, commonError);
     }
     else if (button == "I-Qy") //+++ Vertical Slice
     {
@@ -290,7 +290,7 @@ QString dan18::singleDanMultiButton(int iRow, const QString &button, const QStri
         }
 
         verticalSlice(MD, Sample, SampleErr, mask, Xcenter, Ycenter, nameQI, C, lambda, deltaLambda, detdist,
-                      pixel * binning * pixelAsymetry, r1, r2, label, skipFirst, skipLast);
+                      pixel * binning * pixelAsymetry, r1, r2, label, skipFirst, skipLast, commonError);
     }
     else if (button == "I-Polar") //+++ Polarv Coordinates
         radUniPolar(MD, Sample, mask, Xcenter, Ycenter, nameQI, lambda, detdist, pixel * binning, pixelAsymetry);
@@ -571,7 +571,7 @@ bool dan18::singleDanFactorTransThickness(ScriptTableManager *scriptTableManager
 {
 
     //+++  Factor
-    abs = scriptTableManager->absoluteFactor(iRow).toDouble();
+    abs = factorValue(scriptTableManager->absoluteFactor(iRow)); // "F" or "F [ ±s ]"
     if (abs <= 0.0)
     {
         scriptTableManager->absoluteFactorWrite(iRow, "check!!!");
@@ -651,4 +651,11 @@ bool dan18::singleDanAnalyzerStatus(ScriptTableManager *scriptTableManager, int 
         return false;
     }
     return true;
+}
+//+++ the relative error of the row's absolute factor: "F [ ±s ]" -> s / F (0 for a plain "F")
+double dan18::factorRelativeError(int iRow) const
+{
+    const QString text = scriptTableManager->absoluteFactor(iRow);
+    const double value = factorValue(text);
+    return value != 0.0 ? factorError(text) / std::fabs(value) : 0.0;
 }
