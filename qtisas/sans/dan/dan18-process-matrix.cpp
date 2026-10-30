@@ -171,10 +171,15 @@ bool dan18::readMatrix(const QString &Number, int DD, int RegionOfInteres, int b
     return readMatrixByNameROI(filesManager->fileNameFull(Number, filesManager->wildCardDetector()), DD,
                                RegionOfInteres, binning, pixelPerLine, XY, pixelsInHeader, X2mX, Y2mY, data);
 }
-//+++ Read-DAT-files:: Matrix
+//+++ Read-DAT-files:: Matrix: a run's detector file is DD x DD (its region of interest and binning give MD x MD), as
+//+++ readMatrixCor() reads it; readMatrixByName() takes a file of MD x MD
 bool dan18::readMatrix(const QString &Number, gsl_matrix *&data)
 {
-    return readMatrixByName(filesManager->fileNameFull(Number, filesManager->wildCardDetector()), data);
+    return readMatrix(Number, comboBoxMDdata->currentText().toInt(), spinBoxRegionOfInteres->value(),
+                      comboBoxBinning->currentText().toInt(), spinBoxReadMatrixNumberPerLine->value(),
+                      checkBoxTranspose->isChecked(),
+                      spinBoxHeaderNumberLines->value() + spinBoxDataHeaderNumberLines->value(),
+                      checkBoxMatrixX2mX->isChecked(), checkBoxMatrixY2mY->isChecked(), data);
 }
 //+++ Read-DAT-files:: Matrix
 bool dan18::readMatrixByName(const QString &fn, gsl_matrix *&data)
@@ -1038,7 +1043,7 @@ void dan18::readErrorMatrix(const QString &Number, gsl_matrix *&error)
         {
             current = gsl_matrix_get(error, jj, ii); // jj =>y, ii=>x
 
-            current = (current > 0.0) ? current / std::fabs(current) : 0.0;
+            current = (current > 0.0) ? 1.0 / std::fabs(current) : 0.0; // (dN/N)^2 = 1/N
 
             gsl_matrix_set(error, jj, ii, current);
         }
