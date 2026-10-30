@@ -20,6 +20,9 @@ namespace ParserASCII
 QString readEntryFlexy(const QString &file, QString &code, int &startingPosition, int maxLinesNumberInHeader);
 QString readEntry(const QString &file, QString line, const QStringList &lst = QStringList());
 QString stringParser(QString initText, QString &action);
+QString stringReplace(const QString &text, const QString &action, const QString &newValue, bool &ok);
+bool setEntry(const QString &file, int line, const QString &newEntry);
+bool setEntry(QStringList &lines, int line, const QString &newEntry);
 QString findNumberInString(QString line, int digitNumber, QString &num);
 QString findStringInString(const QString &initialString, int stringPosisionInString, const QString &separationSymbol,
                            QString &indexOfString);

@@ -18,6 +18,7 @@ class ParserHDF5
 {
   public:
     static QString readEntry(const QString &file, const QString &code, QString &action);
+    static bool setEntry(const QString &file, const QString &code, const QString &action, const QString &newValue);
     static bool readSingleMatrix(const QString &fileNameString, QString code, gsl_matrix *&matrix, int dimXY, int roiXY,
                                  int N, int TOF, int dataType);
     static bool dataInfo(const QString &fileName, QString code, int &dimX, int &dimY, int &N, int &TOF, int &dataType);

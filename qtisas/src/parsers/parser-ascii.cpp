@@ -10,6 +10,7 @@ Description: ASCII parser
 #include <QDebug>
 #include <QFile>
 #include <QRegularExpression>
+#include <QSaveFile>
 #include <QTextStream>
 
 #include <sstream>
@@ -252,6 +253,144 @@ QString ParserASCII::stringParser(QString initText, QString &action)
                             action.split("-")[1].toInt() - action.split("-")[0].toInt() + 1);
     }
     return findNumberInString(initText, num.toInt(), action);
+}
+//++++++++++++++++++++++++++++++++++++
+//+++ QString parser, the other way: newValue in place of what stringParser(text, action) returns, the rest of text
+//+++ kept; ok false when action selects nothing in text
+//++++++++++++++++++++++++++++++++++++
+QString ParserASCII::stringReplace(const QString &text, const QString &action, const QString &newValue, bool &ok)
+{
+    ok = false;
+    //--- the whole entry: its leading spaces kept
+    if (action.isEmpty())
+    {
+        ok = true;
+        const auto lead = text.length() - QString(text).remove(QRegularExpression("^\\s+")).length();
+        return text.left(lead) + newValue;
+    }
+
+    //--- token #n of text[from, to) separated by spec[1]: spec "s<separator><n>"
+    auto replaceToken = [&](qsizetype from, qsizetype to, const QString &spec) -> QString {
+        if (spec.length() < 3 || from < 0 || to < from || to > text.length())
+            return text;
+        const QChar sep = spec[1];
+        const int n = spec.mid(2).toInt();
+        if (n <= 0)
+            return text;
+        int count = 0;
+        qsizetype i = from;
+        while (i < to)
+        {
+            while (i < to && text[i] == sep)
+                i++;
+            if (i >= to)
+                break;
+            qsizetype j = i;
+            while (j < to && text[j] != sep)
+                j++;
+            if (++count == n)
+            {
+                ok = true;
+                return text.left(i) + newValue + text.mid(j);
+            }
+            i = j;
+        }
+        return text;
+    };
+
+    //--- exam[11 22 33 44]ple; [s 2]: 22; (s-3) and {s!4} the same in () and {}
+    const QList<QPair<QChar, QChar>> brackets = {{'[', ']'}, {'(', ')'}, {'{', '}'}};
+    for (const auto &b : brackets)
+        if (action.contains(QString(b.first) + "s"))
+        {
+            const QString spec = QString(action).remove(b.first).remove(b.second);
+            const qsizetype open = text.indexOf(b.first);
+            const qsizetype close = text.indexOf(b.second);
+            if (open < 0 || close < 0)
+                return text;
+            return replaceToken(open + 1, close, spec);
+        }
+
+    //--- 11 22 33 44; s 1: 11
+    if (action.contains("s"))
+        return replaceToken(0, text.length(), action);
+
+    //--- example; 2-4: xam
+    if (action.contains("-"))
+    {
+        const qsizetype first = action.split("-")[0].toInt() - 1;
+        const qsizetype length = action.split("-")[1].toInt() - first;
+        if (first < 0 || first > text.length() || length < 0)
+            return text;
+        ok = true;
+        return QString(text).replace(first, length, newValue);
+    }
+
+    //--- number #n, as findNumberInString() counts them (its separators; "," as decimal point)
+    const int n = action.toInt();
+    if (n <= 0)
+        return text;
+    QString line = text;
+    if (line.contains(".") && line.contains(","))
+        line.replace(",", ";");
+    line.replace(",", ".");
+    static const QRegularExpression rx(R"([-+]?\d+(\.\d*)?([eE][-+]?\d{1,4})?)");
+    const QString allowedBefore = QString(" :;)([]_") + '\t';
+    const QString allowedAfter = allowedBefore + '-';
+    int count = 0;
+    QRegularExpressionMatchIterator i = rx.globalMatch(line);
+    while (i.hasNext())
+    {
+        const QRegularExpressionMatch match = i.next();
+        const qsizetype start = match.capturedStart();
+        const qsizetype end = match.capturedEnd();
+        if ((start == 0 || allowedBefore.contains(line[start - 1])) &&
+            (end == line.length() || allowedAfter.contains(line[end])) && ++count == n)
+        {
+            ok = true;
+            return text.left(start) + newValue + text.mid(end);
+        }
+    }
+    return text;
+}
+//++++++++++++++++++++++++++++++++++++
+//+++ File: Standard parser, the other way: line #line (1, 2, ...) replaced by newEntry, the rest of the file as it was
+//++++++++++++++++++++++++++++++++++++
+bool ParserASCII::setEntry(const QString &fileName, int line, const QString &newEntry)
+{
+    QFile file(fileName);
+    if (line < 1 || !file.open(QIODevice::ReadOnly))
+        return false;
+    QByteArray data = file.readAll();
+    file.close();
+
+    qsizetype start = 0;
+    for (int i = 1; i < line; i++)
+    {
+        start = data.indexOf('\n', start);
+        if (start < 0)
+            return false;
+        start++;
+    }
+    qsizetype end = data.indexOf('\n', start);
+    if (end < 0)
+        end = data.size();
+    if (end > start && data[end - 1] == '\r')
+        end--;
+    data.replace(start, end - start, newEntry.toUtf8());
+
+    QSaveFile out(fileName);
+    if (!out.open(QIODevice::WriteOnly) || out.write(data) != data.size())
+        return false;
+    return out.commit();
+}
+//+++ the same in the lines of a header read before
+bool ParserASCII::setEntry(QStringList &lines, int line, const QString &newEntry)
+{
+    if (line < 1 || line > lines.count())
+        return false;
+    lines[line - 1] = newEntry;
+    return true;
 }
 //++++++++++++++++++++++++++++++++++++
 //+++ Find a number (#digitNumber) in Qstring(line)

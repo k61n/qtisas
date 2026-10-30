@@ -9,6 +9,8 @@ Description: XML parser
 
 #include <QDomElement>
 #include <QFile>
+#include <QRegularExpression>
+#include <QSaveFile>
 #include <QStringList>
 
 #include "parser-xml.h"
@@ -277,6 +279,83 @@ QString ParserXML::readEntry(const QString &fileName, QString xmlCode, QString x
     return "";
 }
 
+//+++ readEntry() the other way: its path (the first element of each name, as readEntry() finds it) walked through the
+//+++ file's text; only the element's text replaced
+bool ParserXML::setEntry(const QString &fileName, QString xmlCode, QString xmlBase, const QString &newValue)
+{
+    xmlBase = xmlBase.remove(" ");
+    if (xmlBase != "")
+        xmlBase = (xmlBase + ":").replace("::", ":").replace("::", ":");
+    xmlCode = (xmlBase + xmlCode).remove(" ").replace("::", ":").replace("::", ":");
+    if (xmlCode.count("{") > 1)
+        return false;
+    const QStringList lst = xmlCode.remove("{").remove("}").split(":", Qt::SkipEmptyParts);
+    if (lst.isEmpty())
+        return false;
+
+    QFile file(fileName);
+    if (!file.open(QIODevice::ReadOnly))
+        return false;
+    const QByteArray raw = file.readAll();
+    file.close();
+    // the offsets below are those of this text: a file in another encoding is not rewritten
+    if (QRegularExpression(R"(^\s*<\?xml[^>]*encoding\s*=\s*["'](?!utf-?8["'])[^"']*["'])",
+                           QRegularExpression::CaseInsensitiveOption)
+            .match(QString::fromLatin1(raw.left(200)))
+            .hasMatch())
+        return false;
+    QString text = QString::fromUtf8(raw);
+
+    QXmlStreamReader reader(text);
+    int depth = 0;
+    int matched = 0;
+    qint64 start = -1;
+    QString qualifiedName;
+    while (!reader.atEnd())
+    {
+        const QXmlStreamReader::TokenType token = reader.readNext();
+        if (token == QXmlStreamReader::StartElement)
+        {
+            depth++;
+            if (start >= 0)
+                return false; // elements in it: no text value
+            if (matched == depth - 1 && depth <= lst.count() && reader.name() == lst[depth - 1])
+            {
+                matched = depth;
+                if (matched == lst.count())
+                {
+                    start = reader.characterOffset();
+                    qualifiedName = reader.qualifiedName().toString();
+                }
+            }
+        }
+        else if (token == QXmlStreamReader::EndElement)
+        {
+            if (start >= 0)
+            {
+                const qint64 endTag = text.lastIndexOf("<", reader.characterOffset() - 1);
+                QString value = newValue;
+                value.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+                if (endTag < start) // <name/>
+                {
+                    const qint64 slash = text.lastIndexOf("/", start - 1);
+                    text.replace(slash, start - slash, ">" + value + "</" + qualifiedName + ">");
+                }
+                else
+                    text.replace(start, endTag - start, value);
+                QSaveFile out(fileName);
+                const QByteArray data = text.toUtf8();
+                if (!out.open(QIODevice::WriteOnly) || out.write(data) != data.size())
+                    return false;
+                return out.commit();
+            }
+            if (matched >= depth)
+                return false; // the first element of that name has not the rest of the path
+            depth--;
+        }
+    }
+    return false;
+}
 
 XMLParser::XMLParser(const QString &filePath) : filePath(filePath)
 {

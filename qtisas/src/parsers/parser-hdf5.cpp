@@ -12,8 +12,10 @@ Description: HDF5 parser
 #include <H5Cpp.h>
 
 #include "parser-hdf5.h"
-#include <iostream>
 #include <cmath>
+#include <iostream>
+#include <string>
+#include <vector>
 
 using namespace H5;
 
@@ -469,6 +471,161 @@ QString ParserHDF5::readEntry(const QString &fileNameString, const QString &code
 
     action = postAction;
     return result;
+}
+
+//+++ the attributes of one object copied to another (the same names, types and values)
+static herr_t copyAttribute(hid_t from, const char *name, const H5A_info_t *, void *target)
+{
+    const hid_t to = *static_cast<hid_t *>(target);
+    const hid_t attr = H5Aopen(from, name, H5P_DEFAULT);
+    if (attr < 0)
+        return -1;
+    const hid_t type = H5Aget_type(attr);
+    const hid_t space = H5Aget_space(attr);
+    const hssize_t points = H5Sget_simple_extent_npoints(space);
+    std::vector<char> buffer(H5Tget_size(type) * size_t(points > 0 ? points : 1));
+    bool ok = H5Aread(attr, type, buffer.data()) >= 0;
+    if (ok)
+    {
+        const hid_t copy = H5Acreate2(to, name, type, space, H5P_DEFAULT, H5P_DEFAULT);
+        ok = copy >= 0 && H5Awrite(copy, type, buffer.data()) >= 0;
+        if (copy >= 0)
+            H5Aclose(copy);
+        if (H5Tdetect_class(type, H5T_VLEN) > 0 || H5Tis_variable_str(type) > 0)
+#if H5_VERSION_GE(1, 12, 0)
+            H5Treclaim(type, space, H5P_DEFAULT, buffer.data());
+#else
+            H5Dvlen_reclaim(type, space, H5P_DEFAULT, buffer.data());
+#endif
+    }
+    H5Sclose(space);
+    H5Tclose(type);
+    H5Aclose(attr);
+    return ok ? 0 : -1;
+}
+
+static bool copyAttributes(hid_t from, hid_t to)
+{
+    hsize_t index = 0;
+    return H5Aiterate2(from, H5_INDEX_NAME, H5_ITER_INC, &index, copyAttribute, &to) >= 0;
+}
+
+//+++ a string dataset of one string set to value
+static bool setString(hid_t file, const std::string &path, const std::string &value)
+{
+    const hid_t dataset = H5Dopen2(file, path.c_str(), H5P_DEFAULT);
+    if (dataset < 0)
+        return false;
+    const hid_t type = H5Dget_type(dataset);
+    const hid_t space = H5Dget_space(dataset);
+    bool ok = H5Sget_simple_extent_npoints(space) == 1;
+    if (ok && H5Tis_variable_str(type) > 0)
+    {
+        const char *text = value.c_str();
+        ok = H5Dwrite(dataset, type, H5S_ALL, H5S_ALL, H5P_DEFAULT, &text) >= 0;
+    }
+    else if (ok && H5Tget_size(type) >= value.size())
+    {
+        // the fixed size kept: padded as the type pads (spaces or zeros)
+        const char pad = H5Tget_strpad(type) == H5T_STR_SPACEPAD ? ' ' : '\0';
+        std::string buffer = value;
+        buffer.resize(H5Tget_size(type), pad);
+        ok = H5Dwrite(dataset, type, H5S_ALL, H5S_ALL, H5P_DEFAULT, buffer.data()) >= 0;
+    }
+    else if (ok)
+    {
+        // longer than the fixed size: the dataset made anew under its name, the same space and attributes
+        const hid_t newType = H5Tcopy(type);
+        H5Tset_size(newType, value.size());
+        const std::string temporary = path + "__qtisas_new";
+        const hid_t created =
+            H5Dcreate2(file, temporary.c_str(), newType, space, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        ok = created >= 0 && H5Dwrite(created, newType, H5S_ALL, H5S_ALL, H5P_DEFAULT, value.data()) >= 0 &&
+             copyAttributes(dataset, created);
+        if (created >= 0)
+            H5Dclose(created);
+        H5Tclose(newType);
+        H5Sclose(space);
+        H5Tclose(type);
+        H5Dclose(dataset);
+        if (!ok)
+        {
+            H5Ldelete(file, temporary.c_str(), H5P_DEFAULT);
+            return false;
+        }
+        return H5Ldelete(file, path.c_str(), H5P_DEFAULT) >= 0 &&
+               H5Lmove(file, temporary.c_str(), file, path.c_str(), H5P_DEFAULT, H5P_DEFAULT) >= 0;
+    }
+    H5Sclose(space);
+    H5Tclose(type);
+    H5Dclose(dataset);
+    return ok;
+}
+
+//+++ element index of a 1-D numeric dataset set to value
+static bool setNumber(hid_t file, const std::string &path, const QString &index, const QString &value)
+{
+    bool isNumber = false;
+    const double number = value.toDouble(&isNumber);
+    if (!isNumber)
+        return false;
+    const hid_t dataset = H5Dopen2(file, path.c_str(), H5P_DEFAULT);
+    if (dataset < 0)
+        return false;
+    const hid_t space = H5Dget_space(dataset);
+    const hid_t type = H5Dget_type(dataset);
+    const int rank = H5Sget_simple_extent_ndims(space);
+    const hssize_t points = H5Sget_simple_extent_npoints(space);
+    const bool integer = H5Tget_class(type) == H5T_INTEGER;
+    bool ok = rank <= 1 && points >= 1 && (!integer || number == std::floor(number));
+    hssize_t i = 0;
+    if (index == "[last]")
+        i = points - 1;
+    else if (!index.isEmpty() && index != "[first]")
+        i = QString(index).remove('[').remove(']').toLongLong();
+    ok = ok && i >= 0 && i < points;
+    if (ok)
+    {
+        std::vector<double> values(static_cast<size_t>(points));
+        ok = H5Dread(dataset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, values.data()) >= 0;
+        values[static_cast<size_t>(i)] = number;
+        ok = ok && H5Dwrite(dataset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, values.data()) >= 0;
+    }
+    H5Tclose(type);
+    H5Sclose(space);
+    H5Dclose(dataset);
+    return ok;
+}
+
+bool ParserHDF5::setEntry(const QString &fileName, const QString &code, const QString &action, const QString &newValue)
+{
+    if (code.isEmpty() || action.contains("[sum]") || action.contains("[mean]"))
+        return false;
+    // the element part of the action ("[2]", "[first]", "[last]"); a post-action ("s 1", ...) is the caller's
+    QString index;
+    if (action.left(1) == "[" && action.contains("]") && action.left(2) != "[s")
+        index = action.split("]")[0] + "]";
+
+    H5Eset_auto2(H5E_DEFAULT, nullptr, nullptr);
+    const hid_t file = H5Fopen(fileName.toLocal8Bit().constData(), H5F_ACC_RDWR, H5P_DEFAULT);
+    if (file < 0)
+        return false;
+    const std::string path = code.toLocal8Bit().constData();
+    bool ok = false;
+    const hid_t dataset = H5Dopen2(file, path.c_str(), H5P_DEFAULT);
+    if (dataset >= 0)
+    {
+        const hid_t type = H5Dget_type(dataset);
+        const H5T_class_t typeClass = H5Tget_class(type);
+        H5Tclose(type);
+        H5Dclose(dataset);
+        if (typeClass == H5T_STRING)
+            ok = index.isEmpty() && setString(file, path, newValue.toLocal8Bit().constData());
+        else if (typeClass == H5T_INTEGER || typeClass == H5T_FLOAT)
+            ok = setNumber(file, path, index, newValue);
+    }
+    H5Fclose(file);
+    return ok;
 }
 
 //

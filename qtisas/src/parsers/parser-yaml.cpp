@@ -9,6 +9,9 @@ Description: YAML parser
 
 #include <fstream>
 #include <iostream>
+#include <sstream>
+
+#include <QSaveFile>
 
 #include "parser-yaml.h"
 
@@ -768,4 +771,51 @@ bool ParserYAML::nodeModify(YAML::Node &node, QStringList lst, bool numerical, c
         break;
     }
     return false;
+}
+//+++ readEntry() the other way: the first document that has the entry gets newValue
+bool ParserYAML::setEntry(const QString &fileName, QString code, const QString &newValue, bool numerical, int lstValue)
+{
+    code = code.remove(" ");
+    code = code.replace("::", ":");
+    code = code.replace("::", ":");
+    code = code.replace("||", "|");
+    code = code.replace("||", "|");
+    const QStringList lst = code.split(":", Qt::SkipEmptyParts);
+    if (lst.isEmpty() || lst.count() > 10)
+        return false;
+
+    std::vector<YAML::Node> documents;
+    try
+    {
+        std::ifstream fin(fileName.toLocal8Bit().constData());
+        documents = YAML::LoadAll(fin);
+    }
+    catch (const YAML::Exception &e)
+    {
+        std::cout << "YAML: " << e.what() << "\n";
+        return false;
+    }
+
+    bool modified = false;
+    for (YAML::Node &doc : documents)
+        if (nodeModify(doc, lst, numerical, newValue, lstValue))
+        {
+            modified = true;
+            break;
+        }
+    if (!modified)
+        return false;
+
+    std::stringstream out;
+    for (const YAML::Node &doc : documents)
+    {
+        if (documents.size() > 1)
+            out << "---\n";
+        out << YAML::Dump(doc) << "\n";
+    }
+    const QByteArray data = QByteArray::fromStdString(out.str());
+    QSaveFile file(fileName);
+    if (!file.open(QIODevice::WriteOnly) || file.write(data) != data.size())
+        return false;
+    return file.commit();
 }

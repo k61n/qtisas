@@ -19,6 +19,7 @@ class ParserXML
 {
   public:
     static QString readEntry(const QString &file, QString code, QString xmlBase);
+    static bool setEntry(const QString &file, QString code, QString xmlBase, const QString &newValue);
 };
 
 

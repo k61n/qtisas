@@ -31,6 +31,7 @@ class ParserYAML
                            gsl_matrix *&matrix);
     static bool nodeModify(YAML::Node &node, QStringList lst, bool numerical, const QString &newValue,
                            int lstValue = 0);
+    static bool setEntry(const QString &file, QString code, const QString &newValue, bool numerical, int lstValue = 0);
 };
 
 #endif

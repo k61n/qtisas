@@ -70,8 +70,8 @@ bool readEdfHeaderPairs(QFile &file, EdfHeaderInfo &info, QList<QPair<QString, Q
         // '{' sits on its own line before the first real entry, and '}' can trail the last one —
         // splitting by ';' (not by line) glues either onto whichever token they're adjacent to, so
         // both key and value need stripping, not just the value.
-        key.remove('{').remove('}');
-        val.remove('{').remove('}');
+        key = key.remove('{').remove('}').trimmed();
+        val = val.remove('{').remove('}').trimmed();
         if (key.isEmpty())
             continue;
 
@@ -388,11 +388,25 @@ bool ParserEDF::replaceHeader(const QString &fileName, const QStringList &header
             kv.second = it->second;
     }
 
-    QByteArray newHeaderBlock = "{\n";
-    for (const auto &kv : merged)
-        newHeaderBlock += (kv.first + " = " + kv.second + " ;\n").toLatin1();
-
-    qint64 padded = ((qint64(newHeaderBlock.size()) + 2 + 511) / 512) * 512;
+    // the header block keeps at least its size (the data where it was; EDF_HeaderSize, when there, stays true): a
+    // larger one is the next multiple of 512 bytes, and its EDF_HeaderSize says so
+    auto block = [&merged]() {
+        QByteArray b = "{\n";
+        for (const auto &kv : merged)
+            b += (kv.first + " = " + kv.second + " ;\n").toLatin1();
+        return b;
+    };
+    QByteArray newHeaderBlock = block();
+    qint64 padded = std::max(info.dataOffset, ((qint64(newHeaderBlock.size()) + 2 + 511) / 512) * 512);
+    for (auto &kv : merged)
+        if (kv.first.compare("EDF_HeaderSize", Qt::CaseInsensitive) == 0 && kv.second.toLongLong() != padded)
+        {
+            kv.second = QString::number(padded);
+            newHeaderBlock = block();
+            padded = std::max(padded, ((qint64(newHeaderBlock.size()) + 2 + 511) / 512) * 512);
+            kv.second = QString::number(padded);
+            newHeaderBlock = block();
+        }
     newHeaderBlock += QByteArray(padded - newHeaderBlock.size() - 2, ' ');
     newHeaderBlock += "}\n";
 
