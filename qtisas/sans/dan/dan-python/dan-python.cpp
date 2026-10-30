@@ -1473,6 +1473,7 @@ QStringList DanMerge::join(const QString &templateTable, int overlap, int remove
     d->spinBoxOverlap->setValue(overlap);
     // set by the call, never left from the interface: absolute curves are not scaled unless asked for
     d->checkBoxSmart->setChecked(smart);
+    d->checkBoxScaleErrors->setChecked(true); // a scaled curve keeps its relative errors
     return mergeTemplate(templateTable, removeFirst, removeLast, output);
 }
 

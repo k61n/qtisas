@@ -667,7 +667,7 @@ bool dan18::singleSampleMergeJoin(const QString &nameMerged, QStringList tablesT
                             gsl_matrix_get(data, iii, 1) != InvalidCellValue)
                         {
                             gsl_matrix_set(data, iii, 1, gsl_matrix_get(data, iii, 1) * faktor);
-                            if (dIExist && scaleErrors)
+                            if (dIExist && scaleErrors && gsl_matrix_get(data, iii, 2) != InvalidCellValue)
                                 gsl_matrix_set(data, iii, 2, gsl_matrix_get(data, iii, 2) * faktor);
                         }
                     }
@@ -739,7 +739,7 @@ bool dan18::singleSampleMergeJoin(const QString &nameMerged, QStringList tablesT
                     if (gsl_matrix_get(data, QminInt, 0) != InvalidCellValue &&
                         gsl_matrix_get(data, QminInt, 1) != InvalidCellValue)
                     {
-                        Q = gsl_matrix_get(data, QmaxInt, 0);
+                        Q = gsl_matrix_get(data, QminInt, 0);
                         rightLevel += gsl_matrix_get(data, QminInt, 1) * pow(Q, qExponent);
                         numRightLevel++;
                     }
@@ -751,7 +751,7 @@ bool dan18::singleSampleMergeJoin(const QString &nameMerged, QStringList tablesT
                     if (gsl_matrix_get(data, QminInt, 0) != InvalidCellValue &&
                         gsl_matrix_get(data, QminInt, 1) != InvalidCellValue)
                     {
-                        Q = gsl_matrix_get(data, QmaxInt, 0);
+                        Q = gsl_matrix_get(data, QminInt, 0);
                         rightLevel += gsl_matrix_get(data, QminInt, 1) * pow(Q, qExponent);
                         numRightLevel++;
                     }
@@ -773,7 +773,7 @@ bool dan18::singleSampleMergeJoin(const QString &nameMerged, QStringList tablesT
                             gsl_matrix_get(data, iii, 1) != InvalidCellValue)
                         {
                             gsl_matrix_set(data, iii, 1, gsl_matrix_get(data, iii, 1) * faktor);
-                            if (scaleErrors)
+                            if (dIExist && scaleErrors && gsl_matrix_get(data, iii, 2) != InvalidCellValue)
                                 gsl_matrix_set(data, iii, 2, gsl_matrix_get(data, iii, 2) * faktor);
                         }
                     }
@@ -1012,8 +1012,9 @@ bool dan18::singleSampleMergeRebin(const QString &nameMerged, QStringList tables
         Q[i] = Q[i] / n[i];
         I[i] = I[i] / n[i];
         dI[i] = sqrt(dI[i]) / n[i];
-        Sigma[i] = sqrt(Sigma[i]) / n[i] + (Qmax[i] - Qmin[i]) / 2;
-        dQ[i] = sqrt(dQ[i]) / n[i];
+        // the resolution of an averaged point is the points' (rms), not reduced like a statistical error
+        Sigma[i] = sqrt(Sigma[i] / n[i]) + (Qmax[i] - Qmin[i]) / 2;
+        dQ[i] = sqrt(dQ[i] / n[i]);
         anisotropy[i] = anisotropy[i] / n[i];
     }
 
