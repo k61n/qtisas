@@ -285,8 +285,9 @@ bool ParserXML::setEntry(const QString &fileName, QString xmlCode, QString xmlBa
 {
     xmlBase = xmlBase.remove(" ");
     if (xmlBase != "")
-        xmlBase = (xmlBase + ":").replace("::", ":").replace("::", ":");
-    xmlCode = (xmlBase + xmlCode).remove(" ").replace("::", ":").replace("::", ":");
+        xmlBase = QString(xmlBase + ":").replace("::", ":").replace("::", ":");
+    // QString(): operator+ gives a const QString in Qt5
+    xmlCode = QString(xmlBase + xmlCode).remove(" ").replace("::", ":").replace("::", ":");
     if (xmlCode.count("{") > 1)
         return false;
     const QStringList lst = xmlCode.remove("{").remove("}").split(":", Qt::SkipEmptyParts);

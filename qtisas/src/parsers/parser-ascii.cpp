@@ -281,12 +281,12 @@ QString ParserASCII::stringReplace(const QString &text, const QString &action, c
         qsizetype i = from;
         while (i < to)
         {
-            while (i < to && text[i] == sep)
+            while (i < to && text.at(i) == sep)
                 i++;
             if (i >= to)
                 break;
             qsizetype j = i;
-            while (j < to && text[j] != sep)
+            while (j < to && text.at(j) != sep)
                 j++;
             if (++count == n)
             {
@@ -344,8 +344,8 @@ QString ParserASCII::stringReplace(const QString &text, const QString &action, c
         const QRegularExpressionMatch match = i.next();
         const qsizetype start = match.capturedStart();
         const qsizetype end = match.capturedEnd();
-        if ((start == 0 || allowedBefore.contains(line[start - 1])) &&
-            (end == line.length() || allowedAfter.contains(line[end])) && ++count == n)
+        if ((start == 0 || allowedBefore.contains(line.at(start - 1))) &&
+            (end == line.length() || allowedAfter.contains(line.at(end))) && ++count == n)
         {
             ok = true;
             return text.left(start) + newValue + text.mid(end);
@@ -375,7 +375,7 @@ bool ParserASCII::setEntry(const QString &fileName, int line, const QString &new
     qsizetype end = data.indexOf('\n', start);
     if (end < 0)
         end = data.size();
-    if (end > start && data[end - 1] == '\r')
+    if (end > start && data.at(end - 1) == '\r')
         end--;
     data.replace(start, end - start, newEntry.toUtf8());
 
