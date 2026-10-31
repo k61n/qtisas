@@ -20635,25 +20635,14 @@ bool ApplicationWindow::changeFolder(Folder *newFolder, bool force)
     return true;
 }
 
-bool ApplicationWindow::changeFolder(const QString &name, bool updateIfExist)
+// the project's subfolder name (made when there is none) becomes the current folder, the explorer and the windows
+// shown with it: before, an existing subfolder that was not current only became current_folder, so new windows went
+// into it while the explorer still showed (and listed them under) the folder before
+bool ApplicationWindow::changeFolder(const QString &name)
 {
-    if (current_folder->objectName() == name)
-    {
-        changeFolder(projectFolder()->findSubfolder(name), true);
-        folders->setFocus();
-        return true;
-    }
-
-    if ( !projectFolder()->findSubfolder(name) )
-    {
-        addFolder(name,projectFolder());
-        changeFolder ( projectFolder()->findSubfolder(name),true);
-        folders->setFocus();
-        return true;
-    }
-
-    if (updateIfExist) changeFolder ( projectFolder()->findSubfolder(name),true);
-    current_folder = projectFolder()->findSubfolder(name);
+    if (!projectFolder()->findSubfolder(name))
+        addFolder(name, projectFolder());
+    changeFolder(projectFolder()->findSubfolder(name), true);
     folders->setFocus();
     return true;
 }
