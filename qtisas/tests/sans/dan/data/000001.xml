@@ -1,0 +1,69 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="cansas1d.xsl" ?>
+<SASroot version="1.1"
+		xmlns="urn:cansas1d:1.1"
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		xsi:schemaLocation="urn:cansas1d:1.1 http://www.cansas.org/formats/1.1/cansas1d.xsd"
+		>
+	<SASentry>
+		<Title>Synthetic example: S1 2mm</Title>
+		<Run>000001</Run>
+		<SASdata>
+			<Idata><Q unit="1/A">   5.511106E-03 </Q><I unit="1/cm">   1.305283E+01 </I><Idev unit="1/cm">   2.717132E+00 </Idev><Qdev unit="1/A">   7.599326E-04 </Qdev></Idata>
+			<Idata><Q unit="1/A">   6.312272E-03 </Q><I unit="1/cm">   9.199719E+00 </I><Idev unit="1/cm">   1.025447E+00 </Idev><Qdev unit="1/A">   8.199009E-04 </Qdev></Idata>
+			<Idata><Q unit="1/A">   7.085647E-03 </Q><I unit="1/cm">   8.427243E+00 </I><Idev unit="1/cm">   7.807953E-01 </Idev><Qdev unit="1/A">   8.808349E-04 </Qdev></Idata>
+		</SASdata>
+		<SASsample>
+			<ID>S1 2mm</ID>
+			<thickness unit="mm">    0.00 </thickness>
+			<transmission>   0.0000 </transmission>
+			<temperature unit="C">     0.0000 </temperature>
+			<position>
+				<x unit="mm">    8.00 </x>
+				<y unit="mm">    0.00 </y>
+			</position>
+			<sample_offset_angle_deg xmlns="urn:test">      0.000 </sample_offset_angle_deg>
+		</SASsample>
+		<SASinstrument>
+			<name>TEST</name>
+			<SASsource>
+				<radiation>neutron</radiation>
+				<beam_size>
+					<x unit="mm">30.00</x>
+					<y unit="mm">0.00</y>
+				</beam_size>
+				<wavelength unit="A">8.00</wavelength>
+				<wavelength_spread unit="fraction ">0.10</wavelength_spread>
+			</SASsource>
+			<SAScollimation>
+				<length unit="m">11.200</length>
+			</SAScollimation>
+			<SASdetector>
+				<name />
+				<SDD unit="m">10.000</SDD>
+				<orientation>
+					<roll unit="degree">0.00<!-- was: offset_angle_deg --></roll>
+				</orientation>
+				<beam_center>
+					<x unit="cm">47.03</x>
+					<y unit="cm">47.78</y>
+				</beam_center>
+				<pixel_size>
+					<x unit="mm">7.50</x>
+					<y unit="mm">7.50</y>
+				</pixel_size>
+			</SASdetector>
+		</SASinstrument>
+		<SASprocess name="spol" >
+			<name>spol</name>
+			<date>  1-Jan-2026 12:00:00 </date>
+			<term name="Flux_monitor" unit="none">1.00</term>
+			<term name="Count_time" unit="s">100.000</term>
+			<term name="Q_resolution">estimated</term>
+			<term name="radialstep" unit="cm">1.000</term>
+			<term name="sector_width" unit="deg">180.0</term>
+			<term name="sector_orient" unit="deg">0.0</term>
+		</SASprocess>
+		<SASnote/>
+	</SASentry>
+</SASroot>
