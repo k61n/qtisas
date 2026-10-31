@@ -57,6 +57,13 @@ target_link_libraries(table_numeric_locale_tests PRIVATE Qt${V}::Core Qt${V}::Te
 set_target_properties(table_numeric_locale_tests PROPERTIES AUTOMOC ON)
 add_test(NAME table_numeric_locale_tests COMMAND table_numeric_locale_tests)
 
+add_executable(graph3d_log_scale_tests src/plot3D/graph3d_log_scale_tests.cpp src/plot3D/graph3d_log_scale_tests.h
+    ${CMAKE_SOURCE_DIR}/qtisas/src/plot3D/Graph3DLogScale.h)
+target_include_directories(graph3d_log_scale_tests PRIVATE ${CMAKE_SOURCE_DIR}/qtisas/src/plot3D)
+target_link_libraries(graph3d_log_scale_tests PRIVATE Qt${V}::Core Qt${V}::Test)
+set_target_properties(graph3d_log_scale_tests PROPERTIES AUTOMOC ON)
+add_test(NAME graph3d_log_scale_tests COMMAND graph3d_log_scale_tests)
+
 add_executable(smart_completer_tests src/scripting/smart_completer_tests.cpp
     src/scripting/smart_completer_tests.h
     ${CMAKE_SOURCE_DIR}/qtisas/src/scripting/SmartCompleter.cpp

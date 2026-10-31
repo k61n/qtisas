@@ -491,6 +491,7 @@ class AiContentTests : public QObject
     static void inventedMergeImports_detectsImportNeverUsedInParts();
     static void inventedMergeImports_allowsImportsPresentInParts();
     static void extractExistingEntityNames_findsExistingBeforeQuote();
+    static void extractExistingEntityNames_skipsColumns();
     static void extractExistingEntityNames_findsExistingTablePhrasing();
     static void extractExistingEntityNames_emptyWithoutExistingKeyword();
     static void extractExistingEntityNames_dedupesRepeatedName();
@@ -541,6 +542,8 @@ class AiContentTests : public QObject
     // ---- AiAssistant public statics ----
     static void extractAvailableBlock_findsListedAlternatives();
     static void normalizeErrorForDedup_stripsLineNumbers();
+    static void reviewIntroducedErrorLiteral_findsTheReviewsName();
+    static void reviewIntroducedErrorLiteral_ignoresOtherErrors();
     static void normalizeErrorForDedup_stripsFitTimingNoise();
     static void normalizeErrorForDedup_stripsQuotedSourceLineDifferences();
     static void normalizeErrorForDedup_stillDistinguishesRealDifferences();

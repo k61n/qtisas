@@ -5681,6 +5681,26 @@ void AiContentTests::extractExistingEntityNames_findsExistingBeforeQuote()
     QCOMPARE(names.first().second, QString("function"));
 }
 
+void AiContentTests::extractExistingEntityNames_skipsColumns()
+{
+    // Confirmed live: the active table had the column "State", the request was stopped as referring to a missing
+    // "State" — the check knows windows and functions only, a column is neither
+    QVERIFY(extractExistingEntityNames("dan: in active table, existing \"State\"-column defines pol-an status. SET "
+                                       "to \"Num\"-column (existing) the number")
+                .isEmpty());
+    QVERIFY(extractExistingEntityNames("read the existing column \"Num\" of the active table").isEmpty());
+    QVERIFY(extractExistingEntityNames("the existing \"I\" columns").isEmpty());
+    // a window stays checked
+    const QList<QPair<QString, QString>> names =
+        extractExistingEntityNames(R"(in the existing table "Data", existing "State" column to "Num")");
+    QCOMPARE(names.size(), 1);
+    QCOMPARE(names.first().first, QString("Data"));
+    // a window noun before the name wins over "column" after it
+    const QList<QPair<QString, QString>> table = extractExistingEntityNames("fit the existing table \"T1\" column B");
+    QCOMPARE(table.size(), 1);
+    QCOMPARE(table.first().first, QString("T1"));
+}
+
 void AiContentTests::extractExistingEntityNames_findsExistingTablePhrasing()
 {
     const QString request = "...against existing table \"SAXS_data\" columns I and dI, using weighted LM.";
@@ -6379,6 +6399,42 @@ void AiContentTests::normalizeErrorForDedup_stripsLineNumbers()
     const QString a = "RuntimeError: fit failed\nat <ai>:4 — chi2 = f.fit()";
     const QString b = "RuntimeError: fit failed\nat <ai>:11 — chi2 = f.fit()";
     QCOMPARE(AiAssistant::normalizeErrorForDedup(a), AiAssistant::normalizeErrorForDedup(b));
+}
+
+void AiContentTests::reviewIntroducedErrorLiteral_findsTheReviewsName()
+{
+    // Confirmed live: the draft had the header key right, self-review rewrote it to the request's misspelling, and the
+    // run's error names the misspelled key — the review caused it, the draft runs instead
+    const QString draft = "runs = Dan.Rawdata.runs()\n"
+                          "Dan.Rawdata.setHeaderValue(runs, \"Sample-Thickness\", \"0.1\")\n";
+    QString reviewed = draft;
+    reviewed.replace("Sample-Thickness", "Sample-tickness");
+    const QString error = "ValueError: no header key Sample-tickness; headerKeys(): Sample-Title, Sample-Thickness\n"
+                          "at <ai>:2 — Dan.Rawdata.setHeaderValue(runs, \"Sample-tickness\", \"0.1\")";
+    QCOMPARE(AiAssistant::reviewIntroducedErrorLiteral(reviewed, draft, error), QString("Sample-tickness"));
+    // single quotes too
+    QString single = reviewed;
+    single.replace('"', '\'');
+    QCOMPARE(AiAssistant::reviewIntroducedErrorLiteral(single, draft, error), QString("Sample-tickness"));
+}
+
+void AiContentTests::reviewIntroducedErrorLiteral_ignoresOtherErrors()
+{
+    const QString draft = "t = table(\"Data\")\nt.setColName(2, \"I\")\n";
+    const QString reviewed = "t = table(\"Data\")\nt.setColName(2, \"Intensity\")\n";
+    // the error names a literal the draft had too: not the review's
+    QVERIFY(AiAssistant::reviewIntroducedErrorLiteral(reviewed, draft, "ValueError: no table Data").isEmpty());
+    // the review's literal only in the echoed source line, not in the message
+    QVERIFY(
+        AiAssistant::reviewIntroducedErrorLiteral(reviewed, draft,
+                                                  "AttributeError: 'NoneType' object has no attribute 'setColName'\n"
+                                                  "at <ai>:2 — t.setColName(2, \"Intensity\")")
+            .isEmpty());
+    // a value the review changed is no name
+    QVERIFY(AiAssistant::reviewIntroducedErrorLiteral("x = f(\"0.25\")", "x = f(\"0.2\")", "ValueError: 0.25 too large")
+                .isEmpty());
+    // an unchanged script
+    QVERIFY(AiAssistant::reviewIntroducedErrorLiteral(draft, draft, "ValueError: no table Data").isEmpty());
 }
 
 void AiContentTests::normalizeErrorForDedup_stripsFitTimingNoise()
