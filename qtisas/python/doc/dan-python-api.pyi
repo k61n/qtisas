@@ -57,6 +57,9 @@
 #     (the request gives a number N of runs: neighbours(N))
 #   add all runs of a sample + configuration, not one after the other -> for g in sampleGroups(): addRuns(g["runs"])
 #   a run's file name / the files of runs (move, copy) -> Dan.Rawdata.files(runs)  (a run number is no file name)
+#   change a value in runs' header files   -> Dan.Rawdata.setHeaderValue(Dan.Rawdata.runs(), key, value)
+#     ("all samples"/"all files"/"the folder": runs(), EVERY run; sampleRuns() only when the request leaves the
+#     standard runs out); keys: headerKeys(); check after it: no run left with the old value
 #   a beam-stop / transmission mask       -> Dan.Mask.newMask(name, beamstop=(x1, x2, y1, y2), transmission=...)
 #   a sector / rectangle / ellipse in a mask -> Dan.Mask.sector(...) / rectangle(...) / ellipse(...) on matrix
 #   a transmission of one run (e.g. H2O)  -> Dan.Sensitivity.transmission(run, emptyBeam, mask) -> (Tr, dTr)
@@ -70,6 +73,17 @@
 # --- Dan.Options
 newSession()   openSession(scriptTable)   # a saved session = its script table
 instruments()->list   instrument()->str   selectInstrument(name)   modes()->list   selectMode(mode)
+# PN: selectMode("(PN) Polarized Neutrons"), then selectPolarizationReductionMode("x421"), etc.; the PN reduction
+#   itself needs the polarized script table (no Python call yet: from the interface)
+# polarizationReductionModes()->list ("none", "x2", "x4", "x421".."x424"); polarizationReductionMode()->str
+selectPolarizationReductionMode(mode)  # the PN correction combobox; ValueError unless PN mode is selected
+# POL-ALIAS-UP/DOWN/UP-UP/UP-DOWN/DOWN-DOWN/DOWN-UP/OUT-UP/OUT-DOWN: instrument parameters via Config.setParameters().
+# PN states (polarizer-analyzer; the alias name, as Polarization-Aliased shows it, and its number):
+#   out 0, up 1, down 2, up-up 3, up-down 4, down-down 5, down-up 6, out-up -1, out-down -2
+#   (out-up/out-down: polarizer out, analyzer in; reduced by "none" only; transmissions, calibrants)
+# Aliases: whole-value wildcards (* ? [...]), case and spaces ignored, || alternatives.
+# Rawdata.info()[i]["polarization"] stays raw; configuration grouping uses aliases in PN mode when polarization is a
+# condition, raw values otherwise.
 setInputPath(path)  inputPath()->str   setOutputPath(path)  outputPath()->str   # raw runs in, ASCII files out
 #   setInputPath() sets the output folder to the input's parent (as the interface): setOutputPath() after it
 #   (an output folder that does not exist yet is made)
@@ -103,10 +117,15 @@ neighbours(n=None, runs=None)->list of dict   # NEXT TO EACH OTHER in the folder
 #   n None: every WHOLE series (2+ runs, as many as measured); n=N only when the request gives N: groups of N;
 #   label, condition, sample, runs; added runs left out
 conditions(runs=None)->list of dict   # the runs grouped by configuration: label, C, D, lambda, beamSize, runs
-sampleRuns(runs=None)->list      # the runs minus the standard runs (empty beams, B4C, calibrants, sensitivity)
+sampleRuns(runs=None)->list      # the runs minus the standard runs (empty beams, B4C, calibrants, sensitivity) —
+#   for the script table of auto mode; NOT "all samples" of a request: runs()
 files(runs)->list                # the runs' files, full paths: detector file + own header file (KWS-3: .det,
 #   .yaml); one run or a list; a run number is NO file name
 headerItems()->list              # the names newHeaderTable() takes ("Sample", "C", "D", "lambda", "Duration", ...)
+headerKeys()->list   headerValue(run, key)->str   # the header map's keys; a run's value as in its header
+setHeaderValue(runs, key, value, backup=False)->list  # into the header files where the map reads key, read back; the
+#   files; backup=True: <file>.bak first when there is none; ASCII/Flexi/EDF/XML/YAML/HDF5; not the run number or a
+#   const; an empty list: ValueError "no runs: the list is empty" (a filter matched none: nothing to do)
 newHeaderTable(name, items, runs="*")->str   # one row per run, a column per item; runs "*" or "<first>..<last>"
 #   the header table: first column Runs (the run number), then one column per item
 addRuns(runs, run=None)->list    # the runs added into ONE new run (matrices, duration, counts, monitors summed);
@@ -154,12 +173,14 @@ loadMasks(pattern="*.mask")->list   # the mask files of the input folder
 
 # --- Dan.Sensitivity
 newSensitivity(run, name="sens", emptyBeam="", darkCurrent="", transmission=1.0, mask="mask", errorRange=None,
-               errorMatrix=None, maskedValue=None)->str
+               errorMatrix=None, maskedValue=None, center=None)->str
 #   from a flat scatterer (H2O, Plexiglas) or a provided pure-sensitivity run (then only the run);
 #   transmission: a number | "measured" (run vs emptyBeam through the mask) | "formula" (the calibrant's T(lambda));
 #   errorRange=(min, max): only pixels with a relative error in % inside are used — the others are ALSO masked in
 #   the mask (lastMessages() says how many; newMask() makes it anew); errorMatrix=True: also "<sens>Error";
 #   maskedValue: the sensitivity of masked pixels; these three: None as set, stored with instrument and session
+#   center=(x, y): the center of the wide-angle corrections (1-based); None: the mask's beam stop
+center(name="sens")->tuple|None   # (x, y, "mask"|"manual"): the center it was made with; None: older label
 loadSensitivity(file, name="sens")->str   sensitivities()->list
 saveSensitivity(name="sens", file=None)->str   # the path; None: <input folder>/<sens>.sens
 autoSensitivity()->str           # auto mode: "sens" from the sensitivity run, the *.sens file(s) or flat
@@ -180,7 +201,8 @@ calculate()                       # reads C, D, lambda, beam size; calculates mu
 #   with each configuration's mask and sens — as the table's headers in the interface; a direct-beam calibration
 #   with the instrument's "Direct Beam:: Use Current Mask and Sensitivity Matrices" (KWS-3) takes the factor and the
 #   center through the active "mask" and "sens" (a beam-stop mask hides the beam); set the masks before calculate()
-configuration(i)->dict            # C, D, lambda, beamSize, factor, xCenter, yCenter, xCenterError, mask, sens, ...
+configuration(i)->dict            # C, D, lambda, beamSize, factor, factorError, xCenter, yCenter, xCenterError, mask,
+#   sens, ... (factorError: the factor's statistical error, from the calibrant's counts)
 newScriptTable(name, runs)->str   # one row per run, its configuration found by C, D, lambda, beam size, ...
 #   it MAKES the script table — never newTable() for it
 #   columns: Run-info (sample name), #-Run, #-Condition, ..., Thickness [cm], Transmission-Sample, Factor, ...;
