@@ -15,6 +15,7 @@ runs of a reduction (skipped without the qtisas.com example files).
   addCenterOffsets()).
 - SANS-1 (Ebeam, Ecell, B4C, H2O): its own preset finds the holdout's 4 m configuration; every built-in family has
   its preset, an instrument without "[AutoMode-...]" lines the defaults; a wrong option is a ValueError.
+- No run left by the filters: the error names them, not the empty beam; minCounts 0 is no count filter.
 """
 
 import os
@@ -57,6 +58,14 @@ assert chosen == [("53216", "48462", "53229", "53230", "48462", "53218", "53216"
 assert any("no run for the center" in m for m in p.lastMessages()), p.lastMessages()
 p.calculate()
 assert [round(p.configuration(i)["factor"]) for i in (1, 2, 3)] == [53390, 1765, 117]
+# no run left by the filters: the error names the filter (a header map without Sum gave every run 0 counts, and the
+# error named the empty beam); minCounts 0: no count filter
+Dan.Options.Config.setAutoOptions({"minCounts": 2000000000})
+raises(p.autoConfigurations, "no runs pass the auto filters:")
+raises(p.autoConfigurations, "with counts > 2000000000 (minCounts)")
+Dan.Options.Config.setAutoOptions({"minCounts": 0})
+assert len(Dan.Rawdata.runs(minDuration=30, minCounts=0)) == len(Dan.Rawdata.runs(minDuration=30, minCounts=-1))
+Dan.Options.Config.setAutoOptions({"minCounts": 100})
 s = p.autoConfig("auto-kws1")
 assert s == "auto-kws1" and table(s).numRows() == 9
 assert "QI-SM-53217-H-J" in p.process(s)

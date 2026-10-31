@@ -17,9 +17,9 @@ calibrant = Dan.findChild(QComboBox, "comboBoxACmethod")
 
 # instrument: (transmission method, calibrant type) by their combo-box indices
 expected = {
-    "KWS3-2020": (1, 1),  # "Direct Beam  [dead-time +]" was read as ROI in Header since 1a205940
+    "KWS3-2020": (1, 1),  # "Direct Beam [dead-time +]" was read as ROI in Header since 1a205940
     "SANS1": (1, 0),
-    "KWS1-2020": (4, 0),  # "<9.5A: ROI in Header; >=9.5A: Direct Beam  [dead-time +]"
+    "KWS1-2020": (4, 0),  # "<9.5A: ROI in Header; >=9.5A: Direct Beam [dead-time +]"
     "KWS1": (0, 0),  # Monitor-3
     "KWS3": (1, 1),  # bare "[Calibrant-Type] Direct Beam [DB]" was read as Flat Scatter since 1a205940
     "KWSX-init": (3, 4),  # ROI in Header; Direct Beam from Monitor3
@@ -35,3 +35,20 @@ with quiet():
     for name, method in (("SANS1", "radioButtonRadStdSymm"), ("KWS1-2020", "radioButtonCenterHF")):
         Dan.Options.selectInstrument(name)
         assert Dan.findChild(QRadioButton, method).isChecked(), (name, method)
+
+# The overall PN mode and its correction mode are separate controls in the GUI and Python API.
+with quiet():
+    Dan.Options.selectMode("(SM) Standard Mode")
+try:
+    Dan.Options.selectPolarizationReductionMode("x421")
+    raise AssertionError("accepted a PN correction outside PN mode")
+except ValueError as error:
+    assert "select polarized-neutron mode first" in str(error), str(error)
+with quiet():
+    Dan.Options.selectMode("(PN) Polarized Neutrons")
+    assert Dan.Options.polarizationReductionModes() == ["none", "x2", "x4", "x421", "x422", "x423", "x424"]
+    for mode in ("x421", "x422", "x423", "x424", "x4", "none"):
+        Dan.Options.selectPolarizationReductionMode(mode)
+        assert Dan.Options.polarizationReductionMode() == mode
+        assert Dan.findChild(QComboBox, "comboBoxPolReductionMode").currentIndex() == \
+               Dan.Options.polarizationReductionModes().index(mode)

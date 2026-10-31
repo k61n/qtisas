@@ -14,7 +14,8 @@ skipped without them), the files written into a temporary output folder:
 - neighbours(): the runs to add, found as DAN groups them, whole series or groups of n; info()["added"] marks a run
   made by adding; newAddingTemplate(consecutive=True) of the series; a sample in two configurations, and two names
   that become one column name, get columns of their own; addRunsFromTable(skipSingle=) skips or copies a single run;
-- the "Fast Info Extractor" list keeps each action once when "Ascii" is toggled (before: it renamed the first one).
+- the "Fast Info Extractor" list keeps each action once when "Ascii" is toggled (before: it renamed the first one);
+- a header table's Sum-vs-Mask, Q2-vs-Mask columns name their mask in the comment ("Sum-vs-Mask::mask").
 """
 
 import os
@@ -120,6 +121,16 @@ try:
     raises(lambda: r.info(["53217", "99999"]), "no run 99999")  # before: left out without a word
     assert all(x["sample"] for x in r.info(r.runs()))  # runs() lists only runs DAN opens
 
+    # the header table's counts through a mask: the column's comment names the mask ("Sum-vs-Mask::mask"), its rows
+    # read through that mask
+    Dan.Mask.newMask()
+    active = Dan.findChild(QComboBox, "comboBoxMaskFor").currentText()
+    sums = table(r.newHeaderTable("sums", ["Sum-vs-Mask", "Q2-vs-Mask"], "53217..53218"))
+    assert sums.comment(2) == "Sum-vs-Mask::" + active and sums.comment(3) == "Q2-vs-Mask::" + active, \
+        (sums.comment(2), sums.comment(3))
+    assert list(sums.colNames())[1:] == ["Sum-vs-Mask", "Q2-vs-Mask"] and sums.cell(2, 1) > 0, sums.colNames()
+    closeWindow(sums)
+
     # the Fast Info Extractor's actions: each once, the one chosen kept, after "Ascii" on and off
     actions = Dan.findChild(QComboBox, "comboBoxCheck")
     ascii_ = Dan.findChild(QCheckBox, "checkBoxBigMatrixASCII")
@@ -128,6 +139,8 @@ try:
         ascii_.setChecked(state)
         items = [actions.itemText(i) for i in range(actions.count())]
         assert len(items) == len(set(items)), items
+        if not state:
+            assert "Polarization" in items and "Polarization-Aliased" in items, items
     assert actions.currentText() == "Plot Matrix [Plot-Active]" and "View I(Q)" in items, (actions.currentText(), items)
     actions.setCurrentIndex(actions.findText("View Header"))
     ascii_.setChecked(True)
