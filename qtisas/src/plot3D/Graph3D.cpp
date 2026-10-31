@@ -36,6 +36,7 @@ Description: 3D graph widget
 
 #include "ApplicationWindow.h"
 #include "Graph3D.h"
+#include "Graph3DLogScale.h"
 #include "LinearColorMap.h"
 #include "MyParser.h"
 
@@ -93,9 +94,7 @@ double UserFunction::operator()(double x, double y)
         d_error = QString::fromStdString(e.GetMsg());
         QMessageBox::critical(nullptr, "QtiSAS - Input function error", d_error);
     }
-    if (d_zLog && result > 0)
-        return log10(result);
-	return result;
+    return Graph3DLogScale::logZ(result, d_zLog, zMin());
 }
 
 void UserFunction::setMesh (unsigned int columns, unsigned int rows)
@@ -158,8 +157,7 @@ Triple UserParametricSurface::operator()(double u, double v)
         d_error = QString::fromStdString(e.GetMsg());
         QMessageBox::critical(nullptr, "QtiSAS - Input function error", d_error);
     }
-    if (d_zLog && z > 0)
-        z = log10(z);
+    z = Graph3DLogScale::logZ(z, d_zLog, range_p.minVertex.z);
 	return Triple(x, y, z);
 }
 
@@ -922,12 +920,7 @@ void Graph3D::updateMatrixData(Matrix* m)
                 double ay = y0 + j * dyM;
                 double vy = (yLog && ay > 0) ? log10(ay) : ay;
                 double val = m->cell(j, i);
-                if (zLog && val > 0)
-                    val = log10(val);
-                if (val < zMin)
-                    val = zMin;
-                else if (val > zMax)
-                    val = zMax;
+                val = Graph3DLogScale::plotZ(val, zLog, zMin, zMax);
                 triples[i][j] = Triple(vx, vy, val);
             }
         }
@@ -944,12 +937,7 @@ void Graph3D::updateMatrixData(Matrix* m)
             for (int j = 0; j < rows; j++)
             {
                 double val = m->cell(j, i);
-                if (zLog && val > 0)
-                    val = log10(val);
-                if (val < zMin)
-                    val = zMin;
-                else if (val > zMax)
-                    val = zMax;
+                val = Graph3DLogScale::plotZ(val, zLog, zMin, zMax);
                 data[i][j] = val;
             }
         }
@@ -1848,12 +1836,7 @@ void Graph3D::updateScalesFromMatrix(double xl, double xr, double yl, double yr,
                 double ay = y0 + (jOff + j) * dyM;
                 double vy = (yLog && ay > 0) ? log10(ay) : ay;
                 double val = d_matrix->cell(jOff + j, iOff + i);
-                if (zLog && val > 0)
-                    val = log10(val);
-                if (val < zminL)
-                    val = zminL;
-                else if (val > zmaxL)
-                    val = zmaxL;
+                val = Graph3DLogScale::plotZ(val, zLog, zminL, zmaxL);
                 triples[i][j] = Triple(vx, vy, val);
 			}
 		}
@@ -1874,12 +1857,7 @@ void Graph3D::updateScalesFromMatrix(double xl, double xr, double yl, double yr,
                 for (int j = 0; j < rows; j++)
                 {
                     double val = d_matrix->cell(j, i);
-                    if (zLog && val > 0)
-                        val = log10(val);
-                    if (val < zminL)
-                        val = zminL;
-                    else if (val > zmaxL)
-                        val = zmaxL;
+                    val = Graph3DLogScale::plotZ(val, zLog, zminL, zmaxL);
                     data[i][j] = val;
                 }
             }
@@ -1920,12 +1898,7 @@ void Graph3D::updateScalesFromMatrix(double xl, double xr, double yl, double yr,
                     if (dkf > 0.5)
                         k++;
                     double val = d_matrix->cell(k, l);
-                    if (zLog && val > 0)
-                        val = log10(val);
-                    if (val < zminL)
-                        val = zminL;
-                    else if (val > zmaxL)
-                        val = zmaxL;
+                    val = Graph3DLogScale::plotZ(val, zLog, zminL, zmaxL);
                     data[i][j] = val;
 				}
 			}

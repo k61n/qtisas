@@ -8,6 +8,7 @@ set(SOURCES
 set(HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/ColorMapPreviewDialog.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Graph3D.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/Graph3DLogScale.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Plot3DDialog.h
     ${CMAKE_CURRENT_SOURCE_DIR}/SurfaceDialog.h)
 
