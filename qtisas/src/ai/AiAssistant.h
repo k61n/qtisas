@@ -220,6 +220,9 @@ class AiAssistant : public QObject
     QString selfReviewChecklist() const;
     static QString extractAvailableBlock(const QString &err);
     static QString normalizeErrorForDedup(const QString &err);
+    // A string literal self-review brought in (in `reviewed`, not in its `draft`) that the run's error names, outside
+    // the quoted source line: the review caused the error. Empty when none.
+    static QString reviewIntroducedErrorLiteral(const QString &reviewed, const QString &draft, const QString &error);
 
     // Extracts the missing name from a "Function 'X' not found"/"function 'x' not found." error
     // (Compiler/Fittable's own wording, case varies by call site) — empty if the error doesn't
@@ -978,6 +981,11 @@ class AiAssistant : public QObject
     QString m_singlePartDescription;
     // The compiled script sent to self-review: kept if the review answers with no runnable script at all.
     QString m_selfReviewDraftCode;
+    // A script self-review changed, as it goes to runActionScript(), and the draft it was reviewed from: when that run
+    // fails on a name only the review brought in, the draft runs instead (see reviewIntroducedErrorLiteral()). Empty
+    // for a script self-review did not change.
+    QString m_reviewedRunCode;
+    QString m_reviewedRunDraft;
     bool m_unprintedOutputRetried = false;
     // Everything the scripts of the current LIST item printed, for requestMissingResultLine().
     QString m_itemOutput;

@@ -242,6 +242,35 @@ QString AiAssistant::extractAvailableBlock(const QString &err)
     return m.hasMatch() ? m.captured(0).trimmed() : QString();
 }
 
+// Confirmed live (DAN, "change ... "Sample-tickness" ... from 0.2 to 0.1"): the draft used the header key
+// "Sample-Thickness", self-review (no docs, no EXPLORE output) rewrote it to the request's misspelling three times,
+// each run failed with "no header key Sample-tickness; headerKeys(): ..." and the request was given up. The error names
+// the literal; the draft did not have it.
+QString AiAssistant::reviewIntroducedErrorLiteral(const QString &reviewed, const QString &draft, const QString &error)
+{
+    static const QRegularExpression literalRe(R"re("([^"\\\n]{3,})"|'([^'\\\n]{3,})')re");
+    auto literals = [](const QString &script) {
+        QSet<QString> found;
+        for (auto it = literalRe.globalMatch(script); it.hasNext();)
+        {
+            const QRegularExpressionMatch m = it.next();
+            found << (m.capturedLength(1) > 0 ? m.captured(1) : m.captured(2));
+        }
+        return found;
+    };
+    // the message only: the "at <ai>:N — <source line>" echo quotes every literal of the failing line
+    static const QRegularExpression lineRe(R"(\bat <[^>]+>:\d+[^\n]*)");
+    const QString message = QString(error).remove(lineRe);
+    const QSet<QString> before = literals(draft);
+    static const QRegularExpression letterRe("[A-Za-z]");
+    QStringList introduced;
+    for (const QString &literal : literals(reviewed))
+        if (!before.contains(literal) && literal.contains(letterRe) && message.contains(literal))
+            introduced << literal; // a name: a value the review changed ("0.1") is no name it misspelled
+    std::sort(introduced.begin(), introduced.end());
+    return introduced.isEmpty() ? QString() : introduced.first();
+}
+
 // Strips "at <ai>:N" / "at <ai-explore>:N" location suffixes before the exact-repeat comparison
 // below — the line number shifts whenever surrounding script structure changes (e.g. self-review
 // adding a guard), so two runs of the same underlying failure could otherwise produce
@@ -5571,7 +5600,13 @@ bool AiAssistant::maybeDispatchSelfReview(QString &code, bool &compilable, QStri
     // Codex's right "No. That script creates connected cylindrical/conical surfaces, not three spheres." became
     // "Unable to determine whether spheres exist from the provided script."
     if (!compilable || isSelfReviewResult || !m_selfReviewEnabled || isPureTextAnswer(code))
+    {
+        const bool changedByReview =
+            isSelfReviewResult && !preReviewDraft.trimmed().isEmpty() && code.trimmed() != preReviewDraft.trimmed();
+        m_reviewedRunCode = changedByReview ? code : QString();
+        m_reviewedRunDraft = changedByReview ? preReviewDraft : QString();
         return false;
+    }
 
     // Mandatory pre-execution self-review: send the candidate script back to the
     // AI once, against a short checklist (User Rules + curated silent-failure
@@ -6093,6 +6128,24 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
         }
         failedRunUnchanged = !m_failedRunScripts.isEmpty() && m_failedRunScripts.last().trimmed() == code.trimmed();
         m_failedRunScripts << code;
+        // The error names a literal only self-review brought in: the review caused it, the draft runs (once — the
+        // draft's own run clears the pair). No model call: asked again, the review made the same change each time.
+        const QString reviewedDraft = m_reviewedRunDraft;
+        const bool reviewedRun = !m_reviewedRunCode.isEmpty() && rawCode.trimmed() == m_reviewedRunCode.trimmed();
+        m_reviewedRunCode.clear();
+        m_reviewedRunDraft.clear();
+        if (reviewedRun)
+            if (const QString literal = reviewIntroducedErrorLiteral(code, reviewedDraft, result.error);
+                !literal.isEmpty())
+            {
+                m_host->print("▸▸▸ AI: the error names \"" + literal +
+                              "\", which self-review brought in (its draft did not have it) — running the draft "
+                              "instead.");
+                if (!m_history.isEmpty() && m_history.last().second.trimmed() == code.trimmed())
+                    m_history.last().second = reviewedDraft;
+                runActionScript(reviewedDraft, true);
+                return;
+            }
         static const QRegularExpression failedLineRe(R"(at <ai>:\d+ — ([^\n]+))");
         QString failedStatement;
         for (auto it = failedLineRe.globalMatch(result.error + "\n" + result.output); it.hasNext();)
