@@ -1076,11 +1076,11 @@ double dan18::integralVSmaskUni(gsl_matrix *sample, gsl_matrix *mask, int MaDe)
     return integral;
 }
 //+++ integralVSmaskSimmetrical
-double dan18::integralVSmaskSimmetrical(const QString &Number)
+double dan18::integralVSmaskSimmetrical(const QString &Number, const QString &maskGiven)
 {
     int MD = lineEditMD->text().toInt();
     updateMaskList();
-    QString maskName = comboBoxMaskFor->currentText();
+    const QString maskName = maskGiven.isEmpty() ? comboBoxMaskFor->currentText() : maskGiven;
     
     //+++ mask gsl matrix
     gsl_matrix *mask = gsl_matrix_alloc(MD, MD);
@@ -1098,7 +1098,7 @@ double dan18::integralVSmaskSimmetrical(const QString &Number)
     return res;
 }
 //+++
-double dan18::Q2_VS_maskSimmetrical(const QString &Number, bool showLogYN)
+double dan18::Q2_VS_maskSimmetrical(const QString &Number, bool showLogYN, const QString &maskGiven)
 {
     int MD = lineEditMD->text().toInt();
 
@@ -1107,7 +1107,7 @@ double dan18::Q2_VS_maskSimmetrical(const QString &Number, bool showLogYN)
     int MDy = MD;
 
     updateMaskList();
-    QString maskName = comboBoxMaskFor->currentText();
+    const QString maskName = maskGiven.isEmpty() ? comboBoxMaskFor->currentText() : maskGiven;
 
     //+++ mask gsl matrix
     gsl_matrix *mask = gsl_matrix_alloc(MDy, MDx);

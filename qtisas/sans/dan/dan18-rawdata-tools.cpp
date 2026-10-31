@@ -274,16 +274,20 @@ void dan18::newInfoTable(QString TableName)
     tableDat->setColumnType(itRTframeduration, Table::Text);
 
     tableDat->setColName(itSumvsmask, "Sum-vs-Mask");
+    tableDat->setColComment(itSumvsmask, "Sum-vs-Mask::" + comboBoxMaskFor->currentText());
     tableDat->setColPlotDesignation(itSumvsmask, Table::Y);
     tableDat->setColumnType(itSumvsmask, Table::Numeric);
     tableDat->setColNumericFormat(Table::Default, 13, itSumvsmask, false);
 
     tableDat->setColName(itSumvsmaskdeadtimecorrected, "Sum-vs-Mask-Dead-Time-Corrected");
+    tableDat->setColComment(itSumvsmaskdeadtimecorrected,
+                            "Sum-vs-Mask-Dead-Time-Corrected::" + comboBoxMaskFor->currentText());
     tableDat->setColPlotDesignation(itSumvsmaskdeadtimecorrected, Table::Y);
     tableDat->setColumnType(itSumvsmaskdeadtimecorrected, Table::Numeric);
     tableDat->setColNumericFormat(Table::Default, 13, itSumvsmaskdeadtimecorrected, false);
 
     tableDat->setColName(itQ2vsmask, "Q2-vs-Mask");
+    tableDat->setColComment(itQ2vsmask, "Q2-vs-Mask::" + comboBoxMaskFor->currentText());
     tableDat->setColPlotDesignation(itQ2vsmask, Table::Y);
     tableDat->setColumnType(itQ2vsmask, Table::Numeric);
     tableDat->setColNumericFormat(Table::Default, 13, itQ2vsmask, false);
@@ -694,14 +698,18 @@ void dan18::addToInfoTable(const QString &TableName, QStringList selectedDat)
         tableDat->setColumnType(itRTframeduration, Table::Text);
 
         tableDat->setColName(itSumvsmask, "Sum-vs-Mask");
+        tableDat->setColComment(itSumvsmask, "Sum-vs-Mask::" + comboBoxMaskFor->currentText());
         tableDat->setColPlotDesignation(itSumvsmask, Table::Y);
         tableDat->setColumnType(itSumvsmask, Table::Numeric);
 
         tableDat->setColName(itSumvsmaskdeadtimecorrected, "Sum-vs-Mask-Dead-Time-Corrected");
+        tableDat->setColComment(itSumvsmaskdeadtimecorrected,
+                                "Sum-vs-Mask-Dead-Time-Corrected::" + comboBoxMaskFor->currentText());
         tableDat->setColPlotDesignation(itSumvsmaskdeadtimecorrected, Table::Y);
         tableDat->setColumnType(itSumvsmaskdeadtimecorrected, Table::Numeric);
 
         tableDat->setColName(itQ2vsmask, "Q2-vs-Mask");
+        tableDat->setColComment(itQ2vsmask, "Q2-vs-Mask::" + comboBoxMaskFor->currentText());
         tableDat->setColPlotDesignation(itQ2vsmask, Table::Y);
         tableDat->setColumnType(itQ2vsmask, Table::Numeric);
 

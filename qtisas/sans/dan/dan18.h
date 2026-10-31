@@ -439,8 +439,9 @@ public:
     void gslMatrixWaTrDet(int md, double Tr, gsl_matrix *sensTrDet, double Xcenter, double Ycenter, double detdist,
                           double detelem, double pixelAsymetry);
     double integralVSmaskUni(gsl_matrix *sample, gsl_matrix *mask, int MaDe);
-    double integralVSmaskSimmetrical(const QString &Number);
-    double Q2_VS_maskSimmetrical(const QString &Number, bool showLogYN = false);
+    // the run's counts (or Q^2-weighted counts) through a mask; empty: the active mask
+    double integralVSmaskSimmetrical(const QString &Number, const QString &maskName = QString());
+    double Q2_VS_maskSimmetrical(const QString &Number, bool showLogYN = false, const QString &maskName = QString());
     double integralVSmaskUniDeadTimeCorrected(const QString &Number);
     double integralVSmaskUniDeadTimeCorrected(const QString &Number, const QString &maskName, double VShift,
                                               double HShift);

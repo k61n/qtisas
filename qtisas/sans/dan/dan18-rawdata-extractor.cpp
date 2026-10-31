@@ -43,12 +43,16 @@ QString dan18::getHeaderInfoString(QString number, QString name)
         return QString::number(monitors->readSum(number) / monitors->readDuration(number), 'f', 5);
     if (name == "Thickness")
         return QString::number(sample->readThickness(number), 'f', 5);
-    if (name == "Sum-vs-Mask")
-        return QString::number(integralVSmaskSimmetrical(number));
-    if (name == "Sum-vs-Mask-Dead-Time-Corrected")
-        return QString::number(integralVSmaskUniDeadTimeCorrected(number));
-    if (name == "Q2-vs-Mask")
-        return QString::number(Q2_VS_maskSimmetrical(number));
+    // "Sum-vs-Mask::mask-bs": through that mask (the column's comment keeps it); without "::", the active one
+    const QString item = name.section("::", 0, 0);
+    const QString maskName = name.section("::", 1);
+    if (item == "Sum-vs-Mask")
+        return QString::number(integralVSmaskSimmetrical(number, maskName));
+    if (item == "Sum-vs-Mask-Dead-Time-Corrected")
+        return QString::number(maskName.isEmpty() ? integralVSmaskUniDeadTimeCorrected(number)
+                                                  : integralVSmaskUniDeadTimeCorrected(number, maskName, 0, 0));
+    if (item == "Q2-vs-Mask")
+        return QString::number(Q2_VS_maskSimmetrical(number, false, maskName));
     if (name == "Runs")
         return number;
     if (name == "File-Names")
@@ -257,6 +261,13 @@ void dan18::addColToInfoExtractor()
     if (initNumberCols<1) return;
     
     
+    // a column through a mask: its comment names the mask ("Sum-vs-Mask::mask-bs"), later rows read through it too
+    if (what2add.endsWith("-vs-Mask") || what2add == "Sum-vs-Mask-Dead-Time-Corrected")
+    {
+        updateMaskList();
+        what2add += "::" + comboBoxMaskFor->currentText();
+    }
+
     tableDat->addCol();
     tableDat->setColComment(initNumberCols, what2add);
     tableDat->setColName(initNumberCols,generateUniqueStringInList (tableDat->colNames(), comboBoxInfoExtractorCol->currentText()));
