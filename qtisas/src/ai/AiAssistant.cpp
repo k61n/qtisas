@@ -1014,6 +1014,18 @@ QList<QPair<QString, QString>> extractExistingEntityNames(const QString &request
             // patterns end with \s*"(...)"), which would otherwise defeat trailingNounRe's \s*$
             // anchor — strip it before checking what word precedes the quote.
             const QString beforeQuote = between.chopped(1);
+            // A column is no window or function: the check below knows only those (entityKinds()). Confirmed live:
+            // `in active table, existing "State"-column ...` stopped as "no match was found for it" while the active
+            // table had that column.
+            static const QRegularExpression columnBeforeRe(R"(\b(?:column|col)s?\s*$)",
+                                                           QRegularExpression::CaseInsensitiveOption);
+            static const QRegularExpression columnAfterRe(R"(^\s*-?\s*(?:column|col)s?\b)",
+                                                          QRegularExpression::CaseInsensitiveOption);
+            // ... but `table "T1" column "x"`: the window noun before the name wins
+            if (columnBeforeRe.match(beforeQuote).hasMatch() ||
+                (!trailingNounRe.match(beforeQuote).hasMatch() &&
+                 columnAfterRe.match(requestText.mid(m.capturedEnd(0))).hasMatch()))
+                continue;
             // A function noun pins the kind just as well as a window noun, and the caller widens an
             // unknown kind to ALL THREE checks — so without this, `the existing
             // "sasviewmodels/sphere" form-factor model` paid a window check that could only ever
