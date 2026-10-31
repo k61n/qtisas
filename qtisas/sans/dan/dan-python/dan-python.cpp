@@ -1925,7 +1925,9 @@ QList<DanAuto::Run> DanAuto::filter(const QList<Run> &all, int minDuration, int 
 {
     QList<Run> kept;
     for (const Run &r : all)
-        if (r.duration > minDuration && r.counts > minCounts && (files.trimmed().isEmpty() || matches(r.file, files)) &&
+        // minCounts 0: no count filter (a header map without Sum reads 0 counts for every run)
+        if (r.duration > minDuration && (minCounts <= 0 || r.counts > minCounts) &&
+            (files.trimmed().isEmpty() || matches(r.file, files)) &&
             (skipFiles.trimmed().isEmpty() || !matches(r.file, skipFiles)) &&
             (samples.trimmed().isEmpty() || matches(r.sample, samples)) &&
             (skipSamples.trimmed().isEmpty() || !matches(r.sample, skipSamples)))
@@ -2632,6 +2634,35 @@ QVariantList DanProcessing::autoConfigurations()
     {
         d->danMessage(reason);
         report("  left out: " + reason);
+    }
+    // no run left by the filters: say which one (a header map without Sum gave every run 0 counts, and the error
+    // named the empty beam)
+    if (runs.isEmpty())
+    {
+        const QList<DanAuto::Run> all = a.runs(false);
+        const int minDuration = d->spinBoxAutoMinDuration->value();
+        const int minCounts = d->spinBoxAutoMinCounts->value();
+        int longer = 0, counted = 0, withCounts = 0;
+        for (const DanAuto::Run &r : all)
+        {
+            longer += r.duration > minDuration ? 1 : 0;
+            counted += minCounts <= 0 || r.counts > minCounts ? 1 : 0;
+            withCounts += r.counts > 0 ? 1 : 0;
+        }
+        QString text = QString("no runs pass the auto filters: %1 runs, %2 with duration > %3 s (auto option "
+                               "minDuration), %4 with counts > %5 (minCounts)")
+                           .arg(all.count())
+                           .arg(longer)
+                           .arg(minDuration)
+                           .arg(counted)
+                           .arg(minCounts);
+        if (!all.isEmpty() && withCounts == 0)
+            text += "; no run has counts: is the header's Sum read for this instrument? (or minCounts 0: no count "
+                    "filter)";
+        else if (longer > 0 && counted > 0 && longer + counted > all.count())
+            text += "; the files / samples wildcards (files, skipFiles, samples, skipSamples) leave none";
+        end(false, text);
+        return {};
     }
     if (choices.isEmpty())
     {
