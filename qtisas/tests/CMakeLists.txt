@@ -68,3 +68,12 @@ add_test(NAME smart_completer_tests COMMAND smart_completer_tests)
 if (UNIX)
     set_tests_properties(smart_completer_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 endif ()
+
+add_executable(dan_polarization_corrections_tests sans/dan/dan_polarization_corrections_tests.cpp
+    sans/dan/dan_polarization_corrections_tests.h
+    ${CMAKE_SOURCE_DIR}/qtisas/sans/dan/dan-polarization/dan-polarization-corrections.cpp)
+target_include_directories(dan_polarization_corrections_tests
+    PRIVATE ${CMAKE_SOURCE_DIR}/qtisas/sans/dan/dan-polarization)
+target_link_libraries(dan_polarization_corrections_tests PRIVATE Qt${V}::Core Qt${V}::Test GSL::gsl GSL::gslcblas)
+set_target_properties(dan_polarization_corrections_tests PROPERTIES AUTOMOC ON)
+add_test(NAME dan_polarization_corrections_tests COMMAND dan_polarization_corrections_tests)

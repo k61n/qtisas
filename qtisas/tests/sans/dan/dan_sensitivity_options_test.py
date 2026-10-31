@@ -3,8 +3,9 @@ KWS-1 example's Plexiglas 53224 with its empty beam 53225 and B4C 48462; skipped
 - transmission="measured" is the Transmission button (= Dan.Sensitivity.transmission()), "formula" the button with
   "Calculate Transmission by Formula T(lambda)": the instrument calibrant's To - TA exp(-lambdaT / lambda);
 - errorRange drops the pixels of a larger relative error from the sensitivity AND masks them in the mask (as the
-  interface does, with a message), the mask keeping its own label; errorMatrix makes "<sens>Error"; maskedValue is
-  the sensitivity of the masked pixels;
+  interface does, with a message), the mask keeping its own label; the errors are those of the run read as DD x DD
+  with its region of interest (before, the error matrix read the file as MD x MD: 0.01..100 % masked half the
+  detector); errorMatrix makes "<sens>Error"; maskedValue is the sensitivity of the masked pixels;
 - saveSensitivity() writes the file loadSensitivity() reads back;
 - the mask asked for is the one used, also when the call comes from the Mask tab (before: "mask").
 """
@@ -64,10 +65,13 @@ assert field("lineEditTransAnyD") == "0.5000"
 
 # errorRange: noisy pixels out of the sensitivity and into the mask; the mask keeps its label
 maskedBefore = cells("mask").count(0)
-sens.newSensitivity(RUN, "s-range", EB, DC, transmission="measured", errorRange=(0, 3))
+sens.newSensitivity(RUN, "s-wide", EB, DC, transmission="measured", errorRange=(0.01, 100))
+assert cells("mask").count(0) == maskedBefore, (cells("mask").count(0), maskedBefore)  # every pixel inside
+# the Plexiglas pixels' errors: 1.0..1.3 %
+sens.newSensitivity(RUN, "s-range", EB, DC, transmission="measured", errorRange=(0, 1.2))
 added = cells("mask").count(0) - maskedBefore
 assert added > 0, added
-assert any("mask mask: %d pixels with errors outside 0..3 %% masked" % added in m for m in sens.lastMessages()), \
+assert any("mask mask: %d pixels with errors outside 0..1.2 %% masked" % added in m for m in sens.lastMessages()), \
     sens.lastMessages()
 assert matrix("mask").windowLabel() == labelBefore, (matrix("mask").windowLabel(), labelBefore)
 assert cells("s-range").count(0) == cells("mask").count(0)  # masked pixels: sensitivity 0
