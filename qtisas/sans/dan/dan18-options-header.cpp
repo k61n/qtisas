@@ -34,7 +34,7 @@ double dan18::readTransmission( QString NumberSample, QString NumberEC, QString 
         ec = monitors->readMonitor3Normalized(NumberEC);
         if (fabs(monitors->readMonitor3(NumberEC)) > 0.0)
             sigma2 += 1 / fabs(monitors->readMonitor3(NumberEC));
-    } // Direct Beam  [dead-time+]
+    } // Direct Beam [dead-time+]
     else if (comboBoxTransmMethod->currentIndex() == 1)
     {
         sample = integralVSmaskUniDeadTimeCorrected(NumberSample, mask, VShift, HShift);
@@ -89,7 +89,7 @@ double dan18::readTransmission( QString NumberSample, QString NumberEC, QString 
             ec *= monitors->deadTimeFactorDetectorDB(NumberEC);
         }
         else
-        { // Direct Beam  [dead-time+]
+        { // Direct Beam [dead-time+]
             sample = integralVSmaskUniDeadTimeCorrected(NumberSample, mask, VShift, HShift);
             if (fabs(sample) > 0.0)
                 sigma2 += 1 / fabs(sample);

@@ -18483,7 +18483,7 @@ QTableCornerButton::section{
                     </item>
                     <item>
                      <property name="text">
-                      <string>Direct Beam  [dead-time +]</string>
+                      <string>Direct Beam [dead-time +]</string>
                      </property>
                     </item>
                     <item>
@@ -18498,7 +18498,7 @@ QTableCornerButton::section{
                     </item>
                     <item>
                      <property name="text">
-                      <string>λ&lt;9.5A: ROI in Header; λ&gt;=9.5A: Direct Beam  [dead-time +]</string>
+                      <string>λ&lt;9.5A: ROI in Header; λ&gt;=9.5A: Direct Beam [dead-time +]</string>
                      </property>
                     </item>
                    </widget>
