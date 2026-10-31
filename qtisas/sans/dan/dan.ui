@@ -39931,10 +39931,10 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                 </size>
                </property>
                <property name="toolTip">
-                <string>f.e.: 3-3;10-15;25-27 </string>
+                <string>Rows masked, separated by ;. Whole rows a..b: a-b, e.g. 3-3;10-15. Only a rectangle: a-b-c-d = rows a..b in columns c..d, e.g. 10-15-1-64;25-27-80-128</string>
                </property>
                <property name="whatsThis">
-                <string>f.e.: 3-3;10-15;25-27 </string>
+                <string>Rows masked, separated by ;. Whole rows a..b: a-b, e.g. 3-3;10-15. Only a rectangle: a-b-c-d = rows a..b in columns c..d, e.g. 10-15-1-64;25-27-80-128</string>
                </property>
                <property name="styleSheet">
                 <string notr="true">background-color: rgb(255, 255, 195);</string>
@@ -39962,10 +39962,10 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                 </size>
                </property>
                <property name="toolTip">
-                <string>f.e.: 3-3;10-15;25-27 </string>
+                <string>Columns masked, separated by ;. Whole columns a..b: a-b, e.g. 3-3;10-15. Only a rectangle: a-b-c-d = columns a..b in rows c..d, e.g. 10-15-1-64;25-27-80-128</string>
                </property>
                <property name="whatsThis">
-                <string>f.e.: 3-3;10-15;25-27 </string>
+                <string>Columns masked, separated by ;. Whole columns a..b: a-b, e.g. 3-3;10-15. Only a rectangle: a-b-c-d = columns a..b in rows c..d, e.g. 10-15-1-64;25-27-80-128</string>
                </property>
                <property name="styleSheet">
                 <string notr="true">background-color: rgb(255, 255, 195);</string>
