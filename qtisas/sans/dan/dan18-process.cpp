@@ -716,6 +716,15 @@ void dan18::saveScriptSettings(QString tableName)
     else
 	w->setText(currentRow,1,"no <");       
     currentRow++;	
+
+    //--- Sensitivity::Center: "yes|no x y", yes: the given center
+    w->setNumRows(currentRow + 1);
+    w->setText(currentRow, 0, "Sensitivity::Center");
+    w->setText(currentRow, 1,
+               QString(buttonGroupSensCenter->isChecked() ? "yes " : "no ") +
+                   QString::number(doubleSpinBoxXcenterSens->value(), 'f', 3) + " " +
+                   QString::number(doubleSpinBoxYcenterSens->value(), 'f', 3) + " <");
+    currentRow++;
     
     //+++ Processing::Conditions::Number
     w->setNumRows(currentRow+1);        
@@ -1789,6 +1798,19 @@ bool dan18::readSettingNew(QString tableName)
     index = static_cast<int>(parameters.indexOf("Sensitivity::Tr::Option"));
     if (index >= 0)
         checkBoxSensTr->setChecked(w->text(index, 1).contains("yes"));
+
+    //+++ Sensitivity::Center
+    index = static_cast<int>(parameters.indexOf("Sensitivity::Center"));
+    if (index >= 0)
+    {
+        QStringList lst = w->text(index, 1).remove(" <").simplified().split(" ", Qt::SkipEmptyParts);
+        buttonGroupSensCenter->setChecked(!lst.isEmpty() && lst[0] == "yes");
+        if (lst.count() > 2)
+        {
+            doubleSpinBoxXcenterSens->setValue(lst[1].toDouble());
+            doubleSpinBoxYcenterSens->setValue(lst[2].toDouble());
+        }
+    }
     
     //+++ Processing::Conditions::Number
     int imax = 0;

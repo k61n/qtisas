@@ -95,6 +95,15 @@ void dan18::danMessage(const QString &text, bool critical)
     toResLog("DAN :: " + line + "\n");
 }
 
+void dan18::danWarning(const QString &text)
+{
+    if (m_scriptRun && m_scriptMessages.contains(text))
+        return; // the same row reduced again (a PN mode's channels, an output per kind)
+    if (m_scriptRun)
+        m_scriptMessages << text;
+    toResLog("DAN :: " + text + "\n");
+}
+
 void dan18::beginScriptRun()
 {
     // nested runs (an auto-mode call made of other calls) collect into the outermost one

@@ -302,11 +302,14 @@ class DanSensitivity : public DanPart
     using DanPart::DanPart;
     // transmissionMode: empty (the number transmission), "measured" (the run against emptyBeam through the mask) or
     // "formula" (T(lambda)), as the Transmission button; errorRange: (min, max) relative error in % of the pixels used,
-    // empty: as set; errorMatrix: -1 as set, 0/1; maskedValue: NaN as set
+    // empty: as set; errorMatrix: -1 as set, 0/1; maskedValue: NaN as set; center (x, y): the wide-angle corrections'
+    // center (1-based), empty: the mask's beam stop
     QString newSensitivity(const QString &name, const QString &run, const QString &emptyBeam,
                            const QString &darkCurrent, double transmission, const QString &mask,
                            const QString &transmissionMode = QString(), const QList<double> &errorRange = {},
-                           int errorMatrix = -1, double maskedValue = qQNaN());
+                           int errorMatrix = -1, double maskedValue = qQNaN(), const QList<double> &center = {});
+    // the center the sensitivity was made with (1-based) and its source "mask" or "manual"; false: none in its label
+    bool center(const QString &name, double &x, double &y, QString &source);
     // the sensitivity as a file; file empty: <input folder>/<sens>.sens, as the interface saves it
     QString saveSensitivity(const QString &name, const QString &file);
     QString loadSensitivity(const QString &name, const QString &file);

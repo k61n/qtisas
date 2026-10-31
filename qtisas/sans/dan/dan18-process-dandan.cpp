@@ -935,6 +935,7 @@ void dan18::danDanMultiButton(QString button)
         
         double Xc, Yc;
         readCenterfromMaskName( maskName, Xc, Yc, MD );
+        checkRowAgainstSensitivity(iRow, sensName, Nsample, trans, Xc, Yc);
         
         
         if (trans<1.0 && trans>0.0 && checkBoxParallaxTrisChecked)

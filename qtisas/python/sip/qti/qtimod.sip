@@ -4136,15 +4136,16 @@ class DanSensitivity : DanPart /NoDefaultCtors/
 %End
 public:
     // transmission: a number, "measured" or "formula"; errorRange (min, max) in %, errorMatrix, maskedValue: None
-    // as set
+    // as set; center (x, y): the wide-angle corrections' center, None: the mask's beam stop
     QString newSensitivity(const QString &run, const QString &name = "sens", const QString &emptyBeam = QString(),
                            const QString &darkCurrent = QString(), SIP_PYOBJECT transmission = Py_None,
                            const QString &mask = "mask", SIP_PYOBJECT errorRange = Py_None,
-                           SIP_PYOBJECT errorMatrix = Py_None, SIP_PYOBJECT maskedValue = Py_None);
+                           SIP_PYOBJECT errorMatrix = Py_None, SIP_PYOBJECT maskedValue = Py_None,
+                           SIP_PYOBJECT center = Py_None);
 %MethodCode
-    double tr = 1.0, a = 0, b = 0, masked = qQNaN();
+    double tr = 1.0, a = 0, b = 0, masked = qQNaN(), x = 0, y = 0;
     QString mode;
-    QList<double> range;
+    QList<double> range, center;
     int errors = a7 == Py_None ? -1 : (PyObject_IsTrue(a7) ? 1 : 0);
     bool ok = true;
     if (a4 == Py_None)
@@ -4168,10 +4169,15 @@ public:
         else
             PyErr_SetString(PyExc_TypeError, "maskedValue: a number or None");
     }
+    if (ok && a9 != Py_None) {
+        ok = sipqti_pair(a9, &x, &y, "center", false);
+        center << x << y;
+    }
     if (!ok)
         sipError = sipErrorFail;
     else {
-        sipRes = new QString(sipCpp->newSensitivity(*a1, *a0, *a2, *a3, tr, *a5, mode, range, errors, masked));
+        sipRes = new QString(
+            sipCpp->newSensitivity(*a1, *a0, *a2, *a3, tr, *a5, mode, range, errors, masked, center));
         if (sipRes->isEmpty()) {
             PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
             sipError = sipErrorFail;
@@ -4196,6 +4202,22 @@ public:
     }
 %End
     QStringList sensitivities() const;
+    // the center the sensitivity was made with: (x, y, "mask"|"manual"); None: its label has none
+    SIP_PYOBJECT center(const QString &name = "sens");
+%MethodCode
+    double x = 0.0, y = 0.0;
+    QString source;
+    if (sipCpp->center(*a0, x, y, source))
+        sipRes = Py_BuildValue("(dds)", x, y, source.toUtf8().constData());
+    else if (!sipCpp->lastError().isEmpty()) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+    else {
+        Py_INCREF(Py_None);
+        sipRes = Py_None;
+    }
+%End
     // auto mode: "sens" from the sensitivity run, the *.sens file(s) or flat
     QString autoSensitivity();
 %MethodCode

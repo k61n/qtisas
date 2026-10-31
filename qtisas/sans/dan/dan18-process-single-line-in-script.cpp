@@ -519,6 +519,8 @@ bool dan18::singleDanSimplified(ScriptTableManager *scriptTableManager, int iRow
 
     double Xc, Yc;
     readCenterfromMaskName(maskName, Xc, Yc, MD);
+    if (!ecInSampleRow)
+        checkRowAgainstSensitivity(iRow, sensName, Nsample, trans, Xc, Yc);
 
     gsl_matrix_mul_elements(Sample, mask);
 

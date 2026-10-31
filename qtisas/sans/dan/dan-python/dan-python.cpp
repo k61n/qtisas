@@ -1012,7 +1012,7 @@ int DanSensitivity::maskedPixels(const QString &mask) const
 QString DanSensitivity::newSensitivity(const QString &name, const QString &run, const QString &emptyBeam,
                                        const QString &darkCurrent, double transmission, const QString &mask,
                                        const QString &transmissionMode, const QList<double> &errorRange,
-                                       int errorMatrix, double maskedValue)
+                                       int errorMatrix, double maskedValue, const QList<double> &center)
 {
     if (name.isEmpty())
         return fail("no sensitivity name");
@@ -1034,6 +1034,8 @@ QString DanSensitivity::newSensitivity(const QString &name, const QString &run, 
         return fail("errorRange: (min, max) in %, 0 <= min < max <= 100");
     if (!std::isnan(maskedValue) && maskedValue < 0)
         return fail("maskedValue: >= 0");
+    if (!center.isEmpty() && center.count() != 2)
+        return fail("center: (x, y)");
 
     // begin() first: leaving the Mask tab activates "mask", the mask asked for is selected after it
     begin();
@@ -1055,6 +1057,12 @@ QString DanSensitivity::newSensitivity(const QString &name, const QString &run, 
         d->checkBoxSensError->setChecked(errorMatrix == 1);
     if (!std::isnan(maskedValue))
         d->lineEditSensMaskedPixels->setText(QString::number(maskedValue));
+    d->buttonGroupSensCenter->setChecked(center.count() == 2);
+    if (center.count() == 2)
+    {
+        d->doubleSpinBoxXcenterSens->setValue(center[0]);
+        d->doubleSpinBoxYcenterSens->setValue(center[1]);
+    }
     if (!transmissionMode.isEmpty())
     {
         // the Transmission button: the formula T(lambda) when its option is checked, else measured
@@ -1079,6 +1087,17 @@ QString DanSensitivity::newSensitivity(const QString &name, const QString &run, 
                               .arg(mask, QString::number(added), QString::number(d->spinBoxErrLeftLimit->value()),
                                    QString::number(d->spinBoxErrRightLimit->value()));
     return name;
+}
+
+bool DanSensitivity::center(const QString &name, double &x, double &y, QString &source)
+{
+    m_lastError.clear();
+    if (!isSens(name))
+    {
+        m_lastError = "no sensitivity " + name;
+        return false;
+    }
+    return d->sensitivityCenter(name, x, y, source);
 }
 
 QString DanSensitivity::saveSensitivity(const QString &name, const QString &fileGiven)

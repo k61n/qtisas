@@ -78,6 +78,8 @@ public:
     // the reduction's messages: a message box in the interface; while a script runs it (beginScriptRun ..
     // endScriptRun) nothing modal opens: messages are collected, and a missing name or file is a message too
     void danMessage(const QString &text, bool critical = false);
+    // a warning that does not stop the reduction: the log, and lastMessages() while a script runs; no message box
+    void danWarning(const QString &text);
     void beginScriptRun();
     QStringList endScriptRun();
     bool scriptRun() const
@@ -230,6 +232,16 @@ public:
     bool neededSensExists(int MD, const QString &sensName, bool showErrorMessage = false);
     void updateSensList();
     QString getSensitivityNumber(const QString &sensName);
+    // a field of a sensitivity's label "DAN::Sensitivity::MD::Plexi::run::EB::run::BC::run::Tr::T::Center::x|y|source":
+    // the text after "::key::" up to the next "::"; empty without it
+    QString sensitivityLabelField(const QString &sensName, const QString &key);
+    // the center the sensitivity's wide-angle corrections were made with (1-based) and its source, "mask" (the
+    // beam stop of the mask) or "manual"; false for a label without one (no calibrant, or made before 2026-10-29)
+    bool sensitivityCenter(const QString &sensName, double &Xc, double &Yc, QString &source);
+    // a row against its sensitivity: the same run with another transmission, or wide-angle corrections with another
+    // center (Xc, Yc: 0-based, as the row's corrections use them); a warning each, the reduction goes on
+    void checkRowAgainstSensitivity(int iRow, const QString &sensName, const QString &run, double trans, double Xc,
+                                    double Yc);
     void saveSensAs(QString sensName = "");
 
     // compare two configurations

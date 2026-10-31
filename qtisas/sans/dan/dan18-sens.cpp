@@ -251,6 +251,7 @@ void dan18::createSensFull(const QString &sensName)
         label += "::EB::No";
         label += "::BC::No";
         label += "::Tr::No";
+        label += "::Center::No";
 
         double maskedSensValue = lineEditSensMaskedPixels->text().toDouble();
         if (maskedSensValue > 0.0)
@@ -374,10 +375,24 @@ void dan18::createSensFull(const QString &sensName)
         transmision = lineEditTransAnyD->text().toDouble();
         info += " | Tr : " + QString::number(transmision, 'f', 4);
 
+        // the center of the wide-angle corrections (0-based here): the mask's beam stop, shown in the center fields;
+        // or the fields' values when their group is checked. The reduction's corrections use the row mask's beam stop:
+        // the same center cancels them for the same run (water as sample stays flat)
         double Xc, Yc;
-        readCenterfromMaskName(maskName, Xc, Yc, MD);
-        
-        
+        QString centerSource = "mask";
+        if (buttonGroupSensCenter->isChecked())
+        {
+            Xc = doubleSpinBoxXcenterSens->value() - 1.0;
+            Yc = doubleSpinBoxYcenterSens->value() - 1.0;
+            centerSource = "manual";
+        }
+        else
+        {
+            readCenterfromMaskName(maskName, Xc, Yc, MD);
+            doubleSpinBoxXcenterSens->setValue(Xc + 1.0);
+            doubleSpinBoxYcenterSens->setValue(Yc + 1.0);
+        }
+
         if (transmision < 1.0 && transmision > 0.0 && checkBoxParallaxTr->isChecked())
             transmissionThetaDependenceTrEC(EB, Xc, Yc, D * 100, transmision);
 
@@ -446,8 +461,8 @@ void dan18::createSensFull(const QString &sensName)
 
         info += "High Q Corrections : ";
         if (checkBoxParallax->isChecked())
-            info +=
-                "Yes : Center : " + QString::number(Xc + 1, 'f', 2) + "x" + QString::number(Yc + 1, 'f', 2) + " |\n";
+            info += "Yes : Center : " + QString::number(Xc + 1, 'f', 2) + "x" + QString::number(Yc + 1, 'f', 2) + " (" +
+                    centerSource + ") |\n";
         else
             info += "No |\n";
 
@@ -470,6 +485,8 @@ void dan18::createSensFull(const QString &sensName)
         label += "::EB::" + lineEditEBAnyD->text();
         label += "::BC::" + lineEditBcAnyD->text();
         label += "::Tr::" + lineEditTransAnyD->text();
+        label += "::Center::" + QString::number(Xc + 1.0, 'f', 3) + "|" + QString::number(Yc + 1.0, 'f', 3) + "|" +
+                 centerSource;
 
         double maskedSensValue = lineEditSensMaskedPixels->text().toDouble();
         if (maskedSensValue > 0.0)
@@ -551,8 +568,16 @@ void dan18::readFileNumbersFromSensitivityMatrix(const QString &name)
                 lineEditPlexiAnyD->setText(s.left(s.indexOf("::EB::")));
                 lineEditEBAnyD->setText(s.mid(s.indexOf("::EB::") + 6, s.indexOf("::BC::") - s.indexOf("::EB::") - 6));
                 lineEditBcAnyD->setText(s.mid(s.indexOf("::BC::") + 6, s.indexOf("::Tr::") - s.indexOf("::BC::") - 6));
-                lineEditTransAnyD->setText(s.mid(s.indexOf("::Tr::") + 6, s.length() - s.indexOf("::Tr::") - 6));
+                lineEditTransAnyD->setText(sensitivityLabelField(name, "Tr"));
                 SensitivityLineEditCheck();
+                double Xc, Yc;
+                QString source;
+                if (sensitivityCenter(name, Xc, Yc, source))
+                {
+                    buttonGroupSensCenter->setChecked(source == "manual");
+                    doubleSpinBoxXcenterSens->setValue(Xc);
+                    doubleSpinBoxYcenterSens->setValue(Yc);
+                }
             }
             else
                 lineEditPlexiAnyD->setText(s);
@@ -631,4 +656,55 @@ QString dan18::getSensitivityNumber(const QString &sensName)
         }
 
     return "";
+}
+//+++ a field of the sensitivity's label
+QString dan18::sensitivityLabelField(const QString &sensName, const QString &key)
+{
+    auto *w = app()->window(sensName);
+    if (!w)
+        return {};
+    const QString label = w->windowLabel();
+    const QString tag = "::" + key + "::";
+    const int start = static_cast<int>(label.indexOf(tag));
+    if (!label.startsWith("DAN::Sensitivity::") || start < 0)
+        return {};
+    const int from = start + static_cast<int>(tag.length());
+    const int end = static_cast<int>(label.indexOf("::", from));
+    return (end < 0 ? label.mid(from) : label.mid(from, end - from)).trimmed();
+}
+//+++ the center the sensitivity was made with
+bool dan18::sensitivityCenter(const QString &sensName, double &Xc, double &Yc, QString &source)
+{
+    const QStringList lst = sensitivityLabelField(sensName, "Center").split("|");
+    if (lst.count() < 2)
+        return false;
+    bool okX, okY;
+    Xc = lst[0].toDouble(&okX);
+    Yc = lst[1].toDouble(&okY);
+    source = lst.count() > 2 ? lst[2] : "mask";
+    return okX && okY;
+}
+//+++ a row against its sensitivity
+void dan18::checkRowAgainstSensitivity(int iRow, const QString &sensName, const QString &run, double trans, double Xc,
+                                       double Yc)
+{
+    const QString line = "Line # " + QString::number(iRow + 1) + ": sensitivity \"" + sensName + "\" ";
+
+    // the sensitivity's own run with another transmission: its EB subtraction differs, I(Q) is not flat
+    bool ok;
+    const double trSens = sensitivityLabelField(sensName, "Tr").toDouble(&ok);
+    if (ok && trSens > 0 && run == getSensitivityNumber(sensName) && std::fabs(trSens - trans) > 0.5e-4)
+        danWarning(line + "is made of the same run " + run + " with Tr = " + QString::number(trSens, 'f', 4) +
+                   ", the row has T = " + QString::number(trans, 'f', 4));
+
+    // wide-angle corrections with another center than the sensitivity's
+    double XcSens, YcSens;
+    QString source;
+    if ((checkBoxParallax->isChecked() || checkBoxParallaxTr->isChecked()) &&
+        sensitivityCenter(sensName, XcSens, YcSens, source) &&
+        std::hypot(XcSens - (Xc + 1.0), YcSens - (Yc + 1.0)) > 0.5)
+        danWarning(line + "is made with the center " + QString::number(XcSens, 'f', 2) + "|" +
+                   QString::number(YcSens, 'f', 2) + " (" + source + "), the row's wide-angle corrections use " +
+                   QString::number(Xc + 1.0, 'f', 2) + "|" + QString::number(Yc + 1.0, 'f', 2) +
+                   " (its mask's beam stop)");
 }
