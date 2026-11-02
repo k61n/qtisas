@@ -9,6 +9,9 @@ Description: SANS process tab tools
 
 #include <QScrollBar>
 
+#include <QHelpEvent>
+#include <QToolTip>
+
 #include "dan18.h"
 
 //*******************************************
@@ -16,6 +19,7 @@ Description: SANS process tab tools
 //*******************************************
 void dan18::processdataConnectSlots()
 {
+    tableEC->viewport()->installEventFilter(this); // run cells: the run's header as a tooltip
     connect( pushButtonNewScript, SIGNAL( clicked() ), this, SLOT( newScriptTable()));    
     connect( pushButtonMakeTable, SIGNAL( clicked() ), this, SLOT(makeScriptTable()) );
     connect(pushButtonSaveSettings, SIGNAL(clicked()), this, SLOT(saveScriptSettings()));
@@ -5320,4 +5324,41 @@ void dan18::dataProcessingOptionSelected()
     else stackedWidgetDpOptions->setCurrentIndex(2);
 }
 
+//+++ the header of a run in the configuration table, as its cell's tooltip
+QString dan18::runToolTip(const QString &run) const
+{
+    const double duration = monitors->readDuration(run);
+    const QString beam = collimation->readCA(run) + "|" + collimation->readSA(run);
+    QStringList lines;
+    lines << run + " · " + sample->readName(run).simplified();
+    lines << QString("C %1 m · D %2 m · λ %3 Å · beam %4")
+                 .arg(collimation->readC(run) / 100.0, 0, 'g', 4)
+                 .arg(detector->readD(run) / 100.0, 0, 'g', 4)
+                 .arg(selector->readLambda(run, duration), 0, 'f', 2)
+                 .arg(beam);
+    lines << QString("%1 s · %2 counts · attenuator %3 · polarization %4")
+                 .arg(duration, 0, 'g', 6)
+                 .arg(QLocale::c().toString(monitors->readSum(run), 'f', 0))
+                 .arg(collimation->readAttenuator(run).simplified())
+                 .arg(collimation->readPolarization(run).simplified());
+    lines << QFileInfo(filesManager->fileNameFull(run, filesManager->wildCardDetector())).fileName();
+    return lines.join("\n");
+}
 
+//+++ tooltips of the configuration table's run cells (EC, B4C, calibrant, its EB and B4C, center, EB)
+bool dan18::eventFilter(QObject *watched, QEvent *event)
+{
+    if (event->type() != QEvent::ToolTip || watched != tableEC->viewport())
+        return QWidget::eventFilter(watched, event);
+    static const QList<int> runRows = {dptEC, dptBC, dptACFS, dptACEB, dptACBC, dptCENTER, dptEB};
+    const auto *help = dynamic_cast<QHelpEvent *>(event);
+    const QTableWidgetItem *item = tableEC->itemAt(help->pos());
+    const QString run = item ? item->text().trimmed() : QString();
+    if (!item || !runRows.contains(item->row()) || run.isEmpty() || !filesManager->checkFileNumber(run))
+    {
+        QToolTip::hideText();
+        return true;
+    }
+    QToolTip::showText(help->globalPos(), runToolTip(run), tableEC->viewport(), tableEC->visualItemRect(item));
+    return true;
+}

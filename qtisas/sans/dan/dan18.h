@@ -242,6 +242,10 @@ public:
     // center (Xc, Yc: 0-based, as the row's corrections use them); a warning each, the reduction goes on
     void checkRowAgainstSensitivity(int iRow, const QString &sensName, const QString &run, double trans, double Xc,
                                     double Yc);
+    // the configuration table's run cells: a tooltip with the run's sample, C, D, lambda, beam, time, counts,
+    // attenuator, polarization and file, read when the mouse rests on the cell (eventFilter on its viewport)
+    QString runToolTip(const QString &run) const;
+    bool eventFilter(QObject *watched, QEvent *event) override;
     void saveSensAs(QString sensName = "");
 
     // compare two configurations
