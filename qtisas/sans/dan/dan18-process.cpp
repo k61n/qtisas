@@ -1209,10 +1209,11 @@ void dan18::saveScriptSettings(QString tableName)
     //--- Options::2D::DeadTimeModel
     w->setNumRows(currentRow+1);        
     w->setText(currentRow,0,"Options::2D::DeadTimeModel");
+    // radioButtonDeadTimeCh: N = n exp(-n tau), the paralysable model (sessions before 2026-11-04: "Non-Paralysable")
     if (radioButtonDeadTimeCh->isChecked())
-	w->setText(currentRow,1,"Non-Paralysable <");
+        w->setText(currentRow, 1, "Paralysable: N = n exp[-n tau] <");
     else
-	w->setText(currentRow,1,"Paralysable <");       
+        w->setText(currentRow, 1, "Non-Paralysable: N = n/[1+n tau] <");
     currentRow++;
     
     //--- Options::2D::FindCenterMethod
@@ -2291,7 +2292,12 @@ bool dan18::readSettingNew(QString tableName)
     //+++ Options::2D::DeadTimeModel
     index = static_cast<int>(parameters.indexOf("Options::2D::DeadTimeModel"));
     if (index >= 0)
-        radioButtonDeadTimeCh->setChecked(w->text(index, 1).contains("Non-Paralysable"));
+    {
+        // N = n exp(-n tau): by its formula, or the old name of the model ("Non-Paralysable <")
+        const QString model = w->text(index, 1);
+        const bool exponential = model.contains("exp") || (!model.contains("1+n") && model.contains("Non-Paralysable"));
+        (exponential ? radioButtonDeadTimeCh : radioButtonDeadTimeDet)->setChecked(true);
+    }
 
     //+++ Options::2D::FindCenterMethod
     index = static_cast<int>(parameters.indexOf("Options::2D::FindCenterMethod"));

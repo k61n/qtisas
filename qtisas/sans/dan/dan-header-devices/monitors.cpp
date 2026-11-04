@@ -16,7 +16,7 @@ Description: Individual Header Parser for Monitors and Duration normalization
 
 Monitors::Monitors(ParserHeader *parserHeaderDAN, QComboBox *unitsDurationDAN, QLineEdit *deadTimeM1DAN,
                    QLineEdit *deadTimeM2DAN, QLineEdit *deadTimeM3DAN, QLineEdit *deadTimeDetectorDAN,
-                   QLineEdit *deadTimeDetectorDBDAN, QRadioButton *deadTimeDetectorParalysableDAN,
+                   QLineEdit *deadTimeDetectorDBDAN, QRadioButton *deadTimeDetectorNonParalysableDAN,
                    QSpinBox *normalizationConstDAN, QComboBox *normalizationTypeDAN)
 {
     parserHeader = parserHeaderDAN;
@@ -26,7 +26,7 @@ Monitors::Monitors(ParserHeader *parserHeaderDAN, QComboBox *unitsDurationDAN, Q
     deadTimeM3 = deadTimeM3DAN;
     deadTimeDetector = deadTimeDetectorDAN;
     deadTimeDetectorDB = deadTimeDetectorDBDAN;
-    deadTimeDetectorParalysable = deadTimeDetectorParalysableDAN;
+    deadTimeDetectorNonParalysable = deadTimeDetectorNonParalysableDAN;
     normalizationConst = normalizationConstDAN;
     normalizationType = normalizationTypeDAN;
 }
@@ -119,7 +119,8 @@ double Monitors::deadTimeFactor(double I, double tau)
     if (I == 0.0)
         return 0.0;
 
-    if (deadTimeDetectorParalysable->isChecked())
+    // non-paralysable, m = n / (1 + n tau): n / m = 1 / (1 - tau m)
+    if (deadTimeDetectorNonParalysable->isChecked())
     {
         if (I > (0.99 / tau))
             return 100.0;
@@ -157,7 +158,7 @@ double Monitors::deadTimeFactor(double I, double tau)
         x0 = x;
         x = gsl_root_fdfsolver_root(s);
         status = gsl_root_test_delta(x, x0, 0.0, 1e-5);
-    } while (status1 == GSL_CONTINUE && status == GSL_CONTINUE && iter < max_iter);
+    } while (status1 == GSL_SUCCESS && status == GSL_CONTINUE && iter < max_iter); // iterate() returns GSL_SUCCESS
 
     double res = x / I;
 

@@ -30,7 +30,7 @@ class Monitors : public QObject
     QLineEdit *deadTimeM3;
     QLineEdit *deadTimeDetector;
     QLineEdit *deadTimeDetectorDB;
-    QRadioButton *deadTimeDetectorParalysable;
+    QRadioButton *deadTimeDetectorNonParalysable;
     QSpinBox *normalizationConst;
     QComboBox *normalizationType;
     //! The last run reported without a normalization (one message per run, not per image read)
@@ -39,7 +39,7 @@ class Monitors : public QObject
   public:
     Monitors(ParserHeader *parserHeader, QComboBox *unitsDuration, QLineEdit *deadTimeM1, QLineEdit *deadTimeM2,
              QLineEdit *deadTimeM3, QLineEdit *deadTimeDetector, QLineEdit *deadTimeDetectorDB,
-             QRadioButton *deadTimeDetectorParalysable, QSpinBox *normalizationConst, QComboBox *normalizationType);
+             QRadioButton *deadTimeDetectorNonParalysable, QSpinBox *normalizationConst, QComboBox *normalizationType);
     //+++ Duration units converter to [sec]
     double unitsConverterDurationToSec(double duration);
     //+++ read duration [sec]

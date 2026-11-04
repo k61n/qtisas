@@ -4,7 +4,7 @@ License: GNU GPL Version 3 (see LICENSE)
 Copyright (C) by the authors:
     2022 Konstantin Kholostov <k.kholostov@fz-juelich.de>
     2022 Vitaliy Pipich <v.pipich@gmail.com>
-Description: Dead time correction Non paralysable N=n exp(-nt)
+Description: Dead time correction, paralysable model N = n exp(-n tau)
  ******************************************************************************/
 
 #ifndef DEADTIMEROOT_H

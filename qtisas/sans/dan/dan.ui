@@ -12409,10 +12409,10 @@ QTableCornerButton::section{
                             </font>
                            </property>
                            <property name="whatsThis">
-                            <string>Non Paralysable</string>
+                            <string>Paralysable: N = n exp[-nτ]</string>
                            </property>
                            <property name="text">
-                            <string>Non-Paralysable:</string>
+                            <string>Paralysable:</string>
                            </property>
                            <property name="checked">
                             <bool>true</bool>
@@ -12879,7 +12879,7 @@ QTableCornerButton::section{
                             </font>
                            </property>
                            <property name="text">
-                            <string>Paralysable:</string>
+                            <string>Non-Paralysable:</string>
                            </property>
                            <property name="checked">
                             <bool>false</bool>
@@ -13094,7 +13094,7 @@ QTableCornerButton::section{
                         <string notr="true">color: rgb(137, 137, 183);</string>
                        </property>
                        <property name="text">
-                        <string>Monitors Dead-Time [sec, Paralysable Model]</string>
+                        <string>Monitors Dead-Time [sec, Non-Paralysable Model]</string>
                        </property>
                        <property name="wordWrap">
                         <bool>false</bool>
