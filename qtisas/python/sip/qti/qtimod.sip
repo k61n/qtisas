@@ -6081,15 +6081,38 @@ public:
             {10, "horizontal line"}, {11, "vertical line"},
             {12, "star 1"}, {13, "star 2"}, {14, "hexagon"}
         };
-        QString lower = a0->toLower();
-        sipRes = -1;
+        QString lower = a0->trimmed().toLower();
+        // common names for the same shapes
+        if (lower == "square" || lower == "rect" || lower == "box")
+            lower = "rectangle";
+        else if (lower == "star")
+            lower = "star 1";
+        else if (lower == "plus")
+            lower = "cross";
+        else if (lower == "x")
+            lower = "diagonal cross";
+        else if (lower == "none")
+            lower = "no symbol";
+        bool found = false;
+        QStringList names;
         for (int j = 0; j < 17; j++)
         {
+            names << map[j].name;
             if (lower == QLatin1String(map[j].name))
             {
                 sipRes = map[j].style;
+                found = true;
                 break;
             }
+        }
+        // an unknown name was -1 (no symbol): the curve lost its symbols silently
+        if (!found)
+        {
+            PyErr_SetString(PyExc_ValueError, QString("symbolIndex: \"%1\" - one of %2 (also square, star, plus, x)")
+                                                  .arg(*a0, names.join(", "))
+                                                  .toUtf8()
+                                                  .constData());
+            sipError = sipErrorFail;
         }
     }
   %End
