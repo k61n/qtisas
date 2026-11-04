@@ -169,9 +169,10 @@ void dan18::danDanMultiButton(QString button)
     }
 
     //+++ Subtract Bufffer
-    bool subtractBuffer= false;
-    if (comboBoxModecurrentText.contains("(BS)")) subtractBuffer=true;
-    
+    bool subtractBuffer = false;
+    if (comboBoxModecurrentText.contains("(BS"))
+        subtractBuffer = true;
+
     //+++ Subtract Bufffer && Correct to own Sensitivity
     bool bufferAsSens= false;
     if (comboBoxModecurrentText.contains("(BS-SENS)")) bufferAsSens=true;
@@ -194,6 +195,9 @@ void dan18::danDanMultiButton(QString button)
     QString maskName, sensName, label;
     maskName="";
     sensName="";
+    // mask and sens read are combined (sensAndMaskSynchro: masked where sens is 0) unless the row takes the buffer as
+    // its sensitivity: a row of the other kind with the same names reads them again (it got the other row's)
+    bool masksSynchronized = false;
     
     bool theSameMask=false;
     bool theSameSens=false;
@@ -436,8 +440,12 @@ void dan18::danDanMultiButton(QString button)
             TrDet = 1.0;
 
         //++++ MASK+  >>>>
-        if (maskName != scriptTableManager->mask(iRow) || sensName != scriptTableManager->sens(iRow))
+        const bool synchronizeMasks =
+            !(subtractBufferLocal && bufferAsSens && scriptTableManager->sensFromBuffer(iRow) == "yes");
+        if (maskName != scriptTableManager->mask(iRow) || sensName != scriptTableManager->sens(iRow) ||
+            synchronizeMasks != masksSynchronized)
         {
+            masksSynchronized = synchronizeMasks;
             maskName = scriptTableManager->mask(iRow);
             if (!listMask.contains(maskName))
             {
@@ -459,15 +467,8 @@ void dan18::danDanMultiButton(QString button)
             make_GSL_Matrix_Symmetric(sensName, sens, MD);
             
             //+++
-            if (subtractBufferLocal && bufferAsSens)
-            {
-                if (scriptTableManager->sensFromBuffer(iRow) == "yes")
-                {
-                }
-                else
-                    sensAndMaskSynchro(mask, sens, MD);
-            }
-            else sensAndMaskSynchro(mask, sens, MD );
+            if (synchronizeMasks)
+                sensAndMaskSynchro(mask, sens, MD);
             
             //+++ Sensetivty Error Matrix
             QString sensFile=getSensitivityNumber(sensName);
@@ -556,6 +557,17 @@ void dan18::danDanMultiButton(QString button)
                 scriptTableManager->readStatusWrite(iRow, status);
 
                 subtractBufferLocal = false;
+                // no buffer, so not the buffer as sensitivity either: mask and sens combined, as for any such row
+                if (!masksSynchronized)
+                {
+                    sensAndMaskSynchro(mask, sens, MD);
+                    masksSynchronized = true;
+                    if (maskRead)
+                    {
+                        gsl_matrix_memcpy(maskRead, mask);
+                        gsl_matrix_memcpy(sensRead, sens);
+                    }
+                }
             }
             else
             {
@@ -4735,11 +4747,13 @@ bool dan18::danDanMultiButtonSingleLine(    QString button,
     }
 
     //+++ Subtract Bufffer
-    bool subtractBuffer= false;
-    if (comboBoxMode->currentText().contains("(BS)")) subtractBuffer=true;
-    
-    if (fractionBuffer==0.0) subtractBuffer= false;
-    
+    bool subtractBuffer = false;
+    if (comboBoxMode->currentText().contains("(BS"))
+        subtractBuffer = true;
+
+    if (fractionBuffer == 0.0)
+        subtractBuffer = false;
+
     //+++ result string info for current row
     QString status="... "+Nsample+" ";
     

@@ -360,7 +360,7 @@ void dan18::makeScriptTable(QStringList selectedDat)
     w->setNumRows(startRaw + filesNumber);
 
     //+++ Subtract Bufffer
-    bool subtractBuffer = comboBoxMode->currentText().contains("(BS)");
+    bool subtractBuffer = comboBoxMode->currentText().contains("(BS");
 
     //+++
     int  C;
@@ -3169,7 +3169,7 @@ void dan18::calculateTransmission(int startRow)
     QString tableName=comboBoxMakeScriptTable->currentText();
     
     //+++  Subtract Bufffer
-    bool subtractBuffer = comboBoxMode->currentText().contains("(BS)");
+    bool subtractBuffer = comboBoxMode->currentText().contains("(BS");
     
     //+++  Subtract Bufffer && Correct to own Sensitivity
     bool bufferAsSens= false;
@@ -4456,8 +4456,9 @@ void dan18::copyCorrespondentTransmissions(int startRow)
     QString tableName=comboBoxMakeScriptTable->currentText();
     
     //+++  Subtract Bufffer
-    bool subtractBuffer= false;
-    if (comboBoxMode->currentText().contains("(BS)")) subtractBuffer=true;
+    bool subtractBuffer = false;
+    if (comboBoxMode->currentText().contains("(BS"))
+        subtractBuffer = true;
 
     //+++  Polarized Neutrons
     bool polMode = false;
@@ -5207,10 +5208,10 @@ void dan18::calculateTrMaskDB(int startRow)
     QString tableName=comboBoxMakeScriptTable->currentText();
     
     //+++  Subtract Bufffer
-    bool subtractBuffer= false;
-    if (comboBoxMode->currentText().contains("(BS)")) subtractBuffer=true;
-    
-    
+    bool subtractBuffer = false;
+    if (comboBoxMode->currentText().contains("(BS"))
+        subtractBuffer = true;
+
     //+++  Subtract Bufffer && Correct to own Sensitivity
     bool bufferAsSens= false;
     if (comboBoxMode->currentText().contains("(BS-SENS)")) bufferAsSens=true;
