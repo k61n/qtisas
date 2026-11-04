@@ -109,7 +109,7 @@ public:
     bool setResolutionGeometry(double collimation, double detector, double pixel, double sampleApertureW,
                                double sampleApertureH, double collimationApertureW, double collimationApertureH,
                                double lambda, double deltaLambda);
-    void setResolutionLenses(bool on, double focus);
+    bool setResolutionFocusing(bool on, const QString &optic = QString());
     double resolutionSigma(double q);
     void setPlot(bool on, bool xError, bool yError);
     QStringList importFiles(const QStringList &files, const QStringList &names);
@@ -134,8 +134,8 @@ public:
     void asciiFormatSelected();
     
     //+++ reso
-    void checkBoxLensesChanged();
     void checkBoxResoSlot();
+    void focusedChanged();
     
     //+++ session
     void saveCurrentASCII1D();

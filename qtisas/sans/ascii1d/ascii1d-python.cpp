@@ -386,12 +386,20 @@ bool ascii1d18::setResolutionGeometry(double collimation, double detector, doubl
     return true;
 }
 
-void ascii1d18::setResolutionLenses(bool on, double focus)
+// focusing: a symmetric optic between source and detector, both at 2f = C (the collimation), the sample at D before the
+// detector; the optic "lenses" (with a chromatic term) or "mirror"; an empty optic keeps the current one
+bool ascii1d18::setResolutionFocusing(bool on, const QString &optic)
 {
-    checkBoxLenses->setChecked(on);
-    if (focus > 0.0)
-        lineEditResoFocus->setText(cToUi(QString::number(focus, 'g', 15)));
-    checkBoxLensesChanged();
+    const QString name = optic.trimmed().toLower();
+    if (!name.isEmpty() && name != "lenses" && name != "mirror")
+    {
+        m_lastError = QString("setResolutionFocusing: optic \"%1\" — use \"lenses\" or \"mirror\"").arg(optic);
+        return false;
+    }
+    if (!name.isEmpty())
+        comboBoxFocusType->setCurrentIndex(name == "mirror" ? 1 : 0);
+    checkBoxFocused->setChecked(on);
+    return true;
 }
 
 double ascii1d18::resolutionSigma(double q)

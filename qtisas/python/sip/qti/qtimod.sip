@@ -4854,7 +4854,14 @@ public:
         sipError = sipErrorFail;
     }
 %End
-    void setResolutionLenses(bool on, double focus = 0);
+    bool setResolutionFocusing(bool on, const QString &optic = QString());
+%MethodCode
+    sipRes = sipCpp->setResolutionFocusing(a0, *a1);
+    if (!sipRes) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
     double resolutionSigma(double q);
     void setPlot(bool on, bool xError = false, bool yError = true);
     QStringList importFiles(SIP_PYOBJECT sources, SIP_PYOBJECT names = Py_None);

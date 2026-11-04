@@ -29,8 +29,8 @@ ascii1d18::ascii1d18(QWidget *parent)
     //+++ connections
     connectSlot();
 
-    // the focus field only with lenses: the slot reacts to a change of the checkbox, which the start does not make
-    checkBoxLensesChanged();
+    // the optic (lenses / mirror) only with focusing, the collimation label "= 2f" with it
+    focusedChanged();
 
     //+++
     sourceSelected();
@@ -55,11 +55,11 @@ ascii1d18::ascii1d18(QWidget *parent)
     {
         QLineEdit *edit;
         double bottom, top, fallback;
-    } resolution[] = {{lineEditResoCol, 1, 10000, 2000},     {lineEditResoDet, 1, 10000, 2000},
-                      {lineEditResoFocus, 1, 10000, 1000},   {lineEditResoPixelSize, 0.0001, 5, 0.836},
-                      {lineEditResoSamAper, 0.01, 100, 10},  {lineEditResoSamAper2, 0.01, 100, 10},
-                      {lineEditResoColAper, 0.01, 100, 50},  {lineEditResoColAper2, 0.01, 100, 50},
-                      {lineEditResoLambda, 0.01, 1000, 4.5}, {lineEditResoDeltaLambda, 0.00001, 1.0, 0.1}};
+    } resolution[] = {{lineEditResoCol, 1, 10000, 2000},           {lineEditResoDet, 1, 10000, 2000},
+                      {lineEditResoPixelSize, 0.0001, 5, 0.836},   {lineEditResoSamAper, 0.01, 100, 10},
+                      {lineEditResoSamAper2, 0.01, 100, 10},       {lineEditResoColAper, 0.01, 100, 50},
+                      {lineEditResoColAper2, 0.01, 100, 50},       {lineEditResoLambda, 0.01, 1000, 4.5},
+                      {lineEditResoDeltaLambda, 0.00001, 1.0, 0.1}};
     for (const auto &field : resolution)
     {
         auto *validator = new NumberValidator(field.edit, field.fallback);
@@ -110,8 +110,8 @@ void ascii1d18::connectSlot()
     connect( pushButtonSaveCurrentASCII1D, SIGNAL( clicked() ), this, SLOT( saveCurrentASCII1D() ) );
     
     //+++ reso
-    connect( checkBoxLenses, SIGNAL( stateChanged(int) ), this, SLOT( checkBoxLensesChanged() ) );
     connect( checkBoxReso, SIGNAL( stateChanged(int) ), this, SLOT( checkBoxResoSlot() ) );
+    connect(checkBoxFocused, &QCheckBox::toggled, this, &ascii1d18::focusedChanged);
     
     //+++ modify
     connect( comboBoxSelectPresentationFrom, SIGNAL( activated(int) ), this, SLOT( presentationFromChanged() ) );
@@ -294,24 +294,13 @@ void ascii1d18::asciiFormatSelected()
 }
 
 // *******************************************
-// *** checkBoxLensesChanged()
+// *** focusedChanged(): the optic beside "Focused?", the collimation as 2f
 // *******************************************
-void ascii1d18::checkBoxLensesChanged()
+void ascii1d18::focusedChanged()
 {
-    
-    if (checkBoxLenses->isChecked())
-    {
-        textLabelResoFocus->show();
-        lineEditResoFocus->show();
-        textLabelResoFocus2->show();
-    }
-    else
-    {
-        textLabelResoFocus->hide();
-        lineEditResoFocus->hide();
-        textLabelResoFocus2->hide();
-    }
-    
+    const bool focused = checkBoxFocused->isChecked();
+    comboBoxFocusType->setVisible(focused);
+    textLabelResoCol->setText(focused ? "Colimation = 2f:" : "Colimation:");
 }
 
 // *******************************************
@@ -484,8 +473,10 @@ void ascii1d18::defaultASCII1D()
     lineEditResoColAper2->setText("50");
     lineEditResoDeltaLambda->setText(cToUi("0.1"));
     lineEditResoLambda->setText(cToUi("4.5"));
-    lineEditResoFocus->setText("1000");
-    checkBoxLenses->setChecked(false);
+    comboBoxQunits->setCurrentIndex(0);
+    comboBoxLambdaUnits->setCurrentIndex(0);
+    checkBoxFocused->setChecked(false);
+    comboBoxFocusType->setCurrentIndex(0);
     
     // convert tab
     checkBoxConvert->setChecked(false);
@@ -669,14 +660,19 @@ void ascii1d18::readCurrentASCII1D()
             lineEditResoColAper2->setText(cToUi(s.remove("{Reso-Sample-Source-H} ")));
         if (s.contains("{Reso-Delta-Lambda} "))
             lineEditResoDeltaLambda->setText(cToUi(s.remove("{Reso-Delta-Lambda} ")));
-        if (s.contains("{Reso-Focus} "))
-            lineEditResoFocus->setText(cToUi(s.remove("{Reso-Focus} ")));
         if (s.contains("{Reso-Lambda} "))
             lineEditResoLambda->setText(cToUi(s.remove("{Reso-Lambda} ")));
+        if (s.contains("{Reso-Q-Units} "))
+            comboBoxQunits->setCurrentIndex(s.remove("{Reso-Q-Units} ").trimmed() == "nm" ? 1 : 0);
+        if (s.contains("{Reso-Lambda-Units} "))
+            comboBoxLambdaUnits->setCurrentIndex(s.remove("{Reso-Lambda-Units} ").trimmed() == "nm" ? 1 : 0);
+        // focusing, the optic (older formats: "{Reso-Lens-Yes-No}", lenses)
+        if (s.contains("{Reso-Focused-Yes-No} ") || s.contains("{Reso-Lens-Yes-No} "))
+            checkBoxFocused->setChecked(s.endsWith(" Yes"));
         if (s.contains("{Reso-Lens-Yes-No} Yes"))
-            checkBoxLenses->setChecked(true);
-        if (s.contains("{Reso-Lens-Yes-No} No"))
-            checkBoxLenses->setChecked(false);
+            comboBoxFocusType->setCurrentIndex(0);
+        if (s.contains("{Reso-Focused-Optic} "))
+            comboBoxFocusType->setCurrentIndex(s.remove("{Reso-Focused-Optic} ").trimmed() == "mirror" ? 1 : 0);
         // convert tab
         if (s.contains("{Convert-Yes-No} Yes"))
             checkBoxConvert->setChecked(true);
@@ -878,12 +874,11 @@ void ascii1d18::saveCurrentASCII1D(QString fileName)
     stream << "{Reso-Sample-Source-W} " << uiToC(lineEditResoColAper->text()) << "\n";
     stream << "{Reso-Sample-Source-H} " << uiToC(lineEditResoColAper2->text()) << "\n";
     stream << "{Reso-Delta-Lambda} " << uiToC(lineEditResoDeltaLambda->text()) << "\n";
-    stream << "{Reso-Focus} " << uiToC(lineEditResoFocus->text()) << "\n";
     stream << "{Reso-Lambda} " << uiToC(lineEditResoLambda->text()) << "\n";
-    if (checkBoxLenses->isChecked())
-        stream<<"{Reso-Lens-Yes-No} Yes\n";
-    else
-        stream<<"{Reso-Lens-Yes-No} No\n";
+    stream << "{Reso-Q-Units} " << (comboBoxQunits->currentIndex() == 1 ? "nm" : "A") << "\n";
+    stream << "{Reso-Lambda-Units} " << (comboBoxLambdaUnits->currentIndex() == 1 ? "nm" : "A") << "\n";
+    stream << "{Reso-Focused-Yes-No} " << (checkBoxFocused->isChecked() ? "Yes" : "No") << "\n";
+    stream << "{Reso-Focused-Optic} " << comboBoxFocusType->currentText() << "\n";
     // convert tab
     if (checkBoxConvert->isChecked())
         stream<<"{Convert-Yes-No} Yes\n";
@@ -1889,21 +1884,22 @@ double ascii1d18::sigma( double Q)
     if (comboBoxLambdaUnits->currentIndex()==1) lambdaUnitsAng=false;
     
     const double PI =M_PI;
-    double temp;
 
-    double C = uiToDouble(lineEditResoCol->text());                     //[cm]
-    double D = uiToDouble(lineEditResoDet->text());                     //[cm]
-    double Rdet = uiToDouble(lineEditResoPixelSize->text()) / sqrt(PI); //[cm]
+    double C = uiToDouble(lineEditResoCol->text()); //[cm]
+    double D = uiToDouble(lineEditResoDet->text()); //[cm]
+    // the pixel: the detector's resolution (its real pixel) and the averaging ring, both a box this wide [cm]
+    const double pixel = uiToDouble(lineEditResoPixelSize->text());
 
-    temp = uiToDouble(lineEditResoSamAper->text());
-    temp *= uiToDouble(lineEditResoSamAper2->text());
-
-    double r2         =0.1*sqrt(temp/PI);                                           //[cm]
-
-    temp = uiToDouble(lineEditResoColAper->text());
-    temp *= uiToDouble(lineEditResoColAper2->text());
-
-    double r1         =0.1*sqrt(temp/PI);                                           //[cm]
+    // the apertures (width x height, mm): the radius of a round aperture that spreads the angle alike, variance r^2 / 4
+    // in one direction; a rectangle has x^2 / 12 along x and y^2 / 12 along y, their mean (x^2 + y^2) / 24 (it was
+    // the circle of the same area, sqrt(x y / pi))
+    const auto radius = [this](const QLineEdit *x, const QLineEdit *y) {
+        const double w = 0.1 * uiToDouble(x->text()); //[cm]
+        const double h = 0.1 * uiToDouble(y->text()); //[cm]
+        return std::sqrt((w * w + h * h) / 6.0);
+    };
+    const double r2 = radius(lineEditResoSamAper, lineEditResoSamAper2);
+    const double r1 = radius(lineEditResoColAper, lineEditResoColAper2);
 
     double Lambda = uiToDouble(lineEditResoLambda->text()); //[A]
 
@@ -1914,53 +1910,50 @@ double ascii1d18::sigma( double Q)
     }
 
     double SigmaLambda = uiToDouble(lineEditResoDeltaLambda->text()); //[1]
-    double f = uiToDouble(lineEditResoFocus->text());                 //[cm]
 
-    double SigQ2,SigQ;
-    double Theta0,cos2Theta02, a1, a2, beta1;
-    
-    
-    if (checkBoxLenses    ->isChecked())
+    // sigma = the square root of the sum of the variances of the independent contributions (Mildner & Carpenter
+    // 1984; NIST), as DAN's sigmaQmerged(); the widths with the angle factors of Pedersen et al. (1990)
+    const double K0 = 2.0 * PI / Lambda; //[A-1]
+    // the detector's resolution (its real pixel) and the averaging ring, both a box one pixel wide
+    const double detectorVariance = 2.0 * pixel * pixel / 12.0;
+    double SigQ;
+
+    if (checkBoxFocused->isChecked())
     {
-        SigQ2=PI*PI/Lambda/Lambda/3*(3*r1*r1/C/C+2*r2*r2/f/f*SigmaLambda*SigmaLambda+Rdet*Rdet/D/D+Lambda*Lambda/2/2/PI/PI*Q*Q*SigmaLambda*SigmaLambda);
-        SigQ=2*0.4246609*sqrt(SigQ2);
+        // as DAN's focusing: a symmetric optic (lenses or a mirror) between source and detector, both at 2f = C (the
+        // collimation), 1:1 imaging; the sample at D before the detector (small angles). The source's image, a
+        // uniformly lit disc of radius r1, seen from the sample: r1^2 / 4 / D^2; the lenses' chromatic blur (the image
+        // plane moved by 4 C dlambda, the beam at the lenses r2 C / D): 16 (dlambda^2 / 6) (r2 C / D)^2 / 4 / D^2; the
+        // detector as without focusing; the wavelength Q^2 dlambda^2 / 6. The chromatic blur and gravity for lenses
+        // only (a mirror is achromatic and compensates gravity): the fall A lambda^2 z^2, 2 A lambda^2 C^2 through the
+        // lenses, spread by 4 A lambda^2 C^2 e vertically, half its variance in the radial average
+        const bool lenses = comboBoxFocusType->currentIndex() == 0;
+        const double chromatic =
+            lenses ? 2.0 / 3.0 * SigmaLambda * SigmaLambda * r2 * r2 * C * C / (D * D * D * D) : 0.0;
+        const double lambdaA = qUnitsAng ? Lambda : 10.0 * Lambda; // the wavelength in A
+        const double fall = 3.13311e-9 * lambdaA * lambdaA;        // A lambda^2 [1/cm]: g m^2 / (2 h^2)
+        const double gravity =
+            lenses ? 4.0 / 3.0 * fall * fall * C * C * C * C * SigmaLambda * SigmaLambda / D / D : 0.0;
+        SigQ = sqrt(K0 * K0 * (r1 * r1 / 4.0 / D / D + chromatic + gravity + detectorVariance / D / D) +
+                    Q * Q * SigmaLambda * SigmaLambda / 6.0);
     }
     else
     {
-        
-        double K0                 = 2.0*PI/Lambda;   //[A-1]
-        
-        //
-        Theta0          = asin(Q/2/K0);
-        cos2Theta02     = cos(2*Theta0)*cos(2*Theta0);
-        
-        //+++ Sigma-D1  +++
-        double SigmaDetector      = K0*cos(Theta0)*cos2Theta02*Rdet/D;       //[A-1]
-        
-        //
-        if (cos2Theta02!=0) a1 = r1/(C+D/cos2Theta02); else a1 =0;
-        a2 = r2*cos2Theta02/D;
-        
-        //
-        if (a2>a1)
-        {
-            beta1   =2*r2*(1/C+cos2Theta02/D)-r1*r1*D/(2*r2*cos2Theta02*C*(C+D/cos2Theta02));
-        }
-        else
-        {
-            beta1   =2*r1/C-0.5*r2*r2/r1*cos2Theta02*cos2Theta02*(C+D/cos2Theta02)*(C+D/cos2Theta02)/C/D/D;
-        }
-        
-        //+++ Sigma-W  +++
-        SigQ2        =Q*Q*SigmaLambda*SigmaLambda;
-        //+++ Sigma-D1  +++
-        SigQ2       +=SigmaDetector*SigmaDetector;
-        //+++ Sigma-C1  +++
-        SigQ2       +=K0*K0*cos(Theta0)*cos(Theta0)*beta1*beta1;
-        //+++  Sigma-AV  +++
-        SigQ2       +=K0*K0*cos(Theta0)*cos(Theta0)*cos2Theta02*cos2Theta02*Rdet/D*Rdet/D;
-        //
-        SigQ         =0.4246609*sqrt(SigQ2); //[A-1];
+        const double Theta0 = asin(Q / 2 / K0);
+        const double cosTheta0 = cos(Theta0);
+        const double cos2Theta02 = cos(2 * Theta0) * cos(2 * Theta0);
+        const double detectorAngle = K0 * cosTheta0 * cos2Theta02 / D;
+
+        //+++ Sigma-W: the selector's triangular distribution of FWHM SigmaLambda, variance SigmaLambda^2 / 6
+        double SigQ2 = Q * Q * SigmaLambda * SigmaLambda / 6.0;
+        //+++ Sigma-C1: the uniformly lit round apertures, variance r^2 / 4 of each, the source seen at C, the sample
+        // aperture at 1 / (1 / C + cos^2(2 theta) / D)
+        const double sampleApertureAngle = r2 * (1 / C + cos2Theta02 / D);
+        SigQ2 += K0 * K0 * cosTheta0 * cosTheta0 * (r1 * r1 / C / C + sampleApertureAngle * sampleApertureAngle) / 4.0;
+        //+++ Sigma-D1 and Sigma-AV: the detector's resolution and the averaging ring, both one pixel
+        SigQ2 += detectorAngle * detectorAngle * detectorVariance;
+
+        SigQ = sqrt(SigQ2); //[A-1]
     }
     
     return SigQ;
