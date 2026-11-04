@@ -18584,6 +18584,8 @@ QTableCornerButton::section{
                    <number>0</number>
                   </property>
                   <item>
+                   <layout class="QHBoxLayout" name="horizontalLayoutResoFocus">
+                   <item>
                    <widget class="QCheckBox" name="checkBoxResoFocus">
                     <property name="enabled">
                      <bool>true</bool>
@@ -19055,6 +19057,37 @@ QTableCornerButton::section{
                      <bool>false</bool>
                     </property>
                    </widget>
+                  </item>
+                  <item>
+                   <widget class="QComboBox" name="comboBoxResoFocusType">
+                    <property name="minimumSize">
+                     <size>
+                      <width>110</width>
+                      <height>25</height>
+                     </size>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>16777215</width>
+                      <height>25</height>
+                     </size>
+                    </property>
+                    <property name="toolTip">
+                     <string>The focusing optic: lenses (their focal length depends on the wavelength: a chromatic term in the resolution) or a mirror (achromatic)</string>
+                    </property>
+                    <item>
+                     <property name="text">
+                      <string>lenses</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>mirror</string>
+                     </property>
+                    </item>
+                   </widget>
+                  </item>
+                  </layout>
                   </item>
                   <item>
                    <widget class="QCheckBox" name="checkBoxResoCAround">

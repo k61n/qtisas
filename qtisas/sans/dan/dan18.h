@@ -404,11 +404,14 @@ public:
                  double detdist, double detelem, double pixelAsymetry, double DetectorHShiftAngle,
                  double DetectorVShiftAngle);
     void dQmatrix(int md, gsl_matrix *mask, double Xcenter, double Ycenter, QString &sampleMatrix, double lambda,
-                  double detdist, double detelem, double pixelAsymetry);
+                  double deltaLambda, double detdist, double detelem, double pixelAsymetry);
 
-    double sigma( double Q, double D, double C, double Lambda, double deltaLambda, double r1, double r2);
-    double sigmaQmerged( double Q, double D, double C, double Lambda, double deltaLambda, double r1, double r2, int numberMergedQ);
-    double dQ( double Q, int numberF , double d, double D, double pixel );
+    double sigma(double Q, double D, double C, double Lambda, double deltaLambda, double r1, double r2);
+    double sigmaQmerged(double Q, double D, double C, double Lambda, double deltaLambda, double r1, double r2,
+                        int numberMergedQ);
+    //! the Q uncertainty of a point (1D) or pixel (2D): Q sqrt(dlambda^2 + dD^2 + dd^2) with the run's relative
+    //! wavelength spread, the distance's (1, 2, 5 cm over D) and half the width over the radius on the detector
+    static double dQ(double Q, double deltaLambda, double radius, double D, double width);
     // dandan-center
     void calcCenterNew();
     void calcCenterNew(int col);

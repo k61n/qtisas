@@ -1495,6 +1495,11 @@ void dan18::saveScriptSettings(QString tableName)
 	w->setText(currentRow,1,"no <");       
     currentRow++;    
     
+    //+++ Options::Resolusion::Focusing::Type
+    w->setNumRows(currentRow + 1);
+    w->setText(currentRow, 0, "Options::Resolusion::Focusing::Type");
+    w->setText(currentRow, 1, comboBoxResoFocusType->currentText() + " <");
+    currentRow++;
     //+++ Options::Resolusion::CA::Round
     w->setNumRows(currentRow+1);        
     w->setText(currentRow,0,"Options::Resolusion::CA::Round");
@@ -2516,6 +2521,10 @@ bool dan18::readSettingNew(QString tableName)
     index = static_cast<int>(parameters.indexOf("Options::Resolusion::Focusing"));
     if (index >= 0)
         checkBoxResoFocus->setChecked(w->text(index, 1).contains("yes"));
+
+    //+++ Options::Resolusion::Focusing::Type (none in older sessions: lenses)
+    index = static_cast<int>(parameters.indexOf("Options::Resolusion::Focusing::Type"));
+    comboBoxResoFocusType->setCurrentIndex(index >= 0 && w->text(index, 1).contains("mirror") ? 1 : 0);
 
     //+++ Options::Resolusion::Detector
     index = static_cast<int>(parameters.indexOf("Options::Resolusion::Detector"));

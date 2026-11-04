@@ -101,14 +101,12 @@ double Collimation::readR1(const QString &Number, const QStringList &lst)
         return 0.0;
     cay = unitsConverterAperturetoCM(cay);
 
-    double r1 = cax * cay;
-
+    // the radius of a round aperture that spreads the angle alike, variance r^2 / 4 in one direction: round, the
+    // diameter sqrt(x y); a rectangle, x^2 / 12 along x and y^2 / 12 along y, their mean (x^2 + y^2) / 24 (it was the
+    // circle of the same area, sqrt(x y / pi): 4.5 % less variance for a square)
     if (apertureCAround->isChecked())
-        r1 = sqrt(r1 / 4.0);
-    else
-        r1 = sqrt(r1 / M_PI);
-
-    return r1;
+        return sqrt(cax * cay / 4.0);
+    return sqrt((cax * cax + cay * cay) / 6.0);
 }
 //+++ read  R2 sample aperture [SA-X] x [SA-X] in [cm]
 double Collimation::readR2(const QString &Number, const QStringList &lst)
@@ -122,14 +120,12 @@ double Collimation::readR2(const QString &Number, const QStringList &lst)
         return 0.0;
     say = unitsConverterAperturetoCM(say);
 
-    double r2 = sax * say;
-
+    // the radius of a round aperture that spreads the angle alike, variance r^2 / 4 in one direction: round, the
+    // diameter sqrt(x y); a rectangle, x^2 / 12 along x and y^2 / 12 along y, their mean (x^2 + y^2) / 24 (it was the
+    // circle of the same area, sqrt(x y / pi): 4.5 % less variance for a square)
     if (apertureSAround->isChecked())
-        r2 = sqrt(r2 / 4.0);
-    else
-        r2 = sqrt(r2 / M_PI);
-
-    return r2;
+        return sqrt(sax * say / 4.0);
+    return sqrt((sax * sax + say * say) / 6.0);
 }
 //+++ read  Attenuator
 QString Collimation::readAttenuator(const QString &Number, const QStringList &lst)

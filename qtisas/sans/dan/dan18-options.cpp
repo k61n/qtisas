@@ -25,6 +25,8 @@ void dan18::optionsConnectSlot()
     connect( lineEditMD,                        SIGNAL( textChanged(const QString&) ), this,    SLOT( MDchanged() ) );
     connect( spinBoxRegionOfInteres,            SIGNAL( valueChanged(int) ), this,              SLOT( dataRangeOfInteresChanged(int) ) );
     connect( checkBoxYes2ndHeader,              SIGNAL( toggled(bool) ), this,                  SLOT( secondHeaderExist(bool) ) );
+    // the focusing optic (lenses / mirror): shown only for a focusing geometry
+    connect(checkBoxResoFocus, &QCheckBox::toggled, comboBoxResoFocusType, &QWidget::setVisible);
 }
 //*******************************************
 //+++  new-daDan:: find Table List By Label

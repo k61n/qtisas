@@ -607,7 +607,6 @@ void dan18::saveMatrixAsTableToFile(const QString &fn, gsl_matrix *i, gsl_matrix
     bool SASVIEW = checkBoxASCIIheaderSASVIEW->isChecked();
     bool HEADER = checkBoxASCIIheaderIxy->isChecked();
     bool IGNOREMASK = checkBoxASCIIignoreMask->isChecked();
-    bool FOCUSING = checkBoxResoFocus->isChecked();
 
     double sigmaDWL = 0.0;
     double sigma = 0.0;
@@ -643,19 +642,19 @@ void dan18::saveMatrixAsTableToFile(const QString &fn, gsl_matrix *i, gsl_matrix
         stream << "I[x,y]\t\tdI[x,y]";
 
         if (format == 3)
-            stream << "\t\tQz\t" << QChar(963) << "Q(para)\t" << QChar(963) << "Q(perp)\tmask";
+            stream << "\t\tQz\t" << QChar(963) << "Q(para)\t" << QChar(963) << "Q(perp)\tshadow\tmasked";
 
         stream << "\n";
     }
 
     // SasView's 2D reader (red2d_reader, NIST format): the data after "ASCII data"; the 4th column is err(I) only when
     // a "Data columns" line names it (else it takes the 4th column as Qz), the 5th to 8th Qz, sigma parallel, sigma
-    // perpendicular, the beam-stop shadow factor
+    // perpendicular, the beam-stop shadow factor; the 9th the mask (1: masked, left out)
     if (SASVIEW)
     {
         stream << "Data columns are Qx - Qy - I(Qx,Qy) - err(I)";
         if (format == 3)
-            stream << " - Qz - SigmaQ_parall - SigmaQ_perp - fSubS(beam stop shadow)";
+            stream << " - Qz - SigmaQ_parall - SigmaQ_perp - fSubS(beam stop shadow) - mask";
         stream << "\nASCII data\n";
     }
 
@@ -711,20 +710,20 @@ void dan18::saveMatrixAsTableToFile(const QString &fn, gsl_matrix *i, gsl_matrix
 
             if (format == 3)
             {
-                Qx = (xCenter - jx) * xPixel / d;
-                Qy = (yCenter - iy) * yPixel / d;
-                Q = sqrt(Qx * Qx + Qy * Qy);
-                Q = 4 * M_PI / wl * sin(0.5 * atan(Q));
-                sigmaDWL = 0.4246609 * Q * dwl;
+                // Q of the pixel, as in its Qx, Qy
+                // the wavelength spread widens Q along the radius only: sigma(perp) is sigma without it, Q^2 dwl^2 / 6
+                // of sigma^2 as in sigmaQmerged() (with and without focusing)
+                sigmaDWL = Q * dwl / std::sqrt(6.0);
                 sigma = gsl_matrix_get(sigmaMa, iy, jx);
                 stream << "\t" << QString::number(0.0, 'f', 3);
                 stream << "\t" << QString::number(sigma * maskValue, 'E', 8);
-                if (FOCUSING)
-                    stream << "\t" << QString::number(sigmaDWL * maskValue, 'E', 8);
-                else
-                    stream << "\t" << QString::number(sqrt(maskValue * (sigma * sigma - sigmaDWL * sigmaDWL)), 'E', 8);
+                stream << "\t"
+                       << QString::number(std::sqrt(std::max(0.0, maskValue * (sigma * sigma - sigmaDWL * sigmaDWL))),
+                                          'E', 8);
 
+                // the shadow factor (1: in the data), then SasView's mask (1: masked, left out; with "ignore mask")
                 stream << "\t" << QString::number(maskValue, 'f', 0);
+                stream << "\t" << QString::number(maskValue == 0.0 ? 1 : 0);
             }
 
             stream << "\n";

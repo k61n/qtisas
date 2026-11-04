@@ -300,7 +300,7 @@ QString dan18::singleDanMultiButton(int iRow, const QString &button, const QStri
         MatrixQ(MD, mask, Xcenter, Ycenter, nameQI, lambda, detdist, pixel * binning, pixelAsymetry, detRotationX,
                 detRotationY);
     else if (button == "dQ-x-y") //+++ dQ [x,y]
-        dQmatrix(MD, mask, Xcenter, Ycenter, nameQI, lambda, detdist, pixel * binning, pixelAsymetry);
+        dQmatrix(MD, mask, Xcenter, Ycenter, nameQI, lambda, deltaLambda, detdist, pixel * binning, pixelAsymetry);
 
     if (time >= 0)
         printf("DAN|Result: [%6.5lgsec]\t%s\n", time, nameQI.toLocal8Bit().constData());

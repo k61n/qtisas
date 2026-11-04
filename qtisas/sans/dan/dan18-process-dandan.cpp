@@ -1615,7 +1615,8 @@ void dan18::radUniStandartMSmode(int md, gsl_matrix *Sample, gsl_matrix *SampleE
             avgems = std::hypot(std::sqrt(std::fabs(dIIms[ir])) / nn[ir], commonError * avgms);
 
             sig= sigmaQmerged( qr, detdist, C, lambda, deltaLambda, r1, r2, mergedPoints[ir]);
-            dq=dQ(qr, numberF, mergedPoints[ir]*ir*(pixelAsymetry+1)/2*detelem, detdist, detelem );
+            dq = dQ(qr, deltaLambda, detdist * tan(2.0 * asin(qr * lambda / 4.0 / M_PI)), detdist,
+                    mergedPoints[ir] * detelem);
             
             //
             double Q,I,dI,Ims,dIms;
@@ -1943,6 +1944,8 @@ void dan18::radUni(int md, gsl_matrix *Sample, gsl_matrix *SampleErr, gsl_matrix
     //------------------------------------
     double minPixel=1.0;
     if (pixelAsymetry<1.0) minPixel=pixelAsymetry;
+    // the width of one ring [cm]: shells by the smaller side of a pixel, H.F. by its width
+    const double ringWidth = (radioButtonRadStd->isChecked() ? minPixel : 1.0) * detelem;
 
     int i=0;
     for(int ir=0;ir<nTotal;ir++)
@@ -1961,16 +1964,11 @@ void dan18::radUni(int md, gsl_matrix *Sample, gsl_matrix *SampleErr, gsl_matrix
             else
                 diCurrent[i] = 0.0;
 
-            if (mergedPoints[ir]>0)
-            {
-                sigmaCurrent[i]= sigmaQmerged( qCurrent[i], detdist, C, lambda, deltaLambda, r1, r2, mergedPoints[ir]);
-                dqCurrent[i]=dQ(qCurrent[i], numberF, mergedPoints[ir]*ir*minPixel*(pixelAsymetry+1)/2*detelem, detdist, detelem );
-            }
-            else
-            {
-                sigmaCurrent[i]= sigmaQmerged( qCurrent[i], detdist, C, lambda, deltaLambda, r1, r2, 1);
-                dqCurrent[i]=dQ(qCurrent[i], numberF, 1*ir*minPixel*(pixelAsymetry+1)/2*detelem, detdist, detelem );
-            }
+            // dQ: half the point's width (its rings) over its radius on the detector
+            const int merged = mergedPoints[ir] > 0 ? mergedPoints[ir] : 1;
+            sigmaCurrent[i] = sigmaQmerged(qCurrent[i], detdist, C, lambda, deltaLambda, r1, r2, merged);
+            dqCurrent[i] = dQ(qCurrent[i], deltaLambda, detdist * tan(2.0 * asin(qCurrent[i] * lambda / 4.0 / M_PI)),
+                              detdist, merged * ringWidth);
             //+++
             i++;
         }
@@ -3167,9 +3165,6 @@ void dan18::horizontalSlice(int md, gsl_matrix *Sample, gsl_matrix *SampleErr, g
             dII[xxx] += gsl_matrix_get(SampleErr,yyy,xxx)*gsl_matrix_get(Sample,yyy,xxx)*gsl_matrix_get(Sample,yyy,xxx);
             nn[xxx]+=1;
             
-            qr  = 4.0*M_PI/lambda *
-            sin(0.5*atan(sqrt( (Xcenter-xxx)*(Xcenter-xxx)+(Ycenter-yyy)*(Ycenter-yyy) )*detelem/detdist));
-            sigmaM[xxx]+=sigma( qr, detdist, C, lambda, deltaLambda, r1, r2 );
         }
     }
     
@@ -3186,7 +3181,8 @@ void dan18::horizontalSlice(int md, gsl_matrix *Sample, gsl_matrix *SampleErr, g
             avg = II[xxx] / nn[xxx];
             avge = std::hypot(sqrt(dII[xxx]) / nn[xxx],
                               commonError * avg); // common errors (transmission, factor): once per point
-            sig= sigmaM[xxx] / nn[xxx];
+            // the resolution along the slice: sigma at its Qx (the wavelength term along x is Qx dlambda)
+            sig = sigma(std::fabs(qr), detdist, C, lambda, deltaLambda, r1, r2);
             
             
             //
@@ -3408,9 +3404,6 @@ void dan18::verticalSlice(int md, gsl_matrix *Sample, gsl_matrix *SampleErr, gsl
             
             
             
-            qr  = 4.0*M_PI/lambda *
-            sin(0.5*atan(sqrt( (Xcenter-xxx)*(Xcenter-xxx)+(Ycenter-yyy)*(Ycenter-yyy) )*detelem/detdist));
-            sigmaM[yyy]+=sigma( qr, detdist, C, lambda, deltaLambda, r1, r2 );
         }
     }
     
@@ -3427,7 +3420,8 @@ void dan18::verticalSlice(int md, gsl_matrix *Sample, gsl_matrix *SampleErr, gsl
             avg = II[yyy] / nn[yyy];
             avge = std::hypot(sqrt(dII[yyy]) / nn[yyy],
                               commonError * avg); // common errors (transmission, factor): once per point
-            sig= sigmaM[yyy] / nn[yyy];
+            // the resolution along the slice: sigma at its Qy (the wavelength term along y is Qy dlambda)
+            sig = sigma(std::fabs(qr), detdist, C, lambda, deltaLambda, r1, r2);
             
             
             //
@@ -3741,16 +3735,22 @@ void dan18::sigmaGslMatrix
     // calculation of radial averaging
     //------------------------------------
     double R, Q;
-    
-    for (int xxx=0;xxx<md;xxx++)    for (int yyy=0;yyy<md;yyy++)
-    {
-        //+++
-        R=detelem*sqrt((xxx-Xcenter)*(xxx-Xcenter)+(yyy-Ycenter)*(yyy-Ycenter));
-        Q  = 4.0*M_PI/lambda * sin(0.5*atan(R/detdist));
-        gsl_matrix_set(sigmaMa,yyy,xxx, sigma( Q, detdist, C, lambda, deltaLambda,  r1, r2 ));
-    }
-    
-    gsl_matrix_mul_elements(sigmaMa,mask);
+    // the pixel height over its width: rows are that much farther apart
+    double asymmetry = lineEditAsymetry->text().toDouble();
+    if (asymmetry <= 0.0)
+        asymmetry = 1.0;
+
+    for (int xxx = 0; xxx < md; xxx++)
+        for (int yyy = 0; yyy < md; yyy++)
+        {
+            //+++
+            R = detelem *
+                sqrt((xxx - Xcenter) * (xxx - Xcenter) + asymmetry * asymmetry * (yyy - Ycenter) * (yyy - Ycenter));
+            Q = 4.0 * M_PI / lambda * sin(0.5 * atan(R / detdist));
+            gsl_matrix_set(sigmaMa, yyy, xxx, sigma(Q, detdist, C, lambda, deltaLambda, r1, r2));
+        }
+
+    gsl_matrix_mul_elements(sigmaMa, mask);
 }
 
 //+++
@@ -3766,20 +3766,25 @@ void dan18::sigmaMatrix(int md, gsl_matrix *mask, double Xcenter, double Ycenter
     // calculation of radial averaging
     //------------------------------------
     double R, Q;
-    
-    gsl_matrix* sigmaMa=gsl_matrix_alloc(md,md);
-    
-    for (int xxx=0;xxx<md;xxx++)    for (int yyy=0;yyy<md;yyy++)
-    {
-        //+++
-        R=detelem*sqrt((xxx-Xcenter)*(xxx-Xcenter)+(yyy-Ycenter)*(yyy-Ycenter));
-        Q  = 4.0*M_PI/lambda * sin(0.5*atan(R/detdist));
-        gsl_matrix_set(sigmaMa,yyy,xxx, sigma( Q, detdist, C, lambda, deltaLambda,  r1, r2 ));
-    }
-    
-    gsl_matrix_mul_elements(sigmaMa,mask);
-    
-    
+    // the pixel height over its width: rows are that much farther apart
+    double asymmetry = lineEditAsymetry->text().toDouble();
+    if (asymmetry <= 0.0)
+        asymmetry = 1.0;
+
+    gsl_matrix *sigmaMa = gsl_matrix_alloc(md, md);
+
+    for (int xxx = 0; xxx < md; xxx++)
+        for (int yyy = 0; yyy < md; yyy++)
+        {
+            //+++
+            R = detelem *
+                sqrt((xxx - Xcenter) * (xxx - Xcenter) + asymmetry * asymmetry * (yyy - Ycenter) * (yyy - Ycenter));
+            Q = 4.0 * M_PI / lambda * sin(0.5 * atan(R / detdist));
+            gsl_matrix_set(sigmaMa, yyy, xxx, sigma(Q, detdist, C, lambda, deltaLambda, r1, r2));
+        }
+
+    gsl_matrix_mul_elements(sigmaMa, mask);
+
     if (radioButtonOpenInProject->isChecked())
         makeMatrixSymmetric(sigmaMa, sampleMatrix, "SIGMA::Matrix", md, true);
     else
@@ -3902,7 +3907,7 @@ void dan18::gslMatrixWaTrDet ( int md, double Tr,  gsl_matrix *sensTrDet, double
 
 //+++
 void dan18::dQmatrix(int md, gsl_matrix *mask, double Xcenter, double Ycenter, QString &sampleMatrix, double lambda,
-                     double detdist, double detelem, double pixelAsymetry)
+                     double deltaLambda, double detdist, double detelem, double pixelAsymetry)
 {
     sampleMatrix = "dQ-" + sampleMatrix;
 
@@ -3912,21 +3917,18 @@ void dan18::dQmatrix(int md, gsl_matrix *mask, double Xcenter, double Ycenter, Q
     //------------------------------------
     // calculation of radial averaging
     //------------------------------------
+    // dQ of each pixel as of an I[Q] point (dQ()): its width the pixel's, the run's wavelength spread (it had its
+    // own model: 0.01, 1 cm over D and the pixel over the radius, infinite at Q = 0)
     double R, Q;
-    double epsilonR;
-    double epsilonLambda=0.01;
-    double epsilonD=1.0/detdist;
-    gsl_matrix* matrixQ=gsl_matrix_alloc(md, md);
-    
-    for (int xxx=0;xxx<md;xxx++)    for (int yyy=0;yyy<md;yyy++)
-    {
-        //+++
-        R=detelem*sqrt((xxx-Xcenter)*(xxx-Xcenter)+pixelAsymetry*pixelAsymetry*(yyy-Ycenter)*(yyy-Ycenter));
-        Q  = 4.0*M_PI/lambda * sin(0.5*atan(R/detdist));
-        epsilonR=2.0*M_PI*detelem/Q/lambda/detdist;
-        gsl_matrix_set(matrixQ,yyy,xxx, Q*sqrt(epsilonR*epsilonR+epsilonLambda*epsilonLambda+epsilonD*epsilonD));
-    }
-    
+    gsl_matrix *matrixQ = gsl_matrix_alloc(md, md);
+    for (int xxx = 0; xxx < md; xxx++)
+        for (int yyy = 0; yyy < md; yyy++)
+        {
+            R = detelem * sqrt((xxx - Xcenter) * (xxx - Xcenter) +
+                               pixelAsymetry * pixelAsymetry * (yyy - Ycenter) * (yyy - Ycenter));
+            Q = 4.0 * M_PI / lambda * sin(0.5 * atan(R / detdist));
+            gsl_matrix_set(matrixQ, yyy, xxx, dQ(Q, deltaLambda, R, detdist, detelem));
+        }
     gsl_matrix_mul_elements(matrixQ,mask);
     
     if (radioButtonOpenInProject->isChecked())
@@ -4418,80 +4420,77 @@ double dan18::sigma( double Q, double D, double C, double Lambda, double deltaLa
 double dan18::sigmaQmerged( double Q, double D, double C, double Lambda, double deltaLambda,
                            double r1, double r2, int numberMergedQ)
 {
-    double PI =M_PI;
-    double pixel=lineEditResoPixelSize->text().toDouble();
-    double pixelAsymetry  = lineEditAsymetry->text().toDouble();
-    
-    double binning=comboBoxBinning->currentText().toDouble();
-    double Rdet    =numberMergedQ*binning*(1.0+pixelAsymetry)/2.0*pixel/M_SQRTPI;      //[cm]
-    
-    //+++ new
-    double RdetReso=lineEditDetReso->text().toDouble()/M_SQRTPI;
-    if (RdetReso>Rdet) Rdet=RdetReso;
-    //---
-    
-    double SigQ2,SigQ;
-    
+    // sigma = the square root of the sum of the variances of the independent contributions (Mildner & Carpenter
+    // 1984; NIST); without focusing with the angle factors of Pedersen et al. (1990). r1, r2: the radii of round
+    // apertures with the same variance (Collimation::readR1, readR2)
+    const double pixel = lineEditResoPixelSize->text().toDouble();
+    const double pixelAsymetry = lineEditAsymetry->text().toDouble();
+    const double binning = comboBoxBinning->currentText().toDouble();
+    const double pixelWidth = binning * (1.0 + pixelAsymetry) / 2.0 * pixel;
+    // Sigma-AV: the ring averaged into the point, numberMergedQ pixels wide [cm]: a box, variance width^2 / 12
+    const double widthAV = numberMergedQ * pixelWidth;
+    // Sigma-D1: the detector's spatial resolution, its real pixel ("Detector Space Resolusion"; not set: one pixel)
+    // [cm]: a box, variance width^2 / 12
+    const double detectorResolution = lineEditDetReso->text().toDouble();
+    const double widthD1 = detectorResolution > 0.0 ? detectorResolution : pixelWidth;
+    const double K0 = 2.0 * M_PI / Lambda; //[A-1]
+
+    //+++ Sigma-W: the selector's triangular distribution of FWHM deltaLambda, variance deltaLambda^2 / 6, whatever the
+    // optic
+    const double wavelength = Q * Q * deltaLambda * deltaLambda / 6.0;
+
     if (checkBoxResoFocus->isChecked())
     {
-        C=D;
-        double f=D/2.0;
-        SigQ2=PI*PI/Lambda/Lambda/3.0*(3.0*r1*r1/C/C+2.0*r2*r2/f/f*deltaLambda*deltaLambda+Rdet*Rdet/D/D+Lambda*Lambda/2.0/2.0/PI/PI*Q*Q*deltaLambda*deltaLambda);
-        
-        SigQ=2*0.4246609*sqrt(SigQ2);
-        return SigQ;
+        // a symmetric optic between source and detector, both at 2f: 2f = C (the collimation), 1:1 imaging; the
+        // sample at D before the detector (small angles). The source's image, a uniformly lit disc of radius r1, seen
+        // from the sample: variance r1^2 / 4 / D^2. Lenses only (focal length ~ 1/lambda^2; a mirror is achromatic):
+        // a wavelength lambda (1 + e) moves the image plane by -4 e C, a ray at height h on the optic lands 4 e h off
+        // the image; the beam at the optic has the radius r2 C / D (it converges onto the detector through the sample
+        // aperture): variance 16 (deltaLambda^2 / 6) (r2 C / D)^2 / 4, seen from the sample / D^2 (valid while the
+        // shift 4 C deltaLambda stays well below D). Gravity, lenses only (a mirror compensates it): a neutron falls
+        // by A lambda^2 z^2 over z, 2 A lambda^2 C^2 from source to detector through the lenses; its wavelength
+        // spread spreads the fall by 4 A lambda^2 C^2 e, vertically: half its variance in the radial average
+        const double source = r1 * r1 / 4.0 / D / D;
+        const bool lenses = comboBoxResoFocusType->currentIndex() == 0;
+        const double chromatic =
+            lenses ? 2.0 / 3.0 * deltaLambda * deltaLambda * r2 * r2 * C * C / (D * D * D * D) : 0.0;
+        const double fall = 3.13311e-9 * Lambda * Lambda; // A lambda^2 [1/cm]: g m^2 / (2 h^2), lambda in A
+        const double gravity =
+            lenses ? 4.0 / 3.0 * fall * fall * C * C * C * C * deltaLambda * deltaLambda / D / D : 0.0;
+        // the detector seen from the sample, as without focusing
+        const double detector = (widthD1 * widthD1 + widthAV * widthAV) / 12.0 / D / D;
+        return std::sqrt(K0 * K0 * (source + chromatic + gravity + detector) + wavelength);
     }
-    
-    
-    
-    double Theta0,cos2Theta02, a1, a2, beta1;
-    double K0                 = 2.0*PI/Lambda;   //[A-1]
-    
-    //
-    Theta0          = asin(Q/2.0/K0);
-    cos2Theta02     = cos(2.0*Theta0)*cos(2.0*Theta0);
-    
-    //+++ Sigma-D1  +++
-    double SigmaDetector      = K0*cos(Theta0)*cos2Theta02*Rdet/D;       //[A-1]
-    
-    //
-    if (cos2Theta02!=0.0) a1 = r1/(C+D/cos2Theta02); else a1 =0.0;
-    a2 = r2*cos2Theta02/D;
-    
-    //
-    if (a2>a1)
-    {
-        beta1   =2.0*r2*(1.0/C+cos2Theta02/D)-r1*r1*D/(2.0*r2*cos2Theta02*C*(C+D/cos2Theta02));
-    }
-    else
-    {
-        beta1   =2.0*r1/C-0.5*r2*r2/r1*cos2Theta02*cos2Theta02*(C+D/cos2Theta02)*(C+D/cos2Theta02)/C/D/D;
-    }
-    
-    //+++ Sigma-W  +++
-    SigQ2        =Q*Q*deltaLambda*deltaLambda;
-    //+++ Sigma-D1  +++
-    SigQ2       +=SigmaDetector*SigmaDetector;
-    //+++ Sigma-C1  +++
-    SigQ2       +=K0*K0*cos(Theta0)*cos(Theta0)*beta1*beta1;
-    //+++  Sigma-AV  +++
-    SigQ2       +=K0*K0*cos(Theta0)*cos(Theta0)*cos2Theta02*cos2Theta02*Rdet/D*Rdet/D;
-    //
-    SigQ         =0.4246609*sqrt(SigQ2); //[A-1];
-    
-    return SigQ;
+
+    const double Theta0 = asin(Q / 2.0 / K0);
+    const double cosTheta0 = cos(Theta0);
+    const double cos2Theta02 = cos(2.0 * Theta0) * cos(2.0 * Theta0);
+    const double detectorAngle = K0 * cosTheta0 * cos2Theta02 / D;
+
+    //+++ Sigma-W
+    double SigQ2 = wavelength;
+    //+++ Sigma-D1
+    SigQ2 += detectorAngle * detectorAngle * widthD1 * widthD1 / 12.0;
+    //+++ Sigma-C1: the uniformly lit round apertures, variance r^2 / 4 of each, the source seen at C, the sample
+    // aperture at 1 / (1 / C + cos^2(2 theta) / D)
+    const double sampleApertureAngle = r2 * (1.0 / C + cos2Theta02 / D);
+    SigQ2 += K0 * K0 * cosTheta0 * cosTheta0 * (r1 * r1 / C / C + sampleApertureAngle * sampleApertureAngle) / 4.0;
+    //+++ Sigma-AV
+    SigQ2 += detectorAngle * detectorAngle * widthAV * widthAV / 12.0;
+
+    return std::sqrt(SigQ2); //[A-1]
 }
 
 
 //+++ Q-error +++
-double dan18::dQ( double Q, int numberF , double d, double D, double pixel )
+double dan18::dQ(double Q, double deltaLambda, double radius, double D, double width)
 {
-    double deltaLambda=0;
-    if (numberF>100) deltaLambda=1/sqrt(double(numberF));
-    else deltaLambda=0.01;
-    
-    double deltaSmalD=0;
-    if (d>0) deltaSmalD=0.5*pixel/d;
+    // the header's relative wavelength spread (it was 1/sqrt(selector rpm) above 100 rpm, else 0.01); none: 0.01
+    if (deltaLambda <= 0.0)
+        deltaLambda = 0.01;
+
+    // half the width of the point (or pixel) over its radius; none at the center (Q = 0)
+    const double deltaSmalD = radius > 0.0 ? 0.5 * width / radius : 0.0;
     
     double deltaD=0;
     if (D<50.0) deltaD=1.0/D;
@@ -5414,13 +5413,14 @@ bool dan18::danDanMultiButtonSingleLine(    QString button,
                 detRotationY);
     //+++ dQ [x,y]
     if (button == "dQ-x-y")
-        dQmatrix(MD, mask, Xcenter, Ycenter, nameQI, Lambda, Detector, pixel * binning, pixelAsymetry);
+        dQmatrix(MD, mask, Xcenter, Ycenter, nameQI, Lambda, deltaLambda, Detector, pixel * binning, pixelAsymetry);
 
     toResLog("DAN :: "+status+"\n");
     
     
     //+++ Clean Memory +++
     gsl_matrix_free(Sample);
+    clearSmoothing();
     gsl_matrix_free(SampleErr);
     gsl_matrix_free(Buffer);
     gsl_matrix_free(BufferErr);

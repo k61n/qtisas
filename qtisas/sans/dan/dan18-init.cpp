@@ -645,6 +645,8 @@ void dan18::instrumentSelected(QString instrName)
 
     lineEditDetReso->setText("0.0");
     checkBoxResoFocus->setChecked(false);
+    comboBoxResoFocusType->setCurrentIndex(0); // lenses: the chromatic term counts
+    comboBoxResoFocusType->setVisible(false);
     comboBoxUnitsSelector->setCurrentIndex(0);
     checkBoxSortOutputToFolders->setChecked(true);
     checkBoxSensTr->setChecked(false);
@@ -1352,6 +1354,10 @@ void dan18::applyInstrumentLines(QStringList lst, bool inFocus)
             break;
         case InstrumentSANS::Parameter::Resolusion_Focusing:
             checkBoxResoFocus->setChecked(line.contains("Yes"));
+            comboBoxResoFocusType->setVisible(checkBoxResoFocus->isChecked());
+            break;
+        case InstrumentSANS::Parameter::Resolusion_Focusing_Type:
+            comboBoxResoFocusType->setCurrentIndex(line.contains("mirror", Qt::CaseInsensitive) ? 1 : 0);
             break;
         case InstrumentSANS::Parameter::Resolusion_Detector:
             lineEditDetReso->setText(line);
@@ -1735,6 +1741,7 @@ void dan18::saveInstrumentAsCpp(QString instrPath, QString instrName  )
              .arg(checkBoxSkiptransmisionConfigurations->isChecked() ? "Yes" : "No");
     s += QString("lst<<\"[Skipt-Output-Folders] %1\";\n").arg(checkBoxSortOutputToFolders->isChecked() ? "Yes" : "No");
     s += QString("lst<<\"[Resolusion-Focusing] %1\";\n").arg(checkBoxResoFocus->isChecked() ? "Yes" : "No");
+    s += QString("lst<<\"[Resolusion-Focusing-Type] %1\";\n").arg(comboBoxResoFocusType->currentText());
     s += QString("lst<<\"[Resolusion-CA-Round] %1\";\n").arg(checkBoxResoCAround->isChecked() ? "Yes" : "No");
     s += QString("lst<<\"[Resolusion-SA-Round] %1\";\n").arg(checkBoxResoSAround->isChecked() ? "Yes" : "No");
 
@@ -2002,6 +2009,7 @@ QString dan18::instrumentText(const QString &fileName)
              .arg(checkBoxSkiptransmisionConfigurations->isChecked() ? "Yes" : "No");
     s += QString("[Skipt-Output-Folders] %1\n").arg(checkBoxSortOutputToFolders->isChecked() ? "Yes" : "No");
     s += QString("[Resolusion-Focusing] %1\n").arg(checkBoxResoFocus->isChecked() ? "Yes" : "No");
+    s += QString("[Resolusion-Focusing-Type] %1\n").arg(comboBoxResoFocusType->currentText());
     s += QString("[Resolusion-CA-Round] %1\n").arg(checkBoxResoCAround->isChecked() ? "Yes" : "No");
     s += QString("[Resolusion-SA-Round] %1\n").arg(checkBoxResoSAround->isChecked() ? "Yes" : "No");
 
