@@ -22,7 +22,7 @@
 #   p.setConfiguration(1, emptyBeam="<EB>", darkCurrent="<B4C>", calibrant="<plexi>", calibrantEmptyBeam="<EB>",
 #                      calibrantDarkCurrent="<B4C>", center="<run>", transmission=<True: Tr measured here>)
 #   p.calculate()                                          # 4. C, D, lambda, factor, centers (p.configuration(i))
-#   s = p.newScriptTable("script", [<sample runs>])        # 5. the samples; set "Thickness" [cm] in it if needed
+#   s = p.newScriptTable("script", [<sample runs>])        # 5. the samples; "Thickness" [cm]: none or 0 -> 0.1
 #   p.calculateTransmissions(s)
 #   qi = p.process(s)                                      # 6. I[Q] tables "QI-SM-<run>-<sample>" (+ template)
 #   merged = Dan.Merge.join(s + "-mergingTemplate")        # 7. one table per sample, the configurations joined
@@ -66,7 +66,14 @@
 #   remove points at the curve ends       -> Dan.Processing.Options.setRemovePoints(first, last)   (I[Q])
 #                                            Dan.Merge.join(..., removeFirst=, removeLast=)          (merged)
 #   ASCII files instead of tables         -> p.process(s, output="files"), Dan.Merge.join(t, output="files")
+#   I[Q] columns (sigma, dQ, anisotropy)   -> Dan.Processing.Options.setCurveFormat(columns="dq-sigma", anisotropy=True)
+#   2D as Qx-Qy (SasView) / polar files    -> p.Options.setMatrixFormat("qxqy-resolution", header=True, sasview=True),
+#                                            then p.process(s, "I-x-y", "files")
+#   Guinier / Zimm / Porod / Kratky curves -> p.Options.setPresentation("Guinier") before process(); back: "QI"
 #   join curves of two instruments        -> Dan.Merge.joinTables(name, [table1, table2]); agreement: overlap(t1, t2)
+#   the Q resolution (focusing, lenses|mirror, round apertures, detector resolution [cm]) ->
+#     Dan.Options.Config.setParameters({"Resolusion-Focusing": "Yes", "Resolusion-Focusing-Type": "mirror",
+#     "Resolusion-CA-Round": "No", "Resolusion-SA-Round": "No", "Resolusion-Detector": "0.08"})
 #   any instrument setting, e.g. points always removed -> Dan.Options.Config.setParameters({...});
 #                                            keep it: Dan.Options.saveInstrument("<name>")
 
@@ -106,6 +113,12 @@ autoOptions()->dict  setAutoOptions({name: value, ...})   # auto mode's rules (O
 #   sensitivity "run"|"files"|"flat"
 #   scale True|False (off; on in the KWS-3 presets): autoConfig() adds the Scale column (autoScale());
 #   centerOffsets True|False (off): autoConfig() adds HShift, VShift (addCenterOffsets(s, "mask", "sens"))
+#   flexibleFrom (m, 3.5) / flexibleMin (m, 1.5): empty beams from flexibleFrom on take the calibrant at the
+#     nearest other distance above flexibleMin (with flexibleDistance)
+#   findBeamstop True|False (on): no direct beam measured -> the beam-stop box centered on its shadow in the EB
+#   openMask "auto"|"yes"|"no": "mask" without the beam stop (auto: EB center, masks per configuration, flat sens)
+#   autoAdd (off): autoConfig() first adds repeated runs (autoAdd()); infoTable (off): "<script>-info" table
+#   processIQ (off): autoConfig() ends with process(s); merge (off, with processIQ): Dan.Merge.join(...-mergingTemplate)
 
 # --- Dan.Rawdata
 runs()->list                     # the run numbers of the input folder, sorted
@@ -179,8 +192,9 @@ newSensitivity(run, name="sens", emptyBeam="", darkCurrent="", transmission=1.0,
 #   errorRange=(min, max): only pixels with a relative error in % inside are used — the others are ALSO masked in
 #   the mask (lastMessages() says how many; newMask() makes it anew); errorMatrix=True: also "<sens>Error";
 #   maskedValue: the sensitivity of masked pixels; these three: None as set, stored with instrument and session
-#   center=(x, y): the center of the wide-angle corrections (1-based); None: the mask's beam stop
-center(name="sens")->tuple|None   # (x, y, "mask"|"manual"): the center it was made with; None: older label
+#   center=(x, y): the center of the wide-angle corrections (1-based); None: the beam center of the run's
+#   configuration (the mask's beam stop when no configuration has it)
+center(name="sens")->tuple|None   # (x, y, "configuration"|"mask"|"manual"): its center; None: older label
 loadSensitivity(file, name="sens")->str   sensitivities()->list
 saveSensitivity(name="sens", file=None)->str   # the path; None: <input folder>/<sens>.sens
 autoSensitivity()->str           # auto mode: "sens" from the sensitivity run, the *.sens file(s) or flat
@@ -211,7 +225,7 @@ newScriptTable(name, runs)->str   # one row per run, its configuration found by 
 #   Transmission-Sample is "0.8981 [ ±0.0012 ]" -> float(t.text(col, row).split("[")[0]) (t.cell() gives 0.0 for it);
 #   #-Run is the run as text ("53222"), #-Condition the configuration number
 calculateTransmissions(scriptTable)
-process(scriptTable, kind="I-Q", output="project")->list   # the tables (or files) made; kind: "I-Q", "I-x-y",
+process(scriptTable, kind="I-Q", output="project")->list   # tables, matrices or files made; kind: "I-Q", "I-x-y",
 #   "dI-x-y", "I-Qx", "I-Qy", "Sigma-x-y", "Q-x-y", "dQ-x-y", "I-Polar"; I-Q also makes "<script>-mergingTemplate"
 autoConfigurations()->list of dict   # auto mode: the table of configurations from the runs; configuration(i) of each
 runCenter(run, mask="mask", sens="sens")->tuple (x, y)   # a run's beam center by the center method (1-based)
@@ -221,7 +235,28 @@ addCenterOffsets(scriptTable, mask=None, sens=None)->int   # HShift, VShift colu
 autoScale(scriptTable)->int      # a wavelength whose configurations all measure transmissions: a "Scale" column,
 #   every row normalized to the same sample at the longest distance; the rows scaled
 autoConfig(scriptTable="script")->str   # auto mode up to the script table, ready for process() (and Dan.Merge.join())
-# Dan.Processing.Options:  setRemovePoints(first, last)   removePoints()->tuple
+autoAdd()->list   # repeated runs of a sample (one configuration) added into new runs; their single runs moved to
+#   the sub-folder "added-sources" (no run folder any more); [] nothing to add; ValueError when adding failed
+autoInfoTable(name="info")->str   # info table (header values, a row per run) of the runs the auto filters select;
+#   a new table (an existing name: ValueError)
+# Dan.Processing.Options  (each setter: None keeps the option; the getter returns a dict, or the value)
+setRemovePoints(first, last)   removePoints()->tuple   # I[Q] points removed at both ends
+setSmoothing(pixels)   smoothing()->int                # 1 (none), 5, 9, 25 pixels; error bars stay the data's
+setWideAngle(parallax=None, transmission=None, window=None)   wideAngle()->dict
+#   parallax "off" | "flat" (cos^3) | "tubes" (3He); transmission: angle-dependent Tr; window: column TrDet
+setNormalization(by=None, factor=None, darkCurrentByTime=None)   normalization()->dict
+#   by "monitor2" | "time" | "monitor1", factor 1..1e6; darkCurrentByTime: #BC per second, to each run's time
+setRadialAveraging(method=None, linear=None, progressive=None)   radialAveraging()->dict
+#   method "shells" | "hf" (both follow a rotated detector); linear 1..100 rings/point; progressive 1.0..1.2
+setMatrixFormat(format=None, header=None, sasview=None, ignoreMask=None)   matrixFormat()->dict
+#   I-x-y into files: "matrix" | "xy" | "qxqy" (Qx^2+Qy^2=Q^2) | "qxqy-resolution" (SasView 9 cols) | "polar";
+#   sasview: NIST's "Data columns ... err(I)" + "ASCII data" lines; ignoreMask off by default, kept by sessions
+setCurveFormat(columns=None, header=None, anisotropy=None, anisotropyOffset=None)   curveFormat()->dict
+#   after Q, I, dI: "sigma" | "dq" | "none" | "dq-sigma"; anisotropy column; offset 0..360 deg;
+#   header: a "###" line with the presentation's columns (I in 1/cm, or counts for "Counts per Channel")
+setPresentation(name)   presentation()->str
+#   QI, Guinier, Zimm, Porod, Porod2, logQ, logI, Debye, 1Moment, 2Moment, Kratky, GuinierRod, GuinierPlate;
+#   outputs named QI-<name>-... hold x, y, dy, dx (dQ follows Q) of it; sigma stays the resolution in Q
 
 # --- Dan.Merge  (tables of the project)
 join(templateTable, overlap=30, smart=False, removeFirst=0, removeLast=0, output="project")->list
