@@ -26,23 +26,24 @@ assert [c["mask"] for c in config] == ["mask-bs-9m", "mask-bs-1m"], config  # se
 assert [(c["xCenter"], c["yCenter"]) for c in config] == [(120.044, 140.661), (119.972, 130.853)], config
 s = table(script)
 tr = [s.text(dr.column(s, "Transmission-Sample"), r).split("[")[0].strip() for r in range(1, 7)]
-assert tr == ["0.5380", "0.5471", "0.4829", "0.8232", "0.7811", "0.8088"], tr
+assert tr == ["0.5380", "0.5471", "0.4829", "0.8232", "0.7811", "0.8087"], tr
 Dan.Processing.process(script)
 assert Dan.Merge.join(script + "-mergingTemplate") == ["H-M", "H-J", "H-L"]
 reference = {  # dan-example-kws3.qti: rows, (Q, I) of rows 1, 20 and the last (merged tables saved to 7 digits);
     # the 1.2 m tables' last point (its ring leaves the detector) differs: the HF averaging's corner pixel of a
     # point at x in (-1, 0) was pixel 0, weights 1.5 and -0.5 (a masked pixel 0 left a negative weight); now floor();
-    # and the parallax correction around the row's beam center, not the mask's beam-stop box (2e-5 there)
+    # and the parallax correction around the row's beam center, not the mask's beam-stop box (2e-5 there); the 1.2 m
+    # rows' direct-beam transmissions with the solved dead-time root (one Newton step before: H-M +3.5e-4)
     "QI-SM-00082557-H-M": (132, ((0.000108956598, 11716934), (0.000453985689, 145859.18), (0.00248781846, 1251.67575))),
     "QI-SM-00082559-H-J": (132, ((0.000108956598, 11797939.9), (0.000453985689, 124618.121),
                                  (0.00248781846, 972.144445))),
     "QI-SM-00082561-H-L": (132, ((0.000108956598, 14213305.1), (0.000453985689, 207155.057),
                                  (0.00248781846, 1915.47445))),
-    "QI-SM-00082646-H-J": (122, ((0.00139221903, 8485.04398), (0.00403734514, 195.872129), (0.0182287105, 3.18524089))),
-    "QI-SM-00082647-H-L": (122, ((0.00139221903, 23269.6231), (0.00403734514, 470.741637), (0.0182287105, 5.78667319))),
-    "QI-SM-00082648-H-M": (122, ((0.00139221903, 11369.6134), (0.00403734514, 317.46774), (0.0182287105, 2.65957693))),
-    "H-M": (229, ((0.0001089566, 11716930), (0.0004539857, 145859.2), (0.01822871, 2.659577))),
-    "H-L": (229, ((0.0001089566, 14213310), (0.0004539857, 207155.1), (0.01822871, 5.786673))),
+    "QI-SM-00082646-H-J": (122, ((0.00139221903, 8485.03175), (0.00403734514, 195.872155), (0.0182287105, 3.18523525))),
+    "QI-SM-00082647-H-L": (122, ((0.00139221903, 23269.6257), (0.00403734514, 470.741965), (0.0182287105, 5.78666938))),
+    "QI-SM-00082648-H-M": (122, ((0.00139221903, 11373.5726), (0.00403734514, 317.50691), (0.0182287105, 2.66107676))),
+    "H-M": (229, ((0.0001089566, 11716930), (0.0004539857, 145859.2), (0.01822871, 2.661077))),
+    "H-L": (229, ((0.0001089566, 14213310), (0.0004539857, 207155.1), (0.01822871, 5.786669))),
 }
 for name, (count, values) in reference.items():
     dr.check_rows(name, count, values, rel=1e-6 if name.startswith("QI") else 5e-6)
