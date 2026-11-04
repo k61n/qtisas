@@ -189,7 +189,8 @@ QString dan18::singleDanMultiButton(int iRow, const QString &button, const QStri
                 sigmaGslMatrix(sigmaMa, MD, mask, Xcenter, Ycenter, lambda, deltaLambda, C, detdist, pixel * binning,
                                r1, r2);
                 saveMatrixAsTableToFile(nameQI, Sample, SampleErr, sigmaMa, mask, MD, Xcenter, Ycenter, lambda,
-                                        deltaLambda, detdist, pixel * binning, pixel * binning * pixelAsymetry);
+                                        deltaLambda, detdist, pixel * binning, pixel * binning * pixelAsymetry,
+                                        gravityVariance(detdist, C, lambda, deltaLambda));
                 gsl_matrix_free(sigmaMa);
             }
         }

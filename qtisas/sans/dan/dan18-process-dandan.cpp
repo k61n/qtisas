@@ -4454,12 +4454,10 @@ double dan18::sigmaQmerged( double Q, double D, double C, double Lambda, double 
         const bool lenses = comboBoxResoFocusType->currentIndex() == 0;
         const double chromatic =
             lenses ? 2.0 / 3.0 * deltaLambda * deltaLambda * r2 * r2 * C * C / (D * D * D * D) : 0.0;
-        const double fall = 3.13311e-9 * Lambda * Lambda; // A lambda^2 [1/cm]: g m^2 / (2 h^2), lambda in A
-        const double gravity =
-            lenses ? 4.0 / 3.0 * fall * fall * C * C * C * C * deltaLambda * deltaLambda / D / D : 0.0;
         // the detector seen from the sample, as without focusing
         const double detector = (widthD1 * widthD1 + widthAV * widthAV) / 12.0 / D / D;
-        return std::sqrt(K0 * K0 * (source + chromatic + gravity + detector) + wavelength);
+        return std::sqrt(K0 * K0 * (source + chromatic + detector) + gravityVariance(D, C, Lambda, deltaLambda) / 2.0 +
+                         wavelength);
     }
 
     const double Theta0 = asin(Q / 2.0 / K0);
@@ -4477,10 +4475,27 @@ double dan18::sigmaQmerged( double Q, double D, double C, double Lambda, double 
     SigQ2 += K0 * K0 * cosTheta0 * cosTheta0 * (r1 * r1 / C / C + sampleApertureAngle * sampleApertureAngle) / 4.0;
     //+++ Sigma-AV
     SigQ2 += detectorAngle * detectorAngle * widthAV * widthAV / 12.0;
+    //+++ gravity: vertical, half its variance in the radial average
+    SigQ2 += gravityVariance(D, C, Lambda, deltaLambda) / 2.0;
 
     return std::sqrt(SigQ2); //[A-1]
 }
 
+
+double dan18::gravityVariance(double D, double C, double Lambda, double deltaLambda)
+{
+    const bool focusing = checkBoxResoFocus->isChecked();
+    if (D <= 0.0 || C <= 0.0 || (focusing && comboBoxResoFocusType->currentIndex() != 0))
+        return 0.0;                                   // a mirror compensates gravity
+    const double K0 = 2.0 * M_PI / Lambda;            //[A-1]
+    const double fall = 3.13311e-9 * Lambda * Lambda; // A lambda^2 [1/cm]: g m^2 / (2 h^2), lambda in A
+    // the fall at the detector, relative to the beam center (measured at the nominal wavelength): through the lenses
+    // 2 A lambda^2 C^2; through the two apertures (a parabola fixed at the source aperture and the sample)
+    // A lambda^2 (C + D) D. A wavelength lambda (1 + e) falls 2 e times more
+    const double drop = focusing ? 2.0 * fall * C * C : fall * (C + D) * D;
+    const double spread = 2.0 * drop; // the fall's change per relative wavelength change [cm]
+    return K0 * K0 * spread * spread * deltaLambda * deltaLambda / 6.0 / D / D;
+}
 
 //+++ Q-error +++
 double dan18::dQ(double Q, double deltaLambda, double radius, double D, double width)
@@ -5338,7 +5353,8 @@ bool dan18::danDanMultiButtonSingleLine(    QString button,
             sigmaGslMatrix(sigmaMa, MD, mask, Xcenter, Ycenter, Lambda, selector->readDeltaLambda(Nsample), C, Detector,
                            pixel, collimation->readR1(Nsample), collimation->readR2(Nsample));
             saveMatrixAsTableToFile(fileName, Sample, ErrMatrix, sigmaMa, mask, MD, Xcenter, Ycenter, Lambda,
-                                    selector->readDeltaLambda(Nsample), Detector, pixel, pixel * pixelAsymetry);
+                                    selector->readDeltaLambda(Nsample), Detector, pixel, pixel * pixelAsymetry,
+                                    gravityVariance(Detector, C, Lambda, selector->readDeltaLambda(Nsample)));
             gsl_matrix_free(sigmaMa);
         }
     }

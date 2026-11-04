@@ -600,7 +600,7 @@ void dan18::gslMatrixShift(gsl_matrix *gmatrix, int MD, double HShift, double VS
 //+++ Save Sensitivity Matrx to file
 void dan18::saveMatrixAsTableToFile(const QString &fn, gsl_matrix *i, gsl_matrix *di, gsl_matrix *sigmaMa,
                                     gsl_matrix *mask, int MaDe, double xCenter, double yCenter, double wl, double dwl,
-                                    double d, double xPixel, double yPixel)
+                                    double d, double xPixel, double yPixel, double gravity)
 {
     int format = comboBoxIxyFormat->currentIndex();
 
@@ -659,6 +659,7 @@ void dan18::saveMatrixAsTableToFile(const QString &fn, gsl_matrix *i, gsl_matrix
     }
 
     double Q, Qx, Qy, phi;
+    double sin2 = 0.0; // sin^2 of the pixel's azimuth from the horizontal (Qy^2 / Q^2)
     for (int iy = 0; iy < MaDe; iy++)
         for (int jx = 0; jx < MaDe; jx++)
         {
@@ -701,6 +702,7 @@ void dan18::saveMatrixAsTableToFile(const QString &fn, gsl_matrix *i, gsl_matrix
                 const double y = (iy - yCenter) * yPixel;
                 const double r = std::hypot(x, y);
                 Q = 4 * M_PI / wl * sin(0.5 * atan(r / d));
+                sin2 = r > 0 ? y * y / r / r : 0.0;
                 stream << QString::number(r > 0 ? Q * x / r : 0.0, 'E', 8) << "\t";
                 stream << QString::number(r > 0 ? Q * y / r : 0.0, 'E', 8) << "\t";
             }
@@ -715,11 +717,13 @@ void dan18::saveMatrixAsTableToFile(const QString &fn, gsl_matrix *i, gsl_matrix
                 // of sigma^2 as in sigmaQmerged() (with and without focusing)
                 sigmaDWL = Q * dwl / std::sqrt(6.0);
                 sigma = gsl_matrix_get(sigmaMa, iy, jx);
+                // gravity (focusing lenses) spreads Q vertically: sigma holds half its variance (the radial average);
+                // here it goes to sigma(para) by sin^2 of the azimuth, to sigma(perp) by cos^2
+                const double para2 = sigma * sigma - gravity / 2.0 + gravity * sin2;
+                const double perp2 = sigma * sigma - sigmaDWL * sigmaDWL - gravity / 2.0 + gravity * (1.0 - sin2);
                 stream << "\t" << QString::number(0.0, 'f', 3);
-                stream << "\t" << QString::number(sigma * maskValue, 'E', 8);
-                stream << "\t"
-                       << QString::number(std::sqrt(std::max(0.0, maskValue * (sigma * sigma - sigmaDWL * sigmaDWL))),
-                                          'E', 8);
+                stream << "\t" << QString::number(std::sqrt(std::max(0.0, maskValue * para2)), 'E', 8);
+                stream << "\t" << QString::number(std::sqrt(std::max(0.0, maskValue * perp2)), 'E', 8);
 
                 // the shadow factor (1: in the data), then SasView's mask (1: masked, left out; with "ignore mask")
                 stream << "\t" << QString::number(maskValue, 'f', 0);

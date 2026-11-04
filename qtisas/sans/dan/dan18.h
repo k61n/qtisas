@@ -454,7 +454,11 @@ public:
     static void gslMatrixShift(gsl_matrix *gmatrix, int MD, double HShift, double VShift);
     void saveMatrixAsTableToFile(const QString &fn, gsl_matrix *i, gsl_matrix *di, gsl_matrix *sigma, gsl_matrix *mask,
                                  int MaDe, double xCenter, double yCenter, double wl, double dwl, double d,
-                                 double xPixel, double yPixel);
+                                 double xPixel, double yPixel, double gravity = 0.0);
+    // the variance of Q from gravity, vertical: the fall A lambda^2 z^2, at the detector A lambda^2 (C + D) D through
+    // two apertures, 2 A lambda^2 C^2 through focusing lenses, spread by twice that times e = dlambda / lambda; 0 with
+    // a focusing mirror (it compensates gravity)
+    double gravityVariance(double D, double C, double Lambda, double deltaLambda);
     // the window factor of the sensitivity's own measurement divided out of factor (the window factor of a row): a
     // sensitivity made of a run contains the window's absorption at its distance and center
     void windowRelativeToSensitivity(int md, double Tr, gsl_matrix *factor, const QString &sensName, double detelem,
