@@ -4327,6 +4327,46 @@ public:
     }
 %End
     QVariantMap normalization() const;
+    // the radial averaging I[Q]: method "shells" or "hf", linear (rings per point, 1..100), progressive (each point
+    // that many times wider than the one before, 1.0..1.2); None: as it is
+    void setRadialAveraging(SIP_PYOBJECT method = Py_None, SIP_PYOBJECT linear = Py_None,
+                            SIP_PYOBJECT progressive = Py_None);
+%MethodCode
+    QString method;
+    int linear = 0;
+    double progressive = 0.0;
+    if (a0 != Py_None) {
+        if (!PyUnicode_Check(a0)) {
+            PyErr_SetString(PyExc_TypeError, "method: a string, shells or hf");
+            sipError = sipErrorFail;
+        } else
+            method = QString::fromUtf8(PyUnicode_AsUTF8(a0)).toLower();
+    }
+    if (sipError == sipErrorNone && a1 != Py_None) {
+        if (!PyLong_Check(a1) || PyBool_Check(a1)) {
+            PyErr_SetString(PyExc_TypeError, "linear: an int");
+            sipError = sipErrorFail;
+        } else {
+            const long value = PyLong_AsLong(a1);
+            linear = value < 1 ? -1 : (value > 1000 ? 1001 : int(value));
+        }
+    }
+    if (sipError == sipErrorNone && a2 != Py_None) {
+        if (!PyNumber_Check(a2) || PyBool_Check(a2)) {
+            PyErr_SetString(PyExc_TypeError, "progressive: a number");
+            sipError = sipErrorFail;
+        } else {
+            progressive = PyFloat_AsDouble(a2);
+            if (progressive <= 0.0)
+                progressive = 1e-9; // out of range: a ValueError below
+        }
+    }
+    if (sipError == sipErrorNone && !sipCpp->setRadialAveraging(method, linear, progressive)) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
+    QVariantMap radialAveraging() const;
 };
 
 class DanProcessing : DanPart /NoDefaultCtors/

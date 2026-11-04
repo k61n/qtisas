@@ -1510,6 +1510,58 @@ QVariantMap DanProcessingOptions::normalization() const
             {"darkCurrentByTime", d->checkBoxBCTimeNormalization->isChecked()}};
 }
 
+bool DanProcessingOptions::setRadialAveraging(const QString &method, int linear, double progressive)
+{
+    if (!method.isEmpty() && method != "shells" && method != "hf")
+    {
+        m_lastError = "radial averaging: method shells (Standard) or hf (4-Pixel Interpolation)";
+        return false;
+    }
+    if (linear != 0 && (linear < d->spinBoxAvlinear->minimum() || linear > d->spinBoxAvlinear->maximum()))
+    {
+        m_lastError = QString("radial averaging: linear %1..%2")
+                          .arg(d->spinBoxAvlinear->minimum())
+                          .arg(d->spinBoxAvlinear->maximum());
+        return false;
+    }
+    if (progressive > 0.0 &&
+        (progressive < d->doubleSpinBoxAvLog->minimum() || progressive > d->doubleSpinBoxAvLog->maximum()))
+    {
+        m_lastError = QString("radial averaging: progressive %1..%2")
+                          .arg(d->doubleSpinBoxAvLog->minimum())
+                          .arg(d->doubleSpinBoxAvLog->maximum());
+        return false;
+    }
+    begin();
+    if (!method.isEmpty())
+        (method == "hf" ? d->radioButtonRadHF : d->radioButtonRadStd)->setChecked(true);
+    if (linear != 0)
+        d->spinBoxAvlinear->setValue(linear);
+    if (progressive > 0.0)
+        d->doubleSpinBoxAvLog->setValue(progressive);
+    return end(true);
+}
+
+QVariantMap DanProcessingOptions::radialAveraging() const
+{
+    return {{"method", d->radioButtonRadHF->isChecked() ? "hf" : "shells"},
+            {"linear", d->spinBoxAvlinear->value()},
+            {"progressive", d->doubleSpinBoxAvLog->value()}};
+}
+
+// comboBoxIxyFormat's and comboBox4thCol's items (by index), by their Python names
+static const QStringList &matrixFormats()
+{
+    static const QStringList names = {"matrix", "xy", "qxqy", "qxqy-resolution", "polar"};
+    return names;
+}
+
+static const QStringList &curveColumns()
+{
+    static const QStringList names = {"sigma", "dq", "none", "dq-sigma"};
+    return names;
+}
+
 // the tables and matrices of the project: what a processing makes in it (I[Q] tables, the 2D outputs' matrices: the
 // 2D kinds into the project were "nothing was made")
 static QStringList tableNames(ApplicationWindow *app)

@@ -53339,7 +53339,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                                  <font/>
                                 </property>
                                 <property name="text">
-                                 <string>Standart (Shells)</string>
+                                 <string>Standard (Shells)</string>
                                 </property>
                                 <property name="checked">
                                  <bool>false</bool>

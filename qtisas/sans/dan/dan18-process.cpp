@@ -2414,7 +2414,8 @@ bool dan18::readSettingNew(QString tableName)
     //+++ Options::1D::I[Q]::Method
     index = static_cast<int>(parameters.indexOf("Options::1D::I[Q]::Method"));
     if (index >= 0)
-        radioButtonRadHF->setChecked(w->text(index, 1).contains("4-Pixel Interpolation (H.F.)"));
+        (w->text(index, 1).contains("4-Pixel Interpolation (H.F.)") ? radioButtonRadHF : radioButtonRadStd)
+            ->setChecked(true);
 
     //+++ Options::1D::I[Q]::LinearFactor
     index = static_cast<int>(parameters.indexOf("Options::1D::I[Q]::LinearFactor"));

@@ -20,6 +20,13 @@ Description: SANS data reduction tools
 #include "dan18.h"
 #include "Folder.h"
 
+// progressive merging: the rings of merged point k (0, 1, ...), each point factor times wider than the one before,
+// rounded (at least one ring)
+static int progressiveWidth(double factor, int point)
+{
+    return std::max(1, int(std::lround(std::pow(factor, point))));
+}
+
 //*******************************************
 //+++  RT tools:: Sum [slot]
 //*******************************************
@@ -1537,17 +1544,19 @@ void dan18::radUniStandartMSmode(int md, gsl_matrix *Sample, gsl_matrix *SampleE
     int nnLocal;
     
     int *mergedPoints=new int[nTotal];
-    
+    // Q of a ring and of a merged point (the mean of its fitted rings)
+    auto qRing = [&](int ir) { return 4.0 * M_PI / lambda * sin(0.5 * atan(ir * detelem / detdist)); };
+    std::vector<double> qPoint(nTotal);
+    for (int ir = 0; ir < nTotal; ir++)
+        qPoint[ir] = qRing(ir);
+
     int i=0;
+    int point = 0; // each point stepProg times wider than the one before
     while(i<nTotal)
     {
-        double tm=pow(stepProg,i);
-        int plusPoints=int(tm);
-        if (tm-int(tm)>0.5) plusPoints++;
-        
-        if (i+plusPoints>=nTotal) plusPoints=nTotal-i;
-        
-        
+        const int plusPoints = stepProg > 1.0 ? std::min(progressiveWidth(stepProg, point++), nTotal - i) : 1;
+        double qLocal = 0.0;
+
         IIlocal=0.0;
         dIIlocal=0.0;
         IIlocalms=0.0;
@@ -1555,6 +1564,7 @@ void dan18::radUniStandartMSmode(int md, gsl_matrix *Sample, gsl_matrix *SampleE
         nnLocal=0;
         for (int ii=0;ii<plusPoints;ii++)
         {
+            qLocal += nn[i + ii] * qRing(i + ii);
             nnLocal+=nn[i+ii];
             IIlocal+=II[i+ii];
             dIIlocal+=dII[i+ii];
@@ -1562,6 +1572,7 @@ void dan18::radUniStandartMSmode(int md, gsl_matrix *Sample, gsl_matrix *SampleE
             dIIlocalms+=dIIms[i+ii];
             
             mergedPoints[i+ii]=plusPoints;
+            nn[i + ii] = 0; // merged into point i: not an output point of its own (it was one, with I = 0)
             II[i+ii]=0.0;
             dII[i+ii]=0;
             IIms[i+ii]=0.0;
@@ -1570,6 +1581,8 @@ void dan18::radUniStandartMSmode(int md, gsl_matrix *Sample, gsl_matrix *SampleE
         
         mergedPoints[i]=plusPoints;
         nn[i]=nnLocal;
+        if (nnLocal > 0)
+            qPoint[i] = qLocal / nnLocal;
         II[i]=IIlocal;
         dII[i]=dIIlocal;
         IIms[i]=IIlocalms;
@@ -1591,8 +1604,7 @@ void dan18::radUniStandartMSmode(int md, gsl_matrix *Sample, gsl_matrix *SampleE
     {
         if (nn[ir]>=1)
         {
-            qr  = 4.0*M_PI/lambda *
-            sin(0.5*atan((2*ir+mergedPoints[ir]-1)/2.0*detelem/detdist));  // test
+            qr = qPoint[ir];
             
             
             avg = II[ir] / nn[ir];
@@ -1929,10 +1941,10 @@ void dan18::radUni(int md, gsl_matrix *Sample, gsl_matrix *SampleErr, gsl_matrix
              pixelAsymetry, DetRotationX, DetRotationY, angleAnisotropy, nTotal, QQ, II, dII, IIcos2phi, nn
              );
     else
-        radAvHF(
-                 md, Sample, SampleErr, mask, Xcenter, Ycenter, lambda, detdist, detelem,
-                 pixelAsymetry, DetRotationX, DetRotationY, angleAnisotropy, nTotal, QQ, II, dII, IIcos2phi, nn
-                 );
+    {
+        radAvHF(md, Sample, SampleErr, mask, Xcenter, Ycenter, lambda, detdist, detelem, pixelAsymetry, DetRotationX,
+                DetRotationY, angleAnisotropy, nTotal, QQ, II, dII, IIcos2phi, nn);
+    }
 
     if (nTotal <= 0)
         return;
@@ -2350,21 +2362,23 @@ void dan18::radAvHF
  )
 {
     
-    //+++
-    int numRowsOut=0;
-    int numAllQ=0;
-    
-    
-    //------------------------------------
-    // calculation of radial averaging
-    //------------------------------------
-    
-    //+++ Xc & Yc center of detector
-    double Xc=(double(md)-1.0)/2.0;
-    double Yc=(double(md)-1.0)/2.0;
-    
-    //+++
-    double R;
+    // A detector perpendicular to the beam: ring n is the circle of n pixel widths around the center. A rotated one
+    // (DetRotationX/Y, degrees, the beam's direction as in radAvStd): ring n is the cone of the same scattering
+    // angle atan(n p / D) around the beam, met by the detector plane, sampled by the beam's azimuth
+    const double rotX = DetRotationX / 180.0 * M_PI;
+    const double rotY = DetRotationY / 180.0 * M_PI;
+    const bool rotated = rotX != 0.0 || rotY != 0.0;
+    double b[3] = {sin(rotX) * cos(rotY), sin(rotY) * cos(rotX), cos(rotX) * cos(rotY)};
+    const double bNorm = sqrt(b[0] * b[0] + b[1] * b[1] + b[2] * b[2]);
+    for (double &v : b)
+        v /= bNorm;
+    // e1, e2: perpendicular to the beam, e1 the detector's x as far as it can be
+    double e1[3] = {1.0 - b[0] * b[0], -b[0] * b[1], -b[0] * b[2]};
+    const double e1Norm = sqrt(e1[0] * e1[0] + e1[1] * e1[1] + e1[2] * e1[2]);
+    for (double &v : e1)
+        v /= e1Norm;
+    const double e2[3] = {b[1] * e1[2] - b[2] * e1[1], b[2] * e1[0] - b[0] * e1[2], b[0] * e1[1] - b[1] * e1[0]};
+
     double rmaxLocal;
     
     //+++  maximal distance from center to corner
@@ -2381,7 +2395,7 @@ void dan18::radAvHF
     
     
     int ir,ii;                  //iR iPhi...
-    int ix1,iy1,ix1old,iy1old,ix2,iy2;                //...
+    int ix1, iy1, ix2, iy2;
     int msk, phisteps;          //mask &
     
     double qr,phi,xs,ys,rex,rey;
@@ -2394,6 +2408,19 @@ void dan18::radAvHF
     double anisotropy, phiAnisotropy;
 
     std::map<int, double> pixelWeights; // pixel (row * md + col) -> its total weight on the current ring
+
+    // a rotated detector: the rings up to the largest scattering angle at its corners
+    if (rotated)
+        for (double cx : {0.0, double(md - 1)})
+            for (double cy : {0.0, double(md - 1)})
+            {
+                const double v[3] = {detelem * (cx - Xcenter), pixelAsymetry * detelem * (cy - Ycenter), detdist};
+                const double cosAngle =
+                    (v[0] * b[0] + v[1] * b[1] + v[2] * b[2]) / sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+                const double angle = acos(std::min(1.0, std::max(-1.0, cosAngle)));
+                if (angle < 0.5 * M_PI)
+                    rmax = std::max(rmax, detdist * tan(angle) / detelem);
+            }
 
     nTotal=int(rmax+0.5)+1;
     
@@ -2430,14 +2457,16 @@ void dan18::radAvHF
         
         //+++ 09.09.10+++ phisteps =int( GSL_MAX( int(4*pi*rad+0.5), 4) );
         phisteps =int( GSL_MAX( int(4*pi*rad+0.5), 1) );
+        // a rotated detector stretches the ring (up to 1 / cos^2 of the tilt): as many more points
+        if (rotated)
+            phisteps = int(GSL_MAX(std::lround(4 * pi * rad / (b[2] * b[2])), 1L));
+        const double theta = atan(ir * detelem / detdist);
         
         twt = 0.0;      //      ! totales Gewicht    >>>RESET<<<
         avg = 0.0;      //      ! Mittel
         avge= 0.0;      //      ! Fehler
         anisotropy=0.0; //      ! anisotropy
         
-        ix1old=-1000;
-        iy1old=-1000;
         pixelWeights.clear();
 
         for(ii=0; ii< phisteps; ii++)
@@ -2448,17 +2477,23 @@ void dan18::radAvHF
             //+++
             xs  = Xcenter + rad * cos(phi);
             ys  = Ycenter + rad/pixelAsymetry * sin(phi);
-            
-            //+++
-            R=detelem*sqrt((xs-Xc)*(xs-Xc)+(ys-Yc)*(ys-Yc));
+            if (rotated)
+            {
+                // the direction at the ring's angle theta and the azimuth phi around the beam, met by the detector
+                // plane z = D (pixel (x, y) at (p (x - Xc), a p (y - Yc), D))
+                double u[3];
+                for (int k = 0; k < 3; k++)
+                    u[k] = cos(theta) * b[k] + sin(theta) * (cos(phi) * e1[k] + sin(phi) * e2[k]);
+                if (u[2] <= 0.0)
+                    continue;
+                xs = Xcenter + detdist * u[0] / u[2] / detelem;
+                ys = Ycenter + detdist * u[1] / u[2] / (pixelAsymetry * detelem);
+            }
             
             //+++
             ix1 = int(std::floor(xs)); // the corner pixels (floor: -0.5 lies between -1 and 0, not at 0)
             iy1 = int(std::floor(ys));
 
-            ix1old=ix1;
-            iy1old=iy1;
-            
             ix2 = ix1 + 1;
             iy2 = iy1 + 1;
             
@@ -2606,18 +2641,14 @@ void dan18::radAvDataCorrectionOptions(int nTotal, double *&QQ, double *&II, dou
     if (stepProg>1.0)
     {
         int i=0;
+        int point = 0; // each point stepProg times wider than the one before (in rings, rounded)
         nCurrent=0;
         
         while(i<nTotal)
         {
             //+++ pluspoints
-            double tm=pow(stepProg,i);
-            int plusPoints=int(tm);
-            if (tm-int(tm)>0.5) plusPoints++;
-            
-            if (i+plusPoints>=nTotal) plusPoints=nTotal-i;
-            
-            
+            const int plusPoints = std::min(progressiveWidth(stepProg, point++), nTotal - i);
+
             double IIlocal=0.0;
             double dIIlocal=0.0;
             double IIcos2philocal=0;
@@ -2626,7 +2657,7 @@ void dan18::radAvDataCorrectionOptions(int nTotal, double *&QQ, double *&II, dou
             
             for (int ii=0;ii<plusPoints;ii++)
             {
-                qLocal+=QQ[i+ii];
+                qLocal += QQ[i + ii] * nn[i + ii]; // Q of the point: the pixels' mean
                 nnLocal+=nn[i+ii];
                 IIlocal+=II[i+ii];
                 IIcos2philocal+=IIcos2phi[i+ii];
@@ -2641,7 +2672,8 @@ void dan18::radAvDataCorrectionOptions(int nTotal, double *&QQ, double *&II, dou
             else nn[i]=nnLocal;
             
             mergedPoints[i]=plusPoints;
-            QQ[i]=qLocal/plusPoints;
+            if (nnLocal > 0)
+                QQ[i] = qLocal / nnLocal;
             II[i]=IIlocal;
             dII[i]=dIIlocal;
             IIcos2phi[i]=IIcos2philocal;
@@ -2654,7 +2686,8 @@ void dan18::radAvDataCorrectionOptions(int nTotal, double *&QQ, double *&II, dou
     //+++ Step "2": linear merging
     if (linearMergingFactor>1)
     {
-        int numberLinear=int( nTotal/linearMergingFactor+0.5 );
+        // every ring in a group; a last group of fewer rings too (it is dropped below if it holds no pixel)
+        const int numberLinear = (nTotal + linearMergingFactor - 1) / linearMergingFactor;
         
 
         nCurrent=0;
@@ -2672,12 +2705,15 @@ void dan18::radAvDataCorrectionOptions(int nTotal, double *&QQ, double *&II, dou
             
             for(int j=0;j<linearMergingFactor;j++)
             {
-                if (nn[linearMergingFactor*i+j]<0) continue;
-                if (linearMergingFactor*i+j>=nTotal) continue;
+                if (linearMergingFactor * i + j >= nTotal)
+                    continue;
+                if (nn[linearMergingFactor * i + j] < 0)
+                    continue;
                 allNegative=false;
                 
                 newNumberMergedPoints+=mergedPoints[linearMergingFactor*i+j];
-                qLocal+=QQ[linearMergingFactor*i+j]*mergedPoints[linearMergingFactor*i+j];
+                // Q of the point: the pixels' mean
+                qLocal += QQ[linearMergingFactor * i + j] * nn[linearMergingFactor * i + j];
                 nnLocal+=nn[linearMergingFactor*i+j];
                 IIlocal+=II[linearMergingFactor*i+j];
                 dIIlocal+=dII[linearMergingFactor*i+j];
@@ -2696,7 +2732,8 @@ void dan18::radAvDataCorrectionOptions(int nTotal, double *&QQ, double *&II, dou
             else nn[linearMergingFactor*i]=nnLocal;
             if (nn[linearMergingFactor*i]>=0) nCurrent++;
             
-            QQ[linearMergingFactor*i]=qLocal/newNumberMergedPoints;
+            if (nnLocal > 0)
+                QQ[linearMergingFactor * i] = qLocal / nnLocal;
             II[linearMergingFactor*i]=IIlocal;
             dII[linearMergingFactor*i]=dIIlocal;
             IIcos2phi[linearMergingFactor*i]=IIcos2philocal;

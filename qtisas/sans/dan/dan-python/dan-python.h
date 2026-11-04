@@ -425,6 +425,8 @@ class DanProcessingOptions : public DanPart
     QVariantMap wideAngle() const;
     bool setNormalization(const QString &by, int factor, int darkCurrentByTime);
     QVariantMap normalization() const;
+    bool setRadialAveraging(const QString &method, int linear, double progressive);
+    QVariantMap radialAveraging() const;
 };
 
 // Merge tab
