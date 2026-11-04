@@ -56,7 +56,7 @@ First choose the call:
 | smoothing, wide-angle corrections, normalization, averaging method | `Dan.Processing.Options.setSmoothing(…)`, `setWideAngle(…)`, `setNormalization(…)`, `setRadialAveraging(…)` |
 | join curves of two instruments | `Dan.Merge.joinTables(name, [table1, table2])`; how well they agree: `Dan.Merge.overlap(t1, t2)` |
 | any instrument setting, e.g. points always removed | `Dan.Options.Config.setParameters({...})`; keep it: `Dan.Options.saveInstrument("<name>")` |
-| the Q resolution: focusing, lenses or mirror, round apertures, detector resolution | `Dan.Options.Config.setParameters({"Resolusion-Focusing": "Yes", "Resolusion-Focusing-Type": "mirror", "Resolusion-CA-Round": "No", "Resolusion-SA-Round": "No", "Resolusion-Detector": "0.08"})` (the detector resolution in cm; the chromatic term of the σ only for `"lenses"`) |
+| the Q resolution: focusing, lenses or mirror, round apertures, detector resolution | `Dan.Options.Config.setParameters({"Resolusion-Focusing": "Yes", "Resolusion-Focusing-Type": "mirror", "Resolusion-CA-Round": "No", "Resolusion-SA-Round": "No", "Resolusion-Detector": "0.08"})` (the detector resolution in cm; the chromatic term of the σ only for `"lenses"`; gravity with lenses and without focusing, not with `"mirror"`) |
 
 The request's words for `setConfiguration(i, ...)` (i = the configuration's number; the runs as the request gives
 them), then ONE `calculate()` and `configuration(i)["factor"]`, `["xCenter"]`, `["yCenter"]`:
