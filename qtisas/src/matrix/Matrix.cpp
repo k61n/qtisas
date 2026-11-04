@@ -10,6 +10,8 @@ Copyright (C) by the authors:
 Description: Matrix worksheet class
  ******************************************************************************/
 
+#include <algorithm>
+#include <cmath>
 #include <cstdlib>
 
 #include <QApplication>
@@ -1179,45 +1181,46 @@ bool Matrix::isEmpty()
 
 void Matrix::range(double *min, double *max, bool ynLog)
 {
-	double d_min = cell(0, 0);
-	double d_max = d_min;
-	int rows = numRows();
-	int cols = numCols();
+    // the range of the finite values (log: the positive ones for the minimum); NaN or inf cells (masked pixels) are
+    // left out: a NaN in the first cell made the whole range NaN, and the color map drew nothing
+    const int rows = numRows();
+    const int cols = numCols();
+    bool found = false;
+    double d_min = 0.0;
+    double d_max = 0.0;
+    for (int i = 0; i < rows; i++)
+        for (int j = 0; j < cols; j++)
+        {
+            const double aux = cell(i, j);
+            if (!std::isfinite(aux))
+                continue;
+            if (!found)
+            {
+                d_min = d_max = aux;
+                found = true;
+                continue;
+            }
+            d_min = std::min(d_min, aux);
+            d_max = std::max(d_max, aux);
+        }
 
     if (ynLog)
     {
-        for(int i=0; i<rows; i++) for(int j=0; j<cols; j++)
-        {
-            double aux = cell(i, j);
-            if (aux >= d_max) d_max = aux;
-        }
-        d_min=d_max;
-        
-        for(int i=0; i<rows; i++) for(int j=0; j<cols; j++)
-        {
-            double aux = cell(i, j);
-            if (aux <= d_min && aux>0.0) d_min = aux;
-        }
-        if (d_min==d_max)d_min=d_max/10.0;
-    }
-    else
-    {
-        for(int i=0; i<rows; i++)
-        {
-            for(int j=0; j<cols; j++)
+        double positiveMin = d_max;
+        for (int i = 0; i < rows; i++)
+            for (int j = 0; j < cols; j++)
             {
-                double aux = cell(i, j);
-                if (aux <= d_min)
-                    d_min = aux;
-                
-                if (aux >= d_max)
-                    d_max = aux;
+                const double aux = cell(i, j);
+                if (std::isfinite(aux) && aux > 0.0 && aux < positiveMin)
+                    positiveMin = aux;
             }
-        }
+        d_min = positiveMin;
+        if (d_min == d_max)
+            d_min = d_max / 10.0;
     }
 
-	*min = d_min;
-	*max = d_max;
+    *min = d_min;
+    *max = d_max;
 }
 
 QwtInterval Matrix::colorRange()
