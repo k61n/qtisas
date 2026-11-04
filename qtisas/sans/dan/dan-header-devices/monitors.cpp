@@ -199,10 +199,23 @@ double Monitors::normalizationFactor(const QString &Number, const QStringList &l
             return normConstant / time;
     }
 
-    //+++
+    // the run's image becomes zero: say so in the results log, once per run and processing (clearReported())
+    if (!Number.isEmpty() && Number != unnormalizedReported)
+    {
+        unnormalizedReported = Number;
+        const QString what = normalizationType->currentText() == "Time" ? "duration" : normalizationType->currentText();
+        emit message(
+            QString("run %1: no %2 in the header (not positive): it cannot be normalized, its image is set to zero")
+                .arg(Number, what));
+    }
     std::cout << "DAN:: " << Number.toLocal8Bit().constData() << " ---> check normalization!\n";
 
     return 0.0;
+}
+//+++ A new processing reports every run that cannot be normalized again
+void Monitors::clearReported()
+{
+    unnormalizedReported.clear();
 }
 //+++ Timefactor  [1]
 double Monitors::readTimefactor(const QString &Number, const QStringList &lst)

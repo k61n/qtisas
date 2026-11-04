@@ -108,7 +108,10 @@ void dan18::beginScriptRun()
 {
     // nested runs (an auto-mode call made of other calls) collect into the outermost one
     if (m_scriptDepth == 0)
+    {
         m_scriptMessages.clear();
+        monitors->clearReported();
+    }
     m_scriptDepth++;
     m_scriptRun = true;
 }

@@ -3,6 +3,7 @@ Project: QtiSAS
 License: GNU GPL Version 3 (see LICENSE)
 Copyright (C) by the authors:
     2023 Vitaliy Pipich <v.pipich@gmail.com>
+    2024 Konstantin Kholostov <k.kholostov@fz-juelich.de>
 Description: Extraction Collimation Information
  ******************************************************************************/
 
@@ -32,6 +33,8 @@ class Monitors : public QObject
     QRadioButton *deadTimeDetectorParalysable;
     QSpinBox *normalizationConst;
     QComboBox *normalizationType;
+    //! The last run reported without a normalization (one message per run, not per image read)
+    QString unnormalizedReported;
 
   public:
     Monitors(ParserHeader *parserHeader, QComboBox *unitsDuration, QLineEdit *deadTimeM1, QLineEdit *deadTimeM2,
@@ -59,6 +62,8 @@ class Monitors : public QObject
     double deadTimeFactorDetectorDB(const QString &Number);
     //+++ Normalization Factor
     double normalizationFactor(const QString &Number, const QStringList &lst = QStringList());
+    //+++ A new processing reports every run that cannot be normalized again
+    void clearReported();
     //+++ Timefactor  [1]
     double readTimefactor(const QString &Number, const QStringList &lst = QStringList());
     //+++ Timefactor numberRepetitions [1]
@@ -66,6 +71,9 @@ class Monitors : public QObject
     //++++ Normalization Factor RT
     double normalizationFactorRT(const QString &Number, const QStringList &lst = QStringList());
   public slots:
+  signals:
+    //! A line for the results log (a run that cannot be normalized)
+    void message(const QString &text);
 };
 
 #endif

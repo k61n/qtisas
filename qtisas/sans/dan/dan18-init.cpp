@@ -241,8 +241,9 @@ void dan18::initDAN()
                             radioButtonLambdaHeader, lineEditSel1, lineEditSel2);
 
     //+++ Monitor-Related-Parameter's Parser
-    monitors = new Monitors(parserHeader, comboBoxUnitsTime, lineEditDeadTimeM1, lineEditDeadTimeM2, lineEditDeadTimeM2,
+    monitors = new Monitors(parserHeader, comboBoxUnitsTime, lineEditDeadTimeM1, lineEditDeadTimeM2, lineEditDeadTimeM3,
                             lineEditDeadTime, lineEditDBdeadtime, radioButtonDeadTimeDet, spinBoxNorm, comboBoxNorm);
+    connect(monitors, &Monitors::message, this, [this](const QString &text) { danWarning(text); });
 
     //+++ TOF/RT-Related-Parameter's Parser
     tofrt = new Tofrt(parserHeader, comboBoxUnitsTimeRT);

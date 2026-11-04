@@ -1464,6 +1464,52 @@ QVariantMap DanProcessingOptions::wideAngle() const
             {"window", d->checkBoxWaTrDet->isChecked()}};
 }
 
+// comboBoxNorm's items, by their Python names
+static const QList<std::pair<QString, QString>> &normalizationTypes()
+{
+    static const QList<std::pair<QString, QString>> types = {
+        {"monitor2", "Monitor2"}, {"time", "Time"}, {"monitor1", "Monitor1"}};
+    return types;
+}
+
+bool DanProcessingOptions::setNormalization(const QString &by, int factor, int darkCurrentByTime)
+{
+    QString text;
+    for (const auto &[name, item] : normalizationTypes())
+        if (name == by.toLower())
+            text = item;
+    if (!by.isEmpty() && (text.isEmpty() || d->comboBoxNorm->findText(text) < 0))
+    {
+        m_lastError = "normalization: by monitor2, time or monitor1";
+        return false;
+    }
+    if (factor != 0 && (factor < d->spinBoxNorm->minimum() || factor > d->spinBoxNorm->maximum()))
+    {
+        m_lastError =
+            QString("normalization: the factor %1..%2").arg(d->spinBoxNorm->minimum()).arg(d->spinBoxNorm->maximum());
+        return false;
+    }
+    begin();
+    if (!text.isEmpty())
+        d->comboBoxNorm->setCurrentIndex(d->comboBoxNorm->findText(text));
+    if (factor != 0)
+        d->spinBoxNorm->setValue(factor);
+    if (darkCurrentByTime >= 0)
+        d->checkBoxBCTimeNormalization->setChecked(darkCurrentByTime == 1);
+    return end(true);
+}
+
+QVariantMap DanProcessingOptions::normalization() const
+{
+    QString by;
+    for (const auto &[name, item] : normalizationTypes())
+        if (item == d->comboBoxNorm->currentText())
+            by = name;
+    return {{"by", by},
+            {"factor", d->spinBoxNorm->value()},
+            {"darkCurrentByTime", d->checkBoxBCTimeNormalization->isChecked()}};
+}
+
 // the tables and matrices of the project: what a processing makes in it (I[Q] tables, the 2D outputs' matrices: the
 // 2D kinds into the project were "nothing was made")
 static QStringList tableNames(ApplicationWindow *app)

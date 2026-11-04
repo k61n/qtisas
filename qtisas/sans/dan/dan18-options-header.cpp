@@ -108,8 +108,9 @@ double dan18::readTransmission( QString NumberSample, QString NumberEC, QString 
 
     if (comboBoxNorm->currentText() != "Time" && comboBoxTransmMethod->currentIndex() != 2)
     {
-        sigma2 += fabs(monitors->normalizationFactor(NumberEC));
-        sigma2 += fabs(monitors->normalizationFactor(NumberSample));
+        // the monitors' relative variance 1/M = f/N (f = N/M)
+        sigma2 += fabs(monitors->normalizationFactor(NumberEC)) / spinBoxNorm->value();
+        sigma2 += fabs(monitors->normalizationFactor(NumberSample)) / spinBoxNorm->value();
     }
 
     sigmaTr=sqrt(sigma2);
@@ -176,8 +177,9 @@ double dan18::readTransmissionMaskDB(QString NumberSample,QString NumberEC,doubl
 
     if (comboBoxNorm->currentText() != "Time" && comboBoxTransmMethod->currentIndex() != 2)
     {
-        sigma2 += fabs(monitors->normalizationFactor(NumberEC));
-        sigma2 += fabs(monitors->normalizationFactor(NumberSample));
+        // the monitors' relative variance 1/M = f/N (f = N/M)
+        sigma2 += fabs(monitors->normalizationFactor(NumberEC)) / spinBoxNorm->value();
+        sigma2 += fabs(monitors->normalizationFactor(NumberSample)) / spinBoxNorm->value();
     }
 
     sigmaTr=sqrt(sigma2);

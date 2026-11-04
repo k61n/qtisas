@@ -423,6 +423,8 @@ class DanProcessingOptions : public DanPart
     int smoothing() const;
     bool setWideAngle(const QString &parallax, int transmission, int window);
     QVariantMap wideAngle() const;
+    bool setNormalization(const QString &by, int factor, int darkCurrentByTime);
+    QVariantMap normalization() const;
 };
 
 // Merge tab

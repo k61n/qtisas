@@ -77,6 +77,10 @@ public:
 
     ApplicationWindow* app();
     void toResLog( QString text );
+    //! The dark current subtracted from a run relative to the sample's: 1, or with "Subtract #BC with TIME
+    //! normalization" (t f)_run / (t f)_sample (the BC is the dark-current rate times the run's duration, normalized
+    //! as the run is)
+    double bcScaleRelativeToSample(const QString &run, const QString &sample, const QString &bc);
 
     // the reduction's messages: a message box in the interface; while a script runs it (beginScriptRun ..
     // endScriptRun) nothing modal opens: messages are collected, and a missing name or file is a message too

@@ -92,8 +92,23 @@ void dan18::subtractConstantBackground(gsl_matrix *Sample, gsl_matrix *err, gsl_
             gsl_matrix_set(err, i, j, reduced != 0.0 ? relative * I * I / (reduced * reduced) : 0.0);
         }
 }
+double dan18::bcScaleRelativeToSample(const QString &run, const QString &sample, const QString &bc)
+{
+    if (!checkBoxBCTimeNormalization->isChecked() || !filesManager->checkFileNumber(bc) ||
+        !filesManager->checkFileNumber(run))
+        return 1.0;
+    // the BC scale of a run: (N / t_BC) * t f / N, so t f relative to the sample's
+    auto timesNormalization = [this](const QString &number) {
+        const double t = monitors->readDuration(number);
+        return t > 0.0 ? t * monitors->normalizationFactor(number) : 0.0;
+    };
+    const double reference = timesNormalization(sample);
+    return reference > 0.0 ? timesNormalization(run) / reference : 1.0;
+}
+
 void dan18::danDanMultiButton(QString button)
 {
+    monitors->clearReported(); // each run that cannot be normalized is reported once per processing
     //+++ Output data Suffix
     QString dataSuffix;
     switch (comboBoxMode->currentIndex())
@@ -771,6 +786,12 @@ void dan18::danDanMultiButton(QString button)
         double scaleBufferData=0;
         if (subtractBufferLocal)
             scaleBufferData = fractionBuffer * absBuffer / abs;
+        // BC holds the sample's dark current; the EC's and the buffer's (subtracted below) are rEC, rBuffer times it
+        const double rEC = ECexist ? bcScaleRelativeToSample(NEC, Nsample, NBC) : 1.0;
+        const double rBuffer = subtractBufferLocal ? bcScaleRelativeToSample(Nbuffer, Nsample, NBC) : 1.0;
+        // S - BC - T (EC - rEC BC), and - sB (Buffer - rBuffer BC - Tb (EC - rEC BC)): BC's coefficients
+        const double weightBC = ECexist ? 1.0 - trans * rEC : 1.0;
+        const double weightBCBuffer = ECexist ? rBuffer - transBuffer * rEC : rBuffer;
 
         // 1D outputs (sums over pixels): the transmission error is common to the pixels, so it stays out of the pixel
         // variance and comes as one relative error per row, added once per point after averaging
@@ -798,8 +819,7 @@ void dan18::danDanMultiButton(QString button)
             Iec=Iec*trans*trans;
             Iec*=gsl_matrix_get(ECErr,iii,jjj);
             //+++
-                // BC: S - BC - T*(EC - BC) with an EC, S - BC without one
-                const double weightBC = ECexist ? 1.0 - trans : 1.0;
+                // BC: S - BC - T*(EC - rEC BC) with an EC, S - BC without one
                 Ibc = gsl_matrix_get(BC, iii, jjj);
                 err2 -= weightBC * Ibc;
                 Ibc *= Ibc;
@@ -824,12 +844,13 @@ void dan18::danDanMultiButton(QString button)
                     err2 += IecBuffer;
                     IecBuffer *= IecBuffer;
                     IecBuffer *= gsl_matrix_get(ECErr, iii, jjj);
-                    IbcBuffer = scaleBufferData * (ECexist ? 1.0 - transBuffer : 1.0) * gsl_matrix_get(BC, iii, jjj);
+                    IbcBuffer = scaleBufferData * weightBCBuffer * gsl_matrix_get(BC, iii, jjj);
                     err2 += IbcBuffer;
                     IbcBuffer *= IbcBuffer;
                     IbcBuffer *= gsl_matrix_get(BCErr, iii, jjj);
                     //+++  2019 : error of transmission
-                    ItransBuffer = scaleBufferData * (gsl_matrix_get(Buffer, iii, jjj) - gsl_matrix_get(BC, iii, jjj));
+                    ItransBuffer =
+                        scaleBufferData * (gsl_matrix_get(Buffer, iii, jjj) - rBuffer * gsl_matrix_get(BC, iii, jjj));
                     ItransBuffer *= ItransBuffer;
                     ItransBuffer = ItransBuffer * sigmaTransBuffer * sigmaTransBuffer;
                 }
@@ -838,25 +859,24 @@ void dan18::danDanMultiButton(QString button)
                 if (gsl_matrix_get(mask, iii, jjj) > 0 && err2 != 0.0)
                 {
                     const double samplePart = gsl_matrix_get(Sample, iii, jjj) - gsl_matrix_get(BC, iii, jjj);
-                    const double bufferPart =
-                        subtractBufferLocal
-                            ? scaleBufferData * (gsl_matrix_get(Buffer, iii, jjj) - gsl_matrix_get(BC, iii, jjj))
-                            : 0.0;
+                    const double bufferPart = subtractBufferLocal
+                                                  ? scaleBufferData * (gsl_matrix_get(Buffer, iii, jjj) -
+                                                                       rBuffer * gsl_matrix_get(BC, iii, jjj))
+                                                  : 0.0;
                     sumSignal += err2;
                     sumSamplePart += samplePart;
                     sumBufferPart += bufferPart;
                     if (bufferAsSensRow)
                     {
                         // R = N / B: T acts on N only, Tb on N (through the buffer term) and on B
-                        const double bufferSubtracted =
-                            gsl_matrix_get(Buffer, iii, jjj) -
-                            (ECexist ? transBuffer * gsl_matrix_get(EC, iii, jjj) +
-                                           (1.0 - transBuffer) * gsl_matrix_get(BC, iii, jjj)
-                                     : gsl_matrix_get(BC, iii, jjj));
+                        const double bufferSubtracted = gsl_matrix_get(Buffer, iii, jjj) -
+                                                        (ECexist ? transBuffer * gsl_matrix_get(EC, iii, jjj) : 0.0) -
+                                                        weightBCBuffer * gsl_matrix_get(BC, iii, jjj);
                         sumKappa += samplePart / err2;
                         if (bufferSubtracted != 0.0)
-                            sumKappaBuffer += (gsl_matrix_get(Buffer, iii, jjj) - gsl_matrix_get(BC, iii, jjj)) *
-                                              (scaleBufferData / err2 + 1.0 / bufferSubtracted);
+                            sumKappaBuffer +=
+                                (gsl_matrix_get(Buffer, iii, jjj) - rBuffer * gsl_matrix_get(BC, iii, jjj)) *
+                                (scaleBufferData / err2 + 1.0 / bufferSubtracted);
                         pixelsKappa++;
                     }
                 }
@@ -876,7 +896,7 @@ void dan18::danDanMultiButton(QString button)
                     const double ec = gsl_matrix_get(EC, iii, jjj);
                     const double bc = gsl_matrix_get(BC, iii, jjj);
                     const double coefficientEC = -trans + scaleBufferData * transBuffer;
-                    const double coefficientBC = -weightBC + scaleBufferData * (ECexist ? 1.0 - transBuffer : 1.0);
+                    const double coefficientBC = -weightBC + scaleBufferData * weightBCBuffer;
                     const double varianceEC = coefficientEC * coefficientEC * ec * ec * gsl_matrix_get(ECErr, iii, jjj);
                     const double varianceBC = coefficientBC * coefficientBC * bc * bc * gsl_matrix_get(BCErr, iii, jjj);
                     err2 *= (Isample + varianceEC + varianceBC + ItransSample + Ibuffer + ItransBuffer);
@@ -941,7 +961,7 @@ void dan18::danDanMultiButton(QString button)
         
         if (subtractBuffer)
         {
-            if (filesManager->checkFileNumber(NBC) && checkBoxBCTimeNormalizationisChecked && ECexist)
+            if (filesManager->checkFileNumber(NBC) && checkBoxBCTimeNormalizationisChecked)
             {
                 readMatrixCorTimeNormalizationOnly( NBC, BC );
                 
@@ -5110,7 +5130,7 @@ bool dan18::danDanMultiButtonSingleLine(    QString button,
     
     if (subtractBuffer)
     {
-        if (filesManager->checkFileNumber(NBC) && checkBoxBCTimeNormalization->isChecked() && ECexist)
+        if (filesManager->checkFileNumber(NBC) && checkBoxBCTimeNormalization->isChecked())
         {
             readMatrixCorTimeNormalizationOnly( NBC, BC );
             

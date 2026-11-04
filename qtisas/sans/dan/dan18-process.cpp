@@ -4992,6 +4992,8 @@ void dan18::calculateCentersInScript(int startRow)
         Ycenter = scriptTableManager->centerY(iter).toDouble();
 
         gsl_matrix_sub(sample,bc);                       // SAMPLE=SAMPLE-BC
+        if (BCnumber != "" && ECnumber != "")
+            gsl_matrix_scale(bc, bcScaleRelativeToSample(ECnumber, SAMPLEnumber, BCnumber)); // the EC's dark current
         gsl_matrix_sub(ec,bc);                          // EC=EC-BC
         gsl_matrix_scale(ec,trans);
         gsl_matrix_sub(sample,ec);

@@ -4297,6 +4297,36 @@ public:
     }
 %End
     QVariantMap wideAngle() const;
+    // the data normalization: by "monitor2", "time" or "monitor1", the factor (1..10^6), the dark current per second
+    // rescaled to each run's duration; None: as it is
+    void setNormalization(SIP_PYOBJECT by = Py_None, SIP_PYOBJECT factor = Py_None,
+                          SIP_PYOBJECT darkCurrentByTime = Py_None);
+%MethodCode
+    QString by;
+    int factor = 0;
+    if (a0 != Py_None) {
+        if (!PyUnicode_Check(a0)) {
+            PyErr_SetString(PyExc_TypeError, "by: a string, monitor2, time or monitor1");
+            sipError = sipErrorFail;
+        } else
+            by = QString::fromUtf8(PyUnicode_AsUTF8(a0));
+    }
+    if (sipError == sipErrorNone && a1 != Py_None) {
+        if (!PyLong_Check(a1) || PyBool_Check(a1)) {
+            PyErr_SetString(PyExc_TypeError, "factor: an int");
+            sipError = sipErrorFail;
+        } else {
+            const long value = PyLong_AsLong(a1);
+            factor = value < 1 ? -1 : (value > 1000000 ? 1000001 : int(value));
+        }
+    }
+    const int darkCurrentByTime = a2 == Py_None ? -1 : (PyObject_IsTrue(a2) ? 1 : 0);
+    if (sipError == sipErrorNone && !sipCpp->setNormalization(by, factor, darkCurrentByTime)) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
+    QVariantMap normalization() const;
 };
 
 class DanProcessing : DanPart /NoDefaultCtors/
