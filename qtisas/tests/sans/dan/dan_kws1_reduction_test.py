@@ -44,14 +44,18 @@ assert "QI-SM-53217-H-J" in made and script + "-mergingTemplate" in made, made
 Dan.findChild(QGroupBox, "checkBoxSmart").setChecked(True)  # "Smart" left on in the interface: not used
 assert Dan.Merge.join(script + "-mergingTemplate") == ["H-J", "H-L", "H-M"]
 assert tabs.currentIndex() == 5, tabs.currentIndex()
-reference = {  # dan-example-kws1.qti: rows, (Q, I) of rows 1, 20 and the last (merged tables saved to 7 digits)
-    "QI-SM-53217-H-J": (76, ((0.00270696975, 595.856827), (0.0129929703, 1.83282018), (0.0432928456, 0.0621309327))),
-    "QI-SM-53221-H-J": (76, ((0.00693654466, 11.2781022), (0.0332872661, 0.192008152), (0.110671861, 0.105337522))),
-    "QI-SM-53228-H-M": (74, ((0.0269011888, 0.180945959), (0.128653254, 0.104600095), (0.403763094, 0.0921452575))),
-    "H-L": (164, ((0.00270697, 1738.1), (0.01299297, 3.817852), (0.4037631, 0.1009857))),
+# dan-example-kws1.qti: rows, (Q, I) of rows 1, 20 and the last. Its intensities predate two fixes of the wide-angle
+# corrections (KWS1-2020: He-tubes parallax, on the data and on the Plexiglas calibrant): sin(alpha) from the offset in
+# pixels over the distance in cm; their center the mask's beam-stop box, not the row's (the configuration's) beam
+# center. Together 0.02..0.4 % (row 1 of 53217: 595.856827 -> 598.234004)
+reference = {
+    "QI-SM-53217-H-J": (76, ((0.00270696975, 598.234004), (0.0129929703, 1.84017106), (0.0432928456, 0.0623767956))),
+    "QI-SM-53221-H-J": (76, ((0.00693654466, 11.3164326), (0.0332872661, 0.192647419), (0.110671861, 0.105676476))),
+    "QI-SM-53228-H-M": (74, ((0.0269011888, 0.181545889), (0.128653254, 0.104871763), (0.403763094, 0.0919599957))),
+    "H-L": (164, ((0.00270696975, 1745.03386), (0.0129929703, 3.83316711), (0.403763094, 0.100784219))),
 }
 for name, (count, values) in reference.items():
-    dr.check_rows(name, count, values, rel=1e-6 if name.startswith("QI") else 5e-6)
+    dr.check_rows(name, count, values, rel=1e-6)
 
 # --- centers calculated: the same from other start values, and when calculated again
 dr.kws1(folder, samples=False)

@@ -75,7 +75,7 @@ assert chosen == [("53216", "48462", "53229", "53230", "48462", "53218", "53216"
                   ("53225", "48462", "53224", "53225", "48462", "53227", "53225", False)], chosen
 assert any("no run for the center" in m for m in p.lastMessages()), p.lastMessages()
 p.calculate()
-assert [round(p.configuration(i)["factor"]) for i in (1, 2, 3)] == [53390, 1765, 117]
+assert [round(p.configuration(i)["factor"]) for i in (1, 2, 3)] == [53603, 1771, 118]  # wide-angle fixes
 # no run left by the filters: the error names the filter (a header map without Sum gave every run 0 counts, and the
 # error named the empty beam); minCounts 0: no count filter
 Dan.Options.Config.setAutoOptions({"minCounts": 2000000000})

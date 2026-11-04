@@ -1,7 +1,9 @@
 """The sensitivity against the rows reduced with it (the KWS-1 example's Plexiglas 53224 as sensitivity AND as a sample,
 parallax correction on; skipped without the qtisas.com files):
-- the sensitivity's label keeps the center of its wide-angle corrections, "::Center::x|y|mask" (the mask's beam
-  stop, shown in the center fields) or "...|manual" (the fields' values, center=(x, y) from Python);
+- the sensitivity's label keeps the center of its wide-angle corrections, "::Center::x|y|configuration" (the beam
+  center of the run's configuration in the configuration table, as its rows use it), "...|mask" (the mask's beam stop,
+  when no configuration has the run's) or "...|manual" (the fields' values, center=(x, y) from Python), shown in the
+  center fields;
   Dan.Sensitivity.center() reads it back, None for a label without one (made before 2026-10-29);
 - the same run with the same transmission and center is flat: I(Q) constant;
 - another transmission (the sensitivity tab's Tr against the row's) or another center makes it Q-dependent, and the
@@ -47,12 +49,14 @@ def spread(values):
     return max(values) / min(values) - 1
 
 
-# the mask's beam stop: label, fields, center()
+# the beam center of 53224's configuration (1.98 m): label, fields, center()
 Dan.Sensitivity.newSensitivity(RUN, emptyBeam=ec, darkCurrent=DC, transmission=tr)
 x, y, source = Dan.Sensitivity.center("sens")
-assert source == "mask", source
+own = [c for c in (Dan.Processing.configuration(i) for i in range(1, Dan.Processing.configurations() + 1))
+       if abs(c["D"] - 1.98) < 0.01][0]
+assert source == "configuration" and (x, y) == (round(own["xCenter"], 3), round(own["yCenter"], 3)), (source, x, y)
 label = matrix("sens").windowLabel()
-assert label.endswith("::Tr::%.4f::Center::%.3f|%.3f|mask" % (tr, x, y)), label
+assert label.endswith("::Tr::%.4f::Center::%.3f|%.3f|configuration" % (tr, x, y)), label
 assert not Dan.findChild(QGroupBox, "buttonGroupSensCenter").isChecked()
 assert abs(Dan.findChild(QDoubleSpinBox, "doubleSpinBoxXcenterSens").value() - x) < 1e-3
 assert abs(Dan.findChild(QDoubleSpinBox, "doubleSpinBoxYcenterSens").value() - y) < 1e-3
@@ -81,7 +85,7 @@ intensity, messages = curve()
 assert spread(intensity) < 1e-6, spread(intensity)
 assert not [m for m in messages if "sensitivity" in m], messages
 
-# selecting a sensitivity shows its parameters, the center too; the group unchecked for "mask"
+# selecting a sensitivity shows its parameters, the center too; the group unchecked for "configuration"
 Dan.Sensitivity.newSensitivity(RUN, emptyBeam=ec, darkCurrent=DC, transmission=tr, center=(x + 3, y), name="sens2")
 Dan.Sensitivity.newSensitivity(RUN, emptyBeam=ec, darkCurrent=DC, transmission=tr)
 Dan.findChild(QGroupBox, "buttonGroupSensCenter").setChecked(False)
