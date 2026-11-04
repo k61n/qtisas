@@ -7,6 +7,10 @@ Copyright (C) by the authors:
 Description: SANS matrix related tools
  ******************************************************************************/
 
+#include <algorithm>
+#include <cmath>
+#include <unordered_map>
+
 #include "dan18.h"
 #include "parser-ascii.h"
 #include "parser-edf.h"
@@ -550,8 +554,11 @@ void dan18::gslMatrixShift(gsl_matrix *gmatrix, int MD, double HShift, double VS
     for (int i = 0; i < MD; i++)
         for (int j = 0; j < MD; j++)
         {
-            ix1 = int(double(j) - HShift);
-            iy1 = int(double(i) - VShift);
+            // floor, not int(): int() rounds toward 0, and in the first row and column (j - HShift in -1..0) the
+            // weights became 1.1 and -0.1, an extrapolation: negative intensities and negative variances there (NaN
+            // error bars after the square root)
+            ix1 = static_cast<int>(std::floor(double(j) - HShift));
+            iy1 = static_cast<int>(std::floor(double(i) - VShift));
 
             ix2 = ix1 + 1;
             iy2 = iy1 + 1;
@@ -1250,122 +1257,116 @@ QString dan18::integralVSmaskUniByName(const QString &fileNumber)
     return QString::number(res);
 }
 //+++ Matrix Convolusion
+void dan18::smoothingKernel(int type, const gsl_matrix *mask, int MD, int i, int j,
+                            std::vector<std::pair<int, double>> &kernel)
+{
+    kernel.clear();
+    const int reach = type >= 3 ? 2 : 1;
+    for (int di = -reach; di <= reach; di++)
+        for (int dj = -reach; dj <= reach; dj++)
+        {
+            if (type == 1 && std::abs(di) + std::abs(dj) > 1)
+                continue;
+            const int ii = i + di;
+            const int jj = j + dj;
+            if (ii < 0 || jj < 0 || ii >= MD || jj >= MD)
+                continue;
+            const double mk = gsl_matrix_get(mask, ii, jj);
+            if (mk != 0.0)
+                kernel.emplace_back(ii * MD + jj, mk);
+        }
+}
+
+void dan18::clearSmoothing()
+{
+    if (m_smoothing.mask)
+        gsl_matrix_free(m_smoothing.mask);
+    if (m_smoothing.variance)
+        gsl_matrix_free(m_smoothing.variance);
+    m_smoothing = Smoothing();
+}
+
+bool dan18::smoothingOf(const gsl_matrix *sample, int md) const
+{
+    return m_smoothing.type > 0 && m_smoothing.variance && m_smoothing.sample == sample && m_smoothing.md == md;
+}
+
+double dan18::smoothedVariance(const std::map<int, double> &weights) const
+{
+    const int md = m_smoothing.md;
+    // the weight of each pixel before smoothing: the weights of the smoothed pixels it went into, each its share
+    std::unordered_map<int, double> effective;
+    std::vector<std::pair<int, double>> kernel;
+    for (const auto &[pixel, weight] : weights)
+    {
+        if (weight == 0.0)
+            continue;
+        smoothingKernel(m_smoothing.type, m_smoothing.mask, md, pixel / md, pixel % md, kernel);
+        double norm = 0.0;
+        for (const auto &k : kernel)
+            norm += k.second;
+        if (norm == 0.0)
+            continue;
+        for (const auto &[k, mk] : kernel)
+            effective[k] += weight * mk / norm;
+    }
+    double variance = 0.0;
+    for (const auto &[k, w] : effective)
+        variance += w * w * gsl_matrix_get(m_smoothing.variance, k / md, k % md);
+    return variance;
+}
+
+// each pixel the mean over its kernel inside the mask. The errors: sampleErr (the relative variance) of a smoothed
+// pixel n * sum(var) / sum(I)^2, i.e. the variance sum(var) / n of what the pixel holds independently (its n
+// neighbours share its counts; the variance of the mean, sum(var) / n^2, made the errors of sums over smoothed pixels
+// sqrt(n) too small); the variances before smoothing kept for the exact errors of the radial averages
 int dan18::matrixConvolusion(gsl_matrix *sample, gsl_matrix *mask, int MD, gsl_matrix *sampleErr)
 {
-    int convolutionType = comboBoxMatrixConvolusion->currentIndex();
+    clearSmoothing();
+    const int convolutionType = comboBoxMatrixConvolusion->currentIndex();
     if (convolutionType == 0)
         return 0;
 
     gsl_matrix *sampleInit = gsl_matrix_alloc(MD, MD);
     gsl_matrix_memcpy(sampleInit, sample);
-
-    gsl_matrix *errInit = nullptr;
     if (sampleErr)
     {
-        errInit = gsl_matrix_alloc(MD, MD);
-        gsl_matrix_memcpy(errInit, sampleErr);
+        m_smoothing.type = convolutionType;
+        m_smoothing.md = MD;
+        m_smoothing.sample = sample;
+        m_smoothing.mask = gsl_matrix_alloc(MD, MD);
+        gsl_matrix_memcpy(m_smoothing.mask, mask);
+        m_smoothing.variance = gsl_matrix_alloc(MD, MD);
+        for (int i = 0; i < MD; i++)
+            for (int j = 0; j < MD; j++)
+            {
+                const double value = gsl_matrix_get(sampleInit, i, j);
+                gsl_matrix_set(m_smoothing.variance, i, j, gsl_matrix_get(sampleErr, i, j) * value * value);
+            }
     }
 
-    int numberPixels;
-    double sum;
-    double sumErr;
-
-    // accumulate one pixel: sum += I*mask, sumErr += sigma_rel^2 * I^2 * mask (= sigma_abs^2 * mask)
-    auto accum = [&](int ii, int jj) {
-        double mk = gsl_matrix_get(mask, ii, jj);
-        if (mk == 0.0)
-            return;
-        double Ik = gsl_matrix_get(sampleInit, ii, jj);
-        sum += Ik * mk;
-        numberPixels += static_cast<int>(mk);
-        if (errInit)
-            sumErr += gsl_matrix_get(errInit, ii, jj) * Ik * Ik * mk;
-    };
-
+    std::vector<std::pair<int, double>> kernel;
     for (int i = 0; i < MD; i++)
         for (int j = 0; j < MD; j++)
         {
-            numberPixels = 0;
-            sum = 0.0;
-            sumErr = 0.0;
-
             if (gsl_matrix_get(mask, i, j) == 0)
                 continue;
-
-            accum(i, j);
-
-            if (i > 0)
-                accum(i - 1, j);
-            if (i < (MD - 1))
-                accum(i + 1, j);
-            if (j > 0)
-                accum(i, j - 1);
-            if (j < (MD - 1))
-                accum(i, j + 1);
-
-            if (convolutionType > 1)
+            smoothingKernel(convolutionType, mask, MD, i, j, kernel);
+            double norm = 0.0;
+            double sum = 0.0;
+            double sumVar = 0.0;
+            for (const auto &[k, mk] : kernel)
             {
-                if (i > 0 && j > 0)
-                    accum(i - 1, j - 1);
-                if (i < (MD - 1) && j > 0)
-                    accum(i + 1, j - 1);
-                if (i > 0 && j < (MD - 1))
-                    accum(i - 1, j + 1);
-                if (i < (MD - 1) && j < (MD - 1))
-                    accum(i + 1, j + 1);
-            }
-
-            if (convolutionType > 2)
-            {
-                if (j - 2 >= 0)
-                    for (int ii = i - 2; ii <= i + 2; ii++)
-                    {
-                        if (ii < 0 || ii >= MD)
-                            continue;
-                        accum(ii, j - 2);
-                    }
-                if ((j + 2) < MD)
-                    for (int ii = i - 2; ii <= i + 2; ii++)
-                    {
-                        if (ii < 0 || ii >= MD)
-                            continue;
-                        accum(ii, j + 2);
-                    }
-                if (i - 2 >= 0)
-                    for (int jj = j - 1; jj <= j + 1; jj++)
-                    {
-                        if (jj < 0 || jj >= MD)
-                            continue;
-                        accum(i - 2, jj);
-                    }
-                if ((i + 2) < MD)
-                    for (int jj = j - 1; jj <= j + 1; jj++)
-                    {
-                        if (jj < 0 || jj >= MD)
-                            continue;
-                        accum(i + 2, jj);
-                    }
-            }
-
-            if (numberPixels > 0)
-            {
-                gsl_matrix_set(sample, i, j, sum / double(numberPixels));
+                norm += mk;
+                sum += mk * gsl_matrix_get(sampleInit, k / MD, k % MD);
                 if (sampleErr)
-                {
-                    // sigma_rel^2_conv = sumErr / (n*I_conv)^2 = sumErr / sum^2
-                    gsl_matrix_set(sampleErr, i, j, (sum != 0.0) ? sumErr / (sum * sum) : 0.0);
-                }
+                    sumVar += mk * gsl_matrix_get(m_smoothing.variance, k / MD, k % MD);
             }
-            else
-            {
-                gsl_matrix_set(sample, i, j, 0.0);
-                if (sampleErr)
-                    gsl_matrix_set(sampleErr, i, j, 0.0);
-            }
+            gsl_matrix_set(sample, i, j, norm > 0.0 ? sum / norm : 0.0);
+            if (sampleErr)
+                gsl_matrix_set(sampleErr, i, j, sum != 0.0 ? norm * sumVar / (sum * sum) : 0.0);
         }
 
     gsl_matrix_free(sampleInit);
-    if (errInit)
-        gsl_matrix_free(errInit);
     return convolutionType;
 }

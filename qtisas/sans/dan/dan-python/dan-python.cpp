@@ -1404,6 +1404,33 @@ QList<int> DanProcessingOptions::removePoints() const
     return {d->spinBoxRemoveFirst->value(), d->spinBoxRemoveLast->value()};
 }
 
+namespace
+{
+const QList<int> &smoothingPixels()
+{
+    static const QList<int> pixels = {1, 5, 9, 25}; // the entries of comboBoxMatrixConvolusion
+    return pixels;
+}
+} // namespace
+
+bool DanProcessingOptions::setSmoothing(int pixels)
+{
+    const auto index = smoothingPixels().indexOf(pixels);
+    if (index < 0)
+    {
+        m_lastError = "smoothing: the pixels of the kernel, 1 (none), 5, 9 or 25";
+        return false;
+    }
+    begin();
+    d->comboBoxMatrixConvolusion->setCurrentIndex(static_cast<int>(index));
+    return end(true);
+}
+
+int DanProcessingOptions::smoothing() const
+{
+    return smoothingPixels().value(d->comboBoxMatrixConvolusion->currentIndex(), 1);
+}
+
 static QStringList tableNames(ApplicationWindow *app)
 {
     QStringList names;

@@ -14,6 +14,9 @@ Description: SANS data analysis interface
 #include <cstring>
 #include <fstream>
 #include <iostream>
+#include <map>
+#include <utility>
+#include <vector>
 
 #include <QColorDialog>
 #include <QDir>
@@ -465,6 +468,26 @@ public:
                            int yLast);
     bool insertMatrixInMatrix(gsl_matrix *bigMatrix, gsl_matrix *smallMatrix, int xFirst, int yFirst);
     int matrixConvolusion(gsl_matrix *sample, gsl_matrix *mask, int MD, gsl_matrix *sampleErr = nullptr);
+    // the pixels (row * MD + col) of a pixel's smoothing kernel inside the mask, with their mask values: the cross of
+    // 5 (type 1), 3 x 3 (2), 5 x 5 (3)
+    static void smoothingKernel(int type, const gsl_matrix *mask, int MD, int i, int j,
+                                std::vector<std::pair<int, double>> &kernel);
+    // the smoothing of the sample being reduced: a smoothed pixel holds the counts of its neighbours too, so the
+    // variance of a sum over smoothed pixels comes from the variances before smoothing (smoothedVariance());
+    // sample: the matrix it belongs to (none: no smoothing, or another matrix)
+    struct Smoothing
+    {
+        int type = 0;
+        int md = 0;
+        const gsl_matrix *sample = nullptr;
+        gsl_matrix *mask = nullptr;
+        gsl_matrix *variance = nullptr; // the absolute variance of each pixel before smoothing
+    };
+    Smoothing m_smoothing;
+    void clearSmoothing();
+    bool smoothingOf(const gsl_matrix *sample, int md) const;
+    // the variance of sum_p W_p S_p over smoothed pixels S_p = sum_k K_pk I_k: sum_k (sum_p W_p K_pk)^2 var_k
+    double smoothedVariance(const std::map<int, double> &weights) const;
     
     // merge functions
     bool checkTableRange(const QString &tName, int &Rows, int &Cols, double &Qmin, double &Qmax);

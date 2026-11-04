@@ -1159,6 +1159,13 @@ void dan18::saveScriptSettings(QString tableName)
 	w->setText(currentRow,1,"no <");       
     currentRow++;
     
+    //--- Options::2D::Smoothing: the pixels of the matrix smoothing kernel (1: none, 5, 9, 25)
+    w->setNumRows(currentRow + 1);
+    w->setText(currentRow, 0, "Options::2D::Smoothing");
+    const int smoothingPixels = QList<int>{1, 5, 9, 25}.value(comboBoxMatrixConvolusion->currentIndex(), 1);
+    w->setText(currentRow, 1, QString::number(smoothingPixels) + " <");
+    currentRow++;
+
     //--- Options::2D::Polar::Resolusion
     w->setNumRows(currentRow+1);        
     w->setText(currentRow,0,"Options::2D::Polar::Resolusion");
@@ -2242,6 +2249,15 @@ bool dan18::readSettingNew(QString tableName)
     index = static_cast<int>(parameters.indexOf("Options::2D::RemoveNegativePoints::1D"));
     if (index >= 0)
         checkBoxMaskNegativeQ->setChecked(w->text(index, 1).contains("yes"));
+
+    //+++ Options::2D::Smoothing (none in an older settings table: as the instrument's selection set it, none)
+    index = static_cast<int>(parameters.indexOf("Options::2D::Smoothing"));
+    if (index >= 0)
+    {
+        const auto smoothing = QList<int>{1, 5, 9, 25}.indexOf(w->text(index, 1).remove(" <").trimmed().toInt());
+        if (smoothing >= 0)
+            comboBoxMatrixConvolusion->setCurrentIndex(static_cast<int>(smoothing));
+    }
 
     //+++ Options::2D::Polar::Resolusion
     index = static_cast<int>(parameters.indexOf("Options::2D::Polar::Resolusion"));

@@ -7,6 +7,7 @@ Copyright (C) by the authors:
 Description: SANS data reduction tools
  ******************************************************************************/
 
+#include <algorithm>
 #include <cmath>
 #include <limits>
 #include <map>
@@ -261,6 +262,10 @@ void dan18::danDanMultiButton(QString button)
     //+++ sens gsl matrix
     gsl_matrix *sens = gsl_matrix_alloc(MD, MD);
     gsl_matrix *sensErr = gsl_matrix_alloc(MD, MD);
+    // "Mask negative points" masks a row's negative pixels in mask and sens: a row works on copies of the mask and
+    // sens read (the masked pixels of a row stayed in every following row of the same mask)
+    gsl_matrix *maskRead = checkBoxMaskNegativeisChecked ? gsl_matrix_alloc(MD, MD) : nullptr;
+    gsl_matrix *sensRead = checkBoxMaskNegativeisChecked ? gsl_matrix_alloc(MD, MD) : nullptr;
     gsl_matrix *sensTrDet;
     if (checkBoxWaTrDetChecked)
         sensTrDet = gsl_matrix_alloc(MD, MD);
@@ -470,6 +475,16 @@ void dan18::danDanMultiButton(QString button)
             gsl_matrix_set_zero (sensErr);
             if (sensFile != "" && filesManager->checkFileNumber(sensFile))
                 readErrorMatrix(sensFile, sensErr);
+            if (maskRead)
+            {
+                gsl_matrix_memcpy(maskRead, mask);
+                gsl_matrix_memcpy(sensRead, sens);
+            }
+        }
+        else if (maskRead)
+        {
+            gsl_matrix_memcpy(mask, maskRead);
+            gsl_matrix_memcpy(sens, sensRead);
         }
         label = scriptTableManager->info(iRow);
         if (Suffix!="") label=Suffix+"-"+label;
@@ -1149,6 +1164,7 @@ void dan18::danDanMultiButton(QString button)
     //+++ Clean Memory +++
 
     gsl_matrix_free(Sample);
+    clearSmoothing();
     gsl_matrix_free(SampleErr);
     gsl_matrix_free(Buffer);
     gsl_matrix_free(BufferErr);
@@ -1158,6 +1174,11 @@ void dan18::danDanMultiButton(QString button)
     gsl_matrix_free(BCErr);
     gsl_matrix_free(mask);
     gsl_matrix_free(sens);
+    if (maskRead)
+    {
+        gsl_matrix_free(maskRead);
+        gsl_matrix_free(sensRead);
+    }
     gsl_matrix_free(sensErr);
     if (checkBoxWaTrDetChecked) gsl_matrix_free(sensTrDet);
     gsl_matrix_free(ErrMatrix);
@@ -2192,6 +2213,9 @@ void dan18::radAvStd
     //+++ Step "1": all points inside
     double R, rR, acosTh, phi;
     int currentPos;
+    // a smoothed sample: the bin of each pixel, for the variances from the pixels before smoothing
+    const bool smoothed = smoothingOf(Sample, md);
+    std::vector<int> binOf(smoothed ? md * md : 0, -1);
     
     for (int iii=0;iii<md;iii++) for (int jjj=0;jjj<md;jjj++)
     {
@@ -2208,6 +2232,8 @@ void dan18::radAvStd
                 currentPos = int(std::lround((detdist * tan(acosTh) - rMin) / rStep));
                 if (currentPos < 0 || currentPos >= nTotal)
                     continue;
+                if (smoothed)
+                    binOf[iii * md + jjj] = currentPos;
 
             II[currentPos]+=gsl_matrix_get(Sample,iii,jjj);
         dII[currentPos]+=gsl_matrix_get(SampleErr,iii,jjj)*gsl_matrix_get(Sample,iii,jjj)*gsl_matrix_get(Sample,iii,jjj);
@@ -2222,6 +2248,40 @@ void dan18::radAvStd
             phi+=angleAnisotropy;
             IIcos2phi[currentPos]+=gsl_matrix_get(Sample,iii,jjj)*cos(2*phi);
             //---
+        }
+    }
+
+    // a smoothed sample: var(sum_p S_p) = sum_k (sum_p K_pk)^2 var_k over the pixels k before smoothing (a pixel k
+    // went into the smoothed pixels p of its kernel with the share K_pk = m_k / sum of p's kernel)
+    if (smoothed)
+    {
+        std::vector<double> norm(md * md, 0.0);
+        std::vector<std::pair<int, double>> kernel;
+        for (int p = 0; p < md * md; p++)
+            if (binOf[p] >= 0)
+            {
+                smoothingKernel(m_smoothing.type, m_smoothing.mask, md, p / md, p % md, kernel);
+                for (const auto &k : kernel)
+                    norm[p] += k.second;
+            }
+        for (int ir = 0; ir < nTotal; ir++)
+            dII[ir] = 0.0;
+        std::map<int, double> shares; // bin -> sum_p K_pk of one pixel k
+        for (int k = 0; k < md * md; k++)
+        {
+            const double variance = gsl_matrix_get(m_smoothing.variance, k / md, k % md);
+            const double mk = gsl_matrix_get(m_smoothing.mask, k / md, k % md);
+            if (variance == 0.0 || mk == 0.0)
+                continue;
+            // the smoothed pixels whose kernel holds k: the unmasked pixels of k's own kernel (the kernels are
+            // symmetric)
+            smoothingKernel(m_smoothing.type, m_smoothing.mask, md, k / md, k % md, kernel);
+            shares.clear();
+            for (const auto &pk : kernel)
+                if (binOf[pk.first] >= 0 && norm[pk.first] > 0.0)
+                    shares[binOf[pk.first]] += mk / norm[pk.first];
+            for (const auto &[bin, share] : shares)
+                dII[bin] += share * share * variance;
         }
     }
 }
@@ -2455,12 +2515,16 @@ void dan18::radAvHF
             
         }
 
-        // the variance of sum_p W_p I_p: sum_p W_p^2 var_p (SampleErr: the relative variance)
-        for (const auto &pw : pixelWeights)
-        {
-            const double value = gsl_matrix_get(Sample, pw.first / md, pw.first % md);
-            avge += pw.second * pw.second * gsl_matrix_get(SampleErr, pw.first / md, pw.first % md) * value * value;
-        }
+        // the variance of sum_p W_p I_p: sum_p W_p^2 var_p (SampleErr: the relative variance); of a smoothed
+        // sample from the variances before smoothing (its pixels share counts)
+        if (smoothingOf(Sample, md))
+            avge = smoothedVariance(pixelWeights);
+        else
+            for (const auto &pw : pixelWeights)
+            {
+                const double value = gsl_matrix_get(Sample, pw.first / md, pw.first % md);
+                avge += pw.second * pw.second * gsl_matrix_get(SampleErr, pw.first / md, pw.first % md) * value * value;
+            }
 
         II[ir]  = avg;
         dII[ir] = avge;
@@ -4852,6 +4916,7 @@ bool dan18::danDanMultiButtonSingleLine(    QString button,
         gsl_matrix_free(sens);
         gsl_matrix_free(sensErr);
         gsl_matrix_free(Sample);
+        clearSmoothing();
         gsl_matrix_free(SampleErr);
         gsl_matrix_free(Buffer);
         gsl_matrix_free(BufferErr);
@@ -4873,6 +4938,7 @@ bool dan18::danDanMultiButtonSingleLine(    QString button,
             gsl_matrix_free(sens);
             gsl_matrix_free(sensErr);
             gsl_matrix_free(Sample);
+            clearSmoothing();
             gsl_matrix_free(SampleErr);
             gsl_matrix_free(Buffer);
             gsl_matrix_free(BufferErr);
@@ -5082,9 +5148,10 @@ bool dan18::danDanMultiButtonSingleLine(    QString button,
     }
     
     
+    // the scale first (linear: the same values): the variances smoothing keeps are then those of this Sample
+    gsl_matrix_scale(Sample, scale);
     // 2017 ...
     matrixConvolusion(Sample, mask, MD, SampleErr);
-    gsl_matrix_scale(Sample,scale);
     
     
     QString nameQI = Nsample;  //  file number or name as name

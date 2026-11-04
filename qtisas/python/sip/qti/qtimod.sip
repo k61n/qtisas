@@ -4266,6 +4266,15 @@ public:
     const QList<int> p = sipCpp->removePoints();
     sipRes = Py_BuildValue("(ii)", p[0], p[1]);
 %End
+    // the matrix smoothing before the outputs: the pixels of its kernel, 1 (none), 5, 9 or 25
+    void setSmoothing(int pixels);
+%MethodCode
+    if (!(sipCpp->setSmoothing(a0))) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
+    int smoothing() const;
 };
 
 class DanProcessing : DanPart /NoDefaultCtors/

@@ -554,6 +554,9 @@ bool dan18::singleDanSimplified(ScriptTableManager *scriptTableManager, int iRow
 
     //+++ Matrix convolusion
     matrixConvolusion(Sample, mask, MD, SampleErr);
+    // the PN corrections combine such matrices into new ones: their radial averages take the smoothed errors, not
+    // the variances before smoothing of this one
+    clearSmoothing();
 
     //+++ Clean Memory +++
     gsl_matrix_free(BC);

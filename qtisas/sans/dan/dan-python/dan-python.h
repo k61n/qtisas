@@ -417,6 +417,10 @@ class DanProcessingOptions : public DanPart
     // the I[Q] points removed at the beginning and the end of each curve
     bool setRemovePoints(int first, int last);
     QList<int> removePoints() const;
+    // the matrix smoothing ("Matrix convolusion") before the outputs: the pixels of its kernel, 1 (none), 5 (the
+    // neighbours), 9 (3 x 3), 25 (5 x 5)
+    bool setSmoothing(int pixels);
+    int smoothing() const;
 };
 
 // Merge tab
