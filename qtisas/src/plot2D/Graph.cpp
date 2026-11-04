@@ -98,6 +98,8 @@ Description: Graph widget
 #include <ImageSymbol.h>
 #include <ImportExportPlugin.h>
 
+#include "PlotZoomer.h"
+
 Graph::Graph(int x, int y, int width, int height, QWidget* parent, Qt::WindowFlags f)
 : QwtPlot(parent)
 {
@@ -242,9 +244,9 @@ Graph::Graph(int x, int y, int width, int height, QWidget* parent, Qt::WindowFla
 	titlePicker = new TitlePicker(this);
 	scalePicker = new ScalePicker(this);
 
-    d_zoomer[0] = new QwtPlotZoomer(QwtPlot::xBottom, QwtPlot::yLeft, canvas());
+    d_zoomer[0] = new PlotZoomer(QwtPlot::xBottom, QwtPlot::yLeft, canvas());
 	d_zoomer[0]->setRubberBandPen(QPen(Qt::black));
-    d_zoomer[1] = new QwtPlotZoomer(QwtPlot::xTop, QwtPlot::yRight, canvas());
+    d_zoomer[1] = new PlotZoomer(QwtPlot::xTop, QwtPlot::yRight, canvas());
 	zoom(false);
 
 	d_magnifier = nullptr;
@@ -269,6 +271,16 @@ Graph::Graph(int x, int y, int width, int height, QWidget* parent, Qt::WindowFla
 	connect (scalePicker,SIGNAL(axisRightClicked(int)),this,SLOT(showAxisContextMenu(int)));
 
     connect(d_zoomer[0], SIGNAL(zoomed(const QRectF &)), this, SLOT(zoomed(const QRectF &)));
+
+    // A new scale interval rebuilds a break transform in the engine (divideScale()); the axis widget keeps the
+    // copy it was given, so after a zoom, the magnifier or the panner its ticks and break decoration sat where the
+    // old interval put them, apart from the canvas (curves, grid, the break decoration on the canvas frame).
+    for (int i = 0; i < QwtPlot::axisCnt; i++)
+        if (QwtScaleWidget *scale = axisWidget(i))
+            connect(scale, &QwtScaleWidget::scaleDivChanged, this, [this, i]() {
+                if (auto *se = dynamic_cast<ScaleEngine *>(axisScaleEngine(i)); se && se->hasBreak())
+                    axisWidget(i)->setTransformation(se->transformation());
+            });
 }
 
 MultiLayer* Graph::multiLayer() const
@@ -1490,10 +1502,10 @@ void Graph::setScale(int axis, double start, double end, double step, int majorT
     // unrepresentable near-zero region and mirrors the negative half. The guess
     // also widens start/end to span the data and (for mixed signs) configures the
     // after-break half. Once a break exists (user-set or restored from a project)
-    // it is respected
+    // it is respected, and so is an all-negative range: it is drawn mirrored as it is
     bool showNegatives = false;
     const auto stype = static_cast<ScaleTransformation::Type>(type);
-    if (ScaleEngine::isLog(stype) && left_break == -DBL_MAX && right_break == DBL_MAX)
+    if (ScaleEngine::isLog(stype) && left_break == -DBL_MAX && right_break == DBL_MAX && qMax(start, end) >= 0.0)
         showNegatives = guessLogBreak(axis, type, start, end, left_break, right_break, breakPos, typeAfterBreak);
 
     // Re-apply path (adjusting ticks, reopening the dialog, typing a range): an
@@ -7435,8 +7447,10 @@ void Graph::drawBreak(QPainter *painter, const QRectF &rect, const QwtScaleMap m
         }
     }
 
+    // A range zoomed into one half (or ending at the break) has no break to mark.
     auto *src = (ScaleEngine *)axisScaleEngine(srcAxis);
-    if (!src->hasBreak() || !src->hasBreakDecoration())
+    const QwtScaleDiv &div = axisScaleDiv(srcAxis);
+    if (!src->hasBreak() || !src->hasBreakDecoration() || !src->spansBreak(div.lowerBound(), div.upperBound()))
         return;
 
     // map[] already carries the break-aware transformation; use the source axis's entry.

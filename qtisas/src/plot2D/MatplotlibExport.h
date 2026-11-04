@@ -501,7 +501,9 @@ inline QString pyAxisScaleCall(Graph *g, const QString &axVar, const QString &ax
                           .arg(pyStringLiteral(below), pyStringLiteral(above));
     }
 
-    const ScaleTransformation::Type type = ScaleEngine::resolveHalfType(se->type(), s1, s2);
+    // A range on one half of a broken axis (e.g. zoomed into it) takes that half's scale.
+    const ScaleTransformation::Type type =
+        se->hasBreak() ? se->typeBesideBreak(s1, s2) : ScaleEngine::resolveHalfType(se->type(), s1, s2);
     if (ScaleEngine::isNegLog(type))
         return head + QStringLiteral("\"function\", functions=qtisas_scale(\"neglog\"))\n");
     if (ScaleEngine::isLog(type))
@@ -745,7 +747,10 @@ inline void writeAxisProperties(QTextStream &out, Graph *g, const QString &axVar
         }
         auto *breakSe = dynamic_cast<ScaleEngine *>(g->axisScaleEngine(srcAxisId));
         auto *srcDraw = dynamic_cast<ScaleDraw *>(g->axisScaleDraw(srcAxisId));
-        if (axisEnabled && breakSe && srcDraw && breakSe->hasBreak() && breakSe->hasBreakDecoration())
+        const QwtScaleDiv srcDiv = g->axisScaleDiv(srcAxisId);
+        // No decoration for a range zoomed into one half (or ending at the break): the break is off the axis.
+        if (axisEnabled && breakSe && srcDraw && breakSe->hasBreak() && breakSe->hasBreakDecoration() &&
+            breakSe->spansBreak(srcDiv.lowerBound(), srcDiv.upperBound()))
         {
             const QwtScaleMap map = srcDraw->scaleMap();
             const double canvasW = g->canvas()->width();
@@ -791,16 +796,14 @@ inline void writeAxisProperties(QTextStream &out, Graph *g, const QString &axVar
         for (int t = QwtScaleDiv::MinorTick; t < QwtScaleDiv::MajorTick; t++)
             for (double v : div.ticks(t))
                 minPos << pyNumber(v);
-        if (!majPos.isEmpty())
-            out << QStringLiteral("%1.set_%2ticks([%3])\n").arg(axVar, axisLetter, majPos.join(QStringLiteral(", ")));
-        if (!minPos.isEmpty())
-        {
-            out << QStringLiteral("%1.set_%2ticks([%3], minor=True)\n")
-                       .arg(axVar, axisLetter, minPos.join(QStringLiteral(", ")));
-            // Without this matplotlib's log minor formatter labels the minor ticks too
-            // (2x10^-4, 3x10^-4, ...), which QtiSAS never shows -- only the majors carry text.
-            out << QStringLiteral("%1.%2axis.set_minor_formatter(mticker.NullFormatter())\n").arg(axVar, axisLetter);
-        }
+        // Also when there are none: an axis left to matplotlib got its own ticks, e.g. log minor ticks with
+        // labels (3x10^-4) on a log range under one decade, where QtiSAS draws no minor ticks.
+        out << QStringLiteral("%1.set_%2ticks([%3])\n").arg(axVar, axisLetter, majPos.join(QStringLiteral(", ")));
+        out << QStringLiteral("%1.set_%2ticks([%3], minor=True)\n")
+                   .arg(axVar, axisLetter, minPos.join(QStringLiteral(", ")));
+        // Without this matplotlib's log minor formatter labels the minor ticks too
+        // (2x10^-4, 3x10^-4, ...), which QtiSAS never shows -- only the majors carry text.
+        out << QStringLiteral("%1.%2axis.set_minor_formatter(mticker.NullFormatter())\n").arg(axVar, axisLetter);
 
         // Tick label appearance, and the tick text itself taken from this very ScaleDraw: matplotlib would
         // otherwise re-derive the labels with its own formatter, losing QtiSAS's numeric format/precision,

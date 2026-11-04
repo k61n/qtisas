@@ -147,10 +147,11 @@ void ScaleEngine::buildTransformation()
     if (lb > rb)
         qSwap(lb, rb);
 
-    // A break that sits outside the range, or swallows it, has nothing to rescale.
+    // A break that sits outside the range, or swallows it, has nothing to rescale: the range
+    // lies on one half (e.g. zoomed into it) and takes that half's transform.
     if (lb <= d_x1 || rb >= d_x2 || lb >= rb)
     {
-        updateTransformation();
+        setTransformation(newTransform(typeBesideBreak(d_x1, d_x2)));
         return;
     }
 
@@ -171,6 +172,24 @@ void ScaleEngine::buildTransformation()
  * Class ScaleEngine
  *
  *****************************************************************************/
+
+bool ScaleEngine::spansBreak(double lo, double hi) const
+{
+    if (lo > hi)
+        qSwap(lo, hi);
+    return lo < qMin(d_break_left, d_break_right) && qMax(d_break_left, d_break_right) < hi;
+}
+
+ScaleTransformation::Type ScaleEngine::typeBesideBreak(double lo, double hi) const
+{
+    if (lo > hi)
+        qSwap(lo, hi);
+    const double bl = qMin(d_break_left, d_break_right);
+    const double br = qMax(d_break_left, d_break_right);
+    if (hi <= br)
+        return resolveHalfType(d_type, lo, qMin(hi, bl));
+    return resolveHalfType(d_type_after, qMax(lo, br), hi);
+}
 
 ScaleEngine::ScaleEngine(ScaleTransformation::Type type, double left_break, double right_break)
     : QwtScaleEngine(), d_type(type), d_break_left(left_break), d_break_right(right_break), d_break_pos(50),
@@ -411,10 +430,12 @@ QwtScaleDiv ScaleEngine::divideScale(double x1, double x2, int maxMajSteps,
     d_x2 = qMax(x1, x2);
     const_cast<ScaleEngine *>(this)->buildTransformation();
 
-	QwtScaleEngine *engine;
-	if (!hasBreak()){
-        // An unbroken log axis whose range is negative is drawn mirrored.
-        ScaleTransformation::Type t = resolveHalfType(d_type, x1, x2);
+    QwtScaleEngine *engine;
+    if (!hasBreak() || !spansBreak(x1, x2))
+    {
+        // An unbroken log axis whose range is negative is drawn mirrored; a range on one
+        // half of a broken axis is divided as that half.
+        ScaleTransformation::Type t = hasBreak() ? typeBesideBreak(x1, x2) : resolveHalfType(d_type, x1, x2);
         engine = newScaleEngine(t);
         QwtScaleDiv div = divideHalf(engine, t, x1, x2, maxMajSteps, minorStepsForType(maxMinSteps, t), stepSize);
 		delete engine;

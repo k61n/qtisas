@@ -710,8 +710,10 @@ void ScaleDraw::drawBreak(QPainter *painter) const
         }
     }
 
+    // A range zoomed into one half (or ending at the break) has no break to mark.
     auto *src = (ScaleEngine *)d_plot->axisScaleEngine(srcAxisId);
-    if (!src->hasBreak() || !src->hasBreakDecoration())
+    const QwtScaleDiv &div = d_plot->axisScaleDiv(srcAxisId);
+    if (!src->hasBreak() || !src->hasBreakDecoration() || !src->spansBreak(div.lowerBound(), div.upperBound()))
         return;
 
     painter->save();

@@ -157,6 +157,11 @@ public:
     }
 
 	bool hasBreak() const;
+    //! True when the break lies strictly inside [lo, hi], i.e. both halves are on the axis.
+    bool spansBreak(double lo, double hi) const;
+    //! Type of a range [lo, hi] that does not span the break (e.g. zoomed into one half): the type of the half it
+    //! lies on, mirrored when that half is negative.
+    ScaleTransformation::Type typeBesideBreak(double lo, double hi) const;
 	void clone(const ScaleEngine *engine);
 
 	bool hasBreakDecoration() const;

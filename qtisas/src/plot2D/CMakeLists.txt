@@ -37,6 +37,7 @@ set(SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/MultiPeakFitTool.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/PieCurve.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/PlotCurve.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/PlotZoomer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ProbabilityScaleEngine.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/QwtBarCurve.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/QwtHistogram.cpp
@@ -95,6 +96,7 @@ set(HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/PieCurve.h
     ${CMAKE_CURRENT_SOURCE_DIR}/PlotCurve.h
     ${CMAKE_CURRENT_SOURCE_DIR}/PlotToolInterface.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/PlotZoomer.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ProbabilityScaleEngine.h
     ${CMAKE_CURRENT_SOURCE_DIR}/QwtBarCurve.h
     ${CMAKE_CURRENT_SOURCE_DIR}/QwtHistogram.h
