@@ -53,5 +53,7 @@ assert member_popup() is not None and "newMask" in member_popup() and "Merge" no
 
 editor.setPlainText("")
 type_text("Dan.Processing.Options.set")
-assert member_popup() == ["setRemovePoints"], member_popup()
+expected = ["setCurveFormat", "setMatrixFormat", "setNormalization", "setPresentation", "setRadialAveraging",
+            "setRemovePoints", "setSmoothing", "setWideAngle"]
+assert member_popup() == expected, member_popup()
 
