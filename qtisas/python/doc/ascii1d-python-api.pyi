@@ -72,7 +72,7 @@ setResolutionGeometry(collimationCm, detectorCm, pixelCm=0.525, sampleApertureWm
                       collimationApertureWmm=30, collimationApertureHmm=30, lambdaA=6, deltaLambda=0.1)
 #   CM and MM, NOT METRES: 8 m collimation, 4 m detector = setResolutionGeometry(800, 400, ...); a distance below 50
 #   raises ValueError (given in metres)
-setResolutionLenses(on, focus=0)        # focus in cm
+setResolutionFocusing(on, optic=None)   # "Focused?": optic "lenses" | "mirror"; 2f = collimation, sample at detector distance
 resolutionSigma(q)->float               # sigma at one Q, current geometry
 setMath(op, factor=1, op2="", factor2=1)  # "+","-","*","/"; "" = off: scale 2 then -0.01 = setMath("*",2,"-",0.01)
 setCalculator(op, column)               # I op another curve point by point: Y column "buffer_I" or a table; same
