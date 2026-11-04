@@ -16,13 +16,18 @@
   averaging term "Sigma-AV" from the ring's pixels (both took the larger of the two): a resolution of one pixel gives
   the sigma of none; the resolution is the detector's real pixel, a box (it was a FWHM divided by sqrt(pi)): twice
   it adds (4 - 1) w^2 / 12 of detector width.
+- The SasView Qx-Qy files: gravity spreads Q vertically, so its variance goes to sigma(para) by sin^2 of the pixel's
+  azimuth and to sigma(perp) by cos^2 (both got the radially averaged half); with focusing lenses from the fall
+  2 A lambda^2 C^2, without focusing from A lambda^2 (C + D) D (two apertures; it was left out), with a mirror none.
 - dQ: one estimate for I[Q] and the matrix dQ-x-y (they had two, neither from the header's wavelength spread; the
   matrix's was infinite at Q = 0): the matrix's dQ at a pixel = the I[Q] dQ at its Q and ring width, no NaN.
 """
 
 import math
 import os
+import shutil
 import sys
+import tempfile
 
 try:
     from PyQt6.QtWidgets import QCheckBox, QComboBox, QLineEdit
@@ -216,3 +221,38 @@ for q, s1 in sigmas["0"].items():
 assert checked > 50, checked
 resolution.setText("0.08")
 focus.setChecked(True)
+
+# --- the SasView Qx-Qy files: gravity (lenses) vertical, para^2 - perp^2 = Q^2 dl^2 / 6 + g (2 sin^2 - 1) with the
+# whole vertical variance g (sin: the pixel's azimuth from the horizontal); a mirror: g = 0
+work = tempfile.mkdtemp()
+try:
+    Dan.Options.setOutputPath(work)
+    o.setMatrixFormat("qxqy-resolution", header=True, sasview=True)
+    # pinhole (focusing off): the fall through two apertures A lambda^2 (C + D) D, its spread twice that times e
+    pinhole = k0 * k0 * (2 * fall * (C + D) * D) ** 2 * slope / D ** 2
+    for optic, expected in (("lenses", 2 * gravity), ("mirror", 0.0), ("pinhole", pinhole)):
+        focus.setChecked(optic != "pinhole")
+        if optic != "pinhole":
+            cfg.setParameters({"Resolusion-Focusing-Type": optic})
+        count[0] += 1
+        made = p.process(p.newScriptTable("resolution-2d-%d" % count[0], [RUN]), "I-x-y", "files")
+        with open(made[0]) as f:
+            rows = [[float(v) for v in line.split()] for line in f.read().splitlines()[3:]]
+        os.remove(made[0])
+        # least squares of d = a Q^2 + g (2 sin^2 - 1) over the unmasked pixels
+        saa = sab = sbb = sad = sbd = 0.0
+        for qx, qy, _, _, _, para, perp, shadow, _ in rows:
+            if shadow == 0:
+                continue
+            q2 = qx * qx + qy * qy
+            a, b, d = q2, 2 * qy * qy / q2 - 1, para * para - perp * perp
+            saa, sab, sbb, sad, sbd = saa + a * a, sab + a * b, sbb + b * b, sad + a * d, sbd + b * d
+        g = (saa * sbd - sab * sad) / (saa * sbb - sab * sab)
+        a = (sad - sab * g) / saa
+        assert abs(a / slope - 1) < 1e-3, (optic, a, slope)
+        assert abs(g - expected) <= 1e-3 * max(2 * gravity, expected), (optic, g, expected)
+finally:
+    focus.setChecked(True)
+    o.setMatrixFormat("matrix", header=False, sasview=False)
+    cfg.setParameters({"Resolusion-Focusing-Type": "mirror"})
+    shutil.rmtree(work)
