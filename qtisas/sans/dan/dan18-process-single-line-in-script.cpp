@@ -381,10 +381,9 @@ bool dan18::singleDanSimplified(ScriptTableManager *scriptTableManager, int iRow
     if (checkBoxWaTrDetChecked)
     {
         TrDet = scriptTableManager->transmissionDetector(iRow).toDouble();
-        if (TrDet > 1.0)
+        // outside (0, 1]: no window (as danDanMultiButton; 0 made the factor infinite)
+        if (TrDet > 1.0 || TrDet <= 0.0)
             TrDet = 1.0;
-        else if (TrDet < 0)
-            TrDet = 0.0;
     }
 
     Sample = gsl_matrix_alloc(MD, MD);
@@ -476,6 +475,7 @@ bool dan18::singleDanSimplified(ScriptTableManager *scriptTableManager, int iRow
     {
         sensTrDet = gsl_matrix_alloc(MD, MD);
         gslMatrixWaTrDet(MD, TrDet, sensTrDet, Xcenter, Ycenter, detdist, pixel * binning, pixelAsymetry);
+        windowRelativeToSensitivity(MD, TrDet, sensTrDet, sensName, pixel * binning, pixelAsymetry);
     }
 
     double err2;
@@ -511,14 +511,15 @@ bool dan18::singleDanSimplified(ScriptTableManager *scriptTableManager, int iRow
 
     gsl_matrix_mul_elements(SampleErr, mask);
 
+    //+++ Matrix-to-Matrix actions +++
+    gsl_matrix_sub(Sample, BC); // Sample = Sample - BC
+    // the detector window's factor after the dark current, which does not cross the window
     if (checkBoxWaTrDetChecked)
         gsl_matrix_mul_elements(Sample, sensTrDet);
 
-    //+++ Matrix-to-Matrix actions +++
-    gsl_matrix_sub(Sample, BC); // Sample = Sample - BC
-
-    double Xc, Yc;
-    readCenterfromMaskName(maskName, Xc, Yc, MD);
+    // the wide-angle corrections around the row's beam center (0-based), as in danDanMultiButton
+    const double Xc = Xcenter;
+    const double Yc = Ycenter;
     if (!ecInSampleRow)
         checkRowAgainstSensitivity(iRow, sensName, Nsample, trans, Xc, Yc);
 

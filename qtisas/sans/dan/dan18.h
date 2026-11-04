@@ -271,6 +271,9 @@ public:
     void updatePolScriptTables();
     double tCalc(double lambda);
     double muCalc(double lambda);
+    // the beam center (0-based) of a configuration of the configuration table, the center of the mask's beam stop
+    // when it has none yet
+    void configurationCenter(int col, const QString &maskName, double &Xc, double &Yc);
     void readCenterfromMaskName( QString maskName, double &Xc, double &Yc, int MD );
     void updateCenterAll();
     void updateCenter(int startRow);
@@ -443,6 +446,10 @@ public:
     void saveMatrixAsTableToFile(const QString &fn, gsl_matrix *i, gsl_matrix *di, gsl_matrix *sigma, gsl_matrix *mask,
                                  int MaDe, double xCenter, double yCenter, double wl, double dwl, double d,
                                  double xPixel, double yPixel);
+    // the window factor of the sensitivity's own measurement divided out of factor (the window factor of a row): a
+    // sensitivity made of a run contains the window's absorption at its distance and center
+    void windowRelativeToSensitivity(int md, double Tr, gsl_matrix *factor, const QString &sensName, double detelem,
+                                     double pixelAsymetry);
     void gslMatrixWaTrDet(int md, double Tr, gsl_matrix *sensTrDet, double Xcenter, double Ycenter, double detdist,
                           double detelem, double pixelAsymetry);
     double integralVSmaskUni(gsl_matrix *sample, gsl_matrix *mask, int MaDe);

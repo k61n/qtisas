@@ -3587,15 +3587,15 @@ bool dan18::calcAbsCalTrFs( int col )
     
     
     
+    // the wide-angle corrections around the configuration's beam center, as the rows' (the mask's beam stop when it
+    // has none yet); Tr(theta) with its own option (it came with "Parallax", and without it was left out), as in the
+    // reduction
     double Xc, Yc;
-    readCenterfromMaskName( maskName, Xc, Yc, MD );
-    
-    
-    if (transmision<1.0 && transmision>0.0 && checkBoxParallax->isChecked())
-    {
-        transmissionThetaDependenceTrEC(plexiEB, Xc, Yc, D*100.0, transmision);
-    }
-    
+    configurationCenter(col, maskName, Xc, Yc);
+
+    if (transmision < 1.0 && transmision > 0.0 && checkBoxParallaxTr->isChecked())
+        transmissionThetaDependenceTrEC(plexiEB, Xc, Yc, D * 100.0, transmision);
+
     gsl_matrix_scale(plexiEB,transmision);      // EB=T*EB
     gsl_matrix_sub(plexi,plexiEB);                      // plexi=plexi  - EB
     
@@ -3603,10 +3603,8 @@ bool dan18::calcAbsCalTrFs( int col )
     gsl_matrix_mul_elements(plexi,sens);
     
     //+++
-    if (checkBoxParallax->isChecked())
-    {
-        parallaxCorrection(plexi, Xc, Yc, D*100.0,transmision);
-    }
+    if (checkBoxParallax->isChecked() || checkBoxParallaxTr->isChecked())
+        parallaxCorrection(plexi, Xc, Yc, D * 100.0, transmision);
     
     
     for(ii=0;ii<MD;ii++) for(jj=0;jj<MD;jj++)
@@ -4205,15 +4203,15 @@ bool dan18::calcAbsCalNew( int col )
     
     
     
+    // the wide-angle corrections around the configuration's beam center, as the rows' (the mask's beam stop when it
+    // has none yet); Tr(theta) with its own option (it came with "Parallax", and without it was left out), as in the
+    // reduction
     double Xc, Yc;
-    readCenterfromMaskName( maskName, Xc, Yc, MD );
-    
-    
-    if (transmision<1.0 && transmision>0.0 && checkBoxParallax->isChecked())
-    {
-        transmissionThetaDependenceTrEC(plexiEB, Xc, Yc, D*100.0, transmision);
-    }
-    
+    configurationCenter(col, maskName, Xc, Yc);
+
+    if (transmision < 1.0 && transmision > 0.0 && checkBoxParallaxTr->isChecked())
+        transmissionThetaDependenceTrEC(plexiEB, Xc, Yc, D * 100.0, transmision);
+
     gsl_matrix_scale(plexiEB,transmision);      // EB=T*EB
     gsl_matrix_sub(plexi,plexiEB);                      // plexi=plexi  - EB
     
@@ -4221,10 +4219,8 @@ bool dan18::calcAbsCalNew( int col )
     gsl_matrix_mul_elements(plexi,sens);
     
     //+++
-    if (checkBoxParallax->isChecked())
-    {
-        parallaxCorrection(plexi, Xc, Yc, D*100.0,transmision);
-    }
+    if (checkBoxParallax->isChecked() || checkBoxParallaxTr->isChecked())
+        parallaxCorrection(plexi, Xc, Yc, D * 100.0, transmision);
     
     
     for(ii=0;ii<MD;ii++) for(jj=0;jj<MD;jj++)
@@ -4349,6 +4345,23 @@ double dan18::tCalc(double lambda)
     double lambdaT=lineEditLate->text().toDouble();
     
     return To-TA*exp(-lambdaT/lambda);
+}
+
+void dan18::configurationCenter(int col, const QString &maskName, double &Xc, double &Yc)
+{
+    auto value = [this, col](int row) {
+        const QTableWidgetItem *item = tableEC->item(row, col);
+        return item ? item->text().split(QChar(177)).first().trimmed().toDouble() : 0.0;
+    };
+    const double x = value(dptCENTERX);
+    const double y = value(dptCENTERY);
+    if (x > 0.0 && y > 0.0)
+    {
+        Xc = x - 1.0;
+        Yc = y - 1.0;
+        return;
+    }
+    readCenterfromMaskName(maskName, Xc, Yc, lineEditMD->text().toInt());
 }
 
 void dan18::readCenterfromMaskName( QString maskName, double &Xc, double &Yc, int MD )

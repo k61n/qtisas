@@ -1309,8 +1309,9 @@ bool DanProcessing::calculate()
     // Sensitivity Matrices", KWS-3)
     // dptPOL too, as the interface's corner button: in the PN mode the configurations' polarization states (before,
     // they stayed "out" from Python)
+    // the centers before the factors: the calibrant's wide-angle corrections use the configuration's center
     for (int row : {dan18::dptC, dan18::dptD, dan18::dptWL, dan18::dptBSIZE, dan18::dptPOL, dan18::dptDAC,
-                    dan18::dptACMU, dan18::dptACTR, dan18::dptACFAC, dan18::dptCENTERX, dan18::dptECTR})
+                    dan18::dptACMU, dan18::dptACTR, dan18::dptCENTERX, dan18::dptACFAC, dan18::dptECTR})
         d->vertHeaderTableECPressed(row, true);
     return end(true); // a configuration without calibrant or center run is not an error: lastMessages() says so
 }
@@ -1431,10 +1432,46 @@ int DanProcessingOptions::smoothing() const
     return smoothingPixels().value(d->comboBoxMatrixConvolusion->currentIndex(), 1);
 }
 
+bool DanProcessingOptions::setWideAngle(const QString &parallax, int transmission, int window)
+{
+    static const QStringList parallaxModes = {"off", "flat", "tubes"};
+    if (!parallax.isEmpty() && !parallaxModes.contains(parallax))
+    {
+        m_lastError = "parallax: one of off, flat (cos^3), tubes (cos(alpha) cos^2)";
+        return false;
+    }
+    begin();
+    if (!parallax.isEmpty())
+    {
+        d->checkBoxParallax->setChecked(parallax != "off");
+        if (parallax != "off")
+            d->comboBoxParallax->setCurrentIndex(parallax == "flat" ? 0 : 1);
+    }
+    if (transmission >= 0)
+        d->checkBoxParallaxTr->setChecked(transmission == 1);
+    if (window >= 0)
+        d->checkBoxWaTrDet->setChecked(window == 1);
+    return end(true);
+}
+
+QVariantMap DanProcessingOptions::wideAngle() const
+{
+    const QString parallax = !d->checkBoxParallax->isChecked()          ? "off"
+                             : d->comboBoxParallax->currentIndex() == 0 ? "flat"
+                                                                        : "tubes";
+    return {{"parallax", parallax},
+            {"transmission", d->checkBoxParallaxTr->isChecked()},
+            {"window", d->checkBoxWaTrDet->isChecked()}};
+}
+
+// the tables and matrices of the project: what a processing makes in it (I[Q] tables, the 2D outputs' matrices: the
+// 2D kinds into the project were "nothing was made")
 static QStringList tableNames(ApplicationWindow *app)
 {
     QStringList names;
     for (MdiSubWindow *w : app->tableList())
+        names << w->name();
+    for (MdiSubWindow *w : app->matrixList())
         names << w->name();
     return names;
 }

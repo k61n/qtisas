@@ -439,7 +439,9 @@ void dan18::parallaxCorrection(gsl_matrix *&data, double Xc, double Yc, double D
             theta = sqrt((Xc - ii) * (Xc - ii) + pixelAsymetry * pixelAsymetry * (Yc - jj) * (Yc - jj));
             theta = atan(binning * pixel * theta / D);
             costheta = cos(theta);
-            cosalpha = cos(asin(pixelAsymetry * (Yc - jj) / D * costheta));
+            // sin(alpha) = y / R with y = asymmetry * pixel * binning * (Yc - jj) and R = D / cos(theta), all in cm
+            // (the pixels were divided by cm: asin of more than 1, NaN, at small pixels); at most 1
+            cosalpha = cos(asin(std::min(1.0, std::fabs(pixelAsymetry * binning * pixel * (Yc - jj) / D * costheta))));
 
             if (theta > 0.01)
             {

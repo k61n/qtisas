@@ -4275,6 +4275,28 @@ public:
     }
 %End
     int smoothing() const;
+    // the wide-angle corrections: parallax "off" | "flat" (cos^3) | "tubes" (cos(alpha) cos^2); transmission: the
+    // sample's angle-dependent transmission; window: the detector window's (the script table's column "TrDet");
+    // None: as it is
+    void setWideAngle(SIP_PYOBJECT parallax = Py_None, SIP_PYOBJECT transmission = Py_None,
+                      SIP_PYOBJECT window = Py_None);
+%MethodCode
+    QString parallax;
+    if (a0 != Py_None) {
+        if (!PyUnicode_Check(a0)) {
+            PyErr_SetString(PyExc_TypeError, "parallax: a string, off, flat or tubes");
+            sipError = sipErrorFail;
+        } else
+            parallax = QString::fromUtf8(PyUnicode_AsUTF8(a0));
+    }
+    const int transmission = a1 == Py_None ? -1 : (PyObject_IsTrue(a1) ? 1 : 0);
+    const int window = a2 == Py_None ? -1 : (PyObject_IsTrue(a2) ? 1 : 0);
+    if (sipError == sipErrorNone && !sipCpp->setWideAngle(parallax, transmission, window)) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
+    QVariantMap wideAngle() const;
 };
 
 class DanProcessing : DanPart /NoDefaultCtors/

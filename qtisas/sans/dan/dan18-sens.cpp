@@ -375,9 +375,10 @@ void dan18::createSensFull(const QString &sensName)
         transmision = lineEditTransAnyD->text().toDouble();
         info += " | Tr : " + QString::number(transmision, 'f', 4);
 
-        // the center of the wide-angle corrections (0-based here): the mask's beam stop, shown in the center fields;
-        // or the fields' values when their group is checked. The reduction's corrections use the row mask's beam stop:
-        // the same center cancels them for the same run (water as sample stays flat)
+        // the center of the wide-angle corrections (0-based here), shown in the center fields: the beam center of the
+        // configuration the run belongs to (the configuration table's, as its rows use it); the mask's beam stop when
+        // no configuration has the run's; or the fields' values when their group is checked. The same center cancels
+        // the corrections for the same run (water as sample stays flat)
         double Xc, Yc;
         QString centerSource = "mask";
         if (buttonGroupSensCenter->isChecked())
@@ -389,6 +390,24 @@ void dan18::createSensFull(const QString &sensName)
         else
         {
             readCenterfromMaskName(maskName, Xc, Yc, MD);
+            for (int col = 0; col < tableEC->columnCount(); col++)
+            {
+                const QString ec = tableEC->item(dptEC, col) ? tableEC->item(dptEC, col)->text().trimmed() : QString();
+                if (ec.isEmpty() || !filesManager->checkFileNumber(ec) ||
+                    !compareConfigurations(PlexiFileNumber, ec, 0.05, false))
+                    continue;
+                double x = 0.0;
+                double y = 0.0;
+                configurationCenter(col, maskName, x, y);
+                const QTableWidgetItem *cx = tableEC->item(dptCENTERX, col);
+                if (cx && cx->text().split(QChar(177)).first().trimmed().toDouble() > 0.0)
+                {
+                    Xc = x;
+                    Yc = y;
+                    centerSource = "configuration";
+                    break;
+                }
+            }
             doubleSpinBoxXcenterSens->setValue(Xc + 1.0);
             doubleSpinBoxYcenterSens->setValue(Yc + 1.0);
         }
@@ -705,6 +724,5 @@ void dan18::checkRowAgainstSensitivity(int iRow, const QString &sensName, const 
         std::hypot(XcSens - (Xc + 1.0), YcSens - (Yc + 1.0)) > 0.5)
         danWarning(line + "is made with the center " + QString::number(XcSens, 'f', 2) + "|" +
                    QString::number(YcSens, 'f', 2) + " (" + source + "), the row's wide-angle corrections use " +
-                   QString::number(Xc + 1.0, 'f', 2) + "|" + QString::number(Yc + 1.0, 'f', 2) +
-                   " (its mask's beam stop)");
+                   QString::number(Xc + 1.0, 'f', 2) + "|" + QString::number(Yc + 1.0, 'f', 2) + " (its beam center)");
 }

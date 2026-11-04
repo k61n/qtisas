@@ -762,6 +762,7 @@ void dan18::danDanMultiButton(QString button)
         if (checkBoxWaTrDetChecked)
         {
             gslMatrixWaTrDet (MD, TrDet, sensTrDet, Xcenter, Ycenter, detdist, pixel*binning, pixelAsymetry );
+            windowRelativeToSensitivity(MD, TrDet, sensTrDet, sensName, pixel * binning, pixelAsymetry);
         }
         
         int iii,jjj;
@@ -909,10 +910,11 @@ void dan18::danDanMultiButton(QString button)
             rowCommonError = std::hypot(rowCommonError, factorRelativeError(iRow));
         }
 
-        if (checkBoxWaTrDetChecked) gsl_matrix_mul_elements(Sample,sensTrDet);
-        
         //+++ Matrix-to-Matrix actions +++
         gsl_matrix_sub(Sample,BC);                      // Sample=Sample - BC
+        // the detector window's factor after the dark current, which does not cross the window
+        if (checkBoxWaTrDetChecked)
+            gsl_matrix_mul_elements(Sample, sensTrDet);
         
         // 2012 Time normalization BC
         if (filesManager->checkFileNumber(NBC) && checkBoxBCTimeNormalizationisChecked && ECexist)
@@ -932,8 +934,9 @@ void dan18::danDanMultiButton(QString button)
         }
         
         
-        if (checkBoxWaTrDetChecked) gsl_matrix_mul_elements(EC,sensTrDet);
         gsl_matrix_sub(EC,BC);                          // EC=EC - BC
+        if (checkBoxWaTrDetChecked)
+            gsl_matrix_mul_elements(EC, sensTrDet);
         
         
         if (subtractBuffer)
@@ -956,15 +959,32 @@ void dan18::danDanMultiButton(QString button)
                 
                 gsl_matrix_scale(BC,NormSample);      // EB=T*EB
             }
-            if (checkBoxWaTrDetChecked) gsl_matrix_mul_elements(Buffer,sensTrDet);
             gsl_matrix_sub(Buffer,BC);    //Buffer=Buffer - BC
+            if (checkBoxWaTrDetChecked)
+                gsl_matrix_mul_elements(Buffer, sensTrDet);
         }
         
-        double Xc, Yc;
-        readCenterfromMaskName( maskName, Xc, Yc, MD );
+        // the wide-angle corrections around the row's beam center (0-based), as the window factor and the single-row
+        // reduction: the center of the mask's beam-stop box was another point when the box was not on the beam (no
+        // beam stop: the instrument's box)
+        const double Xc = Xcenter;
+        const double Yc = Ycenter;
         checkRowAgainstSensitivity(iRow, sensName, Nsample, trans, Xc, Yc);
         
         
+        // the buffer's EC term from EC - BC with the buffer's own transmission and its own angular part f(T_b): the
+        // sample's term rescaled by T_b / T kept the sample's f(T)
+        gsl_matrix *ecBuffer = nullptr;
+        if (subtractBufferLocal && ECexist)
+        {
+            ecBuffer = gsl_matrix_alloc(MD, MD);
+            gsl_matrix_memcpy(ecBuffer, EC);
+            if (transBuffer < 1.0 && transBuffer > 0.0 && checkBoxParallaxTrisChecked)
+                transmissionThetaDependenceTrEC(ecBuffer, Xc, Yc, detector->readD(scriptTableManager->runBuffer(iRow)),
+                                                transBuffer);
+            gsl_matrix_scale(ecBuffer, transBuffer); // EC = Tbuffer * f(Tbuffer) * EC
+        }
+
         if (trans<1.0 && trans>0.0 && checkBoxParallaxTrisChecked)
         {
             double Detector = detector->readD(scriptTableManager->runSample(iRow)); // [cm]
@@ -974,10 +994,10 @@ void dan18::danDanMultiButton(QString button)
         gsl_matrix_scale(EC,trans);                             // EC=T*EC
         if (ECexist) gsl_matrix_sub(Sample,EC);         // Sample=Sample  - EC
         
-        if (subtractBufferLocal)
+        if (ecBuffer)
         {
-            gsl_matrix_scale(EC,transBuffer/trans);    // EC=Tbuffer*EC
-            if (ECexist) gsl_matrix_sub(Buffer,EC);    // Buffer=Buffer  - EC
+            gsl_matrix_sub(Buffer, ecBuffer); // Buffer = Buffer - Tbuffer * f(Tbuffer) * EC
+            gsl_matrix_free(ecBuffer);
         }
         
         gsl_matrix_mul_elements(Sample,mask);
@@ -3823,6 +3843,23 @@ void dan18::MatrixQ(int md, gsl_matrix *mask, double Xcenter, double Ycenter, QS
 
 
 //+++
+void dan18::windowRelativeToSensitivity(int md, double Tr, gsl_matrix *factor, const QString &sensName, double detelem,
+                                        double pixelAsymetry)
+{
+    const QString run = getSensitivityNumber(sensName);
+    if (run.isEmpty() || !filesManager->checkFileNumber(run))
+        return; // a flat sensitivity or one of a file: no window in it
+    double xc = 0.0;
+    double yc = 0.0;
+    QString source;
+    if (!sensitivityCenter(sensName, xc, yc, source))
+        return; // a label without its center (before 2026-10-29): the row's factor alone
+    gsl_matrix *own = gsl_matrix_alloc(md, md);
+    gslMatrixWaTrDet(md, Tr, own, xc - 1.0, yc - 1.0, detector->readD(run), detelem, pixelAsymetry);
+    gsl_matrix_div_elements(factor, own);
+    gsl_matrix_free(own);
+}
+
 void dan18::gslMatrixWaTrDet ( int md, double Tr,  gsl_matrix *sensTrDet, double Xcenter, double Ycenter, double detdist, double detelem, double pixelAsymetry)
 {
     //------------------------------------
@@ -5092,15 +5129,26 @@ bool dan18::danDanMultiButtonSingleLine(    QString button,
     }
     
     
+    // the buffer's EC term with the buffer's own transmission and angular part f(T_b) (see danDanMultiButton)
+    gsl_matrix *ecBuffer = nullptr;
+    if (subtractBuffer && ECexist)
+    {
+        ecBuffer = gsl_matrix_alloc(MD, MD);
+        gsl_matrix_memcpy(ecBuffer, EC);
+        if (transBuffer < 1.0 && transBuffer > 0.0 && checkBoxParallaxTr->isChecked())
+            transmissionThetaDependenceTrEC(ecBuffer, Xcenter, Ycenter, Detector, transBuffer);
+        gsl_matrix_scale(ecBuffer, transBuffer); // EC = Tbuffer * f(Tbuffer) * EC
+    }
+
     if (trans<1.0 && trans>0.0 && checkBoxParallaxTr->isChecked()) transmissionThetaDependenceTrEC(EC, Xcenter, Ycenter, Detector, trans);
     gsl_matrix_scale(EC,trans);                             // EC=T*EC
     
     if (ECexist) gsl_matrix_sub(Sample,EC);         // Sample=Sample  - EC
     
-    if (subtractBuffer)
+    if (ecBuffer)
     {
-        gsl_matrix_scale(EC,transBuffer/trans);    // EC=Tbuffer*EC
-        if (ECexist) gsl_matrix_sub(Buffer,EC);    // Buffer=Buffer  - EC
+        gsl_matrix_sub(Buffer, ecBuffer); // Buffer = Buffer - Tbuffer * f(Tbuffer) * EC
+        gsl_matrix_free(ecBuffer);
     }
     
     

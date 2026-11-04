@@ -421,6 +421,8 @@ class DanProcessingOptions : public DanPart
     // neighbours), 9 (3 x 3), 25 (5 x 5)
     bool setSmoothing(int pixels);
     int smoothing() const;
+    bool setWideAngle(const QString &parallax, int transmission, int window);
+    QVariantMap wideAngle() const;
 };
 
 // Merge tab

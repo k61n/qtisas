@@ -312,9 +312,10 @@ void dan18::tableECcorner()
     vertHeaderTableECPressed(dptDAC);
     vertHeaderTableECPressed(dptACMU);
     vertHeaderTableECPressed(dptACTR);
-    vertHeaderTableECPressed(dptACFAC);
+    // the centers before the factors: the calibrant's wide-angle corrections use the configuration's center
     vertHeaderTableECPressed(dptCENTERX);
     vertHeaderTableECPressed(dptCENTERY);
+    vertHeaderTableECPressed(dptACFAC);
     vertHeaderTableECPressed(dptECTR);
 }
 //+++  New Session
