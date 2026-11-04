@@ -228,6 +228,9 @@
 # axisScale(axis)->(start,end)  # read current visible range back; feed into setScale(...) to change
 #   tick count while keeping the same range: start,end = l.axisScale(ax); l.setScale(ax,start,end,0,5,8)
 # setLinOrLogAxis(axis,logYN,changeAxisFormat=True,forceRescale=False)  # single-axis log/lin toggle; forceRescale=True snaps to data extent even when current scale already contains data
+# Log axis + negative values: shown as log|v| (mirrored). setLinOrLogAxis(ax,True): all-negative data -> mirrored
+#   axis over the data; both signs -> break across zero. setScale(...,type=Log10) with start,end both < 0: kept.
+#   start<0<end without left_break/right_break: break guessed, range REPLACED by the data range (pass the break).
 # setLogLog()   # all 4 axes → log scale
 # setLinLin()   # all 4 axes → linear scale
 # setAutoScale()

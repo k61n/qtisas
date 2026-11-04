@@ -825,6 +825,27 @@ l.setScale(Graph.Axis.Left, 0, 100, 0, 5, 5, Graph.Scale.Linear, False,
 > `typeAfterBreak` was WRONGLY exposed as a `bool` in older bindings (only `Linear`/`Log10` were
 > reachable from Python) — fixed to accept the full `Graph.Scale.*` enum, matching `type` above.
 
+### Scale — log axes with negative values
+
+A log axis (`Log10`/`Ln`/`Log2`) shows negative values as log of |value| (mirrored: −10⁻⁶ next to zero,
+−10² far from it):
+
+| Call | Result |
+|------|--------|
+| `setLinOrLogAxis(axis, True)`, all data negative | mirrored log axis over the data range |
+| `setLinOrLogAxis(axis, True)`, data of both signs | a break across zero: mirrored log below it, log above it (`left_break`/`right_break` = the data value closest to zero on each side) |
+| `setScale(axis, start, end, ..., type=Graph.Scale.Log10)` with `start`, `end` both negative | kept as given, mirrored log axis |
+| the same with `start < 0 < end` and no `left_break`/`right_break` | the break is guessed from the data and the range becomes the data range — pass the break explicitly to keep your range |
+
+```python
+l.setScale(Graph.Axis.Left, -1e5, -1e-4, 0, 5, 5, Graph.Scale.Log10)   # all negative: kept, mirrored
+l.setScale(Graph.Axis.Left, -1e3, 1e3, 0, 5, 5, Graph.Scale.Log10, False,
+           -1e-4, 1e-4, 50, 0, 0, 4, 4, Graph.Scale.Log10)              # across zero: explicit break
+```
+
+A range inside one side of the break (e.g. zoomed into it) is drawn with that side's scale and without
+break marks; `axisScale()` returns it as shown, and `export()`/`exportMatplotlibScript()` draw it the same way.
+
 ### Canvas and frame
 
 | Method | Notes |
