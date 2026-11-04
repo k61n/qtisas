@@ -28,6 +28,7 @@ runs of a reduction (skipped without the qtisas.com example files).
 - No run left by the filters: the error names them, not the empty beam; minCounts 0 is no count filter.
 """
 
+import math
 import os
 import shutil
 import sys
@@ -39,9 +40,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import dan_reduction as dr
 
 try:
-    from PyQt6.QtWidgets import QCheckBox
+    from PyQt6.QtWidgets import QCheckBox, QSpinBox
 except ImportError:
-    from PyQt5.QtWidgets import QCheckBox
+    from PyQt5.QtWidgets import QCheckBox, QSpinBox
 
 ROLES = ("emptyBeam", "darkCurrent", "calibrant", "calibrantEmptyBeam", "calibrantDarkCurrent", "center",
          "cellEmptyBeam", "transmission")
@@ -243,6 +244,20 @@ assert abs(x - eb["xCenter"]) < 0.01 and abs(y - eb["yCenter"]) < 0.01, (x, y, e
 assert p.addCenterOffsets("auto-offsets") == 6  # written again, the same
 assert [(float(st.text(cn.index("HShift") + 1, r)), float(st.text(cn.index("VShift") + 1, r)))
         for r in range(1, st.numRows() + 1)] == shifts
+# the shifted samples' error bars are finite: the sub-pixel shift extrapolated in the first row and column (negative
+# variances, NaN error bars) when the mask keeps the detector's edge (here: no edge mask)
+for spin, value in zip(("spinBoxLTx", "spinBoxRBx", "spinBoxLTy", "spinBoxRBy"), (1, 256, 1, 256)):
+    Dan.findChild(QSpinBox, spin).setValue(value)
+Dan.Mask.newMask("mask-full-edge")
+p.setConfiguration(1, mask="mask-full-edge")
+curves = ["QI-SM-%s-%s" % (st.text(cn.index("#-Run") + 1, r).strip(), st.text(cn.index("Run-info") + 1, r).strip())
+          for r in range(1, st.numRows() + 1)]
+p.process("auto-offsets", "I-Q")  # (the tables of the sections above rewritten)
+assert all(table(n) for n in curves), curves
+for name in curves:
+    t = table(name)
+    bad = [r for r in range(1, t.numRows() + 1) if not math.isfinite(float(t.text(3, r)))]
+    assert not bad, (name, len(bad))
 raises(lambda: p.runCenter("99999"), "no run 99999")
 raises(lambda: p.addCenterOffsets("auto-offsets", mask="no-such-mask"), "no mask no-such-mask")
 raises(lambda: p.addCenterOffsets("no-such-table"), "no script table no-such-table")
