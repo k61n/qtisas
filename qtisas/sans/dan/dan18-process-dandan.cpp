@@ -5051,37 +5051,42 @@ bool dan18::danDanMultiButtonSingleLine(    QString button,
     
     int iii,jjj;
     double err2, Isample, Ibc, Iec;
-    
-    for (iii=0;iii<MD;iii++) for (jjj=0;jjj<MD;jjj++)
-    {
-        //+++
-        Isample=gsl_matrix_get(Sample,iii,jjj);
-        err2=Isample;       //+++
-        Isample*=Isample;
-        Isample*=gsl_matrix_get(SampleErr,iii,jjj);
-        //+++
-        Iec=gsl_matrix_get(EC,iii,jjj);
-        err2 -= (trans*Iec);        //+++
-        Iec*=Iec;
-        Iec*=trans*trans;
-        Iec*=gsl_matrix_get(ECErr,iii,jjj);
-        //+++
-        Ibc=gsl_matrix_get(BC,iii,jjj);
-        if (ECexist) err2 -= ( (1.0-trans) * Ibc ); else err2 -= Ibc;   //+++
-        Ibc*=Ibc;
-        if (ECexist) Ibc*=(1.0-trans)*(1.0-trans);
-        Ibc*=gsl_matrix_get(BCErr,iii,jjj);
+    // BC holds the sample's dark current; the EC's and the buffer's (subtracted below) are rEC, rBuffer times it
+    const double rEC = ECexist ? bcScaleRelativeToSample(NEC, Nsample, NBC) : 1.0;
+    const double rBuffer = subtractBuffer ? bcScaleRelativeToSample(Nbuffer, Nsample, NBC) : 1.0;
+    const double weightBC = ECexist ? 1.0 - trans * rEC : 1.0;
+    const double weightBCBuffer = ECexist ? rBuffer - transBuffer * rEC : rBuffer;
+
+    for (iii = 0; iii < MD; iii++)
+        for (jjj = 0; jjj < MD; jjj++)
+        {
+            //+++
+            Isample = gsl_matrix_get(Sample, iii, jjj);
+            err2 = Isample; //+++
+            Isample *= Isample;
+            Isample *= gsl_matrix_get(SampleErr, iii, jjj);
+            //+++
+            Iec = gsl_matrix_get(EC, iii, jjj);
+            err2 -= (trans * Iec); //+++
+            Iec *= Iec;
+            Iec *= trans * trans;
+            Iec *= gsl_matrix_get(ECErr, iii, jjj);
+            //+++
+            Ibc = gsl_matrix_get(BC, iii, jjj);
+            err2 -= weightBC * Ibc; // S - BC - T (EC - rEC BC)
+            Ibc *= Ibc;
+            Ibc *= weightBC * weightBC;
+            Ibc *= gsl_matrix_get(BCErr, iii, jjj);
 
             double variance = Isample + Iec + Ibc;
             if (subtractBuffer)
             {
-                // - sB (Buffer - Tb EC - (1 - Tb) BC) as subtracted below; EC and BC with one coefficient each
+                // - sB (Buffer - Tb EC - (rBuffer - Tb rEC) BC) as subtracted below; EC and BC with one coefficient
+                // each
                 const double sB = fractionBuffer * absBuffer / abs;
                 const double buffer = gsl_matrix_get(Buffer, iii, jjj);
                 const double ec = gsl_matrix_get(EC, iii, jjj);
                 const double bc = gsl_matrix_get(BC, iii, jjj);
-                const double weightBC = ECexist ? 1.0 - trans : 1.0;
-                const double weightBCBuffer = ECexist ? 1.0 - transBuffer : 1.0;
                 err2 -= sB * (buffer - (ECexist ? transBuffer * ec : 0.0) - weightBCBuffer * bc);
                 const double coefficientEC = ECexist ? -trans + sB * transBuffer : 0.0;
                 const double coefficientBC = -weightBC + sB * weightBCBuffer;
