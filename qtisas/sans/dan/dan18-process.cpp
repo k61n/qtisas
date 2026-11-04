@@ -7,6 +7,8 @@ Copyright (C) by the authors:
 Description: SANS process tab tools
  ******************************************************************************/
 
+#include <cmath>
+
 #include <QScrollBar>
 
 #include <QHelpEvent>
@@ -370,6 +372,7 @@ void dan18::makeScriptTable(QStringList selectedDat)
     QString polarization;
     int polarizationValue;
     //
+    QStringList noThickness;
     for (int iter = startRaw; iter < (startRaw + filesNumber); iter++)
     {
         lst.clear();
@@ -389,6 +392,12 @@ void dan18::makeScriptTable(QStringList selectedDat)
         C = int(collimation->readCinM(Number, lst));
         lambda = selector->readLambda(Number, monitors->readDuration(Number), lst);
         thickness = sample->readThickness(Number, lst);
+        // no thickness in the header (empty or 0): 1 mm, told below
+        if (thickness == 0.0 || !std::isfinite(thickness))
+        {
+            thickness = 0.1;
+            noThickness << Number;
+        }
         double analyzerTransmission = analyzerTransmissionSelector->getValue(lambda, Number);
         double analyzerEfficiency = analyzerEfficiencySelector->getValue(lambda, Number);
         //+++
@@ -403,6 +412,16 @@ void dan18::makeScriptTable(QStringList selectedDat)
         scriptTableManager->thicknessWrite(iter, QString::number(thickness, 'f', 3));
         scriptTableManager->analyzerTransmissionWrite(iter, QString::number(analyzerTransmission, 'f', 4));
         scriptTableManager->analyzerEfficiencyWrite(iter, QString::number(analyzerEfficiency, 'f', 4));
+    }
+    if (!noThickness.isEmpty())
+    {
+        const QString text =
+            QString("DAN :: script table: no thickness in the header (empty or 0) of %1 run(s), 0.1 cm "
+                    "(1 mm) set: %2\n")
+                .arg(noThickness.count())
+                .arg(noThickness.join(", "));
+        std::cout << text.toStdString() << std::flush;
+        toResLog(text);
     }
     // check CD conditions
     int Ncond, iC;
