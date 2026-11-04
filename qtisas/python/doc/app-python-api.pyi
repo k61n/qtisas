@@ -138,10 +138,11 @@ colorNames()->list[str]  colorIndex("name")->int
 
 # Symbol palette (indexed symbols used by setCurveSymbolStyle):
 # symbolNames() -> list[str]  — ordered list of symbol names (user-configurable in prefs)
-# symbolIndex("ellipse") -> int — QwtSymbol::Style value for that name (-1 = no symbol)
+# symbolIndex("ellipse") -> int — QwtSymbol::Style value for that name ("no symbol" -> -1); another name: ValueError
 # Names: "no symbol" "ellipse" "circle"(alias) "rectangle" "diamond" "triangle" "down triangle"
 #        "up triangle" "left triangle" "right triangle" "cross" "diagonal cross"
-#        "horizontal line" "vertical line" "star 1" "star 2" "hexagon"
+#        "horizontal line" "vertical line" "star 1" "star 2" "hexagon"; also "square" "rect" "box"
+#        (= rectangle), "star" (= star 1), "plus" (= cross), "x" (= diagonal cross), "none" (= no symbol)
 # Usage: layer.setCurveSymbolStyle(0, symbolIndex("diamond"))
 symbolNames()->list[str]  symbolIndex("name")->int
 

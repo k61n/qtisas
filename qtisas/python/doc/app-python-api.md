@@ -501,9 +501,9 @@ The indexed symbol list, user-configurable in preferences, is used by `setCurveS
 | Call | Returns | Notes |
 |------|---------|-------|
 | `symbolNames()` | `list[str]` | ordered list of symbol names |
-| `symbolIndex("name")` | `int` | `QwtSymbol::Style` value; `-1` = no symbol / not found |
+| `symbolIndex("name")` | `int` | `QwtSymbol::Style` value; `"no symbol"` → `-1`; an unknown name raises `ValueError` (it returned -1: the curve lost its symbols silently) |
 
-Available names: `"no symbol"` `"ellipse"` `"circle"` `"rectangle"` `"diamond"` `"triangle"` `"down triangle"` `"up triangle"` `"left triangle"` `"right triangle"` `"cross"` `"diagonal cross"` `"horizontal line"` `"vertical line"` `"star 1"` `"star 2"` `"hexagon"`
+Available names: `"no symbol"` `"ellipse"` `"circle"` `"rectangle"` `"diamond"` `"triangle"` `"down triangle"` `"up triangle"` `"left triangle"` `"right triangle"` `"cross"` `"diagonal cross"` `"horizontal line"` `"vertical line"` `"star 1"` `"star 2"` `"hexagon"`; also `"square"`, `"rect"`, `"box"` (= rectangle), `"star"` (= star 1), `"plus"` (= cross), `"x"` (= diagonal cross), `"none"` (= no symbol)
 
 (`"circle"` is an alias for `"ellipse"`)
 
