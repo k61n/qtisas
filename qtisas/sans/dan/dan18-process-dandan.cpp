@@ -1636,9 +1636,11 @@ void dan18::radUniStandartMSmode(int md, gsl_matrix *Sample, gsl_matrix *SampleE
             dIIIms=avgems;
             
             // * ****** Change of Presentation  *****************************
-            double dQignored = 0.0;
-            presentation(CurrentLabel, Q, I, dI, 0.0, QQQ, III, dIII, dQignored);
-            presentation(CurrentLabel, Q, Ims, dIms, 0.0, QQQ, IIIms, dIIIms, dQignored);
+            // dQ follows the Q column's presentation (as in radUni); sigma stays the resolution in Q
+            double dQx = 0.0;
+            presentation(CurrentLabel, Q, I, dI, dq, QQQ, III, dIII, dQx);
+            presentation(CurrentLabel, Q, Ims, dIms, dq, QQQ, IIIms, dIIIms, dQx);
+            dq = dQx;
 
             //+++  To File Q-I-dI-?
             if (radioButtonFile->isChecked())
@@ -1816,30 +1818,13 @@ void dan18::radUniStandartMSmode(int md, gsl_matrix *Sample, gsl_matrix *SampleE
         {
             QTextStream stream( &f );
             
-            if(comboBoxSelectPresentation->currentIndex()==0 && checkBoxASCIIheader->isChecked())
-            {
-                QString header;
-                if (comboBox4thCol->currentIndex()==0)
-                {
-                    header    =  "###     Q[1/A]          I[1/cm]         dI[1/cm]       Sigma[1/A]\n";
-                }
-                else if (comboBox4thCol->currentIndex()==1)
-                {
-                    header    =  "###     Q[1/A]          I[1/cm]         dI[1/cm]          dQ[1/A]\n";
-                }				
-                else if (comboBox4thCol->currentIndex()==2)
-                {
-                    header    =  "###     Q[1/A]          I[1/cm]         dI[1/cm]\n";
-                }
-                else if (comboBox4thCol->currentIndex()==3)
-                {
-                    header    =  "###     Q[1/A]          I[1/cm]         dI[1/cm]          dQ[1/A]       Sigma[1/A]\n";
-                }
-                
-                stream<<header;
-            }
-            stream<<streamSTR;
-            
+            // the columns of the presentation, in its units
+            if (checkBoxASCIIheader->isChecked())
+                stream << curveHeader(comboBox4thCol->currentIndex() == 0 || comboBox4thCol->currentIndex() == 3,
+                                      comboBox4thCol->currentIndex() == 1 || comboBox4thCol->currentIndex() == 3,
+                                      false);
+            stream << streamSTR;
+
             f.close();
         }
     }
@@ -1876,30 +1861,13 @@ void dan18::radUniStandartMSmode(int md, gsl_matrix *Sample, gsl_matrix *SampleE
         {
             QTextStream stream( &f );
             
-            if(comboBoxSelectPresentation->currentIndex()==0 && checkBoxASCIIheader->isChecked())
-            {
-                QString header;
-                if (comboBox4thCol->currentIndex()==0)
-                {
-                    header    =  "###     Q[1/A]          I[1/cm]         dI[1/cm]       Sigma[1/A]\n";
-                }
-                else if (comboBox4thCol->currentIndex()==1)
-                {
-                    header    =  "###     Q[1/A]          I[1/cm]         dI[1/cm]          dQ[1/A]\n";
-                }				
-                else if (comboBox4thCol->currentIndex()==2)
-                {
-                    header    =  "###     Q[1/A]          I[1/cm]         dI[1/cm]\n";
-                }
-                else if (comboBox4thCol->currentIndex()==3)
-                {
-                    header    =  "###     Q[1/A]          I[1/cm]         dI[1/cm]          dQ[1/A]       Sigma[1/A]\n";
-                }
-                
-                stream<<header;
-            }
-            stream<<streamSTRms;
-            
+            // the columns of the presentation, in its units
+            if (checkBoxASCIIheader->isChecked())
+                stream << curveHeader(comboBox4thCol->currentIndex() == 0 || comboBox4thCol->currentIndex() == 3,
+                                      comboBox4thCol->currentIndex() == 1 || comboBox4thCol->currentIndex() == 3,
+                                      false);
+            stream << streamSTRms;
+
             f.close();
         }
     }
@@ -2974,6 +2942,46 @@ void dan18::radAvTableGeneration( QString &sampleMatrix, QString label, int N, d
     sampleMatrix = tableOUT;
 }
 
+// the "###" header line of an I[Q] file: x, y, dy of the presentation (QI: Q, I, dI), then dx (dQ in the units of
+// x), sigma (the resolution, in Q) and the anisotropy; I in 1/cm, or counts for "Counts per Channel". Aligned with
+// the data (14-character numbers, 3 spaces)
+QString dan18::curveHeader(bool sigma, bool dq, bool anisotropy)
+{
+    const QString i = comboBoxACmethod->currentIndex() == 3 ? "counts" : "1/cm";
+    static const QMap<QString, QStringList> columns = {{"QI", {"Q[1/A]", "I[%1]", "dI[%1]"}},
+                                                       {"Guinier", {"Q^2[1/A^2]", "ln(I)", "d(ln I)"}},
+                                                       {"Zimm", {"Q^2[1/A^2]", "1/I", "d(1/I)"}},
+                                                       {"Porod", {"log10(Q)", "log10(I)", "d(log10 I)"}},
+                                                       {"Porod2", {"Q^2[1/A^2]", "IQ^4", "d(IQ^4)"}},
+                                                       {"logQ", {"log10(Q)", "I[%1]", "dI[%1]"}},
+                                                       {"logI", {"Q[1/A]", "log10(I)", "d(log10 I)"}},
+                                                       {"Debye", {"Q^2[1/A^2]", "I^-1/2", "d(I^-1/2)"}},
+                                                       {"1Moment", {"Q[1/A]", "IQ", "d(IQ)"}},
+                                                       {"2Moment", {"Q[1/A]", "IQ^2", "d(IQ^2)"}},
+                                                       {"Kratky", {"Q[1/A]", "IQ^2", "d(IQ^2)"}},
+                                                       {"GuinierRod", {"Q^2[1/A^2]", "ln(IQ)", "d(ln IQ)"}},
+                                                       {"GuinierPlate", {"Q^2[1/A^2]", "ln(IQ^2)", "d(ln IQ^2)"}}};
+    QStringList names = columns.value(comboBoxSelectPresentation->currentText(), columns.value("QI"));
+    for (QString &name : names)
+        name = name.arg(i);
+    if (dq) // d of the x column: dQ[1/A], d(Q^2)[1/A^2], d(log10(Q))
+    {
+        const QString x = names.first();
+        const int unit = static_cast<int>(x.indexOf('['));
+        const QString base = unit >= 0 ? x.left(unit) : x;
+        names << (base == "Q" ? "d" + x : "d(" + base + ")" + (unit >= 0 ? x.mid(unit) : QString()));
+    }
+    if (sigma)
+        names << "Sigma[1/A]";
+    if (anisotropy)
+        names << "Anisotropy[1]";
+    QString header = names.first().rightJustified(14);
+    header.replace(0, 3, "###");
+    for (int k = 1; k < names.count(); k++)
+        header += names[k].rightJustified(17);
+    return header + "\n";
+}
+
 //+++ SD:: QI ASCII-file generation
 void dan18::radAvASCIIGeneration( QString &sampleMatrix, QString label, int N, double *Q,double *I, double *dI, double *dQ, double *sigma, double *anisotropy )
 {
@@ -3014,33 +3022,11 @@ void dan18::radAvASCIIGeneration( QString &sampleMatrix, QString label, int N, d
     
     QTextStream stream( &f );
     
-    //+++ header if
-    if(comboBoxSelectPresentation->currentIndex()==0  && checkBoxASCIIheader->isChecked())
-    {
-        QString header    =  "###     Q[1/A]          I[1/cm]         dI[1/cm]";
-        if (comboBox4thCol->currentIndex()==0)
-        {
-            header    = header +   "       Sigma[1/A]";
-        }
-        else if (comboBox4thCol->currentIndex()==1)
-        {
-            header    = header +   "          dQ[1/A]";
-        }
-        else if (comboBox4thCol->currentIndex()==2)
-        {
-            header    =  header;
-        }
-        else if (comboBox4thCol->currentIndex()==3)
-        {
-            header    =  header +   "          dQ[1/A]       Sigma[1/A]";
-        }
-        
-        if (checkBoxAnisotropyisChecked) header    =  header +   "    Anisotropy[1]";
-        
-        header=header+"\n";
-        
-        stream<<header;
-    }
+    //+++ header: the columns of the presentation, in its units
+    if (checkBoxASCIIheader->isChecked())
+        stream << curveHeader(comboBox4thCol->currentIndex() == 0 || comboBox4thCol->currentIndex() == 3,
+                              comboBox4thCol->currentIndex() == 1 || comboBox4thCol->currentIndex() == 3,
+                              checkBoxAnisotropyisChecked);
     
     //+++ data export
     QString str;
@@ -3294,20 +3280,9 @@ void dan18::horizontalSlice(int md, gsl_matrix *Sample, gsl_matrix *SampleErr, g
         {
             QTextStream stream( &f );
             
-            if(comboBoxSelectPresentation->currentIndex()==0 && checkBoxASCIIheader->isChecked())
-            {
-                QString header;
-                if (comboBox4thCol->currentIndex()==0)
-                {
-                    header    =  "###     Q[1/A]          I[1/cm]         dI[1/cm]       Sigma[1/A]\n";
-                }
-                else 
-                {
-                    header    =  "###     Q[1/A]          I[1/cm]         dI[1/cm]\n";
-                }
-                
-                stream<<header;
-            }
+            // the columns of the presentation, in its units
+            if (checkBoxASCIIheader->isChecked())
+                stream << curveHeader(comboBox4thCol->currentIndex() == 0, false, false);
             
             
             stream<<streamSTR;
@@ -3550,20 +3525,9 @@ void dan18::verticalSlice(int md, gsl_matrix *Sample, gsl_matrix *SampleErr, gsl
             
             
             
-            if(comboBoxSelectPresentation->currentIndex()==0 && checkBoxASCIIheader->isChecked())
-            {
-                QString header;
-                if (comboBox4thCol->currentIndex()==0)
-                {
-                    header    =  "###     Q[1/A]          I[1/cm]         dI[1/cm]       Sigma[1/A]\n";
-                }
-                else 
-                {
-                    header    =  "###     Q[1/A]          I[1/cm]         dI[1/cm]\n";
-                }
-                
-                stream<<header;
-            }
+            // the columns of the presentation, in its units
+            if (checkBoxASCIIheader->isChecked())
+                stream << curveHeader(comboBox4thCol->currentIndex() == 0, false, false);
             
             
             stream<<streamSTR;
@@ -5313,7 +5277,9 @@ bool dan18::danDanMultiButtonSingleLine(    QString button,
         
         if (radioButtonXYdimQ->isChecked())
         {
-            double pixel  = lineEditPS->text().toDouble();
+            // the pixel size times the binning, as the processing of the script table takes it (lineEditPS follows
+            // only a binning chosen in the interface)
+            double pixel = lineEditResoPixelSize->text().toDouble() * comboBoxBinning->currentText().toDouble();
             double pixelAsymetry  = lineEditAsymetry->text().toDouble();
             if (pixelAsymetry<=0) pixelAsymetry=1.0;
             
@@ -5344,48 +5310,35 @@ bool dan18::danDanMultiButtonSingleLine(    QString button,
     }
     
     //+++   Save Reduced Matrix to File
-    if (!radioButtonOpenInProject->isChecked() && button=="I-x-y")
+    if (!radioButtonOpenInProject->isChecked() && button == "I-x-y")
     {
+        QString pathPart = lineEditPathRAD->text() + "/";
         if (checkBoxSortOutputToFolders->isChecked())
         {
-            QDir dd;
-            if (!dd.cd(lineEditPathRAD->text()+"/ASCII-I"))
-            {
-                dd.mkdir(lineEditPathRAD->text()+"/ASCII-I");
-            }
-            if (comboBoxIxyFormat->currentText().contains("Matrix"))
-                saveMatrixToFile(lineEditPathRAD->text() + "/ASCII-I/I-" + currentExt + nameQI + "-" +
-                                     comboBoxInstrument->currentText() + ".DAT",
-                                 Sample, MD);
-            else
-            {
-                double pixel  = lineEditPS->text().toDouble();
-                double pixelAsymetry  = lineEditAsymetry->text().toDouble();
-                
-                // saveMatrixAsTableToFile(lineEditPathRAD->text()+"/ASCII-I/I-"+currentExt+nameQI+"-"+
-                // comboBoxInstrument->currentText()+".DAT", Sample,ErrMatrix, mask, MD, Xcenter, Ycenter,
-                // Lambda, Detector, pixel, pixel*pixelAsymetry);
-            }
+            pathPart += "ASCII-I/";
+            QDir().mkdir(pathPart);
         }
+        const QString fileName =
+            QString(pathPart + "I-" + currentExt + nameQI + "-" + comboBoxInstrument->currentText() + ".DAT")
+                .replace("//", "/");
+        if (comboBoxIxyFormat->currentText().contains("Matrix"))
+            saveMatrixToFile(fileName, Sample, MD);
         else
         {
-            if (comboBoxIxyFormat->currentText().contains("Matrix"))
-                saveMatrixToFile(lineEditPathRAD->text() + "/I-" + currentExt + nameQI + "-" +
-                                     comboBoxInstrument->currentText() + ".DAT",
-                                 Sample, MD);
-            else
-            {
-                double pixel  = lineEditPS->text().toDouble();
-                double pixelAsymetry  = lineEditAsymetry->text().toDouble();
-
-                // saveMatrixAsTableToFile(lineEditPathRAD->text()+"/I-"+currentExt+nameQI+"-"+
-                // comboBoxInstrument->currentText()+".DAT", Sample,ErrMatrix, mask, MD, Xcenter,
-                // Ycenter, Lambda, Detector, pixel, pixel*pixelAsymetry );
-            }
+            // the table formats as the processing of the script table writes them (they were not written here)
+            const double pixel = lineEditResoPixelSize->text().toDouble() * comboBoxBinning->currentText().toDouble();
+            double pixelAsymetry = lineEditAsymetry->text().toDouble();
+            if (pixelAsymetry <= 0)
+                pixelAsymetry = 1.0;
+            gsl_matrix *sigmaMa = gsl_matrix_alloc(MD, MD);
+            sigmaGslMatrix(sigmaMa, MD, mask, Xcenter, Ycenter, Lambda, selector->readDeltaLambda(Nsample), C, Detector,
+                           pixel, collimation->readR1(Nsample), collimation->readR2(Nsample));
+            saveMatrixAsTableToFile(fileName, Sample, ErrMatrix, sigmaMa, mask, MD, Xcenter, Ycenter, Lambda,
+                                    selector->readDeltaLambda(Nsample), Detector, pixel, pixel * pixelAsymetry);
+            gsl_matrix_free(sigmaMa);
         }
-        
     }
-    
+
     //+++   Save Error Matrix to File
     if (!radioButtonOpenInProject->isChecked() && button=="dI-x-y")
     {

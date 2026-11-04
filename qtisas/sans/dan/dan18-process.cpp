@@ -1250,6 +1250,12 @@ void dan18::saveScriptSettings(QString tableName)
     else
         w->setText(currentRow,1,"no <");
     currentRow++;
+
+    //--- Options::2D::IgnoreMask
+    w->setNumRows(currentRow + 1);
+    w->setText(currentRow, 0, "Options::2D::IgnoreMask");
+    w->setText(currentRow, 1, checkBoxASCIIignoreMask->isChecked() ? "yes <" : "no <");
+    currentRow++;
     
     //+++ Options::1D::SASpresentation
     w->setNumRows(currentRow+1);            
@@ -2338,6 +2344,10 @@ bool dan18::readSettingNew(QString tableName)
     index = static_cast<int>(parameters.indexOf("Options::2D::HeaderSASVIEW"));
     if (index >= 0)
         checkBoxASCIIheaderSASVIEW->setChecked(w->text(index, 1).contains("yes"));
+
+    //+++ Options::2D::IgnoreMask (none in older sessions: off)
+    index = static_cast<int>(parameters.indexOf("Options::2D::IgnoreMask"));
+    checkBoxASCIIignoreMask->setChecked(index >= 0 && w->text(index, 1).contains("yes"));
 
     //+++ Options::1D::SASpresentation
     index = static_cast<int>(parameters.indexOf("Options::1D::SASpresentation"));

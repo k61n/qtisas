@@ -648,8 +648,16 @@ void dan18::saveMatrixAsTableToFile(const QString &fn, gsl_matrix *i, gsl_matrix
         stream << "\n";
     }
 
+    // SasView's 2D reader (red2d_reader, NIST format): the data after "ASCII data"; the 4th column is err(I) only when
+    // a "Data columns" line names it (else it takes the 4th column as Qz), the 5th to 8th Qz, sigma parallel, sigma
+    // perpendicular, the beam-stop shadow factor
     if (SASVIEW)
-        stream << "ASCII data\n";
+    {
+        stream << "Data columns are Qx - Qy - I(Qx,Qy) - err(I)";
+        if (format == 3)
+            stream << " - Qz - SigmaQ_parall - SigmaQ_perp - fSubS(beam stop shadow)";
+        stream << "\nASCII data\n";
+    }
 
     double Q, Qx, Qy, phi;
     for (int iy = 0; iy < MaDe; iy++)
@@ -688,10 +696,14 @@ void dan18::saveMatrixAsTableToFile(const QString &fn, gsl_matrix *i, gsl_matrix
             }
             else
             {
-                stream << QString::number(-4 * M_PI / wl * sin(0.5 * asin((xCenter - jx) * xPixel / d)), 'E', 8)
-                       << "\t";
-                stream << QString::number(-4 * M_PI / wl * sin(0.5 * asin((yCenter - iy) * yPixel / d)), 'E', 8)
-                       << "\t";
+                // Qx, Qy: the components of the pixel's Q along x and y (Qx^2 + Qy^2 = Q^2, as SasView's 2D models
+                // use it; Qz = 0); it was 4 pi / lambda sin(asin(x / D) / 2) per axis
+                const double x = (jx - xCenter) * xPixel;
+                const double y = (iy - yCenter) * yPixel;
+                const double r = std::hypot(x, y);
+                Q = 4 * M_PI / wl * sin(0.5 * atan(r / d));
+                stream << QString::number(r > 0 ? Q * x / r : 0.0, 'E', 8) << "\t";
+                stream << QString::number(r > 0 ? Q * y / r : 0.0, 'E', 8) << "\t";
             }
 
             stream << QString::number(gsl_matrix_get(i, iy, jx), 'E', 8) << "\t";

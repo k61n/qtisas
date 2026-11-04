@@ -14,8 +14,9 @@ Description: SANS select instrument functions
 void dan18::optionsConnectSlot()
 {
     //+++ Options
-    connect(comboBoxSelectPresentation, &QComboBox::textActivated, this,
-            [this](const QString &) { this->sasPresentation(); });
+    // any change (the GUI, an instrument, a session, Python): the label shows the axes of the presentation
+    connect(comboBoxSelectPresentation, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
+            [this](int) { this->sasPresentation(); });
     connect(comboBoxMDdata, &QComboBox::textActivated, this, &dan18::dataDimensionChanged);
     connect(comboBoxBinning, &QComboBox::textActivated, this, &dan18::binningChanged);
     connect( comboBoxCalibrant,                 SIGNAL( activated(int) ), this,                 SLOT(calibrantselected() ) );

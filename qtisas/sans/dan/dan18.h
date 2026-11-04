@@ -375,6 +375,8 @@ public:
                                     int *&mergedPoints, double *&nn, int &nCurrent, int removeFirst, int removeLast);
     void radAvTableGeneration(QString &sampleMatrix, QString label, int N, double *Q,double *I, double *dI, double *dQ, double *sigma, double *anisotropy);
     void radAvASCIIGeneration(QString &sampleMatrix, QString label, int N, double *Q,double *I, double *dI, double *dQ, double *sigma, double *anisotropy);
+    //! the "###" header line of an I[Q] file for the presentation and its columns
+    QString curveHeader(bool sigma, bool dq, bool anisotropy);
     void radAvDataChangeSASpresentation(int nCurrent, double *&QQ, double *&II, double *&dII,  double *&dQQ);
     static void presentation(const QString &label, double Q, double I, double dI, double dQ, double &x, double &y,
                              double &dy, double &dx);

@@ -4367,6 +4367,73 @@ public:
     }
 %End
     QVariantMap radialAveraging() const;
+    // I-x-y into files: format "matrix", "xy", "qxqy", "qxqy-resolution", "polar"; header, sasview, ignoreMask: bool;
+    // None: as it is
+    void setMatrixFormat(SIP_PYOBJECT format = Py_None, SIP_PYOBJECT header = Py_None, SIP_PYOBJECT sasview = Py_None,
+                         SIP_PYOBJECT ignoreMask = Py_None);
+%MethodCode
+    QString format;
+    if (a0 != Py_None) {
+        if (!PyUnicode_Check(a0)) {
+            PyErr_SetString(PyExc_TypeError, "format: a string");
+            sipError = sipErrorFail;
+        } else
+            format = QString::fromUtf8(PyUnicode_AsUTF8(a0));
+    }
+    const int header = a1 == Py_None ? -1 : (PyObject_IsTrue(a1) ? 1 : 0);
+    const int sasview = a2 == Py_None ? -1 : (PyObject_IsTrue(a2) ? 1 : 0);
+    const int ignoreMask = a3 == Py_None ? -1 : (PyObject_IsTrue(a3) ? 1 : 0);
+    if (sipError == sipErrorNone && !sipCpp->setMatrixFormat(format, header, sasview, ignoreMask)) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
+    QVariantMap matrixFormat() const;
+    // I[Q] tables and files: columns after Q, I, dI "sigma", "dq", "none", "dq-sigma"; header, anisotropy: bool;
+    // anisotropyOffset: degrees 0..360; None: as it is
+    void setCurveFormat(SIP_PYOBJECT columns = Py_None, SIP_PYOBJECT header = Py_None,
+                        SIP_PYOBJECT anisotropy = Py_None, SIP_PYOBJECT anisotropyOffset = Py_None);
+%MethodCode
+    QString columns;
+    int offset = -1;
+    if (a0 != Py_None) {
+        if (!PyUnicode_Check(a0)) {
+            PyErr_SetString(PyExc_TypeError, "columns: a string");
+            sipError = sipErrorFail;
+        } else
+            columns = QString::fromUtf8(PyUnicode_AsUTF8(a0));
+    }
+    if (sipError == sipErrorNone && a3 != Py_None) {
+        if (!PyLong_Check(a3) || PyBool_Check(a3)) {
+            PyErr_SetString(PyExc_TypeError, "anisotropyOffset: an int (degrees)");
+            sipError = sipErrorFail;
+        } else {
+            const long value = PyLong_AsLong(a3);
+            if (value < 0 || value > 360) {
+                PyErr_SetString(PyExc_ValueError, "curve format: anisotropyOffset 0..360");
+                sipError = sipErrorFail;
+            } else
+                offset = int(value);
+        }
+    }
+    const int header = a1 == Py_None ? -1 : (PyObject_IsTrue(a1) ? 1 : 0);
+    const int anisotropy = a2 == Py_None ? -1 : (PyObject_IsTrue(a2) ? 1 : 0);
+    if (sipError == sipErrorNone && !sipCpp->setCurveFormat(columns, header, anisotropy, offset)) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
+    QVariantMap curveFormat() const;
+    // the presentation of I[Q]: QI, Guinier, Zimm, Porod, Porod2, logQ, logI, Debye, 1Moment, 2Moment, GuinierRod,
+    // GuinierPlate, Kratky (case ignored)
+    void setPresentation(const QString &name);
+%MethodCode
+    if (!(sipCpp->setPresentation(*a0))) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
+    QString presentation() const;
 };
 
 class DanProcessing : DanPart /NoDefaultCtors/

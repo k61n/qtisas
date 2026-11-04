@@ -1562,6 +1562,88 @@ static const QStringList &curveColumns()
     return names;
 }
 
+bool DanProcessingOptions::setMatrixFormat(const QString &format, int header, int sasview, int ignoreMask)
+{
+    const auto index = matrixFormats().indexOf(format.toLower());
+    if (!format.isEmpty() && (index < 0 || index >= d->comboBoxIxyFormat->count()))
+    {
+        m_lastError = "matrix format: one of " + matrixFormats().join(", ");
+        return false;
+    }
+    begin();
+    if (!format.isEmpty())
+        d->comboBoxIxyFormat->setCurrentIndex(static_cast<int>(index));
+    if (header >= 0)
+        d->checkBoxASCIIheaderIxy->setChecked(header == 1);
+    if (sasview >= 0)
+        d->checkBoxASCIIheaderSASVIEW->setChecked(sasview == 1);
+    if (ignoreMask >= 0)
+        d->checkBoxASCIIignoreMask->setChecked(ignoreMask == 1);
+    return end(true);
+}
+
+QVariantMap DanProcessingOptions::matrixFormat() const
+{
+    return {{"format", matrixFormats().value(d->comboBoxIxyFormat->currentIndex())},
+            {"header", d->checkBoxASCIIheaderIxy->isChecked()},
+            {"sasview", d->checkBoxASCIIheaderSASVIEW->isChecked()},
+            {"ignoreMask", d->checkBoxASCIIignoreMask->isChecked()}};
+}
+
+bool DanProcessingOptions::setCurveFormat(const QString &columns, int header, int anisotropy, int anisotropyOffset)
+{
+    const auto index = curveColumns().indexOf(columns.toLower());
+    if (!columns.isEmpty() && (index < 0 || index >= d->comboBox4thCol->count()))
+    {
+        m_lastError = "curve format: columns one of " + curveColumns().join(", ");
+        return false;
+    }
+    if (anisotropyOffset >= 0 && anisotropyOffset > d->spinBoxAnisotropyOffset->maximum())
+    {
+        m_lastError = QString("curve format: anisotropyOffset 0..%1").arg(d->spinBoxAnisotropyOffset->maximum());
+        return false;
+    }
+    begin();
+    if (!columns.isEmpty())
+        d->comboBox4thCol->setCurrentIndex(static_cast<int>(index));
+    if (header >= 0)
+        d->checkBoxASCIIheader->setChecked(header == 1);
+    if (anisotropy >= 0)
+        d->checkBoxAnisotropy->setChecked(anisotropy == 1);
+    if (anisotropyOffset >= 0)
+        d->spinBoxAnisotropyOffset->setValue(anisotropyOffset);
+    return end(true);
+}
+
+QVariantMap DanProcessingOptions::curveFormat() const
+{
+    return {{"columns", curveColumns().value(d->comboBox4thCol->currentIndex())},
+            {"header", d->checkBoxASCIIheader->isChecked()},
+            {"anisotropy", d->checkBoxAnisotropy->isChecked()},
+            {"anisotropyOffset", d->spinBoxAnisotropyOffset->value()}};
+}
+
+bool DanProcessingOptions::setPresentation(const QString &name)
+{
+    const int index = d->comboBoxSelectPresentation->findText(name, Qt::MatchFixedString); // case ignored
+    if (index < 0)
+    {
+        QStringList names;
+        for (int i = 0; i < d->comboBoxSelectPresentation->count(); i++)
+            names << d->comboBoxSelectPresentation->itemText(i);
+        m_lastError = "presentation: one of " + names.join(", ");
+        return false;
+    }
+    begin();
+    d->comboBoxSelectPresentation->setCurrentIndex(index);
+    return end(true);
+}
+
+QString DanProcessingOptions::presentation() const
+{
+    return d->comboBoxSelectPresentation->currentText();
+}
+
 // the tables and matrices of the project: what a processing makes in it (I[Q] tables, the 2D outputs' matrices: the
 // 2D kinds into the project were "nothing was made")
 static QStringList tableNames(ApplicationWindow *app)

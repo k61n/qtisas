@@ -427,6 +427,12 @@ class DanProcessingOptions : public DanPart
     QVariantMap normalization() const;
     bool setRadialAveraging(const QString &method, int linear, double progressive);
     QVariantMap radialAveraging() const;
+    bool setMatrixFormat(const QString &format, int header, int sasview, int ignoreMask);
+    QVariantMap matrixFormat() const;
+    bool setCurveFormat(const QString &columns, int header, int anisotropy, int anisotropyOffset);
+    QVariantMap curveFormat() const;
+    bool setPresentation(const QString &name);
+    QString presentation() const;
 };
 
 // Merge tab

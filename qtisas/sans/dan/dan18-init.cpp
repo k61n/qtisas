@@ -619,6 +619,7 @@ void dan18::instrumentSelected(QString instrName)
 
     checkBoxSlicesBS->setChecked(false);
     checkBoxASCIIheaderSASVIEW->setChecked(false);
+    checkBoxASCIIignoreMask->setChecked(false);
 
     comboBoxMatrixConvolusion->setCurrentIndex(0);
 
@@ -1256,6 +1257,9 @@ void dan18::applyInstrumentLines(QStringList lst, bool inFocus)
         case InstrumentSANS::Parameter::Options_2D_Header_SASVIEW:
             checkBoxASCIIheaderSASVIEW->setChecked(line.contains("Yes"));
             break;
+        case InstrumentSANS::Parameter::Options_2D_Output_IgnoreMask:
+            checkBoxASCIIignoreMask->setChecked(line.contains("Yes"));
+            break;
         case InstrumentSANS::Parameter::Options_1D_RADmethod_HF:
             radioButtonRadHF->setChecked(line.contains("Yes"));
             radioButtonRadStd->setChecked(!line.contains("Yes"));
@@ -1679,6 +1683,8 @@ void dan18::saveInstrumentAsCpp(QString instrPath, QString instrName  )
 
     s += QString("lst<<\"[Options-2D-Header-SASVIEW] %1\";\n")
              .arg(checkBoxASCIIheaderSASVIEW->isChecked() ? "Yes" : "No");
+    s += QString("lst<<\"[Options-2D-Output-IgnoreMask] %1\";\n")
+             .arg(checkBoxASCIIignoreMask->isChecked() ? "Yes" : "No");
 
     //+++ [1D] :: options
     s += QString("lst<<\"[Options-1D-RADmethod-HF] %1\";\n").arg(radioButtonRadHF->isChecked() ? "Yes" : "No");
@@ -1958,11 +1964,11 @@ QString dan18::instrumentText(const QString &fileName)
     s += "[Options-2D-Output-Format] " + QString::number(comboBoxIxyFormat->currentIndex()) + "\n";
     s += QString("[Options-2D-Header-Output-Format] %1\n").arg(checkBoxASCIIheaderIxy->isChecked() ? "Yes" : "No");
     s += QString("[Options-2D-Header-SASVIEW] %1\n").arg(checkBoxASCIIheaderSASVIEW->isChecked() ? "Yes" : "No");
+    s += QString("[Options-2D-Output-IgnoreMask] %1\n").arg(checkBoxASCIIignoreMask->isChecked() ? "Yes" : "No");
 
     //+++ [1D] :: options                      +
     s += QString("[Options-1D-RADmethod-HF] %1\n").arg(radioButtonRadHF->isChecked() ? "Yes" : "No");
     s += QString("[Options-1D-RAD-LinearFactor] %1\n").arg(spinBoxAvlinear->value());
-    s += "[Options-1D-RAD-LinearFactor] " + QString::number(spinBoxAvlinear->value()) + "\n";
     s += "[Options-1D-RAD-ProgressiveFactor] " + QString::number(doubleSpinBoxAvLog->value()) + "\n";
     s += "[Options-1D-RemoveFirst] " + QString::number(spinBoxRemoveFirst->value()) + "\n";
     s += "[Options-1D-RemoveLast] " + QString::number(spinBoxRemoveLast->value()) + "\n";
