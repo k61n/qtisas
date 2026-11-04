@@ -22,6 +22,7 @@ script = dr.kws3(folder)
 assert Dan.Options.Config.transmissionMethod() == "Direct Beam [dead-time +]", Dan.Options.Config.transmissionMethod()
 config = [Dan.Processing.configuration(i) for i in (1, 2)]
 assert [round(c["factor"]) for c in config] == [280100, 2816], config
+assert [c["C"] for c in config] == [11.0, 11.0], config  # the instrument's collimation: 2f of the mirror
 assert [c["mask"] for c in config] == ["mask-bs-9m", "mask-bs-1m"], config  # set back after calculate()
 assert [(c["xCenter"], c["yCenter"]) for c in config] == [(120.044, 140.661), (119.972, 130.853)], config
 s = table(script)

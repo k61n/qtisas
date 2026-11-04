@@ -1,9 +1,10 @@
 """The output options of DAN (KWS-3 example runs; skipped without the qtisas.com example files):
 
 - Dan.Processing.Options.setMatrixFormat(format, header, sasview, ignoreMask) / matrixFormat(): "I[x,y] :: Output
-  Format of ASCII-files"; the five formats into files: their header line and columns; SasView's "Data columns" line
-  names err(I) (without it SasView took the 4th column as Qz); Qx, Qy the components of the pixel's Q (Qx^2 + Qy^2 =
-  Q^2 of the polar file). "ignore mask" off in every instrument and kept by a session.
+  Format of ASCII-files"; the five formats into files: their header line and columns; SasView's resolution columns:
+  sigma(perp) is sigma(para) without the wavelength term (with focusing it was that term); Qx, Qy the components of
+  the pixel's Q (Qx^2 + Qy^2 = Q^2 of the polar file); a 9th column, SasView's mask (1: masked; it read none: with
+  "ignore mask" the masked pixels counted). "ignore mask" off in every instrument and kept by a session.
 - The "###" header of the I[Q] files names the columns of the presentation (Guinier: Q^2, ln(I), ...); it was written
   for QI only.
 - setCurveFormat(columns, header, anisotropy, anisotropyOffset) / curveFormat(): "I[Q] :: Output Format"; the
@@ -118,9 +119,9 @@ work = tempfile.mkdtemp()
 try:
     Dan.Options.setOutputPath(work)
     headers = {"xy": "x\t\ty\t\tI[x,y]\t\tdI[x,y]", "qxqy": "Qx\t\tQy\t\tI[x,y]\t\tdI[x,y]",
-               "qxqy-resolution": "Qx\t\tQy\t\tI[x,y]\t\tdI[x,y]\t\tQz\tσQ(para)\tσQ(perp)\tmask",
+               "qxqy-resolution": "Qx\t\tQy\t\tI[x,y]\t\tdI[x,y]\t\tQz\tσQ(para)\tσQ(perp)\tshadow\tmasked",
                "polar": "Q\t\tphi\t\tI[x,y]\t\tdI[x,y]"}
-    columns = {"xy": 4, "qxqy": 4, "qxqy-resolution": 8, "polar": 4}
+    columns = {"xy": 4, "qxqy": 4, "qxqy-resolution": 9, "polar": 4}
     written = {}
     for k, fmt in enumerate(["matrix", "xy", "qxqy", "qxqy-resolution", "polar"]):
         o.setMatrixFormat(fmt, header=True, sasview=(fmt == "qxqy-resolution"))
@@ -139,9 +140,31 @@ try:
         if fmt == "qxqy-resolution":
             # SasView's reader takes the 4th column as err(I) only after a "Data columns ... err(I)" line (else as Qz)
             assert lines[1] == ("Data columns are Qx - Qy - I(Qx,Qy) - err(I) - Qz - SigmaQ_parall - SigmaQ_perp - "
-                                "fSubS(beam stop shadow)"), lines[1]
+                                "fSubS(beam stop shadow) - mask"), lines[1]
             assert lines[2] == "ASCII data", lines[2]
         assert all(len(line.split()) == columns[fmt] for line in data[:100]), (fmt, data[0])
+        if fmt == "qxqy-resolution":
+            # sigma(perp): sigma(para) without the wavelength term, which grows with Q along the radius only (KWS-3
+            # focusing: sigma(perp) was that term itself, 1.1e-3 > sigma(para) 7.1e-4): para^2 - perp^2 ~ Q^2
+            ratios = []
+            for line in data:
+                qx, qy, _, _, _, para, perp, shadow, masked = (float(v) for v in line.split())
+                assert masked == 1 - shadow, line  # SasView's mask: 1 = masked (it read none)
+                if shadow > 0:
+                    assert perp <= para, (line, para, perp)
+                    ratios.append((para * para - perp * perp) / (qx * qx + qy * qy))
+            assert max(ratios) / min(ratios) < 1.01, (min(ratios), max(ratios))
+        if fmt == "qxqy-resolution":  # with "ignore mask" the masked pixels too, SasView's mask 1 (left out)
+            o.setMatrixFormat(fmt, header=True, sasview=True, ignoreMask=True)
+            s = p.newScriptTable("export-matrix-ignore", [RUN])
+            made = p.process(s, "I-x-y", "files")
+            o.setMatrixFormat(ignoreMask=False)
+            with open(made[0]) as f:
+                every = [line.split() for line in f.read().splitlines()[3:]]
+            os.remove(made[0])
+            masked = [line for line in every if line[8] == "1"]
+            assert len(every) == 256 * 256 and len(masked) == len(every) - len(data), (len(every), len(masked))
+            assert all(line[7] == "0" for line in masked), masked[0]
         if fmt == "xy":  # 1-based pixels
             assert all(float(v).is_integer() and float(v) >= 1 for line in data[:100] for v in line.split()[:2])
     # Qx, Qy: the components of the pixel's Q (that of the polar file, the same pixels in the same order), Qx growing
