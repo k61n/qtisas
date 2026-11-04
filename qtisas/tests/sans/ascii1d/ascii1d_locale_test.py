@@ -30,9 +30,9 @@ factor = child(QLineEdit, "lineEditMath")
 
 # Modification / Mathematic: both factors, typed in C, are converted on the format change (they are enabled only
 # with "Actions" and "Math" on)
-# after the start: lenses off, so their focus field is hidden
-lenses, focus = child(QCheckBox, "checkBoxLenses"), child(QLineEdit, "lineEditResoFocus")
-assert (lenses.isChecked(), focus.isHidden()) == (False, True), (lenses.isChecked(), focus.isHidden())
+# after the start: focusing off, so the optic is hidden; no focus field (2f = the collimation)
+assert not child(QCheckBox, "checkBoxFocused").isChecked() and child(QComboBox, "comboBoxFocusType").isHidden()
+assert child(QLineEdit, "lineEditResoFocus") is None
 
 set_app_locale(locale_c())
 for name in ("checkBoxActions", "checkBoxMath", "checkBoxMath2"):
