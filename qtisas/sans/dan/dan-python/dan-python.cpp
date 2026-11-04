@@ -10,6 +10,8 @@ Description: DAN-SANS Python interface: one object per tab (Dan.Options, Dan.Raw
 #include <algorithm>
 #include <cmath>
 #include <iostream>
+#include <utility>
+#include <vector>
 
 #include <QCheckBox>
 #include <QComboBox>
@@ -17,8 +19,10 @@ Description: DAN-SANS Python interface: one object per tab (Dan.Options, Dan.Raw
 #include <QDoubleSpinBox>
 #include <QFile>
 #include <QFileInfo>
+#include <QHash>
 #include <QLineEdit>
 #include <QRegularExpression>
+#include <QScopeGuard>
 #include <QSet>
 #include <QSignalBlocker>
 #include <QSpinBox>
@@ -1642,23 +1646,31 @@ const QList<AutoOption> &autoOptionTable()
         {"singleDarkCurrent", "BC-Single", "checkBoxAutoBCSingle", "No", {}},
         {"calibrant", "Calibrant", "lineEditAutoCalibrant", "*plex[i,y]*", {}},
         {"flexibleDistance", "Calibrant-FlexD", "checkBoxAutoCalibrantFlexD", "Yes", {}},
+        {"flexibleFrom", "Calibrant-FlexD-From", "doubleSpinBoxAutoFlexDFrom", "3.5", {}},
+        {"flexibleMin", "Calibrant-FlexD-Min", "doubleSpinBoxAutoFlexDMin", "1.5", {}},
         {"calibrantEmptyBeam", "Calibrant-EB", "lineEditAutoCalibrantEB", "*eb*||*empty*beam*", {}},
         {"calibrantDarkCurrent", "Calibrant-BC", "lineEditAutoCalibrantBC", "*bc*||*b4c*", {}},
         {"singleCalibrantDarkCurrent", "Calibrant-BC-Single", "checkBoxAutoCalibrantBCSingle", "No", {}},
-        {"center", "Center-Mode", "comboBoxAutoCenter", "maxflux", {"maxflux", "emptybeam", "wildcard"}},
+        {"center", "Center-Mode", "comboBoxAutoCenter", "maxflux", {"maxflux", "emptybeam", "wildcard", "beamstop"}},
         {"centerRuns", "Center", "lineEditAutoCenter", "", {}},
         {"cellEmptyBeam", "Cell-EB", "lineEditAutoCellEB", "*eb*||*empty*beam*", {}},
         {"transmission", "Transmission", "lineEditAutoTransmission", "*", {}},
         {"skip", "Skip", "lineEditAutoSkip", "", {}},
         {"masks", "Masks", "comboBoxAutoMasks", "none", {"none", "configuration", "wavelength", "files"}},
         {"transmissionMargin", "TR-Margin", "spinBoxAutoTrMargin", "-2", {}},
+        {"findBeamstop", "Find-BS", "checkBoxAutoFindBS", "Yes", {}},
+        {"openMask", "Open-Mask", "comboBoxAutoOpenMask", "auto", {"auto", "yes", "no"}},
         {"beamSize", "Beam-Size", "spinBoxAutoBeamSize", "0", {}},
         {"detectorX", "BS-X", "spinBoxAutoBSX", "0", {}},
         {"detectorY", "BS-Y", "spinBoxAutoBSY", "0", {}},
         {"sensitivity", "Sens-Mode", "comboBoxAutoSens", "flat", {"run", "files", "flat"}},
         {"sensitivityRuns", "Sens", "lineEditAutoSens", "*sens*", {}},
         {"scale", "Scale", "checkBoxAutoScale", "No", {}},
-        {"centerOffsets", "Center-Offsets", "checkBoxAutoCenterOffsets", "No", {}}};
+        {"centerOffsets", "Center-Offsets", "checkBoxAutoCenterOffsets", "No", {}},
+        {"infoTable", "Info-Table", "checkBoxAutoInfoTable", "No", {}},
+        {"autoAdd", "Add", "checkBoxAutoAdd", "No", {}},
+        {"processIQ", "Process-IQ", "checkBoxAutoProcessIQ", "No", {}},
+        {"merge", "Merge", "checkBoxAutoMerge", "No", {}}};
     return table;
 }
 
@@ -1668,6 +1680,8 @@ QString autoText(QWidget *w, const AutoOption &o)
     if (auto *line = qobject_cast<QLineEdit *>(w))
         return line->text();
     if (auto *spin = qobject_cast<QSpinBox *>(w))
+        return QString::number(spin->value());
+    if (auto *spin = qobject_cast<QDoubleSpinBox *>(w))
         return QString::number(spin->value());
     if (auto *check = qobject_cast<QCheckBox *>(w))
         return check->isChecked() ? "Yes" : "No";
@@ -1685,6 +1699,14 @@ bool setAutoText(QWidget *w, const AutoOption &o, const QString &text)
     {
         bool ok = false;
         const int value = text.trimmed().toInt(&ok);
+        if (!ok)
+            return false;
+        spin->setValue(value);
+    }
+    else if (auto *spin = qobject_cast<QDoubleSpinBox *>(w))
+    {
+        bool ok = false;
+        const double value = text.trimmed().toDouble(&ok);
         if (!ok)
             return false;
         spin->setValue(value);
@@ -1722,6 +1744,8 @@ QVariant optionValue(QWidget *w, const AutoOption &o)
 {
     if (qobject_cast<QSpinBox *>(w))
         return autoText(w, o).toInt();
+    if (qobject_cast<QDoubleSpinBox *>(w))
+        return autoText(w, o).toDouble();
     if (qobject_cast<QCheckBox *>(w))
         return autoText(w, o) == "Yes";
     return autoText(w, o);
@@ -1750,8 +1774,9 @@ QString DanAuto::setOptions(const QVariantMap &values)
         const AutoOption &o = autoOptionTable()[index];
         if (!o.choices.isEmpty() && !o.choices.contains(it.value().toString().toLower()))
             return it.key() + ": one of " + o.choices.join(", ");
-        if (!setAutoText(d->findChild<QWidget *>(o.widget), o, optionText(it.value())))
-            return it.key() + ": a whole number";
+        auto *w = d->findChild<QWidget *>(o.widget);
+        if (!setAutoText(w, o, optionText(it.value())))
+            return it.key() + (qobject_cast<QDoubleSpinBox *>(w) ? ": a number" : ": a whole number");
     }
     return {};
 }
@@ -1832,6 +1857,8 @@ static QHash<QString, QPair<QString, DanAuto::Run>> &runCache()
     return cache;
 }
 
+const QString DanAuto::addedSources = "added-sources";
+
 void DanAuto::forgetRuns()
 {
     runCache().clear();
@@ -1849,8 +1876,11 @@ QList<DanAuto::Run> DanAuto::runs(bool filtered) const
             FilesManager::findFileNumberInFileName(d->filesManager->wildCardHeader(), QFileInfo(path).fileName());
         if (number.isEmpty())
             continue;
-        // a file of a sub-folder is the run "<sub-folder>/<number>", as DAN names it
+        // a file of a sub-folder is the run "<sub-folder>/<number>", as DAN names it; the runs autoAdd() added moved
+        // to "added-sources" are no runs any more
         const QString sub = QDir(d->filesManager->pathInString()).relativeFilePath(QFileInfo(path).path());
+        if (sub == addedSources || sub.startsWith(addedSources + "/"))
+            continue;
         if (sub != ".")
             number = sub + "/" + number;
         // only what DAN opens as that run: the folder pattern is wider than the run pattern (KWSX-init "*_0_#.edf"
@@ -2098,32 +2128,41 @@ QList<DanAuto::Choice> DanAuto::configurations(const QList<Run> &runs, QStringLi
     };
     auto run = [](const Run *r) { return r ? r->run : QString(); };
 
-    QList<Choice> choices;
+    // the empty beam of each condition, the skipped ones left out, and the configurations measuring the transmissions
+    QList<Run> chosen;
     for (const QList<Run> &condition : conditions(emptyBeams))
     {
+        const Run &eb = *best(all(condition), false);
+        if (matches(label(eb), d->lineEditAutoSkip->text()))
+            dropped << label(eb) + ": skipped (auto option skip)";
+        else
+            chosen << eb;
+    }
+    const QSet<QString> transmissions = transmissionRuns(chosen);
+
+    QList<Choice> choices;
+    for (const Run &eb : chosen)
+    {
         Choice c;
-        c.emptyBeam = *best(all(condition), false);
-        const Run &eb = c.emptyBeam;
+        c.emptyBeam = eb;
         const QString name = label(eb);
-        if (matches(name, d->lineEditAutoSkip->text()))
-        {
-            dropped << name + ": skipped (auto option skip)";
-            continue;
-        }
         c.darkCurrent =
             run(best(d->checkBoxAutoBCSingle->isChecked() ? all(darkCurrents) : in(darkCurrents, eb), false));
-        // the calibrant: most counts in the configuration; "other D" (at 3.5 m and more): the nearest distance above
-        // 1.5 m, most counts among equals; no calibrant wildcard: the direct beam
+        // the calibrant: most counts in the configuration; "other D" (from flexibleFrom on, 3.5 m): the nearest
+        // distance above flexibleMin (1.5 m), most counts among equals; no calibrant wildcard: the direct beam
         const Run *calibrant = nullptr;
         if (!calibrants.isEmpty())
         {
             calibrant = best(in(calibrants, eb), true);
-            if (d->checkBoxAutoCalibrantFlexD->isChecked() && eb.D >= 3.5)
+            const double from = d->doubleSpinBoxAutoFlexDFrom->value();
+            const double minimum = d->doubleSpinBoxAutoFlexDMin->value();
+            if (d->checkBoxAutoCalibrantFlexD->isChecked() && eb.D >= from)
             {
                 const Run *nearest = nullptr;
                 for (const Run *r : in(calibrants, eb, true))
-                    if (r->D > 1.5 && (!nearest || fabs(r->D - eb.D) < fabs(nearest->D - eb.D) ||
-                                       (fabs(r->D - eb.D) == fabs(nearest->D - eb.D) && r->counts > nearest->counts)))
+                    if (r->D > minimum &&
+                        (!nearest || fabs(r->D - eb.D) < fabs(nearest->D - eb.D) ||
+                         (fabs(r->D - eb.D) == fabs(nearest->D - eb.D) && r->counts > nearest->counts)))
                         nearest = r;
                 if (nearest)
                     calibrant = nearest;
@@ -2134,6 +2173,7 @@ QList<DanAuto::Choice> DanAuto::configurations(const QList<Run> &runs, QStringLi
         c.calibrantEmptyBeam = run(best(in(calibrantEBs, calibration), false));
         c.calibrantDarkCurrent = run(best(
             d->checkBoxAutoCalibrantBCSingle->isChecked() ? all(calibrantBCs) : in(calibrantBCs, calibration), false));
+        c.transmission = transmissions.contains(eb.run);
         if (centerMode == "emptybeam")
             c.center = eb.run;
         else
@@ -2143,26 +2183,32 @@ QList<DanAuto::Choice> DanAuto::configurations(const QList<Run> &runs, QStringLi
                 if (!contains(standard, r.run))
                     candidates << r;
             c.center = run(best(in(candidates, eb), true));
-            if (c.center.isEmpty() && centerMode == "maxflux")
+            // beamstop: one without a direct beam is kept, decided below
+            if (c.center.isEmpty() && (centerMode == "maxflux" || (centerMode == "beamstop" && c.transmission)))
             {
                 dropped << name + ": no run for the center (only standard runs)";
                 continue;
             }
         }
         c.cellEmptyBeam = run(best(in(cellEBs, eb), false));
-        c.transmission = matches(name, d->lineEditAutoTransmission->text());
         choices << c;
     }
+    // beamstop: max flux where the direct beam is measured, else no center run (the center of the beam-stop mask):
+    // with the beam behind the beam stop in all runs a sample's center can be far off
+    if (centerMode == "beamstop")
+    {
+        QList<Choice> kept;
+        for (Choice &c : choices)
+            if (!directBeam(c, choices))
+                c.center.clear();
+            else if (c.center.isEmpty())
+                dropped << label(c.emptyBeam) + ": no run for the center (only standard runs)";
+        for (const Choice &c : choices)
+            if (!c.center.isEmpty() || !directBeam(c, choices))
+                kept << c;
+        return kept;
+    }
     return choices;
-}
-
-QList<DanAuto::Run> DanAuto::emptyBeams(const QList<Run> &runs) const
-{
-    QStringList dropped;
-    QList<Run> found;
-    for (const Choice &c : configurations(runs, dropped))
-        found << c.emptyBeam;
-    return found;
 }
 
 QString DanAuto::maskName(const Run &emptyBeam, bool transmission, const QList<Run> &emptyBeams)
@@ -2173,6 +2219,120 @@ QString DanAuto::maskName(const Run &emptyBeam, bool transmission, const QList<R
         if (other.run != emptyBeam.run && QString::number(other.D, 'g', 4) == distance)
             return name + "-" + QString::number(emptyBeam.lambda, 'g', 3) + "A";
     return name;
+}
+
+QSet<QString> DanAuto::transmissionRuns(const QList<Run> &emptyBeams) const
+{
+    QList<Run> matching;
+    for (const Run &eb : emptyBeams)
+        if (matches(label(eb), d->lineEditAutoTransmission->text()))
+            matching << eb;
+    // separate transmission configurations (Skip Transmission Configurations) where the transmissions are measured
+    // with the direct beam (Transmission Method "Direct Beam", or the optional one at 9.5 A and more; the others read
+    // them from the header in every configuration): of those with the same beam-stop mask (another attenuator or
+    // beam-stop position) the one whose empty beam is the direct beam, most of its counts inside the beam stop's box
+    const bool skip = d->checkBoxSkiptransmisionConfigurations->isChecked();
+    auto separate = [this, skip](const Run &eb) { return skip && directBeamTransmission(eb.lambda); };
+    const QList<int> box = {d->spinBoxLTxBS->value(), d->spinBoxRBxBS->value(), d->spinBoxLTyBS->value(),
+                            d->spinBoxRByBS->value()};
+    QSet<QString> found;
+    QHash<QString, const Run *> direct;
+    QHash<QString, double> share;
+    for (const Run &eb : matching)
+    {
+        if (!separate(eb))
+        {
+            found << eb.run;
+            continue;
+        }
+        const QString mask = maskName(eb, false, emptyBeams);
+        share[eb.run] = directBeamShare(eb.run, box);
+        if (!direct.contains(mask) || share[eb.run] > share[direct[mask]->run])
+            direct[mask] = &eb;
+    }
+    for (const Run *eb : direct)
+        found << eb->run;
+    return found;
+}
+
+bool DanAuto::openMask() const
+{
+    const QString open = autoChoice(d->comboBoxAutoOpenMask, "openMask");
+    if (open != "auto")
+        return open == "yes";
+    return autoChoice(d->comboBoxAutoMasks, "masks") == "configuration" &&
+           autoChoice(d->comboBoxAutoCenter, "center") == "emptybeam" &&
+           autoChoice(d->comboBoxAutoSens, "sensitivity") == "flat";
+}
+
+bool DanAuto::directBeamTransmission(double lambda) const
+{
+    const int method = d->comboBoxTransmMethod->currentIndex();
+    return method == 1 || (method == 4 && lambda >= 9.5);
+}
+
+double DanAuto::directBeamShare(const QString &run, const QList<int> &box) const
+{
+    const int md = d->lineEditMD->text().toInt();
+    const int halfX = std::abs(box[1] - box[0]) / 2;
+    const int halfY = std::abs(box[3] - box[2]) / 2;
+    gsl_matrix *data = gsl_matrix_calloc(md, md);
+    d->readMatrixCor(run, data);
+    size_t row = 0;
+    size_t col = 0;
+    gsl_matrix_max_index(data, &row, &col);
+    double total = 0.0;
+    double inside = 0.0;
+    for (int i = 0; i < md; i++)
+        for (int j = 0; j < md; j++)
+        {
+            const double v = gsl_matrix_get(data, i, j);
+            total += v;
+            if (std::abs(i - int(row)) <= halfY && std::abs(j - int(col)) <= halfX)
+                inside += v;
+        }
+    gsl_matrix_free(data);
+    return total > 0 ? inside / total : 0.0;
+}
+
+bool DanAuto::beamVisible(const QString &run, const QList<int> &box) const
+{
+    if (directBeamShare(run, box) > 0.5)
+        return true;
+    // a sharp peak: the brightest pixel 20 times the mean 4..6 pixels around it (a beam stop's shadow with the most
+    // scattering at its edge: 1.2..11, the beam beside or through it: 26 and more)
+    const int md = d->lineEditMD->text().toInt();
+    gsl_matrix *data = gsl_matrix_calloc(md, md);
+    d->readMatrixCor(run, data);
+    size_t row = 0;
+    size_t col = 0;
+    gsl_matrix_max_index(data, &row, &col);
+    const double peak = gsl_matrix_get(data, row, col);
+    double ring = 0.0;
+    int n = 0;
+    for (int i = std::max(0, int(row) - 6); i <= std::min(md - 1, int(row) + 6); i++)
+        for (int j = std::max(0, int(col) - 6); j <= std::min(md - 1, int(col) + 6); j++)
+            if (std::max(std::abs(i - int(row)), std::abs(j - int(col))) >= 4)
+            {
+                ring += gsl_matrix_get(data, i, j);
+                n++;
+            }
+    gsl_matrix_free(data);
+    return peak > 0 && n > 0 && peak > 20.0 * ring / n;
+}
+
+const DanAuto::Run *DanAuto::directBeam(const Choice &c, const QList<Choice> &choices)
+{
+    if (c.transmission)
+        return &c.emptyBeam;
+    QList<Run> emptyBeams;
+    for (const Choice &other : choices)
+        emptyBeams << other.emptyBeam;
+    const QString mask = maskName(c.emptyBeam, false, emptyBeams);
+    for (const Choice &other : choices)
+        if (other.transmission && maskName(other.emptyBeam, false, emptyBeams) == mask)
+            return &other.emptyBeam;
+    return nullptr;
 }
 
 QVariantMap DanOptionsConfig::autoOptions() const
@@ -2434,6 +2594,77 @@ QStringList DanMask::loadMasks(const QString &pattern)
     return made;
 }
 
+QList<int> DanMask::findBeamstop(const QString &run, const QList<int> &box)
+{
+    const int md = d->lineEditMD->text().toInt();
+    const int w = std::abs(box[1] - box[0]) + 1;
+    const int h = std::abs(box[3] - box[2]) + 1;
+    const int ring = 3;
+    if (md <= 0 || w + 2 * ring > md || h + 2 * ring > md)
+        return box;
+    gsl_matrix *data = gsl_matrix_calloc(md, md);
+    gsl_matrix *mask = gsl_matrix_alloc(md, md);
+    gsl_matrix_set_all(mask, 1.0);
+    d->readMatrixCor(run, data);
+    d->make_GSL_Matrix_Symmetric("mask", mask, md);
+    // sums of the counts and of the pixels used (the edges and dead pixels of "mask" left out, its beam stop not)
+    // from the corner to each pixel: any box's sums in four lookups
+    std::vector<double> counts((md + 1) * (md + 1), 0.0);
+    std::vector<double> pixels((md + 1) * (md + 1), 0.0);
+    auto at = [md](int y, int x) { return y * (md + 1) + x; };
+    for (int y = 0; y < md; y++)
+        for (int x = 0; x < md; x++)
+        {
+            const bool used = gsl_matrix_get(mask, y, x) > 0 ||
+                              (x + 1 >= std::min(box[0], box[1]) && x + 1 <= std::max(box[0], box[1]) &&
+                               y + 1 >= std::min(box[2], box[3]) && y + 1 <= std::max(box[2], box[3]));
+            const double v = used ? gsl_matrix_get(data, y, x) : 0.0;
+            counts[at(y + 1, x + 1)] = v + counts[at(y, x + 1)] + counts[at(y + 1, x)] - counts[at(y, x)];
+            pixels[at(y + 1, x + 1)] =
+                (used ? 1.0 : 0.0) + pixels[at(y, x + 1)] + pixels[at(y + 1, x)] - pixels[at(y, x)];
+        }
+    gsl_matrix_free(data);
+    gsl_matrix_free(mask);
+    auto sum = [&at](const std::vector<double> &s, int y1, int x1, int y2, int x2) {
+        return s[at(y2, x2)] - s[at(y1, x2)] - s[at(y2, x1)] + s[at(y1, x1)];
+    };
+    // the box whose surrounding ring (3 pixels) is the brightest against its inside, of any size from half to 1.5
+    // times the instrument's: a box larger than the shadow is placed off its center
+    double best = 0.0;
+    double xc = 0.0;
+    double yc = 0.0;
+    for (int bh = std::max(3, h / 2); bh <= 3 * h / 2 && bh + 2 * ring <= md; bh++)
+        for (int bw = std::max(3, w / 2); bw <= 3 * w / 2 && bw + 2 * ring <= md; bw++)
+            for (int y = 0; y + bh <= md; y++)
+                for (int x = 0; x + bw <= md; x++)
+                {
+                    const double inPixels = sum(pixels, y, x, y + bh, x + bw);
+                    if (inPixels < 0.8 * bw * bh)
+                        continue;
+                    const int y1 = std::max(0, y - ring);
+                    const int x1 = std::max(0, x - ring);
+                    const int y2 = std::min(md, y + bh + ring);
+                    const int x2 = std::min(md, x + bw + ring);
+                    const double ringPixels = sum(pixels, y1, x1, y2, x2) - inPixels;
+                    if (ringPixels < 10)
+                        continue;
+                    const double inCounts = sum(counts, y, x, y + bh, x + bw);
+                    const double score = (sum(counts, y1, x1, y2, x2) - inCounts) / ringPixels - inCounts / inPixels;
+                    if (score > best)
+                    {
+                        best = score;
+                        xc = x + 1 + (bw - 1) / 2.0;
+                        yc = y + 1 + (bh - 1) / 2.0;
+                    }
+                }
+    // the instrument's box size around the shadow's center
+    QList<int> found = box;
+    if (best > 0)
+        found = {int(std::lround(xc - (w - 1) / 2.0)), int(std::lround(xc - (w - 1) / 2.0)) + w - 1,
+                 int(std::lround(yc - (h - 1) / 2.0)), int(std::lround(yc - (h - 1) / 2.0)) + h - 1};
+    return found;
+}
+
 QStringList DanMask::autoMasks()
 {
     begin();
@@ -2453,18 +2684,55 @@ QStringList DanMask::autoMasks()
     // beam stop. The flat "sens" is made from it (= "mask"), the direct beam's center and the absolute factor
     // (DirectBeam calibrant, "Use Current Mask and Sensitivity") then count the beam itself; the samples get the
     // configurations' beam-stop masks
-    const bool beamOpen = mode == "configuration" && autoChoice(d->comboBoxAutoCenter, "center") == "emptybeam" &&
-                          autoChoice(d->comboBoxAutoSens, "sensitivity") == "flat";
+    const bool beamOpen = a.openMask();
+    // the instrument's box and beam stop again for the masks made later, however this call ends; the edge-only mask
+    // of the direct beams' centers removed
+    const QList<int> box = {d->spinBoxLTxBS->value(), d->spinBoxRBxBS->value(), d->spinBoxLTyBS->value(),
+                            d->spinBoxRByBS->value()};
     const bool beamStopChecked = d->groupBoxMaskBS->isChecked();
+    const QString edgeOnly = "mask-auto-edge";
+    const auto restore = qScopeGuard([this, &box, beamStopChecked, &edgeOnly] {
+        QSpinBox *spins[] = {d->spinBoxLTxBS, d->spinBoxRBxBS, d->spinBoxLTyBS, d->spinBoxRByBS};
+        for (int i = 0; i < 4; i++)
+            spins[i]->setValue(box[i]);
+        d->groupBoxMaskBS->setChecked(beamStopChecked);
+        if (MdiSubWindow *w = d->app()->window(edgeOnly))
+        {
+            w->askOnCloseEvent(false);
+            d->app()->closeWindow(w);
+            d->updateMaskList();
+        }
+    });
     if (newMask("mask", {}, beamOpen ? QList<int>{0} : QList<int>{}, QString(), QString(), false).isEmpty())
     {
         end(false);
         return {};
     }
     made << "mask";
+    const int margin = d->spinBoxAutoTrMargin->value();
     if (mode == "none")
     {
-        report("masks: mask (the instrument's)");
+        // transmissions with the direct beam in a configuration: "mask" hides it (SANS-1), a transmission mask of the
+        // instrument's box
+        QStringList dropped;
+        const QList<DanAuto::Choice> choices = a.configurations(a.runs(true), dropped);
+        const bool trMask = std::ranges::any_of(
+            choices, [&a](const DanAuto::Choice &c) { return a.directBeamTransmission(c.emptyBeam.lambda); });
+        const QList<int> tr = {box[0] - margin, box[1] + margin, box[2] - margin, box[3] + margin};
+        if (trMask && newMask("mask-tr", {}, tr, QString(), QString(), true).isEmpty())
+        {
+            end(false);
+            return {};
+        }
+        if (trMask)
+            made << "mask-tr";
+        report(trMask ? QString("masks: mask (the instrument's), mask-tr [x %1..%2, y %3..%4] (transmissions with the "
+                                "direct beam)")
+                            .arg(tr[0])
+                            .arg(tr[1])
+                            .arg(tr[2])
+                            .arg(tr[3])
+                      : QString("masks: mask (the instrument's)"));
         end(true);
         return made;
     }
@@ -2475,45 +2743,103 @@ QStringList DanMask::autoMasks()
         end(false, "no sensitivity for the centers of the masks: " + d->danSensitivity->lastError());
         return {};
     }
-    const QList<int> box = {d->spinBoxLTxBS->value(), d->spinBoxRBxBS->value(), d->spinBoxLTyBS->value(),
-                            d->spinBoxRByBS->value()};
+    // the direct beams' centers through a mask without the beam stop: through "mask" the beam under the instrument's
+    // box was hidden and the center drifted to the scattering around it (PSI 8 m: 4 pixels)
+    if (!beamOpen && newMask(edgeOnly, {}, {0}, QString(), QString(), false).isEmpty())
+    {
+        end(false);
+        return {};
+    }
+    const QString centerMask = beamOpen ? QString("mask") : edgeOnly;
     const double dX = fabs(double(box[1] - box[0]));
     const double dY = fabs(double(box[3] - box[2]));
-    const int margin = d->spinBoxAutoTrMargin->value();
+    // a box of w x h pixels around a center, rounded (truncated, the boxes moved up to half a pixel)
+    auto around = [](double xc, double yc, int w, int h) {
+        const int x1 = int(std::lround(xc - (w - 1) / 2.0));
+        const int y1 = int(std::lround(yc - (h - 1) / 2.0));
+        return QList<int>{x1, x1 + w - 1, y1, y1 + h - 1};
+    };
     const QList<DanAuto::Run> runs = a.runs(true);
-    const QList<DanAuto::Run> emptyBeams = a.emptyBeams(runs);
+    QStringList dropped;
+    const QList<DanAuto::Choice> choices = a.configurations(runs, dropped);
+    QList<DanAuto::Run> emptyBeams;
+    for (const DanAuto::Choice &c : choices)
+        emptyBeams << c.emptyBeam;
     QStringList boxes;
-    // the center of an empty beam (1-based pixels), from the instrument's beam-stop center
-    auto center = [this, &box](const DanAuto::Run &eb, double &xc, double &yc) {
-        xc = (box[0] + box[1]) / 2.0;
-        yc = (box[2] + box[3]) / 2.0;
+    // the center of a direct beam (1-based pixels), from its brightest pixel: from the instrument's beam-stop center
+    // the center was found far off when the beam stop is elsewhere (a detector moved sideways)
+    const int md = d->lineEditMD->text().toInt();
+    auto center = [this, md, &centerMask](const DanAuto::Run &eb, double &xc, double &yc) {
+        gsl_matrix *data = gsl_matrix_calloc(md, md);
+        d->readMatrixCor(eb.run, data);
+        size_t row = 0;
+        size_t col = 0;
+        gsl_matrix_max_index(data, &row, &col);
+        gsl_matrix_free(data);
+        // calcCenterNew() starts from and returns 1-based pixels (as runCenter() calls it): the center was one pixel
+        // off, the start 0-based and 1 added to the result
+        xc = double(col) + 1.0;
+        yc = double(row) + 1.0;
         double xcErr = 0.0;
         double ycErr = 0.0;
-        d->calcCenterNew(eb.run, -1, xc, yc, xcErr, ycErr, "mask", "sens");
-        xc += 1.0;
-        yc += 1.0;
+        d->calcCenterNew(eb.run, -1, xc, yc, xcErr, ycErr, centerMask, "sens");
     };
-    for (const DanAuto::Run &eb : emptyBeams)
+    // one beam-stop mask per name (configurations of another attenuator or beam-stop position share it), centered on
+    // the direct beam, else (masks "configuration") on the beam stop's shadow in the empty beam; a transmission mask
+    // only where the direct beam is measured and the transmissions are calculated with it
+    // the configuration making a shared mask: one with the beam stop in (not measuring the transmissions), whose
+    // detector position moves the box (wavelength; one with the beam stop out moved it off the detector)
+    QList<const DanAuto::Choice *> makers;
+    for (const DanAuto::Choice &c : choices)
     {
+        const QString name = DanAuto::maskName(c.emptyBeam, false, emptyBeams);
+        auto same = [&name, &emptyBeams](const DanAuto::Choice *m) {
+            return DanAuto::maskName(m->emptyBeam, false, emptyBeams) == name;
+        };
+        const auto it = std::find_if(makers.begin(), makers.end(), same);
+        if (it == makers.end())
+            makers << &c;
+        else if ((*it)->transmission && !c.transmission)
+            *it = &c;
+    }
+    for (const DanAuto::Choice *maker : makers)
+    {
+        const DanAuto::Choice &c = *maker;
+        const DanAuto::Run &eb = c.emptyBeam;
+        const DanAuto::Run *direct = DanAuto::directBeam(c, choices);
+        // a transmission mask where the transmissions are measured with the direct beam, not read from the header
+        // (Transmission Method; KWS1-2020's optional one below 9.5 A)
+        const bool trWindow = direct && a.directBeamTransmission(eb.lambda);
         QList<int> bs;
         QList<int> tr;
-        if (mode == "configuration")
+        // per configuration: the instrument's box size scaled by the beam size (CA) / the reference beam size
+        double scale = 1.0;
+        const double reference = d->spinBoxAutoBeamSize->value();
+        const QStringList ca = eb.CA.split('x');
+        if (reference > 0 && ca.count() == 2)
         {
-            // the box around the beam's center, scaled by the beam size (CA) / the reference beam size
-            double scale = 1.0;
-            const double reference = d->spinBoxAutoBeamSize->value();
-            const QStringList ca = eb.CA.split('x');
-            if (reference > 0 && ca.count() == 2)
-            {
-                scale = (ca[0].toDouble() + ca[1].toDouble()) / 2.0 / reference;
-                if (scale < 0.2 || scale > 5.0)
-                    scale = 1.0;
-            }
+            scale = (ca[0].toDouble() + ca[1].toDouble()) / 2.0 / reference;
+            if (scale < 0.2 || scale > 5.0)
+                scale = 1.0;
+        }
+        const int w = int(std::lround(dX * scale)) + 1;
+        const int h = int(std::lround(dY * scale)) + 1;
+        // no direct beam measured: around the beam stop's shadow in the empty beam (searched with the box of that
+        // size); around the instrument's box's center when the beam is seen in it (beside or through the beam stop:
+        // KWS1's leaks moved both the shadow and the beam's center 3-4 pixels)
+        if (mode == "configuration" && !direct)
+        {
+            const QList<int> scaled = around((box[0] + box[1]) / 2.0, (box[2] + box[3]) / 2.0, w, h);
+            bs = d->checkBoxAutoFindBS->isChecked() && !a.beamVisible(eb.run, box) ? findBeamstop(eb.run, scaled)
+                                                                                   : scaled;
+        }
+        else if (mode == "configuration")
+        {
+            // around the direct beam's center
             double xc = 0.0;
             double yc = 0.0;
-            center(eb, xc, yc);
-            bs = {int(xc - dX * scale / 2.0), int(xc + dX * scale / 2.0), int(yc - dY * scale / 2.0),
-                  int(yc + dY * scale / 2.0)};
+            center(*direct, xc, yc);
+            bs = around(xc, yc, w, h);
             tr = bs;
         }
         else
@@ -2527,15 +2853,21 @@ QStringList DanMask::autoMasks()
             const int dx = x0 != 0 && pixelX > 0 ? int(std::lround((eb.detectorX - x0) / pixelX / 10.0)) : 0;
             const int dy = y0 != 0 && pixelY > 0 ? int(std::lround((eb.detectorY - y0) / pixelY / 10.0)) : 0;
             bs = {box[0] + dx, box[1] + dx, box[2] + dy, box[3] + dy};
-            // the transmission window around the beam's own center
-            double xc = 0.0;
-            double yc = 0.0;
-            center(eb, xc, yc);
-            tr = {int(xc - dX / 2.0), int(xc + dX / 2.0), int(yc - dY / 2.0), int(yc + dY / 2.0)};
+            // the transmission window around the direct beam's center
+            if (trWindow)
+            {
+                double xc = 0.0;
+                double yc = 0.0;
+                center(*direct, xc, yc);
+                tr = around(xc, yc, int(dX) + 1, int(dY) + 1);
+            }
         }
-        tr = {tr[0] - margin, tr[1] + margin, tr[2] - margin, tr[3] + margin};
+        if (trWindow)
+            tr = {tr[0] - margin, tr[1] + margin, tr[2] - margin, tr[3] + margin};
         for (const bool transmission : {false, true})
         {
+            if (transmission && !trWindow)
+                continue;
             const QString name = DanAuto::maskName(eb, transmission, emptyBeams);
             if (newMask(name, {}, transmission ? tr : bs, QString(), QString(), transmission).isEmpty())
             {
@@ -2549,11 +2881,6 @@ QStringList DanMask::autoMasks()
     }
     report(QString(beamOpen ? "masks: mask (no beam stop: flat sens, direct beam), " : "masks: mask, ") +
            boxes.join(", "));
-    // the instrument's box again for the masks made later
-    QSpinBox *spins[] = {d->spinBoxLTxBS, d->spinBoxRBxBS, d->spinBoxLTyBS, d->spinBoxRByBS};
-    for (int i = 0; i < 4; i++)
-        spins[i]->setValue(box[i]);
-    d->groupBoxMaskBS->setChecked(beamStopChecked);
     end(true);
     return made;
 }
@@ -2678,19 +3005,58 @@ QVariantList DanProcessing::autoConfigurations()
         end(false, lastError());
         return {};
     }
+    const QString masks = autoChoice(d->comboBoxAutoMasks, "masks");
+    const QString folder = d->filesManager->pathInString();
     QVariantList list;
     for (int i = 0; i < choices.count(); i++)
     {
         const DanAuto::Choice &c = choices[i];
-        const QString mask = DanAuto::maskName(c.emptyBeam, false, emptyBeams);
-        const QString trMask = DanAuto::maskName(c.emptyBeam, true, emptyBeams);
+        // masks "none": "mask" (a beam-stop mask of an earlier folder or session is not this one's); "files": the mask
+        // file named as auto mode names the configuration's mask ("mask-bs-9.2m.mask"), told when there is none
+        QString mask = DanAuto::maskName(c.emptyBeam, false, emptyBeams);
+        const bool noFile = masks == "files" && !QFileInfo::exists(QDir(folder).filePath(mask + ".mask"));
+        if (noFile)
+            d->danMessage(QString("configuration %1 (%2): no mask file %3.mask, \"mask\" used")
+                              .arg(i + 1)
+                              .arg(a.label(c.emptyBeam), mask));
+        mask = masks != "none" && !noFile && isMask(mask) ? mask : "mask";
+        // no transmission mask where the direct beam is not measured (one of an earlier folder is not this one's): the
+        // beam-stop mask
+        QString trMask = DanAuto::maskName(c.emptyBeam, true, emptyBeams);
+        trMask = masks != "none" && DanAuto::directBeam(c, choices) && a.directBeamTransmission(c.emptyBeam.lambda) &&
+                         isMask(trMask)
+                     ? trMask
+                     : mask;
+        // masks "none", transmissions with the direct beam: autoMasks()' "mask-tr"
+        if (masks == "none" && a.directBeamTransmission(c.emptyBeam.lambda) && isMask("mask-tr"))
+            trMask = "mask-tr";
+        // the run cells emptied first: setConfiguration() leaves a cell whose run is not given, and a run chosen
+        // before (another option, folder) stayed where this choice has none
+        for (const int row : {dan18::dptEC, dan18::dptBC, dan18::dptACFS, dan18::dptACEB, dan18::dptACBC,
+                              dan18::dptCENTER, dan18::dptEB})
+            if (QTableWidgetItem *item = d->tableEC->item(row, i))
+                item->setText(QString());
         if (!setConfiguration(i + 1, c.emptyBeam.run, c.darkCurrent, c.calibrant, c.calibrantEmptyBeam,
-                              c.calibrantDarkCurrent, c.center, isMask(mask) ? mask : "mask",
-                              isSens("sens") ? "sens" : QString(), isMask(trMask) ? trMask : "mask", c.cellEmptyBeam,
-                              c.transmission ? 1 : 0))
+                              c.calibrantDarkCurrent, c.center, mask, isSens("sens") ? "sens" : QString(), trMask,
+                              c.cellEmptyBeam, c.transmission ? 1 : 0))
         {
             end(false, lastError());
             return {};
+        }
+        // no center run: the center of the mask's beam stop (calculate() keeps it)
+        if (c.center.isEmpty())
+        {
+            double xc = 0.0;
+            double yc = 0.0;
+            d->readCenterfromMaskName(mask, xc, yc, d->lineEditMD->text().toInt());
+            auto cell = [this, i](int row, const QString &text) {
+                if (!d->tableEC->item(row, i))
+                    d->tableEC->setItem(row, i, new QTableWidgetItem);
+                d->tableEC->item(row, i)->setText(text);
+            };
+            cell(dan18::dptCENTER, QString());
+            cell(dan18::dptCENTERX, QString::number(xc + 1.0, 'f', 3) + QChar(177) + "0.000");
+            cell(dan18::dptCENTERY, QString::number(yc + 1.0, 'f', 3) + QChar(177) + "0.000");
         }
         list << configuration(i + 1);
         report(QString("  %1 %2: EB %3, B4C %4, %5, center %6, cell EB %7%8")
@@ -2698,7 +3064,7 @@ QVariantList DanProcessing::autoConfigurations()
                    .arg(a.label(c.emptyBeam), c.emptyBeam.run, c.darkCurrent.isEmpty() ? "-" : c.darkCurrent,
                         c.calibrant.isEmpty() ? "direct beam " + c.calibrantEmptyBeam
                                               : "calibrant " + c.calibrant + " (EB " + c.calibrantEmptyBeam + ")",
-                        c.center, c.cellEmptyBeam.isEmpty() ? "-" : c.cellEmptyBeam,
+                        c.center.isEmpty() ? "of " + mask : c.center, c.cellEmptyBeam.isEmpty() ? "-" : c.cellEmptyBeam,
                         c.transmission ? ", transmissions measured" : ""));
     }
     end(true);
@@ -2914,6 +3280,102 @@ int DanProcessing::autoScale(const QString &scriptTable)
     return scaled;
 }
 
+QStringList DanProcessing::autoAdd()
+{
+    begin();
+    const QString folder = d->filesManager->pathInString();
+    // the runs the run filters select, of the input folder itself (a run "<sub-folder>/<number>" would be added under
+    // a name with "/"); the groups as the adding template makes them: all runs of a sample + configuration, or the
+    // neighbours with "Only consecutive runs"; a single run is no group
+    QStringList runs;
+    QStringList inSubFolders;
+    for (const DanAuto::Run &r : DanAuto(d).runs(true))
+        (r.run.contains('/') ? inSubFolders : runs) << r.run;
+    if (!inSubFolders.isEmpty())
+        report(QString("adding: %1 runs of sub-folders left out (%2, ...)")
+                   .arg(inSubFolders.count())
+                   .arg(inSubFolders.first()));
+    const bool consecutive = d->checkBoxAddConsecutive->isChecked();
+    const QVariantList groups = runs.isEmpty() ? QVariantList()
+                                : consecutive  ? d->danRawdata->neighbours(0, runs)
+                                               : d->danRawdata->sampleGroups(runs);
+    if (groups.isEmpty())
+    {
+        report("adding: no sample measured twice in one configuration" +
+               QString(consecutive ? " (consecutive runs)" : ""));
+        end(true);
+        return {};
+    }
+    // the added runs written into the input folder (the output folder for the time of the call), their single runs
+    // moved to "added-sources" there: the folder then holds what a reduction reads
+    const QString output = d->lineEditPathRAD->text();
+    const auto restore = qScopeGuard([this, &output] { d->lineEditPathRAD->setText(output); });
+    d->lineEditPathRAD->setText(folder);
+    const QDir sources(QDir(folder).filePath(DanAuto::addedSources));
+    if (!sources.exists() && !QDir(folder).mkdir(DanAuto::addedSources))
+    {
+        end(false, "no folder " + sources.path());
+        return {};
+    }
+    QStringList made;
+    for (const QVariant &g : groups)
+    {
+        const QStringList group = g.toMap()["runs"].toStringList();
+        const QStringList files = d->danRawdata->files(group);
+        if (files.isEmpty() || d->danRawdata->addRuns(group, QString()).isEmpty())
+        {
+            end(false, "adding " + group.join(", ") + ": " + d->danRawdata->lastError());
+            return made;
+        }
+        const QString run = group.first() + QString("%1").arg(group.count(), 5, 10, QChar('0'));
+        for (const QString &file : files)
+            if (QFileInfo::exists(file) && !QFile::rename(file, sources.filePath(QFileInfo(file).fileName())))
+            {
+                end(false, "adding: " + file + " not moved to " + sources.path());
+                return made;
+            }
+        made << run;
+        report(QString("added %1 = %2 (%3, %4); its runs moved to %5/")
+                   .arg(run, group.join(" + "), g.toMap()["label"].toString(), g.toMap()["sample"].toString(),
+                        DanAuto::addedSources));
+    }
+    DanAuto::forgetRuns();
+    int moved = 0;
+    for (const QVariant &g : groups)
+        moved += static_cast<int>(g.toMap()["runs"].toStringList().count());
+    report(QString("adding: %1 run(s) added, %2 single runs moved to %3/")
+               .arg(made.count())
+               .arg(moved)
+               .arg(DanAuto::addedSources));
+    end(true);
+    return made;
+}
+
+QString DanProcessing::autoInfoTable(const QString &name)
+{
+    if (name.isEmpty())
+        return fail("no table name");
+    if (d->app()->checkTableExistence(name))
+        return fail("a table " + name + " exists already");
+    begin();
+    QStringList runs;
+    for (const DanAuto::Run &r : DanAuto(d).runs(true))
+        runs << r.run;
+    if (runs.isEmpty())
+    {
+        end(false, "no runs pass the auto filters (minDuration, minCounts, files, skipFiles, samples, skipSamples)");
+        return {};
+    }
+    if (d->danRawdata->newInfoTable(name, runs, -1, -1, -1).isEmpty())
+    {
+        end(false, d->danRawdata->lastError());
+        return {};
+    }
+    report(QString("info table %1: %2 runs").arg(name).arg(runs.count()));
+    end(true);
+    return name;
+}
+
 QString DanProcessing::autoConfig(const QString &scriptTable)
 {
     if (d->app()->checkTableExistence(scriptTable))
@@ -2923,6 +3385,14 @@ QString DanProcessing::autoConfig(const QString &scriptTable)
         end(false, reason);
         return QString();
     };
+    // the runs of a sample measured several times added first, when the option asks for it: the steps below see the
+    // added runs, their single runs moved away
+    if (d->checkBoxAutoAdd->isChecked())
+    {
+        autoAdd();
+        if (!lastError().isEmpty())
+            return stop("adding: " + lastError());
+    }
     if (d->danMask->autoMasks().isEmpty())
         return stop("masks: " + d->danMask->lastError());
     // "sens" anew by the option (a "sens" of an earlier folder or session is not this one's); the beam-stop masks
@@ -2930,13 +3400,11 @@ QString DanProcessing::autoConfig(const QString &scriptTable)
     const QString masks = autoChoice(d->comboBoxAutoMasks, "masks");
     if ((masks == "none" || masks == "files") && d->danSensitivity->autoSensitivity().isEmpty())
         return stop("sensitivity: " + d->danSensitivity->lastError());
-    // "mask" without the beam stop (centers from the empty beams, beam-stop masks per configuration, flat
-    // sensitivity): a direct-beam calibration takes the center and the factor through it, "Use Current Mask and
-    // Sensitivity" checked as one would (unchecked, the configuration's beam-stop mask hid the beam: KWSX-init-auto)
+    // "mask" without the beam stop (auto option openMask): a direct-beam calibration takes the center and the factor
+    // through it, "Use Current Mask and Sensitivity" checked as one would (unchecked, the configuration's beam-stop
+    // mask hid the beam: KWSX-init-auto)
     const int calibrant = d->comboBoxACmethod->currentIndex();
-    if (masks == "configuration" && autoChoice(d->comboBoxAutoCenter, "center") == "emptybeam" &&
-        autoChoice(d->comboBoxAutoSens, "sensitivity") == "flat" && (calibrant == 1 || calibrant == 4) &&
-        !d->checkBoxACDBuseActive->isChecked())
+    if (DanAuto(d).openMask() && (calibrant == 1 || calibrant == 4) && !d->checkBoxACDBuseActive->isChecked())
     {
         d->checkBoxACDBuseActive->setChecked(true);
         report(R"(direct beam: "Use Current Mask and Sensitivity" checked (mask and sens without beam stop))");
@@ -2966,13 +3434,39 @@ QString DanProcessing::autoConfig(const QString &scriptTable)
     // asks for it
     if (d->checkBoxAutoCenterOffsets->isChecked() && addCenterOffsets(scriptTable, "mask", "sens") < 0)
         return stop(lastError());
+    // an info table of all runs the run filters select ("<script table>-info"), when the option asks for it
+    if (d->checkBoxAutoInfoTable->isChecked())
+    {
+        QString info = scriptTable + "-info";
+        if (d->app()->checkTableExistence(info))
+            info = d->app()->generateUniqueName(info + "-");
+        if (autoInfoTable(info).isEmpty())
+            return stop("info table: " + lastError());
+    }
     // the "Scale" column (normalized to the transmission at the longest distance) only when the option asks for it
     if (d->checkBoxAutoScale->isChecked() && autoScale(scriptTable) < 0)
         return stop(lastError());
     if (!d->checkBoxAutoScale->isChecked())
         report("no Scale column (auto option scale off)");
-    report(QString(R"(ready: %1 (processing: process("%1"); merging: Dan.Merge.join("%1-mergingTemplate")))")
-               .arg(scriptTable));
+    // radial averaging (I[Q] into the project) and merging, when the options ask for it
+    if (d->checkBoxAutoProcessIQ->isChecked())
+    {
+        const QStringList curves = process(scriptTable, "I-Q", "project");
+        if (curves.isEmpty())
+            return stop("I[Q]: " + lastError());
+        report(QString("I[Q]: %1 tables").arg(curves.count()));
+        if (d->checkBoxAutoMerge->isChecked())
+        {
+            const QStringList merged = d->danMerge->join(scriptTable + "-mergingTemplate", 30, 0, 0, "project", false);
+            if (merged.isEmpty())
+                return stop("merging: " + d->danMerge->lastError());
+            report(QString("merged: %1").arg(merged.join(", ")));
+        }
+        report(QString("ready: %1, I[Q] in the project").arg(scriptTable));
+    }
+    else
+        report(QString(R"(ready: %1 (processing: process("%1"); merging: Dan.Merge.join("%1-mergingTemplate")))")
+                   .arg(scriptTable));
     end(true);
     return scriptTable;
 }

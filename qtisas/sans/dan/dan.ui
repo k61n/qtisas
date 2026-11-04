@@ -22737,6 +22737,9 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                            <property name="text">
                             <string/>
                            </property>
+                           <property name="placeholderText">
+                            <string>wildcard: skipped files</string>
+                           </property>
                           </widget>
                          </item>
                          <item row="2" column="0">
@@ -22814,6 +22817,9 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                            </property>
                            <property name="text">
                             <string>*</string>
+                           </property>
+                           <property name="placeholderText">
+                            <string>wildcard: accepted files</string>
                            </property>
                           </widget>
                          </item>
@@ -23023,6 +23029,9 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                            <property name="text">
                             <string/>
                            </property>
+                           <property name="placeholderText">
+                            <string>wildcard: skipped sample names</string>
+                           </property>
                           </widget>
                          </item>
                          <item row="3" column="1">
@@ -23050,6 +23059,9 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                            </property>
                            <property name="text">
                             <string>*</string>
+                           </property>
+                           <property name="placeholderText">
+                            <string>wildcard: accepted sample names</string>
                            </property>
                           </widget>
                          </item>
@@ -23293,7 +23305,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                             </font>
                            </property>
                            <property name="toolTip">
-                            <string>None at this D (and D &gt;= 3.5 m): the nearest D above 1.5 m</string>
+                            <string>At D from the distance set below on: the calibrant at the nearest D above the minimum set below</string>
                            </property>
                            <property name="text">
                             <string>other D</string>
@@ -23304,6 +23316,93 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                           </widget>
                          </item>
                          <item row="3" column="0">
+                          <widget class="QLabel" name="labelAutoFlexD">
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="font">
+                            <font>
+                             <weight>50</weight>
+                             <bold>false</bold>
+                            </font>
+                           </property>
+                           <property name="toolTip">
+                            <string>&quot;other D&quot;: from which empty-beam distance the calibrant is taken at another distance, and the smallest distance it may have</string>
+                           </property>
+                           <property name="styleSheet">
+                            <string notr="true">color: black;</string>
+                           </property>
+                           <property name="text">
+                            <string>Calibrant other D: from, above:</string>
+                           </property>
+                          </widget>
+                         </item>
+                         <item row="3" column="1">
+                          <widget class="QDoubleSpinBox" name="doubleSpinBoxAutoFlexDFrom">
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="toolTip">
+                            <string>Empty beams at this distance and more take the calibrant at the nearest distance (&quot;other D&quot;)</string>
+                           </property>
+                           <property name="suffix">
+                            <string> m</string>
+                           </property>
+                           <property name="decimals">
+                            <number>2</number>
+                           </property>
+                           <property name="minimum">
+                            <double>0.000000000000000</double>
+                           </property>
+                           <property name="maximum">
+                            <double>100.000000000000000</double>
+                           </property>
+                           <property name="singleStep">
+                            <double>0.100000000000000</double>
+                           </property>
+                           <property name="value">
+                            <double>3.500000000000000</double>
+                           </property>
+                          </widget>
+                         </item>
+                         <item row="3" column="2">
+                          <widget class="QDoubleSpinBox" name="doubleSpinBoxAutoFlexDMin">
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="toolTip">
+                            <string>The calibrant's distance must be above this one (&quot;other D&quot;)</string>
+                           </property>
+                           <property name="suffix">
+                            <string> m</string>
+                           </property>
+                           <property name="decimals">
+                            <number>2</number>
+                           </property>
+                           <property name="minimum">
+                            <double>0.000000000000000</double>
+                           </property>
+                           <property name="maximum">
+                            <double>100.000000000000000</double>
+                           </property>
+                           <property name="singleStep">
+                            <double>0.100000000000000</double>
+                           </property>
+                           <property name="value">
+                            <double>1.500000000000000</double>
+                           </property>
+                          </widget>
+                         </item>
+                         <item row="4" column="0">
                           <widget class="QLabel" name="labelAuto11">
                            <property name="maximumSize">
                             <size>
@@ -23328,7 +23427,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                            </property>
                           </widget>
                          </item>
-                         <item row="3" column="1" colspan="2">
+                         <item row="4" column="1" colspan="2">
                           <widget class="QLineEdit" name="lineEditAutoCalibrantEB">
                            <property name="minimumSize">
                             <size>
@@ -23356,7 +23455,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                            </property>
                           </widget>
                          </item>
-                         <item row="4" column="0">
+                         <item row="5" column="0">
                           <widget class="QLabel" name="labelAuto12">
                            <property name="maximumSize">
                             <size>
@@ -23381,7 +23480,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                            </property>
                           </widget>
                          </item>
-                         <item row="4" column="1">
+                         <item row="5" column="1">
                           <widget class="QLineEdit" name="lineEditAutoCalibrantBC">
                            <property name="minimumSize">
                             <size>
@@ -23409,7 +23508,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                            </property>
                           </widget>
                          </item>
-                         <item row="4" column="2">
+                         <item row="5" column="2">
                           <widget class="QCheckBox" name="checkBoxAutoCalibrantBCSingle">
                            <property name="maximumSize">
                             <size>
@@ -23434,7 +23533,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                            </property>
                           </widget>
                          </item>
-                         <item row="5" column="0">
+                         <item row="6" column="0">
                           <widget class="QLabel" name="labelAuto13">
                            <property name="maximumSize">
                             <size>
@@ -23459,7 +23558,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                            </property>
                           </widget>
                          </item>
-                         <item row="5" column="1">
+                         <item row="6" column="1">
                           <widget class="QComboBox" name="comboBoxAutoCenter">
                            <property name="minimumSize">
                             <size>
@@ -23480,7 +23579,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                             </font>
                            </property>
                            <property name="toolTip">
-                            <string>max flux: the run with the most counts, standard runs excluded (configurations without one are dropped); empty beam: the configuration's EC; wildcard: the runs named below</string>
+                            <string>max flux: the run with the most counts, standard runs excluded (configurations without one are dropped); empty beam: the configuration's EC; wildcard: the runs named below; beam stop: max flux where the direct beam is measured (a transmission configuration with the same beam-stop mask), else no run: the center of the beam-stop mask</string>
                            </property>
                            <item>
                             <property name="text">
@@ -23497,9 +23596,14 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                              <string>wildcard</string>
                             </property>
                            </item>
+                           <item>
+                            <property name="text">
+                             <string>beam stop</string>
+                            </property>
+                           </item>
                           </widget>
                          </item>
-                         <item row="5" column="2">
+                         <item row="6" column="2">
                           <widget class="QLineEdit" name="lineEditAutoCenter">
                            <property name="minimumSize">
                             <size>
@@ -23527,7 +23631,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                            </property>
                           </widget>
                          </item>
-                         <item row="6" column="0">
+                         <item row="7" column="0">
                           <widget class="QLabel" name="labelAuto14">
                            <property name="maximumSize">
                             <size>
@@ -23552,7 +23656,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                            </property>
                           </widget>
                          </item>
-                         <item row="6" column="1" colspan="2">
+                         <item row="7" column="1" colspan="2">
                           <widget class="QLineEdit" name="lineEditAutoCellEB">
                            <property name="minimumSize">
                             <size>
@@ -23580,7 +23684,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                            </property>
                           </widget>
                          </item>
-                         <item row="7" column="0">
+                         <item row="8" column="0">
                           <widget class="QLabel" name="labelAuto15">
                            <property name="maximumSize">
                             <size>
@@ -23605,7 +23709,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                            </property>
                           </widget>
                          </item>
-                         <item row="7" column="1" colspan="2">
+                         <item row="8" column="1" colspan="2">
                           <widget class="QLineEdit" name="lineEditAutoTransmission">
                            <property name="minimumSize">
                             <size>
@@ -23626,14 +23730,14 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                             </font>
                            </property>
                            <property name="toolTip">
-                            <string>Configuration wildcard (C..D..L..); &quot;||&quot; separates alternatives</string>
+                            <string>Configuration wildcard (C..D..L..); &quot;||&quot; separates alternatives. With Skip Transmission Configurations (separate transmission configurations) and a Transmission Method with the direct beam: of the matching configurations with the same beam-stop mask only the one whose empty beam is the direct beam</string>
                            </property>
                            <property name="text">
                             <string>*</string>
                            </property>
                           </widget>
                          </item>
-                         <item row="8" column="0">
+                         <item row="9" column="0">
                           <widget class="QLabel" name="labelAuto16">
                            <property name="maximumSize">
                             <size>
@@ -23658,7 +23762,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                            </property>
                           </widget>
                          </item>
-                         <item row="8" column="1" colspan="2">
+                         <item row="9" column="1" colspan="2">
                           <widget class="QLineEdit" name="lineEditAutoSkip">
                            <property name="minimumSize">
                             <size>
@@ -23684,9 +23788,12 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                            <property name="text">
                             <string/>
                            </property>
+                           <property name="placeholderText">
+                            <string>f.e. C20D4L12</string>
+                           </property>
                           </widget>
                          </item>
-                         <item row="9" column="0" colspan="3">
+                         <item row="10" column="0" colspan="3">
                           <spacer name="verticalSpacerAutoConfigurations">
                            <property name="orientation">
                             <enum>Qt::Vertical</enum>
@@ -23770,7 +23877,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                             </font>
                            </property>
                            <property name="toolTip">
-                            <string>per configuration: the beam-stop box around each empty beam's center, scaled by its beam size; per wavelength: the box moved by the detector offset from the reference position</string>
+                            <string>per configuration: the beam-stop box around the direct beam's center, scaled by the beam size (where no direct beam is measured: the instrument's box around the beam stop's shadow in the empty beam); per wavelength: the box moved by the detector offset from the reference position; a transmission mask only where the direct beam is measured, configurations of another attenuator or beam-stop position share the masks</string>
                            </property>
                            <item>
                             <property name="text">
@@ -23856,7 +23963,82 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                            </property>
                           </widget>
                          </item>
-                         <item row="2" column="0">
+                         <item row="2" column="0" colspan="3">
+                          <widget class="QCheckBox" name="checkBoxAutoFindBS">
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="toolTip">
+                            <string>Per configuration, where no direct beam is measured: the beam-stop box (the instrument's size) centered on the beam stop's shadow in the empty beam; unchecked: the instrument's box as it is</string>
+                           </property>
+                           <property name="styleSheet">
+                            <string notr="true">color: black;</string>
+                           </property>
+                           <property name="text">
+                            <string>Find the beam stop's shadow where no direct beam is measured</string>
+                           </property>
+                           <property name="checked">
+                            <bool>true</bool>
+                           </property>
+                          </widget>
+                         </item>
+                         <item row="3" column="0">
+                          <widget class="QLabel" name="labelAutoOpenMask">
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="font">
+                            <font>
+                             <weight>50</weight>
+                             <bold>false</bold>
+                            </font>
+                           </property>
+                           <property name="toolTip">
+                            <string>&quot;mask&quot; without the beam stop: the direct beam's center and factor count the beam itself (&quot;Use Current Mask and Sensitivity&quot; then checked for a direct-beam calibration); the samples get the configurations' beam-stop masks</string>
+                           </property>
+                           <property name="styleSheet">
+                            <string notr="true">color: black;</string>
+                           </property>
+                           <property name="text">
+                            <string>&quot;mask&quot; without beam stop:</string>
+                           </property>
+                          </widget>
+                         </item>
+                         <item row="3" column="1" colspan="2">
+                          <widget class="QComboBox" name="comboBoxAutoOpenMask">
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="toolTip">
+                            <string>auto: when the center is the empty beam, the masks per configuration and the sensitivity flat (KWS-3); yes, no: always, never</string>
+                           </property>
+                           <item>
+                            <property name="text">
+                             <string>auto: empty-beam center, masks per configuration, flat sensitivity</string>
+                            </property>
+                           </item>
+                           <item>
+                            <property name="text">
+                             <string>yes</string>
+                            </property>
+                           </item>
+                           <item>
+                            <property name="text">
+                             <string>no</string>
+                            </property>
+                           </item>
+                          </widget>
+                         </item>
+                         <item row="4" column="0">
                           <widget class="QLabel" name="labelAuto20">
                            <property name="maximumSize">
                             <size>
@@ -23881,7 +24063,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                            </property>
                           </widget>
                          </item>
-                         <item row="2" column="1" colspan="2">
+                         <item row="4" column="1" colspan="2">
                           <widget class="QSpinBox" name="spinBoxAutoBeamSize">
                            <property name="minimumSize">
                             <size>
@@ -23915,7 +24097,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                            </property>
                           </widget>
                          </item>
-                         <item row="3" column="0">
+                         <item row="5" column="0">
                           <widget class="QLabel" name="labelAuto21">
                            <property name="maximumSize">
                             <size>
@@ -23930,17 +24112,17 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                             </font>
                            </property>
                            <property name="toolTip">
-                            <string>Detector position the instrument's beam-stop box belongs to; 0: not moved</string>
+                            <string>Detector (header Detector-X, Detector-Y) motor position in mm the instrument's beam-stop box belongs to (&quot;per wavelength&quot;: the box moved by the difference / the pixel size); 0: not moved</string>
                            </property>
                            <property name="styleSheet">
                             <string notr="true">color: black;</string>
                            </property>
                            <property name="text">
-                            <string>Reference detector X, Y:</string>
+                            <string>Reference detector X, Y [mm]:</string>
                            </property>
                           </widget>
                          </item>
-                         <item row="3" column="1">
+                         <item row="5" column="1">
                           <widget class="QSpinBox" name="spinBoxAutoBSX">
                            <property name="minimumSize">
                             <size>
@@ -23961,7 +24143,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                             </font>
                            </property>
                            <property name="toolTip">
-                            <string>Detector X of the reference position (&quot;per wavelength&quot;)</string>
+                            <string>Detector X [mm] of the reference position (&quot;per wavelength&quot;)</string>
                            </property>
                            <property name="minimum">
                             <number>-100000</number>
@@ -23974,7 +24156,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                            </property>
                           </widget>
                          </item>
-                         <item row="3" column="2">
+                         <item row="5" column="2">
                           <widget class="QSpinBox" name="spinBoxAutoBSY">
                            <property name="minimumSize">
                             <size>
@@ -23995,7 +24177,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                             </font>
                            </property>
                            <property name="toolTip">
-                            <string>Detector Y of the reference position (&quot;per wavelength&quot;)</string>
+                            <string>Detector Y [mm] of the reference position (&quot;per wavelength&quot;)</string>
                            </property>
                            <property name="minimum">
                             <number>-100000</number>
@@ -24008,7 +24190,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                            </property>
                           </widget>
                          </item>
-                         <item row="4" column="0">
+                         <item row="6" column="0">
                           <widget class="QLabel" name="labelAuto22">
                            <property name="maximumSize">
                             <size>
@@ -24033,7 +24215,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                            </property>
                           </widget>
                          </item>
-                         <item row="4" column="1">
+                         <item row="6" column="1">
                           <widget class="QComboBox" name="comboBoxAutoSens">
                            <property name="minimumSize">
                             <size>
@@ -24073,7 +24255,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                            </item>
                           </widget>
                          </item>
-                         <item row="4" column="2">
+                         <item row="6" column="2">
                           <widget class="QLineEdit" name="lineEditAutoSens">
                            <property name="minimumSize">
                             <size>
@@ -24101,7 +24283,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                            </property>
                           </widget>
                          </item>
-                         <item row="5" column="0" colspan="3">
+                         <item row="7" column="0" colspan="3">
                           <spacer name="verticalSpacerAutoMaskSensetivity">
                            <property name="orientation">
                             <enum>Qt::Vertical</enum>
@@ -24121,6 +24303,44 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                          <string>Processing</string>
                         </attribute>
                         <layout class="QVBoxLayout" name="verticalLayoutAutoProcessing">
+                         <item>
+                          <widget class="QCheckBox" name="checkBoxAutoAdd">
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="toolTip">
+                            <string>First of all: the runs of a sample measured several times in one configuration (as the adding template groups them; &quot;Only consecutive runs&quot; as set) added into new runs in the input folder, their single runs moved to the sub-folder &quot;added-sources&quot; there; a sample measured once stays</string>
+                           </property>
+                           <property name="styleSheet">
+                            <string notr="true">color: black;</string>
+                           </property>
+                           <property name="text">
+                            <string>Add the runs of a sample measured several times (first)</string>
+                           </property>
+                          </widget>
+                         </item>
+                         <item>
+                          <widget class="QCheckBox" name="checkBoxAutoInfoTable">
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="toolTip">
+                            <string>An info table &quot;&lt;script table&gt;-info&quot; of all runs the Runs page selects (the header values, a row per run); unchecked: none</string>
+                           </property>
+                           <property name="styleSheet">
+                            <string notr="true">color: black;</string>
+                           </property>
+                           <property name="text">
+                            <string>Info table of the selected runs</string>
+                           </property>
+                          </widget>
+                         </item>
                          <item>
                           <widget class="QCheckBox" name="checkBoxAutoScale">
                            <property name="maximumSize">
@@ -24159,6 +24379,47 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                            </property>
                            <property name="text">
                             <string>Shift samples onto the center of their empty beam</string>
+                           </property>
+                          </widget>
+                         </item>
+                         <item>
+                          <widget class="QCheckBox" name="checkBoxAutoProcessIQ">
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="toolTip">
+                            <string>Last: the script table's samples radially averaged, I[Q] into the project (Processing &gt;&gt; I[Q], Project)</string>
+                           </property>
+                           <property name="styleSheet">
+                            <string notr="true">color: black;</string>
+                           </property>
+                           <property name="text">
+                            <string>Radial averaging: I[Q] into the project</string>
+                           </property>
+                          </widget>
+                         </item>
+                         <item>
+                          <widget class="QCheckBox" name="checkBoxAutoMerge">
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>25</height>
+                            </size>
+                           </property>
+                           <property name="toolTip">
+                            <string>After I[Q]: the curves of a sample merged with the script table's merging template, into the project (Merge &gt;&gt; Project, overlap 30 points)</string>
+                           </property>
+                           <property name="styleSheet">
+                            <string notr="true">color: black;</string>
+                           </property>
+                           <property name="text">
+                            <string>Merge the I[Q] of a sample into the project</string>
+                           </property>
+                           <property name="visible">
+                            <bool>false</bool>
                            </property>
                           </widget>
                          </item>

@@ -29,20 +29,22 @@ void dan18::connectSlot()
     connect(pushButtonsaveCurrentSaveInstr, &QPushButton::clicked, this, &dan18::saveInstrumentAs);
     connect(pushButtonDeleteCurrentInstr, &QPushButton::clicked, this, &dan18::deleteCurrentInstrument);
     connect(pushButtonInstrColor, &QPushButton::clicked, this, &dan18::selectInstrumentColor);
-
-    // auto mode (Options > Auto-Mode): the reduction configured from the runs of the input folder, as
-    // Dan.Processing.autoConfig() does; the configurations left out are told, a failure too
+    connect(checkBoxAutoProcessIQ, &QCheckBox::toggled, checkBoxAutoMerge, &QWidget::setVisible);
+    checkBoxAutoMerge->setVisible(checkBoxAutoProcessIQ->isChecked());
     connect(pushButtonAutoConfig, &QPushButton::clicked, this, [this]() {
         QString name = "script";
         if (app()->checkTableExistence(name))
             name = app()->generateUniqueName("script-");
         const QString made = danProcessing->autoConfig(name);
-        QStringList lines = danProcessing->lastMessages();
         if (made.isEmpty())
+        {
             QMessageBox::warning(this, "QtiSAS", "Auto-Configure: " + danProcessing->lastError());
-        else if (!lines.isEmpty())
-            QMessageBox::information(this, "QtiSAS",
-                                     "Auto-Configure: script table " + made + "\n\n" + lines.join("\n"));
+            return;
+        }
+        QString text = "DAN :: Auto-Configure: script table " + made + "\n";
+        for (const QString &line : danProcessing->lastMessages())
+            text += "DAN :: Auto-Configure: " + line + "\n";
+        toResLog(text);
     });
 
     // experiment mode

@@ -4423,6 +4423,25 @@ public:
         sipError = sipErrorFail;
     }
 %End
+    // auto mode's runs only: the info table of all runs the run filters (Options > Auto-Mode > Runs) select; its name
+    // the runs of a sample measured several times in one configuration added into new runs in the input folder, their
+    // single runs moved to "added-sources" there (the adding template's groups); the added runs
+    QStringList autoAdd();
+%MethodCode
+    sipRes = new QStringList(sipCpp->autoAdd());
+    if (!sipCpp->lastError().isEmpty()) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
+    QString autoInfoTable(const QString &name = "info");
+%MethodCode
+    sipRes = new QString(sipCpp->autoInfoTable(*a0));
+    if (sipRes->isEmpty()) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
+    }
+%End
 };
 
 class DanMerge : DanPart /NoDefaultCtors/

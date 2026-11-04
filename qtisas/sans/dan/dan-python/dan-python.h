@@ -11,6 +11,7 @@ Description: DAN-SANS Python interface: one object per tab (Dan.Options, Dan.Raw
 #define DAN_PYTHON_H
 
 #include <QPair>
+#include <QSet>
 #include <QStringList>
 #include <QVariantList>
 #include <QVariantMap>
@@ -60,6 +61,8 @@ class DanAuto
     // the headers runs() read are kept (a run read again when its detector file changed): forgotten when a header
     // file is written (Rawdata.setHeaderValue())
     static void forgetRuns();
+    // the sub-folder of the input folder autoAdd() moves the runs it added to: no runs of the folder any more
+    static const QString addedSources;
     // "C8D7.68L4.9BS30x30|10x10" (+ "P<polarization>", "A<attenuator>" when they count): what the configuration
     // wildcards (transmissions in, skip) are matched against
     QString label(const Run &r) const;
@@ -69,12 +72,27 @@ class DanAuto
     QList<Run> sampleRuns(const QList<Run> &runs) const;
     // the configurations: one per condition of the empty beams; dropped: the reasons for the conditions left out
     QList<Choice> configurations(const QList<Run> &runs, QStringList &dropped) const;
-    // the empty beams of the configurations (in their order, the dropped ones left out)
-    QList<Run> emptyBeams(const QList<Run> &runs) const;
     // "mask-bs-9.2m" / "mask-tr-9.2m" (+ "-<lambda>A" when another empty beam has the same D)
     static QString maskName(const Run &emptyBeam, bool transmission, const QList<Run> &emptyBeams);
+    // the empty beam of a configuration's direct beam: its own when it measures the transmissions, else that of a
+    // configuration measuring them with the same beam-stop mask (another attenuator or beam-stop position); nullptr:
+    // none, the beam is behind the beam stop in all runs of this geometry
+    static const Run *directBeam(const Choice &c, const QList<Choice> &choices);
+    // "mask" without the beam stop (auto option openMask; auto: the empty beam's center, masks per configuration and
+    // a flat sensitivity): the direct beam's center and factor count the beam itself
+    bool openMask() const;
+    // the transmissions measured with the direct beam (Transmission Method "Direct Beam", or the optional one at 9.5 A
+    // and more), not read from the header
+    bool directBeamTransmission(double lambda) const;
+    // the share of a run's counts inside a box of the beam-stop box's size (x1, x2, y1, y2) around its brightest
+    // pixel (the direct beam: near 1)
+    double directBeamShare(const QString &run, const QList<int> &box) const;
+    // the beam seen in a run: a direct beam (directBeamShare() above 0.5) or a sharp peak beside or through the beam
+    // stop
+    bool beamVisible(const QString &run, const QList<int> &box) const;
 
   private:
+    QSet<QString> transmissionRuns(const QList<Run> &emptyBeams) const;
     Run readRun(const QString &run, const QString &file) const;
     QString sampleName(const QString &name) const;
     dan18 *d;
@@ -287,6 +305,10 @@ class DanMask : public DanPart
     // a tool of "Adv Masking Options" pressed on the matrix, its fields set first
     QString tool(const QString &matrix, const QList<QPair<QDoubleSpinBox *, double>> &fields, bool inside, double value,
                  void (dan18::*press)());
+    // the beam stop's shadow in a run: the box (x1, x2, y1, y2, 1-based) of the size of the instrument's beam-stop box
+    // around the center of the box whose surroundings are the brightest against it; that box when none is found (the
+    // caller checks first that the beam is not seen in the run: beamVisible())
+    QList<int> findBeamstop(const QString &run, const QList<int> &box);
 };
 
 // Sensitivity tab
@@ -369,6 +391,13 @@ class DanProcessing : public DanPart
     // configurations, calculate(), the script table of the sample runs, transmissions, scale; its name. Processing
     // (process()) and merging (Dan.Merge.join()) are calls of their own
     QString autoConfig(const QString &scriptTable);
+    // auto mode's runs only: the info table of all runs the run filters select (a new table: an existing one is an
+    // error); its name
+    QString autoInfoTable(const QString &name);
+    // the runs of a sample measured several times in one configuration (as the adding template groups them: all, or
+    // the consecutive ones) added into new runs in the input folder, their single runs moved to "added-sources" there;
+    // the added runs (none: nothing to add); lastError() when adding failed
+    QStringList autoAdd();
 
   private:
     bool selectScriptTable(const QString &name);
