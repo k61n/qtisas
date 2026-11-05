@@ -21930,6 +21930,46 @@ void ApplicationWindow::removeCustomAction(QAction *action)
     }
 }
 
+static QString normalizedCustomActionPath(const QString &path);
+static QString managedCustomActionPath(const QString &base, const QString &subfolder, const QString &entry);
+
+void ApplicationWindow::removeCustomActionFiles(QAction *action) const
+{
+    if (!action)
+        return;
+
+    const QString descriptorPath = normalizedCustomActionPath(customActionsDirPath + "/" + action->text() + ".qca");
+    const QString scriptPath = managedCustomActionPath(customActionsDirPath, "scripts", action->data().toString());
+    const QString iconPath = managedCustomActionPath(customActionsDirPath, "icons", action->iconText());
+    QFile::remove(descriptorPath);
+
+    const QDir folder(customActionsDirPath);
+    const auto isReferencedByAnotherAction = [&](const QString &path, const QString &element) {
+        if (path.isEmpty())
+            return true;
+
+        for (const QString &name : folder.entryList({"*.qca"}, QDir::Files | QDir::NoSymLinks, QDir::Name))
+        {
+            const QString candidate = normalizedCustomActionPath(folder.filePath(name));
+            if (candidate == descriptorPath)
+                continue;
+
+            XMLParser parser(candidate);
+            if (!parser.errorString().isEmpty() || !parser.hasElement("action") || !parser.hasElement(element))
+                continue;
+            const QString subfolder = element == "file" ? "scripts" : "icons";
+            if (managedCustomActionPath(customActionsDirPath, subfolder, parser.readElement(element).last()) == path)
+                return true;
+        }
+        return false;
+    };
+
+    if (!scriptPath.isEmpty() && !isReferencedByAnotherAction(scriptPath, "file"))
+        QFile::remove(scriptPath);
+    if (!iconPath.isEmpty() && !isReferencedByAnotherAction(iconPath, "icon"))
+        QFile::remove(iconPath);
+}
+
 // Write (or overwrite) the .qca descriptor from the action's current state.
 // scriptRelPath and iconEntry are already relative to customActionsDirPath.
 static void writeCustomActionQca(const QString &base, QAction *a, const QString &scriptRelPath,
@@ -21959,6 +21999,26 @@ static QString actionIconEntry(const QString &base, QAction *a)
 {
     const QString t = a->iconText();
     return t.contains("No Icon") ? t : QDir(base).relativeFilePath(t);
+}
+
+static QString normalizedCustomActionPath(const QString &path)
+{
+    const QFileInfo info(path);
+    const QString canonical = info.canonicalFilePath();
+    return QDir::cleanPath(canonical.isEmpty() ? info.absoluteFilePath() : canonical);
+}
+
+static QString managedCustomActionPath(const QString &base, const QString &subfolder, const QString &entry)
+{
+    if (entry.isEmpty() || entry.contains("No Icon"))
+        return {};
+
+    QString path = normalizedCustomActionPath(QDir::isAbsolutePath(entry) ? entry : QDir(base).absoluteFilePath(entry));
+    const QString relative = QDir(normalizedCustomActionPath(base)).relativeFilePath(path);
+    const QString prefix = subfolder + "/";
+    if (!relative.startsWith(prefix) && !relative.startsWith(subfolder + "\\"))
+        return {};
+    return path;
 }
 
 bool ApplicationWindow::addCustomAction(const QString &name, const QString &scriptName, const QString &menuName,
@@ -22127,7 +22187,7 @@ bool ApplicationWindow::removeCustomActionByName(const QString &name)
         std::find_if(d_user_actions.begin(), d_user_actions.end(), [&](QAction *a) { return a->text() == name; });
     if (it == d_user_actions.end())
         return false;
-    QFile::remove(customActionsDirPath + "/" + name + ".qca");
+    removeCustomActionFiles(*it);
     removeCustomAction(*it);
     return true;
 }
@@ -22597,6 +22657,12 @@ QMenu* ApplicationWindow::addCustomMenu(const QString& title, const QString& par
 	QList<QMenu *> menus = customizableMenusList();
 	foreach (QMenu *m, menus){
 		if (m->objectName() == parentName){
+            foreach (QAction *existingAction, m->actions())
+            {
+                QMenu *existingMenu = existingAction->menu();
+                if (existingMenu && existingMenu->title().remove("&") == title)
+                    return existingMenu;
+            }
 			QMenu *menu = m->addMenu(title);
 			if (menu){
 				menu->setObjectName(title);
@@ -22625,9 +22691,16 @@ void ApplicationWindow::removeCustomMenu(const QString& title)
 void ApplicationWindow::reloadCustomMenus()
 {
 	foreach(QMenu *m, d_user_menus){
-		QWidget *parent = m->parentWidget();
-		if (parent && !parent->children().contains(m))
-			((QMenu *)parent)->addMenu(m);
+        if (auto *parentMenu = qobject_cast<QMenu *>(parent()))
+        {
+            if (!parentMenu->actions().contains(m->menuAction()))
+                parentMenu->addAction(m->menuAction());
+        }
+        else if (auto *parentBar = qobject_cast<QMenuBar *>(parent()))
+        {
+            if (!parentBar->actions().contains(m->menuAction()))
+                parentBar->addAction(m->menuAction());
+        }
 	}
 }
 

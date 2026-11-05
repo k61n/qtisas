@@ -378,9 +378,7 @@ void CustomActionDialog::removeAction()
         return;
 
 	ApplicationWindow *app = (ApplicationWindow *)parentWidget();
-    QFile f(app->customActionsDirPath + "/" + action->text() + ".qca");
-    f.remove();
-
+    app->removeCustomActionFiles(action);
 	app->removeCustomAction(action);
 
 	itemsList->takeItem(row);
@@ -631,9 +629,7 @@ void CustomActionDialog::removeMenu()
 		QList<QAction *> actionsList = app->customActionsList();
 		foreach (QAction *a, actionsList){
 			if (a->statusTip() == menu->objectName()){
-				QFile f(app->customActionsDirPath + "/" + a->text() + ".qca");
-				f.remove();
-
+                app->removeCustomActionFiles(a);
 				QList<QListWidgetItem *> lst = itemsList->findItems(a->text(), Qt::MatchExactly | Qt::MatchCaseSensitive);
 				foreach(QListWidgetItem * item, lst){
 					itemsList->takeItem(itemsList->row(item));
@@ -697,7 +693,7 @@ void CustomActionDialog::downloadActions(const QString &repoUrl)
 {
     auto app = (ApplicationWindow *)parent();
     RepositorySynchronization::updateGitInteractive(this, app->customActionsDirPath, repoUrl,
-                                                    {"py", "qca", "qcm", "png", "svg"});
+                                                    {"py", "qca", "qcm", "png", "svg", "mjs"});
     app->removeAllCustomActions();
     app->loadCustomActions();
     updateDisplayList();
