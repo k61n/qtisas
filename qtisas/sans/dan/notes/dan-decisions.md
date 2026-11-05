@@ -7,6 +7,19 @@ it and says so ("Replaces …"). Explanations and formulas are in the other note
 [polarization absolute calibration](dan-polarization-absolute-calibration.md),
 [wide-angle corrections](dan-wide-angle-corrections.md).
 
+## 2026-11-05 — Resolution σ: gravity without focusing; by azimuth in the Qx-Qy files
+
+- **Decision:** without focusing σ has a gravity term too: the two apertures fix the parabola at the source aperture
+  and the sample, behind it a neutron falls $A\lambda^2(C + D)D$ (beam center at the nominal wavelength), spread by
+  $2\varepsilon$ of it: vertical variance $k^2(2A\lambda^2(C+D)D)^2\Delta\lambda^2/6/D^2$, half in the radial average
+  (`gravityVariance()`, also for lenses; a mirror 0). The Qx-Qy files give the vertical variance to σQ(para) by
+  $\sin^2$ of the pixel's azimuth and to σQ(perp) by $\cos^2$ (both had the radial half).
+- **Why:** "below a pixel" was wrong for long instruments: at 20 m / 10 Å the spread is 2 mm (a pixel's), at 40 m /
+  20 Å 3.3 cm, two to three times the other terms; σ was half a Monte Carlo simulation's there, now within 1–3 %.
+- **With it:** σ unchanged at short distances (8 m / 5 Å), 1–4 % larger at 20 m / 10 Å, twice at 40 m / 20 Å.
+- **Code:** `dan18::gravityVariance`, `sigmaQmerged`, `saveMatrixAsTableToFile`.
+- **Test:** `dan_resolution_test.py`.
+
 ## 2026-11-04 — Resolution σ: gravity of focusing lenses
 
 - **Decision:** with focusing lenses σ has a gravity term, with the chromatic term's switch χ (a mirror: 0, it

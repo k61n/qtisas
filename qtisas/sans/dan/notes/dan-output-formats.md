@@ -149,7 +149,8 @@ angle) and $c = \cos^2 2\theta_0$:
 $$
 \sigma^2 = \frac{Q^2\Delta\lambda^2}{6}
 + k^2\cos^2\theta_0\,\frac14\left[\frac{r_1^2}{C^2} + r_2^2\left(\frac1C + \frac cD\right)^2\right]
-+ \left(\frac{k\cos\theta_0\,c}{D}\right)^2\frac{\Delta_{\rm D1}^2 + w_{\rm AV}^2}{12}:
++ \left(\frac{k\cos\theta_0\,c}{D}\right)^2\frac{\Delta_{\rm D1}^2 + w_{\rm AV}^2}{12}
++ \frac{k^2}{2D^2}\,\bigl(2A\lambda^2(C + D)D\bigr)^2\frac{\Delta\lambda^2}{6}:
 $$
 
 - "Sigma-W", the wavelength: the velocity selector's triangular distribution of FWHM $\Delta\lambda$ has the
@@ -161,7 +162,14 @@ $$
   of that FWHM, $(0.4247\,\Delta_{\rm D1})^2$, the variance would be 2.2 times larger; a two-point resolution is
   0.85–1.2 FWHM of a Gaussian point-spread function);
 - "Sigma-AV", the averaging ring: all radii across its width $w_{\rm AV}$ count alike, a box of variance
-  $w_{\rm AV}^2/12$.
+  $w_{\rm AV}^2/12$;
+- gravity: a neutron falls by $A\lambda^2z^2$ over the flight $z$ ($A = g\,m_n^2/2h^2 = 3.133\cdot10^{-9}$
+  cm⁻¹Å⁻²). The two apertures fix its parabola at the source aperture and the sample: behind the sample it falls by
+  $A\lambda^2(C + D)D$ more than the straight line, the beam center taking the nominal wavelength's. A wavelength
+  $\lambda(1+\varepsilon)$ falls $2\varepsilon$ times more: a vertical spread of variance
+  $(2A\lambda^2(C+D)D)^2\Delta\lambda^2/6$, half of it in the radial average. Negligible at short distances and
+  wavelengths (8 m / 5 Å: 0.1 mm of fall); at 20 m / 10 Å a spread of 2 mm, as wide as a pixel's; at 40 m / 20 Å
+  (a fall of 40 cm) 3.3 cm, two to three times all the other terms at small Q.
 
 **Why variances.** Variances of independent contributions add whatever their shapes (a triangle, a box, the
 trapezoid of two apertures' overlap); widths add in quadrature only for Gaussians. And a smooth I(Q) smeared by any
@@ -209,8 +217,7 @@ $$
 - the wavelength, the selector's triangle, $Q^2\Delta\lambda^2/6$, whatever the optic.
 
 A mirror's σ depends on $D$ only; the sample aperture enters only through the lenses' chromatic term.
-On the pinhole instruments gravity stays out: the fall's spread is below a pixel (KWS-1/2: under 1 mm at 5–10 Å
-and 20 m).
+Without focusing gravity enters as in the pinhole formula above (the fall through the two apertures).
 
 **Checked** against a Monte Carlo simulation of ideal 1:1 imaging (rectangular apertures, the image plane moved by
 the wavelength for lenses, the scattering at the sample, the detector's resolution and the ring as boxes): within
@@ -232,7 +239,9 @@ share of σ² at the smallest Q is 16 % (it was 3 %).
 
 Only the wavelength term $Q\Delta\lambda$ widens Q along the radius alone; the others are geometric and blur both
 directions. So σQ(para) = σ and σQ(perp) = $\sqrt{\sigma^2 - \sigma_\lambda^2}$ in the model's own $\sigma_\lambda$
-($Q\Delta\lambda/\sqrt6$, with and without focusing).
+($Q\Delta\lambda/\sqrt6$, with and without focusing). Gravity (pinhole, focusing lenses) is vertical: σ holds half its variance $g$
+(the radial average); a pixel at the azimuth φ from the horizontal gets $g\sin^2\varphi$ in σQ(para) and
+$g\cos^2\varphi$ in σQ(perp) instead.
 
 - I[Q]: `sigmaQmerged` with the point's merged rings $m$ (MS mode the same).
 - The slices I-Qx, I-Qy: σ at the slice's own Q, $|Q_x|$ or $|Q_y|$ (the wavelength term along x is
@@ -305,15 +314,15 @@ resolution option (an older `{Reso-Lens-Yes-No} Yes` read as focused lenses).
 | Pinhole σ as the sum of variances: the wavelength $Q^2\Delta\lambda^2/6$, the apertures $r^2/4$, the detector resolution (the real pixel) and the ring as boxes, $(\Delta_{\rm D1}^2 + w_{\rm AV}^2)/12$; focusing: the same detector terms; ASCII.1D (and Fittable's "ASCII.1D.SANS") the same | Pedersen's Gaussians of equal FWHM ($0.4247\,Q\Delta\lambda$, $0.4247\,\Delta\beta_1$), the ring and the detector resolution as $w/\sqrt\pi$: 4–30 % above the simulated σ (KWS-1-like, 8/8 m: +16 % at 0.01 Å⁻¹); focusing: $\max(R_{\rm AV}, R_{\rm D1})$ in the optic's bracket, reduced by $0.4247^2/(3\pi)$: a fifth of the variance on KWS-3, σ up to 7 % smaller |
 | Focusing σ as variances: the source's image $r_1^2/4$, the wavelength $Q^2\Delta\lambda^2/6$ (as without focusing), the lenses' blur $\frac23\Delta\lambda^2r_2^2C^2/D^4$ and their gravity $\frac43A^2\lambda^4C^4\Delta\lambda^2/D^2$ (not with a mirror); ASCII.1D's lenses the same | $0.4247^2\,k^2r_1^2$ (the radius as a FWHM), $0.4247^2Q^2\Delta\lambda^2/3$, $0.4247^2\cdot\frac83 k^2\Delta\lambda^2r_2^2C^2/D^4$: KWS-3 σ 10–40 % below the simulation, the most at large Q |
 | ASCII.1D: "Focused?" (it was "Lenses?") as DAN's focusing, $2f$ = the collimation distance ("Colimation = 2f:"), the sample at the detector distance; the optic lenses / mirror beside it; `setResolutionFocusing(on, optic)`; a format file keeps focusing, the optic and the units of Q and λ | lenses only, with a focus field of their own and the source seen over $C$; the units were not saved |
+| Gravity without focusing: the fall through the two apertures, $A\lambda^2(C+D)D$, spread by the wavelength (Monte Carlo: within 1–3 % at 40 m / 20 Å and 20 m / 10 Å) | left out: at 40 m / 20 Å σ was half the simulated one |
+| Gravity in the Qx-Qy files (pinhole and focusing lenses): its vertical variance to σQ(para) by sin² of the pixel's azimuth, to σQ(perp) by cos² (`gravityVariance()`) | half of it in both, in every direction |
 | Rectangular apertures by their variance, $r^2 = (x^2+y^2)/6$ (also ASCII.1D) | circles of the same area, $r^2 = xy/\pi$: 4.5 % less variance for a square |
 | "qxqy-resolution": a 9th column, SasView's mask (1: masked), named in the `Data columns` line | with "ignore mask" the masked pixels counted in SasView (it ignores the 8th column, the shadow factor) |
 | Focusing: σQ(perp) = σ without the wavelength term of the focusing model | σQ(perp) was the (non-focusing) wavelength term itself: 1.1·10⁻³ > σQ(para) 7.1·10⁻⁴ (KWS-3, 1.2 m) |
 
 ## Open points
 
-| # | Point | Effect |
-|---|---|---|
-| 1 | Gravity of the lenses enters radially averaged (half its vertical variance); σQ(para) and σQ(perp) of the Qx-Qy files take it so in every direction | the vertical spread belongs to σQ(para) on the vertical axis and to σQ(perp) on the horizontal |
+None at the moment.
 
 ## References
 
@@ -322,7 +331,9 @@ resolution option (an older `{Reso-Lens-Yes-No} Yes` read as focused lenses).
   [doi:10.1107/S0021889890003946](https://doi.org/10.1107/S0021889890003946) — the contributions W (wavelength), C1
   (collimation), D1 (detector resolution) and AV (averaging) of the pinhole σ.
 - D. F. R. Mildner, J. M. Carpenter, *Optimization of the experimental resolution for small-angle scattering*,
-  J. Appl. Cryst. **17** (1984) — the collimation term (pages and DOI not confirmed: the sources disagree).
+  J. Appl. Cryst. **17**, 249–256 (1984),
+  [doi:10.1107/S0021889884011468](https://doi.org/10.1107/S0021889884011468) — the collimation term, the variances
+  of the resolution.
 - D. F. R. Mildner, *Resolution of small-angle neutron scattering with a reflective focusing optic*, J. Appl. Cryst.
   **47** (2014), [NIST](https://tsapps.nist.gov/publication/get_pdf.cfm?pub_id=915797) — the resolution of a
   focusing mirror (audit point 4).
