@@ -239,10 +239,10 @@ public slots:
 
 	//! \name Event Handlers
 	//@{
-	void dropEvent(QDropEvent*);
-	void dragEnterEvent(QDragEnterEvent*);
-	bool eventFilter(QObject *object, QEvent *e);
-	void resizeEvent (QResizeEvent *);
+    void dropEvent(QDropEvent *) override;
+    void dragEnterEvent(QDragEnterEvent *) override;
+    bool eventFilter(QObject *object, QEvent *e) override;
+    void resizeEvent(QResizeEvent *) override;
 	void scaleFonts(double factor);
 	void setIgnoreFonts(bool ok){ignoreFonts = ok;};
 	//@}
@@ -376,19 +376,19 @@ public slots:
     Qwt3D::COORDSTYLE coordStyle();
 
     void print() override;
-	void print(QPrinter *printer);
+    void print(QPrinter *printer) override;
 	void copyImage();
 	void exportImage(QTextDocument *document, int quality, bool transparent,
 						int dpi, const QSizeF& customSize, int unit, double fontsFactor);
 	QPixmap pixmap(int dpi = 0, const QSizeF& customSize = QSizeF(), int unit = FrameWidget::Pixel, double fontsFactor = 1.0);
 	void exportImage(const QString& fileName, int quality = 100, bool transparent = false, int dpi = 0,
 		const QSizeF& customSize = QSizeF(), int unit = FrameWidget::Pixel, double fontsFactor = 1.0, int compression = 0);
-    void exportPDF(const QString& fileName);
+    void exportPDF(const QString &fileName) override;
     void exportVector(const QString& fileName, int textExportMode = 0, int sortMode = 1,
 		const QSizeF& customSize = QSizeF(), int unit = FrameWidget::Pixel, double fontsFactor = 1.0);
     void exportToFile(const QString& fileName);
 
-	void save(const QString& fn, const QString& geometry, bool = false);
+    void save(const QString &fn, const QString &geometry, bool = false) override;
 
 	void zoomChanged(double);
 	void rotationChanged(double, double, double);
