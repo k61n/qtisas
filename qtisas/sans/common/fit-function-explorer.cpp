@@ -3,6 +3,7 @@ Project: QtiSAS
 License: GNU GPL Version 3 (see LICENSE)
 Copyright (C) by the authors:
     2025 Vitaliy Pipich <v.pipich@gmail.com>
+    2026 Konstantin Kholostov <k.kholostov@fz-juelich.de>
 Description: Common functions for Fit.Function Explorer: compile/fittable
  ******************************************************************************/
 
@@ -77,7 +78,7 @@ QString FunctionsExplorer::filterShared()
     QString filter;
 #if defined(Q_OS_WIN) // +++ WIN
     filter = "*.dll";
-#elif defined(Q_OS_MAC) // +++  MAC
+#elif defined(Q_OS_MACOS) // +++  MAC
     filter = "*.dylib";
 #else                   // +++ UNIX
     filter = "*.so";

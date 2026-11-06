@@ -252,7 +252,7 @@ void fittable18::openSharedLibraryGeneral(QString file)
 
     QString suffix = QString::number(QDateTime::currentMSecsSinceEpoch());
     QString base = QFileInfo(pluginName).absolutePath() + "/" + QFileInfo(pluginName).completeBaseName();
-#if defined(Q_OS_MAC)
+#if defined(Q_OS_MACOS)
     libTempName = base + "." + suffix + ".dylib";
 #elif defined(Q_OS_WIN)
     libTempName = base + "." + suffix + ".dll";

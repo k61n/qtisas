@@ -48,7 +48,7 @@ TableDialog::TableDialog(Table *t, QWidget* parent, Qt::WindowFlags fl )
 	buttonNext = new QPushButton("&>>");
 	buttonNext->setAutoDefault(false);
 
-#ifndef Q_OS_MAC
+#ifndef Q_OS_MACOS
 	buttonPrev->setMaximumWidth(40);
 	buttonNext->setMaximumWidth(40);
 #endif

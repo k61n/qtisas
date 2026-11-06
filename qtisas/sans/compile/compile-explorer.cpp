@@ -636,7 +636,7 @@ QString compile18::makeCompileScript()
     QString pathGSL = "";
 #if defined(Q_OS_WIN)
     pathGSL = qApp->applicationDirPath();
-#elif defined(Q_OS_MAC)
+#elif defined(Q_OS_MACOS)
     QDir dd;
     dd.setPath(qApp->applicationDirPath());
     dd.cdUp();
@@ -656,7 +656,7 @@ QString compile18::makeCompileScript()
     script += "Set-Location $PATHFIF\n";
     script += "$GSL = " + QString("\"`\"") + pathGSL + QString("`\"\"") + "\n";
     script += "$vcvars = " + QString("\"`\"") + batFileMSVC + QString("`\"\"") + "\n";
-#elif defined(Q_OS_MAC)
+#elif defined(Q_OS_MACOS)
     script += "cd \"" + pathFIF + "\"\n";
     script += "GSL=" + QString("\"") + pathGSL + "\"" + "\n";
     script += "export LIBRARY_PATH=$GSL/Frameworks/:$LIBRARY_PATH\n";
@@ -669,7 +669,7 @@ QString compile18::makeCompileScript()
     if (checkBoxIncludePython->isChecked())
     {
 
-#if defined(Q_OS_WIN) || defined(Q_OS_MAC)
+#if defined(Q_OS_WIN) || defined(Q_OS_MACOS)
 
         QString pyInclude = app()->scriptCaller("__import__('sysconfig').get_path('include')").toString();
 
@@ -691,7 +691,7 @@ QString compile18::makeCompileScript()
         compileFlags += " /I`\"$PYTHON_INCLUDE_PATH`\"";
         linkFlags += " /LIBPATH:`\"$PYTHON_LIBS_PATH`\" $PYTHON_LIB";
 
-#elif defined(Q_OS_MAC)
+#elif defined(Q_OS_MACOS)
 
         const QString pyLibDir = QFileInfo(QFileInfo(pyInclude).dir().path()).dir().filePath("lib");
 
@@ -743,7 +743,7 @@ QString compile18::makeCompileScript()
         script += "gfortran -c " + fortranCompileString + " -static-libgfortran\n";
         fortranText = " " + fortranOstring;
 
-#elif defined(Q_OS_MAC)
+#elif defined(Q_OS_MACOS)
 
 #if defined(Q_PROCESSOR_ARM_64)
         script += "export gfortranSTR=/opt/homebrew/bin/gfortran" + QString("\n");
@@ -1252,7 +1252,7 @@ QString compile18::saveAsCPP1d(const QString &fn)
 
 #if defined(_WIN64) || defined(_WIN32)
     text += "WINDOWS";
-#elif defined(Q_OS_MAC)
+#elif defined(Q_OS_MACOS)
     text += "MAC";
 #else
     text += "LINUX";
@@ -1647,7 +1647,7 @@ bool compile18::buildSharedLibrary(bool compileAllYN)
 
 #ifdef Q_OS_WIN
     dir.remove(funcName + ".dll" + ext);
-#elif defined(Q_OS_MAC)
+#elif defined(Q_OS_MACOS)
     dir.remove(funcName + ".dylib" + ext);
 #else
     dir.remove(funcName + ".so" + ext);
@@ -1669,7 +1669,7 @@ bool compile18::buildSharedLibrary(bool compileAllYN)
 #ifdef Q_OS_WIN
     procc->start("powershell.exe",
                  QStringList() << "-ExecutionPolicy" << "Bypass" << "-File" << QDir::toNativeSeparators(script));
-#elif defined(Q_OS_MAC)
+#elif defined(Q_OS_MACOS)
     procc->start("/bin/zsh", QStringList() << "-c" << script);
 #else
     procc->start("/bin/bash", QStringList() << "-c" << script);
@@ -1678,7 +1678,7 @@ bool compile18::buildSharedLibrary(bool compileAllYN)
     procc->waitForFinished();
 
     QString soName = fitPath->text() + "/" + funcName + ".";
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
     soName += "dylib";
 #elif defined(Q_OS_WIN)
     soName += "dll";
@@ -1730,7 +1730,7 @@ void compile18::compileTest()
     dir.remove(funcName + ".o");
 #ifdef Q_OS_WIN
     dir.remove(funcName + ".dll" + ext);
-#elif defined(Q_OS_MAC)
+#elif defined(Q_OS_MACOS)
     dir.remove(funcName + ".dylib" + ext);
 #else
     dir.remove(funcName + ".so" + ext);
@@ -1744,7 +1744,7 @@ void compile18::compileTest()
 #ifdef Q_OS_WIN
     procc->start("powershell.exe",
                  QStringList() << "-ExecutionPolicy" << "Bypass" << "-File" << QDir::toNativeSeparators(script));
-#elif defined(Q_OS_MAC)
+#elif defined(Q_OS_MACOS)
     procc->start("/bin/zsh", QStringList() << "-c" << script);
 #else
     procc->start("/bin/bash", QStringList() << "-c" << script);
@@ -1758,7 +1758,7 @@ void compile18::compileTest()
     // Construct output filename
     QString soName = fitPath->text() + funcName + ".";
 
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
     soName += "dylib";
 #elif defined(Q_OS_WIN)
     soName += "dll";

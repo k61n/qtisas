@@ -7718,7 +7718,7 @@ void ApplicationWindow::readSettings()
         QStringList styles = QStyleFactory::keys();
         styles.sort();
 
-#if defined(Q_OS_MAC)
+#if defined(Q_OS_MACOS)
         if (styles.indexOf("macOS") >= 0)
             appStyle = styles[styles.indexOf("macOS")];
 #elif defined(Q_OS_WIN)
@@ -13521,7 +13521,7 @@ void ApplicationWindow::closeEvent( QCloseEvent* ce )
 	}
 }
 
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
 void ApplicationWindow::hideEvent(QHideEvent *event)
 {
     if (event->spontaneous())
@@ -21121,7 +21121,7 @@ ApplicationWindow::~ApplicationWindow()
 	QApplication::clipboard()->clear(QClipboard::Clipboard);
 	QApplication::restoreOverrideCursor();
 
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
 	((QtiPlotApplication *)QCoreApplication::instance ())->remove(this);
 #endif
 }

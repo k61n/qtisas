@@ -517,7 +517,7 @@ void compile18::defaultOptions()
     QString compileFlag;
     QString linkFlag;
 
-#if defined(Q_OS_MAC) // MAC
+#if defined(Q_OS_MACOS) // MAC
 
     QString arch = "x86_64";
 #if defined(Q_PROCESSOR_ARM_64)
