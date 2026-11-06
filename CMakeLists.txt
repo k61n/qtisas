@@ -119,6 +119,18 @@ if (MSVC)
     add_compile_options($<$<CXX_COMPILER_ID:MSVC>:/MP>)
 endif ()
 
+if (Qt${V}_VERSION VERSION_GREATER_EQUAL 6.12)
+    if (qwt_VERSION VERSION_LESS 6.4)
+        if (MSVC)
+            add_compile_options(/wd4995)
+        else()
+            add_compile_options(-Wno-deprecated-pragma)
+        endif()
+    else ()
+        message(WARNING "In qwt v6.4 use of macro Q_ENUMS should be dropped in favor of Q_ENUM, remove the warning silencing")
+    endif ()
+endif ()
+
 ########################################################################################################################
 # Linking
 #

@@ -19,7 +19,7 @@ else ()
     endif ()
 endif ()
 
-message(STATUS "Found Qt: ${Qt${V}Core_VERSION}")
+message(STATUS "Found Qt: ${Qt${V}_VERSION}")
 foreach (module IN LISTS QT_MODULES)
     get_target_property(module_path Qt${V}::${module} LOCATION)
     message(STATUS "Found ${module}: ${module_path}")
