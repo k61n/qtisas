@@ -710,7 +710,7 @@ void CustomActionDialog::downloadActions(const QString &repoUrl)
 {
     auto app = (ApplicationWindow *)parent();
     RepositorySynchronization::updateGitInteractive(this, app->customActionsDirPath, repoUrl,
-                                                    {"py", "qca", "qcm", "png", "svg", "mjs"});
+                                                    {"py", "qca", "qcm", "png", "svg", "mjs", "sh"}, false, false);
     app->removeAllCustomActions();
     app->loadCustomActions();
     updateDisplayList();

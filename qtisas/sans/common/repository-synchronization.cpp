@@ -17,6 +17,7 @@ Description: a repository synchronization with a local folder
 #include <QGroupBox>
 #include <QHash>
 #include <QHBoxLayout>
+#include <QLabel>
 #include <QListWidget>
 #include <QMessageBox>
 #include <QNetworkAccessManager>
@@ -545,7 +546,8 @@ void RepositorySynchronization::applySyncSelective(const QString &tmpRepoDir, co
 }
 // +++ interactive sync: download → show New/Modified selection dialog → apply
 void RepositorySynchronization::updateGitInteractive(QWidget *parent, const QString &fullPath, const QString &repoUrl,
-                                                     const QStringList &extensions, bool silent)
+                                                     const QStringList &extensions, bool silent,
+                                                     bool selectNewByDefault)
 {
     const QString tmpCleanup = QDir::cleanPath(fullPath) + "/.tmp";
 
@@ -684,7 +686,14 @@ void RepositorySynchronization::updateGitInteractive(QWidget *parent, const QStr
     // Step 3: build selection dialog
     QDialog dlg(parent);
     dlg.setWindowTitle("git :: get — Select Files to Sync");
+    dlg.resize(900, 600);
     auto *dlgLay = new QVBoxLayout(&dlg);
+    dlgLay->addWidget(
+        new QLabel(QString("Review changes before applying: %1 new, %2 modified, %3 empty file(s) to remove.")
+                       .arg(toNew.size())
+                       .arg(toUpdate.size())
+                       .arg(toRemove.size()),
+                   &dlg));
 
     // Diff viewer — shared, always visible, below the file sections
     auto *diffView = new QTextEdit(&dlg);
@@ -773,7 +782,7 @@ void RepositorySynchronization::updateGitInteractive(QWidget *parent, const QStr
     };
 
     auto *grpModified = addSection("Modified", toUpdate, lwUpdate, false, modifiedHtml);
-    auto *grpNew = addSection("New", toNew, lwNew, true, newHtml);
+    auto *grpNew = addSection("New", toNew, lwNew, selectNewByDefault, newHtml);
     auto *grpRemove = addSection("Empty files", toRemove, lwRemove, false, removeHtml);
 
     // clicking in one list clears the others

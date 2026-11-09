@@ -34,8 +34,8 @@ void categorizeSyncPlan(const QString &tmpRepoDir, const QString &destFolder, co
 void applySyncSelective(const QString &tmpRepoDir, const QString &destFolder, const QStringList &extensions,
                         const QSet<QString> &selectedNames);
 
-// Interactive two-phase sync: download → show New/Modified selection dialog → apply
-// New files are checked by default; Modified files are unchecked by default.
+// Interactive two-phase sync: download → show New/Modified selection dialog → apply.
+// Custom actions can require explicit selection of new files via selectNewByDefault=false.
 void updateGitInteractive(QWidget *parent, const QString &fullPath, const QString &repoUrl, const QStringList &extensions,
-                          bool silent = false);
+                          bool silent = false, bool selectNewByDefault = true);
 }
