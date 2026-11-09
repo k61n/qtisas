@@ -1557,6 +1557,7 @@ void Table::addColumns(int c)
     // Same freeze as setNumRows()/addCol() -- one guard around all c insertions instead of c separate ones.
     auto *hh = d_table->horizontalHeader();
     const auto oldMode = hh->sectionResizeMode(0);
+    const bool oldHeaderSignals = hh->blockSignals(true);
     hh->setUpdatesEnabled(false);
     hh->setSectionResizeMode(QHeaderView::Fixed);
     d_table->setUpdatesEnabled(false);
@@ -1578,7 +1579,9 @@ void Table::addColumns(int c)
     d_table->blockSignals(false);
     d_table->setUpdatesEnabled(true);
     hh->setSectionResizeMode(oldMode);
+    hh->blockSignals(oldHeaderSignals);
     hh->setUpdatesEnabled(true);
+    setHeaderColType();
 }
 
 void Table::clearCol()
@@ -2857,7 +2860,8 @@ int Table::indexOf(const QString &label)
 void Table::setHeaderColType()
 {
 	int xcols = 0;
-	for (int j = 0; j < d_table->columnCount(); j++){
+    for (int j = 0; j < d_table->columnCount() && j < col_plot_type.size(); j++)
+    {
 		if (col_plot_type[j] == X)
 			xcols++;
 	}
