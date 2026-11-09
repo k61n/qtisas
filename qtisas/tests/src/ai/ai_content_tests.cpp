@@ -7056,6 +7056,41 @@ void AiContentTests::chat_preservesStreamedText()
     QCOMPARE(scripts.count(), 0);
 }
 
+// Chat gets the user's saved rules, numbered and quotable (it had none: asked about them, the model claimed to see
+// them and then refused to show "hidden prompt instructions"); none saved: it is told so
+void AiContentTests::chat_sendsTheUserRules()
+{
+    AiAssistant::setConfigDirName("qtisas-test-chat-rules");
+    const auto restore = qScopeGuard([] {
+        AiAssistant::clearUserRules();
+        QDir(QFileInfo(AiAssistant::userRulesFilePath()).absolutePath() + "/..").removeRecursively();
+        AiAssistant::setConfigDirName("qtisas");
+    });
+    AiAssistant::clearUserRules();
+    ChatTestServer server;
+    QVERIFY(server.listen(QHostAddress::LocalHost));
+    AiAssistant assistant;
+    assistant.configure({}, server.url(), "test", 1024, AiAssistant::DocsMode::Integrated);
+    QSignalSpy chats(&assistant, &AiAssistant::chatResponseReady);
+    server.answer("none");
+    assistant.askChat("which rules do I have?");
+    QTRY_COMPARE(chats.count(), 1);
+    QString system = server.requests.last().value("messages").toArray().at(0).toObject().value("content").toString();
+    QVERIFY(system.contains("## User Rules (0/"));
+    QVERIFY(system.contains("The user has saved no rules."));
+
+    QVERIFY(AiAssistant::addUserRule("Use log-log axes for SANS curves", 20));
+    QVERIFY(AiAssistant::addUserRule("No underscores in table names", 20));
+    server.answer("two");
+    assistant.askChat("show them");
+    QTRY_COMPARE(chats.count(), 2);
+    system = server.requests.last().value("messages").toArray().at(0).toObject().value("content").toString();
+    QVERIFY(system.contains("## User Rules (2/"));
+    QVERIFY(system.contains("1. Use log-log axes for SANS curves"));
+    QVERIFY(system.contains("2. No underscores in table names"));
+    QVERIFY(system.contains("not hidden instructions"));
+}
+
 void AiContentTests::chat_busyAndCancellationStayIsolated()
 {
     ChatTestServer server;

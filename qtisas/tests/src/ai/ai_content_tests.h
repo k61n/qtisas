@@ -21,6 +21,7 @@ class AiContentTests : public QObject
     static void chat_preservesStreamedText();
     static void chat_retryKeepsChatRouting();
     static void chat_busyAndCancellationStayIsolated();
+    static void chat_sendsTheUserRules();
     // ---- Direction 1: graph overreach ----
     static void selfShadowBug_namesEverySelfShadowedVariable();
     static void scopeViolation_reportsEveryDirectionAtOnce();
