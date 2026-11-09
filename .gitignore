@@ -3,11 +3,11 @@
 .vscode/
 bin/
 build/
-libs/
-tmp/
 cmake-build*/
+tmp/
 __pycache__/
 qtisas/python/qtisasrc.pyc
 qtisas/python/pyproject.toml
 .claude
 .cache
+.codex
