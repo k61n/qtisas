@@ -21932,22 +21932,50 @@ void ApplicationWindow::removeCustomAction(QAction *action)
 
 static QString normalizedCustomActionPath(const QString &path);
 static QString managedCustomActionPath(const QString &base, const QString &subfolder, const QString &entry);
+static QString managedCustomActionResourcePath(const QString &base, const QString &entry);
 
-void ApplicationWindow::removeCustomActionFiles(QAction *action) const
+QString ApplicationWindow::customActionDescriptorPath(const QAction *action) const
 {
     if (!action)
-        return;
+        return {};
 
-    const QString descriptorPath = normalizedCustomActionPath(customActionsDirPath + "/" + action->text() + ".qca");
-    const QString scriptPath = managedCustomActionPath(customActionsDirPath, "scripts", action->data().toString());
-    const QString iconPath = managedCustomActionPath(customActionsDirPath, "icons", action->iconText());
-    QFile::remove(descriptorPath);
+    QString path = action->property("customActionDescriptor").toString();
+    if (path.isEmpty())
+        path = customActionsDirPath + "/" + action->text() + ".qca";
+    path = normalizedCustomActionPath(path);
+    const QFileInfo info(path);
+    if (info.suffix().compare("qca", Qt::CaseInsensitive) != 0 ||
+        info.absolutePath() != normalizedCustomActionPath(customActionsDirPath))
+        return {};
+    return path;
+}
+
+bool ApplicationWindow::removeCustomActionFiles(QAction *action) const
+{
+    if (!action)
+        return false;
+
+    const QString descriptorPath = customActionDescriptorPath(action);
+    if (descriptorPath.isEmpty())
+        return false;
+    QStringList paths;
+    paths << managedCustomActionPath(customActionsDirPath, "scripts", action->data().toString());
+    paths << managedCustomActionPath(customActionsDirPath, "icons", action->iconText());
+    QStringList resources = action->property("customActionResources").toStringList();
+    {
+        XMLParser descriptor(descriptorPath);
+        if (descriptor.errorString().isEmpty() && descriptor.hasElement("action"))
+            for (const QString &resource : descriptor.readElement("resource"))
+                resources << resource;
+    }
+    for (const QString &resource : resources)
+        paths << managedCustomActionResourcePath(customActionsDirPath, resource);
+    paths.removeDuplicates();
+    if (QFile::exists(descriptorPath) && !QFile::remove(descriptorPath))
+        return false;
 
     const QDir folder(customActionsDirPath);
-    const auto isReferencedByAnotherAction = [&](const QString &path, const QString &element) {
-        if (path.isEmpty())
-            return true;
-
+    const auto isReferencedByAnotherAction = [&](const QString &path) {
         for (const QString &name : folder.entryList({"*.qca"}, QDir::Files | QDir::NoSymLinks, QDir::Name))
         {
             const QString candidate = normalizedCustomActionPath(folder.filePath(name));
@@ -21955,19 +21983,25 @@ void ApplicationWindow::removeCustomActionFiles(QAction *action) const
                 continue;
 
             XMLParser parser(candidate);
-            if (!parser.errorString().isEmpty() || !parser.hasElement("action") || !parser.hasElement(element))
+            if (!parser.errorString().isEmpty() || !parser.hasElement("action"))
                 continue;
-            const QString subfolder = element == "file" ? "scripts" : "icons";
-            if (managedCustomActionPath(customActionsDirPath, subfolder, parser.readElement(element).last()) == path)
-                return true;
+            for (const QString &entry : parser.readElement("file"))
+                if (managedCustomActionPath(customActionsDirPath, "scripts", entry) == path)
+                    return true;
+            for (const QString &entry : parser.readElement("icon"))
+                if (managedCustomActionPath(customActionsDirPath, "icons", entry) == path)
+                    return true;
+            for (const QString &entry : parser.readElement("resource"))
+                if (managedCustomActionResourcePath(customActionsDirPath, entry) == path)
+                    return true;
         }
         return false;
     };
 
-    if (!scriptPath.isEmpty() && !isReferencedByAnotherAction(scriptPath, "file"))
-        QFile::remove(scriptPath);
-    if (!iconPath.isEmpty() && !isReferencedByAnotherAction(iconPath, "icon"))
-        QFile::remove(iconPath);
+    for (const QString &path : paths)
+        if (!path.isEmpty() && !isReferencedByAnotherAction(path))
+            QFile::remove(path);
+    return true;
 }
 
 // Write (or overwrite) the .qca descriptor from the action's current state.
@@ -21975,9 +22009,17 @@ void ApplicationWindow::removeCustomActionFiles(QAction *action) const
 static void writeCustomActionQca(const QString &base, QAction *a, const QString &scriptRelPath,
                                  const QString &iconEntry)
 {
-    QFile f(base + "/" + a->text() + ".qca");
+    QString descriptorPath = a->property("customActionDescriptor").toString();
+    if (descriptorPath.isEmpty())
+        descriptorPath = base + "/" + a->text() + ".qca";
+    descriptorPath = normalizedCustomActionPath(descriptorPath);
+    if (QFileInfo(descriptorPath).absolutePath() != normalizedCustomActionPath(base) ||
+        QFileInfo(descriptorPath).suffix().compare("qca", Qt::CaseInsensitive) != 0)
+        return;
+    QFile f(descriptorPath);
     if (!f.open(QIODevice::WriteOnly))
         return;
+    a->setProperty("customActionDescriptor", descriptorPath);
     QTextStream out(&f);
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     out.setCodec("UTF-8");
@@ -21987,8 +22029,10 @@ static void writeCustomActionQca(const QString &base, QAction *a, const QString 
         << "<action version=\"1.0\">\n"
         << "<text>" + a->text() + "</text>\n"
         << "<file>" + scriptRelPath + "</file>\n"
-        << "<icon>" + iconEntry + "</icon>\n"
-        << "<tooltip>" + a->toolTip() + "</tooltip>\n"
+        << "<icon>" + iconEntry + "</icon>\n";
+    for (const QString &resource : a->property("customActionResources").toStringList())
+        out << "<resource>" << resource.toHtmlEscaped() << "</resource>\n";
+    out << "<tooltip>" + a->toolTip() + "</tooltip>\n"
         << "<shortcut>" + a->shortcut().toString() + "</shortcut>\n"
         << "<location>" + a->statusTip() + "</location>\n"
         << "</action>\n";
@@ -22021,6 +22065,12 @@ static QString managedCustomActionPath(const QString &base, const QString &subfo
     return path;
 }
 
+static QString managedCustomActionResourcePath(const QString &base, const QString &entry)
+{
+    const QString script = managedCustomActionPath(base, "scripts", entry);
+    return script.isEmpty() ? managedCustomActionPath(base, "icons", entry) : script;
+}
+
 bool ApplicationWindow::addCustomAction(const QString &name, const QString &scriptName, const QString &menuName,
                                         const QString &iconName, const QString &shortcut, const QString &tooltip)
 {
@@ -22035,6 +22085,8 @@ bool ApplicationWindow::addCustomAction(const QString &name, const QString &scri
 
     auto *action = new QAction(this);
     action->setText(name);
+    action->setProperty("customActionDescriptor",
+                        normalizedCustomActionPath(customActionsDirPath + "/" + name + ".qca"));
     action->setData(scriptPath);
     action->setToolTip(tooltip.isEmpty() ? name : tooltip);
     if (!shortcut.isEmpty())
@@ -22172,7 +22224,6 @@ bool ApplicationWindow::updateCustomActionName(const QString &name, const QStrin
     {
         if (a->text() != name)
             continue;
-        QFile::remove(customActionsDirPath + "/" + name + ".qca");
         a->setText(newName);
         const QString relScript = QDir(customActionsDirPath).relativeFilePath(a->data().toString());
         writeCustomActionQca(customActionsDirPath, a, relScript, actionIconEntry(customActionsDirPath, a));
@@ -22187,7 +22238,8 @@ bool ApplicationWindow::removeCustomActionByName(const QString &name)
         std::find_if(d_user_actions.begin(), d_user_actions.end(), [&](QAction *a) { return a->text() == name; });
     if (it == d_user_actions.end())
         return false;
-    removeCustomActionFiles(*it);
+    if (!removeCustomActionFiles(*it))
+        return false;
     removeCustomAction(*it);
     return true;
 }
@@ -22268,6 +22320,7 @@ void ApplicationWindow::loadCustomActions()
             parser.hasElement("shortcut") && !parser.readElement("location").isEmpty())
         {
             action->setText(parser.readElement("text").last());
+            action->setProperty("customActionDescriptor", normalizedCustomActionPath(fileName));
 
             QString file = parser.readElement("file").last();
             file = QFile(file).exists() ? file : customActionsDirPath + '/' + file;
@@ -22278,6 +22331,10 @@ void ApplicationWindow::loadCustomActions()
             action->setIcon(QIcon(icon));
 
             action->setIconText(parser.readElement("icon").last());
+            QStringList resources;
+            for (const QString &resource : parser.readElement("resource"))
+                resources << resource;
+            action->setProperty("customActionResources", resources);
             action->setToolTip(parser.readElement("tooltip").last());
             if (!parser.readElement("shortcut").isEmpty())
                 action->setShortcut(parser.readElement("shortcut").last());

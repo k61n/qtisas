@@ -378,7 +378,12 @@ void CustomActionDialog::removeAction()
         return;
 
 	ApplicationWindow *app = (ApplicationWindow *)parentWidget();
-    app->removeCustomActionFiles(action);
+    if (!app->removeCustomActionFiles(action))
+    {
+        QMessageBox::warning(this, tr("QtiSAS") + " - " + tr("Remove Action"),
+                             tr("Could not remove the action descriptor file."));
+        return;
+    }
 	app->removeCustomAction(action);
 
 	itemsList->takeItem(row);
@@ -409,6 +414,8 @@ void CustomActionDialog::saveCurrentAction()
 		//relocate action: create a new one and delete the old
 		ApplicationWindow *app = (ApplicationWindow *)parent();
 		QAction *newAction = new QAction(app);
+        newAction->setProperty("customActionResources", action->property("customActionResources"));
+        newAction->setProperty("customActionDescriptor", action->property("customActionDescriptor"));
 		customizeAction(newAction);
 		if (toolBarBtn->isChecked()){
             foreach (QToolBar *t, d_app_toolbars){
@@ -444,7 +451,9 @@ void CustomActionDialog::saveAction(QAction *action)
         return;
 
     ApplicationWindow *app = (ApplicationWindow *)parent();
-    QString fileName = app->customActionsDirPath + "/" + action->text() + ".qca";
+    QString fileName = app->customActionDescriptorPath(action);
+    if (fileName.isEmpty())
+        return;
     QFile f(fileName);
 	if (!f.open( QIODevice::WriteOnly)){
 		QApplication::restoreOverrideCursor();
@@ -452,6 +461,7 @@ void CustomActionDialog::saveAction(QAction *action)
 				tr("Could not write to file: <br><h4> %1 </h4><p>Please verify that you have the right to write to this location!").arg(fileName));
 		return;
 	}
+    action->setProperty("customActionDescriptor", fileName);
 
     QTextStream out( &f );
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
@@ -467,6 +477,8 @@ void CustomActionDialog::saveAction(QAction *action)
     if (QFile(iconFile).exists())
         iconFile = QDir(app->customActionsDirPath).relativeFilePath(iconFile);
     out << "<icon>" + iconFile + "</icon>\n";
+    for (const QString &resource : action->property("customActionResources").toStringList())
+        out << "<resource>" << resource.toHtmlEscaped() << "</resource>\n";
     out << "<tooltip>" + action->toolTip() + "</tooltip>\n";
     out << "<shortcut>" + action->shortcut().toString() + "</shortcut>\n";
 
@@ -629,7 +641,12 @@ void CustomActionDialog::removeMenu()
 		QList<QAction *> actionsList = app->customActionsList();
 		foreach (QAction *a, actionsList){
 			if (a->statusTip() == menu->objectName()){
-                app->removeCustomActionFiles(a);
+                if (!app->removeCustomActionFiles(a))
+                {
+                    QMessageBox::warning(this, tr("QtiSAS") + " - " + tr("Remove Menu"),
+                                         tr("Could not remove the descriptor file for action '%1'.").arg(a->text()));
+                    return;
+                }
 				QList<QListWidgetItem *> lst = itemsList->findItems(a->text(), Qt::MatchExactly | Qt::MatchCaseSensitive);
 				foreach(QListWidgetItem * item, lst){
 					itemsList->takeItem(itemsList->row(item));

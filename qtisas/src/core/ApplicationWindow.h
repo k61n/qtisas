@@ -187,7 +187,8 @@ public:
     void reloadCustomActions();
     void removeAllCustomActions();
     void removeCustomAction(QAction *);
-    void removeCustomActionFiles(QAction *) const;
+    bool removeCustomActionFiles(QAction *) const;
+    QString customActionDescriptorPath(const QAction *) const;
 	void addCustomAction(QAction *, const QString& parentName, int index = -1);
     QList<QAction *> customActionsList(){return d_user_actions;};
 	QList<QMenu *> customizableMenusList();
