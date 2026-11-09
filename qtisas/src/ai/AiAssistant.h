@@ -1262,6 +1262,8 @@ class AiAssistant : public QObject
     // private members (not free functions) since each touches instance state (m_cachedDocs,
     // m_history, m_lastCallMs, ...), not just its own parameters.
     QString buildChatSystemPrompt(const QString &instructions, const QStringList &docTopics);
+    // the user's saved rules as a section of the chat prompt (numbered, quotable; "none saved" when empty)
+    QString chatUserRules() const;
     QString buildSystemPrompt(const QString &systemPrompt, bool includeDocs, const QStringList &docTopics,
                               bool expectsCode = true, const QString &userText = QString());
     qsizetype windowedHistoryStart(bool includeHistory) const;

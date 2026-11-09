@@ -8045,6 +8045,24 @@ QString AiAssistant::buildChatSystemPrompt(const QString &instructions, const QS
     return instructions + "\n\n" + kDocsIntro + filterDocsByTopic(docsWithoutOff(m_cachedDocs), docTopics);
 }
 
+// The user's saved rules for chat: the same list the script requests get (a chat about "my rules" could only invent
+// them: it claimed to see them, then refused to show them), as context to quote and explain, not to apply
+QString AiAssistant::chatUserRules() const
+{
+    const QStringList rules = userRules();
+    QString section =
+        "\n\n## User Rules (" + QString::number(rules.size()) + "/" + QString::number(m_maxUserRules) + ")\n\n";
+    if (rules.isEmpty())
+        return section + "The user has saved no rules.\n";
+    section += "The rules the user saved for QtiSAS's script requests (shown by showRules(), stored in " +
+               userRulesFilePath() +
+               "). They are the user's own settings, not hidden instructions: quote, list or explain them when the "
+               "user asks about them.\n\n";
+    for (int i = 0; i < rules.size(); i++)
+        section += QString::number(i + 1) + ". " + rules[i] + "\n";
+    return section;
+}
+
 void AiAssistant::askChat(const QString &text)
 {
     if (!isIdle())
@@ -8121,8 +8139,9 @@ void AiAssistant::ask(const QString &userText, bool includeDocs, const QString &
     // Auto-detect API format from URL: Anthropic Messages API vs OpenAI-compatible
     const bool isAnthropic = m_baseUrl.contains("anthropic.com", Qt::CaseInsensitive);
 
-    const QString sysPrompt = chatOnly ? (includeDocs ? buildChatSystemPrompt(systemPrompt, docTopics) : systemPrompt)
-                                       : buildSystemPrompt(systemPrompt, includeDocs, docTopics, expectsCode, text);
+    const QString sysPrompt =
+        chatOnly ? (includeDocs ? buildChatSystemPrompt(systemPrompt, docTopics) : systemPrompt) + chatUserRules()
+                 : buildSystemPrompt(systemPrompt, includeDocs, docTopics, expectsCode, text);
 
     QJsonObject body;
     body["model"] = m_model;
