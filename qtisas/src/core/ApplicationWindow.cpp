@@ -2172,6 +2172,7 @@ void ApplicationWindow::initMainMenu()
     gitgetMenu->setTitle(tr("Git-Get - Repositories"));
     gitgetMenu->addAction(openWebPageAction("Fitting Functions", gp + "/fitfunctions", gl));
     gitgetMenu->addAction(openWebPageAction("Python Actions", gp + "/python-actions", gl));
+    gitgetMenu->addAction(openWebPageAction("AI Presets", gp + "/ai", gl));
     help->addMenu(gitgetMenu);
 
     auto *gitgetFolderMenu = new QMenu(this);
@@ -2180,6 +2181,7 @@ void ApplicationWindow::initMainMenu()
         openWebPageAction("Fitting Functions", QUrl::fromLocalFile(sasPath + "FitFunctions/").toString(), fl));
     gitgetFolderMenu->addAction(
         openWebPageAction("Python Actions", QUrl::fromLocalFile(sasPath + "python-actions/").toString(), fl));
+    gitgetFolderMenu->addAction(openWebPageAction("AI Presets", QUrl::fromLocalFile(sasPath + "ai/").toString(), fl));
     help->addMenu(gitgetFolderMenu);
 
     help->addSeparator();
@@ -22747,13 +22749,14 @@ void ApplicationWindow::removeCustomMenu(const QString& title)
 
 void ApplicationWindow::reloadCustomMenus()
 {
-	foreach(QMenu *m, d_user_menus){
-        if (auto *parentMenu = qobject_cast<QMenu *>(parent()))
+    foreach (QMenu *m, d_user_menus)
+    {
+        if (auto *parentMenu = qobject_cast<QMenu *>(m->parent()))
         {
             if (!parentMenu->actions().contains(m->menuAction()))
                 parentMenu->addAction(m->menuAction());
         }
-        else if (auto *parentBar = qobject_cast<QMenuBar *>(parent()))
+        else if (auto *parentBar = qobject_cast<QMenuBar *>(m->parent()))
         {
             if (!parentBar->actions().contains(m->menuAction()))
                 parentBar->addAction(m->menuAction());
