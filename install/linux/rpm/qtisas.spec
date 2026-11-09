@@ -31,6 +31,7 @@ BuildRequires: PyQt-builder
 BuildRequires: qt5-qtbase-devel
 BuildRequires: qt5-qtsvg-devel
 BuildRequires: python3-qt5-devel
+BuildRequires: python3-tomli
 Requires:      python3-qt5
 Requires:      qt5-qtsvg
 %endif
