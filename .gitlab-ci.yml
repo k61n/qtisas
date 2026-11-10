@@ -355,9 +355,9 @@ sync:
   rules:
     - if: '$CI_COMMIT_BRANCH && $CI_PROJECT_ID == "1655"'
   image: alpine/git
+  variables:
+    GIT_DEPTH: "0"
+    GIT_TERMINAL_PROMPT: "0"
   script:
-    - git remote add mirror https://$GITHUB_TOKEN@github.com/k61n/qtisas.git
-    - git fetch mirror
-    - git push -f mirror HEAD:master
-    - git push -f mirror --delete $(git ls-remote --tags mirror | awk -F/ '{print $NF}')
-    - git push mirror --tags
+    - git remote add mirror "https://x-access-token:${GITHUB_TOKEN}@github.com/k61n/qtisas.git"
+    - git push --force --prune mirror HEAD:refs/heads/master 'refs/tags/*:refs/tags/*'
