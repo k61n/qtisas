@@ -8198,16 +8198,13 @@ void AiAssistant::ask(const QString &userText, bool includeDocs, const QString &
     }
     else
     {
-        // OpenAI-compatible: system is the first entry in the messages array. A BIGMODEL prompt becomes two system
-        // messages — the docs first, byte-identical every call, as the cacheable prefix; the per-call rules second.
-        if (const qsizetype cut = sysPrompt.indexOf(kStablePrefixEnd); cut >= 0)
-        {
-            messages.append(QJsonValue(QJsonObject{{"role", "system"}, {"content", sysPrompt.left(cut)}}));
-            messages.append(
-                QJsonValue(QJsonObject{{"role", "system"}, {"content", sysPrompt.mid(cut + kStablePrefixEnd.size())}}));
-        }
-        else
-            messages.append(QJsonValue(QJsonObject{{"role", "system"}, {"content", sysPrompt}}));
+        // OpenAI-compatible: system is the first entry in the messages array. A BIGMODEL prompt stays ONE system
+        // message — the docs first, byte-identical every call, as the cacheable prefix, then the per-call rules:
+        // chat templates such as Qwen's refuse a second system message ("System message must be at the beginning").
+        QString system = sysPrompt;
+        if (const qsizetype cut = system.indexOf(kStablePrefixEnd); cut >= 0)
+            system.replace(cut, kStablePrefixEnd.size(), "\n\n");
+        messages.append(QJsonValue(QJsonObject{{"role", "system"}, {"content", system}}));
         for (qsizetype i = start; i < history.size(); ++i)
         {
             messages.append(QJsonObject{{"role", "user"}, {"content", history[i].first}});
