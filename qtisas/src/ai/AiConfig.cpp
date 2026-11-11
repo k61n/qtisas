@@ -174,7 +174,7 @@ AiConfig::AiConfig(ApplicationWindow *app, QWidget *parent) : QWidget(parent), m
     connect(m_maxAutoContinue, QOverload<int>::of(&QSpinBox::valueChanged), app,
             [app](int v) { app->aiSettings.maxAutoContinue = v; });
 
-    // Split mode — on by default; see AiAssistant.h's splitModeActive doc comment
+    // Split mode — off by default; see AiAssistant.h's splitModeActive doc comment
     m_splitByDefault = new QCheckBox(tr("Split large requests into parts by default"));
     m_splitByDefault->setToolTip(
         tr("When off, split mode stays opt-in per-request via a leading \"SPLIT:\" marker.\n"
@@ -209,9 +209,9 @@ AiConfig::AiConfig(ApplicationWindow *app, QWidget *parent) : QWidget(parent), m
     // pre-execution mechanical checks still run either way.
     m_selfReviewEnabled = new QCheckBox(tr("Mandatory pre-execution self-review"));
     m_selfReviewEnabled->setToolTip(
-        tr("On (default): every candidate script is sent back once for a checklist/regression "
+        tr("On: every candidate script is sent back once for a checklist/regression "
            "review before it runs.\n"
-           "Off: skip that review round-trip entirely — a compilable candidate runs immediately."));
+           "Off (default): skip that review round-trip entirely — a compilable candidate runs immediately."));
     m_selfReviewEnabled->setChecked(app->aiSettings.selfReviewEnabled);
     lay->addWidget(m_selfReviewEnabled, 13, 0, 1, 2);
     connect(m_selfReviewEnabled, &QCheckBox::toggled, app, [app](bool on) { app->aiSettings.selfReviewEnabled = on; });

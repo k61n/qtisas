@@ -1364,7 +1364,7 @@ class AiAssistant : public QObject
     int m_maxAutoContinue = 4;
     int m_maxSplitParts = 8;
     bool m_splitMergeEnabled = true;
-    bool m_selfReviewEnabled = true;
+    bool m_selfReviewEnabled = false;
     bool m_bigModel = false;
     Reasoning m_reasoning = Reasoning::Default;
     bool m_exploreEnabled = true;

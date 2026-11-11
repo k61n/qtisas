@@ -24,8 +24,9 @@ struct AiSettings
     // When true, every ApplicationWindow::askAi() request is split-mode by default (see
     // AiAssistant.h's splitModeActive doc comment) — a leading "SPLIT:" marker is then redundant,
     // and a leading "NOSPLIT:" marker forces that one request to skip split mode instead. When
-    // false, split mode stays fully opt-in via "SPLIT:".
-    bool splitByDefault = true;
+    // false (default), split mode stays fully opt-in via "SPLIT:". Off since the benchmark Steps 3a/3b
+    // (2026-11-10/11, 7 models): no model scored better with splitting, at twice the calls.
+    bool splitByDefault = false;
 
     // Caps how many parts a single split-mode decomposition is allowed to produce.
     int maxSplitParts = 8;
@@ -36,15 +37,16 @@ struct AiSettings
     // this only affects whether a standalone reference script gets printed at the end.
     bool splitRequestMerge = true;
 
-    // When true (default), every candidate action script is sent back to the AI once for a
+    // When true, every candidate action script is sent back to the AI once for a
     // mandatory pre-execution self-review pass (checklist + the 9 mechanical regression backstops)
     // before it ever runs — see AiAssistant::maybeDispatchSelfReview()'s doc comment. When false,
     // that whole round-trip is skipped and a compilable candidate goes straight to
     // runActionScript() — trading the checklist/backstop safety net for one fewer HTTP round-trip
     // per script. detectKnownMistakes() and the other pre-execution mechanical checks in
     // runActionScript() itself are unaffected either way; only the SEPARATE review-and-correct pass
-    // is what this toggles.
-    bool selfReviewEnabled = true;
+    // is what this toggles. Off by default since the benchmark Steps 2b/3b/4b (2026-11-10/11, 7 models): the review
+    // sees no docs, "fixes" correct calls and turns reported failures into silent ones; only GLM gained.
+    bool selfReviewEnabled = false;
 
     // When true (default), the two-phase agentic EXPLORE loop is available: the model may answer
     // with a "# EXPLORE" read-only probe script, QtiSAS runs it and feeds the real output back
