@@ -8,6 +8,7 @@ scored without judgement. Nothing here is loaded by the AI or shipped with QtiSA
 | `list1.json`, `list2.json` | LIST 1 and LIST 2 of ai-test-requests.md made checkable (see below) |
 | `list3.json`, `list4.json` | the benchmarks: instruction, setup, items with expected values and hints |
 | `list5.json` | combined tasks: each item chains several steps (data, formula, compile, fit, graph, 3D, note) and reuses what earlier items created |
+| `list6.json` | realistic tasks: an existing project whose tables are described, not named; the method left to the AI (Guinier range, sphere fit); an existing fit function found by description; a report note and a clean-up |
 | `reference/<list>/itemNN.py` | reference scripts: every item solved with the documented API, must score 100% |
 | `qtisas_benchmark.py` | runs a benchmark list in the test instance and scores it |
 | `../../server/qtisas_test_instance.py` | a separate QtiSAS for scripted tests (own settings and fit library) |
