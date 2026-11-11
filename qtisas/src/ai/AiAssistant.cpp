@@ -5831,7 +5831,7 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
     const bool checkScope = compilable && m_content && !scopeDescription.isEmpty() && m_userCorrections.isEmpty();
     const QString scopeViolation =
         checkScope ? m_content->splitPartScopeViolation(code, scopeDescription, splitPartScripts.join("\n\n"),
-                                                        !splitModeActive)
+                                                        isWholeRequestScope())
                    : QString();
     // The under-delivery counterpart, checked against the same scopeDescription and reported in the
     // same round as the overreach one — see missingRequestedDeliverables()'s doc comment.
@@ -7743,10 +7743,10 @@ QString AiAssistant::generatedScriptWarning(const QString &code) const
         headers << "requested deliverable missing";
         explanations << missingDeliverables;
     }
-    const QString scopeViolation = m_userCorrections.isEmpty()
-                                       ? m_content->splitPartScopeViolation(
-                                             code, scopeDescription, splitPartScripts.join("\n\n"), !splitModeActive)
-                                       : QString();
+    const QString scopeViolation =
+        m_userCorrections.isEmpty() ? m_content->splitPartScopeViolation(
+                                          code, scopeDescription, splitPartScripts.join("\n\n"), isWholeRequestScope())
+                                    : QString();
     if (!scopeViolation.isEmpty())
     {
         headers << "out of scope";
@@ -8957,3 +8957,9 @@ QString AiAssistant::listCode(bool clean) const
     return code;
 }
 
+// A plan of one part is the whole request: no later part refers to what it makes. Confirmed live (split on by default,
+// a one-part fit request): the window-name rule for split parts blocked its plot three times and the request stopped.
+bool AiAssistant::isWholeRequestScope() const
+{
+    return !splitModeActive || splitPlan.size() == 1;
+}

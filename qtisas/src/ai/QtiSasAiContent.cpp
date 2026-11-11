@@ -1413,12 +1413,15 @@ QString QtiSasAiContent::splitPartScopeViolation(const QString &code, const QStr
     // string ("sin(x)*cos(y)") — including it would misread a formula as an invented window name.
     static const QRegularExpression windowCreateRe(
         R"(\b(?:plotResults|newGraph|newPlot3D|setWindowName)\s*\([^)]*?["']([^"']+)["'])");
-    // A whole request that quotes no name leaves the name to the script: the rule enforces a name "already decided
+    // A whole request that names no window leaves the name to the script: the rule enforces a name "already decided
     // for it", and no later part refers to it. Confirmed live: "make a 3D plot with 3 spheres ..." (no name, not
     // split) blocked a correct plot named "ThreeSpheres" ("three" is not "3"), and the retries drifted into a broken
     // one. A split part still needs its name: later parts plot into it.
-    static const QRegularExpression quotedNameRe(R"(["'][^"'\n]{1,80}["'])");
-    QRegularExpressionMatchIterator windowIt = (wholeRequest && !quotedNameRe.match(partDescription).hasMatch())
+    // A quoted name of something else does not decide the window's: confirmed live (a one-part fit request quoting
+    // its table "SANS-spheres"), the plot "FitResult" was blocked three times and the request stopped.
+    static const QRegularExpression windowNameRe(R"(\b(?:graph|window|named|called|plot)\s*["'])",
+                                                 QRegularExpression::CaseInsensitiveOption);
+    QRegularExpressionMatchIterator windowIt = (wholeRequest && !windowNameRe.match(partDescription).hasMatch())
                                                    ? QRegularExpressionMatchIterator()
                                                    : windowCreateRe.globalMatch(code);
     while (windowIt.hasNext())

@@ -457,6 +457,8 @@ class AiAssistant : public QObject
     static QList<bool> linesInsideMultilineString(const QString &code);
     // The scripts of the current or last LIST (see buildListCode()); empty before any LIST.
     QString listCode(bool clean) const;
+    // The current script answers the whole request, not one part of several (splitPartScopeViolation()).
+    bool isWholeRequestScope() const;
     // A script that only prints string literals — a text answer, nothing for self-review to check.
     static bool isPureTextAnswer(const QString &code);
     // A short question with no action verb ("there are spheres?"): answered directly, never split into a plan.
