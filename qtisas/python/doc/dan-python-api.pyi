@@ -62,6 +62,18 @@
 #     standard runs out); keys: headerKeys(); check after it: no run left with the old value
 #   a beam-stop / transmission mask       -> Dan.Mask.newMask(name, beamstop=(x1, x2, y1, y2), transmission=...)
 #   a sector / rectangle / ellipse in a mask -> Dan.Mask.sector(...) / rectangle(...) / ellipse(...) on matrix
+#   sectors (horizontal / vertical) or any changed mask in auto mode -> NOT the processIQ/merge auto options; there
+#     is NO sector/azimuth setting (Config.parameters() has none) — it is done with the masks of the script rows:
+#     s = p.autoConfig("auto")            # stops at the script table (masks, sens, configurations, Tr)
+#     per distinct (Mask, X-center, Y-center) of the rows: w = clone(matrix(<the row's Mask>));
+#       setWindowName(w, "<script>-hor-<n>")   # e.g. "auto1-hor-1": the script table's name in it, so the masks
+#         of another session are never overwritten; a name that exists: choose another, never close that window;
+#         letters, digits, "-" only: "mask-bs-9.2m-hor" is refused
+#       Dan.Mask.sector(<new name>, (xc, yc), phi) per part to remove   # the row's own center (1-based)
+#     the new name into those rows' Mask column (t.setText(maskCol, row, name)); then p.process(s),
+#     Dan.Merge.join(s + "-mergingTemplate", ...)
+#     keep horizontal ±15°: remove (-75, 75) and (105, 255); keep vertical ±15°: remove (15, 165) and (195, 345)
+#     "mask" and "sens" are made anew by every session: process and merge a script table before the next session
 #   a transmission of one run (e.g. H2O)  -> Dan.Sensitivity.transmission(run, emptyBeam, mask) -> (Tr, dTr)
 #   remove points at the curve ends       -> Dan.Processing.Options.setRemovePoints(first, last)   (I[Q])
 #                                            Dan.Merge.join(..., removeFirst=, removeLast=)          (merged)

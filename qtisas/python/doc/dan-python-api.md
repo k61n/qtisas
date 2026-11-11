@@ -47,6 +47,7 @@ First choose the call:
 | a run's file name, the files of runs (to move or copy them) | `Dan.Rawdata.files(runs)`; the runs an added run was made of: `Dan.Rawdata.info([run])[0]["added"]` |
 | a beam-stop or transmission mask | `Dan.Mask.newMask(name, beamstop=(x1, x2, y1, y2), transmission=...)` |
 | a sector, rectangle or ellipse in a mask | `Dan.Mask.sector(...)`, `rectangle(...)`, `ellipse(...)` on the mask's matrix |
+| averaging only in sectors (horizontal, vertical) or with any other changed mask, also in auto mode | there is no sector setting: change the masks of the script rows, then process and merge — see "Sectors or changed masks in auto mode" |
 | the transmission of one run (e.g. H2O) | `Dan.Sensitivity.transmission(run, emptyBeam, mask)` → `(Tr, dTr)` |
 | remove points at the ends of the curves | `Dan.Processing.Options.setRemovePoints(first, last)` (I[Q]); `Dan.Merge.join(..., removeFirst=, removeLast=)` (merged) |
 | ASCII files instead of tables | `Dan.Processing.process(s, output="files")`, `Dan.Merge.join(t, output="files")` |
@@ -117,6 +118,48 @@ project, and the merge joins the curves as they are. With one configuration ther
 Scale) are printed to the terminal QtiSAS runs in; the configurations left out (no center run, skipped) are in
 `p.lastMessages()`. Change a rule for this session with
 `Dan.Options.Config.setAutoOptions({...})` before them.
+
+### Sectors or changed masks in auto mode
+
+There is **no sector or azimuth setting** in DAN (none of `Dan.Options.Config.parameters()`): averaging only in
+sectors is done with the masks. `autoConfig()` stops at the script table (the auto options `processIQ` and `merge`
+are off), so change the masks of its rows first, then process and merge:
+
+1. `s = p.autoConfig("auto")`: masks, sensitivity, configurations, script table, transmissions.
+2. For each distinct (Mask, X-center, Y-center) of the script rows, a copy of the mask: `clone(matrix(mask))`, a
+   name of your own with `setWindowName()`, then `Dan.Mask.sector()` around the row's own center for each part to
+   remove. One copy per center, not per mask: KWS-1 uses one `"mask"` for its three configurations, each with its own
+   center. The name holds the script table's name (`"auto1-hor-1"`), so the masks of another session (KWS-1 and
+   KWS-3 in one project) are never overwritten; a name that exists already: choose another, never close that window.
+   Letters, digits and "-" only: the auto masks' names contain a ".", so `"mask-bs-9.2m-hor"` is refused.
+3. The new names into those rows' Mask column; then `p.process(s)` and `Dan.Merge.join(...)`.
+
+`"mask"` and `"sens"` are made anew by every session (`autoConfig()` of the next instrument): process and merge a
+script table before the next session starts.
+
+The angles: 0° toward larger y, 90° toward larger x. Keep horizontal ±15°: remove (-75, 75) and (105, 255). Keep
+vertical ±15°: remove (15, 165) and (195, 345).
+
+```python
+o, p = Dan.Options, Dan.Processing
+o.newSession(); o.selectInstrument("KWS3-2020"); o.setInputPath("~/kws3")
+s = p.autoConfig("auto3")
+t = table(s)
+cols = list(t.colNames())
+maskCol, xCol, yCol = cols.index("Mask") + 1, cols.index("X-center") + 1, cols.index("Y-center") + 1
+made = {}
+for row in range(1, t.numRows() + 1):
+    key = (t.text(maskCol, row).strip(), float(t.text(xCol, row)), float(t.text(yCol, row)))
+    if key not in made:
+        name = "%s-hor-%d" % (s, len(made) + 1)      # "auto3-hor-1": never another session's mask
+        setWindowName(clone(matrix(key[0])), name)
+        for phi in ((-75, 75), (105, 255)):          # horizontal ±15° stays
+            Dan.Mask.sector(name, (key[1], key[2]), phi)
+        made[key] = name
+    t.setText(maskCol, row, made[key])
+p.process(s)
+merged = Dan.Merge.join(s + "-mergingTemplate", overlap=30, removeFirst=5, removeLast=10)
+```
 
 ---
 
