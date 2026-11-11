@@ -347,6 +347,10 @@ void dan18::newSession()
     findCalibrators();
     updateScriptTables();
     updatePolScriptTables();
+    // a new session has no script table yet: refilling the list selects the project's first one, and the
+    // configuration headers (calculate(), a header click) would write this session's C, D, lambda, factors and
+    // centers into that table of an earlier session
+    comboBoxMakeScriptTable->setCurrentIndex(-1);
 
     pushButtonInstrLabel->show();
     pushButtonNewSession->setMaximumWidth(pushButtonNewSession->maximumHeight());
