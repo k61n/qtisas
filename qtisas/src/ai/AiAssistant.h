@@ -587,6 +587,27 @@ class AiAssistant : public QObject
         return m_bigModel;
     }
     static bool bigModelFromSettings(const QSettings &settings);
+    // A preset's "Reasoning": how long a reasoning model thinks before it answers. Default sends nothing; Low sends
+    // reasoning_effort "low", Off chat_template_kwargs {enable_thinking: false} (OpenAI-compatible backends only).
+    // Measured (BlaBlaDor, benchmark item 4, two calls each): GLM-5.3-Flash 204-209 s and 8.6-9.3K output tokens by
+    // default, 5-7 s and 148-236 with Low; Qwen3.8-27B 101 s and 4.5K by default, 3-4 s and 70-94 with Off — the
+    // scripts no worse, while a default run lost items to all of Max tokens spent on reasoning and an empty answer.
+    enum class Reasoning
+    {
+        Default,
+        Low,
+        Off
+    };
+    void setReasoning(Reasoning reasoning)
+    {
+        m_reasoning = reasoning;
+    }
+    Reasoning reasoning() const
+    {
+        return m_reasoning;
+    }
+    static Reasoning reasoningFromSettings(const QSettings &settings);
+    static QString reasoningName(Reasoning reasoning);
     int historySize() const
     {
         return static_cast<int>(m_history.size());
@@ -1310,6 +1331,7 @@ class AiAssistant : public QObject
     bool m_splitMergeEnabled = true;
     bool m_selfReviewEnabled = true;
     bool m_bigModel = false;
+    Reasoning m_reasoning = Reasoning::Default;
     bool m_exploreEnabled = true;
     int m_requestTimeoutSec = 0;
     QList<QPair<QString, QString>> m_history; // (user, assistant) pairs — the FULL transcript,

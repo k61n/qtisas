@@ -6544,6 +6544,7 @@ bool ApplicationWindow::setAiAgent(const QString &name)
                    sf.value("AI/Model", "claude-opus-4-8").toString(), sf.value("AI/MaxTokens", 4096).toInt(),
                    AiAssistant::docsModeFromSettings(sf));
     m_ai->setBigModel(AiAssistant::bigModelFromSettings(sf));
+    m_ai->setReasoning(AiAssistant::reasoningFromSettings(sf));
     QSettings *s = Settings::DefaultSettings();
     s->setValue("/AI/SelectedPreset", name);
     delete s;
@@ -6584,6 +6585,7 @@ void ApplicationWindow::ensureAiAssistant()
                         sf.value("AI/Model", "claude-opus-4-8").toString(), sf.value("AI/MaxTokens", 4096).toInt(),
                         AiAssistant::docsModeFromSettings(sf));
         m_ai->setBigModel(AiAssistant::bigModelFromSettings(sf));
+        m_ai->setReasoning(AiAssistant::reasoningFromSettings(sf));
     }
 }
 

@@ -6883,6 +6883,32 @@ bool AiAssistant::bigModelFromSettings(const QSettings &settings)
     return settings.value("AI/BigModel", false).toBool();
 }
 
+AiAssistant::Reasoning AiAssistant::reasoningFromSettings(const QSettings &settings)
+{
+    const QString value = settings.value("AI/Reasoning", "default").toString().toLower();
+    if (value == "low")
+        return Reasoning::Low;
+    if (value == "off")
+        return Reasoning::Off;
+    return Reasoning::Default;
+}
+
+QString AiAssistant::reasoningName(Reasoning reasoning)
+{
+    switch (reasoning)
+    {
+    case Reasoning::Low: {
+        return "low";
+    }
+    case Reasoning::Off: {
+        return "off";
+    }
+    default: {
+        return "default";
+    }
+    }
+}
+
 AiAssistant::DocsMode AiAssistant::docsModeFromSettings(const QSettings &settings)
 {
     const int raw = settings.value("AI/DocsMode", -1).toInt();
@@ -8153,6 +8179,11 @@ void AiAssistant::ask(const QString &userText, bool includeDocs, const QString &
         body["max_completion_tokens"] = m_maxTokens;
     else
         body["max_tokens"] = m_maxTokens;
+    // the preset's "Reasoning" (see AiAssistant::Reasoning); Anthropic's API takes neither field
+    if (!isAnthropic && m_reasoning == Reasoning::Low)
+        body["reasoning_effort"] = "low";
+    else if (!isAnthropic && m_reasoning == Reasoning::Off)
+        body["chat_template_kwargs"] = QJsonObject{{"enable_thinking", false}};
 
     // Build messages array including recent conversation history
     QJsonArray messages;

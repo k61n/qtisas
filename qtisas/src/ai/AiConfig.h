@@ -51,6 +51,7 @@ class AiConfig : public QWidget
     QCheckBox *m_exploreEnabled;
     QSpinBox *m_requestTimeoutSec;
     QCheckBox *m_bigModel;
+    QComboBox *m_reasoning;
     class QTableWidget *m_docTiers;
     class QLabel *m_docTiersLabel;
 

@@ -90,6 +90,19 @@ AiConfig::AiConfig(ApplicationWindow *app, QWidget *parent) : QWidget(parent), m
     m_maxTokens->setValue(4096);
     lay->addWidget(m_maxTokens, 4, 1);
 
+    // the preset's "Reasoning": how long a reasoning model thinks before it answers (see AiAssistant::Reasoning)
+    m_reasoning = new QComboBox();
+    m_reasoning->addItem(tr("Reasoning: default"), static_cast<int>(AiAssistant::Reasoning::Default));
+    m_reasoning->addItem(tr("Reasoning: low"), static_cast<int>(AiAssistant::Reasoning::Low));
+    m_reasoning->addItem(tr("Reasoning: off"), static_cast<int>(AiAssistant::Reasoning::Off));
+    m_reasoning->setToolTip(tr("For a reasoning model that thinks long before it answers:\n"
+                               "default sends nothing (the model's own setting);\n"
+                               "low sends reasoning_effort \"low\";\n"
+                               "off sends chat_template_kwargs {enable_thinking: false} (vLLM: Qwen, GLM).\n"
+                               "A model that spends all of Max tokens on reasoning returns an empty answer.\n"
+                               "Not sent to Anthropic."));
+    lay->addWidget(m_reasoning, 4, 2);
+
     auto *labelDocsMode = new QLabel(tr("API docs sent:"));
     lay->addWidget(labelDocsMode, 5, 0);
     m_docsMode = new QComboBox();
@@ -299,6 +312,7 @@ AiConfig::AiConfig(ApplicationWindow *app, QWidget *parent) : QWidget(parent), m
             m_bigModel->setChecked(AiAssistant::bigModelFromSettings(sf));
         }
         showBigModelState();
+        m_reasoning->setCurrentIndex(m_reasoning->findData(static_cast<int>(AiAssistant::reasoningFromSettings(sf))));
         m_apiKey->setEnabled(true);
         m_maxTokens->setVisible(true);
         labelMaxTokens->setVisible(true);
@@ -329,6 +343,8 @@ AiConfig::AiConfig(ApplicationWindow *app, QWidget *parent) : QWidget(parent), m
         sf.setValue("AI/MaxTokens", m_maxTokens->value());
         sf.setValue("AI/DocsMode", m_docsMode->currentData().toInt());
         sf.setValue("AI/BigModel", m_bigModel->isChecked());
+        sf.setValue("AI/Reasoning", AiAssistant::reasoningName(
+                                        static_cast<AiAssistant::Reasoning>(m_reasoning->currentData().toInt())));
         sf.setValue("AI/Mode", mode);
         sf.setValue("AI/Info", infoLabel->toNormalizedHtml());
         sf.sync();
@@ -445,7 +461,10 @@ void AiConfig::apply()
     m_app->askAiConfigure(m_apiKey->text().trimmed(), m_baseUrl->text().trimmed(), m_model->text().trimmed(),
                           m_maxTokens->value(), static_cast<AiAssistant::DocsMode>(m_docsMode->currentData().toInt()));
     if (m_app->aiAssistant())
+    {
         m_app->aiAssistant()->setBigModel(m_bigModel->isChecked());
+        m_app->aiAssistant()->setReasoning(static_cast<AiAssistant::Reasoning>(m_reasoning->currentData().toInt()));
+    }
     QSettings *s = Settings::DefaultSettings();
     s->setValue("/AI/SelectedPreset", m_mode->currentText());
     delete s;
