@@ -306,6 +306,134 @@ void AiContentTests::unprintedOutputLine_flaggedOnlyWhenNotPrinted()
     QVERIFY(AiAssistant::unprintedOutputLineMistake(code, "beta 3").isEmpty());
 }
 
+namespace
+{
+AiAssistant::ListCodeItem listItem(int number, const QString &text, const QStringList &scripts,
+                                   const QStringList &windows = {}, bool failed = false)
+{
+    AiAssistant::ListCodeItem item;
+    item.number = number;
+    item.text = text;
+    item.scripts = scripts;
+    for (int i = 0; i < scripts.size(); ++i)
+        item.giveUp << false;
+    item.windows = windows;
+    item.failed = failed;
+    return item;
+}
+
+const QDateTime listStart(QDate(2026, 11, 11), QTime(15, 20));
+} // namespace
+
+void AiContentTests::listCode_rawKeepsTheScriptsAsTheyRan()
+{
+    const QList<AiAssistant::ListCodeItem> items = {
+        listItem(1, "Make T", {"t = newTable(\"T\", 3, 2)\n"}),
+        listItem(2, "Fill T", {"t = table(\"T\")  \nt.setCell(1, 1, 2)"}, {}, true)};
+    const QString code = AiAssistant::buildListCode(items, "use T", listStart, {}, false);
+    QVERIFY(code.startsWith("# QtiSAS LIST, 2026-11-11 15:20: 2 item(s), the scripts exactly as they ran\n"
+                            "# LIST instruction: use T\n"));
+    QVERIFY(code.contains("# --- Item 1: Make T ---\nt = newTable(\"T\", 3, 2)\n"));
+    // a failed item's successful parts too, as they ran; no name check, nothing moved
+    QVERIFY(code.contains("# --- Item 2 (FAILED): Fill T ---\nt = table(\"T\")  \nt.setCell(1, 1, 2)\n"));
+    QVERIFY(!code.contains("def item_"));
+    QVERIFY(!code.contains("_made"));
+}
+
+void AiContentTests::listCode_eachScriptInItsOwnFunction()
+{
+    // Confirmed live (KWS LIST): every item reuses o, p, t — each ran in its own namespace
+    const QList<AiAssistant::ListCodeItem> items = {
+        listItem(1, "Reduce KWS-1\n\nmore text", {"o = Dan.Options\nt = table(\"auto1\")\n"}),
+        listItem(2, "Reduce KWS-3", {"o = Dan.Options\n\n\n\nt = table(\"auto3\")\n", "scriptPrint(\"R2:\", 1)\n"})};
+    const QString code = AiAssistant::buildListCode(items, {}, listStart, {}, true);
+    QVERIFY(code.contains("# --- Item 1: Reduce KWS-1 ---\ndef item_1():\n    o = Dan.Options\n"
+                          "    t = table(\"auto1\")\nitem_1()\n"));
+    // a split item: one function per part, in order; blank lines collapsed
+    QVERIFY(code.contains("# --- Item 2: Reduce KWS-3 ---\ndef item_2_1():\n    o = Dan.Options\n\n"
+                          "    t = table(\"auto3\")\nitem_2_1()\ndef item_2_2():\n    scriptPrint(\"R2:\", 1)\n"
+                          "item_2_2()\n"));
+    QVERIFY(code.indexOf("item_1()") < code.indexOf("def item_2_1"));
+    QVERIFY(code.contains("2 item(s), 2 included"));
+}
+
+void AiContentTests::listCode_multilineStringsStayUnindented()
+{
+    const QString script =
+        "c = Compiler\nc.setCode(\"\"\"double y = a;\nreturn y;\"\"\")\ns = '''x\n'''\nn = 1  # '''\n";
+    QCOMPARE(AiAssistant::linesInsideMultilineString(script),
+             QList<bool>({false, false, true, false, true, false, false}));
+    const QString code = AiAssistant::buildListCode({listItem(1, "Compile", {script})}, {}, listStart, {}, true);
+    // the string's content is what the item ran: its lines keep their indentation
+    QVERIFY(
+        code.contains("    c.setCode(\"\"\"double y = a;\nreturn y;\"\"\")\n    s = '''x\n'''\n    n = 1  # '''\n"));
+}
+
+void AiContentTests::listCode_importsOnceAtTheTop()
+{
+    const QList<AiAssistant::ListCodeItem> items = {
+        listItem(1, "Plot", {"from PyQt6.QtGui import QColor\nfrom math import *\nc = QColor(\"red\")\n"}),
+        listItem(2, "Plot again", {"from PyQt6.QtGui import QColor\nif True:\n    import os\nc = QColor(\"blue\")\n"})};
+    const QString code = AiAssistant::buildListCode(items, {}, listStart, {}, true);
+    QCOMPARE(code.count("from PyQt6.QtGui import QColor"), 1);
+    QVERIFY(code.contains("\nfrom PyQt6.QtGui import QColor\nfrom math import *\n"));
+    QVERIFY(code.indexOf("from math import *") < code.indexOf("def item_1"));
+    // an indented import belongs to its block
+    QVERIFY(code.contains("    if True:\n        import os\n"));
+}
+
+void AiContentTests::listCode_failedAndGivenUpItemsOnlyAsComments()
+{
+    AiAssistant::ListCodeItem gaveUp = listItem(2, "Fit", {"scriptPrint(\"could not fit\")\n"});
+    gaveUp.giveUp = {true};
+    const QList<AiAssistant::ListCodeItem> items = {listItem(1, "Make T", {"t = newTable(\"T\", 3, 2)\n"}), gaveUp,
+                                                    listItem(3, "Plot", {"plot(\"T\")\n"}, {}, true),
+                                                    listItem(4, "Nothing", {})};
+    const QString code = AiAssistant::buildListCode(items, {}, listStart, {}, true);
+    QVERIFY(code.contains("4 item(s), 1 included"));
+    QVERIFY(code.contains("# --- Item 2: GAVE UP, not included — Fit ---\n"));
+    QVERIFY(code.contains("# --- Item 3: FAILED, not included — Plot ---\n"));
+    QVERIFY(code.contains("# --- Item 4: nothing ran, not included — Nothing ---\n"));
+    QVERIFY(!code.contains("could not fit"));
+    QVERIFY(!code.contains("plot(\"T\")"));
+}
+
+void AiContentTests::listCode_exploreHalfLeftOut()
+{
+    const QString bundled = "# EXPLORE\nscriptPrint(tableNames())\n# Action script\nt = table(\"T\")\n";
+    const QString code = AiAssistant::buildListCode({listItem(1, "Use T", {bundled})}, {}, listStart, {}, true);
+    QVERIFY(code.contains("def item_1():\n    t = table(\"T\")\nitem_1()\n"));
+    QVERIFY(!code.contains("tableNames()"));
+    QVERIFY(!code.contains("EXPLORE"));
+}
+
+void AiContentTests::listCode_nameCheckOnlyForOpenWindows()
+{
+    const QList<AiAssistant::ListCodeItem> items = {
+        listItem(1, "Make", {"x = 1\n"}, {"table:auto1", "matrix:mask", "graph:Final"}),
+        listItem(2, "More", {"y = 2\n"}, {"table:auto1"})};
+    const QString code = AiAssistant::buildListCode(items, {}, listStart, {"table:auto1", "graph:Final"}, true);
+    // closed since ("mask"): running it again does not make it
+    QVERIFY(code.contains("_made = [\"auto1\", \"Final\"]\n"));
+    QVERIFY(code.contains("if _existing:\n    raise RuntimeError("));
+    QVERIFY(code.indexOf("_existing") < code.indexOf("def item_1"));
+    QVERIFY(!AiAssistant::buildListCode(items, {}, listStart, {}, true).contains("_made"));
+}
+
+void AiContentTests::listCode_unboundGlobalReadStaysAtTopLevel()
+{
+    const QList<AiAssistant::ListCodeItem> items = {listItem(1, "Odd", {"table = table(\"T\")\n"}),
+                                                    listItem(2, "Fine", {"t = table(\"T\")\n"})};
+    const auto reads = [](const QString &function) {
+        return function.contains("table = table") ? QStringList{"table"} : QStringList();
+    };
+    const QString code = AiAssistant::buildListCode(items, {}, listStart, {}, true, reads);
+    QVERIFY(code.contains("# --- Item 1: Odd ---\n# at the top level, not in a function: it assigns table, which it "
+                          "also reads as the global\ntable = table(\"T\")\n"));
+    QVERIFY(!code.contains("def item_1"));
+    QVERIFY(code.contains("def item_2():\n    t = table(\"T\")\nitem_2()\n"));
+}
+
 void AiContentTests::labeledLastPrint_repairsOnlyALastTopLevelPrint()
 {
     // Confirmed live: str([...]) printed "[]" right, the retry's rewrite printed "" instead.
@@ -797,6 +925,12 @@ void AiContentTests::direction5_wholeRequestWithoutNameLeavesItToTheScript()
     // a split part without a name, or a whole request that names a different window: still checked
     QVERIFY(content.splitPartScopeViolation(code, request, QString(), false).contains("never mentions the window"));
     QVERIFY(content.splitPartScopeViolation(code, request + " named \"Beads\"", QString(), true)
+                .contains("never mentions the window"));
+    // confirmed live: a whole request quoting only its table's name and the axis titles
+    const QString fit = "Fit table \"SANS-spheres\" with the sphere model, plot it with axis title \"Q (1/A)\"";
+    const QString plotCode = "f = Fittable\nf.plotResults(\"FitResult\", \"\")\n";
+    QVERIFY(!content.splitPartScopeViolation(plotCode, fit, QString(), true).contains("never mentions the window"));
+    QVERIFY(content.splitPartScopeViolation(plotCode, fit + " into graph \"Fit\"", QString(), true)
                 .contains("never mentions the window"));
 }
 

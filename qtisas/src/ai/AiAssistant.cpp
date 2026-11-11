@@ -8727,7 +8727,7 @@ QList<bool> AiAssistant::linesInsideMultilineString(const QString &code)
         QChar single;
         for (qsizetype i = 0; i < line.size(); ++i)
         {
-            const QChar c = line[i];
+            const QChar c = line.at(i);
             if (!open.isEmpty() || !single.isNull())
             {
                 if (c == '\\')
@@ -8869,7 +8869,7 @@ QString AiAssistant::buildListCode(const QList<ListCodeItem> &items, const QStri
                 if (!inString[i])
                 {
                     qsizetype end = line.size();
-                    while (end > 0 && line[end - 1].isSpace())
+                    while (end > 0 && line.at(end - 1).isSpace())
                         --end;
                     line.truncate(end);
                     // C3 / C4: imports to the top, the AI's marker lines away, one blank line at most

@@ -48,6 +48,14 @@ class AiContentTests : public QObject
     static void knownMistakes_textIntoNumericColumnIsCaught();
     static void unprintedOutputLine_flaggedOnlyWhenNotPrinted();
     static void labeledLastPrint_repairsOnlyALastTopLevelPrint();
+    static void listCode_rawKeepsTheScriptsAsTheyRan();
+    static void listCode_eachScriptInItsOwnFunction();
+    static void listCode_multilineStringsStayUnindented();
+    static void listCode_importsOnceAtTheTop();
+    static void listCode_failedAndGivenUpItemsOnlyAsComments();
+    static void listCode_exploreHalfLeftOut();
+    static void listCode_nameCheckOnlyForOpenWindows();
+    static void listCode_unboundGlobalReadStaysAtTopLevel();
     static void requestSuffix_strippedInBothModes();
     static void requestOwnText_dropsListInstructionAndSuffix();
     static void splitPlanChecks_ignoreListInstructionAndSuffix();

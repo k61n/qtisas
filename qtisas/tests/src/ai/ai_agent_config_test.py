@@ -59,3 +59,6 @@ with user_settings_kept():
         assert app.setAiAgent(agents[0]) and app.aiAgent() == agents[0], app.aiAgent()
         assert app.aiConfig()["agent"] == agents[0], app.aiConfig()
     app.aiClearHistory()
+
+    # lastListCode(): the scripts of the last LIST, none has run in this instance
+    assert app.lastListCode() == "" and app.lastListCode(False) == "", app.lastListCode()
