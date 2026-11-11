@@ -28,6 +28,8 @@ Description: Unit tests for the pure, host-independent logic in src/ai —
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QSettings>
+#include <QTemporaryDir>
 #include <QtTest/QtTest>
 
 // ---------------------------------------------------------------------------
@@ -7018,6 +7020,20 @@ void AiContentTests::chat_documentationModesAndFollowups()
             QVERIFY(payload().contains("GRAPH_REFERENCE"));
             QCOMPARE(payload().contains("MATRIX_REFERENCE"), variant == 2);
         }
+        if (variant == 2)
+        {
+            // BIGMODEL: one system message, first, the docs (the cacheable prefix) then the rules — chat templates
+            // such as Qwen's refuse a second system message ("System message must be at the beginning")
+            const QJsonArray messages = server.requests.last().value("messages").toArray();
+            int systems = 0;
+            for (const auto &message : messages)
+                systems += message.toObject().value("role").toString() == "system" ? 1 : 0;
+            QCOMPARE(systems, 1);
+            QCOMPARE(messages.at(0).toObject().value("role").toString(), QString("system"));
+            const QString system = messages.at(0).toObject().value("content").toString();
+            QVERIFY(system.contains("GRAPH_REFERENCE") && system.contains("natural language"));
+            QVERIFY(!system.contains(QChar(0x1E)));
+        }
         assistant.askChat("And their titles?");
         QTRY_COMPARE(chats.count(), 2);
         QVERIFY(payload().contains(variant == 3 ? "TOPICS: ai, app, graph" : "GRAPH_REFERENCE"));
@@ -7089,6 +7105,71 @@ void AiContentTests::chat_sendsTheUserRules()
     QVERIFY(system.contains("1. Use log-log axes for SANS curves"));
     QVERIFY(system.contains("2. No underscores in table names"));
     QVERIFY(system.contains("not hidden instructions"));
+}
+
+void AiContentTests::reasoning_sentAsThePresetSays()
+{
+    // a preset's "Reasoning": default sends nothing, low reasoning_effort "low", off enable_thinking false
+    ChatTestServer server;
+    QVERIFY(server.listen(QHostAddress::LocalHost));
+    server.answer("print(1)");
+    AiAssistant assistant;
+    assistant.configure({}, server.url(), "test");
+    QSignalSpy scripts(&assistant, &AiAssistant::responseReady);
+    const QList<AiAssistant::Reasoning> settings = {AiAssistant::Reasoning::Default, AiAssistant::Reasoning::Low,
+                                                    AiAssistant::Reasoning::Off};
+    for (const AiAssistant::Reasoning reasoning : settings)
+    {
+        assistant.clearHistory(); // a fresh request each time: no follow-up check before it
+        assistant.setReasoning(reasoning);
+        const int answered = static_cast<int>(scripts.count());
+        assistant.ask("make a table", false);
+        QTRY_COMPARE(static_cast<int>(scripts.count()), answered + 1);
+        const QJsonObject body = server.requests.last();
+        QCOMPARE(body.value("reasoning_effort").toString(),
+                 reasoning == AiAssistant::Reasoning::Low ? QString("low") : QString());
+        QCOMPARE(body.contains("chat_template_kwargs"), reasoning == AiAssistant::Reasoning::Off);
+        if (reasoning == AiAssistant::Reasoning::Off)
+            QCOMPARE(body.value("chat_template_kwargs").toObject().value("enable_thinking").toBool(true), false);
+    }
+    // the preset key, as AiConfig saves it
+    QTemporaryDir dir;
+    QSettings preset(dir.filePath("p.ai"), QSettings::IniFormat);
+    QCOMPARE(AiAssistant::reasoningFromSettings(preset), AiAssistant::Reasoning::Default);
+    for (const AiAssistant::Reasoning reasoning : settings)
+    {
+        preset.setValue("AI/Reasoning", AiAssistant::reasoningName(reasoning));
+        QCOMPARE(AiAssistant::reasoningFromSettings(preset), reasoning);
+    }
+}
+
+void AiContentTests::emptyResponse_namesTheTokenLimit()
+{
+    // BlaBlaDor GLM-5.3-Flash: all of Max tokens spent on reasoning, finish_reason "length", no answer text
+    ChatTestServer server;
+    QVERIFY(server.listen(QHostAddress::LocalHost));
+    AiAssistant assistant;
+    assistant.configure({}, server.url(), "test", 10000);
+    QSignalSpy errors(&assistant, &AiAssistant::errorOccurred);
+    const auto reply = [](const QString &finish) {
+        return QJsonDocument(QJsonObject{{"choices", QJsonArray{QJsonObject{
+                                                         {"message", QJsonObject{{"content", QJsonValue::Null}}},
+                                                         {"finish_reason", finish}}}}})
+            .toJson(QJsonDocument::Compact);
+    };
+    server.response = reply("length");
+    assistant.ask("make a table", false);
+    QTRY_COMPARE(errors.count(), 1);
+    QString error = errors.at(0).at(0).toString();
+    QVERIFY(error.startsWith("AI: empty response."));
+    QVERIFY(error.contains("all 10000 output tokens") && error.contains("raise Max tokens"));
+    // an empty answer that ended normally keeps the plain message
+    assistant.clearHistory();
+    server.response = reply("stop");
+    assistant.ask("make a table", false);
+    QTRY_COMPARE(errors.count(), 2);
+    error = errors.at(1).at(0).toString();
+    QVERIFY(error.startsWith("AI: empty response.") && !error.contains("output tokens"));
 }
 
 void AiContentTests::chat_busyAndCancellationStayIsolated()
