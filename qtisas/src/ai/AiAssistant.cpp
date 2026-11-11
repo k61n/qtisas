@@ -8633,13 +8633,27 @@ void AiAssistant::onReplyFinished(QNetworkReply *reply)
     }
     if (text.isEmpty())
     {
+        // Confirmed live (BlaBlaDor GLM-5.3-Flash, benchmark LIST 1 items 4/8/12): a reasoning model spent all of
+        // MaxTokens on reasoning — finish_reason "length" (Anthropic: stop_reason "max_tokens"), no answer text.
+        const QString finish = obj.contains("choices")
+                                   ? obj.value("choices").toArray().at(0).toObject().value("finish_reason").toString()
+                                   : obj.value("stop_reason").toString();
+        const bool atTokenLimit = finish == "length" || finish == "max_tokens";
+        // the reply as it came, for the log: an empty answer can be an empty content field, the text in another field,
+        // or text that cleaning removed (Qwen3.8-27B with Reasoning off: empty within ~1 s, cause not yet known)
+        if (m_host)
+            m_host->print("▸▸▸ AI: the empty reply as received: " + QString::fromUtf8(raw.left(1500)).simplified());
         m_pendingUserText.clear();
         // A malformed body degrades to this same "empty response" gate either way (obj is a
         // default-constructed, key-less QJsonObject when parsing fails) — surface the actual parse
         // error when there is one, instead of a generic message with no diagnosable cause.
-        const QString detail = parseError.error != QJsonParseError::NoError
-                                   ? QString(" (response body wasn't valid JSON: %1)").arg(parseError.errorString())
-                                   : QString();
+        QString detail;
+        if (parseError.error != QJsonParseError::NoError)
+            detail = QString(" (response body wasn't valid JSON: %1)").arg(parseError.errorString());
+        else if (atTokenLimit)
+            detail = QString(" The model used all %1 output tokens (Max tokens) before answering, probably on its "
+                             "reasoning — raise Max tokens in the AI agent's settings.")
+                         .arg(m_maxTokens);
         emit errorOccurred("AI: empty response." + detail + splitModeGiveUpNote());
     }
     else
