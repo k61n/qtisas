@@ -114,6 +114,7 @@ public:
 
     void print(const QString &message) override;
     bool canCompile(const QString &code, QString *errorOut = nullptr) const override;
+    QStringList unboundGlobalReads(const QString &code) const override;
 #endif
 
     enum ShowWindowsPolicy

@@ -399,6 +399,17 @@ void AiAssistant::recordFinishedListItem()
     for (const QString &object : m_host->liveObjects())
         if (!m_itemObjectsAtStart.contains(object))
             item.objects << object;
+    ListCodeItem code;
+    code.number = item.number;
+    code.text = requestOwnText(listItems[listItemIndex].text).trimmed();
+    code.scripts = m_itemRanScripts;
+    for (const QString &script : std::as_const(m_itemRanScripts))
+        code.giveUp << (m_content && m_content->isGiveUpFallbackScript(script));
+    for (const QString &object : std::as_const(item.objects))
+        if (!object.startsWith(QLatin1String("function:")))
+            code.windows << object;
+    code.failed = m_listItemFailed;
+    m_listCodeItems << code;
     static const QRegularExpression nameRe(R"RX(\bsetFunctionName\s*\(\s*["']([^"']+)["'])RX");
     static const QRegularExpression compileRe(R"(\.\s*compile\s*\()");
     for (const QString &script : std::as_const(m_itemRanScripts))
@@ -1683,6 +1694,7 @@ QString AiAssistant::splitModeGiveUpNote()
         // enough that a later one usually still runs; continued on the next event-loop turn so
         // this failure message is emitted before the next item's own output.
         const bool moreItems = listItemIndex + 1 < listItems.size();
+        m_listItemFailed = true; // lastListCode(): this item only as a comment line
         note += moreItems ? QString("\n\n(LIST item %1/%2 failed — skipping it and continuing with "
                                     "the next item.)")
                                 .arg(listItemIndex + 1)
@@ -1699,6 +1711,7 @@ QString AiAssistant::splitModeGiveUpNote()
         }
         else
         {
+            recordFinishedListItem(); // the last item: no next item records it
             listModeActive = false;
             listItems.clear();
             listItemIndex = -1;
@@ -3914,6 +3927,7 @@ void AiAssistant::beginListRequest(const ParsedListRequest &parsed, bool splitBy
     // calls (table("Results").setItem(...)) that every item then copied, each costing a retry; it also cost 20-30 s.
     const QStringList items = itemsWithInstruction(parsed.items, parsed.instructionBlock);
     printParsedListItems(items, !parsed.instructionBlock.trimmed().isEmpty());
+    m_listInstruction = parsed.instructionBlock.trimmed();
     startListItems(items, parsed.forceSplit, parsed.forceNoSplit, parsed.forceReview, parsed.forceNoReview,
                    parsed.forceExplore, parsed.forceNoExplore, splitByDefault, reviewByDefault, exploreByDefault,
                    autoRunValue);
@@ -3957,6 +3971,9 @@ void AiAssistant::startListItems(const QStringList &items, bool forceSplit, bool
     listItemIndex = -1;
     m_listObjectsAtStart = m_host ? m_host->liveObjects() : QStringList();
     m_earlierItems.clear();
+    m_listCodeItems.clear();
+    m_listStarted = QDateTime::currentDateTime();
+    m_listItemFailed = false;
     m_stickyOnDemandTopics.clear();
     listItemForceSplit = forceSplit;
     listItemForceNoSplit = forceNoSplit;
@@ -3997,6 +4014,7 @@ void AiAssistant::startNextListItem()
 {
     const QString finishedNote = listItemElapsedNote();
     recordFinishedListItem();
+    m_listItemFailed = false;
     ++listItemIndex;
     if (listItemIndex >= listItems.size())
     {
@@ -8695,3 +8713,247 @@ void AiAssistant::onReplyFinished(QNetworkReply *reply)
         deliverResponse(response);
     }
 }
+
+// One state machine over the whole script: a triple quote opens and closes across lines, a one-line string ends at its
+// quote (or the line's end), "#" outside a string ends the line. Escapes skip the next character in every string kind,
+// raw strings included: there, too, \" does not end the string.
+QList<bool> AiAssistant::linesInsideMultilineString(const QString &code)
+{
+    QList<bool> inside;
+    QString open;
+    for (const QString &line : code.split('\n'))
+    {
+        inside << !open.isEmpty();
+        QChar single;
+        for (qsizetype i = 0; i < line.size(); ++i)
+        {
+            const QChar c = line[i];
+            if (!open.isEmpty() || !single.isNull())
+            {
+                if (c == '\\')
+                    ++i;
+                else if (!open.isEmpty() && line.mid(i, 3) == open)
+                {
+                    open.clear();
+                    i += 2;
+                }
+                else if (open.isEmpty() && c == single)
+                    single = QChar();
+                continue;
+            }
+            if (c == '#')
+                break;
+            if (c == '"' || c == '\'')
+            {
+                const QString triple(3, c);
+                if (line.mid(i, 3) == triple)
+                {
+                    open = triple;
+                    i += 2;
+                }
+                else
+                    single = c;
+            }
+        }
+    }
+    return inside;
+}
+
+namespace
+{
+// The item's text as one comment line
+QString listItemTitle(const QString &text)
+{
+    QString title = text.section('\n', 0, 0).simplified();
+    if (title.size() > 100)
+        title = title.left(99) + QStringLiteral("…");
+    return title;
+}
+
+// `text` as "# "-comment lines of at most `width` characters
+QStringList commentLines(const QString &prefix, const QString &text, int width = 116)
+{
+    QStringList lines;
+    QString line = prefix;
+    for (const QString &word : text.simplified().split(' ', Qt::SkipEmptyParts))
+    {
+        if (line.size() + 1 + word.size() > width && line.size() > prefix.size())
+        {
+            lines << line;
+            line = "#   ";
+        }
+        line += (line.endsWith(' ') ? QString() : QStringLiteral(" ")) + word;
+    }
+    lines << line;
+    return lines;
+}
+
+// A top-level one-line import: moved to the top of the LIST script (an "import *" may stand nowhere else)
+bool isHoistableImport(const QString &line)
+{
+    static const QRegularExpression importRe(R"(^(?:import\s+\S|from\s+\S+\s+import\s+\S))");
+    return importRe.match(line).hasMatch() && !line.contains(';') && !line.trimmed().endsWith('\\') &&
+           line.count('(') == line.count(')');
+}
+} // namespace
+
+QString AiAssistant::buildListCode(const QList<ListCodeItem> &items, const QString &instruction,
+                                   const QDateTime &started, const QStringList &liveWindows, bool clean,
+                                   const std::function<QStringList(const QString &)> &unboundGlobalReads)
+{
+    static const QRegularExpression exploreMarkerRe(R"(^\s*#\s*EXPLORE\b)");
+    int included = 0;
+    for (const ListCodeItem &item : items)
+        if (!item.failed && item.giveUp.contains(false))
+            ++included;
+    QStringList out;
+    out << QString("# QtiSAS LIST, %1: %2 item(s), %3")
+               .arg(started.toString("yyyy-MM-dd HH:mm"))
+               .arg(items.size())
+               .arg(clean ? QString("%1 included").arg(included) : QString("the scripts exactly as they ran"));
+    if (!instruction.isEmpty())
+        out << commentLines("# LIST instruction:", instruction);
+    if (!clean)
+    {
+        for (const ListCodeItem &item : items)
+        {
+            out << ""
+                << QString("# --- Item %1%2: %3 ---")
+                       .arg(item.number)
+                       .arg(item.failed ? " (FAILED)" : "")
+                       .arg(listItemTitle(item.text));
+            for (const QString &script : item.scripts)
+                out << script.trimmed();
+        }
+        return out.join('\n') + '\n';
+    }
+
+    QStringList imports;
+    QStringList body;
+    QStringList made;
+    for (const ListCodeItem &item : items)
+    {
+        const QString title = listItemTitle(item.text);
+        if (item.failed || !item.giveUp.contains(false))
+        {
+            body << ""
+                 << QString("# --- Item %1: %2, not included — %3 ---")
+                        .arg(item.number)
+                        .arg(item.failed              ? "FAILED"
+                             : item.scripts.isEmpty() ? "nothing ran"
+                                                      : "GAVE UP")
+                        .arg(title);
+            continue;
+        }
+        for (const QString &window : item.windows)
+            if (liveWindows.contains(window) && !made.contains(window.section(':', 1)))
+                made << window.section(':', 1);
+        body << "" << QString("# --- Item %1: %2 ---").arg(item.number).arg(title);
+        QStringList scripts;
+        for (int i = 0; i < item.scripts.size(); ++i)
+            if (!item.giveUp.value(i))
+                scripts << item.scripts[i];
+        for (int s = 0; s < scripts.size(); ++s)
+        {
+            QString script = scripts[s];
+            // C1: of an action script bundled with its EXPLORE probe, the action half only
+            if (const QRegularExpressionMatch m = kActionScriptMarkerRe.match(script); m.hasMatch())
+                script = script.mid(m.capturedStart());
+            const QStringList lines = script.split('\n');
+            const QList<bool> inString = linesInsideMultilineString(script);
+            QStringList kept;
+            QList<bool> keptInString;
+            for (qsizetype i = 0; i < lines.size(); ++i)
+            {
+                QString line = lines[i];
+                if (!inString[i])
+                {
+                    qsizetype end = line.size();
+                    while (end > 0 && line[end - 1].isSpace())
+                        --end;
+                    line.truncate(end);
+                    // C3 / C4: imports to the top, the AI's marker lines away, one blank line at most
+                    if (isHoistableImport(line))
+                    {
+                        if (!imports.contains(line))
+                            imports << line;
+                        continue;
+                    }
+                    if (exploreMarkerRe.match(line).hasMatch() || kActionScriptMarkerRe.match(line).hasMatch())
+                        continue;
+                    if (line.isEmpty() && (kept.isEmpty() || kept.last().isEmpty()))
+                        continue;
+                }
+                kept << line;
+                keptInString << inString[i];
+            }
+            while (!kept.isEmpty() && kept.last().isEmpty())
+            {
+                kept.removeLast();
+                keptInString.removeLast();
+            }
+            const QString name = scripts.size() > 1 ? QString("item_%1_%2").arg(item.number).arg(s + 1)
+                                                    : QString("item_%1").arg(item.number);
+            QStringList function;
+            function << "def " + name + "():";
+            for (qsizetype i = 0; i < kept.size(); ++i)
+                function << (keptInString[i] || kept[i].isEmpty() ? kept[i] : "    " + kept[i]);
+            if (kept.isEmpty())
+                function << "    pass";
+            // C6: in its own function, as it ran in its own namespace — unless it reads a global it also assigns
+            const QStringList unbound =
+                unboundGlobalReads ? unboundGlobalReads(function.join('\n') + '\n') : QStringList();
+            if (!unbound.isEmpty())
+            {
+                body << QString("# at the top level, not in a function: it assigns %1, which it also reads as the "
+                                "global")
+                            .arg(unbound.join(", "))
+                     << kept;
+                continue;
+            }
+            body << function << name + "()";
+        }
+    }
+    if (!imports.isEmpty())
+        out << "" << imports;
+    if (!made.isEmpty())
+    {
+        QStringList quoted;
+        for (const QString &name : std::as_const(made))
+            quoted << "\"" + QString(name).replace('\\', "\\\\").replace('"', "\\\"") + "\"";
+        out << "" << "# the windows this LIST makes: run it in an empty project, or close them first";
+        QString line = "_made = [";
+        for (int i = 0; i < quoted.size(); ++i)
+        {
+            const QString piece = quoted[i] + (i + 1 < quoted.size() ? ", " : "]");
+            if (line.size() + piece.size() > 116)
+            {
+                out << line.trimmed();
+                line = "         ";
+            }
+            line += piece;
+        }
+        out << line;
+        out << "_existing = [n for n in _made if existWindow(n)]" << "if _existing:"
+            << "    raise RuntimeError(\"these windows exist already, close them or run in an empty project: \" + "
+               "\", \".join(_existing))";
+    }
+    out << body;
+    return out.join('\n') + '\n';
+}
+
+QString AiAssistant::listCode(bool clean) const
+{
+    if (m_listCodeItems.isEmpty())
+        return {};
+    const QStringList live = m_host ? m_host->liveObjects() : QStringList();
+    const auto reads = [this](const QString &code) {
+        return m_host ? m_host->unboundGlobalReads(code) : QStringList();
+    };
+    QString code = buildListCode(m_listCodeItems, m_listInstruction, m_listStarted, live, clean, reads);
+    if (clean && m_host && !m_host->canCompile(code))
+        return "# the clean form does not compile: the scripts as they ran\n" +
+               buildListCode(m_listCodeItems, m_listInstruction, m_listStarted, live, false);
+    return code;
+}
+

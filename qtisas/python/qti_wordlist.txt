@@ -464,6 +464,7 @@ aiAgents
 aiAgent
 setAiAgent
 aiClearHistory
+lastListCode
 aiConfig
 setAiConfig
 clone

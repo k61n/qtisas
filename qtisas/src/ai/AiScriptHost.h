@@ -113,6 +113,15 @@ class AiScriptHost
         Q_UNUSED(objects)
         return {};
     }
+
+    // The global names (the host's functions and modules, Python's builtins) that a function defined in `code` reads
+    // where it may not have assigned them yet: at a script's top level those lines read the global, inside a function
+    // they raise UnboundLocalError ("table = table(...)"). Empty when there are none or the host cannot tell.
+    virtual QStringList unboundGlobalReads(const QString &code) const
+    {
+        Q_UNUSED(code)
+        return {};
+    }
 };
 
 #endif

@@ -13,6 +13,7 @@ Description: AI assistant — sends script/note text to an external or local LLM
 #ifndef AIASSISTANT_H
 #define AIASSISTANT_H
 
+#include <QDateTime>
 #include <QElapsedTimer>
 #include <QHash>
 #include <QNetworkAccessManager>
@@ -21,6 +22,8 @@ Description: AI assistant — sends script/note text to an external or local LLM
 #include <QObject>
 #include <QSettings>
 #include <QString>
+
+#include <functional>
 
 #include "AiContentProvider.h"
 #include "AiScriptHost.h"
@@ -430,6 +433,30 @@ class AiAssistant : public QObject
     // The script with that missing label put in front of its LAST line, when that line is a top-level print() or
     // scriptPrint() of the values; empty if it is not.
     static QString labeledLastPrintRepair(const QString &code, const QString &removedText);
+    // What one item of a LIST ran, for lastListCode(): its scripts that ran without an error (the successful attempt
+    // only, as it ran — auto-repairs included; split parts in order), whether each is a give-up message, the windows
+    // the item made ("kind:name", AiScriptHost::liveObjects()) and how it ended.
+    struct ListCodeItem
+    {
+        int number = 0;
+        QString text;
+        QStringList scripts;
+        QList<bool> giveUp;
+        QStringList windows;
+        bool failed = false;
+    };
+    // The scripts of a LIST as one script. clean=false: a header, then each item's scripts as they ran under
+    // "# --- Item N: <text> ---". clean=true: imports at the top, a check that stops when a window the items made
+    // exists already (`liveWindows`: those still open now), and each script in its own function item_N() called in
+    // place — the items ran in fresh namespaces, so their variables must not meet; a script `unboundGlobalReads` says
+    // would read a global as an unassigned local stays at the top level. EXPLORE halves and give-ups are left out.
+    static QString buildListCode(const QList<ListCodeItem> &items, const QString &instruction, const QDateTime &started,
+                                 const QStringList &liveWindows, bool clean,
+                                 const std::function<QStringList(const QString &)> &unboundGlobalReads = {});
+    // For each line of `code`, whether it begins inside a triple-quoted string (so it must not be re-indented).
+    static QList<bool> linesInsideMultilineString(const QString &code);
+    // The scripts of the current or last LIST (see buildListCode()); empty before any LIST.
+    QString listCode(bool clean) const;
     // A script that only prints string literals — a text answer, nothing for self-review to check.
     static bool isPureTextAnswer(const QString &code);
     // A short question with no action verb ("there are spheres?"): answered directly, never split into a plan.
@@ -802,6 +829,12 @@ class AiAssistant : public QObject
     QList<EarlierItem> m_earlierItems;
     QStringList m_itemObjectsAtStart;
     QStringList m_itemRanScripts;
+    // lastListCode(): every finished item of the current or last LIST, its instruction and start; emptied when a LIST
+    // starts, kept after it ends. m_listItemFailed: the current item was given up (splitModeGiveUpNote()).
+    QList<ListCodeItem> m_listCodeItems;
+    QString m_listInstruction;
+    QDateTime m_listStarted;
+    bool m_listItemFailed = false;
     // The scripts of this request that ran and failed — passed to the known-mistake checks with the earlier split
     // parts' scripts, so that a retry reusing what its own failed attempt compiled or created counts as this request's
     // own work. Confirmed live (LIST 5, item 1): the retry reopened "ai/Quad", compiled by its failed attempt a moment

@@ -5878,6 +5878,12 @@ public:
     sipRes = true;
 %End
   void aiClearHistory();
+  // the scripts the items of the current or last LIST ran, as one script (AiAssistant::buildListCode())
+  QString lastListCode(bool clean = true);
+%MethodCode
+  AiAssistant *ai = sipCpp->aiAssistant();
+  sipRes = new QString(ai ? ai->listCode(a0) : QString());
+%End
   SIP_PYOBJECT aiConfig();
 %MethodCode
   // the "Ask AI" page: the agent's fields (read only here; setAiAgent() changes them) and the global settings

@@ -6513,6 +6513,49 @@ bool ApplicationWindow::canCompile(const QString &code, QString *errorOut) const
     return compilable;
 }
 
+// Python's own compiler decides: since 3.12 it emits LOAD_FAST_CHECK for a local it cannot prove assigned at that read
+// (older versions: every local counts). Only the names the scripts see as globals matter — a plain local read too
+// early failed at the top level as well.
+QStringList ApplicationWindow::unboundGlobalReads(const QString &code) const
+{
+    auto *python = qobject_cast<PythonScripting *>(scriptEnv);
+    if (!python || !python->globalDict())
+        return {};
+    static const char *helper = "import builtins, dis\n"
+                                "_known = set(_globals) | set(dir(builtins))\n"
+                                "_checked = 'LOAD_FAST_CHECK' in dis.opmap\n"
+                                "_found = set()\n"
+                                "for _f in compile(_src, '<list>', 'exec').co_consts:\n"
+                                "    if hasattr(_f, 'co_code'):\n"
+                                "        _reads = {i.argval for i in dis.get_instructions(_f) if i.opname == "
+                                "'LOAD_FAST_CHECK'} if _checked else set(_f.co_varnames)\n"
+                                "        _found |= (_reads | set(_f.co_cellvars)) & _known\n"
+                                "_result = sorted(_found)\n";
+    QStringList names;
+    PyGILState_STATE gstate = PyGILState_Ensure();
+    PyObject *ns = PyDict_New();
+    PyObject *builtinsModule = PyImport_ImportModule("builtins");
+    PyObject *source = PyUnicode_FromString(code.toUtf8().constData());
+    if (ns && builtinsModule && source)
+    {
+        PyDict_SetItemString(ns, "__builtins__", builtinsModule);
+        PyDict_SetItemString(ns, "_src", source);
+        PyDict_SetItemString(ns, "_globals", python->globalDict());
+        PyObject *ret = PyRun_String(helper, Py_file_input, ns, ns);
+        if (PyObject *result = ret ? PyDict_GetItemString(ns, "_result") : nullptr; result && PyList_Check(result))
+            for (Py_ssize_t i = 0; i < PyList_Size(result); i++)
+                if (const char *name = PyUnicode_AsUTF8(PyList_GetItem(result, i)))
+                    names << QString::fromUtf8(name);
+        Py_XDECREF(ret);
+    }
+    PyErr_Clear();
+    Py_XDECREF(source);
+    Py_XDECREF(builtinsModule);
+    Py_XDECREF(ns);
+    PyGILState_Release(gstate);
+    return names;
+}
+
 // Lazy-constructs m_ai (with the last-selected preset's API key/base URL/model/max tokens/docs
 // mode loaded, if any) — a no-op if askAiConfigure() already pre-created it, or if this isn't the
 // first askAi() call in the session.
