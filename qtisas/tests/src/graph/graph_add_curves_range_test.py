@@ -8,10 +8,10 @@ with no new data. Now a linear or log axis takes the limits of setLinOrLogAxis()
 try:
     from PyQt6.QtCore import QMetaObject
     from PyQt6.QtGui import QAction
-    from PyQt6.QtWidgets import QApplication, QDialog, QTreeWidget
+    from PyQt6.QtWidgets import QApplication, QDialog, QLineEdit, QTreeWidget
 except ImportError:
     from PyQt5.QtCore import QMetaObject
-    from PyQt5.QtWidgets import QAction, QApplication, QDialog, QTreeWidget
+    from PyQt5.QtWidgets import QAction, QApplication, QDialog, QLineEdit, QTreeWidget
 
 app = [w for w in QApplication.topLevelWidgets() if w.metaObject().className() == "ApplicationWindow"][0]
 
@@ -34,18 +34,26 @@ def add_with_dialog(window, column):
     dialog = [d for d in app.findChildren(QDialog) if d.metaObject().className() == "CurvesDialog" and d.isVisible()]
     assert dialog, "no Add/Remove Curves dialog"
     tree = dialog[-1].findChildren(QTreeWidget)[0]
+    # the dialog's column filter is a user setting ("D*" hid these columns): "*" here, and the user's back on close
+    data_filter = dialog[-1].findChild(QLineEdit)
+    user_filter = data_filter.text()
+    try:
+        data_filter.setText("*")
+        QApplication.processEvents()
 
-    def select(item):
-        for i in range(item.childCount()):
-            if item.child(i).text(0) == column:
-                item.child(i).setSelected(True)
-            select(item.child(i))
+        def select(item):
+            for i in range(item.childCount()):
+                if item.child(i).text(0) == column:
+                    item.child(i).setSelected(True)
+                select(item.child(i))
 
-    for i in range(tree.topLevelItemCount()):
-        select(tree.topLevelItem(i))
-    assert tree.selectedItems(), column
-    QMetaObject.invokeMethod(dialog[-1], "addCurves")
-    QApplication.processEvents()
+        for i in range(tree.topLevelItemCount()):
+            select(tree.topLevelItem(i))
+        assert tree.selectedItems(), column
+        QMetaObject.invokeMethod(dialog[-1], "addCurves")
+        QApplication.processEvents()
+    finally:
+        data_filter.setText(user_filter)
     dialog[-1].close()
     QApplication.processEvents()
 
