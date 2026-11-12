@@ -4691,15 +4691,26 @@ void Graph::updatePlot()
        updateScale();
         return;
     }
-    
-	if (d_auto_scale && !zoomOn() && d_active_tool == nullptr){
-		for (int i = 0; i < QwtPlot::axisCnt; i++){
-			setAxisAutoScale(i);
-			d_user_step[i] = 0.0;
-		}
-	}
-	replot();
-	updateScale();
+
+    // A linear or log axis takes the graph's own limits, as in setAutoScale(): Qwt's autoscale rounded a log axis
+    // out to other decades, so adding a curve (Add/Remove Curves) moved a log axis 1..111 to 1..1000 even when the
+    // data did not change. Other scales, an axis with a break or a hidden axis keep Qwt's autoscale.
+    if (d_auto_scale && !zoomOn() && d_active_tool == nullptr)
+    {
+        for (int i = 0; i < QwtPlot::axisCnt; i++)
+        {
+            d_user_step[i] = 0.0;
+            auto *engine = dynamic_cast<ScaleEngine *>(axisScaleEngine(i));
+            const int axisType = engine ? engine->type() : -1;
+            if (engine && !engine->hasBreak() && axisEnabled(i) && !isPiePlot() &&
+                (axisType == ScaleTransformation::Linear || axisType == ScaleTransformation::Log10))
+                setLinOrLogAxis(i, axisType == ScaleTransformation::Log10, false, true);
+            else
+                setAxisAutoScale(i);
+        }
+    }
+    replot();
+    updateScale();
 }
 
 void Graph::updateScale()
