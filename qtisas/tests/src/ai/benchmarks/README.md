@@ -84,6 +84,11 @@ LIST 3–5 carry verify snippets too (2026-10-19, 21 of 24 items; reference scri
 items have none: LIST 3 item 4 (the column made writable again — there is no read-only getter) and LIST 4 items 3
 and 5 check nothing of their own after item 6 deletes "Grid" and "Names" (item 6's snippet checks that).
 
+**Prerequisites.** An item may carry `"needs"`: the items whose result it works on (LIST 6: items 3, 4, 6 and 8 need
+item 2's table "Lyso-sub", item 7 needs items 3 and 4). A lost item whose prerequisite was lost too is a cascade: the
+score stays as it is, but the report marks it ("after item 2 failed"), the summary counts it (`cascade`) and
+`benchmark_stats.py` shows it in its own column — a weak model losing item 2 otherwise looks like six failures.
+
 ## LIST 3 request — mode comparison benchmark with checkable results
 
 Purpose: ONE fixed task list to run unchanged under every

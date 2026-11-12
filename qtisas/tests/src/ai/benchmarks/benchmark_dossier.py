@@ -21,6 +21,28 @@ END_RE = re.compile(r"^▸▸  (?:verify:|AI LIST: all)")
 R_LINE_RE = re.compile(r"^R\d+:")
 
 
+def min_calls_per_item(markers, ai_config):
+    """The fewest model calls one item can take: one script, plus the plan with split mode, plus the review with
+    self-review. As QtiSAS decides it: the LIST's markers first, then the settings, which a BIGMODEL preset turns
+    off."""
+    words, big = markers.split(), bool(ai_config.get("bigModel"))
+    split = "SPLIT" in words or ("NOSPLIT" not in words and bool(ai_config.get("splitByDefault")) and not big)
+    review = "REVIEW" in words or ("NOREVIEW" not in words and bool(ai_config.get("selfReviewEnabled")) and not big)
+    return 1 + split + review
+
+
+def lost_after(bench_items, verdicts):
+    """{item: [the items it needs that were not ok]} for every lost item with a failed prerequisite: an item may carry
+    "needs" (LIST 6: items 3, 4, 6 and 8 work on item 2's table) — lost after its prerequisite failed, it is a cascade,
+    not a failure of its own. verdicts: {item number: verdict}. Scores stay as they are; this only tells them apart."""
+    after = {}
+    for n, item in enumerate(bench_items, 1):
+        failed = [k for k in item.get("needs", []) if verdicts.get(k, "ok") != "ok"]
+        if failed and verdicts.get(n, "ok") != "ok":
+            after[n] = failed
+    return after
+
+
 def item_sections(log_text):
     """{item number: [its log lines]} — from its "AI LIST: item n/N" line up to the next item or the verify."""
     sections, current = {}, None

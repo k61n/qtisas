@@ -198,6 +198,9 @@ def score(bench, result):
         rows.append({"item": n, "expected": item["expected"], "got": got, "verdict": verdict,
                      "verified": result.get("verify", {}).get(str(n), "") if item.get("verify") else None,
                      "scripts": run.get("scripts"), "seconds": run.get("seconds"), "hint": item.get("hint", "")})
+    after = benchmark_dossier.lost_after(bench["items"], {r["item"]: r["verdict"] for r in rows})
+    for r in rows:
+        r["after"] = after.get(r["item"], [])
     return rows
 
 
@@ -491,10 +494,13 @@ def main(argv=None):
     silent = sum(r["verdict"].endswith("(silent)") for r in rows)  # an unverified line counts as silent
     reported = sum(r["verdict"].endswith("(reported)") for r in rows)
     backend = sum(r["verdict"] in ("backend error", "not run") for r in rows)
-    # call efficiency: the fewest model calls the list could take (one per item) / the calls it took; 1 = no extra call.
-    # Compares runs with the same score: 12/12 in 12 calls is better than 12/12 in 25.
+    cascade = sum(bool(r["after"]) for r in rows)  # lost after an item they need failed
+    # call efficiency: the fewest model calls the list could take / the calls it took; 1 = no extra call. Compares runs
+    # with the same score: 12/12 in 12 calls is better than 12/12 in 25. The fewest is one per item, two with a review
+    # or a split plan, three with both: counted as one per item, a review run looked half as efficient as it was.
     ai_calls = calls[0] if args.reference is None else None
-    call_efficiency = round(len(rows) / ai_calls, 2) if ai_calls else None
+    fewest = len(rows) * benchmark_dossier.min_calls_per_item(args.markers, ai_config)
+    call_efficiency = round(min(1.0, fewest / ai_calls), 2) if ai_calls else None
     preset, model = ai_config.get("agent", ""), ai_config.get("model", "")
     if args.reference is not None:
         preset, model = "reference", os.path.relpath(args.reference, os.path.dirname(os.path.abspath(args.benchmark)))
@@ -505,6 +511,7 @@ def main(argv=None):
                           for tier in ("on demand", "off") if any(v == tier for v in tiers.values()))
     summary = {"date": stamp, "benchmark": bench["name"], "markers": args.markers, "preset": preset, "model": model,
                "score": ok, "of": len(rows), "silent": silent, "reported": reported, "backend_errors": backend,
+               "cascade": cascade,
                "seconds": result.get("seconds"), "scripts": result.get("scripts"), "tokens": result.get("tokens"),
                "status": result.get("status"), "settings": " ".join(args.set), "app": args.app or "",
                "calls": ai_calls, "callEfficiency": call_efficiency,
@@ -552,6 +559,8 @@ def main(argv=None):
             note += " [%s — seen %d× before]" % (this[r["item"]][:60], seen.get(this[r["item"]], 0))
         if r["verdict"].startswith("unverified"):
             note = "the state after the list: %s" % (r["verified"] or "nothing reported")
+        if r["after"]:
+            note = "after item %s failed; %s" % (", ".join(map(str, r["after"])), note)
         print("  %2d %-22s %-24s %s" % (r["item"], r["verdict"], r["got"][:24] or "—", note))
     if summary["model_changed"]:
         print("NOTE: the model behind %s changed since its last run: %s" % (preset, summary["model_changed"]))

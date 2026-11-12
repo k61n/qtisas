@@ -87,9 +87,23 @@ def load_runs(reports, prefixes):
         prompt, cached, reported = log_tokens(path[:-5] + ".log")
         runs[max(matching, key=len)].append({
             "label": label, "lane": lane_of(summary), "list": summary.get("benchmark"),
-            "summary": summary, "items": data.get("items", []),
+            "summary": summary, "items": data.get("items", []), "ai_config": data.get("ai_config") or {},
             "prompt": prompt, "cached": cached, "cache_reported": reported})
     return runs
+
+
+def needs_by_list(folder):
+    """{benchmark name: its items}, from the benchmark files beside this script: what each item needs."""
+    lists = {}
+    for path in glob.glob(os.path.join(folder, "*.json")):
+        try:
+            with open(path, encoding="utf-8") as f:
+                bench = json.load(f)
+        except (OSError, ValueError):
+            continue
+        if isinstance(bench, dict) and "name" in bench and "items" in bench:
+            lists[bench["name"]] = bench["items"]
+    return lists
 
 
 def rounds_of(runs):
@@ -149,15 +163,35 @@ def main(argv=None):
               % (label, lane, len(rounds), statistics.mean(scores), of, min(scores), max(scores),
                  100 * statistics.mean(scores) / of, per("silent"), per("reported"), per("backend_errors")))
 
+    # M = Q · √E: Q = (ok − silent) ÷ items, a silent wrong answer cancels a right one; E = the fewest calls (one per
+    # item, two with a review or a split plan, three with both) ÷ the calls, at most 1. Time is left out: it measures
+    # the server, not the model.
+    print("\n## Master parameter M = Q · √E (all rounds)\n")
+    print("| Label | Lane | Q | E | M |")
+    print("|---|---|---|---|---|")
+    for label, lane, rounds in rows:
+        runs = [r for rnd in rounds for r in rnd]
+        q = sum(r["summary"]["score"] - (r["summary"].get("silent") or 0) for r in runs) / sum(
+            r["summary"]["of"] for r in runs)
+        calls = sum(r["summary"].get("calls") or 0 for r in runs)
+        fewest = sum(r["summary"]["of"] * benchmark_dossier.min_calls_per_item(r["summary"].get("markers") or "",
+                                                                                 r["ai_config"]) for r in runs)
+        e = min(1.0, fewest / calls) if calls and all(r["summary"].get("calls") for r in runs) else None
+        print("| %s | %s | %.3f | %s | %s |" % (label, lane, q, "%.2f" % e if e is not None else "—",
+                                                 "%.3f" % (q * e ** 0.5) if e is not None else "—"))
+
     print("\n## Time and calls (per round)\n")
     print("| Label | Lane | Time | Calls | Call efficiency |")
     print("|---|---|---|---|---|")
     for label, lane, rounds in rows:
         seconds = statistics.mean(sum(r["summary"].get("seconds") or 0 for r in rnd) for rnd in rounds)
         calls = statistics.mean(sum(r["summary"].get("calls") or 0 for r in rnd) for rnd in rounds)
-        items = sum(r["summary"]["of"] for r in rounds[0])
+        fewest = statistics.mean(
+            sum(r["summary"]["of"] * benchmark_dossier.min_calls_per_item(r["summary"].get("markers") or "",
+                                                                           r["ai_config"]) for r in rnd)
+            for rnd in rounds)
         print("| %s | %s | %.1f min | %.0f | %s |" % (label, lane, seconds / 60, calls,
-                                                     "%.2f" % (items / calls) if calls else "—"))
+                                                     "%.2f" % min(1.0, fewest / calls) if calls else "—"))
 
     print("\n## Tokens (per round, as the provider reported them)\n")
     print("| Label | Lane | Prompt | Read from cache | Not cached | Cached share | Billable equivalent |")
@@ -174,22 +208,29 @@ def main(argv=None):
                   % (label, lane, fmt_m(prompt) if prompt else "—"))
 
     print("\n## Failed items\n")
-    print("| Label | Lane | Item | Failed | Verdicts |")
-    print("|---|---|---|---|---|")
+    # "after": lost after an item it needs failed (the list's "needs"), counted apart from its own failures
+    print("| Label | Lane | Item | Failed | After a needed item failed | Verdicts |")
+    print("|---|---|---|---|---|---|")
+    benches = needs_by_list(os.path.dirname(os.path.abspath(__file__)))
     any_failed = False
     for label, lane, rounds in rows:
-        failed = defaultdict(list)
+        failed, cascade = defaultdict(list), defaultdict(int)
         for rnd in rounds:
             for run in rnd:
+                after = benchmark_dossier.lost_after(benches.get(run["list"], []),
+                                                     {i["item"]: i.get("verdict") for i in run["items"]})
                 for item in run["items"]:
                     if item.get("verdict") != "ok":
-                        failed["%s·%s" % (run["list"].replace("LIST ", "L"), item["item"])].append(item["verdict"])
+                        key = "%s·%s" % (run["list"].replace("LIST ", "L"), item["item"])
+                        failed[key].append(item["verdict"])
+                        cascade[key] += item["item"] in after
         for key in sorted(failed, key=lambda k: (-len(failed[k]), k)):
             any_failed = True
             kinds = ", ".join("%s ×%d" % (v, failed[key].count(v)) for v in sorted(set(failed[key])))
-            print("| %s | %s | %s | %d/%d | %s |" % (label, lane, key, len(failed[key]), len(rounds), kinds))
+            print("| %s | %s | %s | %d/%d | %d | %s |"
+                  % (label, lane, key, len(failed[key]), len(rounds), cascade[key], kinds))
     if not any_failed:
-        print("| — | — | — | none | — |")
+        print("| — | — | — | none | — | — |")
 
     if args.items:
         print("\n## Every failed item\n")
