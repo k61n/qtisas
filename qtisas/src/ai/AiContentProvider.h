@@ -565,10 +565,6 @@ class AiContentProvider
     // script back unchanged and the item was given up.
     virtual QString repeatedResultLabelRepair(const QString &code, const QString &requestText) const = 0;
 
-    // Returns `code` with a print of the bare result label removed and the label put in front of the one later print
-    // that carries the requested values without it, or empty when the shape is not that unambiguous one.
-    virtual QString labelOnlyResultLineRepair(const QString &code, const QString &requestText) const = 0;
-
     // Returns `code` with every string literal that is exactly the short part of a name the request quotes with its
     // folder ("MyPeak" for "ai/MyPeak") replaced by that full name, or empty when there is none.
     virtual QString bareFolderNameRepair(const QString &code, const QString &requestText) const = 0;
@@ -580,10 +576,6 @@ class AiContentProvider
     // Returns `code` with the two indices of every cell()/setCell() on a matrix it creates swapped, when some are out
     // of the matrix's range and all fit swapped — the matrix read transposed — or empty.
     virtual QString matrixTransposedCellRepair(const QString &code) const = 0;
-
-    // Returns `code` with every cell call of a table this script creates with literal sizes swapped to (col, row) when
-    // it can only have been meant that way (see matrixTransposedCellRepair()), or empty.
-    virtual QString tableTransposedCellRepair(const QString &code) const = 0;
 
     // Returns `code` with ** made ^ in the formula of a column it recalculates with muParser forced, or empty.
     virtual QString muParserPowerRepair(const QString &code) const = 0;

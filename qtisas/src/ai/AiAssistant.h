@@ -387,6 +387,8 @@ class AiAssistant : public QObject
     // Once per LIST item: asks for the item's result line when the item finished and nothing printed it. True when it
     // asked (the item then ends after that script).
     bool requestMissingResultLine();
+    // After that one ask: still no result line, so the item is reported as failed instead of ending silently.
+    void reportMissingResultLine();
 
     QString exploreSlotText(bool expectsCode) const;
 
@@ -417,6 +419,10 @@ class AiAssistant : public QObject
     // The removed trailing text has a "label: values" line whose label no string in the script prints: the model
     // wrote its result line as text instead of printing it. Empty if not.
     static QString unprintedOutputLineMistake(const QString &code, const QString &removedText);
+    // True when a line of `output` (what the item's scripts printed) starts with the result label `label`.
+    static bool resultLinePrinted(const QString &label, const QString &output);
+    // The last line of `output` that starts with `label`, trimmed and at most 200 characters; empty if there is none.
+    static QString lastResultLine(const QString &label, const QString &output);
     // `code` with the statements after `t = newTable(...)` (or newMatrix) moved out of its `if t is None:` block, so
     // only the creation is conditional; empty when there is no such block (or an else branch follows it). A table in
     // `objectsBefore` (AiScriptHost::liveObjects() when the request started) is left alone.
@@ -827,6 +833,7 @@ class AiAssistant : public QObject
         int number = 0;
         QStringList objects;
         QStringList compiled;
+        QString resultLine; // the result line the item printed ("R3: 24 100"); empty when it failed or printed none
     };
     QList<EarlierItem> m_earlierItems;
     QStringList m_itemObjectsAtStart;

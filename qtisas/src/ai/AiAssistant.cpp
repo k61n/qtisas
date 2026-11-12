@@ -410,6 +410,9 @@ void AiAssistant::recordFinishedListItem()
             code.windows << object;
     code.failed = m_listItemFailed;
     m_listCodeItems << code;
+    if (m_content && !m_listItemFailed)
+        item.resultLine =
+            lastResultLine(m_content->resultLabel(withoutRequestSuffix(listItems[listItemIndex].text)), m_itemOutput);
     static const QRegularExpression nameRe(R"RX(\bsetFunctionName\s*\(\s*["']([^"']+)["'])RX");
     static const QRegularExpression compileRe(R"(\.\s*compile\s*\()");
     for (const QString &script : std::as_const(m_itemRanScripts))
@@ -420,7 +423,7 @@ void AiAssistant::recordFinishedListItem()
                 if (!item.objects.contains(object) && !item.compiled.contains(object))
                     item.compiled << object;
             }
-    if (!item.objects.isEmpty() || !item.compiled.isEmpty())
+    if (!item.objects.isEmpty() || !item.compiled.isEmpty() || !item.resultLine.isEmpty())
         m_earlierItems << item;
 }
 
@@ -450,6 +453,13 @@ QString AiAssistant::createdByEarlierItemsNote() const
     const QStringList live = m_host->liveObjects();
     QStringList perItem;
     QStringList consoleParts;
+    // What the earlier items printed as their result: a LIST item gets no history, so a value found earlier ("the Rg
+    // you found") was read again from a table or guessed. Confirmed live (LIST 6, item 7, every model, 0 of 83 runs):
+    // the report note got its Rg and radius from the fit's session table — empty, or the wrong row.
+    QStringList results;
+    for (const EarlierItem &item : m_earlierItems)
+        if (!item.resultLine.isEmpty())
+            results << QString("item %1: %2").arg(item.number).arg(item.resultLine);
     QStringList previousDescribed; // what the item right before this one made, as described below
     QString previousTable;
     for (const EarlierItem &item : m_earlierItems)
@@ -492,7 +502,7 @@ QString AiAssistant::createdByEarlierItemsNote() const
                 }
         }
     }
-    if (perItem.isEmpty())
+    if (perItem.isEmpty() && results.isEmpty())
         return {};
     // "The previous step" pinned to the item it names. Confirmed live (local all-pyi LIST 1, item 10, five runs of
     // 2026-10-14): "Plot the fit results from the previous step" with item 9's "fitCurve-sasviewmodels/sphere" listed
@@ -506,14 +516,25 @@ QString AiAssistant::createdByEarlierItemsNote() const
                        previousDescribed.join("; ") + ". Work on exactly these objects, by name" +
                        (previousTable.isEmpty() ? QString() : " — e.g. table(\"" + previousTable + "\")") +
                        "; nothing else is meant.";
-    m_host->print("▸▸▸ AI LIST: made by earlier items — " + consoleParts.join(" | "));
+    if (!perItem.isEmpty())
+        m_host->print("▸▸▸ AI LIST: made by earlier items — " + consoleParts.join(" | "));
+    if (!results.isEmpty())
+        m_host->print("▸▸▸ AI LIST: results of earlier items — " + results.join(" | "));
     if (!previousNote.isEmpty())
         m_host->print(QString("▸▸▸ AI LIST: \"the previous step\" = item %1").arg(listItemIndex));
-    return "\n\nMADE BY EARLIER ITEMS of this list (read from QtiSAS — they exist now), item by item:\n- " +
-           perItem.join("\n- ") +
-           "\nWhen this item refers to an earlier result without naming it (\"the previous step\", \"the model\", "
-           "\"the data\", \"it\"), it means these objects — the most recent item's first; use them by name." +
-           previousNote;
+    QString note;
+    if (!perItem.isEmpty())
+        note += "\n\nMADE BY EARLIER ITEMS of this list (read from QtiSAS — they exist now), item by item:\n- " +
+                perItem.join("\n- ") +
+                "\nWhen this item refers to an earlier result without naming it (\"the previous step\", \"the model\", "
+                "\"the data\", \"it\"), it means these objects — the most recent item's first; use them by name." +
+                previousNote;
+    if (!results.isEmpty())
+        note += "\n\nRESULT LINES PRINTED BY EARLIER ITEMS of this list (what their scripts printed):\n- " +
+                results.join("\n- ") +
+                "\nA value this item takes from an earlier item (\"the Rg you found\", \"the fitted radius\") is the "
+                "one printed here: use it as printed, do not compute it again or read it from a table.";
+    return note;
 }
 
 bool AiAssistant::namesSomethingNew(const QString &description, const QString &requestText)
@@ -866,8 +887,11 @@ static bool inCreationClause(const QString &text, qsizetype nameStart, qsizetype
     // and a kind word between), or right before data/points/values/column(s)/residuals, is read.
     static const QRegularExpression sourceBeforeRe(R"(\b(?:from|of)\s+(?:the\s+)?(?:\w+\s+)?"?$)",
                                                    QRegularExpression::CaseInsensitiveOption);
-    static const QRegularExpression sourceAfterRe(R"(^"?\s+(?:\w+\s+)?(?:data|points|values|columns?|residuals)\b)",
-                                                  QRegularExpression::CaseInsensitiveOption);
+    // ... but "with columns" describes the table being made: confirmed live (LIST 6 item 2, every model), "into a new
+    // table \"Lyso-sub\" with columns q, I and dI" was taken as read, checked as existing, and the item refused.
+    static const QRegularExpression sourceAfterRe(
+        R"(^"?\s+(?:(?!with\b)\w+\s+)?(?:data|points|values|columns?|residuals)\b)",
+        QRegularExpression::CaseInsensitiveOption);
     if (sourceBeforeRe.match(text.left(nameStart)).hasMatch() || sourceAfterRe.match(text.mid(nameEnd)).hasMatch())
         return false;
     const QString before = text.left(nameStart);
@@ -4081,7 +4105,44 @@ void AiAssistant::advanceListItem()
 {
     if (requestMissingResultLine())
         return;
+    reportMissingResultLine();
     startNextListItem();
+}
+
+QString AiAssistant::lastResultLine(const QString &label, const QString &output)
+{
+    if (label.isEmpty())
+        return {};
+    QString found;
+    for (const QString &line : output.split('\n'))
+        if (line.trimmed().startsWith(label))
+            found = line.trimmed();
+    return found.size() > 200 ? found.left(200) + "..." : found;
+}
+
+bool AiAssistant::resultLinePrinted(const QString &label, const QString &output)
+{
+    const QRegularExpression printedRe("^\\s*" + QRegularExpression::escape(label),
+                                       QRegularExpression::MultilineOption);
+    return printedRe.match(output).hasMatch();
+}
+
+void AiAssistant::reportMissingResultLine()
+{
+    // Confirmed live (LIST 6, Qwen, item 2): its scripts only printed the tables, the one ask for the result line read
+    // "Lyso-sub" that no script had made, the retry printed the tables again, and the item ended without "R2:" and
+    // without a word — 45 such silent items in the runs since 2026-10. QtiSAS knows the line is missing: it says so.
+    if (!m_content || !m_host || !m_resultLineRetried || listItemIndex < 0 || listItemIndex >= listItems.size())
+        return;
+    const QString label = m_content->resultLabel(withoutRequestSuffix(listItems[listItemIndex].text));
+    if (label.isEmpty() || resultLinePrinted(label, m_itemOutput))
+        return;
+    m_listItemFailed = true; // lastListCode(): this item only as a comment line
+    m_host->print(QString("▸▸▸ AI: no script printed the \"%1\" result line, not even when asked for it — LIST item "
+                          "%2/%3 failed.")
+                      .arg(label)
+                      .arg(listItemIndex + 1)
+                      .arg(listItems.size()));
 }
 
 bool AiAssistant::requestMissingResultLine()
@@ -4092,9 +4153,7 @@ bool AiAssistant::requestMissingResultLine()
     const QString label = m_content->resultLabel(itemText);
     if (label.isEmpty())
         return false;
-    const QRegularExpression printedRe("^\\s*" + QRegularExpression::escape(label),
-                                       QRegularExpression::MultilineOption);
-    if (printedRe.match(m_itemOutput).hasMatch())
+    if (resultLinePrinted(label, m_itemOutput))
         return false;
     // Confirmed live (LIST 5, item 4): a block removed the line from part 1, part 2 never had it, and the item ended
     // silently without a result. Once per item; everything the item made already exists, so this is a print-only task.
@@ -5729,14 +5788,6 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
                               "exactly ONE.");
                 code = repaired;
             }
-        if (laterSplitPartDescriptions().isEmpty())
-            if (const QString repaired = m_content->labelOnlyResultLineRepair(code, originalRequestText);
-                !repaired.isEmpty())
-            {
-                m_host->print("▸▸▸ AI: auto-corrected: the result label, printed alone, moved onto the line that "
-                              "prints the values.");
-                code = repaired;
-            }
         {
             QStringList notes;
             if (const QString repaired = m_content->apiCallRepairs(code, originalRequestText,
@@ -5758,12 +5809,6 @@ void AiAssistant::runActionScript(const QString &rawCode, bool compilable, const
         {
             m_host->print("▸▸▸ AI: auto-corrected: delete(...) became Compiler.delete(...) — there is no global "
                           "delete().");
-            code = repaired;
-        }
-        if (const QString repaired = m_content->tableTransposedCellRepair(code); !repaired.isEmpty())
-        {
-            m_host->print("▸▸▸ AI: auto-corrected: the table's cell calls wrote rows as columns (out of range as "
-                          "written, all in range swapped) — a table cell is (col, row).");
             code = repaired;
         }
         if (const QString repaired = m_content->matrixTransposedCellRepair(code); !repaired.isEmpty())

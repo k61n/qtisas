@@ -129,6 +129,16 @@ def _seconds(match, first_group):
     return (int(minutes) * 60 if minutes else 0) + float(match.group(first_group + 1))
 
 
+# The model's backend failed, not the model: no connection, or an HTTP error that is the server's or the account's
+# (5xx, 401/402/403 key or payment, 429 rate limit). Confirmed (benchmark Step 3a, Codex): every call answered "AI HTTP
+# 502: ... Your workspace is out of credits" and the items were scored as the model's own failures (35 of 43).
+_BACKEND_FAILURE_RE = re.compile(r"^▸▸▸ AI(?:: connection error| HTTP (?:5\d\d|401|402|403|429)\b)")
+
+
+def is_backend_failure(line):
+    return bool(_BACKEND_FAILURE_RE.match(line))
+
+
 def summarize_ai(lines):
     """The structured part of an AI run, read from what it printed: status, R<n>: lines, scripts run, tokens sent,
     and one entry per LIST item (its text, scripts, R lines, seconds, failed)."""
@@ -151,14 +161,14 @@ def summarize_ai(lines):
         if items:
             if "AI code (running)" in line:
                 items[-1]["scripts"] += 1
-            if line.startswith("▸▸▸ AI: connection error"):  # the model's backend, not the model's answer
+            if is_backend_failure(line):  # the model's backend, not the model's answer
                 items[-1]["backend_error"] = True
             if re.search(r"LIST item %d/\d+ failed" % items[-1]["item"], line):
                 items[-1]["failed"] = True
             if not line.startswith("▸"):
                 items[-1]["r_lines"] += _R_LINE_RE.findall(line)
     stopped = any(line.startswith("▸▸▸ AI: stopping") for line in lines) and not items
-    backend_errors = sum(line.startswith("▸▸▸ AI: connection error") for line in lines)
+    backend_errors = sum(is_backend_failure(line) for line in lines)
     failed_items = [i["item"] for i in items if i["failed"]]
     status = "stopped" if stopped else ("items-failed" if failed_items else "done")
     return {"ok": status == "done", "status": status, "transcript": transcript,

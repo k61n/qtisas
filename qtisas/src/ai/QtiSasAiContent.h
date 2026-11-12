@@ -85,11 +85,9 @@ class QtiSasAiContent : public AiContentProvider
     }
     QString nonFinalResultLineRepair(const QString &code, const QString &requestText, bool alsoComputed) const override;
     QString repeatedResultLabelRepair(const QString &code, const QString &requestText) const override;
-    QString labelOnlyResultLineRepair(const QString &code, const QString &requestText) const override;
     QString bareFolderNameRepair(const QString &code, const QString &requestText) const override;
     QString setCodeVariableRepair(const QString &code) const override;
     QString matrixTransposedCellRepair(const QString &code) const override;
-    QString tableTransposedCellRepair(const QString &code) const override;
     QString muParserPowerRepair(const QString &code) const override;
     static QString existenceReadBeforeCreationMistake(const QString &code);
     static QString bareObjectMethodMistake(const QString &code);
@@ -111,7 +109,6 @@ class QtiSasAiContent : public AiContentProvider
     static QString earlierPartVariableMistake(const QString &code, const QString &earlierPartsCode);
     QString noteTabIndexRepair(const QString &code) const override;
     QString noteTabSelfRunRepair(const QString &code) const override;
-    static QString scriptPrintKeywordMistake(const QString &code);
     static QString currentEditorAfterAddTabMistake(const QString &code, const QString &originalRequestText);
     // Python string literals blanked out, so a name inside one is not mistaken for a variable
     // reference — setParamNamesAll(["sigma", ...]) and setCode()'s C++ body are other namespaces.
@@ -181,9 +178,7 @@ class QtiSasAiContent : public AiContentProvider
     static QStringList requestedResultValues(const QString &requestText);
     static QString resultLineTooFewValuesMistake(const QString &code, const QString &originalRequestText);
     static QString rowRangeEndsOneShortMistake(const QString &code);
-    static QString hardcodedResultLineMistake(const QString &code, const QString &originalRequestText);
     static QString placeholderResultValueMistake(const QString &code, const QString &originalRequestText);
-    static QString noWorkFailureResultMistake(const QString &code, const QString &originalRequestText);
     static QString resultsAfterConfigureMistake(const QString &code);
     QString unusedParameterMistake(const QString &code) const;
     static QString repeatedResultLabelMistake(const QString &code, const QString &originalRequestText);
@@ -194,7 +189,6 @@ class QtiSasAiContent : public AiContentProvider
     static QString singletonCalledAsConstructorMistake(const QString &code);
     static QString pyQt6FrameStyleComboMistake(const QString &code);
     static QString fittableParametersDirectiveIgnoredMistake(const QString &code, const QString &originalRequestText);
-    static QString redundantFittableReconfigureMistake(const QString &code, const QString &earlierPartsCode);
     static QString compilerScanGroupsAfterNameMistake(const QString &code);
     static QString fittableFitBeforeConfigureMistake(const QString &code);
     static QString scriptEditPrintDialogMistake(const QString &code);
