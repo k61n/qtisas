@@ -3224,8 +3224,8 @@ void dan18::calculateTransmission(int startRow)
     
     if(startRow==0)
     {
-        
-        for (int iRow=0; iRow<(int)tableList.count(); iRow++)
+
+        for (int iRow = 0; iRow < w->numRows(); iRow++)
         {
             if (w->isRowSelected(iRow,true))
             {
@@ -4531,8 +4531,8 @@ void dan18::copyCorrespondentTransmissions(int startRow)
     
     if(startRow==0)
     {
-        
-        for (int iRow=0; iRow<(int)tableList.count(); iRow++)
+
+        for (int iRow = 0; iRow < w->numRows(); iRow++)
         {
             if (w->isRowSelected(iRow,true))
             {
@@ -4564,15 +4564,17 @@ void dan18::copyCorrespondentTransmissions(int startRow)
         
         name = scriptTableManager->info(i);
         polarization = "";
+        // An empty polarization or transmission cell splits into an empty list: value(0), never [0] — confirmed
+        // crash (2026-11-12, "Make script table" in a (PN) mode: QString::operator= from an empty list's [0]).
         if (polMode)
-            polarization = scriptTableManager->polarization(i).split("-", Qt::SkipEmptyParts)[0];
-        
+            polarization = scriptTableManager->polarization(i).split("-", Qt::SkipEmptyParts).value(0);
+
         wl = scriptTableManager->lambda(i).toDouble();
 
         lst.clear();
         lst = scriptTableManager->transmission(i).remove(" ").split("[", Qt::SkipEmptyParts);
 
-        if (lst[0].toDouble()<=0)
+        if (lst.value(0).toDouble() <= 0)
         {
             tr="";
             
@@ -4580,14 +4582,14 @@ void dan18::copyCorrespondentTransmissions(int startRow)
             {
                 polarizationCurr = "";
                 if (polMode)
-                    polarizationCurr = scriptTableManager->polarization(j).split("-", Qt::SkipEmptyParts)[0];
+                    polarizationCurr = scriptTableManager->polarization(j).split("-", Qt::SkipEmptyParts).value(0);
                 wlCurr = scriptTableManager->lambda(j).toDouble();
                 trCurr = scriptTableManager->transmission(j);
                 lst.clear();
                 lst = scriptTableManager->transmission(j).remove(" ").split("[", Qt::SkipEmptyParts);
 
                 if (i != j && name == scriptTableManager->info(j) && polarization == polarizationCurr &&
-                    lst[0].toDouble() > 0 && wlCurr < 1.05 * wl && wlCurr > 0.95 * wl)
+                    lst.value(0).toDouble() > 0 && wlCurr < 1.05 * wl && wlCurr > 0.95 * wl)
                     tr = trCurr;
             }
             
@@ -4603,7 +4605,7 @@ void dan18::copyCorrespondentTransmissions(int startRow)
             lst.clear();
             lst = scriptTableManager->transmissionBuffer(i).remove(" ").split("[", Qt::SkipEmptyParts);
 
-            if (lst[0].toDouble()<=0)
+            if (lst.value(0).toDouble() <= 0)
             {
                 tr="";
                 
@@ -4614,8 +4616,8 @@ void dan18::copyCorrespondentTransmissions(int startRow)
                     lst.clear();
                     lst = scriptTableManager->transmissionBuffer(j).remove(" ").split("[", Qt::SkipEmptyParts);
 
-                    if (i != j && name == scriptTableManager->info(j) && lst[0].toDouble() > 0 && wlCurr < 1.05 * wl &&
-                        wlCurr > 0.95 * wl)
+                    if (i != j && name == scriptTableManager->info(j) && lst.value(0).toDouble() > 0 &&
+                        wlCurr < 1.05 * wl && wlCurr > 0.95 * wl)
                         tr = trCurr;
                 }
 
@@ -4882,7 +4884,7 @@ void dan18::calculateCentersInScript(int startRow)
     
     if(startRow==0)
     {
-        for (int iRow=0; iRow<(int)tableList.count(); iRow++)
+        for (int iRow = 0; iRow < w->numRows(); iRow++)
         {
             if (w->isRowSelected(iRow,true))
             {
@@ -5009,7 +5011,7 @@ void dan18::calculateCentersInScript(int startRow)
         s=s.remove(" ").remove(QChar(177)).remove("\t").remove("]");
         lst = s.split("[", Qt::SkipEmptyParts);
 
-        trans=lst[0].toDouble();
+        trans = lst.value(0).toDouble(); // an empty cell: no list, 0
 
         //+++ X-center check
         Xcenter = scriptTableManager->centerX(iter).toDouble();
@@ -5090,7 +5092,7 @@ void dan18::calculateAbsFactorInScript(int startRow)
     
     if(startRow==0)
     {
-        for (int iRow=0; iRow<(int)tableList.count(); iRow++)
+        for (int iRow = 0; iRow < w->numRows(); iRow++)
         {
             if (w->isRowSelected(iRow,true))
             {
@@ -5280,8 +5282,8 @@ void dan18::calculateTrMaskDB(int startRow)
     
     if(startRow==0)
     {
-        
-        for (int iRow=0; iRow<(int)tableList.count(); iRow++)
+
+        for (int iRow = 0; iRow < w->numRows(); iRow++)
         {
             if (w->isRowSelected(iRow,true))
             {
