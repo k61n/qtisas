@@ -75,6 +75,7 @@ setCell
 setCellData
 colName
 colNames
+colIndex
 setColName
 setColNames
 notifyChanges
@@ -763,6 +764,7 @@ Star1
 Star2
 Hexagon
 labelsColumnName
+xColumnName
 setLabelsColumnName
 labelsAlignment
 setLabelsAlignment

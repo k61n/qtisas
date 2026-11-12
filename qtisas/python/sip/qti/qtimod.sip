@@ -664,6 +664,15 @@ public:
 	} else
 		sipRes = PyUnicode_FromString(sipCpp->colLabel(a0-1).toLocal8Bit().constData());
 %End
+  int colIndex(const QString &name);
+%MethodCode
+  // 1-based like every other column argument: Table::colIndex() is the C++ 0-based index, and before this declaration
+  // Python reached it unchanged. Confirmed live (LIST 6, Luna, item 6): setColumnRole(t.colIndex("q_nm"), X) set the
+  // role of the column before q_nm ("dI"), with no error. -1 when no column has that label or "<table>_<label>".
+  sipRes = sipCpp->colIndex(*a0);
+  if (sipRes >= 0)
+      sipRes += 1;
+%End
   SIP_PYTUPLE colNames();
 %MethodCode
   QStringList l = sipCpp->colNames();
@@ -1562,6 +1571,7 @@ public:
     void setLabelsWhiteOut(bool whiteOut = true);
 
 	Table* table();
+    QString xColumnName();
 
 	int startRow();
 	int endRow();
@@ -4082,6 +4092,15 @@ public:
             PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
             sipError = sipErrorFail;
         }
+    }
+%End
+    // a copy of a mask, a mask too, in the masks' folder (with "sort output to folders")
+    QString copyMask(const QString &source, const QString &name);
+%MethodCode
+    sipRes = new QString(sipCpp->copyMask(*a0, *a1));
+    if (sipRes->isEmpty()) {
+        PyErr_SetString(PyExc_ValueError, sipCpp->lastError().toUtf8().constData());
+        sipError = sipErrorFail;
     }
 %End
     // the beam-stop box (x1, x2, y1, y2) masked in an existing mask; None: as set

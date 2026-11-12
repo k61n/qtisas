@@ -293,6 +293,9 @@ class DanMask : public DanPart
                          bool inside, double value);
     // the beam-stop box masked in an existing mask (the mask kept otherwise); beamstop empty: as set
     QString addBeamstop(const QString &mask, const QList<int> &beamstop, const QString &shape);
+    // a copy of the mask `source` named `name`, a mask too, in the masks' project folder ("DAN :: mask, sens") when
+    // the output is sorted into folders — e.g. to cut sectors out of it for some rows of a script table
+    QString copyMask(const QString &source, const QString &name);
     // the mask as a file; file empty: <input folder>/<mask>.mask, as the interface saves it
     QString saveMask(const QString &mask, const QString &file);
     QStringList masks() const;

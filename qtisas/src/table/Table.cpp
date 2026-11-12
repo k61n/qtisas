@@ -2845,11 +2845,16 @@ void Table::setHeader(QStringList header)
     setHeaderColType();
 }
 
-int Table::colIndex(const QString& name)
+// `name` is a column's label ("q_nm") or its full name ("Table1_q_nm"). Only the part after the last "_" was compared:
+// confirmed (LIST 6), a column labelled "q_nm" was never found, insertCurve(t, "q_nm", ...) -> "X column not found".
+int Table::colIndex(const QString &name)
 {
-	int pos = name.lastIndexOf("_");
-	QString label = name.right(name.length() - pos - 1);
-	return col_label.indexOf(label);
+    if (const int index = static_cast<int>(col_label.indexOf(name)); index >= 0)
+        return index;
+    if (const QString prefix = objectName() + "_"; name.startsWith(prefix))
+        return static_cast<int>(col_label.indexOf(name.mid(prefix.size())));
+    const qsizetype pos = name.lastIndexOf('_');
+    return static_cast<int>(col_label.indexOf(name.mid(pos + 1)));
 }
 
 int Table::indexOf(const QString &label)

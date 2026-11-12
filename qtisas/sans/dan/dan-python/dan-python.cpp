@@ -981,6 +981,30 @@ QString DanMask::addBeamstop(const QString &mask, const QList<int> &beamstop, co
     return mask;
 }
 
+// clone() puts the copy into the active folder: confirmed live (auto mode, sectors), the masks a script copied for the
+// sectors sat with the script tables, not with "mask" and the auto masks in "DAN :: mask, sens".
+QString DanMask::copyMask(const QString &source, const QString &name)
+{
+    if (!isMask(source))
+        return fail("no mask " + source);
+    if (d->app()->alreadyUsedName(name))
+        return fail("a window " + name + " exists already: choose another name, never close that window");
+    begin();
+    if (d->checkBoxSortOutputToFolders->isChecked())
+        d->app()->changeFolder("DAN :: mask, sens");
+    MdiSubWindow *copy = d->app()->clone(d->app()->matrix(source));
+    if (copy && !d->app()->setWindowName(copy, name, false))
+    {
+        d->app()->closeWindow(copy, true, false);
+        end(false);
+        return fail("invalid name " + name + ": letters, digits and \"-\" only");
+    }
+    d->updateMaskList();
+    if (!end(copy != nullptr, "no copy of " + source + " was made"))
+        return {};
+    return name;
+}
+
 QString DanMask::saveMask(const QString &mask, const QString &fileGiven)
 {
     if (!isMask(mask))
