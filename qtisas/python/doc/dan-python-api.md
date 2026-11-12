@@ -126,13 +126,18 @@ sectors is done with the masks. `autoConfig()` stops at the script table (the au
 are off), so change the masks of its rows first, then process and merge:
 
 1. `s = p.autoConfig("auto")`: masks, sensitivity, configurations, script table, transmissions.
-2. For each distinct (Mask, X-center, Y-center) of the script rows, a copy of the mask: `clone(matrix(mask))`, a
-   name of your own with `setWindowName()`, then `Dan.Mask.sector()` around the row's own center for each part to
-   remove. One copy per center, not per mask: KWS-1 uses one `"mask"` for its three configurations, each with its own
-   center. The name holds the script table's name (`"auto1-hor-1"`), so the masks of another session (KWS-1 and
-   KWS-3 in one project) are never overwritten; a name that exists already: choose another, never close that window.
-   Letters, digits and "-" only: the auto masks' names contain a ".", so `"mask-bs-9.2m-hor"` is refused.
+2. For each distinct (Mask, X-center, Y-center) of the script rows, a copy of the mask under a name of your own:
+   `Dan.Mask.copyMask(mask, name)` (a mask too, kept in the masks' folder; `clone()` would put it with the script
+   tables), then `Dan.Mask.sector()` around the row's own center for each part to remove. One copy per center, not per
+   mask: KWS-1 uses one `"mask"` for its three configurations, each with its own center. The name holds the script
+   table's name (`"auto1-hor-1"`), so the masks of another session (KWS-1 and KWS-3 in one project) are never
+   overwritten; a name that exists already: choose another, never close that window. Letters, digits and "-" only: the
+   auto masks' names contain a ".", so `"mask-bs-9.2m-hor"` is refused.
 3. The new names into those rows' Mask column; then `p.process(s)` and `Dan.Merge.join(...)`.
+4. Several variants of the same rows (full, horizontal, vertical): a copy of the script table per variant
+   (`setWindowName(clone(table(s)), s + "-hor")`) and `"-<variant>"` added to each row's Run-info. The I[Q] tables
+   and the merged ones are named after Run-info, so the same name in two variants overwrites the first variant's
+   tables. The unchanged variant keeps each row's own Mask (`mask-bs-9.2m`, ...), never the session's `"mask"`.
 
 `"mask"` and `"sens"` are made anew by every session (`autoConfig()` of the next instrument): process and merge a
 script table before the next session starts.
@@ -152,7 +157,7 @@ for row in range(1, t.numRows() + 1):
     key = (t.text(maskCol, row).strip(), float(t.text(xCol, row)), float(t.text(yCol, row)))
     if key not in made:
         name = "%s-hor-%d" % (s, len(made) + 1)      # "auto3-hor-1": never another session's mask
-        setWindowName(clone(matrix(key[0])), name)
+        Dan.Mask.copyMask(key[0], name)
         for phi in ((-75, 75), (105, 255)):          # horizontal ±15° stays
             Dan.Mask.sector(name, (key[1], key[2]), phi)
         made[key] = name
@@ -232,6 +237,7 @@ them. To keep such a mask, save it with `saveMask()` and later bring it back wit
 |---|---|
 | `newMask(name="mask", edge=None, beamstop=None, shape=None, triangles=None, transmission=False, deadRows=None, deadCols=None, edgeShape=None)` → str | the detector edge and the beam stop masked (0); `shape` / `edgeShape`: `"rectangle"` or `"ellipse"` (the beam stop / the edge); `triangles`: triangles masked (exactly three points each), `"x1-y1,x2-y2,x3-y3;..."`; `deadRows`/`deadCols`: `"a-b;..."` whole rows/columns a..b, `"a-b-c-d"` rows a..b in columns c..d (for columns the other way round), `""` none; `transmission=True`: the inverse, only the beam-stop box counts — a **transmission mask**. A mask of that name is made anew |
 | `addBeamstop(mask="mask", beamstop=None, shape=None)` → str | the beam-stop box masked in an existing mask, the rest of it kept (e.g. a second beam stop) |
+| `copyMask(source, name)` → str | a copy of the mask `source` named `name`, a mask too, kept with the masks ("DAN :: mask, sens" when the output is sorted into folders); a name in use, an invalid name or no such mask raises ValueError |
 | `loadMask(file, name="mask")` → str | a mask file (`.mask`) |
 | `saveMask(mask="mask", file=None)` → str | the mask as a file, its path returned; `None`: `<input folder>/<mask>.mask` |
 | `masks()` → list | the masks of the project for this detector size |

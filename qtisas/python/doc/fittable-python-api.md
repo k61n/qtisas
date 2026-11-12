@@ -631,6 +631,11 @@ After `fit()` and after `simulate()`, fit curve tables are created in the worksp
 | 9 | `Values` | None | that parameter's fitted value, same row |
 | 10 | `Errors` | None | that parameter's fit error, same row (empty for a pure `simulate()`, only populated after a real `fit()`) |
 
+A fit also creates **`fitCurve-<model>-session`** (two columns, `Parameter` and `Parameter-Value`): the fit's
+*settings*, saved for reloading — keys like `Function::Name`, `Session::Data::Datasets`,
+`Session::Parameters::Values::2`, every value ending in `" <"`. It is not the place to read results: use
+`f.results()` right after `fit()`, or columns 8–10 above.
+
 ### Reading the fit curve from Python
 
 To access the fit curve from Python after `fit()`:
@@ -1481,6 +1486,29 @@ f.configure(model, ["table_I"])
 > unless the function has its own `beforeFitting()` hook deriving them from loaded data (see
 > `beforeFit()`). Skipping this raises no error: the fit silently runs from arbitrary library
 > defaults, which can converge to garbage (huge `chi²/dof`, `R²` near 0) with nothing to flag it.
+
+> **Fit start values: a form-factor fit has a narrow basin** — it reaches the true size only from a
+> start close to it. Verified on a sphere: with true R = 50 Å and q up to 0.5, starts 40 and 60
+> stopped at 46 and 54; with true R = 30 Å, start 60 stopped at 50 and starts 10 and 20 ended with a
+> negative scale. Start from an estimate from the data — for a sphere R ≈ 1.29·Rg, with Rg from a
+> Guinier fit (ln I against q², q·Rg < 1.3) — and try the function's own default too; keep the lowest
+> `chi²/dof` (the value `fit()` returns). A negative scale or volume fraction is never the answer.
+
+```python
+f.configure(model, ["table_I"])
+default = f.paramValue("radius")               # the function's own start
+best = None
+for start in (estimate, default):              # estimate: e.g. 1.29 * Rg for a sphere
+    f.configure(model, ["table_I"])            # configure() resets every parameter
+    f.setParamValue("radius", start)
+    f.setWeightingEnabled(1, True)
+    f.setWeightingDataset(1, "table_dI")
+    chi2 = f.fit()
+    res = f.results()
+    if res.get("scale", (1.0,))[0] > 0 and (best is None or chi2 < best[0]):  # a model without "scale": no check
+        best = (chi2, res)
+radius = best[1]["radius"][0]
+```
 
 If no model is found: print the search results and raise an error — don't fall back silently. If a
 quoted SPECIFIC name doesn't exist but a broader search finds something plausible, use it but print

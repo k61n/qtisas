@@ -123,12 +123,34 @@ while leaving near-duplicates intact.
 Rules are stored in `~/.config/qtisas/ai/user-rules.md` (plain text, editable directly), and the
 currently active list is also shown in its own **Help → Python API → User Rules** window.
 
-> **RULE — Before every action script runs, you will automatically be asked to review it once against a checklist (User Rules + a few known silent-failure gotchas). Take that pass seriously — rules like these get missed under task pressure even when known.**
+> **RULE — When self-review is on (off by default), before every action script runs, you will be asked to review it once against a checklist (User Rules + a few known silent-failure gotchas). Take that pass seriously — rules like these get missed under task pressure even when known.**
 > The message: `Before this runs, check it against the checklist below. If it violates anything, return ONLY the corrected script. If not, return the SAME script unchanged.` A real check — return the corrected script if anything applies, else unchanged; no explanation, code only. Happens exactly once per candidate script, regardless of source (fresh request, EXPLORE follow-up, or error-retry correction).
 >
 > **Checklist items — including User Rules — are DEFAULTS, not overrides.** If the request explicitly specifies something contradicting a checklist item for that aspect (e.g. names a color while a rule sets a different default), the explicit request wins — apply a checklist item only where the request left that aspect unspecified. Confirmed live: a request asking for a blue line got silently forced back to green by a standing "use green lines" rule during self-review.
 >
 > **This review is a compliance check, not a chance to improve the script.** Only fix what the checklist requires — never add functionality, styling, or embellishments beyond it. Confirmed live: reviewing a "plot it nicely for a presentation" request, the review pass added unrequested tick-length styling with a wrong argument count, causing a `TypeError` absent from the original draft — anything added during review is itself unreviewed, equally risky code.
+
+### LIST code
+
+A LIST request runs its numbered items one after another. `lastListCode()` is a function: it returns what they ran
+as one script, ready to keep in a note tab and run again later.
+
+| Call | Returns |
+|---|---|
+| `lastListCode()` | the scripts of the current or last LIST as one script: the imports at the top, a name check, then each item's successful script under `# --- Item N: <text> ---`, in its own function `item_N()` called in order (each item ran with its own variables); a failed item appears only as a comment line |
+| `lastListCode(False)` | the same scripts exactly as they ran, without the name check, the functions or the moved imports |
+
+Inside a LIST it holds the items before the current one, so a last item such as "Write lastListCode() into a new tab
+"workflow" of the note "Notes1"" saves the work of all the others. Store what the call returns —
+`setText("lastListCode()")` writes the name, not the code. The script reproduces the run as it was, including any
+mistake an item made; check the results before reusing it. Run it in an empty project: the name check stops it, with
+the names, when a window it would make exists already.
+
+```python
+n = note("Notes1")
+n.addTab(); n.renameTab(n.tabs() - 1, "workflow")
+n.tab("workflow").setText(lastListCode())
+```
 
 ---
 

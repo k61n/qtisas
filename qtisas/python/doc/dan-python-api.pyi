@@ -65,15 +65,19 @@
 #   sectors (horizontal / vertical) or any changed mask in auto mode -> NOT the processIQ/merge auto options; there
 #     is NO sector/azimuth setting (Config.parameters() has none) — it is done with the masks of the script rows:
 #     s = p.autoConfig("auto")            # stops at the script table (masks, sens, configurations, Tr)
-#     per distinct (Mask, X-center, Y-center) of the rows: w = clone(matrix(<the row's Mask>));
-#       setWindowName(w, "<script>-hor-<n>")   # e.g. "auto1-hor-1": the script table's name in it, so the masks
-#         of another session are never overwritten; a name that exists: choose another, never close that window;
-#         letters, digits, "-" only: "mask-bs-9.2m-hor" is refused
+#     per distinct (Mask, X-center, Y-center) of the rows: Dan.Mask.copyMask(<the row's Mask>, "<script>-hor-<n>")
+#       # e.g. "auto1-hor-1": the script table's name in it, so the masks of another session are never overwritten;
+#       # a name that exists: choose another, never close that window; letters, digits, "-" only: "mask-bs-9.2m-hor"
+#       # is refused; the copy is a mask, kept with the masks (clone() would put it with the script tables)
 #       Dan.Mask.sector(<new name>, (xc, yc), phi) per part to remove   # the row's own center (1-based)
 #     the new name into those rows' Mask column (t.setText(maskCol, row, name)); then p.process(s),
 #     Dan.Merge.join(s + "-mergingTemplate", ...)
 #     keep horizontal ±15°: remove (-75, 75) and (105, 255); keep vertical ±15°: remove (15, 165) and (195, 345)
 #     "mask" and "sens" are made anew by every session: process and merge a script table before the next session
+#     several variants of the same rows (full / hor / ver): a copy of the script table per variant
+#       (setWindowName(clone(table(s)), s + "-hor")) and "-<variant>" added to each row's Run-info — the I[Q] and the
+#       merged tables are named after Run-info: the same name in two variants overwrites the first variant's tables;
+#       the unchanged variant keeps each row's own Mask (mask-bs-9.2m, ...), never the session's "mask"
 #   a transmission of one run (e.g. H2O)  -> Dan.Sensitivity.transmission(run, emptyBeam, mask) -> (Tr, dTr)
 #   remove points at the curve ends       -> Dan.Processing.Options.setRemovePoints(first, last)   (I[Q])
 #                                            Dan.Merge.join(..., removeFirst=, removeLast=)          (merged)
@@ -182,6 +186,7 @@ newMask(name="mask", edge=None, beamstop=None, shape=None, triangles=None, trans
 #   Processing call after the masks activates "mask" again (the sensitivity's mask, its values shown)
 loadMask(file, name="mask")->str   masks()->list
 addBeamstop(mask="mask", beamstop=None, shape=None)->str   # the box masked in an existing mask, the rest kept
+copyMask(source, name)->str   # a copy of a mask, a mask too, kept with the masks; a name in use is refused
 saveMask(mask="mask", file=None)->str   # the path; None: <input folder>/<mask>.mask
 # the "Adv Masking Options" tools on ANY matrix, changed in place; center=(x, y), size=(x, y) or one number, in
 #   pixels (1-based, 0.1 steps); inside=False: the value set outside the shape; returns the matrix name

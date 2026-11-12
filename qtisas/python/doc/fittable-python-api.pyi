@@ -32,6 +32,19 @@
 #     #   beforeFit() below). Skipping this does not raise an error — it silently fits from
 #     #   whatever arbitrary defaults the library ships with, which can converge to garbage
 #     #   (huge chi2/dof, R²~0) with nothing to flag it as wrong.
+# FIT START VALUES — a form-factor fit has a NARROW basin: it reaches the true size only from a
+#   start close to it (verified, sphere: true R 50, q up to 0.5 — starts 40 and 60 stop at 46 and
+#   54; true R 30 — start 60 stops at 50, starts 10/20 end with a negative scale). Start from an
+#   estimate from the data — for a sphere R ≈ 1.29·Rg, Rg from a Guinier fit (ln I against q²,
+#   q·Rg < 1.3) — and try the function's own default too; keep the lowest chi2/dof. A negative
+#   scale or volume fraction is never the answer:
+#   f.configure(model, ["table_I"]); default = f.paramValue("radius")
+#   best = None
+#   for start in (estimate, default):
+#       f.configure(model, ["table_I"]); f.setParamValue("radius", start)  # + the weighting
+#       chi2 = f.fit(); res = f.results()
+#       if res.get("scale", (1.0,))[0] > 0 and (best is None or chi2 < best[0]):  # a model without "scale": no check
+#           best = (chi2, res)
 # IMPORTANT: datasets are "tablename_colname" strings — NOT table names.
 #   WRONG: datasets=["data"]   RIGHT: datasets=["data_I"]
 # IMPORTANT: each list item is one COMPLETE "tablename_colname" string. A 2-item list means a
@@ -164,6 +177,10 @@ setScaleErrors(bool)  setStatisticsNotes(bool)  setSaveSession(bool)
 #   col 8  "Parameters"      role None — one fit param NAME per row
 #   col 9  "Values"          role None — that param's fitted value, same row
 #   col 10 "Errors"          role None — that param's fit error, same row (empty for simulate())
+# ALSO created: "fitCurve-<model>-session" (2 columns "Parameter", "Parameter-Value") — the fit's
+#   SETTINGS for reloading (keys like "Function::Name", "Session::Data::Datasets",
+#   "Session::Parameters::Values::2"; every value ends in " <"). Not the place to read results:
+#   use f.results() right after fit(), or cols 8-10 above.
 # Access from Python — ALWAYS guard: table returns None if fit failed or was not yet run:
 #   fc = table("fitCurve-" + model)
 #   if fc is None: raise RuntimeError("fitCurve table missing — did the fit succeed?")
@@ -278,7 +295,8 @@ setGenMinLocalSearch(0..2)
 #   string used almost everywhere else in this API, easy to confuse given that convention:
 #   setWeightingEnabled("Data_I",True) -> TypeError: argument 1 has unexpected type 'str'.
 #   Passing 0 or any out-of-range m raises ValueError; used to silently no-op instead, e.g.
-#   setWeightingEnabled(0,...) looked fine but never enabled weighting):
+#   setWeightingEnabled(0,...) looked fine but never enabled weighting); there is no setWeight() on Fittable:
+#   weighting is setWeightingEnabled(m, True) + setWeightingDataset(m, "table_col")
 setWeightingMethod(0=1/σ²|1=1/Y|2=σ|3=1/Y²|4=1/Y^a|5=1/(c^a+b·Y^a)|6=1/(Y^a·c^|Xmax-X|))
 setWeightingEnabled(m,bool)  setWeightingDataset(m,name)  # name MUST be "table_col", not a bare
 #   column name ("dI") — raises ValueError now; used to silently no-op (weighting stayed unapplied).
@@ -374,11 +392,14 @@ setParamLimits(name,lo,hi,bayesianYN=False,dataset=-1)
 #   RIGHT: f.setParamLimits("Rg", float('-inf'), float('inf'))
 # paramLimitLeft/Right return float('-inf')/float('inf') for an unbounded side — compare with
 # == float('-inf'), not None or "".
-setParamValueAll(values,dataset=-1)  setParamVariesAll(varies,dataset=-1)
+setParamValueAll(values,dataset=-1)  setParamVariesAll([True, False, True],dataset=-1)   # a list, never (True)
 
 # Simulate Curve tab. ORDER: configure()/setFunction() FIRST, then selectStage("simulate"), then
 #   these setters, then simulateCurve(). selectStage() before a function is selected raises.
 #   RIGHT: f=Fittable; f.configure("Guinier",[]); f.selectStage("simulate"); f.setSimUniformX(True)
+#   WITHOUT data ("without fitting any real data", an x range of its own): the whole uniform-X chain —
+#   f.configure("ai/Porod", []); f.selectStage("simulate"); f.setSimUniformX(True); f.setSimFromX(0.01)
+#   f.setSimToX(1); f.setSimNumPoints(100); f.setSimLogStep(True); f.simulateCurve()   # table "simulatedCurve-ai/Porod"
 #   WRONG: f.selectStage("simulate"); f.setFunction("Guinier")   <- raises, blocked before running
 # In uniform X mode simulateCurve() returns NaN BY DEFINITION (no data to compare) — do NOT report
 #   it as a result; report the output table "simulatedCurve-<model>" instead.

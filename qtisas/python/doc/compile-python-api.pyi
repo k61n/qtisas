@@ -316,7 +316,7 @@ setParamLimitsAll(limits)
 #   setParamVariesAll (floats/bools) right next to it — raw numbers raise TypeError.
 #   WRONG: setParamLimitsAll([0.0, 0.0])   RIGHT: setParamLimitsAll(["0..", "0.."])
 paramVaries(i)->bool  setParamVaries(i, varies) # adjustability checkbox
-setParamVariesAll(varies)
+setParamVariesAll([True, True, False])   # a LIST, one bool per parameter — (True) raises TypeError
 # Every param defaults to FIXED (not varying) when declared via setParamCount(n) — skipping this
 # call bakes "all fixed" into the compiled function. Fittable.configure() re-derives its vary
 # checkboxes from exactly this baked-in default EVERY call (never inherits a prior fit session's

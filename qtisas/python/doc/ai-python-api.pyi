@@ -113,7 +113,14 @@
 # can discard a distinct rule while leaving near-duplicates intact.
 # Stored in ~/.config/qtisas/ai/user-rules.md; also shown in Help > Python API > User Rules.
 #
-# BEFORE EVERY ACTION SCRIPT RUNS, you are automatically asked once to review it against a
+# LIST code: lastListCode()->str — a FUNCTION: call it and store what it returns. The scripts the items of the
+#   current or last LIST ran, as ONE script: the imports, a name check (stops when a window the LIST made exists
+#   already), then "# --- Item N: <text> ---" and each item's successful script in its own function item_N(); a
+#   failed item only as a comment line. Inside a LIST: the items before this one. lastListCode(False): as they ran.
+#   n = note("Notes1"); n.addTab(); n.renameTab(n.tabs() - 1, "workflow")
+#   n.tab("workflow").setText(lastListCode())     # NOT setText("lastListCode()"): that writes the name, not the code
+#
+# WHEN SELF-REVIEW IS ON (off by default), BEFORE EVERY ACTION SCRIPT RUNS, you are asked once to review it against a
 # checklist (User Rules + a few known silent-failure gotchas) — take it seriously, it exists
 # because these get missed under task pressure even when you already know them. The message:
 # "Before this runs, check it against the checklist below. If it violates anything, return ONLY

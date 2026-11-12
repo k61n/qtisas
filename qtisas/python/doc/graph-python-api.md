@@ -316,6 +316,8 @@ ColorMap=16  GrayScale=17  Contour=18  ImagePlot=20  Function=19
 | `curve("title")` | `PlotCurve` | by title string |
 | `curveTitle(index)` | `str` | title at index |
 | `dataCurve(index)` | `DataCurve` | `None` if not a data curve |
+| `dataCurve(index).xColumnName()` | `str` | the X column it is plotted against, `"table_col"` (e.g. `"Data_q_nm"`); the Y column is `curveTitle(index)` |
+| `dataCurve(index).table()` | `Table` | the curve's table |
 | `boxCurve(index)` | `BoxCurve` | |
 | `functionCurve(index)` | `FunctionCurve` | |
 

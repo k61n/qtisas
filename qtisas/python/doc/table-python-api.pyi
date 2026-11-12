@@ -2,12 +2,11 @@
 # t=table("name")|newTable("name",rows,cols)|currentTable()
 # table("name") returns None (confirmed) if no table with that name exists — ALWAYS
 # check "if t is None:" before use; t.cell(...) on None raises AttributeError.
-# Column: int(1-based) or str label; Row: int(1-based). Avoid "_" in labels — setColName() does
-#   NOT reject it, but downstream dataset names (Fittable, etc.) are "tablename_label" split at the
-#   LAST "_". A table "Data" + label "x_err" gives qualified name "Data_x_err", which splits back
-#   to table="Data_x" (doesn't exist) + col="err" (wrong) — a genuine parsing break, not just a
-#   readability issue. Table names CAN safely contain "_" (the split is always at the LAST one);
-#   labels containing "_" are what actually breaks it.
+# Column: int(1-based) or str label; Row: int(1-based). A label with "_" ("q_nm") works in the
+#   table's own calls (colData, setColData, insertCurve by label) — keep a requested name.
+#   It BREAKS Fittable: dataset "Data_I_sub" splits at the LAST "_" (table "Data_I", col "sub");
+#   configure() accepts it, fit() then fails "failed to read data". Fit a column whose label has
+#   no "_". Table names CAN contain "_".
 # PlotDesignation: Table.PlotDesignation. None_=0 X=1 Y=2 Z=3 xErr=4 yErr=5 Label=6
 # NumericFormat:   Table.NumericFormat. Default=0 Decimal=1 Scientific=2
 
@@ -22,6 +21,7 @@ deleteRows(start,end)  insertColumns(col,n)  swapColumns(col1,col2)
 # Column names:
 colName(col)->str         # t.colName(2) → "y"  (short label only)
 colNames()->tuple         # t.colNames() → ("x","y")  BARE labels only — NEVER "tableName_label"
+colIndex(label)->int      # 1-based like every column argument; label or "tableName_label"; -1 if none
 # IMPORTANT: colNames()/colName() as exposed to Python BOTH return the bare label — confirmed
 #   against source, the SIP bindings call colLabel(), not the differently-named C++ colName(int)
 #   that DOES prefix with the table name (that one is never invoked from Python at all). The
@@ -70,6 +70,8 @@ setRowData(row,tuple)     # row is 1-based
 
 # Column role / format:
 setColumnRole(col,Table.PlotDesignation.X)   # col can be int or str label
+# a column's role cannot be read back (columnRole() does not exist): columnsList(Table.PlotDesignation.yErr)
+#   lists the "<table>_<col>" names with that role, of every table
 # Columns start as NumericFormat.Default with 13 significant digits: 3 -> 3, 3.000001 -> 3.000001, 1234.5 -> 1234.5.
 # Change the format only when the request asks for one (a format or a number of decimals).
 setColNumericFormat(col,Table.NumericFormat.Scientific,4,updateCells=True)   # prec positional (prec=4 -> TypeError)
@@ -79,7 +81,8 @@ setColDateFormat(col,fmt,updateCells=True)   # fmt e.g. "yyyy-MM-dd"
 setColTimeFormat(col,fmt,updateCells=True)   # fmt e.g. "hh:mm:ss"
 setColMonthFormat(col,fmt,updateCells=True)  setColDayFormat(col,fmt,updateCells=True)
 setColumnWidth(col,px)  hideColumn(col,on=True)  showAllColumns()
-setDecimalSeparators(format,omitGroupSeparator=True)   # 0=system 1=English(.) 2=German(,) 3=French(,)
+t.setDecimalSeparators(format,omitGroupSeparator=True)   # a TABLE method (t.), not a global; 0=system 1=English(.)
+#   2=German(,) 3=French(,)
 setReadOnlyColumn(col,on=True)
 isRowSelected(row,full=False)->bool  isColSelected(col,full=False)->bool
 firstSelectedColumn()->int  numSelectedRows()->int  selectedColumn()->int  setSelectedCol(col)

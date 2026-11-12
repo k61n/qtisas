@@ -144,6 +144,9 @@
 # removeCurve(index|title|curve)  deleteFitCurves()
 # numCurves()->int  curve(index|title)  curveTitle(index)->str
 # dataCurve(index)->DataCurve  boxCurve(index)->BoxCurve  functionCurve(index)->FunctionCurve
+# What a curve is plotted against: d = l.dataCurve(i) (None for a function curve);
+#   d.xColumnName() -> X column "table_col", e.g. "Data_q_nm"; l.curveTitle(i) -> Y column "Data_I";
+#   d.table() -> the table
 # RULE: curve(index) returns a low-level PlotCurve/Qwt object. ALL styling below (curve type, line
 #   color/style/width, symbol color/style/size) is a method on the LAYER, taking an index — never a
 #   method on this object. EXCEPTION: curve(index).setPen(QPen(...)) genuinely works (inherited
@@ -181,7 +184,8 @@
 # Graph — error bars:
 # SIGNATURE: addErrorBars(curveName, table, col, ...)  — 2nd arg is Table, 3rd is bare col label
 # WRONG: g.addErrorBars("SANS_Data_I", "SANS_Data_dI")       ← TypeError (no string/string overload)
-# RIGHT: g.addErrorBars("SANS_Data_I", t, "dI", 1, 1, 8, QColor("gray"), False, True, True)
+# RIGHT: from PyQt6.QtGui import QColor      # the import first: QColor is not a QtiSAS global
+#        g.addErrorBars("SANS_Data_I", t, "dI", 1, 1, 8, QColor("gray"), False, True, True)
 # addErrorBars(curveName|dataCurve, t, col, type=1, w=1, cap=8, color=QColor(...), through=True, minus=True, plus=True)
 # type:0=X 1=Y  color:QColor NOT colorIndex()
 # through=line through point  minus=lower bar  plus=upper bar

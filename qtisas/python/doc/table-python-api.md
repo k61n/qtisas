@@ -77,11 +77,15 @@ Row arguments are always 1-based.
 
 ## Column Names
 
-> **Warning:** avoid `_` in column labels — QtiSAS uses `_` as the table-name/column-name separator (e.g. `"MyTable_I"`), so `"I_true"` gets misidentified when looked up by name.
+> **A label with `_`** (`"q_nm"`) works in the table's own calls — `colData`, `setColData`, `insertCurve`
+> by label — so keep a name the request gives. It **breaks Fittable**: the dataset
+> `"Data_I_sub"` is split at the last `_` (table `"Data_I"`, column `"sub"`); `configure()` accepts it and
+> `fit()` then fails with "failed to read data". Fit a column whose label has no `_`. Table names can contain `_`.
 
 | Method | Returns | Notes |
 |--------|---------|-------|
 | `colName(col)` | `str` | short label only, e.g. `"y"` — `col` must be `int` here (see exception above) |
+| `colIndex(label)` | `int` | 1-based column number, like every column argument; `label` or `"tablename_label"`; `-1` if there is none |
 | `colNames()` | `tuple` | short labels only, e.g. `("x", "y", "dy")` — **NEVER table-name-prefixed** |
 | `setColName(col, label, updateTableDesignations=False)` | `bool` | rename one column — raises `ValueError` if `label` is empty or already taken in this table |
 | `setColNames(["x","y",...])` | — | set all column labels at once |
