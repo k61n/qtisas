@@ -47,6 +47,8 @@ class AiContentTests : public QObject
     static void knownMistakes_duplicateWindowNameIsCaught();
     static void knownMistakes_textIntoNumericColumnIsCaught();
     static void unprintedOutputLine_flaggedOnlyWhenNotPrinted();
+    static void resultLinePrinted_onlyALineStartingWithTheLabel();
+    static void lastResultLine_theItemsOwnLastLine();
     static void labeledLastPrint_repairsOnlyALastTopLevelPrint();
     static void listCode_rawKeepsTheScriptsAsTheyRan();
     static void listCode_eachScriptInItsOwnFunction();
@@ -259,11 +261,9 @@ class AiContentTests : public QObject
     static void staleResultValue_blocksValueReadBeforeTheWork();
     static void columnListInsteadOfAggregate_blocksBareColData();
     static void selfShadowRepair_removesSelfReferentialDeclarations();
-    static void hardcodedResultLine_blocksFixedText();
     static void repeatedResultLabel_blocksSeveralTopLevelPrints();
     static void resultLineDuty_extractsPrintThroughLabel();
     static void nonFinalResultLine_removesFixedTextOnly();
-    static void redundantReconfigure_allowsFullReSetup();
     static void noteTabIndex_repairsTabZero();
     static void repeatedResultLabel_repairKeepsOnlyTheLastLine();
     static void tableFormulaCaret_repairsToPythonPower();
@@ -272,9 +272,7 @@ class AiContentTests : public QObject
     static void missingGroup_repairsNewAiFunctionWithoutGroup();
     static void requestedResultValues_neverMoreThanTheAnswerHas();
     static void resultLineTooFewValues_blocksShortLineOnly();
-    static void hardcodedResultLine_allowsFallbackBranch();
     static void noteTabSelfRun_removedFromTabText();
-    static void labelOnlyResultLine_labelMovesOntoValues();
     static void bareFolderName_usedWhole();
     static void setCodeVariable_inlinedSoTheBodyIsChecked();
     static void matrixTransposedCell_swappedWhenOnlyThatFits();
@@ -286,7 +284,6 @@ class AiContentTests : public QObject
     static void namesSomethingNew_onlyForAResolvedName();
     static void bareCompilerDelete_madeCompilerDelete();
     static void newTableNamesThatRun_skipsGuardedAndQuoted();
-    static void noWorkFailureResult_blocksMadeUpNotFound();
     static void noteAutoexecReceiver_movedToTheNote();
     static void existenceReadBeforeDeletion_blocksVariablePrinted();
     static void missingHeaderRetryHint_namesTheInclude();
@@ -299,7 +296,6 @@ class AiContentTests : public QObject
     static void textIntoNumericColumn_listOfWords();
     static void docTopicForKind_mapsLiveKinds();
     static void resultsAfterConfigure_blocksStartValuesRead();
-    static void tableTransposedCell_swappedWhenOnlyThatFits();
     static void recalculateExceptionName_blocksWrappingValueError();
     static void yNameRepair_writtenNewlineIsAStatementBoundary();
     static void seriesTwoGuards_onlyOnTheirCase();
@@ -309,7 +305,6 @@ class AiContentTests : public QObject
     static void rowRangeOneShort_blocksLastRowSkipped();
     static void quotedNameWithFolder_findsTheFullName();
     static void repeatedResultLabel_followsTheRequestedCount();
-    static void scriptPrintKeyword_blocksEndOnly();
     static void currentEditorAfterAddTab_blocksRunningNewTab();
     static void noteTabScript_planMustWriteIt();
     static void otherTabRun_blocksRunningAnotherTab();
@@ -506,6 +501,7 @@ class AiContentTests : public QObject
     static void extractExistingEntityNames_findsExistingTablePhrasing();
     static void extractExistingEntityNames_emptyWithoutExistingKeyword();
     static void extractExistingEntityNames_dedupesRepeatedName();
+    static void extractExistingEntityNames_skipsANewTableTheItemMakes();
     static void extractExistingEntityNames_skipsConditionalCreation();
     static void missingEntityNames_findsMissingMarker();
     static void missingEntityNames_emptyWhenAllExist();

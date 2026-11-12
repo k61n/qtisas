@@ -121,7 +121,7 @@ assert fit_table.text(10, 2).startswith("±") and point in fit_table.text(10, 2)
 # Results -> New Table (col): Numeric values, localized Text errors usable as error bars
 QMetaObject.invokeMethod(fw, "newTabResCol")
 result = table([n for n in tableNames() if n.startswith("newFitTableColGuinier")][-1])
-rg_col = result.colIndex("Rg") + 1
+rg_col = result.colIndex("Rg")  # 1-based
 types = (result.columnType(rg_col - 1), result.columnType(rg_col))
 assert types == (0, 1), types  # Numeric, Text (0-based)
 assert "," in result.text(rg_col, 1) and "," in result.text(rg_col + 1, 1), result.text(rg_col + 1, 1)

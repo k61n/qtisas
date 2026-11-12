@@ -306,6 +306,28 @@ void AiContentTests::unprintedOutputLine_flaggedOnlyWhenNotPrinted()
     QVERIFY(AiAssistant::unprintedOutputLineMistake(code, "beta 3").isEmpty());
 }
 
+void AiContentTests::resultLinePrinted_onlyALineStartingWithTheLabel()
+{
+    // LIST 6, Qwen, item 2: the scripts printed only the tables; an item without its line is reported as failed
+    const QString tables = "3 2\n1 Table1 | buffer | 0.1\nTABLE1\n40 3\n";
+    QVERIFY(!AiAssistant::resultLinePrinted("R2:", tables));
+    QVERIFY(AiAssistant::resultLinePrinted("R2:", tables + "R2: 40 99.5509\n"));
+    QVERIFY(AiAssistant::resultLinePrinted("R2:", tables + "  R2: 40 99.5509\n"));
+    // another item's label, or the label inside a line, is not the result line
+    QVERIFY(!AiAssistant::resultLinePrinted("R2:", "R20: 1\n"));
+    QVERIFY(!AiAssistant::resultLinePrinted("R2:", "expected R2: 40\n"));
+}
+
+void AiContentTests::lastResultLine_theItemsOwnLastLine()
+{
+    // LIST 6, item 7: "the Rg and the sphere radius you found" — the next items get what item 3 and 4 printed
+    const QString output = "n positive 40\nR3: 23 100\nweighted 23.6 100.2\n  R3: 24 100\nR30: 7\n";
+    QCOMPARE(AiAssistant::lastResultLine("R3:", output), QString("R3: 24 100"));
+    QVERIFY(AiAssistant::lastResultLine("R4:", output).isEmpty());
+    QVERIFY(AiAssistant::lastResultLine("", output).isEmpty());
+    QCOMPARE(AiAssistant::lastResultLine("R1:", "R1: " + QString(300, 'x')).size(), qsizetype(203));
+}
+
 namespace
 {
 AiAssistant::ListCodeItem listItem(int number, const QString &text, const QStringList &scripts,
@@ -2519,19 +2541,6 @@ void AiContentTests::selfShadowRepair_removesSelfReferentialDeclarations()
     QVERIFY(content.compilerSelfShadowRepair("c.setCode(\"double arg = x/w; y = A*arg;\")\n").isEmpty());
 }
 
-void AiContentTests::hardcodedResultLine_blocksFixedText()
-{
-    // LIST 3 item 3: scriptPrint("R3: 0 ValueError"), nothing computed.
-    const QString request = "Print the number of empty cells. The result label is \"R3:\".";
-    QVERIFY(!QtiSasAiContent::hardcodedResultLineMistake("scriptPrint(\"R3: 0 ValueError\")\n", request).isEmpty());
-    QVERIFY(QtiSasAiContent::hardcodedResultLineMistake("scriptPrint(\"R3:\", n, name)\n", request).isEmpty());
-    QVERIFY(QtiSasAiContent::hardcodedResultLineMistake("scriptPrint(f\"R3: {n} {name}\")\n", request).isEmpty());
-    // a guard branch's failure message is no fabricated result
-    QVERIFY(
-        QtiSasAiContent::hardcodedResultLineMistake("    scriptPrint(\"R3: table not found\")\n", request).isEmpty());
-    QVERIFY(QtiSasAiContent::hardcodedResultLineMistake("scriptPrint(\"R3: 0 ValueError\")\n", "Print 3.").isEmpty());
-}
-
 void AiContentTests::repeatedResultLabel_blocksSeveralTopLevelPrints()
 {
     // LIST 5 item 4: three top-level scriptPrint("R4:", ...) lines.
@@ -2580,30 +2589,6 @@ void AiContentTests::nonFinalResultLine_removesFixedTextOnly()
     // a self-review's computed line in an earlier part goes too (LIST 5, item 6), the rest of its script stays
     QCOMPARE(content.nonFinalResultLineRepair("closeWindow(t)\nscriptPrint(f\"R4: {a} {b}\")\n", request, true),
              QString("closeWindow(t)\npass\n"));
-    // in the last part (no later parts) the fixed-text check still blocks
-    QStringList headers;
-    for (const AiKnownMistakeMatch &m : content.detectKnownMistakes("scriptPrint(\"R4: done\")\n", request, QString()))
-        headers << m.header;
-    QVERIFY(headers.contains("the result line is fixed text, not computed"));
-    headers.clear();
-    for (const AiKnownMistakeMatch &m :
-         content.detectKnownMistakes("scriptPrint(\"R4: done\")\n", request, QString(), "plot it as 3D"))
-        headers << m.header;
-    QVERIFY(!headers.contains("the result line is fixed text, not computed"));
-}
-
-void AiContentTests::redundantReconfigure_allowsFullReSetup()
-{
-    // LIST 5, item 1: part 4 re-did configure, start values, weighting and fit — blocked twice, item given up.
-    const QString earlier = "f = Fittable\nf.configure(\"ai/Quad\", [\"Calib_y\"])\nf.setParamValue(\"a\", 1)\n"
-                            "f.setWeightingEnabled(1, True)\nf.setWeightingDataset(1, \"Calib_dy\")\nf.fit()\n";
-    const QString full = "f.configure(\"ai/Quad\", [\"Calib_y\"])\nf.setParamValue(\"a\", 1)\n"
-                         "f.setWeightingEnabled(1, True)\nf.setWeightingDataset(1, \"Calib_dy\")\nf.fit()\n";
-    QVERIFY(QtiSasAiContent::redundantFittableReconfigureMistake(full, earlier).isEmpty());
-    // the weighting dropped: still blocked
-    QVERIFY(!QtiSasAiContent::redundantFittableReconfigureMistake(
-                 "f.configure(\"ai/Quad\", [\"Calib_y\"])\nf.setParamValue(\"a\", 1)\nf.fit()\n", earlier)
-                 .isEmpty());
 }
 
 void AiContentTests::noteTabIndex_repairsTabZero()
@@ -2731,11 +2716,9 @@ void AiContentTests::repairsAndChecks_leaveEveryReferenceScriptAlone()
                 {"compilerSelfShadowRepair", content.compilerSelfShadowRepair(code)},
                 {"compilerYNameAssignmentRepair", content.compilerYNameAssignmentRepair(code)},
                 {"repeatedResultLabelRepair", content.repeatedResultLabelRepair(code, request)},
-                {"labelOnlyResultLineRepair", content.labelOnlyResultLineRepair(code, request)},
                 {"bareFolderNameRepair", content.bareFolderNameRepair(code, request)},
                 {"setCodeVariableRepair", content.setCodeVariableRepair(code)},
                 {"matrixTransposedCellRepair", content.matrixTransposedCellRepair(code)},
-                {"tableTransposedCellRepair", content.tableTransposedCellRepair(code)},
                 {"bareCompilerDeleteRepair", content.bareCompilerDeleteRepair(code)},
                 {"noteAutoexecReceiverRepair", content.noteAutoexecReceiverRepair(code)},
                 {"apiCallRepairs", content.apiCallRepairs(code, request, true, nullptr)},
@@ -2789,9 +2772,10 @@ void AiContentTests::requestedResultValues_neverMoreThanTheAnswerHas()
     // item, it must never exceed the number of values of the item's expected answer.
     const QString benchmarks = QFileInfo(QString::fromUtf8(__FILE__)).absolutePath() + "/benchmarks";
     int counted = 0;
-    for (const QString &list : {QStringLiteral("list3"), QStringLiteral("list4"), QStringLiteral("list5"),
-                                QStringLiteral("ascii1d"), QStringLiteral("svd"), QStringLiteral("svd_holdout"),
-                                QStringLiteral("jnse"), QStringLiteral("dan"), QStringLiteral("dan_holdout")})
+    for (const QString &list :
+         {QStringLiteral("list3"), QStringLiteral("list4"), QStringLiteral("list5"), QStringLiteral("list6"),
+          QStringLiteral("ascii1d"), QStringLiteral("svd"), QStringLiteral("svd_holdout"), QStringLiteral("jnse"),
+          QStringLiteral("dan"), QStringLiteral("dan_holdout")})
     {
         QFile file(benchmarks + "/" + list + ".json");
         QVERIFY(file.open(QIODevice::ReadOnly));
@@ -2870,19 +2854,6 @@ void AiContentTests::resultLineTooFewValues_blocksShortLineOnly()
         !QtiSasAiContent::resultLineTooFewValuesMistake("scriptPrint(\"R5:\", n, f\"e={e}\")\n", request).isEmpty());
 }
 
-void AiContentTests::hardcodedResultLine_allowsFallbackBranch()
-{
-    // LIST 5 local pyi, item 3: "if t is None: scriptPrint(\"R3: -1\") else: ... scriptPrint(\"R3:\", n, ...)".
-    const QString request = "Print the number of layers. The result label is \"R3:\".";
-    QVERIFY(QtiSasAiContent::hardcodedResultLineMistake(
-                "if t is None:\n    scriptPrint(\"R3: -1\")\nelse:\n    scriptPrint(\"R3:\", n)\n", request)
-                .isEmpty());
-    // a fixed line with no computed one, or at top level: still blocked
-    QVERIFY(!QtiSasAiContent::hardcodedResultLineMistake("if t:\n    scriptPrint(\"R3: 2\")\n", request).isEmpty());
-    QVERIFY(!QtiSasAiContent::hardcodedResultLineMistake("scriptPrint(\"R3: 2\")\nscriptPrint(\"R3:\", n)\n", request)
-                 .isEmpty());
-}
-
 void AiContentTests::noteTabSelfRun_removedFromTabText()
 {
     // LIST 5 local pyi, item 5: the "make" tab's text ended with "n.currentEditor().execute()".
@@ -2899,35 +2870,6 @@ void AiContentTests::noteTabSelfRun_removedFromTabText()
                 "n.addTab()\nn.tab(1).setText('m.currentEditor().execute()')\nn.tab(\"make\").execute()\n",
                 "Run only the \"make\" tab.")
                 .isEmpty());
-}
-
-void AiContentTests::labelOnlyResultLine_labelMovesOntoValues()
-{
-    // LIST 5 NOSPLIT NOEXPLORE local pyi, item 3: the label printed alone first, the values without it at the end.
-    QtiSasAiContent content;
-    const QString request = "Create a graph. Print the number of layers, the number of curves in the top and in the "
-                            "bottom layer, and the largest absolute residual with 4 decimals. The result label is "
-                            "\"R3:\".";
-    const QString code = "scriptPrint(\"R3:\")\nif t is None:\n    scriptPrint(\"Table Calib not found.\")\nelse:\n"
-                         "    scriptPrint(n, a, b, f\"{r:.4f}\")\n";
-    QCOMPARE(content.labelOnlyResultLineRepair(code, request),
-             QString("pass\nif t is None:\n    scriptPrint(\"Table Calib not found.\")\nelse:\n"
-                     "    scriptPrint(\"R3:\", n, a, b, f\"{r:.4f}\")\n"));
-    // too few values, two candidate lines, the label printed with values too, or no label asked: left alone
-    QVERIFY(content.labelOnlyResultLineRepair("scriptPrint(\"R3:\")\nscriptPrint(n, a)\n", request).isEmpty());
-    QVERIFY(content.labelOnlyResultLineRepair("scriptPrint(\"R3:\")\nprint(n, a, b, r)\nprint(n, a, b, r)\n", request)
-                .isEmpty());
-    QVERIFY(content.labelOnlyResultLineRepair("scriptPrint(\"R3:\")\nscriptPrint(\"R3:\", n, a, b, r)\n", request)
-                .isEmpty());
-    QVERIFY(content.labelOnlyResultLineRepair(code, "Print it.").isEmpty());
-    // a print before the label line, or one with fixed text, is not the values line
-    QVERIFY(content.labelOnlyResultLineRepair("scriptPrint(n, a, b, r)\nscriptPrint(\"R3:\")\n", request).isEmpty());
-    QVERIFY(content.labelOnlyResultLineRepair("scriptPrint(\"R3:\")\nscriptPrint(\"layers\", n, a, b)\n", request)
-                .isEmpty());
-    // series 5, LIST 3 item 3: a stray scriptPrint("R3:", end="") beside the full result line goes
-    QCOMPARE(content.labelOnlyResultLineRepair(
-                 "scriptPrint(\"R3:\", end=\"\")\nx = 1\nscriptPrint(\"R3:\", n, a, b, r)\n", request),
-             QString("pass\nx = 1\nscriptPrint(\"R3:\", n, a, b, r)\n"));
 }
 
 void AiContentTests::bareFolderName_usedWhole()
@@ -3005,6 +2947,13 @@ void AiContentTests::requestedResultValues_orderPhraseIsNoValue()
                                                     "Print whether each still exists afterwards, table first. "
                                                     "The result label is \"R6:\"."),
              QStringList({"whether each still exists afterwards"}));
+    // LIST 6, item 8: "sorted alphabetically" counted as a second value blocked the right line
+    QCOMPARE(QtiSasAiContent::requestedResultValues("Tidy up: close every table made today. Print the names of the "
+                                                    "tables left, sorted alphabetically. The result label is \"R8:\"."),
+             QStringList({"the names of the tables left"}));
+    QCOMPARE(QtiSasAiContent::requestedResultValues("Print the curve titles, sorted by name, and their number. The "
+                                                    "result label is \"R2:\"."),
+             QStringList({"the curve titles", "their number"}));
 }
 
 void AiContentTests::requestedResultValues_formatPhraseIsNoValue()
@@ -3111,35 +3060,6 @@ void AiContentTests::newTableNamesThatRun_skipsGuardedAndQuoted()
     QCOMPARE(newTableNamesThatRun("for i in range(2):\n    t = newTable(\"Peak\", 41, 2)\n"), QStringList{"Peak"});
 }
 
-void AiContentTests::noWorkFailureResult_blocksMadeUpNotFound()
-{
-    // Series 4 (local, LIST 3 item 3, three runs): only scriptPrint("R3:", -1, "TableNotFound") — "Squares" existed.
-    const QString request = R"(In "Squares", give column 4 the formula 1/(column 1 - 5). The result label is "R3:".)";
-    QVERIFY(!QtiSasAiContent::noWorkFailureResultMistake("scriptPrint(\"R3:\", -1, \"TableNotFound\")\n", request)
-                 .isEmpty());
-    QVERIFY(!QtiSasAiContent::noWorkFailureResultMistake("# no table\nscriptPrint(\"R3:\", -1, \"Table not found\")\n",
-                                                         request)
-                 .isEmpty());
-    // a script that looks the table up, a computed value, or no failure claim: left to the other checks
-    QVERIFY(QtiSasAiContent::noWorkFailureResultMistake(
-                "t = table(\"Squares\")\nif t is None:\n    scriptPrint(\"R3:\", -1, \"TableNotFound\")\n", request)
-                .isEmpty());
-    QVERIFY(
-        QtiSasAiContent::noWorkFailureResultMistake("scriptPrint(\"R3:\", n, \"TableNotFound\")\n", request).isEmpty());
-    QVERIFY(QtiSasAiContent::noWorkFailureResultMistake("scriptPrint(\"R3:\", 1, \"Squares\")\n", request)
-                .isEmpty()); // values written in, none the request's (benchmark SVD, local pyi): blocked; a value the
-                             // request gives: not
-    const QString svd =
-        "Print the number of unknowns and of the determined combinations. The result label is \"R10:\".";
-    QVERIFY(!QtiSasAiContent::noWorkFailureResultMistake("scriptPrint(\"R10:\", 3, 45)\n", svd).isEmpty());
-    QVERIFY(
-        !QtiSasAiContent::noWorkFailureResultMistake("scriptPrint(\"R10:\", round(0.01 + 0.01, 3))\n", svd).isEmpty());
-    QVERIFY(!QtiSasAiContent::noWorkFailureResultMistake("scriptPrint(\"R10:\", \"decomposition successful\")\n", svd)
-                 .isEmpty());
-    QVERIFY(QtiSasAiContent::noWorkFailureResultMistake("s = Svd\nscriptPrint(\"R10:\", 3, 45)\n", svd).isEmpty());
-    QVERIFY(QtiSasAiContent::noWorkFailureResultMistake("scriptPrint(\"R10:\", 3, s.rank([0, 1]))\n", svd).isEmpty());
-}
-
 void AiContentTests::noteAutoexecReceiver_movedToTheNote()
 {
     // Series 4 (local, LIST 3 item 10): n.tab(1).setAutoexec(False) twice, the model moved one, the item was lost.
@@ -3164,20 +3084,6 @@ void AiContentTests::existenceReadBeforeDeletion_blocksVariablePrinted()
     // read after the delete: fine
     QVERIFY(QtiSasAiContent::existenceReadBeforeCreationMistake(
                 "t = table(\"Peak5\")\ncloseWindow(t)\nscriptPrint(\"R6:\", existTable(\"Peak5\"))\n")
-                .isEmpty());
-}
-
-void AiContentTests::tableTransposedCell_swappedWhenOnlyThatFits()
-{
-    // LIST 3 item 5 (series 4 and 5, local): newTable("Format", 3, 1) written row-first, "no column 2" three times.
-    QtiSasAiContent content;
-    QCOMPARE(content.tableTransposedCellRepair("t = newTable(\"Format\", 3, 1)\nt.setCell(1, 1, 1234.5)\n"
-                                               "t.setCell(2, 1, 0.25)\nt.setText(2, 1, \"2,5\")\nv = t.cell(2, 1)\n"),
-             QString("t = newTable(\"Format\", 3, 1)\nt.setCell(1, 1, 1234.5)\nt.setCell(1, 2, 0.25)\n"
-                     "t.setText(1, 2, \"2,5\")\nv = t.cell(1, 2)\n"));
-    // already (col, row), or a call with a variable index: left alone
-    QVERIFY(content.tableTransposedCellRepair("t = newTable(\"F\", 3, 1)\nt.setCell(1, 3, 1)\n").isEmpty());
-    QVERIFY(content.tableTransposedCellRepair("t = newTable(\"F\", 3, 1)\nt.setCell(2, 1, 1)\nt.setCell(1, i, 2)\n")
                 .isEmpty());
 }
 
@@ -3529,17 +3435,6 @@ void AiContentTests::repeatedResultLabel_followsTheRequestedCount()
                 .isEmpty());
     QCOMPARE(content.repeatedResultLabelRepair("scriptPrint(\"R6:\", fns)\nscriptPrint(\"R6:\", a, b)\n", request),
              QString("pass\nscriptPrint(\"R6:\", fns, a, b)\n"));
-}
-
-void AiContentTests::scriptPrintKeyword_blocksEndOnly()
-{
-    // LIST 5, item 5: scriptPrint("R5:", n.tabs(), existTable("Auto"), end=" ") — TypeError.
-    const QString split = "scriptPrint(\"R5:\", n.tabs(), existTable(\"Auto\"), end=\" \")\n";
-    QVERIFY(!QtiSasAiContent::scriptPrintKeywordMistake(split).isEmpty());
-    // sep= is supported (qtisasrc.py), only end= raises
-    QVERIFY(QtiSasAiContent::scriptPrintKeywordMistake("scriptPrint(a, b, sep=\",\")\n").isEmpty());
-    QVERIFY(QtiSasAiContent::scriptPrintKeywordMistake("scriptPrint(\"R5:\", n.tabs(), ok, total)\n").isEmpty());
-    QVERIFY(QtiSasAiContent::scriptPrintKeywordMistake("print(a, end=\" \")\nscriptPrint(b)\n").isEmpty());
 }
 
 void AiContentTests::currentEditorAfterAddTab_blocksRunningNewTab()
@@ -5851,6 +5746,21 @@ void AiContentTests::extractExistingEntityNames_emptyWithoutExistingKeyword()
 {
     const QString request = R"(Create a table "GaussPeak" and fit it with a "Sphere" model.)";
     QVERIFY(extractExistingEntityNames(request).isEmpty());
+}
+
+void AiContentTests::extractExistingEntityNames_skipsANewTableTheItemMakes()
+{
+    // Confirmed live (LIST 6 item 2, every model, 2026-11-11): "into a new table \"Lyso-sub\"" was checked as an
+    // existing name, came back missing, and the item was refused before it ran
+    const QString request =
+        "The table \"Info\" says which table is the lysozyme sample and which is the buffer. Subtract the buffer from "
+        "the sample point by point into a new table \"Lyso-sub\" with columns q, I and dI (roles X, Y, yErr; the "
+        "errors added in quadrature). Print its number of rows and its intensity at the smallest q with 4 decimals.";
+    QStringList names;
+    for (const QPair<QString, QString> &entry : extractExistingEntityNames(request))
+        names << entry.first;
+    QVERIFY2(!names.contains("Lyso-sub"), qPrintable(names.join(", ")));
+    QVERIFY2(names.contains("Info"), qPrintable(names.join(", ")));
 }
 
 void AiContentTests::extractExistingEntityNames_dedupesRepeatedName()

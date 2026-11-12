@@ -103,5 +103,7 @@ class ChatServerTests(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    result = unittest.main(argv=[__file__], exit=False).result
-    assert result.wasSuccessful()
+    # inside QtiSAS sys.stderr has no flush(), which unittest's runner calls (Python 3.14): the report goes to a string
+    report = io.StringIO()
+    result = unittest.main(argv=[__file__], exit=False, testRunner=unittest.TextTestRunner(stream=report)).result
+    assert result.wasSuccessful(), report.getvalue()

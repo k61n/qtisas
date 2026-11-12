@@ -154,6 +154,12 @@ r = qtisas_server.summarize_ai(["▸▸  AI LIST: item 1/2 — a", "R1: 1",
                                 "▸▸  AI LIST: item 2/2 (took 1.0sec, 1.0sec total) — b",
                                 "▸▸▸ AI: connection error (ConnectionRefusedError): Connection refused"])
 assert [i["backend_error"] for i in r["items"]] == [False, True] and r["backend_errors"] == 1, r["items"]
+# an HTTP error of the server or the account is the backend's too; a 400 (e.g. a prompt over the context) is not
+r = qtisas_server.summarize_ai(["▸▸  AI LIST: item 1/3 — a", "▸▸▸ AI: HTTP 502 — retrying in 2.0s (attempt 1/5)...",
+                                "▸▸▸ AI HTTP 502: {\"error\":{\"message\":\"Your workspace is out of credits.\"}}",
+                                "▸▸  AI LIST: item 2/3 — b", "▸▸▸ AI HTTP 429: rate limit",
+                                "▸▸  AI LIST: item 3/3 — c", "▸▸▸ AI HTTP 400: maximum context length"])
+assert [i["backend_error"] for i in r["items"]] == [True, True, False] and r["backend_errors"] == 2, r["items"]
 r = qtisas_server.summarize_ai(["▸▸▸ AI code (not run):\n\nx = 1", "▸▸▸ AI: stopping — this request refers to ..."])
 assert (r["status"], r["ok"], r["items"]) == ("stopped", False, []), r
 
