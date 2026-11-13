@@ -7060,6 +7060,15 @@ bool ApplicationWindow::handleAiTextCommand(const QString &trimmed)
     return false;
 }
 
+// No AI preset chosen yet (a new installation): the request went to an empty address and failed with "connection
+// error (ProtocolUnknownError): Protocol "" is unknown" — confirmed (2026-11-13, a fresh home); said plainly instead
+static bool aiAgentMissing(const AiAssistant *ai)
+{
+    return ai->baseUrl().trimmed().isEmpty();
+}
+static const char *kNoAiAgent = "▸▸▸ AI: no AI agent is set up yet — choose or create a preset in Preferences → Ask AI "
+                                "(ready-made ones: Git-Get → AI Presets).";
+
 bool ApplicationWindow::askAiChat(const QString &text, bool forceConsole)
 {
     if (scriptEnv->objectName() != "Python")
@@ -7086,6 +7095,8 @@ bool ApplicationWindow::askAiChat(const QString &text, bool forceConsole)
         m_ai->setDocTiers(aiSettings.docTiers);
         if (command.compare("clear history", Qt::CaseInsensitive) == 0)
             m_ai->clearChatHistory();
+        else if (aiAgentMissing(m_ai))
+            print(kNoAiAgent);
         else
         {
             print("▸▸▸ AI chat request:\n\n" + command);
@@ -7104,6 +7115,11 @@ void ApplicationWindow::askAi(const QString &text, bool autoRun, bool forceConso
     }
     // Creates m_ai on first use (no-op if it already exists)
     ensureAiAssistant();
+    if (aiAgentMissing(m_ai))
+    {
+        print(kNoAiAgent);
+        return;
+    }
 
     if (m_ai->isChatPending())
     {
