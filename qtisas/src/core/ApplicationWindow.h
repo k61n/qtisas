@@ -322,7 +322,7 @@ public:
         AiRun,
         AiChat
     };
-    TerminalMode m_terminalMode = TerminalMode::Script;
+    TerminalMode m_terminalMode = TerminalMode::AiChat;
     TerminalMode effectiveTerminalMode(Qt::KeyboardModifiers modifiers) const;
     void updateTerminalModeSuffix(Qt::KeyboardModifiers modifiers = Qt::NoModifier);
     void submitTerminalLine(Qt::KeyboardModifiers modifiers);

@@ -1794,6 +1794,7 @@ void ApplicationWindow::initToolBars()
                                  qMax(m_terminalModeLabel->fontMetrics().horizontalAdvance("python"),
                                       m_terminalModeLabel->fontMetrics().horizontalAdvance("ai-chat")));
     m_terminalModeLabel->setFixedWidth(suffixWidth);
+    updateTerminalModeSuffix(); // "ai-chat", the default mode, or the language when Python is not the one
     auto *terminalLayout = new QHBoxLayout(terminal_line);
     terminalLayout->setContentsMargins(0, 0, 6, 0);
     terminalLayout->addStretch();
@@ -23963,7 +23964,7 @@ void ApplicationWindow::terminal(QString str)
                                  " /python or /muparser — select global language and script mode\n"
                                  " /ai                 — select AI mode (generate only)\n"
                                  " /ai-run             — select AI mode with auto-run\n"
-                                 " /ai-chat            — conversation: reads the project, changes it after your yes\n"
+                                 " /ai-chat            — chat (default): reads the project, changes it after your yes\n"
                                  " In AI-chat mode: Enter = chat; Ctrl+Enter = AI; Ctrl+Shift+Enter = AI+run\n"
                                  " Chat commands: stop / cancel; clear history (chat only)\n"
                                  " AI modes require Python; with muParser, all Enter shortcuts run muParser.\n"
