@@ -86,6 +86,9 @@ public:
     void initScreenResolusionDependentParameters(int hResolusion, double sasResoScale);    
     static bool find(QTextEdit *qte, QLineEdit *qle);
     QStringList groupFunctions(const QString &groupName);
+    // The functions of a category as the window lists them: a folder ("sasviewmodels/") its files, a group its
+    // [group] members, "(...)" copies left out, the top level first — without selecting anything.
+    QStringList categoryFunctions(const QString &category);
     QString functionName() const;
     void setFunctionName(const QString &name);
     QString yName() const;

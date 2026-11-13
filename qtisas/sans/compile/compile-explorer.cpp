@@ -137,35 +137,11 @@ void compile18::groupChanged(const QModelIndex &index, const QModelIndex &p)
     if (!index.isValid())
         return;
 
-    QString fifExt = radioButton2D->isChecked() ? "*.2dfif" : "*.fif";
     QString groupName = index.data().toString();
     if (groupName.isEmpty())
         return;
 
-    QStringList functions;
-    if (groupName.at(groupName.length() - 1) == '/')
-        functions = FunctionsExplorer::listFilesInSubfolder(pathFIF, fifExt, groupName);
-    else
-        functions = groupFunctions(groupName);
-
-    // hide "(...)"-suffixed file copies — their [name] still points at the original, risking a silent overwrite.
-    for (int i = static_cast<int>(functions.count()) - 1; i >= 0; i--)
-        if (functions[i].contains('(') || functions[i].contains(')'))
-            functions.removeAt(i);
-
-    QStringList functionsRoot, functionsSubfolders;
-
-    for (int i = 0; i < functions.count(); i++)
-        if (functions[i].contains("/"))
-            functionsSubfolders << functions[i];
-        else
-            functionsRoot << functions[i];
-
-    functionsSubfolders.sort();
-    functionsRoot.sort();
-    functions.clear();
-
-    functions << functionsRoot << functionsSubfolders;
+    const QStringList functions = categoryFunctions(groupName);
 
     listViewFunctions->setModel(new QStringListModel(functions));
     
@@ -189,6 +165,28 @@ void compile18::groupChanged(const QModelIndex &index, const QModelIndex &p)
     radioButtonBAT->setChecked(false);
     radioButtonCPP->setChecked(false); radioButtonCPP->setText("*.cpp");
     radioButtonFIF->setChecked(false); radioButtonFIF->setText("*.fif");
+}
+// +++  the functions of a category, as the window lists them
+QStringList compile18::categoryFunctions(const QString &category)
+{
+    QString fifExt = radioButton2D->isChecked() ? "*.2dfif" : "*.fif";
+    QStringList functions;
+    if (category.endsWith('/'))
+        functions = FunctionsExplorer::listFilesInSubfolder(pathFIF, fifExt, category);
+    else
+        functions = groupFunctions(category);
+
+    // hide "(...)"-suffixed file copies — their [name] still points at the original, risking a silent overwrite.
+    for (int i = static_cast<int>(functions.count()) - 1; i >= 0; i--)
+        if (functions[i].contains('(') || functions[i].contains(')'))
+            functions.removeAt(i);
+
+    QStringList functionsRoot, functionsSubfolders;
+    for (const QString &function : std::as_const(functions))
+        (function.contains("/") ? functionsSubfolders : functionsRoot) << function;
+    functionsSubfolders.sort();
+    functionsRoot.sort();
+    return functionsRoot + functionsSubfolders;
 }
 // +++  find functions of single Group
 QStringList compile18::groupFunctions(const QString &groupName)

@@ -145,18 +145,16 @@ bool compile18::selectCategory(const QString &name)
     return true;
 }
 
+// A query, as the window lists the category, without selecting it: confirmed (2026-11-13), the chat's probes called
+// functionNames("ALL") in nearly every message about fit functions — each call moved the window's category list and
+// cleared the open function (groupChanged()) — and a folder ("sasviewmodels/") gave [] (only [group] lines matched).
 QStringList compile18::functionNames(QString categoryName)
 {
     if (categoryName.isEmpty())
-    {
-        const QModelIndexList sel = listViewGroup->selectionModel()->selectedRows();
-        if (sel.isEmpty())
-            return {};
-        categoryName = sel[0].data().toString();
-    }
-
-    selectCategory(categoryName);
-    return groupFunctions(categoryName);
+        categoryName = category();
+    if (categoryName.isEmpty())
+        return {};
+    return categoryFunctions(categoryName);
 }
 
 bool compile18::openFunction(const QString &name)

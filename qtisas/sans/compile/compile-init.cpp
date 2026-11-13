@@ -35,7 +35,12 @@ void compile18::connectSlot()
     connect(pushButtonExplDown, &QToolButton::clicked, this, &compile18::expandExplTrue);
     connect(pushButtonExplUp, &QToolButton::clicked, this, &compile18::expandExplFalse);
 
-// compile-explorer
+    // compile-explorer
+    // No drag auto-scroll in the two lists (single selection, no drag and drop): confirmed (2026-11-13), the category
+    // list's auto-scroll timer, started by a drag over it, kept running — each step moved the list down and the next
+    // one back up, so its "nothing changed, stop" never came, and the list jumped up and down 20 times a second
+    listViewGroup->setAutoScroll(false);
+    listViewFunctions->setAutoScroll(false);
     connect(lineEditFunctionName, &QLineEdit::textChanged, this, &compile18::newFunctionName);
     connect(lineEditGroupName, &QLineEdit::textChanged, this, &compile18::newCategoryName);
     connect(textLabelGroupName, &QToolButton::clicked, this, &compile18::newFIF);
