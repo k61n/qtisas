@@ -1,3 +1,39 @@
+# v0.18.1
+
+  * AI assistant
+    - Chat (/ai-chat, now the terminal's default mode) reads the project:
+      tables, graphs, notes, the fit-function library by folder; it runs
+      read-only probe scripts and makes a change only after the user's
+      yes, through the script AI; without an AI preset it says how to
+      set one up
+    - MCP: ask_qtisas_chat talks with the chat from an external AI
+    - Presets: Reasoning (default, low, off); BIGMODEL sends one system
+      message; an empty answer at the token limit is explained
+    - Self-review and split mode off by default; LIST items pass their
+      result lines on, an item without one is reported as failed;
+      lastListCode() returns the scripts a LIST ran as one script
+
+ * DAN
+    - Script table: no crash on empty Polarization/Transmission cells;
+      calculations use the selected rows correctly; a new session
+      selects no script table of an earlier one
+    - Dan.Mask.copyMask(source, name)
+
+ * Plots: adding curves keeps a log axis' own limits
+
+ * Compile: Compiler.functionNames() only lists (the open function
+   stays, folder categories list their files); the category list no
+   longer jumps up and down
+
+ * Python API
+    - colIndex() is 1-based and finds labels containing "_";
+      DataCurve.xColumnName()
+    - deleteFolder() in scripts deletes without a dialog
+      (ask=True asks as the menu does)
+
+ * Fix: crash after closeProject()/newProject()/openProject() when the
+   active window was in a subfolder (e.g. on opening the Edit menu)
+
 
  * min macOS version for bundles is 14
  * upd Qt to 6.12.0

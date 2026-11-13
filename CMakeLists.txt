@@ -6,7 +6,7 @@ if (${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.27")
     cmake_policy(SET CMP0144 NEW)
 endif ()
 
-project(qtisas VERSION 0.18.0 LANGUAGES C CXX)
+project(qtisas VERSION 0.18.1 LANGUAGES C CXX)
 
 option(BUILD_TESTING "Build QtiSAS tests" OFF)
 include(CTest)
