@@ -28,13 +28,14 @@ Description: QtiSAS's main window
 #include <QClipboard>
 #include <QDateTime>
 #include <QDebug>
+#include <QDirIterator>
 #include <QDockWidget>
 #include <QFileDialog>
 #include <QFontComboBox>
+#include <QHideEvent>
 #include <QImageReader>
 #include <QImageWriter>
 #include <QInputDialog>
-#include <QHideEvent>
 #include <QKeySequence>
 #include <QList>
 #include <QMdiSubWindow>
@@ -44,8 +45,8 @@ Description: QtiSAS's main window
 #include <QPixmapCache>
 #include <QPluginLoader>
 #include <QPrintDialog>
-#include <QPrinter>
 #include <QPrintPreviewDialog>
+#include <QPrinter>
 #include <QProgressDialog>
 #include <QRegularExpression>
 #include <QScreen>
@@ -60,10 +61,10 @@ Description: QtiSAS's main window
 #include <QTextBrowser>
 #include <QTextDocumentWriter>
 #include <QTextStream>
-#include <QVBoxLayout>
 #include <QUndoStack>
 #include <QUndoView>
 #include <QUrl>
+#include <QVBoxLayout>
 
 #include <gsl/gsl_sort.h>
 #include <qwt/qwt_plot_layout.h>
@@ -6405,6 +6406,109 @@ QString ApplicationWindow::tableShape(const QString &name)
     return {};
 }
 
+// Each layer's curves (a data curve with its X column), its error bars counted, and the bottom and left axes' scale
+// type and range: what a chat question about a graph needs ("which curves", "log or linear") without a probe — the
+// Python API has no getter for an axis' scale type.
+QString ApplicationWindow::graphShape(const QString &name)
+{
+    auto *ml = qobject_cast<MultiLayer *>(window(name));
+    if (!ml)
+        return {};
+    static const QStringList scaleNames = {"linear", "log10", "ln", "log2", "reciprocal", "probability", "logit"};
+    QStringList layers;
+    const QList<Graph *> graphs = ml->layersList();
+    for (int l = 0; l < graphs.size(); ++l)
+    {
+        Graph *g = graphs[l];
+        QStringList curves;
+        int errorBars = 0;
+        for (int i = 0; i < g->curveCount(); ++i)
+        {
+            auto *c = dynamic_cast<PlotCurve *>(g->plotItem(i));
+            if (c && c->type() == Graph::ErrorBars)
+            {
+                ++errorBars;
+                continue;
+            }
+            const QString title = g->curveTitle(i);
+            DataCurve *dc = g->dataCurve(i);
+            curves << (dc && !dc->xColumnName().isEmpty() ? QString(R"("%1" (x "%2"))").arg(title, dc->xColumnName())
+                                                          : QString("\"%1\"").arg(title));
+        }
+        QStringList axes;
+        for (const auto &[axis, label] : {std::pair<int, QString>{QwtPlot::xBottom, "x"}, {QwtPlot::yLeft, "y"}})
+        {
+            const auto *engine = dynamic_cast<const ScaleEngine *>(g->axisScaleEngine(axis));
+            const int type = engine ? static_cast<int>(engine->type()) : -1;
+            const QwtScaleDiv &div = g->axisScaleDiv(axis);
+            axes << QString("%1 %2 %3..%4")
+                        .arg(label, type >= 0 && type < scaleNames.size() ? scaleNames[type] : "other")
+                        .arg(div.lowerBound(), 0, 'g', 4)
+                        .arg(div.upperBound(), 0, 'g', 4);
+        }
+        // one arg() call: a "%1" in a curve title stays text
+        layers << QString("layer %1: %2%3; %4")
+                      .arg(QString::number(l + 1),
+                           curves.isEmpty() ? QString("no curves") : "curves " + curves.join(", "),
+                           errorBars ? QString(" + %1 error bars").arg(errorBars) : QString(), axes.join(", "));
+    }
+    return layers.join("; ");
+}
+
+// The first tabs of a note, each with its length and its first 160 characters on one line: confirmed (CHAT 1, GLM and
+// gpt-oss) — asked for the measurement conditions, both read the Info table only and answered "not recorded anywhere",
+// although PROJECT NOW listed the note that holds them
+QString ApplicationWindow::noteShape(const QString &name)
+{
+    auto *n = qobject_cast<Note *>(window(name));
+    if (!n)
+        return {};
+    constexpr int kTabs = 3;
+    constexpr int kChars = 160;
+    QStringList tabs;
+    for (int i = 0; i < n->tabs() && i < kTabs; ++i)
+    {
+        const ScriptEdit *editor = n->editorAt(i);
+        const QString text = editor ? editor->toPlainText().simplified() : QString();
+        tabs << QString("tab %1 (%2 characters)%3")
+                    .arg(i + 1)
+                    .arg(text.size())
+                    .arg(text.isEmpty() ? QString()
+                                        : ": \"" + text.left(kChars) + (text.size() > kChars ? "...\"" : "\""));
+    }
+    if (n->tabs() > kTabs)
+        tabs << QString("%1 more tabs").arg(n->tabs() - kTabs);
+    return tabs.join("; ");
+}
+
+// The .fif files of the fit-function library counted per folder (a directory listing, as liveObjects() does for ai/)
+QString ApplicationWindow::functionLibrary()
+{
+    if (!compileWidget)
+        return {};
+    const QDir root(compileWidget->pathFIF);
+    QMap<QString, int> folders; // "" = the top level
+    int total = 0;
+    QDirIterator it(root.absolutePath(), {"*.fif"}, QDir::Files, QDirIterator::Subdirectories);
+    while (it.hasNext())
+    {
+        const QString relative = root.relativeFilePath(it.next());
+        const qsizetype slash = relative.lastIndexOf('/');
+        folders[slash < 0 ? QString() : relative.left(slash + 1)]++;
+        ++total;
+    }
+    if (total == 0)
+        return {};
+    QList<QPair<int, QString>> counts;
+    for (auto f = folders.cbegin(); f != folders.cend(); ++f)
+        counts << qMakePair(f.value(), f.key().isEmpty() ? QString("top level") : f.key());
+    std::sort(counts.begin(), counts.end(), [](const auto &a, const auto &b) { return a.first > b.first; });
+    QStringList parts;
+    for (const auto &[count, folder] : counts)
+        parts << QString("%1 %2").arg(folder, QString::number(count));
+    return QString("%1 fit functions, by folder: %2").arg(total).arg(parts.join(", "));
+}
+
 QString ApplicationWindow::formulaLanguage() const
 {
     return scriptEnv ? QString(scriptEnv->objectName()) : QString();
@@ -6685,6 +6789,21 @@ void ApplicationWindow::connectAiSignalsOnce()
     m_aiConnected = true;
     connect(m_ai, &AiAssistant::chatResponseReady, this,
             [this](const QString &text) { print("▸▸▸ AI chat:\n\n" + text); });
+    // A change the user confirmed in the chat: one script request with the user's settings, as askAi() starts a typed
+    // one; the chat waits for it and reports the outcome (AiAssistant::startChatTask())
+    connect(m_ai, &AiAssistant::chatTaskRequested, this, [this](const QString &task) {
+        m_ai->clearUserCorrections();
+        m_ai->setMaxUserRules(aiSettings.maxUserRules);
+        m_ai->setMaxAutoContinue(aiSettings.maxAutoContinue);
+        m_ai->setMaxSplitParts(aiSettings.maxSplitParts);
+        m_ai->setSplitMergeEnabled(aiSettings.splitRequestMerge);
+        const bool bigModel = m_ai->bigModel();
+        m_ai->setSelfReviewEnabled(aiSettings.selfReviewEnabled && !bigModel);
+        m_ai->setExploreEnabled(aiSettings.exploreEnabled && !bigModel);
+        m_ai->setRequestTimeoutSec(aiSettings.requestTimeoutSec);
+        m_ai->setDocTiers(aiSettings.docTiers);
+        m_ai->beginRequest(task + m_aiContent.requestSuffix(true), true, aiSettings.splitByDefault && !bigModel);
+    });
     connect(m_ai, &AiAssistant::responseReady, this, [this](const QString &code) {
         // "Existing X" verification script round-trip — see AiAssistant::beginRequest()'s doc
         // comment. Checked before EVERYTHING else below, including the continuation-check — this
@@ -23838,7 +23957,7 @@ void ApplicationWindow::terminal(QString str)
                                  " /python or /muparser — select global language and script mode\n"
                                  " /ai                 — select AI mode (generate only)\n"
                                  " /ai-run             — select AI mode with auto-run\n"
-                                 " /ai-chat            — conversation only; no scripts or execution\n"
+                                 " /ai-chat            — conversation: reads the project, changes it after your yes\n"
                                  " In AI-chat mode: Enter = chat; Ctrl+Enter = AI; Ctrl+Shift+Enter = AI+run\n"
                                  " Chat commands: stop / cancel; clear history (chat only)\n"
                                  " AI modes require Python; with muParser, all Enter shortcuts run muParser.\n"

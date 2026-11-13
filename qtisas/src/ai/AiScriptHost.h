@@ -98,6 +98,39 @@ class AiScriptHost
         return {};
     }
 
+    // What the graph window `name` shows — "layer 1: curves \"Table2_I\" (x \"Table2_Q\"), ...; x log10 0.004..0.3,
+    // y log10 0.1..200" — or empty when there is no such graph or the host cannot tell. Read from live state, like
+    // tableShape(): the chat's project state names a graph's curves and scales without a probe.
+    virtual QString graphShape(const QString &name)
+    {
+        Q_UNUSED(name)
+        return {};
+    }
+
+    // What the note `name` holds, briefly — "tab 1 (120 characters): \"Beamtime 2026-11, ...\"" for its first tabs — or
+    // empty when there is no such note or the host cannot tell. The chat's project state shows what a note is about.
+    virtual QString noteShape(const QString &name)
+    {
+        Q_UNUSED(name)
+        return {};
+    }
+
+    // The fit-function library, briefly: how many functions and how many in each folder ("312 fit functions, by folder:
+    // top level 120, sasviewmodels/ 98, ai/ 68, ...") — or empty when the host cannot tell. The chat's project state:
+    // confirmed (2026-11-13, the user's QtiSAS), shown only the "ai/" functions, the chat insisted that no
+    // sasviewmodels/ function existed, even after its own probe had listed them.
+    virtual QString functionLibrary()
+    {
+        return {};
+    }
+
+    // True while an AI script runs (it can take long and process events meanwhile, e.g. a DAN reduction): the AI is
+    // not idle then, although no model call is in flight.
+    virtual bool scriptRunning() const
+    {
+        return false;
+    }
+
     // The state the host's modules keep between scripts, which a later script continues instead of starting anew — one
     // line per module ("DAN-SANS session (Dan): instrument ..., masks: ...") — or empty when no module holds any.
     virtual QStringList moduleStates()

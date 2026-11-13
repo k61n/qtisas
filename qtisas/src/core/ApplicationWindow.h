@@ -110,6 +110,13 @@ public:
     QStringList closeObjects(const QStringList &objects) override;
     QString formulaLanguage() const override;
     QString tableShape(const QString &name) override;
+    QString graphShape(const QString &name) override;
+    QString noteShape(const QString &name) override;
+    QString functionLibrary() override;
+    bool scriptRunning() const override
+    {
+        return m_aiCapturing;
+    }
     QStringList moduleStates() override;
 
     void print(const QString &message) override;

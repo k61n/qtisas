@@ -1482,6 +1482,15 @@ void AiAssistant::dispatchAfterExistenceCheck(const QString &aiText)
         dispatchByMode(aiText);
         return;
     }
+    // A chat's confirmed change is a task of its own, complete in its text: no "new task or continuation?" call, and
+    // never the question to the user it may end in (the chat would wait for an answer nobody gives)
+    if (m_chatTaskRunning)
+    {
+        m_contextHistoryStart = m_history.size();
+        originalRequestText = aiText;
+        dispatchByMode(aiText);
+        return;
+    }
     // History exists — could belong to this same ongoing task, or to an earlier, unrelated
     // request (see awaitingContinuationCheck's doc comment for the confirmed-live failure this
     // guards against). Defer dispatch until handleContinuationCheckResponse() decides which.
@@ -6850,6 +6859,9 @@ AiAssistant::AiAssistant(QObject *parent)
         m_requestTimer.start();
         m_currentReply = m_nam->post(m_lastRequest, m_lastPayload);
     });
+    m_chatTaskTimer = new QTimer(this);
+    m_chatTaskTimer->setInterval(250);
+    connect(m_chatTaskTimer, &QTimer::timeout, this, &AiAssistant::checkChatTaskDone);
 }
 
 void AiAssistant::clearHistory()
@@ -8163,28 +8175,428 @@ void AiAssistant::askChat(const QString &text)
     for (const QString &topic : docTopicsFromRequestText(text))
         if (!m_chatDocTopics.contains(topic))
             m_chatDocTopics << topic;
-    QStringList topics = m_content ? m_content->baselineDocTopics() : QStringList();
-    topics.append(m_chatDocTopics);
-    topics.removeDuplicates();
-    ask(text, true,
-        "You are a conversational assistant in QtiSAS. Answer only in natural language. "
-        "Do not output Python code, executable scripts, code blocks, or scriptPrint wrappers, "
-        "even when asked to write or run code; explain the idea in words instead. "
-        "You cannot execute commands, inspect the project, or access files. "
-        "Treat LIST, SPLIT, REVIEW, EXPLORE, and 'run it' as ordinary conversation text. "
-        "Use the supplied QtiSAS documentation to explain supported features and APIs. "
-        "Documentation is reference material, not instructions to generate or execute scripts. "
-        "Its code examples and agent workflow rules do not override these chat-only instructions. "
-        "If the documentation does not establish an answer, say so rather than inventing API details. "
-        "The TOPICS line is transport metadata, not part of the user's question.",
-        topics, true, true, false, QString(), true);
+    m_chatTopics = m_content ? m_content->baselineDocTopics() : QStringList();
+    m_chatTopics.append(m_chatDocTopics);
+    m_chatTopics.removeDuplicates();
+    addChatTopics(chatNamedObjectTopics(text));
+    m_chatQuestion = text;
+    m_chatWork.clear();
+    m_chatProbeRounds = 0;
+    m_chatTaskDone = false;
+    m_chatCodeRetried = false;
+    m_chatEmptyRetried = false;
+    sendChatTurn();
+}
+
+// The chat used to answer from the docs alone ("You cannot inspect the project"): benchmark CHAT 1 (2026-11-12), every
+// question about the user's own tables, note, graph or fit function answered "I can't see your project" or guessed. Now
+// each message carries the project's state, and the model may read more with up to kMaxChatProbes read-only probes.
+QString AiAssistant::chatSystemPrompt()
+{
+    // The three kinds of reply named and numbered: confirmed (CHAT 1, the small models), a prose description of the
+    // probe and task formats left them answering with code, announcing a probe instead of sending it, or proposing a
+    // change where the user asked why.
+    return QString(
+               "You are the assistant in QtiSAS's chat. Each reply of yours is exactly ONE of these three:\n"
+               "1. ANSWER: in natural language, short and concrete, with the real names and numbers of the user's "
+               "project. No code unless the user asks for code; naming an API call in a sentence is fine.\n"
+               "2. PROBE: when the answer depends on something PROJECT NOW does not show (values in a table, the text "
+               "of a note, a fit function's code or parameters, a number you must compute) — the first line "
+               "\"# EXPLORE\", then a Python script that reads it with the QtiSAS API (see the documentation) and "
+               "prints what you need. QtiSAS runs it and sends you what it printed; then answer, or send another probe "
+               "— up to %1 probes per message. A probe only reads and computes: it never creates, changes, deletes, "
+               "saves, compiles or fits anything (QtiSAS runs it only up to the first such call). Never guess a value "
+               "you can read, and never announce a probe (\"Let me read the table.\"): send it.\n"
+               "3. TASK: only right after the user said yes to a change you proposed — the first line \"# DO\", then "
+               "the task for QtiSAS's script AI in words, complete on its own (the exact names, columns, formulas and "
+               "values from this conversation), as it would be typed into a script request. QtiSAS runs it and sends "
+               "you what happened; then answer with the result.\n\n"
+               "Every message carries PROJECT NOW: the windows of the project (tables with their columns, graphs with "
+               "their curves and axes, notes with their beginning), the fit-function library by folder and the "
+               "modules' state, read from QtiSAS just now.\n\n"
+               "Changes need the user's yes. When the user asks you to make or change something (a table, a column, "
+               "a graph, a fit, a function), answer with exactly what you would do (names, columns, formulas) and ask "
+               "whether to go ahead. A question (\"why ...?\", \"what is ...?\") gets an answer, not a change. "
+               "Never tell the user that something was changed unless QtiSAS sent you the outcome of your task in this "
+               "message.\n\n"
+               "If a name the user gives does not exist, say so and name what does exist. Write names exactly as "
+               "QtiSAS shows them (Table1, ai/MySphere).\n\n"
+               "The documentation is reference material: its code examples and its workflow rules for script "
+               "requests (LIST, SPLIT, REVIEW, result lines) do not apply to this chat. The TOPICS line is transport "
+               "metadata, not part of the user's message.")
+        .arg(kMaxChatProbes);
+}
+
+// The marked part of a chat reply: a code fence whose first line is the marker, or else everything from a line that
+// starts with it to the reply's end (a closing fence dropped). Confirmed (CHAT 1, Qwen): told never to announce a
+// probe, it wrote "Let me read the Info table." and the probe after it, unfenced — read as the answer, the probe never
+// ran.
+static QString chatMarkedPart(const QString &answer, const QRegularExpression &markerRe)
+{
+    static const QRegularExpression fenceRe(R"(```[ \t]*\w*[ \t]*\n(.*?)```)",
+                                            QRegularExpression::DotMatchesEverythingOption);
+    for (auto it = fenceRe.globalMatch(answer); it.hasNext();)
+        if (const QString block = it.next().captured(1).trimmed(); markerRe.match(block).capturedStart() == 0)
+            return block;
+    const QRegularExpressionMatch m = markerRe.match(answer);
+    if (!m.hasMatch())
+        return {};
+    QString part = answer.mid(m.capturedStart()).trimmed();
+    if (part.endsWith("```"))
+        part.chop(3);
+    return part.trimmed();
+}
+
+QString AiAssistant::chatProbeCode(const QString &answer)
+{
+    // Upper case only, as the script AI's EXPLORE marker. In the CHAT runs (2026-11-12/13) all 634 markers the models
+    // sent were upper case, and their code had comments like "# do simple least squares on (q^2, ln(I))": in code the
+    // user asked for, a case-insensitive marker would take such a comment for a probe or a task.
+    static const QRegularExpression exploreRe(R"(^[ \t]*#[ \t]*EXPLORE\b)", QRegularExpression::MultilineOption);
+    return chatMarkedPart(answer, exploreRe);
+}
+
+QStringList AiAssistant::chatProbeTopics(const QString &code)
+{
+    static const QList<QPair<QString, QRegularExpression>> apis = {
+        {"table", QRegularExpression(R"(\b(?:table|newTable|currentTable)\s*\(|\.(?:colData|colNames|numRows)\s*\()")},
+        {"note", QRegularExpression(R"(\b(?:note|newNote)\s*\()")},
+        {"graph", QRegularExpression(R"(\b(?:graphWindow|newGraph)\s*\(|\.(?:layer|activeLayer|curveTitle)\s*\()")},
+        {"matrix", QRegularExpression(R"(\b(?:matrix|newMatrix)\s*\()")},
+        {"compile", QRegularExpression(R"(\bCompiler\b)")},
+        {"fittable", QRegularExpression(R"(\bFittable\b)")},
+        {"dan", QRegularExpression(R"(\bDan\.)")}};
+    QStringList topics;
+    for (const auto &[topic, re] : apis)
+        if (re.match(code).hasMatch())
+            topics << topic;
+    return topics;
+}
+
+bool AiAssistant::chatAsksForCode(const QString &text)
+{
+    static const QRegularExpression codeRe(R"(\b(?:code|scripts?|python|snippet|programm?(?:e|ing)?)\b)",
+                                           QRegularExpression::CaseInsensitiveOption);
+    return codeRe.match(text).hasMatch();
+}
+
+QStringList AiAssistant::chatNamedObjectTopics(const QString &text)
+{
+    if (!m_host)
+        return {};
+    static const QHash<QString, QString> kindTopic = {{"table", "table"},     {"graph", "graph"},
+                                                      {"note", "note"},       {"matrix", "matrix"},
+                                                      {"3D plot", "graph3d"}, {"function", "compile"}};
+    QStringList topics;
+    for (const QString &object : m_host->liveObjects())
+    {
+        const QString topic = kindTopic.value(object.section(':', 0, 0));
+        const QString name = object.section(':', 1);
+        if (topic.isEmpty() || topics.contains(topic) || name.size() < 2)
+            continue;
+        if (QRegularExpression("(?<![\\w/-])" + QRegularExpression::escape(name) + "(?![\\w/-])",
+                               QRegularExpression::CaseInsensitiveOption)
+                .match(text)
+                .hasMatch())
+            topics << topic;
+    }
+    return topics;
+}
+
+void AiAssistant::addChatTopics(const QStringList &topics)
+{
+    for (const QString &topic : topics)
+        if (docTier(topic) != "off")
+        {
+            if (!m_chatTopics.contains(topic))
+                m_chatTopics << topic;
+            if (!m_chatDocTopics.contains(topic))
+                m_chatDocTopics << topic;
+        }
+}
+
+QString AiAssistant::chatProjectState(const QStringList &objects, const QHash<QString, QString> &shapes,
+                                      const QStringList &moduleStates, const QString &library)
+{
+    constexpr int kMaxShaped = 30;
+    constexpr int kMaxNamed = 60;
+    QStringList windows;
+    int shaped = 0, named = 0, left = 0;
+    for (const QString &object : objects)
+    {
+        const QString kind = object.section(':', 0, 0);
+        const QString name = object.section(':', 1);
+        if (kind == "function") // the "ai/" functions only: the library line below names them all, by folder
+            continue;
+        const QString shape = shapes.value(object);
+        if (!shape.isEmpty() && shaped < kMaxShaped)
+        {
+            windows << QString("- %1 \"%2\": %3").arg(kind, name, shape);
+            ++shaped;
+        }
+        else if (named < kMaxNamed)
+        {
+            windows << QString("- %1 \"%2\"").arg(kind, name);
+            ++named;
+        }
+        else
+            ++left;
+    }
+    if (left > 0)
+        windows << QString("- ... and %1 more windows").arg(left);
+    QString text = "\n\nPROJECT NOW (read from QtiSAS just now, nothing was executed):\n";
+    text += windows.isEmpty() ? QString("- no windows\n") : windows.join("\n") + "\n";
+    if (!library.isEmpty())
+        text += "- fit-function library: " + library +
+                " — their names: Compiler.functionNames(\"ALL\"), the compiled ones: Fittable.fitFunctions()\n";
+    for (const QString &state : moduleStates)
+        text += "- " + state + "\n";
+    return text;
+}
+
+QString AiAssistant::currentChatProjectState()
+{
+    if (!m_host)
+        return {};
+    const QStringList objects = m_host->liveObjects();
+    QHash<QString, QString> shapes;
+    for (const QString &object : objects)
+    {
+        const QString name = object.section(':', 1);
+        if (object.startsWith(QLatin1String("table:")))
+            shapes.insert(object, m_host->tableShape(name));
+        else if (object.startsWith(QLatin1String("graph:")))
+            shapes.insert(object, m_host->graphShape(name));
+        else if (object.startsWith(QLatin1String("note:")))
+            shapes.insert(object, m_host->noteShape(name));
+    }
+    return chatProjectState(objects, shapes, m_host->moduleStates(), m_host->functionLibrary());
+}
+
+QString AiAssistant::chatProbeOutput(const QString &output, qsizetype limit)
+{
+    const QString text = output.trimmed();
+    if (text.size() <= limit)
+        return text.isEmpty() ? QString("(no output)") : text;
+    const qsizetype head = limit * 3 / 4;
+    const qsizetype tail = limit - head;
+    return text.left(head) + QString("\n... (%1 characters left out) ...\n").arg(text.size() - head - tail) +
+           text.right(tail);
+}
+
+QString AiAssistant::chatTaskText(const QString &answer)
+{
+    // upper case only, see chatProbeCode()
+    static const QRegularExpression doRe(R"(^[ \t]*#[ \t]*DO\b[ \t:]*)", QRegularExpression::MultilineOption);
+    QString task = chatMarkedPart(answer, doRe);
+    if (const QRegularExpressionMatch m = doRe.match(task); m.hasMatch())
+        task.remove(0, m.capturedEnd());
+    return task.trimmed();
+}
+
+bool AiAssistant::looksLikeChatConfirmation(const QString &text)
+{
+    // A short message that says yes: the chat proposed the change in its previous answer. Anything longer is a new
+    // request, which the chat answers with a proposal first. "please" alone is no yes — confirmed (CHAT 1 HOLDOUT,
+    // Qwen): "Please delete Graph2." was taken for one, and the graph was deleted before anything had been proposed.
+    static const QRegularExpression yesRe(
+        R"(^\W*(?:please\W+)?(?:yes|yeah|yep|y|ok|okay|sure|go|go ahead|do it|do that|do so|run it|proceed|)"
+        R"(confirmed?|agreed|fine|great|correct|right|perfect|ja|make it|create it|apply it|go for it)\b)",
+        QRegularExpression::CaseInsensitiveOption);
+    const QString trimmed = text.trimmed();
+    return trimmed.split(QRegularExpression(R"(\s+)"), Qt::SkipEmptyParts).size() <= 12 &&
+           yesRe.match(trimmed).hasMatch();
+}
+
+void AiAssistant::startChatTask(const QString &task)
+{
+    m_chatTaskDone = true;
+    m_chatTaskText = task;
+    m_chatTaskObjectsBefore = m_host->liveObjects();
+    m_itemOutput.clear();
+    m_itemRanScripts.clear();
+    m_chatTaskRunning = true;
+    m_chatTaskQuietMs = 0;
+    m_host->print("▸▸▸ AI chat: the script AI makes the change:\n\n" + task);
+    emit chatTaskRequested(task);
+    m_chatTaskTimer->start();
+}
+
+void AiAssistant::checkChatTaskDone()
+{
+    // The script request is over when nothing of it has been in flight for a moment (between two of its steps it is
+    // idle for an instant, as the script server sees it too: AI_IDLE_SECONDS)
+    // ... nor a script of it runs: confirmed (2026-11-13, a DAN reduction in the user's QtiSAS), the script processed
+    // events for minutes with no call in flight, the chat reported "did not complete" while it still ran, and the
+    // script request's own retry was then refused ("previous request still in progress")
+    const bool quiet = !m_busy && !listModeActive && !(m_retryTimer && m_retryTimer->isActive()) &&
+                       !(m_host && m_host->scriptRunning());
+    m_chatTaskQuietMs = quiet ? m_chatTaskQuietMs + m_chatTaskTimer->interval() : 0;
+    if (m_chatTaskQuietMs >= 1500)
+        finishChatTask();
+}
+
+void AiAssistant::finishChatTask()
+{
+    m_chatTaskTimer->stop();
+    m_chatTaskRunning = false;
+    const QStringList after = m_host->liveObjects();
+    QStringList created, removed;
+    for (const QString &object : after)
+        if (!m_chatTaskObjectsBefore.contains(object))
+            created << object;
+    for (const QString &object : std::as_const(m_chatTaskObjectsBefore))
+        if (!after.contains(object))
+            removed << object;
+    QString outcome = m_itemRanScripts.isEmpty()
+                          ? QString("No script of it ran without an error: it failed or was given up.")
+                          : QString("Its script ran without an error.");
+    if (!created.isEmpty())
+        outcome += " Created: " + created.join(", ") + ".";
+    if (!removed.isEmpty())
+        outcome += " Removed: " + removed.join(", ") + ".";
+    outcome += "\nWhat its scripts printed:\n" + chatProbeOutput(m_itemOutput, 3000);
+    m_chatWork += "--- the script AI ran your task ---\n" + m_chatTaskText + "\n--- outcome ---\n" + outcome + "\n";
+    sendChatTurn();
+}
+
+void AiAssistant::sendChatTurn()
+{
+    QString text = m_chatQuestion + currentChatProjectState();
+    if (!m_chatWork.isEmpty())
+    {
+        const int left = kMaxChatProbes - m_chatProbeRounds;
+        text += "\nYOUR PROBES FOR THIS MESSAGE AND WHAT THEY PRINTED:\n" + m_chatWork +
+                (left > 0 ? QString("\nAnswer the message now, in words, or send one more probe (%1 left).").arg(left)
+                          : QString("\nNo probes left: answer the message now, in words, with what you have."));
+    }
+    ask(text, true, chatSystemPrompt(), m_chatTopics, true, true, false, m_chatQuestion, true);
+}
+
+void AiAssistant::runChatProbe(const QString &code)
+{
+    ++m_chatProbeRounds;
+    // Read-only by the same cut as an EXPLORE probe of a script request: everything from the first call that changes
+    // the project on is dropped. The cut is a list of known write calls, not a sandbox, so a window the probe still
+    // created is closed again below.
+    const QString safe = m_content ? m_content->explorePrefixBeforeFirstWriteCall(code) : code;
+    m_host->print(QString("▸▸▸ AI chat probe %1/%2 (read-only):\n\n%3")
+                      .arg(m_chatProbeRounds)
+                      .arg(kMaxChatProbes)
+                      .arg(safe.trimmed()));
+    QStringList notes;
+    if (safe.length() != code.length())
+        notes << "Not run: everything from the first call that would change the project on — a probe only reads.";
+    QString output;
+    const QList<AiKnownMistakeMatch> mistakes =
+        m_content ? m_content->detectKnownMistakes(safe, m_chatQuestion, QString(), QString(), true)
+                  : QList<AiKnownMistakeMatch>();
+    if (!mistakes.isEmpty())
+    {
+        QStringList headers, explanations;
+        for (const AiKnownMistakeMatch &m : mistakes)
+        {
+            headers << m.header;
+            explanations << m.explanation;
+        }
+        m_host->print("▸▸▸ AI chat: this probe was blocked before running — " + headers.join("; ") + ".");
+        output = "NOT RUN, blocked: " + explanations.join("\n\n");
+    }
+    else
+    {
+        const QStringList before = m_host->liveObjects();
+        m_chatProbeRunning = true;
+        const AiScriptResult result = m_host->runScript(safe, "<ai-chat-probe>");
+        m_chatProbeRunning = false;
+        output = result.output;
+        if (!result.error.isEmpty() && !output.contains(result.error))
+            output += "\n" + result.error;
+        QStringList created;
+        const QStringList after = m_host->liveObjects();
+        for (const QString &object : after)
+            if (!before.contains(object) && !object.startsWith(QLatin1String("function:")))
+                created << object;
+        // what it removed cannot be brought back: said, to the user and to the model
+        QStringList removed;
+        for (const QString &object : before)
+            if (!after.contains(object))
+                removed << object;
+        if (!removed.isEmpty())
+        {
+            m_host->print("▸▸▸ AI chat: the probe removed " + removed.join(", ") + " — a probe should only read.");
+            notes << "The probe REMOVED " + removed.join(", ") + " — a probe only reads; tell the user.";
+        }
+        if (const QStringList closed = m_host->closeObjects(created); !closed.isEmpty())
+        {
+            m_host->print("▸▸▸ AI chat: closed what the probe created — " + closed.join(", "));
+            notes << "The probe created " + closed.join(", ") + "; QtiSAS closed it again — a probe only reads.";
+        }
+    }
+    m_chatWork += QString("--- probe %1 ---\n%2\n--- what it printed ---\n%3\n")
+                      .arg(m_chatProbeRounds)
+                      .arg(safe.trimmed(), chatProbeOutput(output));
+    // the docs of the API it used come with the next round: a probe that guessed (n.tab(0).text() for a note's text)
+    // is corrected from them — confirmed (CHAT 1, gpt-oss, item 4): the question named no note, the probe ran without
+    // the note docs, failed, and the model spent its answer's tokens guessing the API
+    addChatTopics(chatProbeTopics(safe));
+    if (!notes.isEmpty())
+        m_chatWork += notes.join("\n") + "\n";
+    sendChatTurn();
 }
 
 void AiAssistant::deliverResponse(const QString &response)
 {
     // Route by the submitted request, never by the terminal's current mode.
     const bool chat = m_pendingChat;
-    const QString answer = chat ? response.trimmed() : cleanResponse(response);
+    QString answer = chat ? response.trimmed() : cleanResponse(response);
+    // A reply-kind label the prompt's numbered list invites, dropped: confirmed (CHAT 1 HOLDOUT, Qwen) "ANSWER: Done —
+    // ..."
+    if (chat)
+    {
+        static const QRegularExpression labelRe(R"(^(?:\*\*)?ANSWER(?:\*\*)?\s*:\s*(?:\*\*)?)");
+        answer.remove(labelRe);
+    }
+    // A chat answer that is a probe: QtiSAS runs it and asks again with its output — history keeps only the question
+    // and the final answer. Past the probe budget the model was told to answer; a probe then is shown as it came.
+    if (chat && m_host && m_chatProbeRounds < kMaxChatProbes)
+        if (const QString probe = chatProbeCode(answer); !probe.isEmpty())
+        {
+            m_pendingUserText.clear();
+            runChatProbe(probe);
+            return;
+        }
+    // A task for the script AI: run only when the user's message confirms a change, once per message. Before the go it
+    // is the proposal: shown to the user as what would be done, with the question — no call spent on asking the model
+    // to rephrase it. Confirmed (CHAT 1, local model): told once that its task was not run, it sent the task again.
+    if (chat && m_host && !m_chatTaskDone)
+        if (const QString task = chatTaskText(answer); !task.isEmpty())
+        {
+            // a yes counts only after a question: the previous answer proposed the change and asked for the go
+            if (looksLikeChatConfirmation(m_chatQuestion) && !m_chatHistory.isEmpty() &&
+                m_chatHistory.last().second.contains('?'))
+            {
+                m_pendingUserText.clear();
+                startChatTask(task);
+                return;
+            }
+            m_host->print("▸▸▸ AI chat: a change before the user's go — shown as a proposal, not run.");
+            answer = "I would make this change:\n" + task + "\n\nShall I go ahead?";
+        }
+    // An answer with a code block the user did not ask for: asked again once, in words. Confirmed (CHAT 1 baseline and
+    // first run): the small models (gpt-oss, the local model) answered 3–7 of 10 questions with code although the
+    // prompt says "no code unless asked" — a chat answer is read by the user, not run.
+    if (chat && !m_chatCodeRetried && answer.contains("```") && !chatAsksForCode(m_chatQuestion))
+    {
+        m_chatCodeRetried = true;
+        m_pendingUserText.clear();
+        if (m_host)
+            m_host->print("▸▸▸ AI chat: the answer showed code the user did not ask for — asked again for words.");
+        m_chatWork +=
+            "--- your answer was NOT shown ---\nIt contained a code block, and the user did not ask for code. "
+            "Answer again in words: name an API call in a sentence if it helps, but no code block.\n";
+        sendChatTurn();
+        return;
+    }
     if (!m_pendingUserText.isEmpty() && m_pendingAddToHistory)
     {
         if (chat)
@@ -8415,7 +8827,8 @@ QString AiAssistant::parseCorrection(const QString &text, bool *now)
 
 bool AiAssistant::isIdle() const
 {
-    return !m_busy && !listModeActive && !(m_retryTimer && m_retryTimer->isActive());
+    return !m_busy && !listModeActive && !m_chatProbeRunning && !m_chatTaskRunning &&
+           !(m_retryTimer && m_retryTimer->isActive()) && !(m_host && m_host->scriptRunning());
 }
 
 void AiAssistant::stop()
@@ -8435,6 +8848,12 @@ void AiAssistant::stop()
         m_httpRetryCount = 0;
         m_busy = false;
         m_pendingUserText.clear();
+    }
+    // a chat's change in the script AI: stopped with it, and the chat says nothing more about it
+    if (m_chatTaskRunning)
+    {
+        m_chatTaskTimer->stop();
+        m_chatTaskRunning = false;
     }
     // Confirmed live: without this, the next request — even an obviously unrelated one typed
     // right after Stop — still relied on the continuation-check's own model judgment to decide
@@ -8748,6 +9167,18 @@ void AiAssistant::onReplyFinished(QNetworkReply *reply)
             detail = QString(" The model used all %1 output tokens (Max tokens) before answering, probably on its "
                              "reasoning — raise Max tokens in the AI agent's settings.")
                          .arg(m_maxTokens);
+        // A chat message is asked once more, for a short reply: confirmed (CHAT 1, DeepSeek and gpt-oss), after a
+        // failed probe the model reasoned about the API until its tokens ran out, and the question went unanswered.
+        if (m_pendingChat && !m_chatEmptyRetried)
+        {
+            m_chatEmptyRetried = true;
+            if (m_host)
+                m_host->print("▸▸▸ AI chat: an empty reply" + detail + " — asked once more for a short one.");
+            m_chatWork += "--- your last reply was empty ---\nReply now, briefly: the answer in a few sentences, or "
+                          "one short probe.\n";
+            sendChatTurn();
+            return;
+        }
         emit errorOccurred("AI: empty response." + detail + splitModeGiveUpNote());
     }
     else

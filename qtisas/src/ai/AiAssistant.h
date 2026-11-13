@@ -83,11 +83,36 @@ class AiAssistant : public QObject
     void ask(const QString &userText, bool includeDocs = true, const QString &systemPrompt = QString(),
              const QStringList &docTopics = QStringList(), bool addToHistory = true, bool includeHistory = true,
              bool expectsCode = true, const QString &historyText = QString(), bool chatOnly = false);
+    // The chat (/ai-chat): a question answered in words, from the project state sent with it and up to
+    // kMaxChatProbes read-only probes ("# EXPLORE" scripts QtiSAS runs, their output sent back) — see sendChatTurn().
     void askChat(const QString &text);
     bool isChatPending() const
     {
-        return m_pendingChat && m_busy;
+        return (m_pendingChat && m_busy) || m_chatProbeRunning || m_chatTaskRunning;
     }
+    static constexpr int kMaxChatProbes = 3;
+    // The probe in a chat answer: a code fence whose first line is "# EXPLORE", or the reply from a line "# EXPLORE"
+    // on (also after a sentence announcing it); empty when the reply is an answer in words.
+    static QString chatProbeCode(const QString &answer);
+    // The project as the chat sees it with every message: one line per window (its kind and name and, when given in
+    // `shapes`, its shape), the fit-function library by folder (`library`, see AiScriptHost::functionLibrary()), the
+    // modules' states. Large projects are cut: windows with shapes first, the rest by name, capped.
+    static QString chatProjectState(const QStringList &objects, const QHash<QString, QString> &shapes,
+                                    const QStringList &moduleStates, const QString &library = QString());
+    // A probe's output as it goes back to the model: at most `limit` characters, its head and tail.
+    static QString chatProbeOutput(const QString &output, qsizetype limit = 4000);
+    // The task in a chat answer that hands a confirmed change to the script AI: the text after a line "# DO" (bare, in
+    // a code fence or after a sentence); empty when the reply is no such task.
+    static QString chatTaskText(const QString &answer);
+    // True when the user's message is a short yes ("yes", "do it", "go ahead", "please do") — with a question in the
+    // chat's previous answer, the one case in which a chat answer may hand a change to the script AI.
+    static bool looksLikeChatConfirmation(const QString &text);
+    // The doc topics of the API a probe used (table(), note(), graphWindow(), Compiler, ...): sent with the next round,
+    // so a probe that guessed an API is corrected from its docs.
+    static QStringList chatProbeTopics(const QString &code);
+    // True when the user's message asks for code ("the script", "python", "show the code") — then a code block in the
+    // chat's answer is what was asked.
+    static bool chatAsksForCode(const QString &text);
     void clearChatHistory()
     {
         m_chatHistory.clear();
@@ -1215,6 +1240,9 @@ class AiAssistant : public QObject
   signals:
     void responseReady(const QString &text);
     void chatResponseReady(const QString &text);
+    // The chat hands a confirmed change to the script AI: the receiver starts `task` as a script request with the
+    // user's settings (ApplicationWindow::askAi()'s), see startChatTask().
+    void chatTaskRequested(const QString &task);
     void errorOccurred(const QString &error);
     void infoMessage(const QString &text);
     // Separate from infoMessage() specifically so its consecutive attempts can overwrite one
@@ -1395,6 +1423,33 @@ class AiAssistant : public QObject
     void deliverResponse(const QString &response);
     QList<QPair<QString, QString>> m_chatHistory;
     QStringList m_chatDocTopics;
+    // The chat question in progress: its text (what history keeps), its doc topics, the probes it ran with their output
+    // (sent back with the question each round) and how many.
+    QString m_chatQuestion;
+    QStringList m_chatTopics;
+    QString m_chatWork;
+    int m_chatProbeRounds = 0;
+    bool m_chatProbeRunning = false; // a probe script runs: the AI is not idle, although no call is in flight
+    void sendChatTurn();
+    void runChatProbe(const QString &code);
+    // A confirmed change: the script AI runs the chat's task as a request of its own (ApplicationWindow starts it, see
+    // chatTaskRequested()); when that request has been idle for a moment, its outcome goes back to the chat.
+    void startChatTask(const QString &task);
+    void checkChatTaskDone();
+    void finishChatTask();
+    bool m_chatTaskRunning = false;
+    bool m_chatTaskDone = false; // one task per message
+    QString m_chatTaskText;
+    QStringList m_chatTaskObjectsBefore;
+    QTimer *m_chatTaskTimer = nullptr;
+    int m_chatTaskQuietMs = 0;
+    static QString chatSystemPrompt();
+    QString currentChatProjectState();
+    // The doc topics of the windows and fit functions `text` names (a graph: "graph", ai/X: "compile", ...).
+    QStringList chatNamedObjectTopics(const QString &text);
+    void addChatTopics(const QStringList &topics);
+    bool m_chatCodeRetried = false;  // an answer with code the user did not ask for: asked again once per message
+    bool m_chatEmptyRetried = false; // an empty reply: asked again once per message
     bool m_pendingChat = false;
     QString m_pendingUserText;
     bool m_pendingAddToHistory = true;

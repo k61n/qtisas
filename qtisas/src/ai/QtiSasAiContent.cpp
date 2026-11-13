@@ -7154,7 +7154,8 @@ QString QtiSasAiContent::explorePrefixBeforeFirstWriteCall(const QString &code) 
         R"(setColData|setRowData|appendRowData|setColName|setColNames|setColumnRole|deleteRows|)"
         R"(removeCol|insertColumns|recalculate|setCommand|normalize|setRandomValues|)"
         R"(setNormalRandomValues|setNumRows|setNumCols|importASCII|exportASCII|notifyChanges|)"
-        R"(replot|compile|save|delete|fit|simulate|plotResults|simulateCurve|plot|new|)"
+        R"(replot|compile|save|delete|fit|simulate|plotResults|simulateCurve|plot|new|closeWindow|removeCurve|)"
+        R"(removeTab|setWindowName|)"
         R"(setFunctionName|setGroup|setYName|setXName|setInfo|setParamCount|setParamNamesAll|)"
         R"(setParamInitsAll|setParamLimitsAll|setParamVariesAll|setParamDescrsAll|setCode|)"
         R"(configure)\s*\()");
