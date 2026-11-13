@@ -8,8 +8,8 @@
 #   Category known → filter c.categories() first; functionNames() needs the EXACT category name.
 #   functionNames() lists DEFINITIONS (.fif) — also one whose last compile failed. Whether a
 #   function can be fitted: name in Fittable.fitFunctions() (compiled ones only).
-#   functionNames() CLOSES the open function: functionName() is "" and paramNames() [] afterwards
-#   (scanGroups() clears functionName() too) — read them first, or c.open(name) again.
+#   functionNames(category) only lists: nothing is selected, the open function stays; a folder category
+#   ("sasviewmodels/") lists its files. scanGroups() and new() clear the open function (functionName() "").
 #   A function the request asks to compile: always c.new() … c.compile(), never behind such a check.
 #     c.open(refs[0]); ref_code = c.code(); ref_params = c.paramNames()
 #
@@ -345,8 +345,8 @@ groups()->list      # all group names from .fif files (no "ALL", no sub-folders)
 scanGroups()
 category()->str                       # currently selected row in category list
 categories()->list                    # includes "ALL" and sub-folders
-selectCategory(categoryName)->bool    # selects category, populates function list
-functionNames(categoryName="ALL")->list  # selectCategory(categoryName) + return its function names
+selectCategory(categoryName)->bool    # selects category, populates function list; clears the open function
+functionNames(categoryName="ALL")->list  # its function names as the explorer lists them; selects nothing
 c.functionExists(name)->bool           # Compiler.functionExists("ai/X") — a method: a plain functionExists() is a NameError
 #   ("ALL" returns every function). NOTE: there is no functions() method — confirmed live
 #   AttributeError, repeatedly, across separate conversations; the real name is functionNames().

@@ -26,6 +26,7 @@ text()->str  setText(s)  autoexec()->bool  setAutoexec(on=True)
 #   addTab() used the tab COUNT as if it were a valid 1-based "next index" — the new tab was never
 #   actually renamed, so a later tab("Configuration") lookup silently returned None. Use
 #   renameTab(n.tabs() - 1, name) instead.
+#   the tab addTab() just added: n.tab(n.tabs()) (tab() is 1-based) — n.tab(n.tabs() - 1) is the tab before it
 tabs()->int  addTab()  removeTab(index=-1)  renameTab(index,name)
 # A new note has ONE tab, named "Tab 1"; addTab() adds "Tab 2", ... — there is no tab "Main".
 #   First tab + a second named tab: n.tab(1).setText(...); n.addTab(); n.renameTab(1, "Calc");

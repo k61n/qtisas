@@ -127,6 +127,8 @@ the FIRST.
 > if it were a valid 1-based "next index" — but `renameTab()` needs the 0-based index instead
 > (`n.tabs() - 1`), so the new tab was never actually renamed. The later `n.tab("Configuration")`
 > lookup then silently returned `None`, with no error pointing back at the real cause.
+>
+> The tab `addTab()` just added is `n.tab(n.tabs())` (`tab()` is 1-based); `n.tab(n.tabs() - 1)` is the one before.
 
 ### Tabs — addTab() already activates the new tab
 

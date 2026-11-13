@@ -299,7 +299,7 @@ Every QtiSAS project has a tree of folders; windows live inside folders.
 | `activeFolder()` | `Folder` | the currently selected folder |
 | `rootFolder()` | `Folder` | the top-level project folder |
 | `addFolder("name", parent=None)` | `Folder` | create a new sub-folder; `parent=None` adds under `activeFolder()` |
-| `deleteFolder(folder)` | `bool` | remove folder and all its contents — **shows a blocking confirmation dialog by default** (the "confirm close folder" preference defaults to on); can hang an unattended script with no way to dismiss it |
+| `deleteFolder(folder, ask=False)` | `bool` | remove the folder with all its windows and subfolders, without a dialog; `False` for `rootFolder()`, which is never deleted. `ask=True` shows the menu's "Delete folder?" box (if the "confirm close folder" preference is on) and waits for a click; `False` when the answer is No |
 | `changeFolder(folder, force=False)` | `bool` | switch active folder; there is no confirmation dialog involved — `force=True` re-runs the folder switch/refresh even if `folder` is already the active one (otherwise a no-op) |
 | `copyFolder(src, dest)` | `bool` | copy all windows from `src` into `dest` |
 | `saveFolder(folder, "path", compress=False)` | — | save one folder as a project file |

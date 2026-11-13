@@ -683,8 +683,7 @@ c.selectCategory("Spheres")    # select category in explorer, populate function 
 c.selectCategory("ALL")        # select the "ALL" meta-group
 ```
 
-Selects a category in the explorer list and populates `listViewFunctions`.
-Called automatically by `functionNames()`.
+Selects a category in the explorer list and populates `listViewFunctions`; this clears the function that was open.
 Raises `ValueError` if the category name is not found.
 
 > `categoryChanged(category="")` is the lower-level primitive `selectCategory()` calls internally —
@@ -701,21 +700,19 @@ A method of `Compiler` (also `Fittable.functionExists`) — a plain `functionExi
 c.functionExists("ai/MyPeak")    # True when a compiled function of that full name exists
 ```
 
-No category is selected (unlike `functionNames()`); the same as `"ai/MyPeak" in Fittable.fitFunctions()`.
+No category is selected; the same as `"ai/MyPeak" in Fittable.fitFunctions()`.
 
-### functionNames(groupName="ALL")
+### functionNames(categoryName="ALL")
 
 ```python
-functions = c.functionNames("Spheres")    # select category and return its function names
-functions = c.functionNames()             # "ALL" by default: every function name
+functions = c.functionNames("Spheres")         # the function names of a category (a group)
+functions = c.functionNames("sasviewmodels/")  # a folder category: its files, "sasviewmodels/sphere", ...
+functions = c.functionNames()                  # "ALL" by default: every function name
 ```
 
-Calls `selectCategory(categoryName)` first, then returns the function list from the explorer.
-After this call the category is selected in the UI and `open()` + `compile()` work correctly.
-
-**It closes the function that was open:** afterwards `functionName()` is `""` and `paramNames()` is `[]`
-(`scanGroups()` clears `functionName()` too). Read a function's names before it, or `open(name)` again:
-`c.compile(); names = c.paramNames(); n = len([f for f in c.functionNames() if f == "ai/X"])`.
+Returns the names as the explorer lists them (the top level first, `(...)` copies left out) without selecting the
+category: the explorer and the function that is open stay as they are. `scanGroups()` and `new()` clear the open
+function (`functionName()` is `""` afterwards).
 
 Requires an **exact** category name as returned by `categories()` — wildcards and substrings are not accepted.
 

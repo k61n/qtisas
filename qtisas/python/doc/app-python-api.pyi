@@ -76,7 +76,7 @@ currentNote()->Note  notes()->list
 
 # Folders:
 activeFolder()->Folder  rootFolder()->Folder
-addFolder("name",parent=None)->Folder  deleteFolder(folder)->bool
+addFolder("name",parent=None)->Folder  deleteFolder(folder,ask=False)->bool
 changeFolder(folder,force=False)->bool  copyFolder(src,dest)->bool
 saveFolder(folder,"path",compress=False)  appendProject("path",parent=None)->Folder
 
