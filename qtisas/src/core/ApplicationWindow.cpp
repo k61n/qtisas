@@ -12782,6 +12782,12 @@ void ApplicationWindow::removeWindowFromLists(MdiSubWindow *w, bool updatePlot)
 	if (!w)
 		return;
 
+    // The window is about to be deleted, so it is no longer the active one: confirmed (2026-11-13), closeProject()
+    // deletes the windows of subfolders without closeWindow(); one of them active left d_active_window dangling, and
+    // the next look at it crashed QtiSAS (currentTable(); a crash on opening the Edit menu showed the same)
+    if (d_active_window == w)
+        d_active_window = nullptr;
+
 	QString caption = w->objectName();
 	if (w->inherits("Table")){
 		Table* m = (Table*)w;
