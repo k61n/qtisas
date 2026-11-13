@@ -48,14 +48,28 @@ inside QtiSAS, with its variables kept between calls; print() and scriptPrint() 
 (tables, graphs, fit functions "ai/...") persist in QtiSAS. Use show_graph to see a graph as an image. Nothing is
 saved by itself: save with saveProjectAs("/path/file.qti") when asked. ask_qtisas_ai hands a request (or a LIST of
 numbered tasks) to QtiSAS's own built-in AI instead of writing the code yourself; while it runs, correct_qtisas_ai
-steers it and stop cancels it. To supervise a long request, start it with wait=false and watch it with
-qtisas_ai_progress (wait_seconds avoids tight polling); correct it when it goes wrong."""
+steers it and stop cancels it. ask_qtisas_chat talks with QtiSAS's chat instead: it answers in words, reading the
+project itself, and makes a change only after a yes to its proposal; the conversation continues across calls. To
+supervise a long request, start it with wait=false and watch it with qtisas_ai_progress (wait_seconds avoids tight
+polling); correct it when it goes wrong."""
 
 COACH_INSTRUCTIONS = """
 Coach tools (source tree only): qtisas_run starts a benchmark list in a test instance and returns at once;
 qtisas_wait returns when it is done (call again on timeout); qtisas_summary gives the score and every lost item's
 dossier; qtisas_failures says whether a failure was seen before; qtisas_stats compares runs by label; qtisas_probe
 checks an API call on a side instance; qtisas_environment shows the build, the docs and the local backends."""
+
+def chat_work(lines, limit=20000):
+    """What the chat did for a message: its probes with what they printed and a change it handed over, without the
+    echo of the message, the "question ..." and "loaded API docs" lines and the reply itself (returned on its own)."""
+    work = [line for line in lines
+            if not line.startswith(("▸▸▸ AI chat request:", "▸▸▸ AI chat:\n\n", "▸▸▸ AI chat: question ",
+                                    "▸▸▸ AI loaded API docs"))]
+    text = "\n".join(work).strip()
+    if len(text) > limit:  # a long one: keep the end, where the last probe and the change are
+        text = "...(earlier lines left out)\n" + text[-limit:]
+    return ("what the chat did:\n" + text) if text else ""
+
 
 TOOLS = [
     {"name": "run_python",
@@ -78,10 +92,22 @@ TOOLS = [
                                                     "returns at once, to watch it with qtisas_ai_progress and steer "
                                                     "it with correct_qtisas_ai"}},
          "required": ["text"]}},
+    {"name": "ask_qtisas_chat",
+     "description": "Talk with QtiSAS's chat (/ai-chat), the AI selected in that QtiSAS: it answers in words, reads "
+                    "the project itself with read-only probes, and changes it only after a yes to a change it "
+                    "proposed (its script AI then makes the change). The conversation continues from call to call "
+                    "(its history lives in that QtiSAS; the text \"clear history\" starts over). Returns the reply, "
+                    "the probes it ran with what they printed, and the windows created or removed.",
+     "inputSchema": {"type": "object", "properties": {
+         "text": {"type": "string", "description": "the message"},
+         "timeout": {"type": "number", "description": "seconds, default 900"},
+         "wait": {"type": "boolean", "description": "wait for the reply (default true); false starts it and returns "
+                                                    "at once, to watch it with qtisas_ai_progress"}},
+         "required": ["text"]}},
     {"name": "qtisas_ai_progress",
-     "description": "The progress of an ask_qtisas_ai request started with wait=false: its new lines from line "
-                    "from_line on, and its result once it has finished. wait_seconds (up to 120) waits for new "
-                    "lines first.",
+     "description": "The progress of an ask_qtisas_ai or ask_qtisas_chat request started with wait=false: its new "
+                    "lines from line from_line on, and its result once it has finished. wait_seconds (up to 120) "
+                    "waits for new lines first.",
      "inputSchema": {"type": "object", "properties": {
          "from_line": {"type": "integer", "description": "the first line to return, default 0"},
          "wait_seconds": {"type": "number", "description": "wait up to this long for something new, default 0"}}}},
@@ -152,7 +178,7 @@ def log(*args):
 
 class Server:
     def __init__(self, instance, start_offscreen=False, qtisas=None):
-        self.background = None  # an ask_qtisas_ai request started with wait=false, see start_ai()
+        self.background = None  # an ask_qtisas_ai or ask_qtisas_chat request started with wait=false, see start_ai()
         self.instance = instance
         self.path = qtisas_send.default_socket_path(instance)
         self.start_offscreen = start_offscreen
@@ -222,7 +248,7 @@ class Server:
 
     def ask_qtisas_ai(self, text, run=True, timeout=1800, wait=True):
         if not wait:
-            return self.start_ai(text, run, timeout)
+            return self.start_ai(text, "ai-run" if run else "ai", timeout)
         lines = []
         r = self.send({"mode": "ai-run" if run else "ai", "text": text, "timeout": timeout},
                       timeout + 30, lines.append)
@@ -231,7 +257,15 @@ class Server:
             transcript = "...(earlier lines left out)\n" + transcript[-30000:]
         return self.text(transcript, qtisas_send.summary(r), error=not r.get("ok"))
 
-    def start_ai(self, text, run, timeout):
+    def ask_qtisas_chat(self, text, timeout=900, wait=True):
+        if not wait:
+            return self.start_ai(text, "ai-chat", timeout)
+        lines = []
+        r = self.send({"mode": "ai-chat", "text": text, "timeout": timeout}, timeout + 30, lines.append)
+        return self.text(r.get("reply") or "(no reply)", chat_work(lines), qtisas_send.summary(r),
+                         r.get("error", ""), error=not r.get("ok"))
+
+    def start_ai(self, text, mode, timeout):
         """Starts the request in a thread of its own and returns at once: the caller watches it with
         qtisas_ai_progress() and can correct or stop it meanwhile."""
         if self.background and not self.background["done"]:
@@ -241,8 +275,8 @@ class Server:
 
         def work():
             try:
-                job["result"] = self.send({"mode": "ai-run" if run else "ai", "text": text, "timeout": timeout},
-                                          timeout + 30, job["lines"].append)
+                job["result"] = self.send({"mode": mode, "text": text, "timeout": timeout}, timeout + 30,
+                                          job["lines"].append)
             except Exception as e:  # reported by qtisas_ai_progress
                 job["result"] = {"ok": False, "status": "failed", "error": "%s: %s" % (type(e).__name__, e)}
             job["done"] = True
@@ -264,6 +298,7 @@ class Server:
                                        "finished" if done else "still running")
         result = job["result"] if done else None
         return self.text(head, "\n".join(lines),
+                         ("chat reply:\n" + result["reply"]) if result and result.get("reply") else "",
                          (qtisas_send.summary(result) + ("\n" + result["error"] if result.get("error") else ""))
                          if result else "",
                          error=bool(result) and not result.get("ok"))
@@ -332,6 +367,8 @@ class Server:
         if name == "ask_qtisas_ai":
             return self.ask_qtisas_ai(args["text"], args.get("run", True), args.get("timeout") or 1800,
                                       args.get("wait", True))
+        if name == "ask_qtisas_chat":
+            return self.ask_qtisas_chat(args["text"], args.get("timeout") or 900, args.get("wait", True))
         if name == "qtisas_ai_progress":
             return self.ai_progress(int(args.get("from_line") or 0), float(args.get("wait_seconds") or 0))
         if name == "list_objects":

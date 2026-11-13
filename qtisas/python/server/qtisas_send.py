@@ -13,7 +13,8 @@
     qtisas_send.py [--instance NAME] [--mode python|ai|ai-run|ai-chat]     # no code in a terminal: the interactive prompt
 
 python: the script's output goes to stdout, its error to stderr. ai / ai-run: the text is a request to the internal AI
-(ai generates only, ai-run also runs its scripts; ai-chat is conversation without scripts); its lines are printed as they come. A one-line summary goes to
+(ai generates only, ai-run also runs its scripts; ai-chat is a conversation that reads the project and changes it
+only after a yes); its lines are printed as they come. A one-line summary goes to
 stderr; --json prints the whole result as JSON instead, --stream-json every event as one JSON line.
 Exit code: 0 ok, 1 the script or the AI run failed, 2 no server, busy or no reply in time.
 Without code in a terminal it opens a prompt: Python (variables kept between inputs) or the AI, see :help.
@@ -115,8 +116,9 @@ PROMPTS = {"python": "py> ", "ai": "ai> ", "ai-run": "ai-run> ", "ai-chat": "ai-
 
 PROMPT_HELP = """Python runs in the QtiSAS script server, with its variables kept from one input to the next; a line
 that opens a block (if/for/def ...) continues until an empty line. ai: the text is a request to QtiSAS's AI, which only
-writes the script; ai-run: the AI also runs it; ai-chat: conversation without scripts. The AI's lines are printed as they come; a request starting
-with LIST (a numbered task list) continues until an empty line, so a whole list can be pasted.
+writes the script; ai-run: the AI also runs it; ai-chat: a conversation (it reads the project, changes it only after a
+yes). The AI's lines are printed as they come; a request starting with LIST (a numbered task list) continues until an
+empty line, so a whole list can be pasted.
   :py  :ai  :ai-run  :ai-chat  switch the mode (the prompt shows it)
   :file PATH            send a file in the current mode: a Python script, or an AI request such as a LIST
   :status               the server's state          :instance NAME   talk to another QtiSAS

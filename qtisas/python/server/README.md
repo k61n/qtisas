@@ -45,7 +45,7 @@ qtisas_send.py -f myscript.py                           # a file (or: qtisas_sen
 qtisas_send.py --instance second -f myscript.py
 qtisas_send.py --mode ai -c 'Plot column y of table "Data"'       # the AI writes the script, nothing runs
 qtisas_send.py --mode ai-run -c 'Plot column y of table "Data"'   # the AI writes and runs it
-qtisas_send.py --mode ai-chat -c 'Explain weighted fitting'     # conversation, no scripts or execution
+qtisas_send.py --mode ai-chat -c 'Explain weighted fitting'     # conversation: reads the project, changes after a yes
 qtisas_send.py --mode status
 qtisas_send.py --mode stop                              # cancel the running AI request
 qtisas_send.py --mode note -c 'use table "B", not "A"'  # correct the running AI request
@@ -56,9 +56,10 @@ The default instance is `test` (or `$QTISAS_SERVER`); use `--instance main` for 
 - **python:** the script's `print()`/`scriptPrint()` output goes to stdout, its error (with the script's
   own file and line) to stderr. Each request starts with fresh variables; `--keep` keeps them between
   requests.
-- **ai-chat:** natural-language conversation, with separate chat history and no script execution.
+- **ai-chat:** natural-language conversation, with separate chat history: it reads the project with read-only probes
+  and hands a change to the script AI only after your yes.
   Uses the configured AI provider/model and requires Python as QtiSAS's global scripting language.
-  Replies bypass compilation and execution; chat cannot inspect the live project.
+  Its probes only read (QtiSAS cuts each before its first write call); the reply itself is words, never run.
   QtiSAS reference docs follow the configured documentation mode: compact/full docs are selected by topic,
   BIGMODEL includes all docs, and Integrated sends topic hints to the backend instead of local docs.
   Topics are retained for follow-up questions and reset by `clear history`.
@@ -80,7 +81,7 @@ The default instance is `test` (or `$QTISAS_SERVER`); use `--instance main` for 
   While a correction is active, the scope and deliverable checks (which read the original request) are skipped.
 - `--mode quit` ends QtiSAS at once **without saving** — meant for the test instance.
 
-### Chat without scripts
+### Chat
 
 After updating from a version without server chat support, rebuild QtiSAS (including its Python bindings)
 and restart it with the updated server files. Updating `qtisas_send.py` alone is not enough.
@@ -122,7 +123,8 @@ ai-chat> :quit
 - **py** (the default): Python in the script server, variables kept from one input to the next. A bare
   expression prints its value, and a line opening a block (`if`/`for`/`def` ...) continues until an empty
   line, as in Python's own prompt.
-- **ai-chat:** switch with `:ai-chat`, or start with `--mode ai-chat`, for conversation without scripts.
+- **ai-chat:** switch with `:ai-chat`, or start with `--mode ai-chat`, for a conversation: the chat reads the project
+  (read-only probes) and hands a change to the script AI only after your yes.
   `LIST` is ordinary chat text; each input is one message. Use `:file PATH` for a multiline question.
 - **ai / ai-run:** the text goes to QtiSAS's AI, which writes the script (`:ai`) or also runs it (`:ai-run`).
   A request starting with `LIST` (e.g. `LIST NOSPLIT`) continues until an empty line, so a whole numbered task

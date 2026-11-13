@@ -25,7 +25,8 @@ still run (between the AI's steps), "stop" cancels it (its result then has statu
 cannot be interrupted), "note" ({"mode": "note", "text": "..."}) adds a correction to it, from its next model
 call on or at once with a leading "!", and "follow" ({"mode": "follow", "from": N}) streams its lines from line N on
 and then its result, e.g. to a client that stopped waiting. Modes: "python", "status", "quit", "stop", "note",
-"follow", "ai-chat" (conversation without scripts), and the AI: "ai" (generates only, nothing runs) and "ai-run" (the full pipeline with execution), with
+"follow", "ai-chat" (a conversation: it reads the project and changes it only after a yes), and the AI: "ai"
+(generates only, nothing runs) and "ai-run" (the full pipeline with execution), with
 "text" instead of "code"; their lines are streamed as "line" events, and the result adds "transcript", "items" (one
 per LIST item), "r_lines", "scripts", "tokens".
 """
