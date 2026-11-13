@@ -1103,8 +1103,10 @@ public slots:
 	//! Deletes the current folder
 	void deleteFolder();
 
-	//! Ask confirmation from user, deletes the folder f if user confirms and returns true, otherwise returns false;
-	bool deleteFolder(Folder *f);
+    //! Deletes the folder f with its windows and subfolders; false for the project folder or when the user says No.
+    //! With ask (the menu, the Delete key) a "Delete folder?" box asks first if the "confirm close folder" preference
+    //! is on. Python's deleteFolder() has ask = false by default: a script has no one to click the box.
+    bool deleteFolder(Folder *f, bool ask = true);
 
 	//! Deletes the currently selected items from the list view #lv.
 	void deleteSelectedItems();

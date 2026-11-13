@@ -20550,18 +20550,18 @@ Folder* ApplicationWindow::addFolder(QString name, Folder* parent)
     return f;
 }
 
-bool ApplicationWindow::deleteFolder(Folder *f)
+bool ApplicationWindow::deleteFolder(Folder *f, bool ask)
 {
     // The project folder holds everything else; deleting it left no folder to return to — confirmed live, an AI
     // script's deleteFolder(rootFolder()) crashed QtiSAS in changeFolder()
     if (!f || f == projectFolder())
         return false;
 
-    if (confirmCloseFolder &&
+    if (ask && confirmCloseFolder &&
         QMessageBox::information(this, tr("QTISAS - Delete folder?"),
                                  tr("Delete folder '%1' and all the windows it contains?").arg(f->objectName()),
                                  QMessageBox::Yes | QMessageBox::No) == QMessageBox::No)
-		return false;
+        return false;
 	else {
         // where to go afterwards: the current folder, unless it is f or below f — then f's parent, which survives f
         Folder *parent = current_folder ? current_folder : projectFolder();

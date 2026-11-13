@@ -5611,7 +5611,9 @@ public:
   Folder* projectFolder() /PyName=rootFolder/;
 
   Folder* addFolder(QString name, Folder* parent = 0);
-  bool deleteFolder(Folder *);
+  // no confirmation dialog by default: confirmed (2026-11-13), a script deleting the "DAN ::" folders stopped at a
+  // "Delete folder ...?" message box for each one (the "confirm close folder" preference is on by default)
+  bool deleteFolder(Folder *, bool ask = false);
   bool changeFolder(Folder *, bool force = false);
   bool copyFolder(Folder *src, Folder *dest);
 
