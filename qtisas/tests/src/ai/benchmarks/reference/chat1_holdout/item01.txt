@@ -1,0 +1,1 @@
+80 pixels of the 64 x 64 image Detector are zero: the masked beam stop in the middle.

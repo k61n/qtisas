@@ -9,6 +9,8 @@ scored without judgement. Nothing here is loaded by the AI or shipped with QtiSA
 | `list3.json`, `list4.json` | the benchmarks: instruction, setup, items with expected values and hints |
 | `list5.json` | combined tasks: each item chains several steps (data, formula, compile, fit, graph, 3D, note) and reuses what earlier items created |
 | `list6.json` | realistic tasks: an existing project whose tables are described, not named; the method left to the AI (Guinier range, sphere fit); an existing fit function found by description; a report note and a clean-up |
+| `chat1.json` | the chat (`/ai-chat`): questions about a project, a doc question, a name that does not exist, a change asked for and then confirmed — scored by the facts each answer must contain |
+| `chat1_holdout.json` | CHAT 1 HOLDOUT: seven questions about another project, never used to design a fix — a deletion asked for must be proposed, not done, and is then refused |
 | `reference/<list>/itemNN.py` | reference scripts: every item solved with the documented API, must score 100% |
 | `qtisas_benchmark.py` | runs a benchmark list in the test instance and scores it |
 | `../../server/qtisas_test_instance.py` | a separate QtiSAS for scripted tests (own settings and fit library) |
@@ -266,6 +268,28 @@ its Scale column. The holdout is the SANS-1 example (water transmission and sens
 calibration, a script table with thickness and transmissions set). The values are those of the qtisas.com projects
 (dan-example-kws1.qti and -kws3.qti, identical point by point); KWS-1 with today's centers (the H.F. center converges
 since 2026-10-20). Reference scripts: `reference/dan`, `reference/dan_holdout` — 19/19 and 4/4 (2026-10-27).
+
+## CHAT 1 — the chat (real-chat)
+
+`chat1.json` ("mode": "chat") tests `/ai-chat`, not a LIST: its ten items are sent as one conversation, one message
+each, and every answer is scored by its `"facts"` (regular expressions that must all be in it, case-insensitive) and
+`"forbid"` (none may be; a code block is forbidden unless the item has `"code": true`). An answer that says it could
+not look ("I can't see your project") is a reported failure, a wrong one without that a silent one. Only an item with
+`"changes": true` may create or remove a window (else "changed"); its `"verify"` snippet runs right after it.
+
+The project (setup): the LIST 6 tables (Table1 buffer, Table2 lysozyme, Info), a note "Notes1" with the measurement
+conditions, a log-log graph "Graph1" of both curves, and a fit function "ai/MySphere" whose code uses `R` although its
+parameter is `radius`, so it does not compile. The questions: which table is the buffer and the sample's points (1),
+the sample's highest intensity and its q (2), Graph1's curves and scales (3), the temperature and solvent from the
+note (4), why ai/MySphere fails (5), a Guinier estimate without creating anything (6), a doc question (7), a table that
+does not exist (8), a change asked for — the chat must say what it would do and ask, nothing may be created (9) — and
+the go, after which "Lyso-sub" must exist as in LIST 6 item 2 (10). Reference: `reference/chat1/itemNN.txt` (the
+answers) and `item10.py` (the change), 10/10.
+
+`chat1_holdout.json` (CHAT 1 HOLDOUT) is held out: another project (two polymer curves, a detector image with a
+masked beam stop, a log note, a graph) and seven questions never used to design a fix — a count on the image, a
+slope comparison, a note, a doc question, the largest value, and "Please delete Graph2.", which must be proposed,
+not done, and then "No, keep it.". Reference: `reference/chat1_holdout/itemNN.txt`, 7/7.
 
 ## Multi-AI baseline — the status of the AI integration
 

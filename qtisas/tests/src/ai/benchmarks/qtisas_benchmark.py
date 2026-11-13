@@ -25,6 +25,12 @@ and compares every item's R<n>: line with its expected value. Verdicts: ok; wron
 assistant itself said the item failed, "silent" when it reported success. Written to ~/.qtisas-test/reports: the full
 log, a JSON report, and one line per run in history.csv. Exit code: 0 all items ok, 1 not all, 2 no run.
     qtisas_benchmark.py BENCHMARK.json --rescore    # score the saved reports of this benchmark again (after "also")
+
+A chat benchmark ("mode": "chat") sends its items as one conversation in mode ai-chat, one message each, and scores
+each answer by its "facts" (regular expressions that must all match, case-insensitive) and "forbid" (none may match;
+a code block is forbidden unless the item has "code": true). An item may change the project only with "changes": true
+(a window created or removed otherwise is "changed"); its "verify" snippet runs right after it. Its reference
+(reference/<file name>/itemNN.txt, the answer, and itemNN.py, the change) must score 100%.
 """
 
 import argparse
@@ -75,12 +81,13 @@ def run_reference(bench, folder, path, on_line):
             "scripts": len(items), "tokens": 0, "seconds": round(seconds, 2)}
 
 
-def verify_code(bench):
+def verify_code(bench, only=None):
     """One script that runs every item's "verify" snippet after the list: each reads the real state and reports it
-    with check(...), printed as "V<n>: ..."; a snippet that raises reports "V<n>: error ..." instead."""
+    with check(...), printed as "V<n>: ..."; a snippet that raises reports "V<n>: error ..." instead. only: the item
+    numbers to verify (a chat verifies each item right after it)."""
     code = []
     for n, item in enumerate(bench["items"], 1):
-        if not item.get("verify"):
+        if not item.get("verify") or (only is not None and n not in only):
             continue
         body = "\n".join("    " + line for line in item["verify"].splitlines())
         code.append("def _verify%d(check):\n%s\n" % (n, body))
@@ -89,9 +96,9 @@ def verify_code(bench):
     return "\n".join(code)
 
 
-def run_verify(bench, path, on_line):
+def run_verify(bench, path, on_line, only=None):
     """The items' verify snippets, run after the list in the same instance: {item number: "V<n>: ..." line}."""
-    code = verify_code(bench)
+    code = verify_code(bench, only)
     if not code:
         return {}
     on_line("▸▸  verify: the real state after the list")
@@ -127,6 +134,119 @@ name = agent + "-bigmodel-%(state)s"
 open(os.path.join(folder, name + ".ai"), "w", encoding="utf-8").write(text)
 qti.app.setAiAgent(name)
 """
+
+
+CHAT_ITEM = "▸▸  AI chat: item %d/%d — %s"  # the log line before each chat item (benchmark_dossier.ITEM_RE)
+
+
+def chat_record(n, answer):
+    """One chat item's result from the server's answer: the reply, what it ran and what it changed."""
+    transcript = answer.get("transcript") or ""
+    return {"item": n, "reply": answer.get("reply", "") or "", "created": answer.get("created", []),
+            "removed": answer.get("removed", []), "seconds": answer.get("seconds"),
+            "backend_error": bool(answer.get("backend_errors")) and not answer.get("reply"),
+            "status": answer.get("status"), "failed": not answer.get("ok"),
+            "probes": transcript.count("▸▸▸ AI chat probe"), "scripts": transcript.count("▸▸▸ AI code (running)"),
+            "r_lines": []}
+
+
+def run_chat(bench, path, on_line, timeout):
+    """The items as one conversation in mode ai-chat, one message each, in order; an item's verify snippet runs right
+    after it (a later item may change the state again)."""
+    items, verify, seconds = [], {}, 0.0
+    total = len(bench["items"])
+    for n, item in enumerate(bench["items"], 1):
+        on_line(CHAT_ITEM % (n, total, item["text"]))
+        answer = qtisas_send.request({"id": 10 + n, "mode": "ai-chat", "text": item["text"], "timeout": timeout,
+                                      "dialogs": "auto"}, path, timeout + 60, on_line)
+        items.append(chat_record(n, answer))
+        seconds += answer.get("seconds") or 0.0
+        if item.get("verify"):
+            verify.update({str(k): v for k, v in run_verify(bench, path, on_line, only={n}).items()})
+        if answer.get("status") in ("stopped", "timeout"):
+            break
+    return {"ok": all(not i["failed"] for i in items), "status": "done", "items": items, "r_lines": [],
+            "scripts": sum(i["probes"] + i["scripts"] for i in items), "tokens": None, "seconds": round(seconds, 2),
+            "verify": verify}
+
+
+def run_chat_reference(bench, folder, path, on_line):
+    """A chat's reference: per item its change (itemNN.py, run in python mode) and its answer (itemNN.txt)."""
+    items, verify = [], {}
+    total = len(bench["items"])
+    for n, item in enumerate(bench["items"], 1):
+        on_line(CHAT_ITEM % (n, total, item["text"]))
+        answer = {"ok": True, "status": "done", "created": [], "removed": []}
+        script = os.path.join(folder, "item%02d.py" % n)
+        if os.path.isfile(script):
+            code = open(script, encoding="utf-8").read()
+            answer = qtisas_send.request({"id": 10 + n, "mode": "python", "code": code}, path, timeout=600)
+            for line in ((answer.get("output") or "") + (answer.get("error") or "")).splitlines():
+                on_line(line)
+        reply = os.path.join(folder, "item%02d.txt" % n)
+        answer["reply"] = open(reply, encoding="utf-8").read().strip() if os.path.isfile(reply) else ""
+        on_line("▸▸▸ AI chat:\n\n" + answer["reply"])
+        items.append(chat_record(n, answer))
+        if item.get("verify"):
+            verify.update({str(k): v for k, v in run_verify(bench, path, on_line, only={n}).items()})
+    return {"ok": all(not i["failed"] for i in items), "status": "done", "items": items, "r_lines": [],
+            "scripts": 0, "tokens": 0, "seconds": 0.0, "verify": verify}
+
+
+# an answer that says it could not look (the chat before real-chat: "I cannot inspect the project"): a reported
+# failure, not a confident wrong one
+CANNOT_RE = re.compile(r"\b(?:cannot|can['’]t|can not|unable to|not able to|(?:do not|don['’]t) have|"
+                       r"no (?:direct )?access|without (?:access|the|your|seeing))\b[^.\n]{0,60}?\b"
+                       r"(?:inspect|access|see|read|view|check|open|look|execute|run|tell|know|determine|identify|"
+                       r"find|data|metadata|error|project|tables?|modify|create)|\bunavailable without\b",
+                       re.IGNORECASE)
+
+
+TYPOGRAPHY = {0x2010: "-", 0x2011: "-", 0x2012: "-", 0x2013: "-", 0x2212: "-", 0x00A0: " ", 0x2007: " ", 0x2009: " ",
+              0x202F: " "}
+
+
+def score_chat(bench, result):
+    """Verdicts of a chat: ok when every fact is in the answer, nothing forbidden is, the project changed only where the
+    item allows it and its verify snippet (if any) reads the expected state."""
+    items = {i["item"]: i for i in result.get("items", [])}
+    rows = []
+    for n, item in enumerate(bench["items"], 1):
+        run = items.get(n)
+        reply = (run or {}).get("reply", "")
+        # typographic hyphens, minus signs and spaces as plain ones: "Lyso‑sub" (U+2011) is Lyso-sub, "20 000" 20 000
+        plain = reply.translate(TYPOGRAPHY)
+        missing = [f for f in item.get("facts", []) if not re.search(f, plain, re.IGNORECASE)]
+        # a probe shown as the answer is none, and a code block only where the item asks for code
+        forbid = item.get("forbid", []) + [r"(?m)^\s*#\s*EXPLORE\b"] + ([] if item.get("code") else [r"```"])
+        found = [f for f in forbid if re.search(f, plain, re.IGNORECASE)]
+        changed = bool(run and (run["created"] or run["removed"])) and not item.get("changes")
+        reported = bool(run and (run["failed"] or CANNOT_RE.search(reply)))
+        if run is None:
+            verdict = "not run"
+        elif run["backend_error"]:
+            verdict = "backend error"
+        elif changed:
+            verdict = "changed (silent)"
+        elif missing or found or not reply:
+            verdict = ("wrong" if reply else "missing") + (" (reported)" if reported else " (silent)")
+        else:
+            verdict = "ok"
+            if item.get("verify"):
+                state = result.get("verify", {}).get(str(n), "")
+                if not (state and matches(state, item.get("verified", ""))):
+                    verdict = "unverified" + (" (reported)" if reported else " (silent)")
+        note = "; ".join(filter(None, ["missing: " + ", ".join(missing) if missing else "",
+                                       "forbidden: " + ", ".join(found) if found else "",
+                                       "changed: " + ", ".join((run or {}).get("created", []) +
+                                                               (run or {}).get("removed", [])) if changed else ""]))
+        rows.append({"item": n, "expected": " & ".join(item.get("facts", [])), "got": " ".join(reply.split())[:300],
+                     "verdict": verdict, "verified": result.get("verify", {}).get(str(n), "") if item.get("verify")
+                     else None, "scripts": (run or {}).get("probes"), "seconds": (run or {}).get("seconds"),
+                     "hint": item.get("hint", ""), "note": note})
+    for r in rows:
+        r["after"] = []
+    return rows
 
 
 def list_text(bench, markers="", item_prefix=False):
@@ -215,7 +335,7 @@ def rescore(bench, reports):
         summary = data.get("summary") if isinstance(data, dict) else None
         if not summary or summary.get("benchmark") != bench["name"] or "result" not in data:
             continue
-        rows = score(bench, data["result"])
+        rows = (score_chat if bench.get("mode") == "chat" else score)(bench, data["result"])
         counts = {"score": sum(r["verdict"] == "ok" for r in rows),
                   "silent": sum(r["verdict"].endswith("(silent)") for r in rows),
                   "reported": sum(r["verdict"].endswith("(reported)") for r in rows)}
@@ -381,7 +501,9 @@ def main(argv=None):
             print("%s %s: %s -> %s of %d" % (date, bench["name"], old, new, len(bench["items"])))
         print("%d report(s) changed" % len(changed))
         return 0
-    text = list_text(bench, args.markers, args.item_prefix)
+    chat = bench.get("mode") == "chat"
+    text = "\n".join(item["text"] for item in bench["items"]) if chat else list_text(bench, args.markers,
+                                                                                  args.item_prefix)
     if args.print:
         print(text)
         return 0
@@ -459,7 +581,7 @@ def main(argv=None):
             m = re.match(r"^▸▸  AI LIST: item (\d+)/", line)
             if m:
                 current[0] = int(m.group(1))
-            if line.startswith("▸▸▸ AI: sending"):
+            if line.startswith("▸▸▸ AI: sending") or line.startswith("▸▸▸ AI chat: question"):
                 calls[0] += 1
             if not args.quiet:
                 print(line, flush=True)
@@ -470,8 +592,12 @@ def main(argv=None):
                           % (probed["probe_error"] or "%s s" % probed["probe_seconds"]))
                 result = {"ok": False, "status": "probe failed", "items": [], "r_lines": [], "scripts": None,
                           "tokens": None, "seconds": None}
+            elif args.reference is not None and chat:
+                result = run_chat_reference(bench, args.reference, path, on_line)
             elif args.reference is not None:
                 result = run_reference(bench, args.reference, path, on_line)
+            elif chat:
+                result = run_chat(bench, path, on_line, args.timeout)
             else:
                 result = qtisas_send.request({"id": 3, "mode": "ai-run", "text": text, "timeout": args.timeout,
                                               "dialogs": "auto"}, path, args.timeout + 60, on_line)
@@ -483,13 +609,13 @@ def main(argv=None):
                       "tokens": None, "seconds": None}
             instance("stop")
         else:
-            if result.get("items"):
+            if result.get("items") and not chat:  # a chat verifies each item right after it
                 try:  # JSON keys are strings: stored so, a --rescore reads the same
                     result["verify"] = {str(k): v for k, v in run_verify(bench, path, on_line).items()}
                 except (TimeoutError, OSError) as e:
                     log.write("\n(qtisas_benchmark: verify failed: %s — scored without it)\n" % e)
 
-    rows = score(bench, result)
+    rows = (score_chat if chat else score)(bench, result)
     ok = sum(r["verdict"] == "ok" for r in rows)
     silent = sum(r["verdict"].endswith("(silent)") for r in rows)  # an unverified line counts as silent
     reported = sum(r["verdict"].endswith("(reported)") for r in rows)
@@ -499,7 +625,7 @@ def main(argv=None):
     # with the same score: 12/12 in 12 calls is better than 12/12 in 25. The fewest is one per item, two with a review
     # or a split plan, three with both: counted as one per item, a review run looked half as efficient as it was.
     ai_calls = calls[0] if args.reference is None else None
-    fewest = len(rows) * benchmark_dossier.min_calls_per_item(args.markers, ai_config)
+    fewest = len(rows) * (1 if chat else benchmark_dossier.min_calls_per_item(args.markers, ai_config))
     call_efficiency = round(min(1.0, fewest / ai_calls), 2) if ai_calls else None
     preset, model = ai_config.get("agent", ""), ai_config.get("model", "")
     if args.reference is not None:
@@ -540,7 +666,7 @@ def main(argv=None):
 
     print("\n%s %s — %d of %d ok, %d silent, %d reported%s · %s s · %s scripts · %s calls (call efficiency %s) · "
           "~%sK tokens · %s %s%s"
-          % (bench["name"], ("LIST " + args.markers).strip(), ok, len(rows), silent, reported,
+          % (bench["name"], "chat" if chat else ("LIST " + args.markers).strip(), ok, len(rows), silent, reported,
              ", %d backend errors (run not valid)" % backend if backend else "", summary["seconds"],
              summary["scripts"], ai_calls, call_efficiency, (summary["tokens"] or 0) // 1000, preset, model,
              (" · server check %s s%s" % (probed["probe_seconds"], ", answered by " + probed["probe_model"]
@@ -561,6 +687,8 @@ def main(argv=None):
             note = "the state after the list: %s" % (r["verified"] or "nothing reported")
         if r["after"]:
             note = "after item %s failed; %s" % (", ".join(map(str, r["after"])), note)
+        if chat and r["verdict"] != "ok":
+            note = "%s — %s" % (r["note"] or r["verdict"], r["hint"])
         print("  %2d %-22s %-24s %s" % (r["item"], r["verdict"], r["got"][:24] or "—", note))
     if summary["model_changed"]:
         print("NOTE: the model behind %s changed since its last run: %s" % (preset, summary["model_changed"]))

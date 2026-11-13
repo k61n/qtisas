@@ -1,0 +1,1 @@
+I would make a new table Lyso-sub with q from Table2, I = I(Table2) − I(Table1) and dI = sqrt(dI1² + dI2²), with the roles X, Y and yErr. Shall I do it?

@@ -1,0 +1,1 @@
+There is no Table3 in the Info table: it lists only Table1 (buffer) and Table2 (sample), both 0.1 cm thick.

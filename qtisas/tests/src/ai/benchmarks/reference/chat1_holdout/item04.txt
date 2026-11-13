@@ -1,0 +1,1 @@
+Enable weighting for that dataset and choose the dI column as its errors: in a script setWeightingEnabled(1, True) and setWeightingDataset(1, "table_dI") with the method 1/σ².

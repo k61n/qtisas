@@ -1,0 +1,1 @@
+Table1 is the buffer (the Info table says so); the sample, Table2 (lysozyme 5 mg/ml), has 40 data points.

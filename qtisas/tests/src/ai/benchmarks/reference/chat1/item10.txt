@@ -1,0 +1,1 @@
+Done: Lyso-sub has 40 rows; the intensity at the smallest q is 99.5509.

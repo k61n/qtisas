@@ -1,0 +1,1 @@
+Its code uses R, but the function has no R: its parameters are scale, radius and bgd. Write radius in the code instead of R (or rename the parameter), then compile again.

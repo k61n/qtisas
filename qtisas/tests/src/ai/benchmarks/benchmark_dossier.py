@@ -16,7 +16,7 @@ import json
 import os
 import re
 
-ITEM_RE = re.compile(r"^▸▸  AI LIST: item (\d+)/\d+")
+ITEM_RE = re.compile(r"^▸▸  AI (?:LIST|chat): item (\d+)/\d+")
 END_RE = re.compile(r"^▸▸  (?:verify:|AI LIST: all)")
 R_LINE_RE = re.compile(r"^R\d+:")
 
@@ -80,7 +80,7 @@ def dossier(lines):
     d = {"scripts": 0, "calls": 0, "last_script": "", "errors": [], "blocks": [], "repairs": [], "stopped": "",
          "doc_topics": "", "plan_parts": None, "replans": 0, "connection_errors": 0, "r_lines": []}
     for i, line in enumerate(lines):
-        if line.startswith("▸▸▸ AI code ("):
+        if line.startswith("▸▸▸ AI code (") or line.startswith("▸▸▸ AI chat probe"):
             d["scripts"] += 1
             d["last_script"] = "\n".join(_block_after(lines, i))
         elif line.startswith("▸▸▸ Python script Error"):

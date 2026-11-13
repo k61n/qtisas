@@ -1,0 +1,1 @@
+PolyA falls off like q^-2 (slope about -1.9, a polymer chain); PolyB like q^-4 (slope about -3.8, Porod).

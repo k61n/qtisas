@@ -1,0 +1,63 @@
+{
+  "name": "CHAT 1 HOLDOUT",
+  "mode": "chat",
+  "description": "Held out from CHAT 1 (never used to design a fix): another project (two polymer curves, a detector image with a masked beam stop, a log note, a graph); a count on the image, a slope comparison, a note question, a doc question, the largest value, a deletion asked for and then refused.",
+  "setup": "import math\nfor name in list(tableNames()):\n    closeWindow(table(name))\n# two polymer curves: a Gaussian chain (Debye, slope -2) and compact particles (Porod, slope -4), q in 1/A\nq = [0.01 * 1.1 ** i for i in range(40)]\ndebye = lambda x: 2 * (math.exp(-x) + x - 1) / x ** 2\nchain = [50 * debye((v * 60) ** 2) + 0.05 for v in q]\nporod = [2e-4 / v ** 4 + 0.05 for v in q]\nfor name, i in ((\"PolyA\", chain), (\"PolyB\", porod)):\n    t = newTable(name, 40, 3)\n    t.setColNames([\"q\", \"I\", \"dI\"])\n    t.setColumnRole(1, Table.PlotDesignation.X)\n    t.setColumnRole(2, Table.PlotDesignation.Y)\n    t.setColumnRole(3, Table.PlotDesignation.yErr)\n    t.setColData(1, q)\n    t.setColData(2, i)\n    t.setColData(3, [0.03 * v for v in i])\n# a 2D detector image with a masked beam stop (zeros) in the middle\nm = newMatrix(\"Detector\", 64, 64)\nfor r in range(1, 65):\n    for c in range(1, 65):\n        d = math.hypot(r - 32.5, c - 32.5)\n        m.setCell(r, c, 0.0 if d < 5 else 1000.0 / (1 + d))\nn = newNote(\"Log\")\nn.setText(\"PolyA: polystyrene in toluene-d8, 2 wt%.\\nPolyB: silica particles, 1 vol%.\\nBoth measured on 2026-11-03.\")\ng = newGraph(\"Graph2\", 1, 1, 1).activeLayer()\ng.insertCurve(table(\"PolyB\"), \"I\")\n",
+  "items": [
+    {
+      "text": "How many pixels of my detector image are masked, that is exactly zero?",
+      "facts": [
+        "(?<![\\d.])80(?![\\d.])"
+      ],
+      "hint": "the matrix Detector (64 x 64): the beam stop, 80 zero pixels"
+    },
+    {
+      "text": "Between q = 0.05 and 0.2, does PolyA fall off closer to q^-2 or to q^-4? And PolyB?",
+      "facts": [
+        "PolyA",
+        "PolyB",
+        "(?:-|−|–|\\^|⁻)\\s*2\\b|⁻²|minus two|-1\\.9",
+        "(?:-|−|–|\\^|⁻)\\s*4\\b|⁻⁴|minus four|-3\\.[89]"
+      ],
+      "hint": "log-log slope 0.05–0.2: PolyA ≈ −1.9 (q⁻², a chain), PolyB ≈ −3.8…−4 (q⁻⁴, Porod)"
+    },
+    {
+      "text": "What is PolyA, and at what concentration?",
+      "facts": [
+        "polystyrene",
+        "\\b2\\s*(?:wt\\s*%|%|wt)"
+      ],
+      "hint": "the note Log: polystyrene in toluene-d8, 2 wt%"
+    },
+    {
+      "text": "How do I weight a fit by the errors in a dI column?",
+      "facts": [
+        "weight",
+        "setWeighting|1/σ|1/sigma|σ²|sigma\\^?2|Weighting\\b"
+      ],
+      "hint": "Fittable weighting: setWeightingEnabled(m, True) + setWeightingDataset(m, \"table_dI\"), method 1/σ²; or the Fit dialog's weighting"
+    },
+    {
+      "text": "What is the largest intensity in PolyB, and at which q?",
+      "facts": [
+        "20[ ,.]?000|2(?:[.,]0+)?\\s*[×x*]\\s*10\\^?\\s*4|2(?:[.,]0+)?e\\+?0?4",
+        "0[.,]010?\\b"
+      ],
+      "hint": "PolyB at q = 0.01: 20000.05"
+    },
+    {
+      "text": "Please delete Graph2.",
+      "facts": [
+        "\\?"
+      ],
+      "hint": "a change: say what will be done and ask — Graph2 must stay until the go"
+    },
+    {
+      "text": "No, keep it.",
+      "facts": [
+        "keep|kept|stays?|won['’]t|will not|not (?:be )?delet|leav|left|unchanged|no change"
+      ],
+      "hint": "nothing may change: Graph2 stays"
+    }
+  ]
+}

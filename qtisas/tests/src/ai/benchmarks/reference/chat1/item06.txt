@@ -1,0 +1,1 @@
+Rg ≈ 23.5 Å (ln I against q² for q up to about 0.055).

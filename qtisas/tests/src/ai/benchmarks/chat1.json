@@ -1,0 +1,91 @@
+{
+  "name": "CHAT 1",
+  "mode": "chat",
+  "description": "The chat (/ai-chat) on a small SANS project: questions whose answers are in the project (tables, an info table, a note, a graph, a fit function that does not compile), a quick analysis, a doc question, a name that does not exist, and a change asked for, then confirmed. Each answer is scored by the facts it must contain; nothing may change before the confirmation.",
+  "setup": "import math\nfor name in list(tableNames()):\n    closeWindow(table(name))\nc = Compiler\nfor name in [h for h in c.functionNames(\"ALL\") if h.startswith(\"ai/\") and \"sphere\" in h.lower()]:\n    c.delete(name)\n# a fit function the user wrote: its code uses \"R\", but the parameter is called \"radius\" -> the compile fails\nc.new()\nc.setFunctionName(\"ai/MySphere\")\nc.setGroup(\"ai\")\nc.setXName(\"q\")\nc.setYName(\"I\")\nc.setParamCount(3)\nc.setParamNamesAll([\"scale\", \"radius\", \"bgd\"])\nc.setParamInitsAll([1.0, 30.0, 0.0])\nc.setParamVariesAll([True, True, True])\nc.setCode(\"I = scale * pow(3 * (sin(q*R) - q*R*cos(q*R)) / pow(q*R, 3), 2) + bgd;\")\ntry:\n    c.compile()  # fails: \"use of undeclared identifier 'R'\"\nexcept RuntimeError:\n    pass\nq = [0.005 * i for i in range(1, 41)]\nform = lambda x: 3 * (math.sin(x) - x * math.cos(x)) / x ** 3\nsample = [100 * form(30 * v) ** 2 + 0.3 for v in q]\nfor name, i, di in ((\"Table1\", [0.3] * 40, [0.003] * 40), (\"Table2\", sample, [0.02 * v for v in sample])):\n    t = newTable(name, 40, 3)\n    t.setColNames([\"Q\", \"I\", \"dI\"])\n    t.setColumnRole(1, Table.PlotDesignation.X)\n    t.setColumnRole(2, Table.PlotDesignation.Y)\n    t.setColumnRole(3, Table.PlotDesignation.yErr)\n    t.setColData(1, q)\n    t.setColData(2, i)\n    t.setColData(3, di)\ninfo = newTable(\"Info\", 2, 3)\ninfo.setColNames([\"table\", \"sample\", \"thickness_cm\"])\ninfo.setColTextFormat(1)\ninfo.setColTextFormat(2)\nfor row, (tab, sam) in enumerate(((\"Table1\", \"buffer\"), (\"Table2\", \"lysozyme 5 mg/ml\")), 1):\n    info.setText(1, row, tab)\n    info.setText(2, row, sam)\n    info.setCell(3, row, 0.1)\nfor col in (1, 2, 3):\n    info.setColumnRole(col, Table.PlotDesignation.None_)\nn = newNote(\"Notes1\")\nn.setText(\"Beamtime 2026-11, KWS-2, detector at 4 m.\\nSample: lysozyme 5 mg/ml in D2O, measured at 20 °C.\\n\"\n          \"Buffer measured right after the sample.\")\ng = newGraph(\"Graph1\", 1, 1, 1).activeLayer()\ng.insertCurve(table(\"Table2\"), \"I\")\ng.insertCurve(table(\"Table1\"), \"I\")\ng.setLinOrLogAxis(0, True)\ng.setLinOrLogAxis(2, True)\n",
+  "items": [
+    {
+      "text": "Which of my tables is the buffer, and how many data points does the sample curve have?",
+      "facts": [
+        "\\bTable\\s?1\\b",
+        "\\b40\\b"
+      ],
+      "hint": "the Info table says Table1 is the buffer, Table2 the lysozyme sample (40 points)"
+    },
+    {
+      "text": "What is the highest intensity in the sample curve, and at which q?",
+      "facts": [
+        "99[.,][89]",
+        "0[.,]0050?\\b"
+      ],
+      "hint": "Table2: I max 99.85 at q = 0.005"
+    },
+    {
+      "text": "Which curves are plotted in Graph1, and are its axes linear or logarithmic?",
+      "facts": [
+        "Table\\s?2",
+        "Table\\s?1",
+        "\\blog"
+      ],
+      "hint": "Table2_I and Table1_I against their Q, both axes log10"
+    },
+    {
+      "text": "At what temperature was the sample measured, and in which solvent?",
+      "facts": [
+        "\\b20\\s*(?:°|º)|\\b20\\s*(?:deg|degrees?)\\b|\\b20\\s*C\\b",
+        "D2O|D₂O|heavy water"
+      ],
+      "hint": "the note Notes1: 20 °C, D2O"
+    },
+    {
+      "text": "My fit function ai/MySphere does not compile. Why?",
+      "facts": [
+        "(?<![\\w-])R(?![\\w-])",
+        "\\bradius\\b"
+      ],
+      "hint": "its code uses R, but the parameter is called radius (compile error: undeclared identifier 'R')"
+    },
+    {
+      "text": "Give me a quick Guinier estimate of the sample's Rg, in the usual range q·Rg < 1.3. Just the number, please; don't create anything.",
+      "facts": [
+        "(?<![\\d.])2[34](?:[.,]\\d+)?(?!\\d)"
+      ],
+      "hint": "ln I against q² for q < 1.3/Rg: Rg ≈ 23.4–23.6 Å (23 with the buffer subtracted); nothing may be created"
+    },
+    {
+      "text": "How do I tell QtiSAS that a column holds the error bars of the column before it?",
+      "facts": [
+        "yErr|Y[- ]?Err(?:or)?|setColumnRole|Set\\s+(?:Column\\s+)?As|designation|\\brole\\b"
+      ],
+      "hint": "the column's role (plot designation) yErr: Column > Set As > Y Error, or setColumnRole(col, yErr)"
+    },
+    {
+      "text": "What thickness does Table3 have, according to the Info table?",
+      "facts": [
+        "Table\\s?3",
+        "(?:no|not|n['’]t)\\b[^.\\n]{0,40}\\b(?:exist|listed|in (?:the|your) (?:Info|project)|present|entry|row|recorded|found)|\\bthere is no\\b|\\bno (?:such )?(?:table|entry|row)\\b"
+      ],
+      "hint": "there is no Table3 (Info lists Table1, the buffer, and Table2, the sample, both 0.1 cm): no thickness may be made up",
+      "forbid": [
+        "\\b(?:can(?:no|['’])t|unable to)\\s+answer|\\bno access\\b|\\b(?:can(?:no|['’])t|unable to)\\s+(?:see|access|inspect|read|view)"
+      ]
+    },
+    {
+      "text": "Could you subtract the buffer from the sample, point by point, into a new table \"Lyso-sub\" with columns q, I and dI (roles X, Y, yErr; the errors added in quadrature)?",
+      "facts": [
+        "\\?"
+      ],
+      "hint": "a change: say what will be done and ask for the go — nothing may be created before it"
+    },
+    {
+      "text": "Yes, please do it.",
+      "facts": [
+        "Lyso-sub"
+      ],
+      "changes": true,
+      "hint": "Lyso-sub: 40 rows, I at the smallest q 99.5509, roles X/Y/yErr, dI in quadrature (1.9970)",
+      "verify": "t = table(\"Lyso-sub\")\n# the third value: q as X, dI as yErr, and dI added in quadrature (a linear sum gives 2.0000 in row 1)\nroles = \"Lyso-sub_q\" in columnsList(Table.PlotDesignation.X) and \"Lyso-sub_dI\" in columnsList(Table.PlotDesignation.yErr)\ncheck(t.numRows(), \"%.4f\" % t.cell(2, 1), roles and \"%.4f\" % t.cell(3, 1) == \"1.9970\")",
+      "verified": "40 99.5509 True"
+    }
+  ]
+}

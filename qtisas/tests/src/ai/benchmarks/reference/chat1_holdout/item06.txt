@@ -1,0 +1,1 @@
+I would close and delete the graph window Graph2 (its table PolyB stays). Shall I do it?

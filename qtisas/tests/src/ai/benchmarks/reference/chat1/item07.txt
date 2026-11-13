@@ -1,0 +1,1 @@
+Give that column the role Y Error (yErr): select it and use Column > Set As > Y Error, or in a script setColumnRole(col, Table.PlotDesignation.yErr).
