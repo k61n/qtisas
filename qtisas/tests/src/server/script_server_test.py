@@ -215,7 +215,7 @@ replies = {r["id"]: r for r in map(json.loads, mcp_out.getvalue().splitlines())}
 assert sorted(replies) == [1, 2, 3, 4, 5, 6, 7], replies.keys()  # the notification is not answered
 assert replies[1]["result"]["serverInfo"]["name"] == "qtisas", replies[1]
 assert {t["name"] for t in replies[2]["result"]["tools"]} >= {"run_python", "ask_qtisas_ai", "show_graph", "stop",
-                                                               "correct_qtisas_ai"}
+                                                               "correct_qtisas_ai", "ask_qtisas_chat"}
 assert any(r["uri"] == "qtisas-doc://table-python-api.md" for r in replies[3]["result"]["resources"]), replies[3]
 assert "newTable" in replies[4]["result"]["contents"][0]["text"], replies[4]
 assert replies[5]["result"]["isError"], replies[5]  # an unknown tool: reported to the model, not a protocol error
@@ -236,6 +236,25 @@ for _ in range(20):  # the thread has finished within moments
     r = mcp.ai_progress(0)["content"][0]["text"]
 assert "finished" in r and "first\nsecond" in r, r
 assert "lines 1 to 2" in mcp.ai_progress(1)["content"][0]["text"]
+
+# the chat (ask_qtisas_chat): the reply first, then what the chat did (its probe and what it printed) — without the echo
+# of the message and the reply's own line; the script server faked here, the mode it was sent recorded
+sent = []
+chat_lines = ("▸▸▸ AI chat request:\n\nWhich table is the buffer?", "▸▸▸ AI chat: question 30 character(s), 0 previous "
+              "turn(s).", "▸▸▸ AI chat probe 1/3 (read-only):\n\n# EXPLORE\nprint(table('Info').text(2, 1))",
+              "buffer", "▸▸▸ AI chat:\n\nTable1 is the buffer.")
+mcp.send = lambda message, timeout, on_line=None: sent.append(message["mode"]) or [on_line(t) for t in chat_lines] and {
+    "ok": True, "status": "done", "seconds": 2.0, "created": [], "removed": [], "reply": "Table1 is the buffer."}
+r = mcp.ask_qtisas_chat("Which table is the buffer?")["content"][0]["text"]
+assert r.startswith("Table1 is the buffer.") and "probe 1/3" in r and "\nbuffer" in r, r
+assert "AI chat request" not in r and "question 30" not in r and sent == ["ai-chat"], (r, sent)
+assert "started" in mcp.ask_qtisas_chat("And the sample?", wait=False)["content"][0]["text"]
+for _ in range(20):
+    r = mcp.ai_progress(0)["content"][0]["text"]
+    if "finished" in r:
+        break
+    time.sleep(0.1)
+assert "finished" in r and "chat reply:\nTable1 is the buffer." in r and sent == ["ai-chat", "ai-chat"], (r, sent)
 
 server.server.close()
 os.remove(path) if os.path.exists(path) else None

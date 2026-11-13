@@ -1606,6 +1606,18 @@ void AiContentTests::explorePrefix_truncatesIndentedWriteCall()
     QVERIFY(!prefix.contains("try:"));
 }
 
+void AiContentTests::explorePrefix_cutsAtClosingOrRenamingAWindow()
+{
+    // a chat probe is read-only by this cut too: closing, renaming or emptying a window is a change
+    QtiSasAiContent content;
+    for (const char *write :
+         {"closeWindow(graphWindow(\"Graph2\"))", "g.removeCurve(0)", "n.removeTab(1)", "setWindowName(t, \"New\")"})
+    {
+        const QString code = QString("# EXPLORE\nprint(tableNames())\n%1\nprint(1)\n").arg(write);
+        QCOMPARE(content.explorePrefixBeforeFirstWriteCall(code), QString("# EXPLORE\nprint(tableNames())\n"));
+    }
+}
+
 void AiContentTests::explorePrefix_ignoresWriteCallNameInsideString()
 {
     // The column-0 guard's real purpose — a quoted API name is not a call. Now handled by matching
@@ -6926,6 +6938,7 @@ class ChatTestServer : public QTcpServer
   public:
     QList<QJsonObject> requests;
     QByteArray response;
+    QList<QByteArray> queued; // answered first, one per request, before `response`
     QList<int> statuses;
     bool hold = false;
     explicit ChatTestServer()
@@ -6949,9 +6962,10 @@ class ChatTestServer : public QTcpServer
                 if (!hold)
                 {
                     const int status = statuses.isEmpty() ? 200 : statuses.takeFirst();
+                    const QByteArray body = queued.isEmpty() ? response : queued.takeFirst();
                     socket->write("HTTP/1.1 " + QByteArray::number(status) +
                                   " Test\r\nContent-Type: application/json\r\nContent-Length: " +
-                                  QByteArray::number(response.size()) + "\r\nConnection: close\r\n\r\n" + response);
+                                  QByteArray::number(body.size()) + "\r\nConnection: close\r\n\r\n" + body);
                     socket->disconnectFromHost();
                 }
             });
@@ -6966,6 +6980,70 @@ class ChatTestServer : public QTcpServer
     QString url() const
     {
         return QString("http://127.0.0.1:%1").arg(serverPort());
+    }
+    static QByteArray reply(const QString &text)
+    {
+        return QJsonDocument(
+                   QJsonObject{{"choices", QJsonArray{QJsonObject{{"message", QJsonObject{{"content", text}}}}}}})
+            .toJson(QJsonDocument::Compact);
+    }
+};
+
+// A host for the chat's probes: what it holds, the scripts it ran; a script calling newTable() makes a table.
+class ProbeHost : public AiScriptHost
+{
+  public:
+    QStringList objects = {"table:Info", "graph:Graph1", "function:ai/MySphere"};
+    QStringList scripts;
+    QStringList printed;
+    AiScriptResult runScript(const QString &code, const QString &) override
+    {
+        scripts << code;
+        if (code.contains("leak("))
+            objects << "table:Leaked";
+        return {"Table1 buffer\n", QString()};
+    }
+    void print(const QString &message) override
+    {
+        printed << message;
+    }
+    bool canCompile(const QString &, QString *) const override
+    {
+        return true;
+    }
+    QList<QStringList> entityKinds(const QStringList &names) override
+    {
+        QList<QStringList> kinds; // one (empty) entry per name; Qt5's QList has no size constructor
+        for (int i = 0; i < names.size(); ++i)
+            kinds << QStringList();
+        return kinds;
+    }
+    QStringList liveObjects() override
+    {
+        return objects;
+    }
+    QString tableShape(const QString &name) override
+    {
+        return name == "Info" ? "2 rows; columns: 1 \"table\" None" : QString();
+    }
+    QString graphShape(const QString &name) override
+    {
+        return name == "Graph1" ? R"(layer 1: curves "Table2_I" (x "Table2_Q"); x log10 0.004..0.3)" : QString();
+    }
+    QStringList closeObjects(const QStringList &closing) override
+    {
+        for (const QString &object : closing)
+            objects.removeAll(object);
+        return closing;
+    }
+    QString functionLibrary() override
+    {
+        return "3 fit functions, by folder: sasviewmodels/ 2, ai/ 1";
+    }
+    bool running = false; // a script runs
+    bool scriptRunning() const override
+    {
+        return running;
     }
 };
 } // namespace
@@ -6984,10 +7062,11 @@ void AiContentTests::chat_isolatesPromptHistoryAndReplies()
     assistant.ask("old script request", false);
     QTRY_COMPARE(scripts.count(), 1);
     const QString history = assistant.historyText();
-    // Even unexpected executable-looking text must remain a chat reply, with its formatting intact.
+    // Executable-looking text stays a chat reply, never run, with its formatting intact. The message asks for code:
+    // an unasked code block is asked again in words (chat_codeInTheAnswerAskedAgainInWords).
     const QString reply = "```python\nprint('never execute')\n```";
     server.answer(reply);
-    assistant.askChat("LIST EXPLORE run it: explain uncertainty");
+    assistant.askChat("LIST EXPLORE run it: explain uncertainty with Python code");
     QTRY_COMPARE(chats.count(), 1);
     QCOMPARE(chats.at(0).at(0).toString(), reply);
     QCOMPARE(scripts.count(), 1);
@@ -7262,3 +7341,331 @@ void AiContentTests::chat_retryKeepsChatRouting()
 }
 
 QTEST_GUILESS_MAIN(AiContentTests)
+
+void AiContentTests::chatProbeCode_onlyAReplyThatStartsWithExplore()
+{
+    const QString probe = "# EXPLORE\nt = table(\"Info\")\nprint(t.text(1, 1))";
+    QCOMPARE(AiAssistant::chatProbeCode(probe), probe);
+    QCOMPARE(AiAssistant::chatProbeCode(probe + "\n```"), probe);
+    QCOMPARE(AiAssistant::chatProbeCode("Let me look.\n```python\n" + probe + "\n```\n"), probe);
+    QCOMPARE(AiAssistant::chatProbeCode("  # EXPLORE\nprint(1)"), QString("# EXPLORE\nprint(1)"));
+    // upper case only: a code comment is no marker
+    QVERIFY(AiAssistant::chatProbeCode("```python\n# explore the data\nt = table(\"Info\")\n```").isEmpty());
+    // announced, then the probe unfenced after it (Qwen)
+    QCOMPARE(AiAssistant::chatProbeCode("Let me read the Info table.\n\n" + probe), probe);
+    // an answer in words, or code that is no probe, stays the answer
+    QVERIFY(AiAssistant::chatProbeCode("Table1 is the buffer.").isEmpty());
+    QVERIFY(AiAssistant::chatProbeCode("```python\nt = table(\"Info\")\n```").isEmpty());
+    QVERIFY(AiAssistant::chatProbeCode("Use # EXPLORE in a script request.").isEmpty());
+}
+
+void AiContentTests::chatProjectState_windowsWithShapesThenFunctionsAndModules()
+{
+    const QString state = AiAssistant::chatProjectState(
+        {"table:Info", "note:Notes1", "graph:Graph1", "function:ai/MySphere", "function:ai/Porod"},
+        {{"table:Info", "2 rows; columns: 1 \"table\" None"}, {"graph:Graph1", "layer 1: no curves"}},
+        {"DAN-SANS session (Dan): instrument KWS-2"}, "312 fit functions, by folder: top level 120, sasviewmodels/ 98");
+    QVERIFY2(state.contains("PROJECT NOW"), qPrintable(state));
+    QVERIFY(state.contains("- table \"Info\": 2 rows; columns: 1 \"table\" None\n"));
+    QVERIFY(state.contains("- note \"Notes1\"\n"));
+    QVERIFY(state.contains("- graph \"Graph1\": layer 1: no curves\n"));
+    // the whole library by folder, not the "ai/" names: shown those alone, a chat denied that sasviewmodels/ existed
+    QVERIFY(state.contains("- fit-function library: 312 fit functions, by folder: top level 120, sasviewmodels/ 98"));
+    QVERIFY(!state.contains("ai/MySphere"));
+    QVERIFY(state.contains("- DAN-SANS session (Dan): instrument KWS-2"));
+    QVERIFY(AiAssistant::chatProjectState({}, {}, {}).contains("- no windows"));
+    // a large project: 30 windows with shapes, 60 by name, the rest counted
+    QStringList many;
+    QHash<QString, QString> shapes;
+    for (int i = 1; i <= 100; ++i)
+    {
+        many << QString("table:T%1").arg(i);
+        shapes.insert(many.last(), "1 rows");
+    }
+    const QString big = AiAssistant::chatProjectState(many, shapes, {});
+    QCOMPARE(big.count(": 1 rows"), 30);
+    QVERIFY(big.contains("- table \"T31\"\n") && big.contains("... and 10 more windows"));
+}
+
+void AiContentTests::chatProbeOutput_headAndTailOfALongOutput()
+{
+    QCOMPARE(AiAssistant::chatProbeOutput("  \n"), QString("(no output)"));
+    QCOMPARE(AiAssistant::chatProbeOutput("short"), QString("short"));
+    const QString cut = AiAssistant::chatProbeOutput(QString(300, 'a') + QString(300, 'b'), 100);
+    QVERIFY(cut.startsWith(QString(75, 'a')) && cut.endsWith(QString(25, 'b')));
+    QVERIFY(cut.contains("(500 characters left out)"));
+}
+
+void AiContentTests::chat_probeRunsReadOnlyAndTheAnswerFollows()
+{
+    ChatTestServer server;
+    QVERIFY(server.listen(QHostAddress::LocalHost));
+    ProbeHost host;
+    QtiSasAiContent content;
+    AiAssistant assistant;
+    assistant.setContentProvider(&content);
+    assistant.setHost(&host);
+    assistant.configure({}, server.url(), "test", 1024, AiAssistant::DocsMode::Integrated);
+    QSignalSpy chats(&assistant, &AiAssistant::chatResponseReady);
+    // the probe reads, then would make a table: only the reading part runs; a window it still makes is closed again
+    server.queued << ChatTestServer::reply("```python\n# EXPLORE\nprint(table(\"Info\").text(1, 1))\n"
+                                           "leak()\nnewTable(\"X\", 2, 2)\n```")
+                  << ChatTestServer::reply("Table1 is the buffer.");
+    assistant.askChat("Which table is the buffer?");
+    QTRY_COMPARE(chats.count(), 1);
+    QCOMPARE(chats.at(0).at(0).toString(), QString("Table1 is the buffer."));
+    QCOMPARE(host.scripts.size(), 1);
+    QVERIFY2(!host.scripts.at(0).contains("newTable"), qPrintable(host.scripts.at(0)));
+    QVERIFY(!host.objects.contains("table:Leaked"));
+    QCOMPARE(server.requests.size(), 2);
+    const auto last = [&server](int i) {
+        return server.requests.at(i).value("messages").toArray().last().toObject().value("content").toString();
+    };
+    // every round: the question first, the project state; the second also the probe and what it printed
+    QVERIFY(last(0).startsWith("Which table is the buffer?") && last(0).contains("PROJECT NOW"));
+    QVERIFY(last(0).contains("- graph \"Graph1\": layer 1: curves"));
+    QVERIFY(last(1).contains("--- probe 1 ---") && last(1).contains("Table1 buffer"));
+    QVERIFY(last(1).contains("QtiSAS closed it again") && last(1).contains("2 left"));
+    QVERIFY(!assistant.isChatPending() && assistant.isIdle());
+    // history keeps the question and the final answer only
+    server.response = ChatTestServer::reply("Fine.");
+    assistant.askChat("Thanks");
+    QTRY_COMPARE(chats.count(), 2);
+    const QJsonArray messages = server.requests.last().value("messages").toArray();
+    QCOMPARE(messages.size(), 4);
+    QCOMPARE(messages.at(1).toObject().value("content").toString(), QString("Which table is the buffer?"));
+    QCOMPARE(messages.at(2).toObject().value("content").toString(), QString("Table1 is the buffer."));
+}
+
+void AiContentTests::chat_probesEndAtTheBudget()
+{
+    ChatTestServer server;
+    QVERIFY(server.listen(QHostAddress::LocalHost));
+    ProbeHost host;
+    QtiSasAiContent content;
+    AiAssistant assistant;
+    assistant.setContentProvider(&content);
+    assistant.setHost(&host);
+    assistant.configure({}, server.url(), "test", 1024, AiAssistant::DocsMode::Integrated);
+    QSignalSpy chats(&assistant, &AiAssistant::chatResponseReady);
+    // a model that probes for ever: after kMaxChatProbes probes, its next reply is the answer, as it came
+    server.response = ChatTestServer::reply("# EXPLORE\nprint(1)");
+    assistant.askChat("Anything?");
+    QTRY_COMPARE(chats.count(), 1);
+    QCOMPARE(host.scripts.size(), AiAssistant::kMaxChatProbes);
+    QCOMPARE(server.requests.size(), AiAssistant::kMaxChatProbes + 1);
+    QVERIFY(server.requests.last()
+                .value("messages")
+                .toArray()
+                .last()
+                .toObject()
+                .value("content")
+                .toString()
+                .contains("No probes left"));
+}
+
+void AiContentTests::chatTaskText_aReplyThatStartsWithDo()
+{
+    QCOMPARE(AiAssistant::chatTaskText("# DO\nSubtract Table1 from Table2 into a new table \"Lyso-sub\"."),
+             QString("Subtract Table1 from Table2 into a new table \"Lyso-sub\"."));
+    QCOMPARE(AiAssistant::chatTaskText("# DO: make it"), QString("make it"));
+    QCOMPARE(AiAssistant::chatTaskText("Here it is:\n```\n# DO\nPlot Lyso-sub.\n```"), QString("Plot Lyso-sub."));
+    QCOMPARE(AiAssistant::chatTaskText("Going ahead.\n\n# DO\nPlot Lyso-sub."), QString("Plot Lyso-sub."));
+    QVERIFY(AiAssistant::chatTaskText("I would subtract Table1. Shall I do it?").isEmpty());
+    QVERIFY(AiAssistant::chatTaskText("# DONE already").isEmpty());
+    // upper case only: a comment in code the user asked for is no task (seen in the models' Guinier code)
+    QVERIFY(AiAssistant::chatTaskText("```python\n# do simple least squares on (q^2, ln(I))\nfit()\n```").isEmpty());
+    QVERIFY(AiAssistant::chatTaskText("The script:\n\n# do a simple linear fit lnI vs q^2\nfit()").isEmpty());
+}
+
+void AiContentTests::looksLikeChatConfirmation_aShortYes()
+{
+    for (const char *yes : {"yes", "Yes, please do it.", "do it", "OK, go ahead", "sure", "Go for it!", "ja",
+                            "Please do it.", "please, go ahead"})
+        QVERIFY2(AiAssistant::looksLikeChatConfirmation(yes), yes);
+    for (const char *no : {"Could you subtract the buffer from the sample?", "no", "Why does it fail?",
+                           "yesterday I measured it", "Please delete Graph2.", "please plot Table2",
+                           "Yes, and then subtract the buffer, fit a sphere, plot both and write a note"})
+        QVERIFY2(!AiAssistant::looksLikeChatConfirmation(no), no);
+}
+
+void AiContentTests::chat_taskRunsOnlyAfterTheGo()
+{
+    ChatTestServer server;
+    QVERIFY(server.listen(QHostAddress::LocalHost));
+    ProbeHost host;
+    QtiSasAiContent content;
+    AiAssistant assistant;
+    assistant.setContentProvider(&content);
+    assistant.setHost(&host);
+    assistant.configure({}, server.url(), "test", 1024, AiAssistant::DocsMode::Integrated);
+    QSignalSpy chats(&assistant, &AiAssistant::chatResponseReady);
+    QSignalSpy tasks(&assistant, &AiAssistant::chatTaskRequested);
+    // asked for a change, the model hands it over at once: not run, shown as the proposal with the question
+    server.queued << ChatTestServer::reply("# DO\nSubtract Table1 from Table2 into Lyso-sub.");
+    assistant.askChat("Could you subtract the buffer from the sample into Lyso-sub?");
+    QTRY_COMPARE(chats.count(), 1);
+    QCOMPARE(tasks.count(), 0);
+    QCOMPARE(server.requests.size(), 1);
+    QCOMPARE(chats.at(0).at(0).toString(),
+             QString("I would make this change:\nSubtract Table1 from Table2 into Lyso-sub.\n\nShall I go ahead?"));
+    // the go: the task goes to the script AI, and when that is over (here nothing ran) the chat reports it
+    server.queued << ChatTestServer::reply("# DO\nSubtract Table1 from Table2 into Lyso-sub.")
+                  << ChatTestServer::reply("It did not work: no script ran.");
+    assistant.askChat("Yes, do it.");
+    QTRY_COMPARE(tasks.count(), 1);
+    QCOMPARE(tasks.at(0).at(0).toString(), QString("Subtract Table1 from Table2 into Lyso-sub."));
+    QVERIFY(!assistant.isIdle());
+    QTRY_COMPARE_WITH_TIMEOUT(chats.count(), 2, 5000);
+    QCOMPARE(chats.at(1).at(0).toString(), QString("It did not work: no script ran."));
+    const QString last =
+        server.requests.last().value("messages").toArray().last().toObject().value("content").toString();
+    QVERIFY2(last.contains("--- the script AI ran your task ---") && last.contains("No script of it ran"),
+             qPrintable(last));
+    QVERIFY(assistant.isIdle());
+}
+
+void AiContentTests::chatProbeTopics_theApiTheProbeUsed()
+{
+    QCOMPARE(AiAssistant::chatProbeTopics("# EXPLORE\nn = note(\"Notes1\")\nprint(n.tab(1).toPlainText())"),
+             QStringList({"note"}));
+    QCOMPARE(AiAssistant::chatProbeTopics("t = table(\"Info\")\nl = graphWindow(\"Graph1\").layer(1)"),
+             QStringList({"table", "graph"}));
+    QCOMPARE(AiAssistant::chatProbeTopics("c = Compiler\nc.open(\"ai/MySphere\")\nf = Fittable"),
+             QStringList({"compile", "fittable"}));
+    QVERIFY(AiAssistant::chatProbeTopics("print(1 + 1)").isEmpty());
+}
+
+void AiContentTests::chatAsksForCode_onlyWhenTheMessageSaysSo()
+{
+    QVERIFY(AiAssistant::chatAsksForCode("Show me the script for that"));
+    QVERIFY(AiAssistant::chatAsksForCode("How would that look in Python?"));
+    QVERIFY(!AiAssistant::chatAsksForCode("How do I tell QtiSAS that a column holds error bars?"));
+    QVERIFY(!AiAssistant::chatAsksForCode("My fit function ai/MySphere does not compile. Why?"));
+}
+
+void AiContentTests::chat_codeInTheAnswerAskedAgainInWords()
+{
+    ChatTestServer server;
+    QVERIFY(server.listen(QHostAddress::LocalHost));
+    ProbeHost host;
+    host.objects << "note:Notes1";
+    QtiSasAiContent content;
+    AiAssistant assistant;
+    assistant.setContentProvider(&content);
+    assistant.setHost(&host);
+    assistant.configure({}, server.url(), "test", 1024, AiAssistant::DocsMode::Integrated);
+    QSignalSpy chats(&assistant, &AiAssistant::chatResponseReady);
+    server.queued << ChatTestServer::reply("Set the role:\n```python\nt.setColumnRole(3, yErr)\n```")
+                  << ChatTestServer::reply("Give the column the role yErr.");
+    assistant.askChat("How do I mark a column as error bars? And what does Notes1 say?");
+    QTRY_COMPARE(chats.count(), 1);
+    QCOMPARE(chats.at(0).at(0).toString(), QString("Give the column the role yErr."));
+    QCOMPARE(server.requests.size(), 2);
+    const QString second =
+        server.requests.at(1).value("messages").toArray().last().toObject().value("content").toString();
+    QVERIFY(second.contains("your answer was NOT shown"));
+    // the note the message names brings the note docs (the topics line of an integrated-docs request)
+    QVERIFY2(second.contains("note"), qPrintable(second.right(200)));
+    QVERIFY(second.right(120).contains(QRegularExpression(R"(TOPICS: [^\n]*\bnote\b)")));
+    // asked once per message: code again is shown as it came
+    server.queued << ChatTestServer::reply("```python\nprint(1)\n```")
+                  << ChatTestServer::reply("```python\nprint(2)\n```");
+    assistant.askChat("And how do I plot it?");
+    QTRY_COMPARE(chats.count(), 2);
+    QCOMPARE(chats.at(1).at(0).toString(), QString("```python\nprint(2)\n```"));
+}
+
+void AiContentTests::chat_emptyReplyAskedAgainOnce()
+{
+    ChatTestServer server;
+    QVERIFY(server.listen(QHostAddress::LocalHost));
+    AiAssistant assistant;
+    QtiSasAiContent content;
+    assistant.setContentProvider(&content);
+    assistant.configure({}, server.url(), "test", 1024, AiAssistant::DocsMode::Integrated);
+    QSignalSpy chats(&assistant, &AiAssistant::chatResponseReady);
+    QSignalSpy errors(&assistant, &AiAssistant::errorOccurred);
+    server.queued << ChatTestServer::reply("") << ChatTestServer::reply("Table1.");
+    assistant.askChat("Which table is the buffer?");
+    QTRY_COMPARE(chats.count(), 1);
+    QCOMPARE(chats.at(0).at(0).toString(), QString("Table1."));
+    QCOMPARE(errors.count(), 0);
+    QVERIFY(server.requests.last()
+                .value("messages")
+                .toArray()
+                .last()
+                .toObject()
+                .value("content")
+                .toString()
+                .contains("your last reply was empty"));
+    // twice empty: the error as before
+    server.queued << ChatTestServer::reply("") << ChatTestServer::reply("");
+    assistant.askChat("And the sample?");
+    QTRY_COMPARE(errors.count(), 1);
+    QVERIFY(errors.at(0).at(0).toString().contains("empty response"));
+}
+
+void AiContentTests::chat_aYesWithoutAProposalRunsNothing()
+{
+    ChatTestServer server;
+    QVERIFY(server.listen(QHostAddress::LocalHost));
+    ProbeHost host;
+    QtiSasAiContent content;
+    AiAssistant assistant;
+    assistant.setContentProvider(&content);
+    assistant.setHost(&host);
+    assistant.configure({}, server.url(), "test", 1024, AiAssistant::DocsMode::Integrated);
+    QSignalSpy chats(&assistant, &AiAssistant::chatResponseReady);
+    QSignalSpy tasks(&assistant, &AiAssistant::chatTaskRequested);
+    // the previous answer asked nothing: "yes, do it" confirms nothing, the task is the proposal
+    server.queued << ChatTestServer::reply("Graph2 shows PolyB.") << ChatTestServer::reply("# DO\nDelete Graph2.");
+    assistant.askChat("What does Graph2 show?");
+    QTRY_COMPARE(chats.count(), 1);
+    assistant.askChat("Yes, do it.");
+    QTRY_COMPARE(chats.count(), 2);
+    QCOMPARE(tasks.count(), 0);
+    QVERIFY(chats.at(1).at(0).toString().endsWith("Shall I go ahead?"));
+    // a reply-kind label the prompt's list invites is dropped
+    server.queued << ChatTestServer::reply("ANSWER: Graph2 stays.");
+    assistant.askChat("No, keep it.");
+    QTRY_COMPARE(chats.count(), 3);
+    QCOMPARE(chats.at(2).at(0).toString(), QString("Graph2 stays."));
+}
+
+void AiContentTests::chat_taskWaitsWhileItsScriptRuns()
+{
+    ChatTestServer server;
+    QVERIFY(server.listen(QHostAddress::LocalHost));
+    ProbeHost host;
+    QtiSasAiContent content;
+    AiAssistant assistant;
+    assistant.setContentProvider(&content);
+    assistant.setHost(&host);
+    assistant.configure({}, server.url(), "test", 1024, AiAssistant::DocsMode::Integrated);
+    QSignalSpy chats(&assistant, &AiAssistant::chatResponseReady);
+    QSignalSpy tasks(&assistant, &AiAssistant::chatTaskRequested);
+    server.queued << ChatTestServer::reply("I would reduce the data. Shall I?");
+    assistant.askChat("Reduce the data");
+    QTRY_COMPARE(chats.count(), 1);
+    // the script of the task runs (no model call in flight): the chat waits, and the AI is not idle meanwhile
+    QObject::connect(&assistant, &AiAssistant::chatTaskRequested, &assistant, [&host] { host.running = true; });
+    server.queued << ChatTestServer::reply("# DO\nReduce the data.") << ChatTestServer::reply("Reduced.");
+    assistant.askChat("yes");
+    QTRY_COMPARE(tasks.count(), 1);
+    QTest::qWait(2500);
+    QCOMPARE(chats.count(), 1);
+    QVERIFY(!assistant.isIdle());
+    host.running = false;
+    QTRY_COMPARE_WITH_TIMEOUT(chats.count(), 2, 5000);
+    QCOMPARE(chats.at(1).at(0).toString(), QString("Reduced."));
+    // the state names the library by folder
+    QVERIFY(server.requests.at(0)
+                .value("messages")
+                .toArray()
+                .last()
+                .toObject()
+                .value("content")
+                .toString()
+                .contains("fit-function library: 3 fit functions, by folder: sasviewmodels/ 2, ai/ 1"));
+}

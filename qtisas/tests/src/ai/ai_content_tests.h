@@ -22,6 +22,21 @@ class AiContentTests : public QObject
     static void chat_retryKeepsChatRouting();
     static void chat_busyAndCancellationStayIsolated();
     static void chat_sendsTheUserRules();
+    static void chatProbeCode_onlyAReplyThatStartsWithExplore();
+    static void chatProjectState_windowsWithShapesThenFunctionsAndModules();
+    static void chatProbeOutput_headAndTailOfALongOutput();
+    static void chat_probeRunsReadOnlyAndTheAnswerFollows();
+    static void chat_probesEndAtTheBudget();
+    static void chatTaskText_aReplyThatStartsWithDo();
+    static void looksLikeChatConfirmation_aShortYes();
+    static void chat_taskRunsOnlyAfterTheGo();
+    static void chatProbeTopics_theApiTheProbeUsed();
+    static void chatAsksForCode_onlyWhenTheMessageSaysSo();
+    static void chat_codeInTheAnswerAskedAgainInWords();
+    static void chat_emptyReplyAskedAgainOnce();
+    static void chat_aYesWithoutAProposalRunsNothing();
+    static void explorePrefix_cutsAtClosingOrRenamingAWindow();
+    static void chat_taskWaitsWhileItsScriptRuns();
     static void emptyResponse_namesTheTokenLimit();
     static void reasoning_sentAsThePresetSays();
     // ---- Direction 1: graph overreach ----
